@@ -22,8 +22,11 @@ export class ResolveRecipe extends Strategy {
     let arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (handle.connections.length == 0 || (handle.id && handle.storageKey) || (!handle.type) || (!handle.fate))
+        if (handle.connections.length == 0 ||
+            (handle.id && handle.storageKey) || (!handle.type) ||
+            (!handle.fate)) {
           return;
+        }
 
         let mappable;
 
@@ -66,10 +69,12 @@ export class ResolveRecipe extends Strategy {
         }
 
         mappable = mappable.filter(incomingHandle => {
-          for (let existingHandle of recipe.handles)
-            if (incomingHandle.id == existingHandle.id
-                && existingHandle !== handle)
+          for (let existingHandle of recipe.handles) {
+            if (incomingHandle.id == existingHandle.id &&
+                existingHandle !== handle) {
               return false;
+            }
+          }
           return true;
         });
 

@@ -50,8 +50,9 @@ export class Slot {
 
   _copyInto(recipe, cloneMap) {
     let slot = undefined;
-    if (!this.sourceConnection && this.id)
+    if (!this.sourceConnection && this.id) {
       slot = recipe.findSlot(this.id);
+    }
     if (slot == undefined) {
       slot = recipe.newSlot(this.name);
       slot._id = this.id;
@@ -60,8 +61,9 @@ export class Slot {
       slot._tags = [...this._tags];
       // the connections are re-established when Particles clone their attached SlotConnection objects.
       slot._sourceConnection = cloneMap.get(this._sourceConnection);
-      if (slot.sourceConnection)
+      if (slot.sourceConnection) {
         slot.sourceConnection._providedSlots[slot.name] = slot;
+      }
       this._handleConnections.forEach(connection => slot._handleConnections.push(cloneMap.get(connection)));
     }
     this._consumeConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
@@ -93,8 +95,9 @@ export class Slot {
     let idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);
     this._consumeConnections.splice(idx, 1);
-    if (this._consumeConnections.length == 0)
+    if (this._consumeConnections.length == 0) {
       this.remove();
+    }
   }
 
   remove() {

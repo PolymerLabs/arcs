@@ -316,12 +316,15 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
         const tile = tileBoard.tileAtIndex(i);
         const letterClasses = ['tile'];
         let yPixels = tile.y * 50 + tile.y;
-        if (tile.isShiftedDown)
+        if (tile.isShiftedDown) {
           yPixels += 25;
-        if (coordinates.indexOf(`(${tile.x},${tile.y})`) != -1)
+        }
+        if (coordinates.indexOf(`(${tile.x},${tile.y})`) != -1) {
           letterClasses.push('selected');
-        if (tile.style == Tile.Style.FIRE)
+        }
+        if (tile.style == Tile.Style.FIRE) {
           letterClasses.push('fire');
+        }
         models.push({
           letter: tile.letter,
           points: Scoring.pointsForLetter(tile.letter),
@@ -334,8 +337,9 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
     }
     moveToTiles(tileBoard, move) {
       let tiles = [];
-      if (!tileBoard || !move || !move.coordinates)
+      if (!tileBoard || !move || !move.coordinates) {
         return tiles;
+      }
       // TODO(wkorman): If move coordinates were stored as a list of x/y tuples
       // this would be much simpler.
       const tuples = move.coordinates.match(/(\d+,\d+)/g);
@@ -409,8 +413,9 @@ recipe
         score = Scoring.wordScore(moveTiles);
         info(`Scoring word [word=${word}, score=${score}].`);
         const gameOver = tileBoard.applyMove(moveTiles);
-        if (gameOver)
+        if (gameOver) {
           info('Ending game.');
+        }
         this.setStats(Scoring.applyMoveStats(
             tileBoard.gameId, props.person, props.stats, word, score));
         const gameState =
@@ -446,15 +451,17 @@ recipe
       let topPixel = fromTile.y * 50 + 18 + fromTile.y;
       if (fromTile.isShiftedDown) {
         topPixel += 25;
-        if (toTile.y == fromTile.y)
+        if (toTile.y == fromTile.y) {
           topPixel -= 12;
-        else
+        } else {
           topPixel += 12;
+        }
       } else {
-        if (toTile.y == fromTile.y)
+        if (toTile.y == fromTile.y) {
           topPixel += 12;
-        else
+        } else {
           topPixel -= 12;
+        }
       }
       return topPixel;
     }
@@ -521,16 +528,18 @@ recipe
         contentText = '➜';//'↓';
         orientation = 'orientation-down';
         let topPixel = (fromTile.y + 1) * 50 - 7 + fromTile.y;
-        if (fromTile.isShiftedDown)
+        if (fromTile.isShiftedDown) {
           topPixel += 25;
+        }
         positionText =
             `top: ${topPixel-43}px; left: ${fromTile.x * 50 + fromTile.x }px; width: 28px; height: 80px; line-height:80px;`;
       } else {
         contentText = '➜';//'↑';
         orientation = 'orientation-up';
         let topPixel = fromTile.y * 50 - 9 + fromTile.y;
-        if (fromTile.isShiftedDown)
+        if (fromTile.isShiftedDown) {
           topPixel += 25;
+        }
         positionText =
             `top: ${topPixel-43}px; left: ${fromTile.x * 50 + fromTile.x }px; width: 28px; height: 80px; line-height:80px;`;
       }
@@ -538,8 +547,9 @@ recipe
     }
     selectedTilesToModels(selectedTiles) {
       let models = [];
-      if (selectedTiles.length < 2)
+      if (selectedTiles.length < 2) {
         return models;
+      }
       for (let i = 0; i < selectedTiles.length - 1; i++) {
         let [contentText, positionText, orientation] = this.tileTransitionToTextAndPosition(
             selectedTiles[i], selectedTiles[i + 1]);
@@ -571,8 +581,9 @@ recipe
         this.setBoard(board);
       }
       const tileBoard = new TileBoard(board);
-      if (!props.stats && props.person)
+      if (!props.stats && props.person) {
         this.setStats(Scoring.create(props.person, board.gameId));
+      }
       board.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
       let [moveData, moveTiles, moveScore] =
           this.processSubmittedMove(props, state, tileBoard);
@@ -637,8 +648,9 @@ recipe
       //     lastSelectedTile ? lastSelectedTile : 'undefined'
       //   }].`
       // );
-      if (!state.tileBoard.isMoveValid(state.selectedTiles, tile))
+      if (!state.tileBoard.isMoveValid(state.selectedTiles, tile)) {
         return;
+      }
       let newCoordinates = '';
       if (lastSelectedTile && lastSelectedTile.x == tile.x &&
           lastSelectedTile.y == tile.y) {
@@ -647,8 +659,9 @@ recipe
         // We could pop the last tuple but it's easier to just rebuild,
         // and hopefully we'll move away from a string tuple hack soon.
         for (let i = 0; i < state.selectedTiles.length; i++) {
-          if (i > 0)
+          if (i > 0) {
             newCoordinates += ',';
+          }
           let buildTile = state.selectedTiles[i];
           newCoordinates += `(${buildTile.x},${buildTile.y})`;
         }
@@ -709,11 +722,13 @@ recipe
       let highestScoringWord;
       let highestScore = 0;
       for (let i = 0; i < words.length; i++) {
-        if (!longestWord || words[i].text.length > longestWord.text.length)
+        if (!longestWord || words[i].text.length > longestWord.text.length) {
           longestWord = words[i];
+        }
         let wordTiles = [];
-        for (let j = 0; j < words[i].text.length; j++)
+        for (let j = 0; j < words[i].text.length; j++) {
           wordTiles.push(new Tile(0, words[i].text.charAt(j)));
+        }
         let wordScore = Scoring.wordScore(wordTiles);
         if (wordScore > highestScore) {
           highestScore = wordScore;

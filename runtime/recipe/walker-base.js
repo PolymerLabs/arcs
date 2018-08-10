@@ -48,8 +48,9 @@ export class WalkerBase extends Strategizer.Walker {
           let permutations = [[]];
           updateList.forEach(({continuation, context}) => {
             let newResults = [];
-            if (typeof continuation == 'function')
+            if (typeof continuation == 'function') {
               continuation = [continuation];
+            }
             continuation.forEach(f => {
               permutations.forEach(p => {
                 let newP = p.slice();
@@ -65,8 +66,9 @@ export class WalkerBase extends Strategizer.Walker {
             let newRecipe = recipe.clone(cloneMap);
             let score = 0;
             permutation = permutation.filter(p => p.f !== null);
-            if (permutation.length == 0)
+            if (permutation.length == 0) {
               continue;
+            }
             permutation.forEach(({f, context}) => {
               score += f(newRecipe, cloneMap.get(context));
             });
@@ -77,11 +79,13 @@ export class WalkerBase extends Strategizer.Walker {
         }
         case WalkerBase.Independent:
           updateList.forEach(({continuation, context}) => {
-            if (typeof continuation == 'function')
+            if (typeof continuation == 'function') {
               continuation = [continuation];
+            }
             continuation.forEach(f => {
-              if (f == null)
+              if (f == null) {
                 f = () => 0;
+              }
               let cloneMap = new Map();
               let newRecipe = recipe.clone(cloneMap);
               let score = f(newRecipe, cloneMap.get(context));
@@ -109,11 +113,13 @@ export class WalkerBase extends Strategizer.Walker {
   }
 
   isEmptyResult(result) {
-    if (!result)
+    if (!result) {
       return true;
+    }
 
-    if (result.constructor == Array && result.length <= 0)
+    if (result.constructor == Array && result.length <= 0) {
       return true;
+    }
 
       assert(typeof result == 'function' || result.length);
 

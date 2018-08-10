@@ -28,21 +28,25 @@ export class AssignHandles extends Strategy {
           return;
         }
 
-        if (handle.connections.length == 0)
+        if (handle.connections.length == 0) {
           return;
+        }
 
-        if (handle.id)
+        if (handle.id) {
           return;
+        }
 
-        if (!handle.type)
+        if (!handle.type) {
           return;
+        }
 
         // TODO: using the connection to retrieve type information is wrong.
         // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
         let counts = RecipeUtil.directionCounts(handle);
-        if (counts.unknown > 0)
+        if (counts.unknown > 0) {
           return;
+        }
 
         let score = this._getScore(counts, handle.tags);
 
@@ -78,15 +82,17 @@ export class AssignHandles extends Strategy {
       _getScore(counts, tags) {
         let score = -1;
         if (counts.in == 0 || counts.out == 0) {
-          if (counts.out == 0)
+          if (counts.out == 0) {
             score = 1;
-          else
+          } else {
             score = 0;
+          }
         }
         // TODO: Why is score negative, where there are both - in and out?
-    
-        if (tags.length > 0)
+
+        if (tags.length > 0) {
           score += 4;
+        }
         return score;
       }
 

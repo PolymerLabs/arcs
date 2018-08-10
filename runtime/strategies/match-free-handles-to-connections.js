@@ -19,8 +19,9 @@ export class MatchFreeHandlesToConnections extends Strategy {
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (handle.connections.length > 0)
+        if (handle.connections.length > 0) {
           return;
+        }
 
         let matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'descriptions');
 

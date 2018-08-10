@@ -14,10 +14,14 @@ function addType(name, arg=undefined) {
   let upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
-      if (!this[`is${name}`])
-        assert(this[`is${name}`], `{${this.tag}, ${this.data}} is not of type ${name}`);
+      if (!this[`is${name}`]) {
+        assert(
+            this[`is${name}`],
+            `{${this.tag}, ${this.data}} is not of type ${name}`);
+      }
       return this.data;
-    }});
+    }
+  });
   Object.defineProperty(Type.prototype, `is${name}`, {
     get: function() {
       return this.tag == name;
@@ -128,8 +132,9 @@ export class Type {
   static unwrapPair(type1, type2) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
-    if (type1.isCollection && type2.isCollection)
+    if (type1.isCollection && type2.isCollection) {
       return Type.unwrapPair(type1.primitiveType(), type2.primitiveType());
+    }
     return [type1, type2];
   }
 
@@ -141,10 +146,12 @@ export class Type {
   }
 
   _applyExistenceTypeTest(test) {
-    if (this.isCollection)
+    if (this.isCollection) {
       return this.primitiveType()._applyExistenceTypeTest(test);
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return this.interfaceShape._applyExistenceTypeTest(test);
+    }
     return test(this);
   }
 
@@ -177,8 +184,9 @@ export class Type {
     }
     if (this.isVariable) {
       let resolution = this.variable.resolution;
-      if (resolution)
+      if (resolution) {
         return resolution;
+      }
     }
     if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.resolvedType());
@@ -192,56 +200,72 @@ export class Type {
   }
 
   canEnsureResolved() {
-    if (this.isResolved())
+    if (this.isResolved()) {
       return true;
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return this.interfaceShape.canEnsureResolved();
-    if (this.isVariable)
+    }
+    if (this.isVariable) {
       return this.variable.canEnsureResolved();
-    if (this.isCollection)
+    }
+    if (this.isCollection) {
       return this.primitiveType().canEnsureResolved();
+    }
     return true;
   }
 
   maybeEnsureResolved() {
-    if (this.isInterface)
+    if (this.isInterface) {
       return this.interfaceShape.maybeEnsureResolved();
-    if (this.isVariable)
+    }
+    if (this.isVariable) {
       return this.variable.maybeEnsureResolved();
-    if (this.isCollection)
+    }
+    if (this.isCollection) {
       return this.primitiveType().maybeEnsureResolved();
+    }
     return true;
   }
 
   get canWriteSuperset() {
-    if (this.isVariable)
+    if (this.isVariable) {
       return this.variable.canWriteSuperset;
-    if (this.isEntity || this.isSlot)
+    }
+    if (this.isEntity || this.isSlot) {
       return this;
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canWriteSuperset);
+    }
     assert(false, `canWriteSuperset not implemented for ${this}`);
     return undefined;
   }
 
   get canReadSubset() {
-    if (this.isVariable)
+    if (this.isVariable) {
       return this.variable.canReadSubset;
-    if (this.isEntity || this.isSlot)
+    }
+    if (this.isEntity || this.isSlot) {
       return this;
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canReadSubset);
+    }
     assert(false, `canReadSubset not implemented for ${this}`);
     return undefined;
   }
 
   isMoreSpecificThan(type) {
-    if (this.tag !== type.tag)
+    if (this.tag !== type.tag) {
       return false;
-    if (this.isEntity)
+    }
+    if (this.isEntity) {
       return this.entitySchema.isMoreSpecificThan(type.entitySchema);
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
+    }
     if (this.isSlot) {
       // TODO: formFactor checking, etc.
       return true;
@@ -251,10 +275,14 @@ export class Type {
 
   static _canMergeCanReadSubset(type1, type2) {
     if (type1.canReadSubset && type2.canReadSubset) {
-      if (type1.canReadSubset.tag !== type2.canReadSubset.tag)
+      if (type1.canReadSubset.tag !== type2.canReadSubset.tag) {
         return false;
-      if (type1.canReadSubset.isEntity)
-        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
+      }
+      if (type1.canReadSubset.isEntity) {
+        return Schema.intersect(
+                   type1.canReadSubset.entitySchema,
+                   type2.canReadSubset.entitySchema) !== null;
+      }
       assert(false, `_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
     return true;
@@ -262,11 +290,14 @@ export class Type {
 
   static _canMergeCanWriteSuperset(type1, type2) {
     if (type1.canWriteSuperset && type2.canWriteSuperset) {
-      if (type1.canWriteSuperset.tag !== type2.canWriteSuperset.tag)
+      if (type1.canWriteSuperset.tag !== type2.canWriteSuperset.tag) {
         return false;
-      if (type1.canWriteSuperset.isEntity)
-        return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
-
+      }
+      if (type1.canWriteSuperset.isEntity) {
+        return Schema.union(
+                   type1.canWriteSuperset.entitySchema,
+                   type2.canWriteSuperset.entitySchema) !== null;
+      }
     }
     return true;
   }
@@ -307,12 +338,18 @@ export class Type {
         return new Type('Variable', variableMap.get(this.variable));
       } else {
         let newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
-        if (this.variable.resolution)
-          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
-        if (this.variable._canReadSubset)
-          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
-        if (this.variable._canWriteSuperset)
-          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
+        if (this.variable.resolution) {
+          newTypeVariable.resolution =
+              this.variable.resolution._cloneWithResolutions(variableMap);
+        }
+        if (this.variable._canReadSubset) {
+          newTypeVariable.canReadSubset =
+              this.variable.canReadSubset._cloneWithResolutions(variableMap);
+        }
+        if (this.variable._canWriteSuperset) {
+          newTypeVariable.canWriteSuperset =
+              this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
+        }
         variableMap.set(this.variable, newTypeVariable);
         return new Type('Variable', newTypeVariable);
       }
@@ -329,8 +366,9 @@ export class Type {
       return this.variable.resolution.toLiteral();
     }
     if (this.data instanceof Type || this.data instanceof Shape || this.data instanceof Schema || 
-        this.data instanceof TypeVariable)
+        this.data instanceof TypeVariable) {
       return {tag: this.tag, data: this.data.toLiteral()};
+    }
     return this;
   }
 
@@ -361,24 +399,31 @@ export class Type {
 
   // TODO: is this the same as _applyExistenceTypeTest
   hasProperty(property) {
-    if (property(this))
+    if (property(this)) {
       return true;
-    if (this.isCollection)
+    }
+    if (this.isCollection) {
       return this.collectionType.hasProperty(property);
+    }
     return false;
   }
 
   toString(options) {
-    if (this.isCollection)
+    if (this.isCollection) {
       return `[${this.primitiveType().toString(options)}]`;
-    if (this.isEntity)
+    }
+    if (this.isEntity) {
       return this.entitySchema.toInlineSchemaString(options);
-    if (this.isInterface)
+    }
+    if (this.isInterface) {
       return this.interfaceShape.name;
-    if (this.isVariable)
+    }
+    if (this.isVariable) {
       return `~${this.variable.name}`;
-    if (this.isSlot)
+    }
+    if (this.isSlot) {
       return 'Slot';
+    }
     assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
@@ -414,8 +459,9 @@ export class Type {
     if (this.isCollection) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
-    if (this.isVariable)
+    if (this.isVariable) {
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
+    }
     if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
       if (this.entitySchema.name) {
@@ -423,8 +469,9 @@ export class Type {
       }
       return JSON.stringify(this.entitySchema._model);
     }
-    if (this.isInterface)
+    if (this.isInterface) {
       return this.interfaceShape.toPrettyString();
+    }
   }
 }
 

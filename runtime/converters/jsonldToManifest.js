@@ -21,9 +21,9 @@ export class JsonldToManifest {
     }
 
     for (let item of obj['@graph']) {
-      if (item['@type'] == 'rdf:Property')
+      if (item['@type'] == 'rdf:Property') {
         properties[item['@id']] = item;
-      else if (item['@type'] == 'rdfs:Class') {
+      } else if (item['@type'] == 'rdfs:Class') {
         classes[item['@id']] = item;
         item.subclasses = [];
         item.superclass = null;
@@ -32,12 +32,14 @@ export class JsonldToManifest {
 
     for (let clazz of Object.values(classes)) {
       if (clazz['rdfs:subClassOf'] !== undefined) {
-        if (clazz['rdfs:subClassOf'].length == undefined)
+        if (clazz['rdfs:subClassOf'].length == undefined) {
           clazz['rdfs:subClassOf'] = [clazz['rdfs:subClassOf']];
+        }
         for (let subClass of clazz['rdfs:subClassOf']) {
           let superclass = subClass['@id'];
-          if (clazz.superclass == undefined)
+          if (clazz.superclass == undefined) {
             clazz.superclass = [];
+          }
           if (classes[superclass]) {
             classes[superclass].subclasses.push(clazz);
             clazz.superclass.push(classes[superclass]);
@@ -57,23 +59,28 @@ export class JsonldToManifest {
     let relevantProperties = [];
     for (let property of Object.values(properties)) {
       let domains = property['schema:domainIncludes'];
-      if (!domains)
+      if (!domains) {
         domains = {'@id': theClass['@id']};
-      if (!domains.length)
+      }
+      if (!domains.length) {
         domains = [domains];
+      }
       domains = domains.map(a => a['@id']);
       if (domains.includes(theClass['@id'])) {
         let name = property['@id'].split(':')[1];
         let type = property['schema:rangeIncludes'];
-        if (!type)
+        if (!type) {
           console.log(property);
-        if (!type.length)
+        }
+        if (!type.length) {
           type = [type];
+        }
 
         type = type.map(a => a['@id'].split(':')[1]);
         type = type.filter(type => supportedTypes.includes(type));
-        if (type.length > 0)
-        relevantProperties.push({name, type});
+        if (type.length > 0) {
+          relevantProperties.push({name, type});
+        }
       }
     }
 
@@ -81,20 +88,23 @@ export class JsonldToManifest {
     let superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
 
     let s = '';
-    for (let superName of superNames)
+    for (let superName of superNames) {
       s += `import 'https://schema.org/${superName}'\n\n`;
+    }
 
     s += `schema ${className}`;
-    if (superNames.length > 0)
+    if (superNames.length > 0) {
       s += ` extends ${superNames.join(', ')}`;
+    }
 
     if (relevantProperties.length > 0) {
       for (let property of relevantProperties) {
         let type;
-        if (property.type.length > 1)
+        if (property.type.length > 1) {
           type = '(' + property.type.join(' or ') + ')';
-        else
+        } else {
           type = property.type[0];
+        }
         s += `\n  ${type} ${property.name}`;
       }
     }

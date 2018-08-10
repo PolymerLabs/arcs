@@ -40,8 +40,9 @@ class TileBoard {
     let rowCount = 0;
     let letters = board.letters;
     for (let i = 0; i < letters.length; i += 2) {
-      if (colCount == 0)
+      if (colCount == 0) {
         this._rows.push([]);
+      }
       const style = Tile.NumberToStyle[parseInt(letters.charAt(i + 1))];
       this._rows[rowCount][colCount] = new Tile(i / 2, letters[i], style);
       if (colCount == BOARD_WIDTH - 1) {
@@ -78,12 +79,14 @@ class TileBoard {
   }
   isMoveValid(selectedTiles, tile) {
     // Initial moves are considered valid.
-    if (selectedTiles.length == 0)
+    if (selectedTiles.length == 0) {
       return true;
+    }
     // Selecting the last selected tile is permitted so as to de-select.
     let lastSelectedTile = selectedTiles[selectedTiles.length - 1];
-    if (lastSelectedTile.x == tile.x && lastSelectedTile.y == tile.y)
+    if (lastSelectedTile.x == tile.x && lastSelectedTile.y == tile.y) {
       return true;
+    }
     // Else the new selection must touch the last selection and can't
     // already be selected.
     let touchesLastSelectedTile =
@@ -198,8 +201,9 @@ class TileBoard {
     return gameOver;
   }
   shuffle() {
-    if (this._shuffleAvailableCount <= 0)
+    if (this._shuffleAvailableCount <= 0) {
       return false;
+    }
     // Fisher-Yates shuffle per https://bost.ocks.org/mike/shuffle/
     let m = TILE_COUNT;
     while (m) {
@@ -241,8 +245,9 @@ class TileBoard {
     let accumulator = 0;
     for (let i = 0; i < CHAR_FREQUENCIES.length; i++) {
       accumulator += CHAR_FREQUENCIES[i][1];
-      if (accumulator >= pick)
+      if (accumulator >= pick) {
         return CHAR_FREQUENCIES[i][0];
+      }
     }
     return CHAR_FREQUENCIES[CHAR_FREQUENCIES.length - 1][0];
   }

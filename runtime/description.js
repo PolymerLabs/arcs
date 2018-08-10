@@ -225,8 +225,9 @@ export class DescriptionFormatter {
       }
       assert(tokenIndex >= 0);
       let nextToken = pattern.substring(0, tokenIndex);
-      if (nextToken.length > 0)
+      if (nextToken.length > 0) {
         results.push({text: nextToken});
+      }
       if (firstToken.length > 0) {
         results = results.concat(this._initSubTokens(firstToken, particleDescription));
       }

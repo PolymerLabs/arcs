@@ -159,14 +159,16 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     }
     peopleSetToMap(people) {
       const peopleMap = {};
-      if (people)
+      if (people) {
         people.map(p => peopleMap[p.id] = p.name);
+      }
       return peopleMap;
     }
     avatarSetToMap(avatars) {
       const avatarMap = {};
-      if (avatars)
+      if (avatars) {
         avatars.map(a => avatarMap[a.owner] = a.url);
+      }
       return avatarMap;
     }
     initBlogMetadata(props) {
@@ -198,8 +200,9 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     }
     onDeletePost(e, state) {
       const targetPost = state.posts.find(p => p.id == e.data.value);
-      if (targetPost)
+      if (targetPost) {
         this.handles.get('posts').remove(targetPost);
+      }
     }
     onBlurDescription(e, state) {
       this.updateVariable('metadata',

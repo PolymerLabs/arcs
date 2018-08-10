@@ -96,8 +96,10 @@ defineParticle(({DomParticle, html}) => {
       if (x == undefined) {
         // Start a search along one x and one y edge.
         for (let i = 0; i < this._size; i++) {
-          if (this._tryFindWinner(0, i, seen) || this._tryFindWinner(i, 0, seen))
+          if (this._tryFindWinner(0, i, seen) ||
+              this._tryFindWinner(i, 0, seen)) {
             return true;
+          }
         }
         return false;
       }
@@ -149,8 +151,9 @@ defineParticle(({DomParticle, html}) => {
     }
 
     cell(x, y) {
-      if (x >= 0 && x < this.size && y >= 0 && y < this.size)
+      if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
         return this._board[x + this.size * y];
+      }
     }
 
     toModel() {
@@ -216,10 +219,11 @@ defineParticle(({DomParticle, html}) => {
       });
     }
     getTemplate(slotName) {
-      if (slotName == 'root')
+      if (slotName == 'root') {
         return rootTemplate;
-      else if (slotName == 'cell')
+      } else if (slotName == 'cell') {
         return cellTemplate;
+      }
     }
     willReceiveProps(props, state, oldProps, oldState) {
       if (!props.user || !props.gameState || !props.gameState.player1 || !props.gameState.player2) {

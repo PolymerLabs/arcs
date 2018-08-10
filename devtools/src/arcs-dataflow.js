@@ -362,8 +362,9 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
       let n1 = Number(ids1[i]);
       let n2 = Number(ids2[i]);
       let lexComp;
-      if ((!n1 || !n2) && (lexComp = ids1[i].localeCompare(ids2[i])) !== 0)
-          return lexComp;
+      if ((!n1 || !n2) && (lexComp = ids1[i].localeCompare(ids2[i])) !== 0) {
+        return lexComp;
+      }
       if ((n1 && n2) && n1 !== n2) return n1 - n2;
     }
     return ids1.length - ids2.length;

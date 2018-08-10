@@ -90,18 +90,20 @@ export class GroupHandleConnections extends Strategy {
           }
         });
 
-        if (groupsByType.size > 0) return recipe => {
-          groupsByType.forEach((groups, type) => {
-            groups.forEach(group => {
-              let recipeHandle = recipe.newHandle();
-              group.forEach(conn => {
-                let cloneConn = recipe.updateToClone({conn}).conn;
-                cloneConn.connectToHandle(recipeHandle);
+        if (groupsByType.size > 0) {
+          return recipe => {
+            groupsByType.forEach((groups, type) => {
+              groups.forEach(group => {
+                let recipeHandle = recipe.newHandle();
+                group.forEach(conn => {
+                  let cloneConn = recipe.updateToClone({conn}).conn;
+                  cloneConn.connectToHandle(recipeHandle);
+                });
               });
             });
-          });
-          // TODO: score!
-        };
+            // TODO: score!
+          };
+        }
       }
     }(Walker.Permuted);
   }

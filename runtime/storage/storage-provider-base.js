@@ -52,8 +52,9 @@ export class StorageProviderBase {
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   async _fire(kind, details) {
     let listenerMap = this._listeners.get(kind);
-    if (!listenerMap || listenerMap.size == 0)
+    if (!listenerMap || listenerMap.size == 0) {
       return;
+    }
 
     let trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
@@ -97,8 +98,9 @@ export class StorageProviderBase {
       handleStr.push(`in '${this.source}'`);
     }
     results.push(handleStr.join(' '));
-    if (this.description)
+    if (this.description) {
       results.push(`  description \`${this.description}\``);
+    }
     return results.join('\n');
   }
 

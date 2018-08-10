@@ -93,8 +93,9 @@ Polymer({
               valueList.forEach(value => {
                 let strategyList = value.slice();
                 strategyList.push(derivation.strategy);
-                if (this.strategyMap.get(key) == undefined)
+                if (this.strategyMap.get(key) == undefined) {
                   this.strategyMap.set(key, []);
+                }
                 this.strategyMap.get(key).push(strategyList);
               });
             });
@@ -112,8 +113,10 @@ Polymer({
         });
 
         if (newParent == undefined) {
-          if (!document.strategyExplorer.pendingActions.has(derivation.parent))
+          if (!document.strategyExplorer.pendingActions.has(
+                  derivation.parent)) {
             document.strategyExplorer.pendingActions.set(derivation.parent, []);
+          }
           document.strategyExplorer.pendingActions.get(derivation.parent).push(setupContext);
         } else {
           setupContext(newParent);

@@ -32,9 +32,6 @@ module.exports = {
     "max-len": "off",
     "comma-dangle": "off",
     "linebreak-style": "off",
-
-    // Things we might care about if we could automate them.
-    "curly": "off", // curly braces even single line blocks, --fix does something weird.
   },
   env: {
     browser: true,
