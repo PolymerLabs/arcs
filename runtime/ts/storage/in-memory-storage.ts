@@ -131,7 +131,12 @@ export class InMemoryStorage {
 class InMemoryStorageProvider extends StorageProviderBase {
   static newProvider(type, storageEngine, name, id, key) {
     if (type.isCollection) {
-      return new InMemoryCollection(type, storageEngine, name, id, key);
+      // FIXME: implement a mechanism for specifying BigCollections in manifests
+      if (id.startsWith('~big~')) {
+        return new InMemoryBigCollection(type, storageEngine, name, id, key);
+      } else {
+        return new InMemoryCollection(type, storageEngine, name, id, key);
+      }
     }
     return new InMemoryVariable(type, storageEngine, name, id, key);
   }
@@ -353,5 +358,60 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async clear(originatorId=null, barrier=null) {
     this.set(null, originatorId, barrier);
+  }
+}
+
+// In-memory version of the BigCollection API; primarily for testing.
+class InMemoryBigCollection extends InMemoryStorageProvider {
+  protected version: number;
+  private items: Map<string, {index: number, value: any, keys: {[index: string]: number}}>;
+  constructor(type, storageEngine, name, id, key) {
+    super(type, name, id, key);
+    this.version = 0;
+    this.items = new Map();
+  }
+
+  async get(id) {
+    let data = this.items.get(id);
+    return (data !== undefined) ? data.value : null;
+  }
+
+  async store(value, keys) {
+    assert(keys != null && keys.length > 0, 'keys required');
+    this.version++;
+
+    if (!this.items.has(value.id)) {
+      this.items.set(value.id, {index: null, value: null, keys: {}});
+    }
+    let data = this.items.get(value.id);
+    data.index = this.version;
+    data.value = value;
+    keys.forEach(k => data.keys[k] = this.version);
+    return data;
+  }
+
+  async remove(id) {
+    this.version++;
+    this.items.delete(id);
+  }
+
+  async stream(pageSize) {
+    assert(!isNaN(pageSize) && pageSize > 0);
+    let copy = [...this.items.values()];
+    copy.sort((a, b) => a.index - b.index);
+    return {
+      version: this.version,
+
+      next: async function() {
+        if (copy.length === 0) {
+          return {done: true};
+        }
+        return {value: copy.splice(0, pageSize).map(v => v.value), done: false};
+      },
+
+      close: async function() {
+        copy = [];
+      }
+    };
   }
 }

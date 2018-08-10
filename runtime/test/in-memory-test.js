@@ -204,4 +204,100 @@ describe('in-memory', function() {
       assert.sameDeepMembers(result, await underlyingValues.toList());
     }); 
   });
+
+  describe('big collection', () => {
+    it('supports get, store and remove (including concurrently)', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text data
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = new StorageProviderFactory(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key = newStoreKey('bigcollection');
+      let collection1 = await storage.construct('~big~0', BarType.collectionOf(), key);
+      let collection2 = await storage.connect('~big~0', BarType.collectionOf(), collection1.storageKey);
+
+      // Concurrent writes to different ids.
+      await Promise.all([
+        collection1.store({id: 'id1', data: 'ab'}, ['k34']),
+        collection2.store({id: 'id2', data: 'cd'}, ['k12'])
+      ]);
+      assert.equal((await collection2.get('id1')).data, 'ab');
+      assert.equal((await collection1.get('id2')).data, 'cd');
+
+      await collection1.remove('id2');
+      assert.isNull(await collection2.get('id2'));
+
+      // Concurrent writes to the same id.
+      await Promise.all([
+        collection1.store({id: 'id3', data: 'xx'}, ['k65']),
+        collection2.store({id: 'id3', data: 'yy'}, ['k87'])
+      ]);
+      assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
+
+      assert.isNull(await collection1.get('non-existent'));
+      await collection1.remove('non-existent');
+    });
+
+    it('supports version-stable streamed reads', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text data
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = new StorageProviderFactory(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key = newStoreKey('bigcollection');
+      let collection = await storage.construct('~big~1', BarType.collectionOf(), key);
+
+      let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
+      for (let i = 0; i < ids.length; i++) {
+        await collection.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
+      }
+
+      // Re-store a couple of ids to change the insertion order of the collection's internal map
+      // so we know the cursor is correctly ordering results based on the index.
+      await collection.store({id: 'p07', data: 'vp07'}, ['kXX']);
+      await collection.store({id: 'q04', data: 'vq04'}, ['kYY']);
+
+      let checkNext = async (cursor, ids) => {
+        let {value, done} = await cursor.next();
+        assert.isFalse(done);
+        assert.equal(value.length, ids.length);
+        for (let i = 0; i < value.length; i++) {
+          assert.equal(value[i].id, ids[i]);
+          assert.equal(value[i].data, 'v' + ids[i]);
+        }
+      };
+
+      let checkDone = async cursor => {
+        let {value, done} = await cursor.next();
+        assert.isTrue(done);
+        assert.isUndefined(value);
+      };
+
+      let cursor1 = await collection.stream(6);
+      await checkNext(cursor1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
+
+      await collection.store({id: 'f11', data: 'vf11'}, ['kf11']);
+      await collection.remove('g08');
+      await collection.remove('z03');
+
+      // Interleave another cursor at a different version.
+      let cursor2 = await collection.stream(20);
+      assert.equal(cursor2.version, cursor1.version + 3);
+      await checkNext(cursor2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
+      
+      await checkNext(cursor1, ['x09', 'o10', 'p07', 'q04']);
+      await checkDone(cursor1);
+      await checkDone(cursor2);
+
+      // Verify close().
+      let cursor3 = await collection.stream(3);
+      await checkNext(cursor3, ['r01', 'i02', 'h05']);
+      await cursor3.close();
+      await checkDone(cursor3);
+    });
+  });
 });

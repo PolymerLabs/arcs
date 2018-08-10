@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
-import {FirebaseStorage, resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
+import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -303,12 +303,8 @@ describe('firebase', function() {
         assert.isFalse(done);
         assert.equal(value.length, ids.length);
         for (let i = 0; i < value.length; i++) {
-          // actual = { index: '...', value: {id: 'rXX', data: 'vYY'}, keys: {'encoded<kZZ>': N} }
-          let actual = value[i];
-          let item = items.get(ids[i]);
-          assert.equal(actual.value.id, ids[i]);
-          assert.equal(actual.value.data, item.data);
-          assert.deepEqual(Object.keys(actual.keys), [FirebaseStorage.encodeKey(item.key)]);
+          assert.equal(value[i].id, ids[i]);
+          assert.equal(value[i].data, items.get(ids[i]).data);
         }
       };
 
