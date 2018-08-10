@@ -17,15 +17,16 @@ import {assert} from '../../platform/assert-web.js';
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
 export class CrdtCollectionModel {
-  constructor(model) {
+  private items: Map<string, {value: any, keys: Set<string>}>;
+  constructor(model = undefined) {
     // id => {value, Set[keys]}
-    this._items = new Map();
+    this.items = new Map();
     if (model) {
       for (let {id, value, keys} of model) {
         if (!keys) {
           keys = [];
         }
-        this._items.set(id, {value, keys: new Set(keys)});
+        this.items.set(id, {value, keys: new Set(keys)});
       }
     }
   }
@@ -34,11 +35,11 @@ export class CrdtCollectionModel {
   // or `value` is different to the value previously stored).
   add(id, value, keys) {
     assert(keys.length > 0, 'add requires keys');
-    let item = this._items.get(id);
+    let item = this.items.get(id);
     let effective = false;
     if (!item) {
       item = {value, keys: new Set(keys)};
-      this._items.set(id, item);
+      this.items.set(id, item);
       effective = true;
     } else {
       let newKeys = false;
@@ -60,7 +61,7 @@ export class CrdtCollectionModel {
   // Returns whether the change is effective (the value is no longer present
   // in the collection because all of the keys have been removed).
   remove(id, keys) {
-    let item = this._items.get(id);
+    let item = this.items.get(id);
     if (!item) {
       return false;
     }
@@ -69,33 +70,33 @@ export class CrdtCollectionModel {
     }
     let effective = item.keys.size == 0;
     if (effective) {
-      this._items.delete(id);
+      this.items.delete(id);
     }
     return effective;
   }
   // [{id, value, keys: []}]
   toLiteral() {
     let result = [];
-    for (let [id, {value, keys}] of this._items.entries()) {
+    for (let [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }
     return result;
   }
   toList() {
-    return [...this._items.values()].map(item => item.value);
+    return [...this.items.values()].map(item => item.value);
   }
   has(id) {
-    return this._items.has(id);
+    return this.items.has(id);
   }
   getKeys(id) {
-    let item = this._items.get(id);
+    let item = this.items.get(id);
     return item ? [...item.keys] : [];
   }
   getValue(id) {
-    let item = this._items.get(id);
+    let item = this.items.get(id);
     return item ? item.value : null;
   }
   get size() {
-    return this._items.size;
+    return this.items.size;
   }
 }
