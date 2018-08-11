@@ -6,10 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageProviderBase} from './storage-provider-base.js';
+import {StorageProviderBase} from './storage-provider-base';
 import {firebase} from '../../platform/firebase-web.js';
 import {assert} from '../../platform/assert-web.js';
-import {KeyBase} from './key-base.js';
+import {KeyBase} from './key-base';
 import {atob} from '../../platform/atob-web.js';
 import {btoa} from '../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model';
@@ -104,7 +104,7 @@ export class FirebaseStorage {
 
   // Unit tests should call this in an 'after' block.
   async shutdown() {
-    return Promise.all(Object.keys(this.apps).map(k => this.apps[k].delete()));
+    return Promise.all(Object.keys(this.apps).map(k => this.apps[k].delete())).then(a => { return; });
   }
   
   async share(id, type, key) {
@@ -307,7 +307,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // Monotonic version, initialized via response from firebase,
     // or a call to `set` (as 0). Updated on changes from firebase
     // or during local modifications.
-    this._version = null;
+    this.version = null;
 
     // Whether `this.value` is affected by a local modification.
     // When this is true we are still in the process of writing
@@ -330,13 +330,13 @@ class FirebaseVariable extends FirebaseStorageProvider {
       return;
     }
     let data = dataSnapshot.val();
-    assert(this._version == null || data.version > this._version);
+    assert(this.version == null || data.version > this.version);
 
     this.value = data.value;
-    this._version = data.version;
+    this.version = data.version;
 
     this.resolveInitialized();
-    this._fire('change', {data: data.value, version: this._version});
+    this._fire('change', {data: data.value, version: this.version});
   }
 
   get _hasLocalChanges() {
@@ -349,10 +349,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // local mutation, these versions will be different when the transaction
     // completes indicating that we need to continue the process of sending
     // local modifications.
-    let version = this._version;
+    let version = this.version;
     let value = this.value;
     let result = await this._transaction(data => {
-      assert(this._version >= version);
+      assert(this.version >= version);
       return {
         version: Math.max(data.version + 1, version),
         value: value,
@@ -361,19 +361,19 @@ class FirebaseVariable extends FirebaseStorageProvider {
     assert(result.committed, 'uncommited transaction (offline?) not supported yet');
     let data = result.snapshot.val();
     assert(data !== 0);
-    assert(data.version >= this._version);
-    if (this._version != version) {
+    assert(data.version >= this.version);
+    if (this.version != version) {
       // A new local modification happened while we were writing the previous one.
       return this._persistChangesImpl();
     }
 
     this.localModified = false;
-    this._version = data.version;
+    this.version = data.version;
     this.value = data.value;
   }
 
   get versionForTesting() {
-    return this._version;
+    return this.version;
   }
 
   async get() {
@@ -399,18 +399,18 @@ class FirebaseVariable extends FirebaseStorageProvider {
       this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageKey);
     }
 
-    if (this._version == null) {
+    if (this.version == null) {
       assert(!this.localModified);
       // If the first modification happens before init, this becomes
       // init. We pick the initial version which will be updated by the
       // transaction in _persistChanges.
-      this._version = 0;
+      this.version = 0;
       this.resolveInitialized();
     } else {
       if (JSON.stringify(this.value) == JSON.stringify(value)) {
          return;
       }
-      this._version++;
+      this.version++;
     }
     if (this.type.isReference) {
       await this.backingStore.store(value, [this.storageKey]);
@@ -419,7 +419,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
     this.localModified = true;
     this.value = value;
-    this._fire('change', {data: this.value, version: this._version, originatorId, barrier});
+    this._fire('change', {data: this.value, version: this.version, originatorId, barrier});
     await this._persistChanges();
   }
 
@@ -445,7 +445,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
       }];
     }
     return {
-      version: this._version,
+      version: this.version,
       model,
     };
   }
@@ -454,7 +454,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     let value = model.length == 0 ? null : model[0].value;
     assert(value !== undefined);
     this.value = value;
-    this._version = version;
+    this.version = version;
   }
 }
 
@@ -542,7 +542,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     // Monotonic version. Updated each time we receive an update
     // from firebase, or when a local modification is applied.
-    this._version = null;
+    this.version = null;
 
     // The last copy of the serialized state received from firebase.
     // {items: id => {value, keys: {[key]: null}}}
@@ -644,7 +644,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // version, but we might not be able to if there have been local
     // modifications in the meantime. We'll recover the remote version
     // once we persist those.
-    this._version = Math.max(this._version + 1, newRemoteState.version);
+    this.version = Math.max(this.version + 1, newRemoteState.version);
     this.remoteState = newRemoteState;
     this.resolveInitialized();
 
@@ -655,14 +655,14 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     this._fire('change', {
       originatorId: null,
-      version: this._version,
+      version: this.version,
       add,
       remove,
     });
   }
 
   get versionForTesting() {
-    return this._version;
+    return this.version;
   }
 
   async get(id) {
@@ -698,10 +698,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // TODO: These keys might already have been removed (concurrently).
     // We should exit early in that case.
     let effective = this.model.remove(id, keys);
-    this._version++;
+    this.version++;
 
     // 2. Notify listeners.
-    this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId});
+    this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId});
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -731,10 +731,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
     }
     let id = value.id;
     let effective = this.model.add(value.id, value, keys);
-    this._version++;
+    this.version++;
 
     // 2. Notify listeners.
-    this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId});
+    this._fire('change', {add: [{value, keys, effective}], version: this.version, originatorId});
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -764,7 +764,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
           // However it seems firebase will remove an empty object.
           data.items = {};
         }
-        data.version = Math.max(data.version + 1, this._version);
+        data.version = Math.max(data.version + 1, this.version);
         // Record the changes that we're attempting to write. We'll remove
         // these from this.localChanges if this transaction commits.
         changesPersisted = new Map();
@@ -882,13 +882,13 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // if yes, how should it represent local modifications?
     await this.persisting;
     return {
-      version: this._version,
+      version: this.version,
       model: this.model.toLiteral(),
     };
   }
 
   fromLiteral({version, model}) {
-    this._version = version;
+    this.version = version;
     this.model = new CrdtCollectionModel(model);
   }
 }

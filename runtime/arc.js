@@ -164,7 +164,7 @@ export class Arc {
       let handleTags = [...this._storeTags.get(handle)].map(a => `#${a}`).join(' ');
       switch (key.protocol) {
         case 'firebase':
-          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} at '${handle.storageKey}'\n`;
+          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} at '${handle.storageKey}'\n`;
           break;
         case 'in-memory': {
           resources += `resource Store${id}Resource\n`;
@@ -192,7 +192,7 @@ export class Arc {
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
-          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} in Store${id++}Resource\n`;
+          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} in Store${id++}Resource\n`;
           break;
         }
       }
@@ -403,7 +403,7 @@ ${this.activeRecipe.toString()}`;
           newStore.set(particle.clone().toLiteral());
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
-          assert(copiedStore._version !== null);
+          assert(copiedStore.version !== null);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.findStoreTags(copiedStore));
           let copiedStoreDesc = this.getStoreDescription(copiedStore);
@@ -583,13 +583,13 @@ ${this.activeRecipe.toString()}`;
 
   getStoresState() {
     let versionById = new Map();
-    this._storesById.forEach((handle, id) => versionById.set(id, handle._version));
+    this._storesById.forEach((handle, id) => versionById.set(id, handle.version));
     return versionById;
   }
 
   isSameState(storesState) {
     for (let [id, version] of storesState ) {
-      if (!this._storesById.has(id) || this._storesById.get(id)._version != version) {
+      if (!this._storesById.has(id) || this._storesById.get(id).version != version) {
         return false;
       }
     }
