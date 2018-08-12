@@ -7,5 +7,8 @@
   "include": [
     "runtime/**/*",
     "platform/**/*"
+  ],
+  "exclude": [
+    "runtime/test/**/*"
   ]
 }
