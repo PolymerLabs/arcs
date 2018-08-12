@@ -278,6 +278,18 @@ async function webpack() {
   return true;
 }
 
+function spawnWasSuccessful(result) {
+  if (result.status === 0 && !result.error) {
+    return true;
+  }
+  for (let x of [result.stdout.toString().trim(), result.stderr.toString().trim(), result.error]) {
+    if (x) {
+      console.warn(x);
+    }
+  }
+  return false;
+}
+
 // make spawn work more or less the same way cross-platform
 function saneSpawn(cmd, args, opts) {
   cmd = path.normalize(cmd);
@@ -285,11 +297,7 @@ function saneSpawn(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error || result.status != 0) {
-    console.warn(result.error || result.stderr.toString());
-    return false;
-  }
-  return result.status == 0;
+  return spawnWasSuccessful(result);
 }
 
 // make spawn work more or less the same way cross-platform
@@ -299,8 +307,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error || result.status != 0) {
-    console.warn(result.error || result.stderr.toString());
+  if (!spawnWasSuccessful(result)) {
     return false;
   }
   return {status: result.status == 0, stdout: result.stdout};
