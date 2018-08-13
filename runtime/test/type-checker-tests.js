@@ -13,6 +13,7 @@
 import {assert} from './chai-web.js';
 
 import {Schema} from '../schema.js';
+import {Shape} from '../shape.js';
 import {Type} from '../type.js';
 import {SlotInfo} from '../slot-info.js';
 import {TypeChecker} from '../recipe/type-checker.js';
@@ -172,6 +173,19 @@ describe('TypeChecker', () => {
     let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     let b = Type.newVariable(new TypeVariable('a')).collectionOf();
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
+  });
+
+  it.only('does not resolve type variable constraint to an Entity and an Interface', async () => {
+    let a = Type.newVariable(new TypeVariable('a'));
+    let b = Type.newEntity(new Schema({names: ['Product'], fields: {}}));
+    let c = Type.newInterface(new Shape('Test', [], [{name: Type.newVariable({name: 'y'})}]));
+
+    // Constraints 'a' canWriteSuperset to 'b'.
+    assert.exists(TypeChecker.processTypeList(a, [{type: b, direction: 'in'}]));
+    assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Product');
+
+    // 'a' cannot be an entity and an interface at the same time.
+    assert.notExists(Handle.effectiveType(a, [{type: c, direction: 'host'}]));
   });
 
   it('does not modify an input baseType if invoked through Handle.effectiveType', async () => {
