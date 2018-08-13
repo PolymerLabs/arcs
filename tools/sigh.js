@@ -205,7 +205,11 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  let result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  if (result.status) {
+    console.log(result.stdout);
+  }
+  return result;
 }
 
 async function lint(args) {
@@ -310,7 +314,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
   if (!spawnWasSuccessful(result)) {
     return false;
   }
-  return {status: result.status == 0, stdout: result.stdout};
+  return {status: result.status == 0, stdout: result.stdout.toString()};
 }
 
 function rot13(str) {
