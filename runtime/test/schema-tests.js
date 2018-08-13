@@ -11,7 +11,7 @@
 import {assert} from './chai-web.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
-import {Schema} from '../schema.js';
+import {Schema} from '../ts-build/schema.js';
 
 describe('schema', function() {
   let loader = new StubLoader({

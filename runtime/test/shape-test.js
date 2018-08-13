@@ -9,26 +9,26 @@
  */
 
 import {assert} from './chai-web.js';
-import {Shape} from '../shape.js';
+import {Shape} from '../ts-build/shape.js';
 import {Type} from '../ts-build/type.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {Schema} from '../schema.js';
+import {Schema} from '../ts-build/schema.js';
 
 
 describe('shape', function() {
   it('finds type variable references in handles', function() {
     let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
-    assert.lengthOf(shape._typeVars, 1);
-    assert.equal(shape._typeVars[0].field, 'type');
-    assert.equal(shape._typeVars[0].object[shape._typeVars[0].field].variable.name, 'a');
+    assert.lengthOf(shape.typeVars, 1);
+    assert.equal(shape.typeVars[0].field, 'type');
+    assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
     let shape = new Shape('Test', [], [{name: Type.newVariable({name: 'a'})}]);
-    assert.lengthOf(shape._typeVars, 1);
-    assert.equal(shape._typeVars[0].field, 'name');
-    assert.equal(shape._typeVars[0].object[shape._typeVars[0].field].variable.name, 'a');
+    assert.lengthOf(shape.typeVars, 1);
+    assert.equal(shape.typeVars[0].field, 'name');
+    assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
   });
 
   it('upgrades type variable references', function() {
@@ -41,7 +41,7 @@ describe('shape', function() {
       [
         {name: Type.newVariable({name: 'a'})},
       ]);
-    assert.lengthOf(shape._typeVars, 4);
+    assert.lengthOf(shape.typeVars, 4);
     let type = Type.newInterface(shape);
     let map = new Map();
     type = type.mergeTypeVariablesByName(map);

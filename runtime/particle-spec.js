@@ -10,7 +10,7 @@
 
 import {Type} from './ts-build/type.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Shape} from './shape.js';
+import {Shape} from './ts-build/shape.js';
 import {assert} from '../platform/assert-web.js';
 
 class ConnectionSpec {
