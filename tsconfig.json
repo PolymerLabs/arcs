@@ -1,8 +1,18 @@
 {
   "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+
     "outDir": "runtime/ts-build",
     "allowJs": false,
-    "target": "es6"
+    "sourceMap": true,
+    "target": "es6",
+    "lib": ["es2017", "dom"]
   },
   "include": [
     "runtime/ts/**/*",
