@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {CrdtCollectionModel} from './storage/crdt-collection-model.js';
+import {CrdtCollectionModel} from './ts-build/storage/crdt-collection-model.js';
 
 const SyncState = {none: 0, pending: 1, full: 2};
 

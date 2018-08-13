@@ -6,10 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import {Tracing} from '../../tracelib/trace.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Tracing} from '../../../tracelib/trace.js';
 import {Type} from '../type';
-import * as util from '../recipe/util.js';
+import * as util from '../../recipe/util.js';
 
 enum EventKind {'change'};
 type Callback = () => any;

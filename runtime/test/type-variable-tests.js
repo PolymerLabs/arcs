@@ -11,7 +11,7 @@
 
 import {assert} from './chai-web.js';
 
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {Schema} from '../schema.js';
 import {TypeVariable} from '../type-variable.js';
 

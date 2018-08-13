@@ -205,7 +205,7 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawnWithOutput('node_modules/.bin/tsc', [], {});
+  return saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
 }
 
 async function lint(args) {
@@ -331,8 +331,6 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
-    // runtime tests are compiled into intermediate/
-    if (fullPath.startsWith(path.normalize(`${dir}/runtime/`))) return false;
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.

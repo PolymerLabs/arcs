@@ -9,7 +9,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Symbols} from './symbols.js';
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 
 export class Entity {
   constructor(userIDComponent) {

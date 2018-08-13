@@ -7,15 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {assert} from '../../platform/assert-web.js';
-import {Tracing} from '../../tracelib/trace.js';
-<<<<<<< HEAD
+
+import {assert} from '../../../platform/assert-web.js';
+import {Tracing} from '../../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base';
 import {KeyBase} from './key-base';
-=======
-import {StorageProviderBase} from './storage-provider-base.js';
-import {KeyBase} from './key-base.js';
->>>>>>> typescriptify crdt-collection-model.
 import {CrdtCollectionModel} from './crdt-collection-model';
 import {Type} from '../type';
 

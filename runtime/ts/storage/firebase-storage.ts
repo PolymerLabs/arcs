@@ -7,15 +7,15 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {StorageProviderBase} from './storage-provider-base';
-import {firebase} from '../../platform/firebase-web.js';
-import {assert} from '../../platform/assert-web.js';
+import {firebase} from '../../../platform/firebase-web.js';
+import {assert} from '../../../platform/assert-web.js';
 import {KeyBase} from './key-base';
-import {atob} from '../../platform/atob-web.js';
-import {btoa} from '../../platform/btoa-web.js';
+import {atob} from '../../../platform/atob-web.js';
+import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model';
 import {Type} from '../type';
 
-import {app, database} from '../../node_modules/firebase/index';
+import {app, database} from '../../../node_modules/firebase/index';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
