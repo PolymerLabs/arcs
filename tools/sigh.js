@@ -263,7 +263,9 @@ async function webpack() {
       webpack(
           {
             entry: path.resolve(projectRoot, file),
+            mode: 'development',
             output: {
+              path: process.cwd(),
               filename: `${sources.pack.buildDir}/${path.basename(file)}`,
             },
             node,

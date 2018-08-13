@@ -39,7 +39,7 @@
     "wdio-mocha-framework": "^0.5.11",
     "wdio-spec-reporter": "^0.1.3",
     "webdriverio": "^4.10.1",
-    "webpack": "^2.6.1"
+    "webpack": "^4.16.5"
   },
   "dependencies": {
     "@types/firebase": "^3.2.1",
