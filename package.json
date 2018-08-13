@@ -37,7 +37,7 @@
     "wdio-chromedriver-service": "^0.1.3",
     "wdio-errorshot-reporter": "^0.2.1",
     "wdio-mocha-framework": "^0.5.11",
-    "wdio-spec-reporter": "^0.1.3",
+    "wdio-spec-reporter": "^0.1.5",
     "webdriverio": "^4.13.1",
     "webpack": "^4.16.5"
   },
