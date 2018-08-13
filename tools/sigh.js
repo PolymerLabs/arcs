@@ -288,10 +288,13 @@ function spawnWasSuccessful(result) {
   if (result.status === 0 && !result.error) {
     return true;
   }
-  for (let x of [result.stdout.toString().trim(), result.stderr.toString().trim(), result.error]) {
+  for (let x of [result.stdout, result.stderr]) {
     if (x) {
-      console.warn(x);
+      console.warn(x.toString().trim());
     }
+  }
+  if (result.error) {
+    console.warn(result.error);
   }
   return false;
 }
