@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import * as util from './util.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 
 export class HandleConnection {
   constructor(name, particle) {

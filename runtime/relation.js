@@ -8,7 +8,7 @@
 'use strict';
 
 import {Entity} from './entity.js';
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 import {Symbols} from './symbols.js';
 
 // TODO: Should relations normalized by another layer, or here?

@@ -8,7 +8,7 @@
 import {assert} from '../../platform/assert-web.js';
 import * as util from './util.js';
 import {TypeChecker} from './type-checker.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 
 export class Handle {
   constructor(recipe) {
