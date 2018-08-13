@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
-import {FirebaseStorage, resetStorageForTesting} from '../storage/firebase-storage.js';
+import {FirebaseStorage, resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';

@@ -205,7 +205,11 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawnWithOutput('node_modules/.bin/tsc', [], {});
+  let result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  if (result.status) {
+    console.log(result.stdout);
+  }
+  return result;
 }
 
 async function lint(args) {
@@ -259,7 +263,9 @@ async function webpack() {
       webpack(
           {
             entry: path.resolve(projectRoot, file),
+            mode: 'development',
             output: {
+              path: process.cwd(),
               filename: `${sources.pack.buildDir}/${path.basename(file)}`,
             },
             node,
@@ -278,6 +284,18 @@ async function webpack() {
   return true;
 }
 
+function spawnWasSuccessful(result) {
+  if (result.status === 0 && !result.error) {
+    return true;
+  }
+  for (let x of [result.stdout.toString().trim(), result.stderr.toString().trim(), result.error]) {
+    if (x) {
+      console.warn(x);
+    }
+  }
+  return false;
+}
+
 // make spawn work more or less the same way cross-platform
 function saneSpawn(cmd, args, opts) {
   cmd = path.normalize(cmd);
@@ -285,11 +303,7 @@ function saneSpawn(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error || result.status != 0) {
-    console.warn(result.error || result.stderr.toString());
-    return false;
-  }
-  return result.status == 0;
+  return spawnWasSuccessful(result);
 }
 
 // make spawn work more or less the same way cross-platform
@@ -299,11 +313,10 @@ function saneSpawnWithOutput(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error || result.status != 0) {
-    console.warn(result.error || result.stderr.toString());
+  if (!spawnWasSuccessful(result)) {
     return false;
   }
-  return {status: result.status == 0, stdout: result.stdout};
+  return {status: result.status == 0, stdout: result.stdout.toString()};
 }
 
 function rot13(str) {
@@ -324,8 +337,6 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
-    // runtime tests are compiled into intermediate/
-    if (fullPath.startsWith(path.normalize(`${dir}/runtime/`))) return false;
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.

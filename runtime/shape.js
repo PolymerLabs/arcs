@@ -401,5 +401,5 @@ ${this._slotsToManifestString()}
   }
 }
 
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 import {TypeChecker} from './recipe/type-checker.js';

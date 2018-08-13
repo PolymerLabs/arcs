@@ -105,7 +105,7 @@ const ArcsUtils = {
       // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
       // hacking store API to fix for now. Probably we need low-level support
       // for 'setStoreData' above.
-      const ids = [...store._model._items.keys()];
+      const ids = [...store._model.items.keys()];
       //const entities = await store.toList();
       ids.forEach(id => store.remove(id));
     } else {

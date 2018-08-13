@@ -17,7 +17,7 @@ import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {Shape} from '../shape.js';
 import {ParticleSpec} from '../particle-spec.js';
 

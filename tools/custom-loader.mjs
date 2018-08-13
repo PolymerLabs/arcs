@@ -9,7 +9,7 @@ export function resolve(specifier, parent, resolve) {
     return result;
   }
   if (!/\.(js|mjs)$/.test(specifier)) {
-    if (/intermediate/.test(parent)) {
+    if (/ts-build/.test(parent)) {
       const resolved = new url.URL(specifier, parent || 'file:///');
       return {
         url: resolved.href + '.js',

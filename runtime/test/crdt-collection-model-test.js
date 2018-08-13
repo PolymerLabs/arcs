@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from './chai-web.js';
-import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
+import {CrdtCollectionModel} from '../ts-build/storage/crdt-collection-model.js';
 
 describe('crdt-collection-model', () => {
   it('can add values', async () => {

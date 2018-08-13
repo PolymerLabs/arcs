@@ -10,7 +10,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {assert} from '../../platform/assert-web.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot

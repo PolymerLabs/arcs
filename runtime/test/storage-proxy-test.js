@@ -11,11 +11,11 @@
 
 import {assert} from './chai-web.js';
 import {Schema} from '../schema.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {handleFor} from '../handle.js';
-import {InMemoryStorage} from '../storage/in-memory-storage.js';
-import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
+import {InMemoryStorage} from '../ts-build/storage/in-memory-storage.js';
+import {CrdtCollectionModel} from '../ts-build/storage/crdt-collection-model.js';
 
 const CAN_READ = true;
 const CAN_WRITE = true;
