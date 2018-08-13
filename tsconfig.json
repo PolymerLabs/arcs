@@ -4,10 +4,8 @@
     "allowUnusedLabels": false,
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
-
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-
     "outDir": "runtime/ts-build",
     "allowJs": false,
     "sourceMap": true,

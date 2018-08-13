@@ -25,7 +25,7 @@ class MathRandomRNG extends RNG {
  * Provides a deterministic Random Number Generator for Tests
  */
 class SeededRNG extends RNG {
-    private seed: number = 0;
+    private seed = 0;
     next(): number {
         this.seed = Math.pow(this.seed + Math.E, Math.PI) % 1;
         return this.seed;
@@ -38,7 +38,7 @@ export namespace Random {
 
     export function next() : number {
         return random.next();
-    };
+    }
     // TODO: remove test code and allow for injectable implementations.
     export function seedForTests() : void {
         random = new SeededRNG();

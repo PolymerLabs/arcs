@@ -5,41 +5,51 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-'use strict';
 
 import {InMemoryStorage} from './in-memory-storage';
 import {FirebaseStorage} from './firebase-storage';
+import {KeyBase} from './key-base';
+import {StorageProviderBase} from './storage-provider-base';
+import {Type} from '../type';
 
 export class StorageProviderFactory {
   _storageInstances: {[index: string]: InMemoryStorage | FirebaseStorage};
-  _arcId: string;
-  constructor(arcId) {
-    this._arcId = arcId;
-    this._storageInstances = {'in-memory': new InMemoryStorage(arcId), 'firebase': new FirebaseStorage(arcId)};
+
+  constructor(private arcId: string) {
+    this._storageInstances = {
+      'in-memory': new InMemoryStorage(arcId),
+      'firebase': new FirebaseStorage(arcId)
+    };
   }
 
-  _storageForKey(key) {
-    let protocol = key.split(':')[0];
+  _storageForKey(key: string) {
+    const protocol = key.split(':')[0];
     return this._storageInstances[protocol];
   }
 
-  async share(id, type, key) {
+  async share(id: string,
+              type: Type,
+              key: string): Promise<StorageProviderBase> {
     return this._storageForKey(key).share(id, type, key);
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string,
+                  type: Type,
+                  keyFragment: string): Promise<StorageProviderBase> {
     return this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }
 
-  async connect(id, type, key) {
+  async connect(id: string,
+                type: Type,
+                key: string): Promise<StorageProviderBase> {
     return this._storageForKey(key).connect(id, type, key);
   }
 
-  parseStringAsKey(string) {
-    return this._storageForKey(string).parseStringAsKey(string);
+  parseStringAsKey(s: string): KeyBase {
+    return this._storageForKey(s).parseStringAsKey(s);
   }
 
-  newKey(id, associatedKeyFragment) {
+  newKey(id: string, associatedKeyFragment: string) {
 
   }
 

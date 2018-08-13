@@ -19,7 +19,7 @@ import {app, database} from '../../../node_modules/firebase/index';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
-  let app = firebase.initializeApp({
+  const app = firebase.initializeApp({
     apiKey: key.apiKey,
     databaseURL: key.databaseUrl
   });
@@ -47,7 +47,7 @@ class FirebaseKey extends KeyBase {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol == 'firebase');
+    assert(this.protocol === 'firebase');
     if (parts[1]) {
       parts = parts[1].split('/');
       assert(parts[0].endsWith('.firebaseio.com'));
@@ -63,9 +63,9 @@ class FirebaseKey extends KeyBase {
     }
   }
 
-  childKeyForHandle(id) {
+  childKeyForHandle(id) : FirebaseKey {
     let location = '';
-    if (this.location != undefined && this.location.length > 0) {
+    if (this.location !== undefined && this.location.length > 0) {
       location = this.location + '/';
     }
     location += `handles/${id}`;
@@ -94,11 +94,15 @@ export class FirebaseStorage {
     this.baseStores = new Map();
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string,
+                  type: Type,
+                  keyFragment: string): Promise<StorageProviderBase> {
     return this._join(id, type, keyFragment, false);
   }
 
-  async connect(id, type, key) {
+  async connect(id: string,
+                type: Type,
+                key: string) : Promise<StorageProviderBase> {
     return this._join(id, type, key, true);
   }
 
@@ -107,7 +111,9 @@ export class FirebaseStorage {
     return Promise.all(Object.keys(this.apps).map(k => this.apps[k].delete())).then(a => { return; });
   }
   
-  async share(id, type, key) {
+  async share(id: string,
+              type: Type,
+              key: string): Promise<StorageProviderBase> {
     if (!this.sharedStores[id]) {
       this.sharedStores[id] = await this._join(id, type, key, true);
     }
@@ -119,42 +125,42 @@ export class FirebaseStorage {
     key.location = `backingStores/${type.toString()}`;
     
     if (!this.baseStores.has(type)) {
-      let store = await this._join(type.toString(), type.collectionOf(), key.toString(), 'unknown') as FirebaseCollection;
+      const store = await this._join(type.toString(), type.collectionOf(), key.toString(), 'unknown') as FirebaseCollection;
       this.baseStores.set(type, store);
     }
 
     return this.baseStores.get(type);
   }
 
-  parseStringAsKey(string) {
-    return new FirebaseKey(string);
+  parseStringAsKey(s: string) {
+    return new FirebaseKey(s);
   }
 
   async _join(id, type, key, shouldExist) {
-    assert(typeof id == 'string');
+    assert(typeof id === 'string');
     key = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
-    if (key.databaseUrl == undefined || key.apiKey == undefined) {
+    if (key.databaseUrl === undefined || key.apiKey === undefined) {
       throw new Error('Can\'t complete partial firebase keys');
     }
 
-    if (this.apps[key.projectId] == undefined) {
-      for (let app of firebase.apps) {
-        if (app.options.databaseURL == key.databaseURL) {
+    if (this.apps[key.projectId] === undefined) {
+      for (const app of firebase.apps) {
+        if (app.options.databaseURL === key.databaseURL) {
           this.apps[key.projectId] = app;
           break;
         }
       }
     }
 
-    if (this.apps[key.projectId] == undefined) {
+    if (this.apps[key.projectId] === undefined) {
       this.apps[key.projectId] = firebase.initializeApp({
         apiKey: key.apiKey,
         databaseURL: key.databaseUrl
       }, `app${_nextAppNameSuffix++}`);
     }
 
-    let reference = firebase.database(this.apps[key.projectId]).ref(key.location);
+    const reference = firebase.database(this.apps[key.projectId]).ref(key.location);
 
     let currentSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
@@ -162,8 +168,8 @@ export class FirebaseStorage {
       return null;
     }
 
-    if (shouldExist == false || (shouldExist == 'unknown' && currentSnapshot.exists() == false)) {
-      let result = await reference.transaction(data => {
+    if (shouldExist === false || (shouldExist === 'unknown' && currentSnapshot.exists() === false)) {
+      const result = await reference.transaction(data => {
         if (data != null) {
           return undefined;
         }
@@ -189,7 +195,7 @@ export class FirebaseStorage {
   }
 }
 
-class FirebaseStorageProvider extends StorageProviderBase {
+abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>;
   protected reference: database.Reference;
@@ -208,7 +214,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
     this.persisting = null;
   }
 
-  static newProvider(type, storageEngine, id, reference, key) {
+  static newProvider(type, storageEngine, id, reference: database.Reference, key) {
     if (type.isCollection) {
       // FIXME: implement a mechanism for specifying BigCollections in manifests
       if (id.startsWith('~big~')) {
@@ -221,7 +227,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 
   async _transaction(transactionFunction) {
-    let result = await this.reference.transaction(data => {
+    const result = await this.reference.transaction(data => {
       if (data == null) {
         // If the data is not cached locally, firebase will speculatively
         // attempt to run the transaction against `null`. This should never
@@ -247,9 +253,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
     return undefined;
   }
 
-  async _persistChangesImpl() {
-    assert(false, 'subclass should implement _persistChangesImpl');
-  }
+  abstract async _persistChangesImpl(): Promise<void>;
 
   async _persistChanges() {
     if (!this._hasLocalChanges) {
@@ -329,7 +333,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this.localModified) {
       return;
     }
-    let data = dataSnapshot.val();
+    const data = dataSnapshot.val();
     assert(this.version == null || data.version > this.version);
 
     this.value = data.value;
@@ -343,26 +347,26 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.localModified;
   }
 
-  async _persistChangesImpl() {
+  async _persistChangesImpl(): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
     // completes indicating that we need to continue the process of sending
     // local modifications.
-    let version = this.version;
-    let value = this.value;
-    let result = await this._transaction(data => {
+    const version = this.version;
+    const value = this.value;
+    const result = await this._transaction(data => {
       assert(this.version >= version);
       return {
         version: Math.max(data.version + 1, version),
-        value: value,
+        value,
       };
     });
     assert(result.committed, 'uncommited transaction (offline?) not supported yet');
-    let data = result.snapshot.val();
+    const data = result.snapshot.val();
     assert(data !== 0);
     assert(data.version >= this.version);
-    if (this.version != version) {
+    if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
       return this._persistChangesImpl();
     }
@@ -379,9 +383,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
   async get() {
     await this.initialized;
     if (this.type.isReference) {
-      let referredType = this.type.referenceReferredType;
+      const referredType = this.type.referenceReferredType;
       if (this.backingStore == null) {
-        let backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), this.value.storageKey);
+        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), this.value.storageKey);
         this.backingStore = backingStore as FirebaseCollection;
       }
       return await this.backingStore.get(this.value.id);  
@@ -407,7 +411,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
       this.version = 0;
       this.resolveInitialized();
     } else {
-      if (JSON.stringify(this.value) == JSON.stringify(value)) {
+      if (JSON.stringify(this.value) === JSON.stringify(value)) {
          return;
       }
       this.version++;
@@ -428,7 +432,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let literal = await handle.toLiteral();
+    const literal = await handle.toLiteral();
     await this.fromLiteral(literal);
   }
 
@@ -436,7 +440,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   async toLiteral() {
     await this.initialized;
     // fixme: think about if there are local mutations...
-    let value = this.value;
+    const value = this.value;
     let model = [];
     if (value != null) {
       model = [{
@@ -451,7 +455,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   fromLiteral({version, model}) {
-    let value = model.length == 0 ? null : model[0].value;
+    const value = model.length === 0 ? null : model[0].value;
     assert(value !== undefined);
     this.value = value;
     this.version = version;
@@ -460,12 +464,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
 
 function setDiff(from, to) {
-  let add = [];
-  let remove = [];
-  let items = new Set([...from, ...to]);
+  const add = [];
+  const remove = [];
+  const items = new Set([...from, ...to]);
   from = new Set(from);
   to = new Set(to);
-  for (let item of items) {
+  for (const item of items) {
     if (from.has(item)) {
       if (to.has(item)) {
         continue;
@@ -556,7 +560,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   remoteStateChanged(dataSnapshot) {
-    let newRemoteState = dataSnapshot.val();
+    const newRemoteState = dataSnapshot.val();
     if (!newRemoteState.items) {
       // This is the inital remote state, where we have only {version: 0}
       // fixme: assert this.
@@ -564,11 +568,11 @@ class FirebaseCollection extends FirebaseStorageProvider {
     }
 
     // [{id, value, keys}]
-    let add = [];
+    const add = [];
     // [{id, keys}]
-    let remove = [];
+    const remove = [];
 
-    let encIds = new Set([
+    const encIds = new Set([
       ...Object.keys(newRemoteState.items),
       ...Object.keys(this.remoteState.items),
     ]);
@@ -576,18 +580,18 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     // Diff the old state (this.remoteState) with the new state (newRemoteState) to determine
     // which keys have been added/removed.
-    for (let encId of encIds) {
-      let id = FirebaseStorage.decodeKey(encId);
-      let suppression = this.addSuppressions.get(id);
+    for (const encId of encIds) {
+      const id = FirebaseStorage.decodeKey(encId);
+      const suppression = this.addSuppressions.get(id);
       if (encId in newRemoteState.items) {
         let {keys: encKeys, value} = newRemoteState.items[encId];
         encKeys = Object.keys(encKeys);
         if (encId in this.remoteState.items) {
           // 1. possibly updated remotely.
-          let encOldkeys = Object.keys(this.remoteState.items[encId].keys);
-          let {add: encAddKeys, remove: encRemoveKeys} = setDiff(encOldkeys, encKeys);
+          const encOldkeys = Object.keys(this.remoteState.items[encId].keys);
+          const {add: encAddKeys, remove: encRemoveKeys} = setDiff(encOldkeys, encKeys);
           let addKeys = encAddKeys.map(FirebaseStorage.decodeKey);
-          let removeKeys = encRemoveKeys.map(FirebaseStorage.decodeKey);
+          const removeKeys = encRemoveKeys.map(FirebaseStorage.decodeKey);
           if (suppression) {
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
           }
@@ -597,12 +601,12 @@ class FirebaseCollection extends FirebaseStorageProvider {
             if (this.localChanges.has(id) && this.localChanges.get(id).add.length > 0 && this.model.has(id)) {
               value = this.model.getValue(id);
             }
-            let effective = this.model.add(id, value, addKeys);
+            const effective = this.model.add(id, value, addKeys);
             add.push({value, keys: addKeys, effective});
           }
           if (removeKeys.length) {
-            let value = this.model.getValue(id);
-            let effective = this.model.remove(id, removeKeys);
+            const value = this.model.getValue(id);
+            const effective = this.model.remove(id, removeKeys);
             remove.push({value, keys: removeKeys, effective});
           }
         } else {
@@ -618,23 +622,23 @@ class FirebaseCollection extends FirebaseStorageProvider {
             if (this.localChanges.has(id) && this.localChanges.get(id).add.length > 0 && this.model.has(id)) {
               value = this.model.getValue(id);
             }
-            let keys = encKeys.map(FirebaseStorage.decodeKey);
-            let effective = this.model.add(id, value, keys);
+            const keys = encKeys.map(FirebaseStorage.decodeKey);
+            const effective = this.model.add(id, value, keys);
             add.push({value, keys, effective});
           }
         }
       } else {
         // 3. Removed remotely.
-        let {keys: encKeys, value} = this.remoteState.items[encId];
-        let encKeysList = Object.keys(encKeys);
-        let keys = encKeysList.map(FirebaseStorage.decodeKey);
-        let effective = this.model.remove(id, keys);
-        remove.push({value, keys: keys, effective});
+        const {keys: encKeys, value} = this.remoteState.items[encId];
+        const encKeysList = Object.keys(encKeys);
+        const keys = encKeysList.map(FirebaseStorage.decodeKey);
+        const effective = this.model.remove(id, keys);
+        remove.push({value, keys, effective});
       }
     }
 
     // Clean up any suppressions that have reached the barrier version.
-    for (let [id, {barrierVersion}] of this.addSuppressions.entries()) {
+    for (const [id, {barrierVersion}] of this.addSuppressions.entries()) {
       if (newRemoteState.version >= barrierVersion) {
         this.addSuppressions.delete(id);
       }
@@ -648,7 +652,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this.remoteState = newRemoteState;
     this.resolveInitialized();
 
-    if (add.length == 0 && remove.length == 0) {
+    if (add.length === 0 && remove.length === 0) {
       // The update had no effect.
       return;
     }
@@ -668,16 +672,16 @@ class FirebaseCollection extends FirebaseStorageProvider {
   async get(id) {
     await this.initialized;
     if (this.type.primitiveType().isReference) {
-      let ref = this.model.getValue(id);
+      const ref = this.model.getValue(id);
       if (ref == null) {
         return null;
       }
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType().referenceReferredType;
       if (this.backingStore == null) {
-        let backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
+        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
         this.backingStore = backingStore as FirebaseCollection;
       }
-      let result = await this.backingStore.get(ref.id);
+      const result = await this.backingStore.get(ref.id);
       return result;
     }
     return this.model.getValue(id);
@@ -687,17 +691,17 @@ class FirebaseCollection extends FirebaseStorageProvider {
     await this.initialized;
 
     // 1. Apply the change to the local model.
-    let value = this.model.getValue(id);
+    const value = this.model.getValue(id);
     if (value === null) {
       return;
     }
-    if (keys.length == 0) {
+    if (keys.length === 0) {
       keys = this.model.getKeys(id);
     }
 
     // TODO: These keys might already have been removed (concurrently).
     // We should exit early in that case.
-    let effective = this.model.remove(id, keys);
+    const effective = this.model.remove(id, keys);
     this.version++;
 
     // 2. Notify listeners.
@@ -707,8 +711,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
     if (!this.localChanges.has(id)) {
       this.localChanges.set(id, {add: [], remove: []});
     }
-    let localChange = this.localChanges.get(id);
-    for (let key of keys) {
+    const localChange = this.localChanges.get(id);
+    for (const key of keys) {
       localChange.remove.push(key);
     }
 
@@ -722,15 +726,15 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     // 1. Apply the change to the local model.
     if (this.type.primitiveType().isReference) {
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType().referenceReferredType;
       if (this.backingStore == null) {
         this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageKey);
       }
       await this.backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this.backingStore.storageKey};
     }
-    let id = value.id;
-    let effective = this.model.add(value.id, value, keys);
+    const id = value.id;
+    const effective = this.model.add(value.id, value, keys);
     this.version++;
 
     // 2. Notify listeners.
@@ -740,8 +744,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
     if (!this.localChanges.has(id)) {
       this.localChanges.set(id, {add: [], remove: []});
     }
-    let localChange = this.localChanges.get(id);
-    for (let key of keys) {
+    const localChange = this.localChanges.get(id);
+    for (const key of keys) {
       localChange.add.push(key);
     }
 
@@ -753,11 +757,11 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.localChanges.size > 0;
   }
 
-  async _persistChangesImpl() {
+  async _persistChangesImpl(): Promise<void> {
     while (this.localChanges.size > 0) {
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
-      let result = await this._transaction(data => {
+      const result = await this._transaction(data => {
         // Updating the inital state with no items.
         if (!data.items) {
           // Ideally we would be able to assert that version is 0 here.
@@ -769,19 +773,19 @@ class FirebaseCollection extends FirebaseStorageProvider {
         // these from this.localChanges if this transaction commits.
         changesPersisted = new Map();
         for (let [id, {add, remove}] of this.localChanges.entries()) {
-          let encId = FirebaseStorage.encodeKey(id);
+          const encId = FirebaseStorage.encodeKey(id);
           changesPersisted.set(id, {add: [...add], remove: [...remove]});
           // Don't add keys that we have also removed.
           add = add.filter(key => !(remove.indexOf(key) >= 0));
-          let item = data.items[encId] || {value: null, keys: {}};
+          const item = data.items[encId] || {value: null, keys: {}};
           // Propagate keys added locally.
-          for (let key of add) {
-            let encKey = FirebaseStorage.encodeKey(key);
+          for (const key of add) {
+            const encKey = FirebaseStorage.encodeKey(key);
             item.keys[encKey] = data.version;
           }
           // Remove keys removed locally.
-          for (let key of remove) {
-            let encKey = FirebaseStorage.encodeKey(key);
+          for (const key of remove) {
+            const encKey = FirebaseStorage.encodeKey(key);
             delete item.keys[encKey];
           }
           // If we've added a key, also propagate the value. (legacy mutation).
@@ -789,7 +793,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
             assert(this.model.has(id));
             item.value = this.model.getValue(id);
           }
-          let keys = Object.keys(item.keys);
+          const keys = Object.keys(item.keys);
           if (keys.length > 0) {
             data.items[encId] = item;
           } else {
@@ -804,7 +808,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // transaction committing and the result promise resolving :/
 
       assert(result.committed);
-      let data = result.snapshot.val();
+      const data = result.snapshot.val();
 
       // While we were persisting changes, we may have received new ones.
       // We remove any changes that were just persisted, `changesPersisted`
@@ -812,10 +816,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
       for (let [id, {add, remove}] of changesPersisted.entries()) {
         add = new Set(add);
         remove = new Set(remove);
-        let localChange = this.localChanges.get(id);
+        const localChange = this.localChanges.get(id);
         localChange.add = localChange.add.filter(key => !add.has(key));
         localChange.remove = localChange.remove.filter(key => !remove.has(key));
-        if (localChange.add.length == 0 && localChange.remove.length == 0) {
+        if (localChange.add.length === 0 && localChange.remove.length === 0) {
           this.localChanges.delete(id);
         }
         // Record details about keys added, so that we can suppress them
@@ -823,8 +827,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
         if (this.addSuppressions.has(id)) {
           // If we already have a suppression, we augment it and bump the
           // barrier version.
-          let suppression = this.addSuppressions.get(id);
-          for (let key of add) {
+          const suppression = this.addSuppressions.get(id);
+          for (const key of add) {
             suppression.keys.add(key);
           }
           suppression.barrierVersion = data.version;
@@ -841,20 +845,20 @@ class FirebaseCollection extends FirebaseStorageProvider {
   async toList() {
     await this.initialized;
     if (this.type.primitiveType().isReference) {
-      let items = this.model.toList();
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const items = this.model.toList();
+      const referredType = this.type.primitiveType().referenceReferredType;
 
-      let refSet = new Set();
+      const refSet = new Set();
 
       items.forEach(item => refSet.add(item.storageKey));
-      assert(refSet.size == 1);
-      let ref = refSet.values().next().value;
+      assert(refSet.size === 1);
+      const ref = refSet.values().next().value;
 
       if (this.backingStore == null) {
-        let backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref);
+        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref);
         this.backingStore = backingStore as FirebaseCollection;
       }
-      let retrieveItem = async item => {
+      const retrieveItem = async item => {
         return this.backingStore.get(item.id);
       };
 
@@ -867,7 +871,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this.fromLiteral(await handle.toLiteral());
     // Don't notify about the contents that have just been cloned.
     // However, do record local changes for persistence.
-    for (let item of this.model.toLiteral()) {
+    for (const item of this.model.toLiteral()) {
       assert(item.value.id !== undefined);
       this.localChanges.set(item.value.id, {add: [...item.keys], remove: []});
     }
@@ -895,7 +899,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
 
 
-enum CursorState {'new', 'init', 'stream', 'removed', 'done'};
+enum CursorState {'new', 'init', 'stream', 'removed', 'done'}
 
 // Cursor provides paginated reads over the contents of a BigCollection, locked to the version
 // of the collection at which the cursor was created.
@@ -972,7 +976,7 @@ class Cursor {
       query = this.baseQuery.startAt(this.nextStart);
     }
 
-    let value = [];
+    const value = [];
     if (this.state === CursorState.stream) {
       this.nextStart = null;
       await query.once('value', snapshot => snapshot.forEach(entry => {
@@ -1041,7 +1045,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
 
   async get(id) {
     let value;
-    let encId = FirebaseStorage.encodeKey(id);
+    const encId = FirebaseStorage.encodeKey(id);
     await this.reference.child('items/' + encId).once('value', snapshot => {
       value = (snapshot.val() !== null) ? snapshot.val().value : null;
     });
@@ -1068,7 +1072,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
       return version;
     }, undefined, false);
 
-    let encId = FirebaseStorage.encodeKey(value.id);
+    const encId = FirebaseStorage.encodeKey(value.id);
     return this.reference.child('items/' + encId).transaction(data => {
       if (data === null) {
         data = {value, keys: {}};
@@ -1076,8 +1080,8 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
         // Allow legacy mutation for now.
         data.value = value;
       }
-      for (let key of keys) {
-        let encKey = FirebaseStorage.encodeKey(key);
+      for (const key of keys) {
+        const encKey = FirebaseStorage.encodeKey(key);
         data.keys[encKey] = version;
       }
       
@@ -1096,17 +1100,22 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
       return (data || 0) + 1;
     }, undefined, false);
 
-    let encId = FirebaseStorage.encodeKey(id);
+    const encId = FirebaseStorage.encodeKey(id);
     return this.reference.child('items/' + encId).remove();
   }
 
   // Returns a Cursor for paginated reads of the current version of this BigCollection.
   async stream(pageSize) {
-    let cursor = new Cursor(this.reference, pageSize);
+    const cursor = new Cursor(this.reference, pageSize);
     await cursor._init();
     return cursor;
   }
 
+  async _persistChangesImpl(): Promise<void> {
+    assert(false, ' should implement _persistChangesImpl');
+  }
+
+  
   // TODO: cloneFrom, toLiteral, fromLiteral ?
   // A cloned instance will probably need to reference the same Firebase URL but collect all
   // modifications locally for speculative execution.

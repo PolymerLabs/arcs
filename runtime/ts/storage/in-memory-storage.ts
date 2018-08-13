@@ -16,8 +16,8 @@ import {CrdtCollectionModel} from './crdt-collection-model';
 import {Type} from '../type';
 
 export function resetInMemoryStorageForTesting() {
-  for (let key in __storageCache) {
-    __storageCache[key]._memoryMap = {};
+  for (const key in storageCache) {
+    storageCache[key]._memoryMap = {};
   }
 }
 
@@ -25,15 +25,16 @@ class InMemoryKey extends KeyBase {
   protocol: string;
   arcId: string;
   location: string;
-  constructor(key) {
+
+  constructor(key: string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol == 'in-memory');
+    assert(this.protocol === 'in-memory');
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
-    assert(this.toString() == key);
+    assert(this.toString() === key);
   }
 
   childKeyForHandle(id) {
@@ -51,34 +52,35 @@ class InMemoryKey extends KeyBase {
   }
 }
 
-let __storageCache = {};
+const storageCache = {};
 
 export class InMemoryStorage {
-  _arcId: string;
-  _memoryMap: { [index: string]: InMemoryStorageProvider};
-  _typeMap: Map<Type, InMemoryCollection>;
-  localIDBase: number;
-  constructor(arcId) {
-      assert(arcId !== undefined, 'Arcs with storage must have ids');
-      this._arcId = arcId;
-      this._memoryMap = {};
-      this._typeMap = new Map();
-      this.localIDBase = 0;
-      // TODO(shans): re-add this assert once we have a runtime object to put it on.
-      // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-      __storageCache[this._arcId] = this;
+  private _memoryMap: { [index: string]: InMemoryStorageProvider};
+  private _typeMap: Map<Type, InMemoryCollection>;
+  private localIDBase: number;
+
+  constructor(private arcId: string) {
+    assert(arcId !== undefined, 'Arcs with storage must have ids');
+    this._memoryMap = {};
+    this._typeMap = new Map();
+    this.localIDBase = 0;
+    // TODO(shans): re-add this assert once we have a runtime object to put it on.
+    // assert(storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
+    storageCache[this.arcId] = this;
   }
 
-  async construct(id, type, keyFragment) {
-    let key = new InMemoryKey(keyFragment);
-    if (key.arcId == undefined) {
-      key.arcId = this._arcId;
+  async construct(id: string,
+                  type: Type,
+                  keyFragment: string) {
+    const key = new InMemoryKey(keyFragment);
+    if (key.arcId === undefined) {
+      key.arcId = this.arcId;
     }
-    if (key.location == undefined) {
+    if (key.location === undefined) {
       key.location = 'in-memory-' + this.localIDBase++;
     }
     // TODO(shanestephens): should pass in factory, not 'this' here.
-    let provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
+    const provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined) {
       return null;
     }
@@ -86,25 +88,27 @@ export class InMemoryStorage {
     return provider;
   }
 
-  async connect(id, type, keyString) {
-    let key = new InMemoryKey(keyString);
-    if (key.arcId !== this._arcId.toString()) {
-      if (__storageCache[key.arcId] == undefined) {
+  async connect(id: string, type: Type, keyString: string) {
+    const key = new InMemoryKey(keyString);
+    if (key.arcId !== this.arcId.toString()) {
+      if (storageCache[key.arcId] === undefined) {
         return null;
       }
-      return __storageCache[key.arcId].connect(id, type, keyString);
+      return storageCache[key.arcId].connect(id, type, keyString);
     }
-    if (this._memoryMap[keyString] == undefined) {
+    if (this._memoryMap[keyString] === undefined) {
       return null;
     }
     // TODO assert types match?
     return this._memoryMap[keyString];
   }
 
-  async share(id, type, keyString) {
-    let key = new InMemoryKey(keyString);
-    assert(key.arcId == this._arcId.toString());
-    if (this._memoryMap[keyString] == undefined) {
+  async share(id: string,
+              type: Type,
+              keyString: string) : Promise<StorageProviderBase> {
+    const key = new InMemoryKey(keyString);
+    assert(key.arcId === this.arcId.toString());
+    if (this._memoryMap[keyString] === undefined) {
       return this.construct(id, type, keyString);
     }
     return this._memoryMap[keyString];
@@ -114,13 +118,13 @@ export class InMemoryStorage {
     if (this._typeMap.has(type)) {
       return this._typeMap.get(type);
     }
-    let storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
+    const storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
     this._typeMap.set(type, storage);
     return storage;
   }
 
-  parseStringAsKey(string) {
-    return new InMemoryKey(string);
+  parseStringAsKey(s: string) {
+    return new InMemoryKey(s);
   }
 
   shutdown() {
@@ -129,7 +133,11 @@ export class InMemoryStorage {
 }
 
 class InMemoryStorageProvider extends StorageProviderBase {
-  static newProvider(type, storageEngine, name, id, key) {
+  static newProvider(type: Type,
+                     storageEngine: InMemoryStorage,
+                     name: string,
+                     id: string,
+                     key: string) {
     if (type.isCollection) {
       return new InMemoryCollection(type, storageEngine, name, id, key);
     }
@@ -141,7 +149,12 @@ class InMemoryCollection extends InMemoryStorageProvider {
   _model: CrdtCollectionModel;
   _storageEngine: InMemoryStorage;
   _backingStore: InMemoryCollection;
-  constructor(type, storageEngine, name, id, key) {
+
+  constructor(type: Type,
+              storageEngine: InMemoryStorage,
+              name: string,
+              id: string,
+              key: string) {
     super(type, name, id, key);
     this._model = new CrdtCollectionModel();
     this._storageEngine = storageEngine;
@@ -150,7 +163,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    let handle = new InMemoryCollection(this.type, this._storageEngine, this.name, this.id, null);
+    const handle = new InMemoryCollection(this.type, this._storageEngine, this.name, this.id, null);
     handle.cloneFrom(this);
     return handle;
   }
@@ -174,21 +187,21 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async toList() {
     if (this.type.primitiveType().isReference) {
-      let items = this.toLiteral().model;
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const items = this.toLiteral().model;
+      const referredType = this.type.primitiveType().referenceReferredType;
 
-      let refSet = new Set();
+      const refSet = new Set();
 
       items.forEach(item => refSet.add(item.value.storageKey));
-      assert(refSet.size == 1);
-      let ref = refSet.values().next().value;
+      assert(refSet.size === 1);
+      const ref = refSet.values().next().value;
 
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref) as InMemoryCollection;
       }
 
-      let retrieveItem = async item => {
-        let ref = item.value;
+      const retrieveItem = async item => {
+        const ref = item.value;
         return this._backingStore.get(ref.id);
       };
 
@@ -199,15 +212,15 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async get(id) {
     if (this.type.primitiveType().isReference) {
-      let ref = this._model.getValue(id);
+      const ref = this._model.getValue(id);
       if (ref == null) {
         return null;
       }
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType().referenceReferredType;
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey) as InMemoryCollection;
       }
-      let result = await this._backingStore.get(ref.id);
+      const result = await this._backingStore.get(ref.id);
       return result;
     }
     return this._model.getValue(id);
@@ -219,10 +232,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async store(value, keys, originatorId=null) {
     assert(keys != null && keys.length > 0, 'keys required');
-    let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
+    const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
 
     if (this.type.primitiveType().isReference) {
-      let referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType().referenceReferredType;
       if (this._backingStore == null) {
         this._backingStore =
             await this._storageEngine.baseStorageFor(referredType);
@@ -231,7 +244,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
       value = {id: value.id, storageKey: this._backingStore.storageKey};
     }
 
-    let effective = this._model.add(value.id, value, keys);
+    const effective = this._model.add(value.id, value, keys);
     this.version++;
     await trace.wait(
         this._fire('change', {add: [{value, keys, effective}], version: this.version, originatorId}));
@@ -239,13 +252,13 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id, keys=[], originatorId=null) {
-    let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
-    if (keys.length == 0) {
+    const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
+    if (keys.length === 0) {
       keys = this._model.getKeys(id);
     }
-    let value = this._model.getValue(id);
+    const value = this._model.getValue(id);
     if (value !== null) {
-      let effective = this._model.remove(id, keys);
+      const effective = this._model.remove(id, keys);
       this.version++;
       await trace.wait(
           this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId}));
@@ -262,7 +275,11 @@ class InMemoryVariable extends InMemoryStorageProvider {
   _storageEngine: InMemoryStorage;
   _stored: {id: string};
   _backingStore: InMemoryCollection;
-  constructor(type, storageEngine, name, id, key) {
+  constructor(type: Type,
+              storageEngine: InMemoryStorage,
+              name: string,
+              id: string,
+              key: string) {
     super(type, name, id, key);
     this._storageEngine = storageEngine;
     this._stored = null;
@@ -270,19 +287,19 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   clone() {
-    let variable = new InMemoryVariable(this.type, this._storageEngine, this.name, this.id, null);
+    const variable = new InMemoryVariable(this.type, this._storageEngine, this.name, this.id, null);
     variable.cloneFrom(this);
     return variable;
   }
 
   async cloneFrom(handle) {
-    let literal = await handle.toLiteral();
+    const literal = await handle.toLiteral();
     await this.fromLiteral(literal);
   }
 
   // Returns {version, model: [{id, value}]}
   async toLiteral() {
-    let value = this._stored;
+    const value = this._stored;
     let model = [];
     if (value != null) {
       model = [{
@@ -297,7 +314,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   fromLiteral({version, model}) {
-    let value = model.length == 0 ? null : model[0].value;
+    const value = model.length === 0 ? null : model[0].value;
     assert(value !== undefined);
     this._stored = value;
     this.version = version;
@@ -309,13 +326,13 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async get() {
     if (this.type.isReference) {
-      let value = this._stored as {id: string, storageKey: string};
-      let referredType = this.type.referenceReferredType;
+      const value = this._stored as {id: string, storageKey: string};
+      const referredType = this.type.referenceReferredType;
       // TODO: string version of ReferredTyped as ID?
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey) as InMemoryCollection;
       }
-      let result = await this._backingStore.get(value.id);
+      const result = await this._backingStore.get(value.id);
       return result;
     }
     return this._stored;
@@ -327,11 +344,11 @@ class InMemoryVariable extends InMemoryStorageProvider {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
       // TODO(shans): Make sure this is tested.
-      if (this._stored && this._stored.id == value.id && barrier == null) {
+      if (this._stored && this._stored.id === value.id && barrier === null) {
         return;
       }
 
-      let referredType = this.type.referenceReferredType;
+      const referredType = this.type.referenceReferredType;
       if (this._backingStore == null) {
         this._backingStore =
             await this._storageEngine.baseStorageFor(referredType);
@@ -341,8 +358,8 @@ class InMemoryVariable extends InMemoryStorageProvider {
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-      if (JSON.stringify(this._stored) == JSON.stringify(value) &&
-          barrier == null) {
+      if (JSON.stringify(this._stored) === JSON.stringify(value) &&
+          barrier === null) {
         return;
       }
       this._stored = value;
