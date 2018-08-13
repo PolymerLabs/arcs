@@ -205,7 +205,11 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawnWithOutput('node_modules/.bin/tsc', [], {});
+  let result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  if (result.status) {
+    console.log(result.stdout);
+  }
+  return result;
 }
 
 async function lint(args) {
@@ -310,7 +314,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
   if (!spawnWasSuccessful(result)) {
     return false;
   }
-  return {status: result.status == 0, stdout: result.stdout};
+  return {status: result.status == 0, stdout: result.stdout.toString()};
 }
 
 function rot13(str) {
@@ -331,8 +335,6 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
-    // runtime tests are compiled into intermediate/
-    if (fullPath.startsWith(path.normalize(`${dir}/runtime/`))) return false;
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.

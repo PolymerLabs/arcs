@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {Type} from '../type.js';
+import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
-import {resetInMemoryStorageForTesting} from '../storage/in-memory-storage.js';
+import {resetInMemoryStorageForTesting} from '../ts-build/storage/in-memory-storage.js';
 
 // Resolves when the two stores are synchronzied with each other:
 // * same version

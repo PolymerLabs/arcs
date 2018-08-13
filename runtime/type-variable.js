@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 

@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 function addType(name, arg=undefined) {
   let lowerName = name[0].toLowerCase() + name.substring(1);
@@ -483,9 +483,9 @@ addType('Interface', 'shape');
 addType('Slot');
 addType('Reference', 'referredType');
 
-import {Shape} from './shape.js';
-import {Schema} from './schema.js';
-import {TypeVariable} from './type-variable.js';
-import {TupleFields} from './tuple-fields.js';
-import {TypeChecker} from './recipe/type-checker.js';
-import {SlotInfo} from './slot-info.js';
+import {Shape} from '../shape.js';
+import {Schema} from '../schema.js';
+import {TypeVariable} from '../type-variable.js';
+import {TupleFields} from '../tuple-fields.js';
+import {TypeChecker} from '../recipe/type-checker.js';
+import {SlotInfo} from '../slot-info.js';

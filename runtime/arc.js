@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
@@ -18,7 +18,7 @@ import {Manifest} from './manifest.js';
 import {Description} from './description.js';
 import * as util from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';

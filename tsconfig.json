@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "outDir": "intermediate",
-    "allowJs": true,
+    "outDir": "runtime/ts-build",
+    "allowJs": false,
     "target": "es6"
   },
   "include": [
-    "runtime/**/*",
-    "platform/**/*"
-  ]
+    "runtime/ts/**/*",
+  ],
 }

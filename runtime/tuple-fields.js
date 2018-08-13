@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type} from './type.js';
+import {Type} from './ts-build/type.js';
 
 export class TupleFields {
   constructor(fieldList) {
