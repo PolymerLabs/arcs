@@ -103,7 +103,7 @@ describe('firebase', function() {
       let result = await var1.get();
       assert.equal('underlying', result.value);
 
-      let underlyingValue = await storage._storageInstances['firebase']._baseStores.get(BarType).get('id1');
+      let underlyingValue = await storage._storageInstances['firebase'].baseStores.get(BarType).get('id1');
       assert.equal('underlying', underlyingValue.value);
 
       // force variable to reconnect to underlying storage
@@ -209,7 +209,7 @@ describe('firebase', function() {
       assert.equal('value2', result.value);
       
       result = await collection1.toList();
-      let underlyingValues = await storage._storageInstances['firebase']._baseStores.get(BarType);
+      let underlyingValues = await storage._storageInstances['firebase'].baseStores.get(BarType);
 
       assert.sameDeepMembers(result, await underlyingValues.toList());
 
