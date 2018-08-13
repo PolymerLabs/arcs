@@ -9,6 +9,6 @@
 
 export class KeyBase {
   childKeyForHandle(id) {
-    throw 'NotImplemented';
+    throw new Error('NotImplemented');
   }
 }

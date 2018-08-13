@@ -43,7 +43,7 @@ export class CrdtCollectionModel {
       effective = true;
     } else {
       let newKeys = false;
-      for (let key of keys) {
+      for (const key of keys) {
         if (!item.keys.has(key)) {
           newKeys = true;
         }
@@ -61,14 +61,14 @@ export class CrdtCollectionModel {
   // Returns whether the change is effective (the value is no longer present
   // in the collection because all of the keys have been removed).
   remove(id, keys) {
-    let item = this.items.get(id);
+    const item = this.items.get(id);
     if (!item) {
       return false;
     }
-    for (let key of keys) {
+    for (const key of keys) {
       item.keys.delete(key);
     }
-    let effective = item.keys.size == 0;
+    const effective = item.keys.size == 0;
     if (effective) {
       this.items.delete(id);
     }
@@ -76,8 +76,8 @@ export class CrdtCollectionModel {
   }
   // [{id, value, keys: []}]
   toLiteral() {
-    let result = [];
-    for (let [id, {value, keys}] of this.items.entries()) {
+    const result = [];
+    for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }
     return result;
@@ -89,11 +89,11 @@ export class CrdtCollectionModel {
     return this.items.has(id);
   }
   getKeys(id) {
-    let item = this.items.get(id);
+    const item = this.items.get(id);
     return item ? [...item.keys] : [];
   }
   getValue(id) {
-    let item = this.items.get(id);
+    const item = this.items.get(id);
     return item ? item.value : null;
   }
   get size() {
