@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Random} from './random.js';
+import {Random} from './ts-build/random.js';
 
 export class Id {
   constructor(currentSession) {

@@ -16,7 +16,7 @@ import {MessageChannel} from '../../message-channel.js';
 import {ParticleExecutionContext} from '../../particle-execution-context.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {DevtoolsForTests} from '../../debug/devtools-connection.js';
-import {Random} from '../../random.js';
+import {Random} from '../../ts-build/random.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('OuterPortAttachment', function() {
