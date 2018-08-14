@@ -10,10 +10,10 @@
 import {assert} from '../../platform/assert-web.js';
 
 function addType(name, arg=undefined) {
-  let lowerName = name[0].toLowerCase() + name.substring(1);
-  let upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
+  const lowerName = name[0].toLowerCase() + name.substring(1);
+  const upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
-    get: function() {
+    get() {
       if (!this[`is${name}`]) {
         assert(
             this[`is${name}`],
@@ -23,7 +23,7 @@ function addType(name, arg=undefined) {
     }
   });
   Object.defineProperty(Type.prototype, `is${name}`, {
-    get: function() {
+    get() {
       return this.tag == name;
     }});
 }
@@ -94,14 +94,14 @@ export class Type {
 
   mergeTypeVariablesByName(variableMap: Map<String, Type>) {
     if (this.isVariable) {
-      let name = this.variable.name;
+      const name = this.variable.name;
       let variable = variableMap.get(name);
       if (!variable) {
         variable = this;
         variableMap.set(name, this);
       } else {
         if (variable.variable.hasConstraint || this.variable.hasConstraint) {
-          let mergedConstraint = variable.variable.maybeMergeConstraints(this.variable);
+          const mergedConstraint = variable.variable.maybeMergeConstraints(this.variable);
           if (!mergedConstraint) {
             throw new Error('could not merge type variables');
           }
@@ -111,8 +111,8 @@ export class Type {
     }
 
     if (this.isCollection) {
-      let primitiveType = this.primitiveType();
-      let result = primitiveType.mergeTypeVariablesByName(variableMap);
+      const primitiveType = this.primitiveType();
+      const result = primitiveType.mergeTypeVariablesByName(variableMap);
       if (result === primitiveType) {
         return this;
       }
@@ -120,7 +120,7 @@ export class Type {
     }
 
     if (this.isInterface) {
-      let shape = this.interfaceShape.clone(new Map());
+      const shape = this.interfaceShape.clone(new Map());
       shape._typeVars.map(({object, field}) => object[field] = object[field].mergeTypeVariablesByName(variableMap));
       // TODO: only build a new type when a variable is modified
       return Type.newInterface(shape);
@@ -178,12 +178,12 @@ export class Type {
 
   resolvedType() {
     if (this.isCollection) {
-      let primitiveType = this.primitiveType();
-      let resolvedPrimitiveType = primitiveType.resolvedType();
+      const primitiveType = this.primitiveType();
+      const resolvedPrimitiveType = primitiveType.resolvedType();
       return primitiveType !== resolvedPrimitiveType ? resolvedPrimitiveType.collectionOf() : this;
     }
     if (this.isVariable) {
-      let resolution = this.variable.resolution;
+      const resolution = this.variable.resolution;
       if (resolution) {
         return resolution;
       }
@@ -312,12 +312,12 @@ export class Type {
   // before cloning should still be associated after cloning. To maintain this 
   // property, create a Map() and pass it into all clone calls in the group.
   clone(variableMap) {
-    let type = this.resolvedType();
+    const type = this.resolvedType();
     if (type.isVariable) {
       if (variableMap.has(type.variable)) {
         return new Type('Variable', variableMap.get(type.variable));
       } else {
-        let newTypeVariable = TypeVariable.fromLiteral(type.variable.toLiteral());
+        const newTypeVariable = TypeVariable.fromLiteral(type.variable.toLiteral());
         variableMap.set(type.variable, newTypeVariable);
         return new Type('Variable', newTypeVariable);
       }
@@ -337,7 +337,7 @@ export class Type {
       if (variableMap.has(this.variable)) {
         return new Type('Variable', variableMap.get(this.variable));
       } else {
-        let newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
+        const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
         if (this.variable.resolution) {
           newTypeVariable.resolution =
               this.variable.resolution._cloneWithResolutions(variableMap);
@@ -443,7 +443,7 @@ export class Type {
 
   toPrettyString() {
     // Try extract the description from schema spec.
-    let entitySchema = this.getEntitySchema();
+    const entitySchema = this.getEntitySchema();
     if (entitySchema) {
       if (this.isCollection && entitySchema.description.plural) {
         return entitySchema.description.plural;
