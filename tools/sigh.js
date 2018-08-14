@@ -41,6 +41,7 @@ const steps = {
   webpack: [peg, railroad, tsc, webpack],
   watch: [watch],
   lint: [lint],
+  tslint: [tslint],
   check: [check],
   clean: [clean],
   default: [check, peg, railroad, tsc, test, webpack, lint],
@@ -206,6 +207,27 @@ function railroad() {
 
 async function tsc() {
   let result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  if (result.status) {
+    console.log(result.stdout);
+  }
+  return result;
+}
+
+async function tslint(args) {
+  let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
+    if (/intermediate/.test(fullPath)) {
+      return false;
+    }
+    return /\.ts$/.test(fullPath);
+  })];
+
+  let options = minimist(args, {
+    boolean: ['fix'],
+  });
+
+  const tslintArgs = options.fix ? ['--fix', ...jsSources] : jsSources;
+    
+  let result = saneSpawnWithOutput('node_modules/.bin/tslint', tslintArgs, {});
   if (result.status) {
     console.log(result.stdout);
   }
