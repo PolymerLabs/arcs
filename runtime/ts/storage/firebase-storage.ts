@@ -189,7 +189,7 @@ export class FirebaseStorage {
   }
 }
 
-class FirebaseStorageProvider extends StorageProviderBase {
+abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>;
   protected reference: database.Reference;
@@ -241,15 +241,9 @@ class FirebaseStorageProvider extends StorageProviderBase {
     return result;
   }
 
+  abstract get _hasLocalChanges(): boolean;
 
-  get _hasLocalChanges() {
-    assert(false, 'subclass should implement _hasLocalChanges');
-    return undefined;
-  }
-
-  async _persistChangesImpl() {
-    assert(false, 'subclass should implement _persistChangesImpl');
-  }
+  abstract async _persistChangesImpl(): Promise<void>;
 
   async _persistChanges() {
     if (!this._hasLocalChanges) {
@@ -343,7 +337,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.localModified;
   }
 
-  async _persistChangesImpl() {
+  async _persistChangesImpl(): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
@@ -753,7 +747,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.localChanges.size > 0;
   }
 
-  async _persistChangesImpl() {
+  async _persistChangesImpl(): Promise<void> {
     while (this.localChanges.size > 0) {
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
@@ -1108,6 +1102,13 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     const cursor = new Cursor(this.reference, pageSize);
     await cursor._init();
     return cursor;
+  }
+  async _persistChangesImpl(): Promise<void> {
+    throw new Error('FireBaseBigCollection does not implement _persistChangesImpl');
+  }
+
+  get _hasLocalChanges(): boolean {
+    return false;
   }
 
   // TODO: cloneFrom, toLiteral, fromLiteral ?

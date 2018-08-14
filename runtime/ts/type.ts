@@ -237,8 +237,7 @@ export class Type {
     if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canWriteSuperset);
     }
-    assert(false, `canWriteSuperset not implemented for ${this}`);
-    return undefined;
+    throw new Error(`canWriteSuperset not implemented for ${this}`);
   }
 
   get canReadSubset() {
@@ -251,8 +250,7 @@ export class Type {
     if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canReadSubset);
     }
-    assert(false, `canReadSubset not implemented for ${this}`);
-    return undefined;
+    throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
   isMoreSpecificThan(type) {
@@ -269,7 +267,7 @@ export class Type {
       // TODO: formFactor checking, etc.
       return true;
     }
-    assert(false, `contains not implemented for ${this}`);
+    throw new Error(`contains not implemented for ${this}`);
   }
 
   static _canMergeCanReadSubset(type1, type2) {
@@ -282,7 +280,7 @@ export class Type {
                    type1.canReadSubset.entitySchema,
                    type2.canReadSubset.entitySchema) !== null;
       }
-      assert(false, `_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
+      throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
     return true;
   }
@@ -423,7 +421,7 @@ export class Type {
     if (this.isSlot) {
       return 'Slot';
     }
-    assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
+    throw new Error(`Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
   getEntitySchema() {
