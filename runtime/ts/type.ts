@@ -483,8 +483,8 @@ addType('Interface', 'shape');
 addType('Slot');
 addType('Reference', 'referredType');
 
-import {Shape} from './shape';
-import {Schema} from './schema';
+import {Shape} from './shape.js';
+import {Schema} from './schema.js';
 import {TypeVariable} from '../type-variable.js';
 import {TupleFields} from '../tuple-fields.js';
 import {TypeChecker} from '../recipe/type-checker.js';
