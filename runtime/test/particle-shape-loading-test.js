@@ -18,7 +18,7 @@ import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../ts-build/type.js';
-import {Shape} from '../shape.js';
+import {Shape} from '../ts-build/shape.js';
 import {ParticleSpec} from '../particle-spec.js';
 
 describe('particle-shape-loading', function() {

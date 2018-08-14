@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 // ShapeHandle {name, direction, type}
 // Slot {name, direction, isRequired, isSet}
@@ -31,6 +31,12 @@ const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 export class Shape {
+  public name: string;
+  public handles: {type: Type, name: string, direction: string}[];
+  public slots: {name: string, direction: string, isRequired: boolean, isSet: boolean}[];
+
+  private typeVars: {object: any, field: string}[];
+
   constructor(name, handles, slots) {
     assert(name);
     assert(handles !== undefined);
@@ -38,11 +44,11 @@ export class Shape {
     this.name = name;
     this.handles = handles;
     this.slots = slots;
-    this._typeVars = [];
+    this.typeVars = [];
     for (let handle of handles) {
       for (let field of handleFields) {
         if (Shape.isTypeVar(handle[field])) {
-          this._typeVars.push({object: handle, field});
+          this.typeVars.push({object: handle, field});
         }
       }
     }
@@ -50,7 +56,7 @@ export class Shape {
     for (let slot of slots) {
       for (let field of slotFields) {
         if (Shape.isTypeVar(slot[field])) {
-          this._typeVars.push({object: slot, field});
+          this.typeVars.push({object: slot, field});
         }
       }
     }
@@ -58,6 +64,10 @@ export class Shape {
 
   toPrettyString() {
     return 'SHAAAAPE';
+  }
+
+  mergeTypeVariablesByName(variableMap) {
+    this.typeVars.map(({object, field}) => object[field] = object[field].mergeTypeVariablesByName(variableMap));
   }
 
   get canReadSubset() {
@@ -74,11 +84,11 @@ export class Shape {
       return false;
     }
     // TODO: should probably confirm that handles and slots actually match.
-    for (let i = 0; i < this._typeVars.length; i++) {
-      let thisTypeVar = this._typeVars[i];
-      let otherTypeVar = other._typeVars[i];
-      if (!thistypeVar.object[thistypeVar.field].isMoreSpecificThan(
-              othertypeVar.object[othertypeVar.field])) {
+    for (let i = 0; i < this.typeVars.length; i++) {
+      let thisTypeVar = this.typeVars[i];
+      let otherTypeVar = other.typeVars[i];
+      if (!thisTypeVar.object[thisTypeVar.field].isMoreSpecificThan(
+              otherTypeVar.object[otherTypeVar.field])) {
         return false;
       }
     }
@@ -86,7 +96,7 @@ export class Shape {
   }
 
   _applyExistenceTypeTest(test) {
-    for (let typeRef of this._typeVars) {
+    for (let typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
       }
@@ -130,7 +140,7 @@ ${this._slotsToManifestString()}
     return {name: this.name, handles, slots};
   }
 
-  clone(variableMap) {
+  clone(variableMap) : Shape {
     let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
@@ -147,7 +157,7 @@ ${this._slotsToManifestString()}
   }
 
   canEnsureResolved() {
-    for (let typeVar of this._typeVars) {
+    for (let typeVar of this.typeVars) {
       if (!typeVar.object[typeVar.field].canEnsureResolved()) {
         return false;
       }
@@ -156,12 +166,12 @@ ${this._slotsToManifestString()}
   }
 
   maybeEnsureResolved() {
-    for (let typeVar of this._typeVars) {
+    for (let typeVar of this.typeVars) {
       let variable = typeVar.object[typeVar.field];
       variable = variable.clone(new Map());
       if (!variable.maybeEnsureResolved()) return false;
     }
-    for (let typeVar of this._typeVars) {
+    for (let typeVar of this.typeVars) {
       typeVar.object[typeVar.field].maybeEnsureResolved();
     }
     return true;
@@ -203,7 +213,7 @@ ${this._slotsToManifestString()}
       sizeCheck = handles.size;
     }
 
-    handles = [];
+    let handleList = [];
     for (let handle of this.handles) {
       let otherHandle = handleMap.get(handle);
       let resultType;
@@ -215,10 +225,10 @@ ${this._slotsToManifestString()}
       } else {
         resultType = handle.type || otherHandle.type;
       }
-      handles.push({name: handle.name || otherHandle.name, direction: handle.direction || otherHandle.direction, type: resultType});
+      handleList.push({name: handle.name || otherHandle.name, direction: handle.direction || otherHandle.direction, type: resultType});
     }
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new Shape(this.name, handles, slots);
+    return new Shape(this.name, handleList, slots);
   }
 
   resolvedType() {
@@ -268,7 +278,7 @@ ${this._slotsToManifestString()}
 
   _cloneAndUpdate(update) {
     let copy = this.clone(new Map());
-    copy._typeVars.forEach(typeVar => Shape._updateTypeVar(typeVar, update));
+    copy.typeVars.forEach(typeVar => Shape._updateTypeVar(typeVar, update));
     return copy;
   }
 
@@ -401,5 +411,5 @@ ${this._slotsToManifestString()}
   }
 }
 
-import {Type} from './ts-build/type.js';
-import {TypeChecker} from './recipe/type-checker.js';
+import {Type} from './type.js';
+import {TypeChecker} from '../recipe/type-checker.js';

@@ -9,7 +9,7 @@
 
 import {Type} from './ts-build/type.js';
 import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
+import {Schema} from './ts-build/schema.js';
 
 export class TypeVariable {
   constructor(name, canWriteSuperset, canReadSubset) {

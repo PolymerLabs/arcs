@@ -13,11 +13,11 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../handle.js';
-import {Shape} from '../shape.js';
+import {Shape} from '../ts-build/shape.js';
 import {Type} from '../ts-build/type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
-import {Schema} from '../schema.js';
+import {Schema} from '../ts-build/schema.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 
 let loader = new Loader();

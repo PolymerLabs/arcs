@@ -8,11 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-import {Type} from './ts-build/type.js';
-import {Entity} from './entity.js';
+import {assert} from '../../platform/assert-web.js';
+import {Type} from './type.js';
+import {Entity} from '../entity.js';
 
 export class Schema {
+  private _model: {names: string[], fields: {[index: string]: any}};
+  public description: {[index: string]: string};
   constructor(model) {
     let legacy = [];
     // TODO: remove this (remnants of normative/optional)
@@ -240,10 +242,11 @@ export class Schema {
     };
 
     let clazz = class extends Entity {
+      rawData: any;
       constructor(data, userIDComponent) {
         super(userIDComponent);
         this.rawData = new Proxy({}, {
-          get: (target, name) => {
+          get: (target, name : string) => {
             if (classJunk.includes(name) || name.constructor == Symbol) {
               return undefined;
             }
