@@ -220,8 +220,7 @@ export class Handle {
         if (options) {
           options.details.push(`invalid fate ${this.fate}`);
         }
-        assert(false, `Unexpected fate: ${this.fate}`);
-        resolved = false;
+        throw new Error(`Unexpected fate: ${this.fate}`);
       }
     }
     return resolved;

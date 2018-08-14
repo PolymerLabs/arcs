@@ -121,7 +121,7 @@ export class TypeChecker {
         return null;
       }
 
-      assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
+      throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
 
     return base;

@@ -252,7 +252,7 @@ class CollectionProxy extends StorageProxyBase {
         }
       }
     } else {
-      assert(false, `StorageProxy received invalid update event: ${JSON.stringify(update)}`);
+      throw new Error(`StorageProxy received invalid update event: ${JSON.stringify(update)}`);
     }
     if (added.length || removed.length) {
       let result = {};

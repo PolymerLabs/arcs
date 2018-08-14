@@ -299,7 +299,7 @@ export class DescriptionFormatter {
     } else if (token.consumeSlotName && token.provideSlotName) {
       return this._slotTokenToString(token);
     }
-    assert(false, 'no handle or slot name');
+    throw new Error('no handle or slot name');
   }
 
   async _handleTokenToString(token) {
