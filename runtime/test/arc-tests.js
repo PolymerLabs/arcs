@@ -56,7 +56,11 @@ describe('Arc', function() {
     await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
-    assert(recipe.normalize());
+    let errors = new Map();
+    if(!recipe.normalize({errors})) {
+      console.log(errors);
+      assert(false);
+    }
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });

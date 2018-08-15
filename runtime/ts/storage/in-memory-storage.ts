@@ -178,9 +178,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async toList() {
-    if (this.type.primitiveType().isReference) {
+    if (this.referenceMode) {
       const items = this.toLiteral().model;
-      const referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType();
 
       const refSet = new Set();
 
@@ -203,12 +203,12 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async get(id) {
-    if (this.type.primitiveType().isReference) {
+    if (this.referenceMode) {
       const ref = this._model.getValue(id);
       if (ref == null) {
         return null;
       }
-      const referredType = this.type.primitiveType().referenceReferredType;
+      const referredType = this.type.primitiveType();
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey) as InMemoryCollection;
       }
@@ -226,8 +226,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
 
-    if (this.type.primitiveType().isReference) {
-      const referredType = this.type.primitiveType().referenceReferredType;
+    if (this.referenceMode) {
+      const referredType = this.type.primitiveType();
       if (this._backingStore == null) {
         this._backingStore =
             await this._storageEngine.baseStorageFor(referredType);
@@ -313,9 +313,9 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async get() {
-    if (this.type.isReference) {
+    if (this.referenceMode) {
       const value = this._stored as {id: string, storageKey: string};
-      const referredType = this.type.referenceReferredType;
+      const referredType = this.type;
       // TODO: string version of ReferredTyped as ID?
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey) as InMemoryCollection;
@@ -328,7 +328,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async set(value : {id: string}, originatorId=null, barrier=null) {
     assert(value !== undefined);
-    if (this.type.isReference) {
+    if (this.referenceMode) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
       // TODO(shans): Make sure this is tested.
@@ -336,7 +336,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
         return;
       }
 
-      const referredType = this.type.referenceReferredType;
+      const referredType = this.type;
       if (this._backingStore == null) {
         this._backingStore =
             await this._storageEngine.baseStorageFor(referredType);
@@ -353,7 +353,12 @@ class InMemoryVariable extends InMemoryStorageProvider {
       this._stored = value;
     }
     this.version++;
-    await this._fire('change', {data: this._stored, version: this.version, originatorId, barrier});
+    if (this.referenceMode) {
+      console.log(value);
+      await this._fire('change', {data: value, version: this.version, originatorId, barrier});
+    } else {
+      await this._fire('change', {data: this._stored, version: this.version, originatorId, barrier});
+    }
   }
 
   async clear(originatorId=null, barrier=null) {

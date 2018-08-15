@@ -22,6 +22,7 @@ export class StorageProviderBase {
   private nextLocalID: number;
   private readonly _type: Type;
 
+  protected referenceMode: boolean = false;
   protected version: number|null;
   
   id: string;
@@ -42,6 +43,10 @@ export class StorageProviderBase {
     this._storageKey = key;
     this.nextLocalID = 0;
     trace.end();
+  }
+
+  enableReferenceMode() {
+    this.referenceMode = true;
   }
 
   get storageKey() {
