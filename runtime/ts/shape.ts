@@ -32,10 +32,10 @@ const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 export class Shape {
   name: string;
-  handles: Array<{type: Type, name: string, direction: string}>;
-  slots: Array<{name: string, direction: string, isRequired: boolean, isSet: boolean}>;
+  handles: {type: Type, name: string, direction: string}[];
+  slots: {name: string, direction: string, isRequired: boolean, isSet: boolean}[];
 
-  private typeVars: Array<{object: any, field: string}>;
+  private typeVars: {object: any, field: string}[];
 
   constructor(name, handles, slots) {
     assert(name);
