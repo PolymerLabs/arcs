@@ -35,7 +35,7 @@ export class StorageProviderFactory {
   }
 
   parseStringAsKey(s: string) {
-    return this._storageForKey(string).parseStringAsKey(s);
+    return this._storageForKey(s).parseStringAsKey(s);
   }
 
   newKey(id, associatedKeyFragment) {
