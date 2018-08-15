@@ -22,6 +22,7 @@ function cloneData(data) {
 function restore(entry, entityClass) {
   assert(entityClass, 'Handles need entity classes for deserialization');
   let {id, rawData} = entry;
+  console.log(id, rawData);
   let entity = new entityClass(cloneData(rawData));
   if (entry.id) {
     entity.identify(entry.id);
