@@ -358,7 +358,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     assert(data.version >= this.version);
     if (this.version != version) {
       // A new local modification happened while we were writing the previous one.
-      this._persistChangesImpl();
+      return this._persistChangesImpl();
     }
 
     this.localModified = false;
