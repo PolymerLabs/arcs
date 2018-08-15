@@ -117,8 +117,8 @@ export class InMemoryStorage {
     return storage;
   }
 
-  parseStringAsKey(string) {
-    return new InMemoryKey(string);
+  parseStringAsKey(s: string) {
+    return new InMemoryKey(s);
   }
 
   shutdown() {
