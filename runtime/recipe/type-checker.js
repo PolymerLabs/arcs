@@ -7,7 +7,6 @@
 
 import {Type} from '../ts-build/type.js';
 import {TypeVariable} from '../type-variable.js';
-import {assert} from '../../platform/assert-web.js';
 
 export class TypeChecker {
 
@@ -121,7 +120,7 @@ export class TypeChecker {
         return null;
       }
 
-      assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
+      throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
 
     return base;

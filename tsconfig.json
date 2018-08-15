@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+
     "outDir": "runtime/ts-build",
+
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+
     "allowJs": false,
+    "sourceMap": true,
     "target": "es6",
     "lib": ["es2017", "dom"] 
   },

@@ -285,7 +285,7 @@ export class RecipeIndex {
       case '?':
         return false;
       default:
-        assert(false, `Unexpected fate ${slotHandleConn.handle.fate}`);
+        throw new Error(`Unexpected fate ${slotHandleConn.handle.fate}`);
     }
   }
 

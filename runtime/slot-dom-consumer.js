@@ -302,7 +302,7 @@ export class SlotDomConsumer extends SlotConsumer {
         content.templateName = `${hostedSlot.consumeConn.particle.name}::${hostedSlot.consumeConn.name}::${content.templateName}`;
       } else {
         // TODO(mmandlis): add support for hosted particle rendering set slot.
-        assert(false, 'TODO: Implement this!');
+        throw new Error('TODO: Implement this!');
       }
     }
     return content;

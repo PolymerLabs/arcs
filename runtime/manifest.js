@@ -708,7 +708,7 @@ ${e.message}
           return new TagEndPoint(info.tags);
         }
         default:
-          assert(false, `endpoint ${info.targetType} not supported`);
+          throw new Error(`endpoint ${info.targetType} not supported`);
       }
     };
 
@@ -847,7 +847,7 @@ ${e.message}
           } else if (entry.item.kind == 'particle') {
             targetParticle = entry.particle;
           } else {
-            assert(false, `did not expect ${entry.item.kind}`);
+            throw new Error(`did not expect ${entry.item.kind}`);
           }
         }
 

@@ -9,7 +9,6 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Walker} from '../recipe/walker.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {assert} from '../../platform/assert-web.js';
 import {MapSlots} from './map-slots.js';
 
 export class ResolveRecipe extends Strategy {
@@ -46,7 +45,7 @@ export class ResolveRecipe extends Strategy {
               mappable = [];
               break;
             default:
-              assert(false, `unexpected fate ${handle.fate}`);
+              throw new Error(`unexpected fate ${handle.fate}`);
           }
         } else if (!handle.storageKey) {
           // Handle specified by the ID, but not yet mapped to storage.
@@ -63,7 +62,7 @@ export class ResolveRecipe extends Strategy {
             case '?':
               break;
             default:
-              assert(false, `unexpected fate ${handle.fate}`);
+              throw new Error(`unexpected fate ${handle.fate}`);
           }
           mappable = storeById ? [storeById] : [];
         }

@@ -1,6 +1,6 @@
 {
   "rules": {
-    "array-type": [true, "array-simple"],
+    "array-type": [true, "array"],
     "arrow-return-shorthand": true,
     "ban": [true,
       {"name": "parseInt", "message": "tsstyle#type-coercion"},
