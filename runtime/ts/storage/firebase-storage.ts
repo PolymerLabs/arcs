@@ -63,7 +63,7 @@ class FirebaseKey extends KeyBase {
     }
   }
 
-  childKeyForHandle(id) {
+  childKeyForHandle(id): FirebaseKey {
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
