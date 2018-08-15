@@ -6,6 +6,7 @@
 \#*\#
 .\#*
 .eslint_sigh_cache
+.idea
 **/trace.json
 runtime/browser-test/browser-test-ified.js
 manifest-railroad.html
