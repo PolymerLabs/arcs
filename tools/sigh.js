@@ -215,7 +215,7 @@ async function tsc() {
 
 async function tslint(args) {
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/intermediate/.test(fullPath)) {
+    if (/ts-build/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
@@ -242,7 +242,7 @@ async function lint(args) {
   });
 
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/intermediate/.test(fullPath)) {
+    if (/ts-build/.test(fullPath)) {
       return false;
     }
     return /\.js$/.test(fullPath);
