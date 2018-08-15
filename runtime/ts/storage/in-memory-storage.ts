@@ -34,7 +34,7 @@ class InMemoryKey extends KeyBase {
     assert(this.toString() == key);
   }
 
-  childKeyForHandle(id) {
+  childKeyForHandle(id): InMemoryKey {
     return new InMemoryKey('in-memory://');
   }
 
