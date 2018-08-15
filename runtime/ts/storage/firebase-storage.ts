@@ -140,7 +140,7 @@ export class FirebaseStorage {
 
     if (this.apps[key.projectId] == undefined) {
       for (const app of firebase.apps) {
-        if (app.options.databaseURL == key.databaseURL) {
+        if (app.options.databaseURL == key.databaseUrl) {
           this.apps[key.projectId] = app;
           break;
         }
@@ -511,8 +511,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private remoteState: {items: {[index: string]: {value: any, keys: { [index: string]: null}}}};
   private initialized: Promise<void>;
   private resolveInitialized: () => void;
-  constructor(type, arcId, id, reference, firebaseKey) {
-    super(type, arcId, id, reference, firebaseKey);
+  constructor(type, storageEngine, id, reference, firebaseKey) {
+    super(type, storageEngine, id, reference, firebaseKey);
 
     // Lists mapped by id containing membership keys that have been
     // added or removed by local modifications. Entries in this
@@ -1032,8 +1032,8 @@ class Cursor {
 //      }
 //    }
 class FirebaseBigCollection extends FirebaseStorageProvider {
-  constructor(type, arcId, id, reference, firebaseKey) {
-    super(type, arcId, id, reference, firebaseKey);
+  constructor(type, storageEngine, id, reference, firebaseKey) {
+    super(type, storageEngine, id, reference, firebaseKey);
   }
 
   async get(id) {
