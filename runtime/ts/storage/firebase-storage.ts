@@ -126,8 +126,8 @@ export class FirebaseStorage {
     return this.baseStores.get(type);
   }
 
-  parseStringAsKey(string) {
-    return new FirebaseKey(string);
+  parseStringAsKey(s: string) {
+    return new FirebaseKey(s);
   }
 
   async _join(id, type, key, shouldExist) {
