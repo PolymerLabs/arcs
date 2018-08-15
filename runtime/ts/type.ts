@@ -28,13 +28,13 @@ function addType(name, arg=undefined) {
 }
 
 export interface Type {
-  isEntity: Boolean;
-  isVariable: Boolean;
-  isCollection: Boolean;
-  isRelation: Boolean;
-  isInterface: Boolean;
-  isSlot: Boolean;
-  isReference: Boolean;
+  isEntity: boolean;
+  isVariable: boolean;
+  isCollection: boolean;
+  isRelation: boolean;
+  isInterface: boolean;
+  isSlot: boolean;
+  isReference: boolean;
 
   entitySchema: Schema;
   variable: TypeVariable;
@@ -91,7 +91,7 @@ export class Type {
   }
 
 
-  mergeTypeVariablesByName(variableMap: Map<String, Type>) {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     if (this.isVariable) {
       const name = this.variable.name;
       let variable = variableMap.get(name);
