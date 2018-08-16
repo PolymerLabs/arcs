@@ -13,7 +13,7 @@ import {KeyBase} from './key-base';
 import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model';
-import {Id} from '../id';
+import {Id} from '../id.js';
 import {Type} from '../type';
 
 import {app, database} from '../../../node_modules/firebase/index';
