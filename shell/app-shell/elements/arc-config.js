@@ -16,7 +16,7 @@ class ArcConfig extends Xen.Base {
   static get observedAttributes() {
     return ['userid', 'key', 'search'];
   }
-  _update({userid, key, search}, state, oldProps) {
+  _update({userid, key/*, search*/}, state, oldProps) {
     if (!state.config) {
       state.config = this._configure();
       // TODO(sjmiles): default to Gomer for now, but should have a proper 'no user' state
@@ -27,13 +27,14 @@ class ArcConfig extends Xen.Base {
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     ArcUtils.setUrlParam('user', null);
-    if (userid && userid !== oldProps.userid) {
+    if (userid) {
       localStorage.setItem(Const.LOCALSTORAGE.user, userid);
     }
     if (key && key !== oldProps.key) {
       ArcUtils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
     }
     // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
+    ArcUtils.setUrlParam('search', null);
     // if (search && search !== oldProps.search) {
     //   ArcUtils.setUrlParam('search', search);
     // }
