@@ -13,6 +13,7 @@ import {KeyBase} from './key-base';
 import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model';
+import {Id} from '../id';
 import {Type} from '../type';
 
 import {app, database} from '../../../node_modules/firebase/index';
@@ -83,12 +84,11 @@ class FirebaseKey extends KeyBase {
 let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage {
-  private arcId: string;
   private apps: {[index: string]: app.App};
   private sharedStores: {[index: string]: FirebaseStorageProvider};
   private baseStores: Map<Type, FirebaseCollection>;
-  constructor(arcId) {
-    this.arcId = arcId;
+
+  constructor(private readonly arcId: Id) {
     this.apps = {};
     this.sharedStores = {};
     this.baseStores = new Map();
