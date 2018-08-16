@@ -98,7 +98,7 @@ const template = html`
     on-metadata="_onStateData"
     on-share="_onStateData"
     on-serialization="_onStateData"
-    on-suggestion="_onStateData"
+    on-suggestion="_onSuggestion"
   ></cloud-data>
 
   <shell-ui
@@ -114,7 +114,7 @@ const template = html`
     search="{{search}}"
     glows="{{glows}}"
     on-search="_onStateData"
-    on-suggestion="_onStateData"
+    on-suggestion="_onSuggestion"
     on-select-user="_onSelectUser"
     on-share="_onStateData"
     on-showhint="_onStateData"
@@ -258,6 +258,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, userid) {
     this._setState({userid});
+  }
+  _onSuggestion(e, suggestion) {
+    this._setState({suggestion, search: ''});
   }
 }
 

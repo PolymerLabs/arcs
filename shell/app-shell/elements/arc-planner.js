@@ -54,7 +54,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._setState({planificator});
     }
   }
-  _update({arc, suggestions, search, planificator}, {pendingPlans}) {
+  _update({arc}, {pendingPlans}) {
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
@@ -79,8 +79,6 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     } catch (x) {
       error('plan instantiation failed', x);
     }
-    // search term is used up
-    this._fire('search', '');
     // need new suggestions
     this._fire('suggestions', null);
   }
