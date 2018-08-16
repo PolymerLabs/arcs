@@ -20,7 +20,7 @@ import * as util from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {Id} from './id.js';
+import {Id} from './ts-build/id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {RecipeIndex} from './recipe-index.js';
 
