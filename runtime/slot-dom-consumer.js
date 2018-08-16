@@ -10,6 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
+import {sanitize} from './ts-build/isolate/sanitize.js';
 import {SlotConsumer} from './slot-consumer.js';
 import Template from '../shell/components/xen/xen-template.js';
 
@@ -145,7 +146,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   createTemplateElement(template) {
-    return Object.assign(document.createElement('template'), {innerHTML: template});
+    return Object.assign(document.createElement('template'), {innerHTML: sanitize(template)});
   }
 
   get templatePrefix() {
