@@ -1142,4 +1142,8 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   // TODO: cloneFrom, toLiteral, fromLiteral ?
   // A cloned instance will probably need to reference the same Firebase URL but collect all
   // modifications locally for speculative execution.
+
+  toLiteral() {
+    assert(false, "no toLiteral implementation on bigCollection");
+  }
 }

@@ -130,7 +130,7 @@ export class InMemoryStorage {
   }
 }
 
-class InMemoryStorageProvider extends StorageProviderBase {
+abstract class InMemoryStorageProvider extends StorageProviderBase {
   static newProvider(type, storageEngine, name, id, key) {
     if (type.isCollection) {
       return new InMemoryCollection(type, storageEngine, name, id, key);
@@ -285,6 +285,23 @@ class InMemoryVariable extends InMemoryStorageProvider {
     await this.fromLiteral(literal);
   }
 
+  async modelForSynchronization() {
+    if (this.referenceMode) {
+      const value = this._stored as {id: string, storageKey: string};
+
+      if (this._backingStore == null) {
+        this._backingStore = await this._storageEngine.share(this.type.toString(), this.type.collectionOf(), value.storageKey) as InMemoryCollection;
+      }
+      const result = await this._backingStore.get(value.id);
+      return {
+        version: this.version,
+        model: [{id: value.id, value: result}]
+      };
+    }
+    
+    return super.modelForSynchronization();
+  }
+
   // Returns {version, model: [{id, value}]}
   async toLiteral() {
     const value = this._stored;
@@ -419,5 +436,9 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
         copy = [];
       }
     };
+  }
+
+  toLiteral() {
+    assert(false, "no toLiteral implementation for BigCollection");
   }
 }

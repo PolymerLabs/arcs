@@ -39,7 +39,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onSynchronizeProxy = async ({handle, callback}) => {
-      let data = await handle.toLiteral();
+      let data = await handle.modelForSynchronization();
       this._apiPort.SimpleCallback({callback, data});
     };
 
