@@ -8,11 +8,11 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Tracing} from '../../../tracelib/trace.js';
-import {StorageProviderBase} from './storage-provider-base';
-import {KeyBase} from './key-base';
-import {CrdtCollectionModel} from './crdt-collection-model';
-import {Id} from '../id';
-import {Type} from '../type';
+import {StorageProviderBase} from './storage-provider-base.js';
+import {KeyBase} from './key-base.js';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {Id} from '../id.js';
+import {Type} from '../type.js';
 
 export function resetInMemoryStorageForTesting() {
   for (const key in __storageCache) {
@@ -54,12 +54,14 @@ class InMemoryKey extends KeyBase {
 const __storageCache = {};
 
 export class InMemoryStorage {
+  private readonly arcId: Id;
   _memoryMap: { [index: string]: InMemoryStorageProvider};
   _typeMap: Map<Type, InMemoryCollection>;
   localIDBase: number;
 
-  constructor(private readonly arcId: Id) {
+  constructor(arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
+    this.arcId = arcId;
     this._memoryMap = {};
     this._typeMap = new Map();
     this.localIDBase = 0;

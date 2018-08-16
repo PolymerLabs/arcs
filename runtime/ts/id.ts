@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Random} from './random';
+import {Random} from './random.js';
 
 export class Id {
   private session: string;
