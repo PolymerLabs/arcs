@@ -9,11 +9,12 @@
 import {StorageProviderBase} from './storage-provider-base';
 import {firebase} from '../../../platform/firebase-web.js';
 import {assert} from '../../../platform/assert-web.js';
-import {KeyBase} from './key-base';
+import {KeyBase} from './key-base.js';
 import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
-import {CrdtCollectionModel} from './crdt-collection-model';
-import {Type} from '../type';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {Id} from '../id.js';
+import {Type} from '../type.js';
 
 import {app, database} from '../../../node_modules/firebase/index';
 
@@ -83,11 +84,12 @@ class FirebaseKey extends KeyBase {
 let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage {
-  private arcId: string;
+  private readonly arcId: Id
   private apps: {[index: string]: app.App};
   private sharedStores: {[index: string]: FirebaseStorageProvider};
   private baseStores: Map<Type, FirebaseCollection>;
-  constructor(arcId) {
+
+  constructor(arcId: Id) {
     this.arcId = arcId;
     this.apps = {};
     this.sharedStores = {};

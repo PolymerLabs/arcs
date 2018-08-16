@@ -8,10 +8,11 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Tracing} from '../../../tracelib/trace.js';
-import {StorageProviderBase} from './storage-provider-base';
-import {KeyBase} from './key-base';
-import {CrdtCollectionModel} from './crdt-collection-model';
-import {Type} from '../type';
+import {StorageProviderBase} from './storage-provider-base.js';
+import {KeyBase} from './key-base.js';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {Id} from '../id.js';
+import {Type} from '../type.js';
 
 export function resetInMemoryStorageForTesting() {
   for (const key in __storageCache) {
@@ -23,7 +24,8 @@ class InMemoryKey extends KeyBase {
   protocol: string;
   arcId: string;
   location: string;
-  constructor(key) {
+
+  constructor(key: string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
@@ -52,25 +54,26 @@ class InMemoryKey extends KeyBase {
 const __storageCache = {};
 
 export class InMemoryStorage {
-  _arcId: string;
+  private readonly arcId: Id;
   _memoryMap: { [index: string]: InMemoryStorageProvider};
   _typeMap: Map<Type, InMemoryCollection>;
   localIDBase: number;
-  constructor(arcId) {
-      assert(arcId !== undefined, 'Arcs with storage must have ids');
-      this._arcId = arcId;
-      this._memoryMap = {};
-      this._typeMap = new Map();
-      this.localIDBase = 0;
-      // TODO(shans): re-add this assert once we have a runtime object to put it on.
-      // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-      __storageCache[this._arcId] = this;
+
+  constructor(arcId: Id) {
+    assert(arcId !== undefined, 'Arcs with storage must have ids');
+    this.arcId = arcId;
+    this._memoryMap = {};
+    this._typeMap = new Map();
+    this.localIDBase = 0;
+    // TODO(shans): re-add this assert once we have a runtime object to put it on.
+    // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
+    __storageCache[this.arcId.toString()] = this;
   }
 
   async construct(id, type, keyFragment) {
     const key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined) {
-      key.arcId = this._arcId;
+      key.arcId = this.arcId.toString();
     }
     if (key.location == undefined) {
       key.location = 'in-memory-' + this.localIDBase++;
@@ -86,7 +89,7 @@ export class InMemoryStorage {
 
   async connect(id, type, keyString) {
     const key = new InMemoryKey(keyString);
-    if (key.arcId !== this._arcId.toString()) {
+    if (key.arcId !== this.arcId.toString()) {
       if (__storageCache[key.arcId] == undefined) {
         return null;
       }
@@ -101,7 +104,7 @@ export class InMemoryStorage {
 
   async share(id, type, keyString) {
     const key = new InMemoryKey(keyString);
-    assert(key.arcId == this._arcId.toString());
+    assert(key.arcId == this.arcId.toString());
     if (this._memoryMap[keyString] == undefined) {
       return this.construct(id, type, keyString);
     }

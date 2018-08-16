@@ -7,14 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {Random} from './random.js';
 
 export class Id {
   private session: string;
   private currentSession: string;
-  private nextIdComponent: number = 0;
+  private nextIdComponent = 0;
   private components: string[] = [];
 
   constructor(currentSession: string) {
@@ -23,16 +22,15 @@ export class Id {
   }
 
   static newSessionId() {
-    let session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
+    const session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
     return new Id(session);
   }
 
-  fromString(str: string) {
-    let components = str.split(':');
+  fromString(str: string): Id {
+    const components = str.split(':');
+    const id = new Id(this.currentSession);
 
-    let id = new Id(this.currentSession);
-
-    if (components[0][0] == '!') {
+    if (components[0][0] === '!') {
       id.session = components[0].slice(1);
       id.components = components.slice(1);
     } else {
@@ -42,23 +40,23 @@ export class Id {
     return id;
   }
 
-  toString() {
+  toString(): string {
     return `!${this.session}:${this.components.join(':')}`;
   }
 
   // Only use this for testing!
-  toStringWithoutSessionForTesting() {
+  toStringWithoutSessionForTesting(): string {
     return this.components.join(':');
   }
 
-  createId(component = '') {
-    let id = new Id(this.currentSession);
+  createId(component = ''): Id {
+    const id = new Id(this.currentSession);
     id.components = this.components.slice();
     id.components.push(component + this.nextIdComponent++);
     return id;
   }
 
-  equal(id: Id) {
+  equal(id: Id): boolean {
     if (id.session !== this.session || id.components.length !== this.components.length) {
       return false;
     }
