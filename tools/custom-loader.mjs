@@ -2,10 +2,15 @@ import url from 'url';
 
 export function resolve(specifier, parent, resolve) {
   if (!/^[./]/.test(specifier)) {
-    if (!parent.includes('-node.js') && !parent.includes('node_modules')) {
-      throw new Error(`cannot load ${specifier} from ${parent}`);
+    let result;
+    try {
+      result = resolve(specifier, parent);
+    } catch(e) {}
+
+    if (!result && !parent.includes('-node.js') && !parent.includes('node_modules')) {
+      throw new Error(`cannot load ${specifier} from ${parent}. Only node_modules can be loaded using non-filesystem paths.`);
     }
-    let result = resolve(specifier, parent);
+
     return result;
   }
   if (!/\.(js|mjs)$/.test(specifier)) {
