@@ -175,7 +175,7 @@ export class FirebaseStorage {
       }
     }
 
-    return FirebaseStorageProvider.newProvider(type, this, id, reference, key);
+    return FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
   }
 
   static encodeKey(key) {
@@ -208,7 +208,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
     this.persisting = null;
   }
 
-  static newProvider(type, storageEngine, id, reference, key) {
+  static newProvider(type, storageEngine, id, reference, key, shouldExist) {
     if (type.isCollection) {
       // FIXME: implement a mechanism for specifying BigCollections in manifests
       if (id.startsWith('~big~')) {
@@ -217,7 +217,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
         return new FirebaseCollection(type, storageEngine, id, reference, key);
       }
     }
-    return new FirebaseVariable(type, storageEngine, id, reference, key);
+    return new FirebaseVariable(type, storageEngine, id, reference, key, shouldExist);
   }
 
   async _transaction(transactionFunction) {
@@ -288,10 +288,12 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 class FirebaseVariable extends FirebaseStorageProvider {
   private value: any;
   private localModified: boolean;
-  private initialized: Promise<void>;
+  private initialized: Promise<void>; 
+  wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
-  constructor(type, storageEngine, id, reference, firebaseKey) {
+  constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
+    this.wasConnect = shouldExist;
 
     // Current value stored in this variable. Reflects either a
     // value that was stored in firebase, or a value that was
@@ -423,7 +425,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
   async cloneFrom(handle) {
     const literal = await handle.toLiteral();
-    await this.fromLiteral(literal);
+    this.fromLiteral(literal);
+    this.localModified = true;
+    this._fire('change', {data: this.value, version: this.version, originatorId: null, barrier: null});
+    await this._persistChanges();
   }
 
   // Returns {version, model: [{id, value}]}
