@@ -43,10 +43,12 @@
     "webpack": "^4.16.5"
   },
   "dependencies": {
+    "@types/dompurify": "0.0.31",
     "@types/firebase": "^3.2.1",
     "@types/pouchdb": "^6.3.2",
     "atob": "^2.1.0",
     "btoa": "^1.2.1",
+    "dompurify": "^1.0.7",
     "firebase": "^5.3.1",
     "node-fetch": "^1.7.2",
     "pouchdb": "^7.0.0",
