@@ -288,8 +288,8 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 class FirebaseVariable extends FirebaseStorageProvider {
   private value: any;
   private localModified: boolean;
-  private initialized: Promise<void>;
-  wasConnect: boolean;
+  private initialized: Promise<void>; 
+  wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
