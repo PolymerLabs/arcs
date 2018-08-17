@@ -155,6 +155,7 @@ function peg() {
   let source = peg.generate(readProjectFile(sources.peg.grammar), {
     format: 'bare',
     output: 'source',
+    trace: false
   });
   let outputFile = path.resolve(projectRoot, sources.peg.output);
   let dir = path.dirname(outputFile);

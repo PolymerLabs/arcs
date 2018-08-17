@@ -223,12 +223,10 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   static newProvider(type, storageEngine, id, reference, key, shouldExist) {
     if (type.isCollection) {
-      // FIXME: implement a mechanism for specifying BigCollections in manifests
-      if (id.startsWith('~big~')) {
-        return new FirebaseBigCollection(type, storageEngine, id, reference, key);
-      } else {
-        return new FirebaseCollection(type, storageEngine, id, reference, key);
-      }
+      return new FirebaseCollection(type, storageEngine, id, reference, key);
+    }
+    if (type.isBigCollection) {
+      return new FirebaseBigCollection(type, storageEngine, id, reference, key);
     }
     return new FirebaseVariable(type, storageEngine, id, reference, key, shouldExist);
   }

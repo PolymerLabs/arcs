@@ -133,12 +133,10 @@ export class InMemoryStorage {
 class InMemoryStorageProvider extends StorageProviderBase {
   static newProvider(type, storageEngine, name, id, key) {
     if (type.isCollection) {
-      // FIXME: implement a mechanism for specifying BigCollections in manifests
-      if (id.startsWith('~big~')) {
-        return new InMemoryBigCollection(type, storageEngine, name, id, key);
-      } else {
-        return new InMemoryCollection(type, storageEngine, name, id, key);
-      }
+      return new InMemoryCollection(type, storageEngine, name, id, key);
+    }
+    if (type.isBigCollection) {
+      return new InMemoryBigCollection(type, storageEngine, name, id, key);
     }
     return new InMemoryVariable(type, storageEngine, name, id, key);
   }

@@ -27,9 +27,19 @@ describe('TypeChecker', () => {
     let b = Type.newVariable(new TypeVariable('b')).collectionOf();
     let c = Type.newEntity(new Schema({names: ['Product'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
-    assert.equal(a.resolvedType().primitiveType().canWriteSuperset.entitySchema.name, 'Product');
-    assert.equal(result.resolvedType().primitiveType().canWriteSuperset.entitySchema.name, 'Product');
-    assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal(a.resolvedType().collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal(result.resolvedType().collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
+  });
+
+  it('resolves a trio of in BigCollection<~a>, out BigCollection<~b>, in BigCollection<Product>', async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    let c = Type.newEntity(new Schema({names: ['Product'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
+    assert.equal(a.resolvedType().bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal(result.resolvedType().bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
   });
 
   it('resolves a trio of in [Thing], in [Thing], out [Product]', async () => {
@@ -37,8 +47,17 @@ describe('TypeChecker', () => {
     let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).collectionOf();
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
+    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+  });
+
+  it('resolves a trio of in BigCollection<Thing>, in BigCollection<Thing>, out BigCollection<Product>', async () => {
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).bigCollectionOf();
+    let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).bigCollectionOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
+    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
   it('resolves a trio of out [Product], in [Thing], in [Thing]', async () => {
@@ -46,47 +65,97 @@ describe('TypeChecker', () => {
     let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).collectionOf();
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'out'}, {type: a, direction: 'in'}, {type: b, direction: 'in'}]);
-    assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
+    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+  });
+
+  it('resolves a trio of out BigCollection<Product>, in BigCollection<Thing>, in BigCollection<Thing>', async () => {
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).bigCollectionOf();
+    let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).bigCollectionOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'out'}, {type: a, direction: 'in'}, {type: b, direction: 'in'}]);
+    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
   it('resolves a trio of in [~a] (is Thing), in [~b] (is Thing), out [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).collectionOf();
     let b = Type.newVariable(new TypeVariable('b')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    a.primitiveType().variable.resolution = resolution;
-    b.primitiveType().variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
+    b.collectionType.variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
+    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+  });
+
+  it('resolves a trio of in BigCollection<~a> (is Thing), in BigCollection<~b> (is Thing), out BigCollection<Product>', async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    a.bigCollectionType.variable.resolution = resolution;
+    b.bigCollectionType.variable.resolution = resolution;
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
+    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
   it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    a.primitiveType().variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
-    assert.include(result.primitiveType().canReadSubset.entitySchema.names, 'Thing');
-    assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
+    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.include(result.collectionType.canReadSubset.entitySchema.names, 'Thing');
+    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
-  it('doesn\'t resolve a pair of out [~a (is Thing)], in [Product]', async () => {
+  it('resolves a pair of in BigCollection<~a> (is Thing), out BigCollection<Product>', async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    a.bigCollectionType.variable.resolution = resolution;
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
+    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+    assert.include(result.bigCollectionType.canReadSubset.entitySchema.names, 'Thing');
+    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+  });
+
+  it(`doesn't resolve a pair of out [~a (is Thing)], in [Product]`, async () => {
     let a = Type.newVariable(new TypeVariable('a')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    a.primitiveType().variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.isNull(result);
   });
 
-  it('doesn\'t resolve a pair of out [~a (is Thing)], inout [Product]', async () => {
+  it(`doesn't resolve a pair of out BigCollection<~a (is Thing)>, in BigCollection<Product>`, async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    a.bigCollectionType.variable.resolution = resolution;
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
+    assert.isNull(result);
+  });
+
+  it(`doesn't resolve a pair of out [~a (is Thing)], inout [Product]`, async () => {
     let a = Type.newVariable(new TypeVariable('a')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    a.primitiveType().variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'inout'}]);
+    assert.isNull(result);
+  });
+
+  it(`doesn't resolve a pair of out BigCollection<~a (is Thing)>, inout BigCollection<Product>]`, async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    a.bigCollectionType.variable.resolution = resolution;
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'inout'}]);
     assert.isNull(result);
   });
@@ -95,18 +164,33 @@ describe('TypeChecker', () => {
     let a = Type.newVariable(new TypeVariable('a')).collectionOf();
     let b = Type.newVariable(new TypeVariable('b')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    a.primitiveType().variable.resolution = resolution;
-    b.primitiveType().variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
+    b.collectionType.variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let d = Type.newVariable(new TypeVariable('c')).collectionOf();
     let e = Type.newVariable(new TypeVariable('d')).collectionOf();
     resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
-    e.primitiveType().variable.resolution = resolution;
+    e.collectionType.variable.resolution = resolution;
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
     assert.isNull(result);
   });
 
-  it('doesn\'t depend on ordering in assigning a resolution to a type variable', async () => {
+  it('resolves inout BigCollection<~a> (is Thing), in BC<~b> (is Thing), in BC<Product>, in BC<~c>, in BC<~d> (is Product)', async () => {
+    let a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    a.bigCollectionType.variable.resolution = resolution;
+    b.bigCollectionType.variable.resolution = resolution;
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
+    let d = Type.newVariable(new TypeVariable('c')).bigCollectionOf();
+    let e = Type.newVariable(new TypeVariable('d')).bigCollectionOf();
+    resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
+    e.bigCollectionType.variable.resolution = resolution;
+    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
+    assert.isNull(result);
+  });
+
+  it(`doesn't depend on ordering in assigning a resolution to a type variable`, async () => {
     let a = Type.newVariable(new TypeVariable('a'));
     let b = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     let c = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
@@ -145,14 +229,14 @@ describe('TypeChecker', () => {
     assert.equal(true, type.canEnsureResolved());
     assert.equal(true, type.maybeEnsureResolved());
     assert.equal(true, type.isResolved());
-    assert.equal('Product', type.resolvedType().primitiveType().entitySchema.names[0]);
+    assert.equal('Product', type.resolvedType().collectionType.entitySchema.names[0]);
 
     recipe.normalize();
     assert.equal(true, recipe.isResolved());
 
   });
 
-  it('does not resolve Entity and Collection', async () => {
+  it(`doesn't resolve Entity and Collection`, async () => {
     let entity = {
       type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})),
       direction: 'inout'
@@ -168,13 +252,57 @@ describe('TypeChecker', () => {
     assert.isNull(TypeChecker.processTypeList(undefined, [collection, entity]));
   });
 
-  it(`doesn't resolve entity and collection of type variable`, () => {
+  it(`doesn't resolve Entity and BigCollection`, async () => {
+    let entity = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})),
+      direction: 'inout'
+    };
+    let bigCollection = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf(),
+      direction: 'inout'
+    };
+
+    assert.isNull(TypeChecker.processTypeList(entity.type, [bigCollection]));
+    assert.isNull(TypeChecker.processTypeList(bigCollection.type, [entity]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [entity, bigCollection]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [bigCollection, entity]));
+  });
+
+  it(`doesn't resolve Collection and BigCollection`, async () => {
+    let collection = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf(),
+      direction: 'inout'
+    };
+    let bigCollection = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf(),
+      direction: 'inout'
+    };
+
+    assert.isNull(TypeChecker.processTypeList(collection.type, [bigCollection]));
+    assert.isNull(TypeChecker.processTypeList(bigCollection.type, [collection]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [collection, bigCollection]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [bigCollection, collection]));
+  });
+
+  it(`doesn't resolve Entity and Collection of type variable`, () => {
     let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     let b = Type.newVariable(new TypeVariable('a')).collectionOf();
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
   });
 
-  it('does not modify an input baseType if invoked through Handle.effectiveType', async () => {
+  it(`doesn't resolve Entity and BigCollection of type variable`, () => {
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    let b = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
+  });
+
+  it(`doesn't resolve Collection and BigCollection of type variable`, () => {
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).collectionOf();
+    let b = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
+  });
+
+  it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
     let baseType = Type.newVariable(new TypeVariable('a'));
     let connection = {
       type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
@@ -186,25 +314,44 @@ describe('TypeChecker', () => {
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType.variable.resolution);
   });
-  it('can compare a type variable with a set handle', async () => {
+
+  it('can compare a type variable with a Collection handle', async () => {
     let leftType = Type.newVariable(new TypeVariable('a')).collectionOf();
     let rightType = Type.newVariable(new TypeVariable('b'));
     assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
-  it('can compare a type variable with a set handle (with constraints)', async () => {
+
+  it('can compare a type variable with a BigCollection handle', async () => {
+    let leftType = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let rightType = Type.newVariable(new TypeVariable('b'));
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a type variable with a Collection handle (with constraints)', async () => {
     let canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     let leftType = Type.newVariable(new TypeVariable('a')).collectionOf();
     let rightType = Type.newVariable(new TypeVariable('b', canWrite));
     assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
+
+  it('can compare a type variable with a Collection handle (with constraints)', async () => {
+    let canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
+    let leftType = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    let rightType = Type.newVariable(new TypeVariable('b', canWrite));
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     let a = Type.newVariable(new TypeVariable('a'));
     assert.isNull(a.data._resolution);
     Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
     assert.isNull(a.data._resolution);
   });
+
   it('resolves a single Slot type', () => {
     let a = Type.newSlot(new SlotInfo({}));
     let result = TypeChecker.processTypeList(null, [{type: a, direction: '`consume'}]);
