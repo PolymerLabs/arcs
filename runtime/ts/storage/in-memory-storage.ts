@@ -125,7 +125,7 @@ export class InMemoryStorage {
   }
 
   shutdown() {
-    return Promise.resolve();
+    // No-op
   }
 }
 
