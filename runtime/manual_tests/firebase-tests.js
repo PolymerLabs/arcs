@@ -50,8 +50,8 @@ describe('firebase', function() {
     return storage;
   }
 
-  after(async () => {
-    await Promise.all(storageInstances.map(s => s.shutdown()));
+  after(() => {
+    storageInstances.map(s => s.shutdown());
     storageInstances = [];
   });
 

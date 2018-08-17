@@ -85,7 +85,7 @@ let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage {
   private readonly arcId: Id;
-  private apps: {[index: string]: app.App};
+  private apps: {[index: string]: {app: app.App, owned: boolean}};
   private sharedStores: {[index: string]: FirebaseStorageProvider};
   private baseStores: Map<Type, FirebaseCollection>;
 
@@ -105,8 +105,13 @@ export class FirebaseStorage {
   }
 
   // Unit tests should call this in an 'after' block.
-  async shutdown() {
-    return Promise.all(Object.keys(this.apps).map(k => this.apps[k].delete())).then(a => { return; });
+  shutdown() {
+    for (const entry of Object.values(this.apps)) {
+      if (entry.owned) {
+        entry.app.delete();
+        entry.owned = false;
+      }
+    }
   }
   
   async share(id, type, key) {
@@ -143,20 +148,22 @@ export class FirebaseStorage {
     if (this.apps[key.projectId] == undefined) {
       for (const app of firebase.apps) {
         if (app.options.databaseURL === key.databaseUrl) {
-          this.apps[key.projectId] = app;
+          this.apps[key.projectId] = {app, owned: false};
           break;
         }
       }
     }
 
     if (this.apps[key.projectId] == undefined) {
-      this.apps[key.projectId] = firebase.initializeApp({
+      const app = firebase.initializeApp({
         apiKey: key.apiKey,
         databaseURL: key.databaseUrl
       }, `app${_nextAppNameSuffix++}`);
+
+      this.apps[key.projectId] = {app, owned: true};
     }
 
-    const reference = firebase.database(this.apps[key.projectId]).ref(key.location);
+    const reference = firebase.database(this.apps[key.projectId].app).ref(key.location);
 
     let currentSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
