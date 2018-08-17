@@ -14,6 +14,9 @@ import './elements/shell-ui.js';
 import './elements/shell-stores.js';
 import './elements/cloud-data.js';
 
+// external data pipes (MiToast, ArcExtension)
+import './elements/pipes/mi-toast-pipe.js';
+
 // templates
 const html = Xen.Template.html;
 const template = html`
@@ -100,6 +103,10 @@ const template = html`
     on-serialization="_onStateData"
     on-suggestion="_onStateData"
   ></cloud-data>
+
+  <mi-toast-pipe
+    arc="{{arc}}"
+  ></mi-toast-pipe>
 
   <shell-ui
     key="{{key}}"
