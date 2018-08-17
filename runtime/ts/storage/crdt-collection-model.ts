@@ -49,7 +49,7 @@ export class CrdtCollectionModel {
         }
         item.keys.add(key);
       }
-      if (JSON.stringify(item.value) != JSON.stringify(value)) {
+      if (JSON.stringify(item.value) !== JSON.stringify(value)) {
         assert(newKeys, 'cannot add without new keys');
         item.value = value;
         effective = true;
@@ -68,7 +68,7 @@ export class CrdtCollectionModel {
     for (const key of keys) {
       item.keys.delete(key);
     }
-    const effective = item.keys.size == 0;
+    const effective = item.keys.size === 0;
     if (effective) {
       this.items.delete(id);
     }
