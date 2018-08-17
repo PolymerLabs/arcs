@@ -85,8 +85,8 @@ let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage {
   private readonly arcId: Id;
-  private apps: {[index: string]: {app: app.App, owned: boolean}};
-  private sharedStores: {[index: string]: FirebaseStorageProvider};
+  private readonly apps: {[index: string]: {app: app.App, owned: boolean}};
+  private readonly sharedStores: {[index: string]: FirebaseStorageProvider};
   private baseStores: Map<Type, FirebaseCollection>;
 
   constructor(arcId: Id) {
@@ -165,7 +165,7 @@ export class FirebaseStorage {
 
     const reference = firebase.database(this.apps[key.projectId].app).ref(key.location);
 
-    let currentSnapshot;
+    let currentSnapshot: firebase.database.DataSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
@@ -187,12 +187,12 @@ export class FirebaseStorage {
     return FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
   }
 
-  static encodeKey(key) {
+  static encodeKey(key: string): string {
     key = btoa(key);
     return key.replace(/\//g, '*');
   }
 
-  static decodeKey(key) {
+  static decodeKey(key: string): string {
     key = key.replace(/\*/g, '/');
     return atob(key);
   }
@@ -205,7 +205,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   protected backingStore: FirebaseCollection;
   protected storageEngine: FirebaseStorage;
 
-  constructor(type, storageEngine, id, reference, key) {
+  protected constructor(type, storageEngine, id, reference, key) {
     super(type, undefined, id, key.toString());
     this.storageEngine = storageEngine;
     this.firebaseKey = key;
@@ -292,14 +292,15 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 // (by incrementing) may not match the final state that is
 // written to firebase (if there are concurrent changes in
 // firebase, or if we have queued up multiple local
-// modiciations), but the result will always be
+// modifications), but the result will always be
 // monotonically increasing.
 class FirebaseVariable extends FirebaseStorageProvider {
-  private value: any;
+  private value: {storageKey: string, id: string};
   private localModified: boolean;
-  private initialized: Promise<void>; 
+  private readonly initialized: Promise<void>;
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
+
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
     this.wasConnect = shouldExist;
@@ -386,7 +387,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this.type.isReference) {
       const referredType = this.type.referenceReferredType;
       if (this.backingStore == null) {
-        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), this.value.storageKey);
+        const backingStore = await this.storageEngine.share(
+          referredType.toString(),
+          referredType.collectionOf(),
+          this.value.storageKey);
         this.backingStore = backingStore as FirebaseCollection;
       }
       return await this.backingStore.get(this.value.id);  
@@ -522,9 +526,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private localChanges: Map<string, {add: string[], remove: string[]}>;
   private addSuppressions: Map<string, {keys: Set<string>, barrierVersion: number}>;
   private model: CrdtCollectionModel;
-  private remoteState: {items: {[index: string]: {value: any, keys: { [index: string]: null}}}};
-  private initialized: Promise<void>;
+  private remoteState: {items: {[index: string]: {value: {}, keys: { [index: string]: null}}}};
+  private readonly initialized: Promise<void>;
   private resolveInitialized: () => void;
+
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
 
@@ -915,13 +920,14 @@ enum CursorState {'new', 'init', 'stream', 'removed', 'done'}
 // index past the cursor's end but Firebase doesn't issue a child_removed event for it.
 class Cursor {
   private orderByIndex: database.Query;
-  private pageSize: number;
+  private readonly pageSize: number;
   private state: CursorState;
-  private removed: any[];
+  private removed: {}[];
   private baseQuery: database.Query;
   private nextStart: string;
   private end: string;
-  private removedFn: (removed: any) => any;
+  private removedFn: (removed: firebase.database.DataSnapshot) => void;
+
   constructor(reference, pageSize) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.orderByIndex = reference.child('items').orderByChild('index');
@@ -961,7 +967,7 @@ class Cursor {
   }
 
   // Returns the BigCollection version at which this cursor is reading.
-  get version() {
+  get version(): string {
     return this.end;
   }
 

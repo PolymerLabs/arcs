@@ -30,14 +30,27 @@ function _toLiteral(member) {
 const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
+interface Handle {
+  type: Type;
+  name: string;
+  direction: string;
+}
+
+interface Slot {
+  name: string;
+  direction: string;
+  isRequired: boolean;
+  isSet: boolean;
+}
+
 export class Shape {
   name: string;
-  handles: {type: Type, name: string, direction: string}[];
-  slots: {name: string, direction: string, isRequired: boolean, isSet: boolean}[];
+  handles: Handle[];
+  slots: Slot[];
 
-  private typeVars: {object: any, field: string}[];
+  private readonly typeVars: {object: Handle|Slot, field: string}[];
 
-  constructor(name, handles, slots) {
+  constructor(name: string, handles: Handle[], slots: Slot[]) {
     assert(name);
     assert(handles !== undefined);
     assert(slots !== undefined);

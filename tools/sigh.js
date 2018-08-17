@@ -40,11 +40,11 @@ const steps = {
   test: [peg, railroad, tsc, test],
   webpack: [peg, railroad, tsc, webpack],
   watch: [watch],
-  lint: [lint],
+  lint: [lint, tslint],
   tslint: [tslint],
   check: [check],
   clean: [clean],
-  default: [check, peg, railroad, tsc, test, webpack, lint],
+  default: [check, peg, railroad, tsc, test, webpack, lint, tslint],
 };
 
 // Paths to `watch` for the `watch` step.
@@ -227,7 +227,7 @@ async function tslint(args) {
 
   const tslintArgs = options.fix ? ['--fix', ...jsSources] : jsSources;
     
-  let result = saneSpawnWithOutput('node_modules/.bin/tslint', tslintArgs, {});
+  let result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...tslintArgs], {});
   if (result.status) {
     console.log(result.stdout);
   }

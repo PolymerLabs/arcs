@@ -12,19 +12,19 @@ import {Type} from '../type';
 import * as util from '../../recipe/util.js';
 
 enum EventKind {'change'}
-type Callback = () => any;
+type Callback = () => void;
 
 export class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
-  private _storageKey: string;
+  private readonly _storageKey: string;
   private nextLocalID: number;
-  private _type: Type;
+  private readonly _type: Type;
 
-  protected version: number;
+  protected version: number|null;
   
   id: string;
   name: string;
-  source: any;
+  source: {};
   description: string;
 
   constructor(type, name, id, key) {
@@ -58,7 +58,7 @@ export class StorageProviderBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind, callback, target) {
+  on(kind, callback, target): void {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
     const listeners = this.listeners.get(kind) || new Map();
     listeners.set(callback, {target});
@@ -87,16 +87,20 @@ export class StorageProviderBase {
     trace.end();
   }
 
-  _compareTo(other) {
+  _compareTo(other) : number {
     let cmp;
-    if ((cmp = util.compareStrings(this.name, other.name)) !== 0) return cmp;
-    if ((cmp = util.compareNumbers(this.version, other.version)) !== 0) return cmp;
-    if ((cmp = util.compareStrings(this.source, other.source)) !== 0) return cmp;
-    if ((cmp = util.compareStrings(this.id, other.id)) !== 0) return cmp;
+    cmp = util.compareStrings(this.name, other.name);
+    if (cmp !== 0) return cmp;
+    cmp = util.compareNumbers(this.version, other.version);
+    if (cmp !== 0) return cmp;
+    cmp = util.compareStrings(this.source, other.source);
+    if (cmp !== 0) return cmp;
+    cmp = util.compareStrings(this.id, other.id);
+    if (cmp !== 0) return cmp;
     return 0;
   }
 
-  toString(handleTags) {
+  toString(handleTags): string {
     const results = [];
     const handleStr = [];
     handleStr.push(`store`);

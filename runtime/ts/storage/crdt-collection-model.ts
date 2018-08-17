@@ -16,8 +16,16 @@ import {assert} from '../../../platform/assert-web.js';
 //
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
+
+interface Model {
+  id: string;
+  value: {};
+  keys: [];
+}
+
 export class CrdtCollectionModel {
-  private items: Map<string, {value: any, keys: Set<string>}>;
+  private items: Map<string, {value: {storageKey: string, id: {}}, keys: Set<string>}>;
+
   constructor(model = undefined) {
     // id => {value, Set[keys]}
     this.items = new Map();
@@ -33,7 +41,7 @@ export class CrdtCollectionModel {
   // Adds membership, `keys`, of `value` indexed by `id` to this collection.
   // Returns whether the change is effective (`id` is new to the collection,
   // or `value` is different to the value previously stored).
-  add(id, value, keys) {
+  add(id: string, value, keys): boolean {
     assert(keys.length > 0, 'add requires keys');
     let item = this.items.get(id);
     let effective = false;
@@ -57,10 +65,11 @@ export class CrdtCollectionModel {
     }
     return effective;
   }
+
   // Removes the membership, `keys`, of the value indexed by `id` from this collection.
   // Returns whether the change is effective (the value is no longer present
   // in the collection because all of the keys have been removed).
-  remove(id, keys) {
+  remove(id: string, keys): boolean {
     const item = this.items.get(id);
     if (!item) {
       return false;
@@ -74,6 +83,7 @@ export class CrdtCollectionModel {
     }
     return effective;
   }
+
   // [{id, value, keys: []}]
   toLiteral() {
     const result = [];
@@ -82,21 +92,26 @@ export class CrdtCollectionModel {
     }
     return result;
   }
+
   toList() {
     return [...this.items.values()].map(item => item.value);
   }
-  has(id) {
+
+  has(id): boolean {
     return this.items.has(id);
   }
-  getKeys(id) {
+
+  getKeys(id: string) {
     const item = this.items.get(id);
     return item ? [...item.keys] : [];
   }
-  getValue(id) {
+
+  getValue(id: string) {
     const item = this.items.get(id);
     return item ? item.value : null;
   }
-  get size() {
+
+  get size(): number {
     return this.items.size;
   }
 }
