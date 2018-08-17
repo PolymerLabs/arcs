@@ -41,7 +41,8 @@
     "radix": true,
     "semicolon": [true, "always", "ignore-bound-class-methods"],
     "switch-default": true,
-    "triple-equals": [true, "allow-null-check"],
+    // TODO: enable stricter checks at a later point
+    "triple-equals": [true, "allow-null-check", "allow-undefined-check"],
     "use-isnan": true,
     "variable-name": [
       true,
