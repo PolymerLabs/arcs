@@ -29,11 +29,11 @@ class InMemoryKey extends KeyBase {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol == 'in-memory');
+    assert(this.protocol === 'in-memory');
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
-    assert(this.toString() == key);
+    assert(this.toString() === key);
   }
 
   childKeyForHandle(id): InMemoryKey {
@@ -104,7 +104,7 @@ export class InMemoryStorage {
 
   async share(id, type, keyString) {
     const key = new InMemoryKey(keyString);
-    assert(key.arcId == this.arcId.toString());
+    assert(key.arcId === this.arcId.toString());
     if (this._memoryMap[keyString] == undefined) {
       return this.construct(id, type, keyString);
     }
@@ -186,7 +186,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
       const refSet = new Set();
 
       items.forEach(item => refSet.add(item.value.storageKey));
-      assert(refSet.size == 1);
+      assert(refSet.size === 1);
       const ref = refSet.values().next().value;
 
       if (this._backingStore == null) {
@@ -246,7 +246,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async remove(id, keys=[], originatorId=null) {
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
-    if (keys.length == 0) {
+    if (keys.length === 0) {
       keys = this._model.getKeys(id);
     }
     const value = this._model.getValue(id);
@@ -303,7 +303,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   fromLiteral({version, model}) {
-    const value = model.length == 0 ? null : model[0].value;
+    const value = model.length === 0 ? null : model[0].value;
     assert(value !== undefined);
     this._stored = value;
     this.version = version;
@@ -333,7 +333,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
       // TODO(shans): Make sure this is tested.
-      if (this._stored && this._stored.id == value.id && barrier == null) {
+      if (this._stored && this._stored.id === value.id && barrier == null) {
         return;
       }
 
@@ -347,7 +347,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-      if (JSON.stringify(this._stored) == JSON.stringify(value) &&
+      if (JSON.stringify(this._stored) === JSON.stringify(value) &&
           barrier == null) {
         return;
       }

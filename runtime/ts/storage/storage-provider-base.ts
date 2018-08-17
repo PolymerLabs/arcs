@@ -68,7 +68,7 @@ export class StorageProviderBase {
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   async _fire(kind, details) {
     const listenerMap = this.listeners.get(kind);
-    if (!listenerMap || listenerMap.size == 0) {
+    if (!listenerMap || listenerMap.size === 0) {
       return;
     }
 
@@ -89,10 +89,10 @@ export class StorageProviderBase {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this.name, other.name)) != 0) return cmp;
-    if ((cmp = util.compareNumbers(this.version, other.version)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.source, other.source)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.id, other.id)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.name, other.name)) !== 0) return cmp;
+    if ((cmp = util.compareNumbers(this.version, other.version)) !== 0) return cmp;
+    if ((cmp = util.compareStrings(this.source, other.source)) !== 0) return cmp;
+    if ((cmp = util.compareStrings(this.id, other.id)) !== 0) return cmp;
     return 0;
   }
 
