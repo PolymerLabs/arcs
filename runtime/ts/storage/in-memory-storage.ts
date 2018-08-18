@@ -14,10 +14,10 @@ import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 
+const storageCache: Map<string, InMemoryStorage> = new Map();
+
 export function resetInMemoryStorageForTesting() {
-  for (const key in __storageCache) {
-    __storageCache[key]._memoryMap = {};
-  }
+  storageCache.clear();
 }
 
 class InMemoryKey extends KeyBase {
@@ -51,23 +51,21 @@ class InMemoryKey extends KeyBase {
   }
 }
 
-const __storageCache = {};
-
 export class InMemoryStorage {
   private readonly arcId: Id;
-  _memoryMap: { [index: string]: InMemoryStorageProvider};
-  _typeMap: Map<Type, InMemoryCollection>;
+  private memoryMap: Map<string, InMemoryStorageProvider>;
+  private typeMap: Map<Type, InMemoryCollection>;
   localIDBase: number;
 
   constructor(arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
     this.arcId = arcId;
-    this._memoryMap = {};
-    this._typeMap = new Map();
+    this.memoryMap = new Map();
+    this.typeMap = new Map();
     this.localIDBase = 0;
     // TODO(shans): re-add this assert once we have a runtime object to put it on.
     // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-    __storageCache[this.arcId.toString()] = this;
+    storageCache.set(this.arcId.toString(), this);
   }
 
   async construct(id, type, keyFragment) {
@@ -78,45 +76,47 @@ export class InMemoryStorage {
     if (key.location == undefined) {
       key.location = 'in-memory-' + this.localIDBase++;
     }
-    // TODO(shanestephens): should pass in factory, not 'this' here.
-    const provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
-    if (this._memoryMap[key.toString()] !== undefined) {
+
+    if (this.memoryMap.has(key.toString())) {
       return null;
     }
-    this._memoryMap[key.toString()] = provider;
+
+    // TODO(shanestephens): should pass in factory, not 'this' here.
+    const provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
+    this.memoryMap.set(key.toString(), provider);
     return provider;
   }
 
   async connect(id, type, keyString) {
     const key = new InMemoryKey(keyString);
     if (key.arcId !== this.arcId.toString()) {
-      if (__storageCache[key.arcId] == undefined) {
+      if (!storageCache.has(key.arcId)) {
         return null;
       }
-      return __storageCache[key.arcId].connect(id, type, keyString);
+      return storageCache.get(key.arcId).connect(id, type, keyString);
     }
-    if (this._memoryMap[keyString] == undefined) {
+    if (!this.memoryMap.has(keyString)) {
       return null;
     }
     // TODO assert types match?
-    return this._memoryMap[keyString];
+    return this.memoryMap.get(keyString);
   }
 
   async share(id, type, keyString) {
     const key = new InMemoryKey(keyString);
     assert(key.arcId === this.arcId.toString());
-    if (this._memoryMap[keyString] == undefined) {
+    if (!this.memoryMap.has(keyString)) {
       return this.construct(id, type, keyString);
     }
-    return this._memoryMap[keyString];
+    return this.memoryMap.get(keyString);
   }
 
   async baseStorageFor(type) {
-    if (this._typeMap.has(type)) {
-      return this._typeMap.get(type);
+    if (this.typeMap.has(type)) {
+      return this.typeMap.get(type);
     }
     const storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
-    this._typeMap.set(type, storage);
+    this.typeMap.set(type, storage);
     return storage;
   }
 
