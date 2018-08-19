@@ -12,7 +12,7 @@ import {Random} from './random.js';
 
 export class Id {
   private session: string;
-  private currentSession: string;
+  private readonly currentSession: string;
   private nextIdComponent = 0;
   private components: string[] = [];
 

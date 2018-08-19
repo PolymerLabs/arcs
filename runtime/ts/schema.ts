@@ -13,8 +13,10 @@ import {Type} from './type.js';
 import {Entity} from '../entity.js';
 
 export class Schema {
-  private _model: {names: string[], fields: {[index: string]: any}};
+  // tslint:disable-next-line: no-any
+  private readonly _model: {names: string[], fields: {[index: string]: any}};
   description: {[index: string]: string};
+
   constructor(model) {
     const legacy = [];
     // TODO: remove this (remnants of normative/optional)
@@ -242,6 +244,7 @@ export class Schema {
     };
 
     const clazz = class extends Entity {
+      // tslint:disable-next-line: no-any
       rawData: any;
       constructor(data, userIDComponent) {
         super(userIDComponent);

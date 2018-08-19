@@ -358,14 +358,15 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async clear(originatorId=null, barrier=null) {
-    this.set(null, originatorId, barrier);
+    await this.set(null, originatorId, barrier);
   }
 }
 
 // In-memory version of the BigCollection API; primarily for testing.
 class InMemoryBigCollection extends InMemoryStorageProvider {
   protected version: number;
-  private items: Map<string, {index: number, value: any, keys: {[index: string]: number}}>;
+  private items: Map<string, {index: number, value: {}, keys: {[index: string]: number}}>;
+
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this.version = 0;
@@ -396,7 +397,7 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
     this.items.delete(id);
   }
 
-  async stream(pageSize) {
+  async stream(pageSize: number) {
     assert(!isNaN(pageSize) && pageSize > 0);
     let copy = [...this.items.values()];
     copy.sort((a, b) => a.index - b.index);
