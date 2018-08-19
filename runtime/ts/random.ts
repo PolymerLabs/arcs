@@ -32,15 +32,15 @@ class SeededRNG extends RNG {
     }
 }
 
-export namespace Random {
-    // Singleton Pattern
-    let random: RNG = new MathRandomRNG();
+// Singleton Pattern
+let random: RNG = new MathRandomRNG();
 
-    export function next() : number {
+export class Random {
+    static next() : number {
         return random.next();
     }
     // TODO: remove test code and allow for injectable implementations.
-    export function seedForTests() : void {
+    static seedForTests() : void {
         random = new SeededRNG();
     }
 }
