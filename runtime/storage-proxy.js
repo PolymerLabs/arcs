@@ -408,9 +408,6 @@ export class StorageProxyScheduler {
 
   // TODO: break apart args here, sync events should flush the queue.
   enqueue(particle, handle, args) {
-    console.log('enqueue', args);
-    if (args.id == 'test:1:0') 
-      assert(args.rawData);
     if (!this._queues.has(particle)) {
       this._queues.set(particle, new Map());
     }
@@ -465,7 +462,6 @@ export class StorageProxyScheduler {
       for (let [handle, queue] of byHandle.entries()) {
         for (let args of queue) {
           try {
-            console.log(args);
             handle._notify(...args);
           } catch (e) {
             console.error('Error dispatching to particle', e);
