@@ -24,12 +24,11 @@ class InMemoryKey extends KeyBase {
   protocol: string;
   arcId: string;
   location: string;
-
-  constructor(key: string) {
+  constructor(key : string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol === 'in-memory');
+    assert(this.protocol === 'in-memory', `can't construct in-memory key for protocol ${this.protocol} (input key ${key})`);
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
@@ -72,6 +71,12 @@ export class InMemoryStorage {
   }
 
   async construct(id, type, keyFragment) {
+    let provider = await this._construct(id, type, keyFragment);
+    provider.enableReferenceMode();
+    return provider;
+  }
+
+  async _construct(id, type, keyFragment) {
     const key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined) {
       key.arcId = this.arcId.toString();
@@ -104,10 +109,11 @@ export class InMemoryStorage {
   }
 
   async share(id, type, keyString) {
+    assert(keyString, "Must provide valid keyString to connect to underlying data");
     const key = new InMemoryKey(keyString);
-    assert(key.arcId === this.arcId.toString());
+    assert(key.arcId === this.arcId.toString(), `key's arcId ${key.arcId} doesn't match this storageProvider's arcId ${this.arcId.toString()}`);
     if (this._memoryMap[keyString] == undefined) {
-      return this.construct(id, type, keyString);
+      return this._construct(id, type, keyString);
     }
     return this._memoryMap[keyString];
   }
@@ -116,7 +122,7 @@ export class InMemoryStorage {
     if (this._typeMap.has(type)) {
       return this._typeMap.get(type);
     }
-    const storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
+    const storage = await this._construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
     this._typeMap.set(type, storage);
     return storage;
   }
@@ -161,7 +167,15 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
+    this.referenceMode = handle.referenceMode;
     this.fromLiteral(await handle.toLiteral());
+  }
+
+  async modelForSynchronization() {
+    return {
+      version: this.version,
+      model: await this._toList()
+    }
   }
 
   // Returns {version, model: [{id, value, keys: []}]}
@@ -177,13 +191,14 @@ class InMemoryCollection extends InMemoryStorageProvider {
     this._model = new CrdtCollectionModel(model);
   }
 
-  async toList() {
+  async _toList() {
     if (this.referenceMode) {
       const items = this.toLiteral().model;
+      if (items.length == 0)
+        return [];
       const referredType = this.type.primitiveType();
 
       const refSet = new Set();
-
       items.forEach(item => refSet.add(item.value.storageKey));
       assert(refSet.size === 1);
       const ref = refSet.values().next().value;
@@ -194,12 +209,16 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
       const retrieveItem = async item => {
         const ref = item.value;
-        return this._backingStore.get(ref.id);
+        return {id: ref.id, value: await this._backingStore.get(ref.id), keys: item.keys};
       };
 
       return await Promise.all(items.map(retrieveItem));
     }
-    return this.toLiteral().model.map(item => item.value);
+    return this.toLiteral().model;
+  }
+
+  async toList() {
+    return (await this._toList()).map(item => item.value);
   }
 
   async get(id) {
@@ -226,20 +245,23 @@ class InMemoryCollection extends InMemoryStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
 
+    let changeEvent = {value, keys, effective: undefined};
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
       if (this._backingStore == null) {
         this._backingStore =
             await this._storageEngine.baseStorageFor(referredType);
+        assert(this._backingStore !== this, "A store can't be its own backing store");
       }
       this._backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this._backingStore.storageKey};
     }
 
-    const effective = this._model.add(value.id, value, keys);
+    changeEvent.effective = this._model.add(value.id, value, keys);
     this.version++;
+
     await trace.wait(
-        this._fire('change', {add: [{value, keys, effective}], version: this.version, originatorId}));
+        this._fire('change', {add: [changeEvent], version: this.version, originatorId}));
     trace.end({args: {value}});
   }
 
@@ -281,12 +303,13 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
+    this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     await this.fromLiteral(literal);
   }
 
   async modelForSynchronization() {
-    if (this.referenceMode) {
+    if (this.referenceMode && this._stored !== null) {
       const value = this._stored as {id: string, storageKey: string};
 
       if (this._backingStore == null) {
@@ -320,6 +343,9 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   fromLiteral({version, model}) {
     const value = model.length === 0 ? null : model[0].value;
+    if (this.referenceMode && value.rawData)
+      assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
+
     assert(value !== undefined);
     this._stored = value;
     this.version = version;
@@ -330,8 +356,9 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async get() {
-    if (this.referenceMode) {
+    if (this.referenceMode && this._stored) {
       const value = this._stored as {id: string, storageKey: string};
+
       const referredType = this.type;
       // TODO: string version of ReferredTyped as ID?
       if (this._backingStore == null) {
@@ -371,7 +398,6 @@ class InMemoryVariable extends InMemoryStorageProvider {
     }
     this.version++;
     if (this.referenceMode) {
-      console.log(value);
       await this._fire('change', {data: value, version: this.version, originatorId, barrier});
     } else {
       await this._fire('change', {data: this._stored, version: this.version, originatorId, barrier});

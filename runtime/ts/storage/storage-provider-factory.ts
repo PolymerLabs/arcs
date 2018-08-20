@@ -29,14 +29,12 @@ export class StorageProviderFactory {
   async construct(id, type, keyFragment) {
     const storage = await this._storageForKey(keyFragment).construct(id, type, keyFragment);
     // TODO(shans): don't use reference mode once adapters are implemented
-    storage.enableReferenceMode();
     return storage;
   }
 
   async connect(id, type, key) {
     const storage = await this._storageForKey(key).connect(id, type, key);
     // TODO(shans): don't use reference mode once adapters are implemented
-    storage.enableReferenceMode();
     return storage;
   }
 
