@@ -454,6 +454,8 @@ function test(args) {
         ...extraFlags,
         '--loader',
         fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+        '-r',
+        'source-map-support/register.js',
         runner
       ],
       {stdio: 'inherit'});
