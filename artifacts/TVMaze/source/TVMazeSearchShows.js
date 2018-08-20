@@ -18,19 +18,19 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     get template() {
       return '&nbsp;'; //html`Searching`;
     }
-    update({search}, state) {
-      // If we are asynchronously populating episodes, wait until this is done before
+    update({query}, state) {
+      // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (!state.receiving) {
-        if (search !== state.search) {
-          state.search = search;
-          this.fetchShows(search.query);
+        if (query !== state.query) {
+          state.query = query;
+          this.fetchShows(query);
         }
       }
     }
     async fetchShows(query) {
       this.setState({count: -1, receiving: true});
-      const response = await fetch(`${service}/search/shows?q=${query}`);
+      const response = await fetch(`${service}/search/shows?q=${query.query}`);
       const shows = await response.json();
       this.receiveShows(shows);
       this.setState({receiving: false});

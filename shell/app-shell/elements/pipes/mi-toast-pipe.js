@@ -63,11 +63,23 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (!state.store && context && state.entity) {
+    if (!state.store && context && state.entity && state.entity.query) {
       this._requireStore(context);
     }
-    if (state.store && state.entity) {
+    if (state.store && state.entity && state.entity.query) {
       state.store.set({
+        id: 'piped-store',
+        rawData: state.entity
+      });
+      // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
+      // force replanning here
+      document.querySelector('app-shell').shadowRoot.querySelector('arc-planner')._state.planificator._onDataChange();
+    }
+    if (!state.findStore && context && state.entity && state.entity.name) {
+      this._requireFindStore(context);
+    }
+    if (state.findStore && state.entity && state.entity.name) {
+      state.findStore.set({
         id: 'piped-store',
         rawData: state.entity
       });
@@ -84,21 +96,40 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
       schema: {
         tag: 'Entity',
         data: {
-          names: ['TVShowName'],
+          names: ['TVMazeQuery'],
           fields: {
             'query': 'Text',
-            'type': 'Text',
-            'name': 'Text'
+            'type': 'Text'
           }
         }
       },
-      type: 'TVShowName',
-      name: 'TVShowName',
-      id: 'piped-show-name',
+      type: 'TVMazeQuery',
+      name: 'TVMazeQuery',
+      id: 'piped-show-query',
       tags: ['piped', 'nosync'],
       storageKey: 'in-memory'
     });
     this._setState({store});
+  }
+  async _requireFindStore(context) {
+    const findStore = await FbStore.createContextStore(context, {
+      schema: {
+        tag: 'Entity',
+        data: {
+          names: ['TVMazeFind'],
+          fields: {
+            'name': 'Text',
+            'type': 'Text'
+          }
+        }
+      },
+      type: 'TVMazeFind',
+      name: 'TVMazeFind',
+      id: 'piped-show-find',
+      tags: ['piped', 'nosync'],
+      storageKey: 'in-memory'
+    });
+    this._setState({findStore});
   }
   _updateMetaplans(metaplans, context) {
     if (metaplans.plans) {
