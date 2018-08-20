@@ -105,7 +105,11 @@ const template = html`
   ></cloud-data>
 
   <mi-toast-pipe
+    context="{{context}}"
     arc="{{arc}}"
+    suggestions="{{suggestions}}"
+    metaplans="{{metaplans}}"
+    on-suggestion="_onStateData"
   ></mi-toast-pipe>
 
   <shell-ui
