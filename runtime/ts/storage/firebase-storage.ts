@@ -39,21 +39,25 @@ export async function resetStorageForTesting(key) {
 }
 
 class FirebaseKey extends KeyBase {
-  protocol: string;
-  databaseUrl: string;
-  projectId: string;
-  apiKey: string;
+  private protocol: string;
+  databaseUrl?: string;
+  projectId?: string;
+  apiKey?: string;
   location: string;
-  constructor(key) {
+
+  constructor(key: string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol === 'firebase');
     if (parts[1]) {
       parts = parts[1].split('/');
-      assert(parts[0].endsWith('.firebaseio.com'));
       this.databaseUrl = parts[0];
-      this.projectId = this.databaseUrl.split('.')[0];
+      if (this.databaseUrl && this.databaseUrl.endsWith('.firebaseio.com')) {
+        this.projectId = this.databaseUrl.split('.')[0];
+      } else {
+        throw new Error("FirebaseKey must end with .firebaseio.com");
+      }
       this.apiKey = parts[1];
       this.location = parts.slice(2).join('/');
     } else {
@@ -86,7 +90,7 @@ let _nextAppNameSuffix = 0;
 export class FirebaseStorage {
   private readonly arcId: Id;
   private readonly apps: {[index: string]: {app: app.App, owned: boolean}};
-  private readonly sharedStores: {[index: string]: FirebaseStorageProvider};
+  private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
   private baseStores: Map<Type, FirebaseCollection>;
 
   constructor(arcId: Id) {
@@ -133,7 +137,7 @@ export class FirebaseStorage {
     return this.baseStores.get(type);
   }
 
-  parseStringAsKey(s: string) {
+  parseStringAsKey(s: string) : FirebaseKey {
     return new FirebaseKey(s);
   }
 
@@ -200,9 +204,9 @@ export class FirebaseStorage {
 
 abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
-  protected persisting: Promise<void>;
+  protected persisting: Promise<void>|null;
   protected reference: database.Reference;
-  protected backingStore: FirebaseCollection;
+  protected backingStore: FirebaseCollection|null;
   protected storageEngine: FirebaseStorage;
 
   protected constructor(type, storageEngine, id, reference, key) {
@@ -295,7 +299,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 // modifications), but the result will always be
 // monotonically increasing.
 class FirebaseVariable extends FirebaseStorageProvider {
-  private value: {storageKey: string, id: string};
+  private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
   wasConnect: boolean; // for debugging
@@ -313,6 +317,8 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // Monotonic version, initialized via response from firebase,
     // or a call to `set` (as 0). Updated on changes from firebase
     // or during local modifications.
+
+    // TODO Replace this nullness with a uninitialized boolean.
     this.version = null;
 
     // Whether `this.value` is affected by a local modification.
@@ -445,17 +451,16 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   // Returns {version, model: [{id, value}]}
-  async toLiteral() {
+  async toLiteral(): Promise<{}> {
     await this.initialized;
     // fixme: think about if there are local mutations...
     const value = this.value;
-    let model = [];
-    if (value != null) {
-      model = [{
+    const model = (value == null) ? [] :
+      [{
         id: value.id,
         value,
       }];
-    }
+
     return {
       version: this.version,
       model,
@@ -471,21 +476,21 @@ class FirebaseVariable extends FirebaseStorageProvider {
 }
 
 
-function setDiff(from, to) {
-  const add = [];
-  const remove = [];
+function setDiff(from: string[], to: string[]) {
+  const add: string[] = [];
+  const remove: string[] = [];
   const items = new Set([...from, ...to]);
-  from = new Set(from);
-  to = new Set(to);
+  const fromSet = new Set(from);
+  const toSet = new Set(to);
   for (const item of items) {
-    if (from.has(item)) {
-      if (to.has(item)) {
+    if (fromSet.has(item)) {
+      if (toSet.has(item)) {
         continue;
       }
       remove.push(item);
       continue;
     }
-    assert(to.has(item));
+    assert(toSet.has(item));
     add.push(item);
   }
   return {remove, add};
@@ -696,7 +701,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.model.getValue(id);
   }
 
-  async remove(id, keys=[], originatorId=null) {
+  async remove(id, keys:string[] = [], originatorId=null) {
     await this.initialized;
 
     // 1. Apply the change to the local model.
@@ -923,10 +928,10 @@ class Cursor {
   private readonly pageSize: number;
   private state: CursorState;
   private removed: {}[];
-  private baseQuery: database.Query;
-  private nextStart: string;
-  private end: string;
-  private removedFn: (removed: firebase.database.DataSnapshot) => void;
+  private baseQuery: database.Query|null;
+  private nextStart: string|null;
+  private end: string|null;
+  private removedFn: ((removed: firebase.database.DataSnapshot) => void) | null;
 
   constructor(reference, pageSize) {
     assert(!isNaN(pageSize) && pageSize > 0);

@@ -147,7 +147,7 @@ class InMemoryStorageProvider extends StorageProviderBase {
 class InMemoryCollection extends InMemoryStorageProvider {
   _model: CrdtCollectionModel;
   _storageEngine: InMemoryStorage;
-  _backingStore: InMemoryCollection;
+  _backingStore: InMemoryCollection|null;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this._model = new CrdtCollectionModel();
@@ -245,7 +245,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     trace.end({args: {value}});
   }
 
-  async remove(id, keys=[], originatorId=null) {
+  async remove(id, keys:string[] = [], originatorId=null) {
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (keys.length === 0) {
       keys = this._model.getKeys(id);
@@ -267,8 +267,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
 class InMemoryVariable extends InMemoryStorageProvider {
   _storageEngine: InMemoryStorage;
-  _stored: {id: string};
-  _backingStore: InMemoryCollection;
+  _stored: {id: string}|null;
+  _backingStore: InMemoryCollection|null;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this._storageEngine = storageEngine;

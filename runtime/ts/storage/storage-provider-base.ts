@@ -11,8 +11,10 @@ import {Tracing} from '../../../tracelib/trace.js';
 import {Type} from '../type';
 import * as util from '../../recipe/util.js';
 
-enum EventKind {'change'}
-type Callback = () => void;
+enum EventKind {
+  Change = 'change'
+}
+type Callback = ({}) => void;
 
 export class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
@@ -24,7 +26,7 @@ export class StorageProviderBase {
   
   id: string;
   name: string;
-  source: {};
+  source: {}|null;
   description: string;
 
   constructor(type, name, id, key) {
@@ -58,15 +60,19 @@ export class StorageProviderBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind, callback, target): void {
+  on(kindStr: string, callback: Callback, target): void {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
+    const kind: EventKind = EventKind[kindStr];
+    
     const listeners = this.listeners.get(kind) || new Map();
     listeners.set(callback, {target});
     this.listeners.set(kind, listeners);
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
-  async _fire(kind, details) {
+  async _fire(kindStr: string, details) {
+    const kind: EventKind = EventKind[kindStr];
+    
     const listenerMap = this.listeners.get(kind);
     if (!listenerMap || listenerMap.size === 0) {
       return;
@@ -75,7 +81,7 @@ export class StorageProviderBase {
     const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this.type.tag,
         name: this.name, listeners: listenerMap.size}});
 
-    const callbacks = [];
+    const callbacks:Callback[] = [];
     for (const [callback] of listenerMap.entries()) {
       callbacks.push(callback);
     }
@@ -101,8 +107,8 @@ export class StorageProviderBase {
   }
 
   toString(handleTags): string {
-    const results = [];
-    const handleStr = [];
+    const results: string[] = [];
+    const handleStr: string[] = [];
     handleStr.push(`store`);
     if (this.name) {
       handleStr.push(`${this.name}`);
