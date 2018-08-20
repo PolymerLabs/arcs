@@ -13,7 +13,12 @@ import Xen from '../../../components/xen/xen.js';
 import {FbStore} from '../fb-data/FbStore.js';
 
 // MiToast object supplied externally, otherwise a mock
-const MiToast = window.MiToast || {entityArcAvailable() {}};
+const MiToast = window.MiToast || {
+  entityArcAvailable() {
+  },
+  foundSuggestions(suggestions) {
+  }
+};
 
 // public handshake object
 const ShellApi = window.ShellApi = {
@@ -33,6 +38,11 @@ const ShellApi = window.ShellApi = {
     } else {
       ShellApi.pendingEntity = entity;
     }
+  },
+  chooseSuggestion(suggestion) {
+    if (ShellApi.pipe) {
+      ShellApi.pipe.chooseSuggestion(suggestion);
+    }
   }
 };
 
@@ -40,28 +50,33 @@ const log = Xen.logFactory('MiToastPipe', '#a01a01');
 
 class MiToastPipe extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc'];
+    return ['context', 'arc', 'metaplans', 'suggestions'];
   }
-  receiveEntity(entity) {
-    log('receiveEntity:', entity);
+  receiveEntity(entityJSON) {
+    log('receiveEntity:', entityJSON);
+    const entity = JSON.parse(entityJSON);
     this._setState({entity});
   }
-  _update({arc}, state) {
+  _update({context, arc, metaplans}, state) {
     if (arc && !state.registered) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (arc && !state.store) {
-      this._requireStore(arc);
+    if (!state.store && context && state.entity) {
+      this._requireStore(context);
     }
     if (state.store && state.entity) {
       state.store.set({
         id: 'piped-store',
-        rawData: {
-          name: state.entity
-        }
+        rawData: state.entity
       });
+      // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
+      // force replanning here
+      document.querySelector('app-shell').shadowRoot.querySelector('arc-planner')._state.planificator._onDataChange();
+    }
+    if (metaplans && context) {
+      this._updateMetaplans(metaplans, context);
     }
   }
   async _requireStore(context) {
@@ -71,16 +86,45 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
         data: {
           names: ['TVShowName'],
           fields: {
+            'query': 'Text',
+            'type': 'Text',
             'name': 'Text'
           }
         }
       },
       type: 'TVShowName',
       name: 'TVShowName',
-      tags: ['#piped', '#nosync'],
+      id: 'piped-show-name',
+      tags: ['piped', 'nosync'],
       storageKey: 'in-memory'
     });
     this._setState({store});
+  }
+  _updateMetaplans(metaplans, context) {
+    if (metaplans.plans) {
+      // find metaplans that use #piped stores
+      const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
+        //log(handle._id);
+        const tags = context.findStoreTags(context.findStoreById(handle._id));
+        //log(tags);
+        // TODO(sjmiles): tags is sometimes a Set, sometimes an Array
+        return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+      }));
+      if (piped.length) {
+        // reduce plans to descriptionText
+        const suggestions = piped.map(metaplan => metaplan.descriptionText);
+        log('piped suggestions', suggestions);
+        MiToast.foundSuggestions(suggestions);
+      }
+    }
+  }
+  chooseSuggestion(suggestion) {
+    const {metaplans} = this._props;
+    if (metaplans && metaplans.plans) {
+      const metaplan = metaplans.plans.find(metaplan => metaplan.descriptionText === suggestion);
+      log('piped plan', metaplan);
+      this._fire('suggestion', metaplan);
+    }
   }
 }
 customElements.define('mi-toast-pipe', MiToastPipe);
