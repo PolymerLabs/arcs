@@ -69,7 +69,7 @@ export class CrdtCollectionModel {
   // Removes the membership, `keys`, of the value indexed by `id` from this collection.
   // Returns whether the change is effective (the value is no longer present
   // in the collection because all of the keys have been removed).
-  remove(id: string, keys): boolean {
+  remove(id: string, keys: string[]): boolean {
     const item = this.items.get(id);
     if (!item) {
       return false;
@@ -85,8 +85,8 @@ export class CrdtCollectionModel {
   }
 
   // [{id, value, keys: []}]
-  toLiteral() {
-    const result = [];
+  toLiteral(): {id, value, keys}[] {
+    const result: {id, value, keys}[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }
@@ -97,11 +97,11 @@ export class CrdtCollectionModel {
     return [...this.items.values()].map(item => item.value);
   }
 
-  has(id): boolean {
+  has(id: string): boolean {
     return this.items.has(id);
   }
 
-  getKeys(id: string) {
+  getKeys(id: string): string[] {
     const item = this.items.get(id);
     return item ? [...item.keys] : [];
   }

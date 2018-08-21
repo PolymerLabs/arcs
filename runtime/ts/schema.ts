@@ -18,7 +18,7 @@ export class Schema {
   description: {[index: string]: string};
 
   constructor(model) {
-    const legacy = [];
+    const legacy:string[] = [];
     // TODO: remove this (remnants of normative/optional)
     if (model.sections) {
       legacy.push('sections');
@@ -310,7 +310,7 @@ export class Schema {
   }
 
   toManifestString() {
-    const results = [];
+    const results:string[] = [];
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(([name, type]) => `  ${Schema._typeString(type)} ${name}`));
     if (Object.keys(this.description).length > 0) {

@@ -226,7 +226,7 @@ ${this._slotsToManifestString()}
       sizeCheck = handles.size;
     }
 
-    const handleList = [];
+    const handleList: Handle[] = [];
     for (const handle of this.handles) {
       const otherHandle = handleMap.get(handle);
       let resultType;
@@ -367,7 +367,7 @@ ${this._slotsToManifestString()}
       handle => particleSpec.connections.map(connection => ({match: connection, result: Shape.handlesMatch(handle, connection)}))
                                       .filter(a => a.result !== false));
 
-    const particleSlots = [];
+    const particleSlots: {}[] = [];
     particleSpec.slots.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
       consumedSlot.providedSlots.forEach(providedSlot => {
