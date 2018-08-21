@@ -206,7 +206,7 @@ export class Arc {
       }
     }
     for (let url of importSet.values()) {
-      resources += `import '${url}'\n`;
+      context.resources += `import '${url}'\n`;
     }
 
     for (let handle of this._stores) {
