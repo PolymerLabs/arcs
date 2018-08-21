@@ -134,12 +134,15 @@ export class FirebaseStorage {
     return this.sharedStores[id];
   }
 
-  async baseStorageFor(type, key) {
+  baseStorageKey(type, key) {
     key = new FirebaseKey(key);
     key.location = `backingStores/${type.toString()}`;
-    
+    return key.toString();
+  }
+
+  async baseStorageFor(type, key) {
     if (!this.baseStores.has(type)) {
-      const store = await this._join(type.toString(), type.collectionOf(), key.toString(), 'unknown') as FirebaseCollection;
+      const store = await this._join(type.toString(), type.collectionOf(), key, 'unknown') as FirebaseCollection;
       this.baseStores.set(type, store);
     }
 
@@ -420,7 +423,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // first, before looking at anything else. 
     if (this.referenceMode && this.backingStore == null) {
       referredType = this.type;    
-      this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageKey);
+      this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageEngine.baseStorageKey(referredType, this.storageKey));
     }
 
     if (this.version == null) {
@@ -745,7 +748,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
       if (this.backingStore == null) {
-        this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageKey);
+        this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageEngine.baseStorageKey(referredType, this.storageKey));
       }
       await this.backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this.backingStore.storageKey};

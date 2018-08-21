@@ -71,7 +71,7 @@ describe('in-memory', function() {
       assert.deepEqual(await var1.get(), await var2.get());
     });
 
-    it('supports pointer dereferences', async () => {
+    it.skip('supports pointer dereferences', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -172,7 +172,7 @@ describe('in-memory', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
-    it('supports pointer dereferences', async () => {
+    it.skip('supports pointer dereferences', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value

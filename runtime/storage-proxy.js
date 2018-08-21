@@ -248,8 +248,9 @@ class CollectionProxy extends StorageProxyBase {
       }
     } else if ('remove' in update) {
       for (let {value, keys, effective} of update.remove) {
+        const localValue = this._model.getValue(value.id);
         if (apply && this._model.remove(value.id, keys) || !apply && effective) {
-          removed.push(value);
+          removed.push(localValue);
         }
       }
     } else {

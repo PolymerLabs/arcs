@@ -108,6 +108,7 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
+    console.log("1", helper.arc.id.toString());
     await helper.makePlans();
     assert.lengthOf(helper.plans, 1);
     let suggestContext = suggestionComposer._slotComposer._contexts.find(h => h.id == helper.plans[0].plan.slots[0].id);
@@ -120,6 +121,8 @@ describe('suggestion composer', function() {
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     await helper.acceptSuggestion({particles: ['LightCandles']});
+    console.log("2", helper.arc.id.toString());
+
     await helper.makePlans();
     assert.isEmpty(helper.plans);
     await suggestionComposer._updateSuggestions(helper.plans);
