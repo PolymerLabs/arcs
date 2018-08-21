@@ -51,8 +51,8 @@ class ArcConfig extends Xen.Base {
       key: params.get('arc') || null,
       search: params.get('search') || '',
       urls: window.shellUrls || {},
-      useStorage: !params.has('legacy'),
-      useSerialization: !params.has('legacy') && !params.has('legacy-steps')
+      useStorage: !params.has('legacy') && !params.has('legacy-store'),
+      useSerialization: !params.has('legacy')
     };
   }
 }
