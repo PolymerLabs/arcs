@@ -127,7 +127,8 @@ class StoreExplorer extends Xen.Base {
         }
         let moniker = store.id.split(':').pop();
         if (!store.type || store.type.tag !== 'Interface') {
-          result.push({tags: data.tags, data, name: store.name || data.tags || moniker});
+          const label = data.name || `unnamed (${store.type.toPrettyString()})`;
+          result.push({tags: data.tags, data: {[label]: data}, name: store.name || data.tags || moniker});
         }
       }
     }
