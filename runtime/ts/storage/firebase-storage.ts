@@ -446,6 +446,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const literal = await handle.toLiteral();
     this.fromLiteral(literal);
     this.localModified = true;
+    this.resolveInitialized();
     this._fire('change', {data: this.value, version: this.version, originatorId: null, barrier: null});
     await this._persistChanges();
   }
@@ -455,16 +456,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
     await this.initialized;
     // fixme: think about if there are local mutations...
     const value = this.value;
-    const model = (value == null) ? [] :
-      [{
-        id: value.id,
-        value,
-      }];
+    const model = (value == null) ? [] : [{id: value.id, value}];
 
-    return {
-      version: this.version,
-      model,
-    };
+    return {version: this.version, model};
   }
 
   fromLiteral({version, model}) {
