@@ -40,14 +40,12 @@ defineParticle(({DomParticle, resolver}) => {
         .then(response => response.json())
         .then(places => this._receivePlaces(places));
     }
-    _receivePlaces(places) {
-      let restaurants = this.handles.get('restaurants');
-      let Restaurant = restaurants.entityClass;
-      places.results.forEach(p => {
-        let photo = p.photos && p.photos.length
+    async _receivePlaces(places) {
+      const restaurants = places.results.map(p => {
+        const photo = p.photos && p.photos.length
           ? `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
           : p.icon;
-        let e = new Restaurant({
+        return {
           id: p.id,
           reference: p.reference,
           name: p.name,
@@ -56,9 +54,10 @@ defineParticle(({DomParticle, resolver}) => {
           rating: p.rating,
           identifier: p.place_id,
           photo
-        });
-        restaurants.store(e);
+        };
       });
+      await this.clearHandle('restaurants');
+      this.appendRawDataToHandle('restaurants', restaurants);
       this._setState({count: places.results.length});
     }
     render(props, state) {

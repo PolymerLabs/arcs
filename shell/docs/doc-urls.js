@@ -5,6 +5,7 @@ const design = `${arcs}/design`;
 export default [
   `${runtime}/particle-execution-context.js`,
   `${runtime}/particle.js`,
+  `${runtime}/dom-particle-base.js`,
   `${runtime}/dom-particle.js`,
   `${design}/schemas.md`,
   `${runtime}/manifest.md`,

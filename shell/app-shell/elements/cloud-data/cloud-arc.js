@@ -84,7 +84,10 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       if (!this._props.config.useSerialization) {
         serialization = '';
       }
-      this._fire('serialization', serialization);
+      // TODO(sjmiles): hack to delay deserialization until after Context has initialized
+      setTimeout(() => {
+        this._fire('serialization', serialization);
+      }, 300);
     }
   }
   _createKey(db) {

@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 import './arc-store.js';
+import {FbStore} from './fb-data/FbStore.js';
 
 // templates
 const template = Xen.html`
@@ -25,7 +26,7 @@ const log = Xen.logFactory('ShellStores', '#004f00');
 
 class ShellStores extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'config', 'users', 'user', 'arc'];
+    return ['key', 'config', 'users', 'user', 'arc', 'context'];
   }
   get template() {
     return template;
@@ -71,6 +72,23 @@ class ShellStores extends Xen.Debug(Xen.Base, log) {
         name: 'User',
         tags: ['user']
       },
+      user0StoreOptions: {
+        schema: {
+          tag: 'Entity',
+          data: {
+            names: ['User0'],
+            fields: {
+              'id': 'Text',
+              'name': 'Text',
+              'location': 'Object'
+            }
+          }
+        },
+        type: 'User0',
+        id: 'User0',
+        name: 'User0',
+        tags: ['user0']
+      },
       usersStoreOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Person]',
@@ -89,22 +107,34 @@ class ShellStores extends Xen.Debug(Xen.Base, log) {
     });
   }
   _update(props, state, oldProps, oldState) {
-    const {config, users, user, key} = props;
+    const {config, users, user, key, context} = props;
     if (config) {
       if (!state.config) {
         state.config = config;
         this._configState(config);
       }
-      const {geoCoords} = state;
-      if (key && (key !== oldProps.key)) {
-        state.themeData = Object.assign({key}, state.defaultThemeData);
-      }
-      if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
-        state.userStoreData = this._renderUser(user, geoCoords);
-      }
       if (users && (users !== oldProps.users || !state.usersStoreData)) {
         state.usersStoreData = this._renderUsers(users);
       }
+      if (user && (user !== oldProps.user || state.geoCoords !== oldState.geoCoords)) {
+        state.userStoreData = this._renderUser(user, state.geoCoords);
+      }
+      if (key && (key !== oldProps.key)) {
+        state.themeData = Object.assign({key}, state.defaultThemeData);
+      }
+      this._updateUser(props, state, oldState);
+    }
+  }
+  async _updateUser({context, user}, state, oldState) {
+    const {userStore} = state;
+    if (context && !userStore) {
+      this._setState({userStore: await FbStore.createContextStore(context, state.user0StoreOptions)});
+    }
+    if (userStore && user && (user !== state.user || state.geoCoords !== oldState.geoCoords)) {
+      state.user = user;
+      log('setting User0 data');
+      //const entity = this._renderUser(user, state.geoCoords);
+      userStore.set({id: userStore.generateID(), rawData: {name: user.info.name}});
     }
   }
   _render(props, state) {

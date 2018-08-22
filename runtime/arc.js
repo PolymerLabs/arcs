@@ -320,7 +320,7 @@ ${this.activeRecipe.toString()}`;
    let particleIndex = 0;
    let handleIndex = 0;
    let slotIndex = 0;
-    
+
    this._recipes.forEach(recipe => {
      let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), pattern: recipe.pattern};
      recipe.particles.forEach(p => {
@@ -464,12 +464,14 @@ ${this.activeRecipe.toString()}`;
               .toString();
     }
 
-    if (storageKey == undefined) {
+    // TODO(sjmiles): use `in-memory` for nosync stores
+    const hasNosyncTag = tags => tags && ((Array.isArray(tags) && tags.includes('nosync')) || tags === 'nosync');
+    if (storageKey == undefined || hasNosyncTag(tags)) {
       storageKey = 'in-memory';
     }
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(store, 'stopre with id ${id} already exists');
+    assert(store, 'store with id ${id} already exists');
     store.name = name;
 
     this._registerStore(store, tags);
