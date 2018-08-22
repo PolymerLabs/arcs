@@ -232,7 +232,7 @@ const set = function(notes, map, scope, controller) {
 const _set = function(node, property, value, controller) {
   // TODO(sjmiles): the property conditionals here could be precompiled
   let modifier = property.slice(-1);
-  if (property === 'style%' || property === 'style') {
+  if (property === 'style%' || property === 'style' || property === 'xen:style') {
     if (typeof value === 'string') {
       node.style.cssText = value;
     } else {
