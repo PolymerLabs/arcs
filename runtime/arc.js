@@ -239,10 +239,11 @@ ${this.activeRecipe.toString()}`;
       context
     });
     await Promise.all(manifest.stores.map(async store => {
+      const tags = manifest._storeTags.get(store);
       if (store.constructor.name == 'StorageStub') {
         store = await store.inflate();
       }
-      arc._registerStore(store, manifest._storeTags.get(store));
+      arc._registerStore(store, tags);
     }));
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
