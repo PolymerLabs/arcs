@@ -75,6 +75,7 @@ const template = html`
     config="{{config}}"
     users="{{users}}"
     user="{{user}}"
+    context="{{context}}"
     key="{{key}}"
     arc="{{arc}}"
     on-theme="_onStateData"
