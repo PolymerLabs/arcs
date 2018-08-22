@@ -23,9 +23,13 @@ import {StorageProviderFactory} from '../ts-build/storage/storage-provider-facto
 let loader = new Loader();
 
 const createSlotComposer = () => new SlotComposer({rootContainer: 'test', affordance: 'mock'});
-const Bar = new Schema({names: ['Bar'], fields: {id: 'Number', value: 'Text'}}).entityClass();
 
 describe('Handle', function() {
+
+  let Bar;
+  before(() => {
+    Bar = new Schema({names: ['Bar'], fields: {id: 'Number', value: 'Text'}}).entityClass();
+  });
 
   it('clear singleton store', async () => {
     let slotComposer = createSlotComposer();
