@@ -9,8 +9,8 @@
 defineParticle(({DomParticle, html}) => {
 
   const item = html`
-  
-<div item style%="{{image}}" style="position: relative;">
+
+<div item xen:style="{{image}}" style="position: relative;">
   <div scrim></div>
   <div style="flex: 1"></div>
 
@@ -22,12 +22,12 @@ defineParticle(({DomParticle, html}) => {
     <div style="width: 56px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
       <div rating>{{rating}}</div>
       <div stars-container>
-        <div stars style="{{starStyle}}"></div>
+        <div stars xen:style="{{starStyle}}"></div>
       </div>
     </div>
   </div>
 </div>
-<div slotid="annotation" subid="{{id}}" style="padding:4px 0;">
+<div slotid="annotation" subid$="{{id}}" style="padding:4px 0;">
 
 `;
 
