@@ -102,6 +102,30 @@ export class DomParticleBase extends Particle {
     super.setDescriptionPattern('_template_', pattern.template);
     super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
   }
+  /** @method clearHandle(handleName)
+   * Remove entities from named handle.
+   */
+  async clearHandle(handleName) {
+    const handle = this.handles.get(handleName);
+    if (handle.clear) {
+      handle.clear();
+    } else {
+      const data = this._props[handleName];
+      if (data) {
+        return Promise.all(data.map(entity => handle.remove(entity)));
+      }
+    }
+  }
+  /** @method appendRawDataToHandle(handleName, rawDataArray)
+   * Create an entity from each rawData, and append to named handle.
+   */
+  appendRawDataToHandle(handleName, rawDataArray) {
+    const handle = this.handles.get(handleName);
+    const entityClass = handle.entityClass;
+    rawDataArray.forEach(raw => {
+      handle.store(new entityClass(raw));
+    });
+  }
   /** @method updateVariable(handleName, record)
    * Modify value of named handle.
    */
