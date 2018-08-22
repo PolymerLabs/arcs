@@ -9,6 +9,8 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {Type} from './type.js';
+import {TypeChecker} from '../recipe/type-checker.js';
 
 // ShapeHandle {name, direction, type}
 // Slot {name, direction, isRequired, isSet}
@@ -75,7 +77,7 @@ export class Shape {
     }
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     return 'SHAAAAPE';
   }
 
@@ -91,7 +93,7 @@ export class Shape {
     return this._cloneAndUpdate(typeVar => typeVar.canWriteSuperset);
   }
 
-  isMoreSpecificThan(other) {
+  isMoreSpecificThan(other): boolean {
     if (this.handles.length !== other.handles.length ||
         this.slots.length !== other.slots.length) {
       return false;
@@ -108,7 +110,7 @@ export class Shape {
     return true;
   }
 
-  _applyExistenceTypeTest(test) {
+  _applyExistenceTypeTest(test): boolean {
     for (const typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
@@ -118,7 +120,7 @@ export class Shape {
     return false;
   }
 
-  _handlesToManifestString() {
+  _handlesToManifestString(): string {
     return this.handles
       .map(handle => {
         const type = handle.type.resolvedType();
@@ -126,7 +128,7 @@ export class Shape {
       }).join('\n');
   }
 
-  _slotsToManifestString() {
+  _slotsToManifestString(): string {
     // TODO deal with isRequired
     return this.slots
       .map(slot => `  ${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name ? slot.name + ' ' : ''}`)
@@ -134,14 +136,14 @@ export class Shape {
   }
   // TODO: Include name as a property of the shape and normalize this to just
   // toString().
-  toString() {
+  toString(): string {
     return `shape ${this.name}
 ${this._handlesToManifestString()}
 ${this._slotsToManifestString()}
 `;
   }
 
-  static fromLiteral(data) {
+  static fromLiteral(data): Shape {
     const handles = data.handles.map(handle => ({type: _fromLiteral(handle.type), name: _fromLiteral(handle.name), direction: _fromLiteral(handle.direction)}));
     const slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction), isRequired: _fromLiteral(slot.isRequired), isSet: _fromLiteral(slot.isSet)}));
     return new Shape(data.name, handles, slots);
@@ -159,17 +161,17 @@ ${this._slotsToManifestString()}
     return new Shape(this.name, handles, slots);
   }
 
-  cloneWithResolutions(variableMap) {
+  cloneWithResolutions(variableMap): Shape {
     return this._cloneWithResolutions(variableMap);
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap): Shape {
     const handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type._cloneWithResolutions(variableMap) : undefined}));
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
   }
 
-  canEnsureResolved() {
+  canEnsureResolved(): boolean {
     for (const typeVar of this.typeVars) {
       if (!typeVar.object[typeVar.field].canEnsureResolved()) {
         return false;
@@ -178,7 +180,7 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     for (const typeVar of this.typeVars) {
       let variable = typeVar.object[typeVar.field];
       variable = variable.clone(new Map());
@@ -201,7 +203,7 @@ ${this._slotsToManifestString()}
     }
 
     const handles = new Set(this.handles);
-    const otherHandles = new Set(other.handles);
+    const otherHandles = new Set<Handle>(other.handles);
     const handleMap = new Map();
     let sizeCheck = handles.size;
     while (handles.size > 0) {
@@ -244,11 +246,11 @@ ${this._slotsToManifestString()}
     return new Shape(this.name, handleList, slots);
   }
 
-  resolvedType() {
+  resolvedType(): Shape {
     return this._cloneAndUpdate(typeVar => typeVar.resolvedType());
   }
 
-  equals(other) {
+  equals(other: Shape): boolean {
     if (this.handles.length !== other.handles.length) {
       return false;
     }
@@ -264,11 +266,11 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  _equalHandle(handle, otherHandle) {
+  _equalHandle(handle: Handle, otherHandle: Handle): boolean {
     return handle.name === otherHandle.name && handle.direction === otherHandle.direction && handle.type.equals(otherHandle.type);
   }
 
-  _equalSlot(slot, otherSlot) {
+  _equalSlot(slot: Slot, otherSlot: Slot): boolean {
     return slot.name === otherSlot.name && slot.direction === otherSlot.direction && slot.isRequired === otherSlot.isRequired && slot.isSet === otherSlot.isSet;
   }
 
@@ -289,7 +291,7 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  _cloneAndUpdate(update) {
+  _cloneAndUpdate(update): Shape {
     const copy = this.clone(new Map());
     copy.typeVars.forEach(typeVar => Shape._updateTypeVar(typeVar, update));
     return copy;
@@ -299,14 +301,15 @@ ${this._slotsToManifestString()}
     typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
   }
 
-  static isTypeVar(reference) {
+  static isTypeVar(reference): boolean {
     return (reference instanceof Type) && reference.hasProperty(r => r.isVariable);
   }
 
-  static mustMatch(reference) {
+  static mustMatch(reference): boolean {
     return !(reference == undefined || Shape.isTypeVar(reference));
   }
 
+  // TODO this should return a boolean.
   static handlesMatch(shapeHandle, particleHandle) {
     if (Shape.mustMatch(shapeHandle.name) &&
         shapeHandle.name !== particleHandle.name) {
@@ -329,10 +332,9 @@ ${this._slotsToManifestString()}
     } else {
       return left.equals(right);
     }
-
   }
 
-  static slotsMatch(shapeSlot, particleSlot) {
+  static slotsMatch(shapeSlot, particleSlot): boolean {
     if (Shape.mustMatch(shapeSlot.name) &&
         shapeSlot.name !== particleSlot.name) {
       return false;
@@ -352,7 +354,7 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  particleMatches(particleSpec) {
+  particleMatches(particleSpec): boolean {
     const shape = this.cloneWithResolutions(new Map());
     return shape.restrictType(particleSpec) !== false;
   }
@@ -423,6 +425,3 @@ ${this._slotsToManifestString()}
     return this;
   }
 }
-
-import {Type} from './type.js';
-import {TypeChecker} from '../recipe/type-checker.js';

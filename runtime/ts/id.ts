@@ -21,7 +21,7 @@ export class Id {
     this.currentSession = currentSession;
   }
 
-  static newSessionId() {
+  static newSessionId(): Id {
     const session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
     return new Id(session);
   }

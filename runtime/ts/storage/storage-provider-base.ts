@@ -25,14 +25,14 @@ export class StorageProviderBase {
   protected version: number|null;
   
   id: string;
-  name: string;
+  name: string|undefined;
   source: {}|null;
   description: string;
 
-  constructor(type, name, id, key) {
+  constructor(type: Type, name: string|undefined, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name}});
+    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type, name}});
     this._type = type;
     this.listeners = new Map();
     this.name = name;
@@ -44,11 +44,11 @@ export class StorageProviderBase {
     trace.end();
   }
 
-  get storageKey() {
+  get storageKey(): string {
     return this._storageKey;
   }
 
-  generateID() {
+  generateID(): string {
     return `${this.id}:${this.nextLocalID++}`;
   }
 
@@ -56,9 +56,10 @@ export class StorageProviderBase {
     return {base: this.id, component: () => this.nextLocalID++};
   }
 
-  get type() {
+  get type(): Type {
     return this._type;
   }
+
   // TODO: add 'once' which returns a promise.
   on(kindStr: string, callback: Callback, target): void {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
@@ -93,7 +94,7 @@ export class StorageProviderBase {
     trace.end();
   }
 
-  _compareTo(other) : number {
+  _compareTo(other: StorageProviderBase) : number {
     let cmp;
     cmp = util.compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
@@ -106,7 +107,7 @@ export class StorageProviderBase {
     return 0;
   }
 
-  toString(handleTags): string {
+  toString(handleTags: string[]): string {
     const results: string[] = [];
     const handleStr: string[] = [];
     handleStr.push(`store`);
@@ -130,7 +131,7 @@ export class StorageProviderBase {
     return results.join('\n');
   }
 
-  get apiChannelMappingId() {
+  get apiChannelMappingId(): string {
     return this.id;
   }
 }

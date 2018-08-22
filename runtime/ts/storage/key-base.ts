@@ -6,6 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {Id} from "../id.js";
+
 export abstract class KeyBase {
-  abstract childKeyForHandle(id): KeyBase;
+  abstract childKeyForHandle(id: Id): KeyBase;
 }

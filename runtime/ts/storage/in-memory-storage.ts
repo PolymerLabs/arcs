@@ -36,11 +36,11 @@ class InMemoryKey extends KeyBase {
     assert(this.toString() === key);
   }
 
-  childKeyForHandle(id): InMemoryKey {
+  childKeyForHandle(id: Id): InMemoryKey {
     return new InMemoryKey('in-memory://');
   }
 
-  toString() {
+  toString(): string {
     if (this.location !== undefined && this.arcId !== undefined) {
       return `${this.protocol}://${this.arcId}^^${this.location}`;
     }
@@ -71,7 +71,7 @@ export class InMemoryStorage {
     __storageCache[this.arcId.toString()] = this;
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string, type: Type, keyFragment: string): Promise<StorageProviderBase|null> {
     const key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined) {
       key.arcId = this.arcId.toString();
@@ -88,7 +88,7 @@ export class InMemoryStorage {
     return provider;
   }
 
-  async connect(id, type, keyString) {
+  async connect(id: string, type: Type, keyString: string): Promise<StorageProviderBase|null> {
     const key = new InMemoryKey(keyString);
     if (key.arcId !== this.arcId.toString()) {
       if (__storageCache[key.arcId] == undefined) {
@@ -103,7 +103,7 @@ export class InMemoryStorage {
     return this._memoryMap[keyString];
   }
 
-  async share(id, type, keyString) {
+  async share(id: string, type: Type, keyString: string): Promise<StorageProviderBase|null> {
     const key = new InMemoryKey(keyString);
     assert(key.arcId === this.arcId.toString());
     if (this._memoryMap[keyString] == undefined) {
@@ -112,7 +112,7 @@ export class InMemoryStorage {
     return this._memoryMap[keyString];
   }
 
-  async baseStorageFor(type) {
+  async baseStorageFor(type: Type) {
     if (this._typeMap.has(type)) {
       return this._typeMap.get(type);
     }
@@ -121,7 +121,7 @@ export class InMemoryStorage {
     return storage;
   }
 
-  parseStringAsKey(s: string) {
+  parseStringAsKey(s: string): InMemoryKey {
     return new InMemoryKey(s);
   }
 
@@ -131,7 +131,7 @@ export class InMemoryStorage {
 }
 
 class InMemoryStorageProvider extends StorageProviderBase {
-  static newProvider(type, storageEngine, name, id, key) {
+  static newProvider(type: Type, storageEngine, name: string|undefined, id: string, key: string) {
     if (type.isCollection) {
       return new InMemoryCollection(type, storageEngine, name, id, key);
     }
@@ -202,7 +202,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     return this.toLiteral().model.map(item => item.value);
   }
 
-  async get(id) {
+  async get(id: string) {
     if (this.type.primitiveType().isReference) {
       const ref = this._model.getValue(id);
       if (ref == null) {
@@ -243,7 +243,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     trace.end({args: {value}});
   }
 
-  async remove(id, keys:string[] = [], originatorId=null) {
+  async remove(id: string, keys: string[] = [], originatorId=null) {
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (keys.length === 0) {
       keys = this._model.getKeys(id);
@@ -326,13 +326,13 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return this._stored;
   }
 
-  async set(value : {id: string}, originatorId=null, barrier=null) {
+  async set(value : {id: string}|null, originatorId=null, barrier=null) {
     assert(value !== undefined);
     if (this.type.isReference) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
       // TODO(shans): Make sure this is tested.
-      if (this._stored && this._stored.id === value.id && barrier == null) {
+      if (this._stored && value && this._stored.id === value.id && barrier == null) {
         return;
       }
 
@@ -372,12 +372,12 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
     this.items = new Map();
   }
 
-  async get(id) {
+  async get(id: string) {
     const data = this.items.get(id);
     return (data !== undefined) ? data.value : null;
   }
 
-  async store(value, keys) {
+  async store(value, keys: string[]) {
     assert(keys != null && keys.length > 0, 'keys required');
     this.version++;
 
@@ -391,7 +391,7 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
     return data;
   }
 
-  async remove(id) {
+  async remove(id: string) {
     this.version++;
     this.items.delete(id);
   }

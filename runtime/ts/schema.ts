@@ -115,7 +115,7 @@ export class Schema {
     });
   }
 
-  static intersect(schema1, schema2) {
+  static intersect(schema1, schema2): Schema {
     const names = [...schema1.names].filter(name => schema2.names.includes(name));
     const fields = {};
 
@@ -132,14 +132,14 @@ export class Schema {
     });
   }
 
-  equals(otherSchema) {
+  equals(otherSchema): boolean {
     return this === otherSchema || (this.name === otherSchema.name
        // TODO: Check equality without calling contains.
        && this.isMoreSpecificThan(otherSchema)
        && otherSchema.isMoreSpecificThan(this));
   }
 
-  isMoreSpecificThan(otherSchema) {
+  isMoreSpecificThan(otherSchema): boolean {
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
@@ -161,7 +161,7 @@ export class Schema {
     return true;
   }
 
-  get type() {
+  get type(): Type {
     return Type.newEntity(this);
   }
 
@@ -303,13 +303,13 @@ export class Schema {
     return clazz;
   }
 
-  toInlineSchemaString(options) {
+  toInlineSchemaString(options): string {
     const names = (this.names || ['*']).join(' ');
     const fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
   }
 
-  toManifestString() {
+  toManifestString(): string {
     const results:string[] = [];
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(([name, type]) => `  ${Schema._typeString(type)} ${name}`));

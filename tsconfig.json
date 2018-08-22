@@ -8,6 +8,7 @@
 
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+    "strictFunctionTypes" : true,
     "module": "es2015",
     "moduleResolution": "Node",
 

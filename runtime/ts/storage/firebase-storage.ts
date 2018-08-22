@@ -21,8 +21,8 @@ import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 
-export async function resetStorageForTesting(key) {
-  key = new FirebaseKey(key);
+export async function resetStorageForTesting(keyStr: string) {
+  const key = new FirebaseKey(keyStr);
   const app = firebase.initializeApp({
     apiKey: key.apiKey,
     databaseURL: key.databaseUrl
@@ -42,7 +42,7 @@ export async function resetStorageForTesting(key) {
 }
 
 class FirebaseKey extends KeyBase {
-  private protocol: string;
+  private readonly protocol: string;
   databaseUrl?: string;
   projectId?: string;
   apiKey?: string;
@@ -71,7 +71,7 @@ class FirebaseKey extends KeyBase {
     }
   }
 
-  childKeyForHandle(id): FirebaseKey {
+  childKeyForHandle(id: Id): FirebaseKey {
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
@@ -80,7 +80,7 @@ class FirebaseKey extends KeyBase {
     return new FirebaseKey(`${this.protocol}://${this.databaseUrl}/${this.apiKey}/${location}`);
   }
 
-  toString() {
+  toString(): string {
     if (this.databaseUrl && this.apiKey) {
       return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${this.location}`;
     }
@@ -94,7 +94,7 @@ export class FirebaseStorage {
   private readonly arcId: Id;
   private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
-  private baseStores: Map<Type, FirebaseCollection>;
+  private readonly baseStores: Map<Type, FirebaseCollection>;
 
   constructor(arcId: Id) {
     this.arcId = arcId;
@@ -103,11 +103,11 @@ export class FirebaseStorage {
     this.baseStores = new Map();
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string, type: Type, keyFragment: string) {
     return this._join(id, type, keyFragment, false);
   }
 
-  async connect(id, type, key) {
+  async connect(id: string, type: Type, key: string) {
     return this._join(id, type, key, true);
   }
 
@@ -121,15 +121,15 @@ export class FirebaseStorage {
     }
   }
   
-  async share(id, type, key) {
+  async share(id: string, type: Type, key: string) {
     if (!this.sharedStores[id]) {
       this.sharedStores[id] = await this._join(id, type, key, true);
     }
     return this.sharedStores[id];
   }
 
-  async baseStorageFor(type, key) {
-    key = new FirebaseKey(key);
+  async baseStorageFor(type: Type, keyStr: string) {
+    const key = new FirebaseKey(keyStr);
     key.location = `backingStores/${type.toString()}`;
     
     if (!this.baseStores.has(type)) {
@@ -144,9 +144,9 @@ export class FirebaseStorage {
     return new FirebaseKey(s);
   }
 
-  async _join(id, type, key, shouldExist) {
+  async _join(id: string, type: Type, keyStr: string, shouldExist: boolean|string) {
     assert(typeof id === 'string');
-    key = new FirebaseKey(key);
+    const key = new FirebaseKey(keyStr);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (key.databaseUrl == undefined || key.apiKey == undefined) {
       throw new Error('Can\'t complete partial firebase keys');
@@ -191,7 +191,7 @@ export class FirebaseStorage {
       }
     }
 
-    return FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
+    return FirebaseStorageProvider.newProvider(type, this, id, reference, key.toString(), shouldExist);
   }
 
   static encodeKey(key: string): string {
@@ -212,7 +212,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   protected backingStore: FirebaseCollection|null;
   protected storageEngine: FirebaseStorage;
 
-  protected constructor(type, storageEngine, id, reference, key) {
+  protected constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, key: string) {
     super(type, undefined, id, key.toString());
     this.storageEngine = storageEngine;
     this.firebaseKey = key;
@@ -224,7 +224,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
     this.persisting = null;
   }
 
-  static newProvider(type, storageEngine, id, reference, key, shouldExist) {
+  static newProvider(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, key: string, shouldExist) {
     if (type.isCollection) {
       return new FirebaseCollection(type, storageEngine, id, reference, key);
     }
@@ -306,7 +306,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
 
-  constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
+  constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, firebaseKey: string, shouldExist: boolean) {
     super(type, storageEngine, id, reference, firebaseKey);
     this.wasConnect = shouldExist;
 
@@ -532,7 +532,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private readonly initialized: Promise<void>;
   private resolveInitialized: () => void;
 
-  constructor(type, storageEngine, id, reference, firebaseKey) {
+  constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
 
     // Lists mapped by id containing membership keys that have been
@@ -579,9 +579,9 @@ class FirebaseCollection extends FirebaseStorageProvider {
     }
 
     // [{id, value, keys}]
-    const add = [];
+    const add: {value, keys: string[], effective: boolean}[] = [];
     // [{id, keys}]
-    const remove = [];
+    const remove: {value, keys: string[], effective: boolean}[] = [];
 
     const encIds = new Set([
       ...Object.keys(newRemoteState.items),
@@ -680,7 +680,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.version;
   }
 
-  async get(id) {
+  async get(id: string) {
     await this.initialized;
     if (this.type.primitiveType().isReference) {
       const ref = this.model.getValue(id);
@@ -698,7 +698,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.model.getValue(id);
   }
 
-  async remove(id, keys:string[] = [], originatorId=null) {
+  async remove(id: string, keys:string[] = [], originatorId=null) {
     await this.initialized;
 
     // 1. Apply the change to the local model.
@@ -930,7 +930,7 @@ class Cursor {
   private end: string|null;
   private removedFn: ((removed: firebase.database.DataSnapshot) => void) | null;
 
-  constructor(reference, pageSize) {
+  constructor(reference: firebase.database.Reference, pageSize: number) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.orderByIndex = reference.child('items').orderByChild('index');
     this.pageSize = pageSize;
@@ -989,9 +989,11 @@ class Cursor {
     } else if (this.state === CursorState.stream) {
       assert(this.nextStart !== null);
       query = this.baseQuery.startAt(this.nextStart);
+    } else {
+      throw new Error("no query");
     }
 
-    const value = [];
+    const value:{}[] = [];
     if (this.state === CursorState.stream) {
       this.nextStart = null;
       await query.once('value', snapshot => snapshot.forEach(entry => {
@@ -1054,11 +1056,11 @@ class Cursor {
 //      }
 //    }
 class FirebaseBigCollection extends FirebaseStorageProvider {
-  constructor(type, storageEngine, id, reference, firebaseKey) {
+  constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, firebaseKey: string) {
     super(type, storageEngine, id, reference, firebaseKey);
   }
 
-  async get(id) {
+  async get(id: string) {
     let value;
     const encId = FirebaseStorage.encodeKey(id);
     await this.reference.child('items/' + encId).once('value', snapshot => {
@@ -1067,7 +1069,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     return value;
   }
 
-  async store(value, keys) {
+  async store(value, keys: string[]) {
     // Technically we don't really need keys here; Firebase provides the central replicated storage
     // protocol and the mutating ops here are all pass-through (so no local CRDT management is
     // required). This may change in the future - we may well move to full CRDT support in the
@@ -1110,7 +1112,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     }, undefined, false);
   }
 
-  async remove(id) {
+  async remove(id: string) {
     await this.reference.child('version').transaction(data => {
       return (data || 0) + 1;
     }, undefined, false);
@@ -1120,7 +1122,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   }
 
   // Returns a Cursor for paginated reads of the current version of this BigCollection.
-  async stream(pageSize) {
+  async stream(pageSize: number) {
     const cursor = new Cursor(this.reference, pageSize);
     await cursor._init();
     return cursor;

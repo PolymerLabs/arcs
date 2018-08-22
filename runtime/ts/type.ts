@@ -71,39 +71,39 @@ export class Type {
     this.data = data;
   }
 
-  static newEntity(entity : Schema) {
+  static newEntity(entity : Schema): Type {
     return new Type('Entity', entity);
   }
 
-  static newVariable(variable : TypeVariable) {
+  static newVariable(variable : TypeVariable): Type {
     return new Type('Variable', variable);
   }
 
-  static newCollection(collection : Type) {
+  static newCollection(collection : Type): Type {
     return new Type('Collection', collection);
   }
 
-  static newBigCollection(bigCollection : Type) {
+  static newBigCollection(bigCollection : Type): Type {
     return new Type('BigCollection', bigCollection);
   }
-
-  static newRelation(relation : [Type]) {
+  
+  static newRelation(relation : [Type]): Type {
     return new Type('Relation', relation);
   }
 
-  static newInterface(iface : Shape) {
+  static newInterface(iface : Shape): Type {
     return new Type('Interface', iface);
   }
 
-  static newSlot(slot : SlotInfo) {
+  static newSlot(slot : SlotInfo): Type {
     return new Type('Slot', slot);
   }
 
-  static newReference(reference : Type) {
+  static newReference(reference : Type): Type {
     return new Type('Reference', reference);
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): Type {
     if (this.isVariable) {
       const name = this.variable.name;
       let variable = variableMap.get(name);
@@ -143,7 +143,7 @@ export class Type {
     return this;
   }
 
-  static unwrapPair(type1, type2) {
+  static unwrapPair(type1: Type, type2: Type) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
     if (type1.isCollection && type2.isCollection) {
@@ -202,11 +202,11 @@ export class Type {
   }
 
   // TODO: naming is hard
-  isSomeSortOfCollection() {
+  isSomeSortOfCollection(): boolean {
     return this.isCollection || this.isBigCollection;
   }
 
-  collectionOf() {
+  collectionOf(): Type {
     return Type.newCollection(this);
   }
 
