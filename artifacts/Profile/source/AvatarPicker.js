@@ -57,7 +57,7 @@ ${styles}
     render(props, state) {
       let avatar = props.avatar || 0;
       let avatars = [];
-      for (let i=0; i<30; i++) {
+      for (let i=0; i<33; i++) {
         let url = `https://$cdn/assets/avatars/user (${i+1}).png`;
         avatars.push({
           index: i,
