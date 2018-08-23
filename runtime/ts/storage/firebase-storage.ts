@@ -7,7 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {StorageProviderBase} from './storage-provider-base';
-import * as firebase from 'firebase';
+
+// keep in sync with shell/source/ArcsLib.js
+import * as firebase from 'firebase/app';
+import 'firebase/database';
+import 'firebase/storage';
 
 import {assert} from '../../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
