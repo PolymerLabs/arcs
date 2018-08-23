@@ -346,7 +346,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this.version = data.version;
 
     this.resolveInitialized();
-    this._fire('change', {data: data.value, version: this.version});
+    // Firebase doesn't maintain a distinction between null and undefined, but we explicitly
+    // require empty variables to store 'null'.
+    this._fire('change', {data: data.value || null, version: this.version});
   }
 
   get _hasLocalChanges() {
