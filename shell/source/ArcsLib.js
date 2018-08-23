@@ -17,6 +17,7 @@ import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
+import * as firebase from 'firebase';
 
 //Tracing.enable();
 
@@ -38,4 +39,5 @@ const Arcs = {
 // export default Arcs;
 
 window.Arcs = window.Arcs ? Object.assign(window.Arcs, Arcs) : Arcs;
+window.firebase = firebase;
 
