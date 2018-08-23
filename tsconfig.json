@@ -8,10 +8,12 @@
 
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+    "module": "es2015",
+    "moduleResolution": "Node",
 
     "allowJs": false,
     "sourceMap": true,
-    "target": "es6",
+    "target": "ES2017",
     "lib": ["es2017", "dom"] 
   },
   "include": [
