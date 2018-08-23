@@ -8,8 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// firebase runtime (customized by sjmiles@ for import-ability)
-import firebase from '../../components/firebase.4.2.0.js';
+// firebase runtime is provided by ArcsLib.js 
 
 const config = (() => {
   const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');

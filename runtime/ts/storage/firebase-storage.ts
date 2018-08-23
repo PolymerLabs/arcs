@@ -7,7 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {StorageProviderBase} from './storage-provider-base';
-import {firebase} from '../../../platform/firebase-web.js';
+
+// keep in sync with shell/source/ArcsLib.js
+import * as firebase from 'firebase/app';
+import 'firebase/database';
+import 'firebase/storage';
+
 import {assert} from '../../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
 import {atob} from '../../../platform/atob-web.js';
@@ -15,8 +20,6 @@ import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
-
-import {app, database} from '../../../node_modules/firebase/index';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -89,7 +92,7 @@ let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage {
   private readonly arcId: Id;
-  private readonly apps: {[index: string]: {app: app.App, owned: boolean}};
+  private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
   private baseStores: Map<Type, FirebaseCollection>;
 
@@ -151,7 +154,7 @@ export class FirebaseStorage {
 
     if (this.apps[key.projectId] == undefined) {
       for (const app of firebase.apps) {
-        if (app.options.databaseURL === key.databaseUrl) {
+        if (app.options['databaseURL'] === key.databaseUrl) {
           this.apps[key.projectId] = {app, owned: false};
           break;
         }
@@ -205,7 +208,7 @@ export class FirebaseStorage {
 abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>|null;
-  protected reference: database.Reference;
+  protected reference: firebase.database.Reference;
   protected backingStore: FirebaseCollection|null;
   protected storageEngine: FirebaseStorage;
 
@@ -918,11 +921,11 @@ enum CursorState {'new', 'init', 'stream', 'removed', 'done'}
 // NOTE: entity mutation removes elements from a streamed read; the entity will be updated with an
 // index past the cursor's end but Firebase doesn't issue a child_removed event for it.
 class Cursor {
-  private orderByIndex: database.Query;
+  private orderByIndex: firebase.database.Query;
   private readonly pageSize: number;
   private state: CursorState;
   private removed: {}[];
-  private baseQuery: database.Query|null;
+  private baseQuery: firebase.database.Query|null;
   private nextStart: string|null;
   private end: string|null;
   private removedFn: ((removed: firebase.database.DataSnapshot) => void) | null;
@@ -979,7 +982,7 @@ class Cursor {
       return {done: true};
     }
 
-    let query;
+    let query: firebase.database.Query;
     if (this.state === CursorState.init) {
       query = this.baseQuery;
       this.state = CursorState.stream;

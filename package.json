@@ -46,7 +46,6 @@
     "webpack": "^4.16.5"
   },
   "dependencies": {
-    "@types/firebase": "^3.2.1",
     "@types/pouchdb": "^6.3.2",
     "atob": "^2.1.0",
     "btoa": "^1.2.1",
