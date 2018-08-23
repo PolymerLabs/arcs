@@ -468,7 +468,7 @@ async function watch([arg, ...moreArgs]) {
   let funs = steps[arg || watchDefault];
   let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   let watcher = chokidar.watch('.', {
-    ignored: /(node_modules|\/build\/|\.git)/,
+    ignored: /(node_modules|\/build\/|ts-build|\.git)/,
     persistent: true
   });
   let version = 0;
