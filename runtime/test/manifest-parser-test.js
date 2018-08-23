@@ -102,7 +102,8 @@ describe('manifest parser', function() {
       particle MyParticle
         in MyThing mandatory
         in MyThing? optional1
-        out [MyThing]? optional2`);
+        out [MyThing]? optional2
+        out BigCollection<MyThing>? optional3`);
   });
   it('parses manifests with search', () => {
     parse(`

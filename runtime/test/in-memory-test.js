@@ -215,8 +215,8 @@ describe('in-memory', function() {
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('bigcollection');
-      let collection1 = await storage.construct('~big~0', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('~big~0', BarType.collectionOf(), collection1.storageKey);
+      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
+      let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -249,7 +249,7 @@ describe('in-memory', function() {
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('bigcollection');
-      let collection = await storage.construct('~big~1', BarType.collectionOf(), key);
+      let collection = await storage.construct('test0', BarType.bigCollectionOf(), key);
 
       let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {

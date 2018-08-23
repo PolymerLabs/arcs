@@ -107,10 +107,9 @@ export class TypeVariable {
   set resolution(value) {
     assert(value instanceof Type);
     assert(!this._resolution);
-    let resolvedValue = value.resolvedType();
-    if (resolvedValue.isCollection && resolvedValue.collectionType.isVariable) {
-      assert(resolvedValue.collectionType.variable != this,
-        'variable cannot resolve to collection of itself');
+    let elementType = value.resolvedType().elementTypeIfCollection();
+    if (elementType !== null && elementType.isVariable) {
+      assert(elementType.variable != this, 'variable cannot resolve to collection of itself');
     }
 
     let probe = value;

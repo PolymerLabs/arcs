@@ -18,7 +18,7 @@ import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
 
-// Resolves when the two stores are synchronzied with each other:
+// Resolves when the two stores are synchronized with each other:
 // * same version
 // * no pending changes
 async function synchronized(store1, store2, delay=1) {
@@ -242,8 +242,8 @@ describe('firebase', function() {
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('bigcollection');
-      let collection1 = await storage.construct('~big~0', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('~big~0', BarType.collectionOf(), key);
+      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
+      let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), key);
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -277,7 +277,7 @@ describe('firebase', function() {
       let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection = await storage.construct('~big~1', BarType.collectionOf(), newStoreKey('bigcollection'));
+      let collection = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
       let items = new Map();
 
       // Stores a new item for each id in both collection and items, with data and key derived

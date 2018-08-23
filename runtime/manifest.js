@@ -232,6 +232,7 @@ export class Manifest {
     function typePredicate(store) {
       let resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
+        // TODO: update for BigCollection handling
         return type.isCollection == store.type.isCollection;
       }
 
@@ -493,8 +494,11 @@ ${e.message}
           }
           return;
         }
-        case 'list-type':
+        case 'collection-type':
           node.model = Type.newCollection(node.type.model);
+          return;
+        case 'big-collection-type':
+          node.model = Type.newBigCollection(node.type.model);
           return;
         default:
           return;
@@ -1004,6 +1008,7 @@ ${e.message}
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
 
+    // Note that BigCollection isn't relevant here (ManifestStorage cannot be of BigCollectionType).
     let unitType;
     if (!type.isCollection) {
       if (entities.length == 0) {
@@ -1013,7 +1018,7 @@ ${e.message}
       entities = entities.slice(entities.length - 1);
       unitType = type;
     } else {
-      unitType = type.primitiveType();
+      unitType = type.collectionType;
     }
 
     if (unitType.isEntity) {

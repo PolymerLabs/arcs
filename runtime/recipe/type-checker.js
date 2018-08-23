@@ -48,8 +48,7 @@ export class TypeChecker {
     }
 
     for (let item of concreteTypes) {
-      let success = TypeChecker._tryMergeConstraints(baseType, item);
-      if (!success) {
+      if (!TypeChecker._tryMergeConstraints(baseType, item)) {
         return null;
       }
     }
@@ -58,13 +57,11 @@ export class TypeChecker {
       if (candidate.isVariable == false) {
         return candidate;
       }
-      if (candidate.canReadSubset == null ||
-          candidate.canWriteSuperset == null) {
+      if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
         return candidate;
       }
       if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
-        if (candidate.canWriteSuperset.isMoreSpecificThan(
-                candidate.canReadSubset)) {
+        if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset)) {
           candidate.variable.resolution = candidate.canReadSubset;
         }
         return candidate;
@@ -75,12 +72,12 @@ export class TypeChecker {
     let candidate = baseType.resolvedType();
 
     if (candidate.isCollection) {
-      candidate = candidate.primitiveType();
-      let resolution = getResolution(candidate);
-      if (resolution == null) {
-        return null;
-      }
-      return resolution.collectionOf();
+      let resolution = getResolution(candidate.collectionType);
+      return (resolution !== null) ? resolution.collectionOf() : null;
+    }
+    if (candidate.isBigCollection) {
+      let resolution = getResolution(candidate.bigCollectionType);
+      return (resolution !== null) ? resolution.bigCollectionOf() : null;
     }
 
     return getResolution(candidate);
@@ -103,6 +100,7 @@ export class TypeChecker {
         // base variable, onto not.
         primitiveBase.variable.resolution = primitiveOnto;
       }
+      return base;
     } else if (primitiveOnto.isVariable) {
       // onto variable, base not.
       primitiveOnto.variable.resolution = primitiveBase;
@@ -113,23 +111,18 @@ export class TypeChecker {
         return null;
       }
       return Type.newInterface(result);
-    } else {
-      if ((primitiveBase.isCollection && primitiveBase.hasVariable)
-          || (primitiveOnto.isCollection && primitiveOnto.hasVariable)) {
-        // Cannot merge [~a] with a type that is not a variable and not a collection.
-        return null;
-      }
-
-      throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
+    } else if ((primitiveBase.isSomeSortOfCollection() && primitiveBase.hasVariable)
+               || (primitiveOnto.isSomeSortOfCollection() && primitiveOnto.hasVariable)) {
+      // Cannot merge [~a] with a type that is not a variable and not a collection.
+      return null;
     }
-
-    return base;
+    throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
   }
 
   static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType.isVariable) {
-      while (primitiveConnectionType.isCollection) {
+      while (primitiveConnectionType.isSomeSortOfCollection()) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
             || primitiveHandleType.variable.canWriteSuperset != null) {
@@ -139,41 +132,40 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        primitiveHandleType.variable.resolution = Type.newCollection(Type.newVariable(new TypeVariable('a')));
+        let newVar = Type.newVariable(new TypeVariable('a'));
+        primitiveHandleType.variable.resolution = 
+            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : Type.newBigCollection(newVar);
         let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
-        primitiveHandleType = unwrap[0];
-        primitiveConnectionType = unwrap[1];
+        [primitiveHandleType, primitiveConnectionType] = unwrap;
       }
 
       if (direction == 'out' || direction == 'inout' || direction == '`provide') {
         // the canReadSubset of the handle represents the maximal type that can be read from the
         // handle, so we need to intersect out any type that is more specific than the maximal type
         // that could be written.
-        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(
-                primitiveConnectionType.canWriteSuperset)) {
+        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(primitiveConnectionType.canWriteSuperset)) {
           return false;
         }
       }
       if (direction == 'in' || direction == 'inout' || direction == '`consume') {
         // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
         // so we need to union it with the type that wants to be read here.
-        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(
-                primitiveConnectionType.canReadSubset)) {
+        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
           return false;
         }
       }
     } else {
-      if (primitiveConnectionType.tag !== primitiveHandleType.tag) return false;
+      if (primitiveConnectionType.tag !== primitiveHandleType.tag) {
+        return false;
+      }
 
       if (direction == 'out' || direction == 'inout') {
-        if (!TypeChecker._writeConstraintsApply(
-                primitiveHandleType, primitiveConnectionType)) {
+        if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
       }
       if (direction == 'in' || direction == 'inout') {
-        if (!TypeChecker._readConstraintsApply(
-                primitiveHandleType, primitiveConnectionType)) {
+        if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
       }
@@ -223,15 +215,11 @@ export class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType.isVariable && rightType.isCollection) {
-      return !(
-          leftType.variable.canReadSubset ||
-          leftType.variable.canWriteSuperset);
+    if (leftType.isVariable && rightType.isSomeSortOfCollection()) {
+      return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
     }
-    if (rightType.isVariable && leftType.isCollection) {
-      return !(
-          rightType.variable.canReadSubset ||
-          rightType.variable.canWriteSuperset);
+    if (rightType.isVariable && leftType.isSomeSortOfCollection()) {
+      return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
     }
 
     if (leftType.isVariable || rightType.isVariable) {

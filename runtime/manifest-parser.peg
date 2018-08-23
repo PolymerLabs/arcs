@@ -99,7 +99,7 @@ ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
-  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
+  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / CollectionType / ReferenceType) id:(whiteSpace id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
@@ -373,16 +373,27 @@ ParticleArgumentDirection
 
 ParticleArgumentType
   = VariableType
+  / CollectionType
+  / BigCollectionType
   / SlotType
   / SchemaInline
   / ReferenceType
-  / ListType
 
-ListType
+CollectionType
   = '[' type:ParticleArgumentType ']'
   {
     return {
-      kind: 'list-type',
+      kind: 'collection-type',
+      location: location(),
+      type,
+    };
+  }
+
+BigCollectionType
+  = 'BigCollection<' type:ParticleArgumentType '>'
+  {
+    return {
+      kind: 'big-collection-type',
       location: location(),
       type,
     };

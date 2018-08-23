@@ -15,12 +15,15 @@ import {Type} from '../ts-build/type.js';
 import {Schema} from '../ts-build/schema.js';
 import {TypeVariable} from '../type-variable.js';
 
+const resolutionAssertMsg = 'variable cannot resolve to collection of itself';
+
 describe('TypeVariable', () => {
   it(`setting the resolution to itself is a no-op`, () => {
     let a = Type.newVariable(new TypeVariable('x'));
     a.variable.resolution = a;
     assert.isNull(a.variable.resolution);
   });
+
   it(`allows 2 type variables to resolve to each other`, () => {
     let a = Type.newVariable(new TypeVariable('x'));
     let b = Type.newVariable(new TypeVariable('x'));
@@ -29,32 +32,57 @@ describe('TypeVariable', () => {
 
     assert.strictEqual(a.resolvedType(), b.resolvedType());
   });
-  it(`allows the resolution to be a collection of other type variable`, () => {
+
+  it(`allows the resolution to be a Collection of other type variable`, () => {
     let a = Type.newVariable(new TypeVariable('x'));
     let b = Type.newVariable(new TypeVariable('x'));
     a.variable.resolution = b.collectionOf();
   });
-  it(`disallows the resolution to be a collection of itself`, () => {
-    let a = Type.newVariable(new TypeVariable('x'));
-    assert.throws(() => a.variable.resolution = a.collectionOf(),
-        'variable cannot resolve to collection of itself');
-  });
-  it(`disallows the resolution of x to be a collection of type variable that resolve to x`, () => {
+
+  it(`allows the resolution to be a BigCollection of other type variable`, () => {
     let a = Type.newVariable(new TypeVariable('x'));
     let b = Type.newVariable(new TypeVariable('x'));
+    a.variable.resolution = b.bigCollectionOf();
+  });
 
+  it(`disallows the resolution to be a Collection of itself`, () => {
+    let a = Type.newVariable(new TypeVariable('x'));
+    assert.throws(() => a.variable.resolution = a.collectionOf(), resolutionAssertMsg);
+  });
+
+  it(`disallows the resolution to be a BigCollection of itself`, () => {
+    let a = Type.newVariable(new TypeVariable('x'));
+    assert.throws(() => a.variable.resolution = a.bigCollectionOf(), resolutionAssertMsg);
+  });
+
+  it(`disallows the resolution of x to be a Collection of type variable that resolve to x`, () => {
+    let a = Type.newVariable(new TypeVariable('x'));
+    let b = Type.newVariable(new TypeVariable('x'));
     b.variable.resolution = a;
-    assert.throws(() => a.variable.resolution = b.collectionOf(),
-        'variable cannot resolve to collection of itself');
+    assert.throws(() => a.variable.resolution = b.collectionOf(), resolutionAssertMsg);
   });
-  it(`disallows the resolution of x to be a type variable that resolves to collection of x`, () => {
+
+  it(`disallows the resolution of x to be a BigCollection of type variable that resolve to x`, () => {
     let a = Type.newVariable(new TypeVariable('x'));
     let b = Type.newVariable(new TypeVariable('x'));
-
-    b.variable.resolution = a.collectionOf();
-    assert.throws(() => a.variable.resolution = b,
-        'variable cannot resolve to collection of itself');
+    b.variable.resolution = a;
+    assert.throws(() => a.variable.resolution = b.bigCollectionOf(), resolutionAssertMsg);
   });
+
+  it(`disallows the resolution of x to be a type variable that resolves to Collection of x`, () => {
+    let a = Type.newVariable(new TypeVariable('x'));
+    let b = Type.newVariable(new TypeVariable('x'));
+    b.variable.resolution = a.collectionOf();
+    assert.throws(() => a.variable.resolution = b, resolutionAssertMsg);
+  });
+
+  it(`disallows the resolution of x to be a type variable that resolves to BigCollection of x`, () => {
+    let a = Type.newVariable(new TypeVariable('x'));
+    let b = Type.newVariable(new TypeVariable('x'));
+    b.variable.resolution = a.bigCollectionOf();
+    assert.throws(() => a.variable.resolution = b, resolutionAssertMsg);
+  });
+
   it(`maybeEnsureResolved clears canReadSubset and canWriteSuperset`, () => {
     let a = new TypeVariable('x');
     let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
