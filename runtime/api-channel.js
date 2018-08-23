@@ -265,7 +265,7 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('SynchronizeProxy', {handle: this.Mapped, callback: this.Direct});
     this.registerHandler('HandleGet', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
-    this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct, barrier: this.Direct});
     this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct});
     this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct});
