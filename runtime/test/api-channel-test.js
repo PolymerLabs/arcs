@@ -22,7 +22,8 @@ class Registrar {
 }
 
 describe('API channel', function() {
-  let outer, inner;
+  let outer;
+  let inner;
 
   before(() => {
     APIPort.prototype._testingHook = function() {
