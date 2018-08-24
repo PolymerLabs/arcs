@@ -49,6 +49,8 @@ class StorageProxyBase {
     this._pec = pec;
     this._scheduler = scheduler;
     this.name = name;
+    this._baseForNewID = this._pec.generateID();
+    this._localIDComponent = 0;
 
     this._version = undefined;
     this._listenerAttached = false;
@@ -189,12 +191,12 @@ class StorageProxyBase {
     }
   }
 
-  generateID(component) {
-    return this._pec.generateID(component);
+  generateID() {
+    return `${this._baseForNewID}:${this._localIDComponent++}`;
   }
 
   generateIDComponents() {
-    return this._pec.generateIDComponents();
+    return {base: this._baseForNewID, component: () => this._localIDComponent++};
   }
 }
 

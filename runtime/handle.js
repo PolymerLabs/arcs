@@ -169,7 +169,7 @@ class Collection extends Handle {
       throw new Error('Handle not writeable');
     }
     let serialization = this._serialize(entity);
-    let keys = [this._proxy.generateID('key')];
+    let keys = [this._proxy.generateID() + 'key'];
     return this._proxy.store(serialization, keys, this._particleId);
   }
 
