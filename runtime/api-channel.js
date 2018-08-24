@@ -82,7 +82,7 @@ class ThingMapper {
 }
 
 
-class APIPort {
+export class APIPort {
   constructor(messagePort, prefix) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
@@ -104,18 +104,6 @@ class APIPort {
     this.Mapped = {
       convert: a => this._mapper.identifierForThing(a),
       unconvert: a => this._mapper.thingForIdentifier(a)
-    };
-
-    this.Dictionary = function(primitive) {
-      return {
-        convert: a => {
-          let r = {};
-          for (let key in a) {
-            r[key] = primitive.convert(a[key]);
-          }
-          return r;
-        }
-      };
     };
 
     this.Map = function(keyprimitive, valueprimitive) {
@@ -149,6 +137,12 @@ class APIPort {
         unconvert: a => clazz.fromLiteral(a)
       };
     };
+  
+    this._testingHook();
+  }
+
+  // Overridden by unit tests.
+  _testingHook() {
   }
 
   close() {
@@ -268,7 +262,7 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct, barrier: this.Direct});
     this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct});
-    this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct});
+    this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
     this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerHandler('ConstructInnerArc', {callback: this.Direct, particle: this.Mapped});
@@ -306,7 +300,7 @@ export class PECInnerPort extends APIPort {
     this.registerHandler('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerHandler('SimpleCallback', {callback: this.LocalMapped, data: this.Direct});
     this.registerHandler('AwaitIdle', {version: this.Direct});
-    this.registerHandler('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.Direct});
+    this.registerHandler('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
     this.registerHandler('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
