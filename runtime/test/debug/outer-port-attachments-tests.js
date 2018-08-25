@@ -93,7 +93,7 @@ describe('OuterPortAttachment', function() {
         storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
         type: 'Foo'
       },
-      data: '{"id":"!158405822139616:demo:0:inner:0","rawData":{"value":"FooBar"}}',
+      data: '{"id":"!158405822139616:demo:0:inner:0:0","rawData":{"value":"FooBar"}}',
     });
   });
 });
