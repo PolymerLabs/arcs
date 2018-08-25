@@ -22,7 +22,7 @@ export abstract class StorageProviderBase {
   private nextLocalID: number;
   private readonly _type: Type;
 
-  protected referenceMode: boolean = false;
+  protected referenceMode = false;
   protected version: number|null;
   
   id: string;

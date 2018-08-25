@@ -73,7 +73,7 @@ export class InMemoryStorage {
   }
 
   async construct(id, type, keyFragment) {
-    let provider = await this._construct(id, type, keyFragment);
+    const provider = await this._construct(id, type, keyFragment);
     provider.enableReferenceMode();
     return provider;
   }
@@ -198,7 +198,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     return {
       version: this.version,
       model: await this._toList()
-    }
+    };
   }
 
   // Returns {version, model: [{id, value, keys: []}]}
@@ -217,8 +217,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
   async _toList() {
     if (this.referenceMode) {
       const items = this.toLiteral().model;
-      if (items.length == 0)
+      if (items.length === 0) {
         return [];
+      }
       const referredType = this.type.primitiveType();
 
       const refSet = new Set();
@@ -279,7 +280,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
 
-    let changeEvent = {value, keys, effective: undefined};
+    const changeEvent = {value, keys, effective: undefined};
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
 
@@ -330,7 +331,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   _storageEngine: InMemoryStorage;
   _stored: {id: string}|null;
   _backingStore: InMemoryCollection|null;
-  private localKeyId: number = 0;
+  private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this._storageEngine = storageEngine;
@@ -361,7 +362,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   async modelForSynchronization() {
     if (this.referenceMode && this._stored !== null) {
       const value = this._stored as {id: string, storageKey: string};
-      assert(new InMemoryKey(value.storageKey).arcId == this._storageEngine.arcId.toString());
+      assert(new InMemoryKey(value.storageKey).arcId === this._storageEngine.arcId.toString());
 
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(this.type.toString(), this.type.collectionOf(), value.storageKey) as InMemoryCollection;
@@ -394,9 +395,9 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   fromLiteral({version, model}) {
     const value = model.length === 0 ? null : model[0].value;
-    if (this.referenceMode && value && value.rawData)
+    if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
-
+    }
     assert(value !== undefined);
     this._stored = value;
     this.version = version;

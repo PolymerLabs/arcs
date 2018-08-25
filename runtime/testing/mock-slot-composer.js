@@ -172,8 +172,9 @@ export class MockSlotComposer extends SlotComposer {
         .filter(conn => conn.type.isInterface)
         .map(conn => {
           const store = this.arc.findStoreById(conn.handle.id);
-          if (store.referenceMode)
+          if (store.referenceMode) {
             return store._backingStore._model.getValue(store._stored.id).name;
+          }
           return store._stored.name;
         });
   }
