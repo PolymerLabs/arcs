@@ -439,7 +439,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
       }
       this.version++;
     }
-    if (this.type.isReference) {
+    if (this.referenceMode) {
       await this.backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this.backingStore.storageKey};
     }
