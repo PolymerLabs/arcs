@@ -20,7 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // TODO: get rid of unsafe-inline for style?
   // TODO: construct whitelist dynamically from particle manifests
   //       OR use service worker to enforce
-  // TODO(sjmiles): explain failure of script-src 'dynamic-self'
+  // TODO(sjmiles): explain failure of `script-src 'strict-dynamic'`
   //
   const httpEquiv = 'Content-Security-Policy';
   const content = `
