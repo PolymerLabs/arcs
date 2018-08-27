@@ -54,7 +54,7 @@ class InMemoryKey extends KeyBase {
 const __storageCache = {};
 
 export class InMemoryStorage {
-  readonly arcId: Id;
+  private readonly arcId: Id;
   _memoryMap: {[index: string]: InMemoryStorageProvider};
   _typeMap: {[index: string]: InMemoryCollection};
   private typePromiseMap: {[index: string]: Promise<InMemoryCollection>};
@@ -362,7 +362,6 @@ class InMemoryVariable extends InMemoryStorageProvider {
   async modelForSynchronization() {
     if (this.referenceMode && this._stored !== null) {
       const value = this._stored as {id: string, storageKey: string};
-      assert(new InMemoryKey(value.storageKey).arcId === this._storageEngine.arcId.toString());
 
       if (this._backingStore == null) {
         this._backingStore = await this._storageEngine.share(this.type.toString(), this.type.collectionOf(), value.storageKey) as InMemoryCollection;
