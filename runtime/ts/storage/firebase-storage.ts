@@ -53,7 +53,7 @@ class FirebaseKey extends KeyBase {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol === 'firebase');
+    assert(this.protocol === 'firebase', `can't construct firebase key for protocol ${this.protocol} (input key ${key})`);
     if (parts[1]) {
       parts = parts[1].split('/');
       this.databaseUrl = parts[0];
