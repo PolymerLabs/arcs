@@ -24,7 +24,7 @@ class InMemoryKey extends KeyBase {
   protocol: string;
   arcId: string;
   location: string;
-  constructor(key : string) {
+  constructor(key: string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
@@ -54,7 +54,7 @@ class InMemoryKey extends KeyBase {
 const __storageCache = {};
 
 export class InMemoryStorage {
-  /*private*/ readonly arcId: Id;
+  readonly arcId: Id;
   _memoryMap: {[index: string]: InMemoryStorageProvider};
   _typeMap: {[index: string]: InMemoryCollection};
   private typePromiseMap: {[index: string]: Promise<InMemoryCollection>};
