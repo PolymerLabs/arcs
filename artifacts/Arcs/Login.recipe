@@ -5,15 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema User
-  Text id
-  Text name
-  URL avatar
+schema UserName
+  Text username
 
 particle Login in 'source/Login.js'
-  // consume modal
+  in UserName username
   consume root
 
 recipe Login
+  create as username
+  slot 'rootslotid-root' as root
   Login
+    username = username
+    consume root as root
   description `user sign in`
