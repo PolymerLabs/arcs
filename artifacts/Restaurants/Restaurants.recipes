@@ -21,6 +21,7 @@ recipe &displayRestaurants
 
 recipe
   create as location
+  use as person
   ExtractLocation
     location -> location
 
