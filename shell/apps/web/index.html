@@ -7,12 +7,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
+  <!-- Unfortunately, we rely on static file serving now, so we have to needlessly
+    --   duplicate these rules between categories, as well as device surfaces.
+    -- Explanation:
+    -- 1. Deny everything
+    -- 2. Scripts from self, the inner <script> tag, and transitively loaded are allowed
+    --   a. nonce currently is hardcoded, but should be random
+    -- 3. Scripts from explicitly whitelisted 3P allowed
+    -- 4. fonts only allowed from Google fonts and sjmiles repo
+    -- 5. Images allowed from 3P, plus data: URLs
+    -- 6. CSS allowed as inline <style>, as well as 3P whitelist
+    -- TODO: make this dynamically generated at build time for static file serving
+    -- TODO: get rid of unsafe-inline for style?
+    -- TODO: construct whitelist dynamically from particle manifests
+             OR use service worker to enforce
+    -->
+  <meta http-equiv="Content-Security-Policy"
+         content="script-src 'nonce-should_be_dynamic' 'strict-dynamic' 'self'
+                             wss://*.firebase.io wss://*.firebaseio.com https://*.firebaseio.com https://*.firebase.io
+                             https://xenonjs.com https://raw.githubusercontent.com/shaper/ https://bost.ocks.org
+                             https://media.w3.org https://noelutz.github.io;
+                 font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://sjmiles.github.io;
+                 img-src 'self'  https://xenonjs.com https://raw.githubusercontent.com/shaper/ https://bost.ocks.org
+                                 https://media.w3.org https://noelutz.github.io data:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://sjmiles.github.io
+                            https://xenonjs.com https://raw.githubusercontent.com/shaper/ https://bost.ocks.org
+                            https://media.w3.org https://noelutz.github.io;">
+
   <link rel="manifest" href="../common/manifest.json"/>
   <link rel="shortcut icon" href="../common/logo_64.png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
   <link rel="stylesheet" href="../common/index.css">
 
-  <script type="module">
+  <script type="module" nonce="should_be_dynamic">
     // global configuration
     import '../common/config.js';
     // arcs runtime
