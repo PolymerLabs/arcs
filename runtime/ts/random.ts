@@ -9,38 +9,39 @@
  */
 
 abstract class RNG {
-    abstract next() : number;
+  abstract next() : number;
 }
 
 /**
  * A basic random number generator using Math.random();
  */
 class MathRandomRNG extends RNG {
-    next() : number {
-        return Math.random();
-    }
+  next() : number {
+    return Math.random();
+  }
 }
 
 /**
  * Provides a deterministic Random Number Generator for Tests
  */
 class SeededRNG extends RNG {
-    private seed = 0;
-    next(): number {
-        this.seed = Math.pow(this.seed + Math.E, Math.PI) % 1;
-        return this.seed;
-    }
+  private seed = 0;
+  next(): number {
+    this.seed = Math.pow(this.seed + Math.E, Math.PI) % 1;
+    return this.seed;
+  }
 }
 
 // Singleton Pattern
 let random: RNG = new MathRandomRNG();
 
 export class Random {
-    static next() : number {
-        return random.next();
-    }
-    // TODO: remove test code and allow for injectable implementations.
-    static seedForTests() : void {
-        random = new SeededRNG();
-    }
+  static next() : number {
+    return random.next();
+  }
+
+  // TODO: remove test code and allow for injectable implementations.
+  static seedForTests() : void {
+    random = new SeededRNG();
+  }
 }
