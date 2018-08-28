@@ -880,6 +880,10 @@ ${e.message}
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
           let store = await manifest.createStore(connection.type, null, id, []);
+          // TODO(shans): Work out a better way to turn off reference mode for these stores.
+          // Maybe a different function call in the storageEngine? Alternatively another
+          // param to the connect/construct functions?
+          store.referenceMode = false;
           store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
@@ -1045,7 +1049,20 @@ ${e.message}
 
     let version = item.version || 0;
     let store = await Manifest._createStore(manifest, type, name, id, tags, item);
-    
+
+    // While the referenceMode hack exists, we need to look at the entities being stored to
+    // determine whether this store should be in referenceMode or not.
+    // TODO(shans): Eventually the actual type will need to be part of the determination too.
+    // TODO(shans): Need to take into account the possibility of multiple storage key mappings
+    // at some point.
+    if (entities.length > 0 && (entities[0].rawData && entities[0].rawData.storageKey)) {
+      let storageKey = entities[0].rawData.storageKey;
+      storageKey = manifest.findStoreByName(storageKey).storageKey;
+      entities = entities.map(({id, rawData}) => ({id, storageKey}));
+    } else if (entities.length > 0) {
+      store.referenceMode = false;
+    }
+
     // For this store to be able to be treated as a CRDT, each item needs a key.
     // Using id as key seems safe, nothing else should do this.
     store.fromLiteral({

@@ -35,12 +35,15 @@ describe('Handle', function() {
     let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type);
-    barStore.set(new Bar({value: 'a Bar'}));
-    barStore.clear();
+    await barStore.set({id: 'an id', value: 'a Bar'});
+    await barStore.clear();
     assert.isNull(await barStore.get());
   });
 
   it('ignores duplicate stores of the same entity value (variable)', async () => {
+    // NOTE: Until entity mutation is distinct from collection modification,
+    // referenceMode stores *can't* ignore duplicate stores of the same
+    // entity value.
     let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let store = await arc.createStore(Bar.type);
@@ -51,9 +54,10 @@ describe('Handle', function() {
     await store.set(bar1);
     assert.equal(version, 1);
     await store.set(bar1);
-    assert.equal(version, 1);
-    await store.set({value: 'a Bar'});
+    // TODO(shans): fix this test once entity mutation is a thing
     assert.equal(version, 2);
+    await store.set({value: 'a Bar'});
+    assert.equal(version, 3);
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
@@ -139,7 +143,7 @@ describe('Handle', function() {
     assert(shape.particleMatches(manifest.particles[0]));
 
     let shapeStore = await arc.createStore(Type.newInterface(shape));
-    shapeStore.set(manifest.particles[0]);
+    await shapeStore.set(manifest.particles[0]);
     assert.equal(await shapeStore.get(), manifest.particles[0]);
   });
 

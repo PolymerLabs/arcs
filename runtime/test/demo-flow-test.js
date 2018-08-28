@@ -21,7 +21,7 @@ describe('demo flow', function() {
     await Manifest.load('./artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('flows like a demo', async function() {
+  it.skip('flows like a demo', async function() {
     let helper = await TestHelper.createAndPlan({
       manifestFilename: './artifacts/Products/Products.recipes',
       expectedNumPlans: 1,

@@ -46,9 +46,10 @@ class StorageProxyBase {
     this._id = id;
     this._type = type;
     this._port = port;
-    this._pec = pec;
     this._scheduler = scheduler;
     this.name = name;
+    this._baseForNewID = pec.generateID();
+    this._localIDComponent = 0;
 
     this._version = undefined;
     this._listenerAttached = false;
@@ -189,12 +190,12 @@ class StorageProxyBase {
     }
   }
 
-  generateID(component) {
-    return this._pec.generateID(component);
+  generateID() {
+    return `${this._baseForNewID}:${this._localIDComponent++}`;
   }
 
   generateIDComponents() {
-    return this._pec.generateIDComponents();
+    return {base: this._baseForNewID, component: () => this._localIDComponent++};
   }
 }
 
@@ -248,8 +249,9 @@ class CollectionProxy extends StorageProxyBase {
       }
     } else if ('remove' in update) {
       for (let {value, keys, effective} of update.remove) {
+        const localValue = this._model.getValue(value.id);
         if (apply && this._model.remove(value.id, keys) || !apply && effective) {
-          removed.push(value);
+          removed.push(localValue);
         }
       }
     } else {

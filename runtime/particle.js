@@ -146,7 +146,7 @@ export class Particle {
   setDescriptionPattern(connectionName, pattern) {
     let descriptions = this.handles.get('descriptions');
     if (descriptions) {
-      descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, connectionName));
+      descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       return true;
     }
     return false;

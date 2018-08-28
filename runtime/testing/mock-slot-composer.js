@@ -165,10 +165,18 @@ export class MockSlotComposer extends SlotComposer {
     return this.expectQueue.find(e => e.type == 'render' && e.ignoreUnexpected);
   }
 
+  //TODO: reaching directly into data objects like this is super dodgy and we should
+  // fix.
   _getHostedParticleNames(particle) {
     return Object.values(particle.connections)
         .filter(conn => conn.type.isInterface)
-        .map(conn => this.arc.findStoreById(conn.handle.id)._stored.name);
+        .map(conn => {
+          const store = this.arc.findStoreById(conn.handle.id);
+          if (store.referenceMode) {
+            return store._backingStore._model.getValue(store._stored.id).name;
+          }
+          return store._stored.name;
+        });
   }
 
   _verifyRenderContent(particle, slotName, content) {
@@ -180,6 +188,7 @@ export class MockSlotComposer extends SlotComposer {
              ((names) => names.length == 1 && names[0] == e.hostedParticle)(this._getHostedParticleNames(particle)));
     });
     if (index < 0) {
+      console.log('\tno match');
       return false;
     }
     let expectation = this.expectQueue[index];

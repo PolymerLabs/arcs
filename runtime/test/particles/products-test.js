@@ -41,7 +41,12 @@ describe('products test', function() {
                 && content.model.items['$template'].length > 0
                 && 1 == content.model.items.models.length;
             if (verified) {
-              assert.equal('Harry Potter', helper.arc._stores[0]._model.getValue(content.model.items.models[0].id).rawData.name);
+              //TODO: reaching directly into data objects like this is super dodgy and we should
+              // fix.
+              const reference = helper.arc._stores[0]._model.getValue(content.model.items.models[0].id);
+              const store = helper.arc._stores[0]._backingStore;
+              assert.equal(store.storageKey, reference.storageKey);
+              assert.equal('Harry Potter', store._model.getValue(reference.id).rawData.name);
             }
             return verified;
           }})
