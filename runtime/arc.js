@@ -149,23 +149,24 @@ export class Arc {
       case 'in-memory': {
         // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
         const nosync = handleTags.includes('nosync');
-        let serializedData = nosync ?
-            [] :
-            (await handle.toLiteral()).model.map(({id, value}) => {
-              if (value == null) {
-                return null;
+        let serializedData = [];
+        if (!nosync) {
+          serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+            if (value == null) {
+              return null;
+            }
+            if (value.rawData) {
+              let result = {};
+              for (let field in value.rawData) {
+                result[field] = value.rawData[field];
               }
-              if (value.rawData) {
-                let result = {};
-                for (let field in value.rawData) {
-                  result[field] = value.rawData[field];
-                }
-                result.$id = id;
-                return result;
-              } else {
-                return value;
-              }
-            });
+              result.$id = id;
+              return result;
+            } else {
+              return value;
+            }
+          });
+        }
         if (handle.referenceMode && serializedData.length > 0) {
           const storageKey = serializedData[0].storageKey;
           if (!context.dataResources.has(storageKey)) {

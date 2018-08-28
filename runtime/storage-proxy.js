@@ -46,10 +46,9 @@ class StorageProxyBase {
     this._id = id;
     this._type = type;
     this._port = port;
-    this._pec = pec;
     this._scheduler = scheduler;
     this.name = name;
-    this._baseForNewID = this._pec.generateID();
+    this._baseForNewID = pec.generateID();
     this._localIDComponent = 0;
 
     this._version = undefined;
