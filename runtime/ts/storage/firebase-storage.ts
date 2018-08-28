@@ -538,7 +538,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private readonly initialized: Promise<void>;
   private resolveInitialized: () => void;
 
-  constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, firebaseKey) {
+  constructor(type: Type, storageEngine: FirebaseStorage, id: string, reference: firebase.database.Reference, firebaseKey: string) {
     super(type, storageEngine, id, reference, firebaseKey);
 
     // Lists mapped by id containing membership keys that have been
@@ -995,12 +995,11 @@ class Cursor {
     } else if (this.state === CursorState.stream) {
       assert(this.nextStart !== null);
       query = this.baseQuery.startAt(this.nextStart);
-    } else {
-      throw new Error("no query");
     }
 
     const value:{}[] = [];
-    if (this.state === CursorState.stream) {
+    
+    if (query && this.state === CursorState.stream) {
       this.nextStart = null;
       await query.once('value', snapshot => snapshot.forEach(entry => {
         if (value.length < this.pageSize) {
