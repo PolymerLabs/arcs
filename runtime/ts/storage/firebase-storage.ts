@@ -13,12 +13,6 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/storage';
 
-/* tslint:disable:no-any */
-const firebaseInitializeApp = (firebase as any).default.initializeApp; 
-const firebaseDatabase = (firebase as any).default.database;
-const firebaseApps = (firebase as any).default.apps;
-/* tslint:enable:no-any */
-
 import {assert} from '../../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
 import {atob} from '../../../platform/atob-web.js';
@@ -29,17 +23,17 @@ import {Type} from '../type.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
-  const app = firebaseInitializeApp({
+  const app = firebase.initializeApp({
     apiKey: key.apiKey,
     databaseURL: key.databaseUrl
   });
 
-  let reference = firebaseDatabase(app).ref(key.location);
+  let reference = firebase.database(app).ref(key.location);
   await new Promise(resolve => {
     reference.remove(resolve);
   });
 
-  reference = firebaseDatabase(app).ref('backingStores');
+  reference = firebase.database(app).ref('backingStores');
   await new Promise(resolve => {
     reference.remove(resolve);
   });
@@ -162,7 +156,7 @@ export class FirebaseStorage {
     }
 
     if (this.apps[key.projectId] == undefined) {
-      for (const app of firebaseApps) {
+      for (const app of firebase.apps) {
         if (app.options['databaseURL'] === key.databaseUrl) {
           this.apps[key.projectId] = {app, owned: false};
           break;
@@ -171,7 +165,7 @@ export class FirebaseStorage {
     }
 
     if (this.apps[key.projectId] == undefined) {
-      const app = firebaseInitializeApp({
+      const app = firebase.initializeApp({
         apiKey: key.apiKey,
         databaseURL: key.databaseUrl
       }, `app${_nextAppNameSuffix++}`);
@@ -179,7 +173,7 @@ export class FirebaseStorage {
       this.apps[key.projectId] = {app, owned: true};
     }
 
-    const reference = firebaseDatabase(this.apps[key.projectId].app).ref(key.location);
+    const reference = firebase.database(this.apps[key.projectId].app).ref(key.location);
 
     let currentSnapshot: firebase.database.DataSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
