@@ -9,7 +9,7 @@
 import {StorageProviderBase} from './storage-provider-base';
 
 // keep in sync with shell/source/ArcsLib.js
-import * as firebase from 'firebase/app';
+import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/storage';
 
