@@ -8,7 +8,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 
-// Bulding block for CRDT collections. Tracks the membership (keys) of
+// Building block for CRDT collections. Tracks the membership (keys) of
 // values identified by unique IDs. A value is considered to be part
 // of the collection if the set of keys added by calls to
 // `add(id, ..., keys)` minus the set of keys removed by calls to
@@ -17,20 +17,25 @@ import {assert} from '../../../platform/assert-web.js';
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
 
-interface Model {
+interface Value {
+  storageKey: string;
   id: string;
-  value: {};
-  keys: [];
+}
+
+interface Entity {
+  id: string;
+  value: Value;
+  keys: string[];
 }
 
 export class CrdtCollectionModel {
-  private items: Map<string, {value: {storageKey: string, id: {}}, keys: Set<string>}>;
+  private items: Map<string, {value: Value, keys: Set<string>}>;
 
-  constructor(model = undefined) {
+  constructor(entity?: Entity[]) {
     // id => {value, Set[keys]}
     this.items = new Map();
-    if (model) {
-      for (let {id, value, keys} of model) {
+    if (entity) {
+      for (let {id, value, keys} of entity) {
         if (!keys) {
           keys = [];
         }
@@ -41,7 +46,7 @@ export class CrdtCollectionModel {
   // Adds membership, `keys`, of `value` indexed by `id` to this collection.
   // Returns whether the change is effective (`id` is new to the collection,
   // or `value` is different to the value previously stored).
-  add(id: string, value, keys): boolean {
+  add(id: string, value: Value, keys: string[]): boolean {
     assert(keys.length > 0, 'add requires keys');
     let item = this.items.get(id);
     let effective = false;
@@ -85,15 +90,15 @@ export class CrdtCollectionModel {
   }
 
   // [{id, value, keys: []}]
-  toLiteral(): {id, value, keys}[] {
-    const result: {id, value, keys}[] = [];
+  toLiteral(): Entity[] {
+    const result: Entity[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }
     return result;
   }
 
-  toList() {
+  toList(): Value[] {
     return [...this.items.values()].map(item => item.value);
   }
 
@@ -106,7 +111,7 @@ export class CrdtCollectionModel {
     return item ? [...item.keys] : [];
   }
 
-  getValue(id: string) {
+  getValue(id: string): Value {
     const item = this.items.get(id);
     return item ? item.value : null;
   }
