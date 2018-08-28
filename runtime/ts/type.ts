@@ -71,35 +71,35 @@ export class Type {
     this.data = data;
   }
 
-  static newEntity(entity : Schema): Type {
+  static newEntity(entity : Schema) {
     return new Type('Entity', entity);
   }
 
-  static newVariable(variable : TypeVariable): Type {
+  static newVariable(variable : TypeVariable) {
     return new Type('Variable', variable);
   }
 
-  static newCollection(collection : Type): Type {
+  static newCollection(collection : Type) {
     return new Type('Collection', collection);
   }
 
-  static newBigCollection(bigCollection : Type): Type {
+  static newBigCollection(bigCollection : Type) {
     return new Type('BigCollection', bigCollection);
   }
   
-  static newRelation(relation : [Type]): Type {
+  static newRelation(relation : [Type]) {
     return new Type('Relation', relation);
   }
 
-  static newInterface(iface : Shape): Type {
+  static newInterface(iface : Shape) {
     return new Type('Interface', iface);
   }
 
-  static newSlot(slot : SlotInfo): Type {
+  static newSlot(slot : SlotInfo) {
     return new Type('Slot', slot);
   }
 
-  static newReference(reference : Type): Type {
+  static newReference(reference : Type) {
     return new Type('Reference', reference);
   }
 

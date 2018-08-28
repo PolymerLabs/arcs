@@ -22,7 +22,7 @@ interface Value {
   id: string;
 }
 
-interface Model {
+interface Entity {
   id: string;
   value: Value;
   keys: string[];
@@ -31,11 +31,11 @@ interface Model {
 export class CrdtCollectionModel {
   private items: Map<string, {value: Value, keys: Set<string>}>;
 
-  constructor(model?: Model[]) {
+  constructor(entity?: Entity[]) {
     // id => {value, Set[keys]}
     this.items = new Map();
-    if (model) {
-      for (let {id, value, keys} of model) {
+    if (entity) {
+      for (let {id, value, keys} of entity) {
         if (!keys) {
           keys = [];
         }
@@ -90,8 +90,8 @@ export class CrdtCollectionModel {
   }
 
   // [{id, value, keys: []}]
-  toLiteral(): Model[] {
-    const result: Model[] = [];
+  toLiteral(): Entity[] {
+    const result: Entity[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }

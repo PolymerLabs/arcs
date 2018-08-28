@@ -32,7 +32,7 @@ export class StorageProviderBase {
   constructor(type: Type, name: string|undefined, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type, name}});
+    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.tag, name}});
     this._type = type;
     this.listeners = new Map();
     this.name = name;
