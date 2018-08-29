@@ -5,8 +5,7 @@ const template = Xen.Template.html`
 
 <style>
   :host {
-    display: block;
-    /*height: 200px;*/
+    display: none;
     position: relative;
     overflow: hidden;
     border: 1px dotted silver;
@@ -18,10 +17,7 @@ const template = Xen.Template.html`
 </style>
 
 <arc-host config="{{config}}" manifest="{{manifest}}" key="{{key}}" serialization="{{serialization}}" on-arc="_onArc">
-  <!-- <div slotid="toproot"></div> -->
   <div slotid="root"></div>
-  <!-- <div slotid="modal" slot="modal"></div> -->
-  <!-- <div slotid="suggestions" slot="suggestions"></div> -->
 </arc-host>
 
 `;

@@ -115,9 +115,9 @@ const template = html`
   ></mi-toast-pipe>
 
   <!-- pretend this is a processing arc -->
-  <bg-arc style="display: none;"></bg-arc>
+  <bg-arc></bg-arc>
   <!-- pretend this is the login arc -->
-  <bg-arc style="display: none;"></bg-arc>
+  <bg-arc></bg-arc>
 
   <shell-ui
     key="{{key}}"
