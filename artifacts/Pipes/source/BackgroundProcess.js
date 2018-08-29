@@ -16,7 +16,7 @@ defineParticle(({DomParticle, html}) => {
   <span>Handling background processing...</span>
 </div>
 
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {
