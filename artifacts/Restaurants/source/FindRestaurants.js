@@ -6,63 +6,51 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle}) => {
 
-  let host = `find-restaurants`;
+  const service = `https://xenonjs.com/services/http/php`;
+  const placesService =`${service}/places.php`;
+  const photoService = `${service}/place-photo.php`;
 
-  let template = `
-<div ${host}>
-  <div hidden="{{complete}}" style="position:absolute;left:50%;top:50%;-webkit-transform: translate3d(-50%,-50%,0);">Finding restaurants...</div>
-  <div slotid="masterdetail"></div>
-</div>
-
-  `.trim();
-
-  let service = `https://xenonjs.com/services/http/php`;
-  let placesService =`${service}/places.php`;
-  let photoService = `${service}/place-photo.php`;
+  const makePlacesUrl = ({loc, radius, type}) => `${placesService}?location=${loc}&radius=${radius}&type=${type}`;
 
   return class extends DomParticle {
-    get template() {
-      return template;
-    }
-    willReceiveProps(props, state) {
-      if (props.restaurants && props.location && !state.count) {
-        this._fetchPlaces(props.location);
+    willReceiveProps({location, restaurants}, {count}) {
+      if (!count && restaurants && location) {
+        this.fetchPlaces(location);
       }
     }
-    _fetchPlaces(location) {
+    async fetchPlaces(location) {
       this._setState({count: -1});
-      const loc = `${location.latitude},${location.longitude}`;
-      const radius = `1000`;
-      const type = `restaurant`;
-      fetch(`${placesService}?location=${loc}&radius=${radius}&type=${type}`)
-        .then(response => response.json())
-        .then(places => this._receivePlaces(places));
-    }
-    async _receivePlaces(places) {
-      const restaurants = places.results.map(p => {
-        const photo = p.photos && p.photos.length
-          ? `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
-          : p.icon;
-        return {
-          id: p.id,
-          reference: p.reference,
-          name: p.name,
-          icon: p.icon,
-          address: p.vicinity,
-          rating: p.rating,
-          identifier: p.place_id,
-          photo
-        };
+      const placesUrl = makePlacesUrl({
+        loc: `${location.latitude},${location.longitude}`,
+        radius: `1000`,
+        type: `restaurant`
       });
+      const response = await fetch(placesUrl);
+      const places = await response.json();
+      this.receivePlaces(places);
+    }
+    async receivePlaces(places) {
+      const results = places.results || [];
+      const restaurants = results.map(p => this.placeToEntity(p));
       await this.clearHandle('restaurants');
       this.appendRawDataToHandle('restaurants', restaurants);
-      this._setState({count: places.results.length});
+      this.setState({count: results.length});
     }
-    render(props, state) {
+    placeToEntity(p) {
+      const photo = p.photos && p.photos.length
+      ? `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
+      : p.icon;
       return {
-        complete: state.count > 0
+        id: p.id,
+        reference: p.reference,
+        name: p.name,
+        icon: p.icon,
+        address: p.vicinity,
+        rating: p.rating,
+        identifier: p.place_id,
+        photo
       };
     }
   };

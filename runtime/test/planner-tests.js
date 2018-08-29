@@ -208,7 +208,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('maps untagged remote handle', async () => { 
+  it('maps untagged remote handle', async () => {
     await testManifest(`
       recipe
         map as list
@@ -216,7 +216,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 3);
   });
-  it('copies tagged remote handle', async () => { 
+  it('copies tagged remote handle', async () => {
     // copy one
     await testManifest(`
       recipe
@@ -237,7 +237,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('copies untagged remote handle', async () => { 
+  it('copies untagged remote handle', async () => {
     await testManifest(`
       recipe
         copy as list
@@ -281,7 +281,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     assert.lengthOf(plansB[0].handles, 1);
     assert.equal('copy', plansB[0].handles[0].fate);
   });
-  it('finds multiple remote handles', async () => { 
+  it('finds multiple remote handles', async () => {
     // both at once
     await testManifest(`
       recipe
@@ -779,7 +779,7 @@ describe('Automatic resolution', function() {
 
   let verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/TestRestaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
 
       store User of Person 'User' in './artifacts/Things/empty.json'
@@ -856,7 +856,7 @@ describe('Automatic resolution', function() {
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/TestRestaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
 
       store User of Person 'User' in './artifacts/Things/empty.json'

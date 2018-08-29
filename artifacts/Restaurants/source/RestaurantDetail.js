@@ -106,6 +106,17 @@ defineParticle(({DomParticle, html}) => {
     display: flex;
     flex-direction: row;
   }
+  [${host}] [row0] {
+    margin-top: 22px;
+  }
+  [${host}] [row1] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 82px;
+    margin-top: 16px;
+    padding-bottom: 4px;
+  }
   [${host}] [flex] {
     flex: 1;
   }
@@ -140,18 +151,18 @@ ${styles}
   <div content>
     <div name>{{name}}</div>
     <div row>
-      <div flex style="margin-top: 22px;">
+      <div flex row0>
         <div detail-caption>Address</div>
         <div detail-content unsafe-html="{{addr}}"></div>
         <div detail-caption>Phone</div>
         <div detail-content>{{phone}}</div>
         <div detail-caption>Website</div>
-        <div detail-content>{{website}}</div>
+        <div detail-content><a href="{{link}}" target="_blank">{{website}}</a></div>
       </div>
-      <div style="margin-top: 16px; width: 82px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
+      <div row1>
         <div rating>{{rating}}</div>
         <div stars-container>
-          <div stars style="{{starStyle}}"></div>
+          <div stars xen:style="{{starStyle}}"></div>
         </div>
       </div>
     </div>
@@ -213,6 +224,7 @@ ${styles}
           kind: state.detail.types ? state.detail.types.slice(0, 3).join(' - ').replace(/_/g, ' ') : '',
           addr: state.detail.vicinity,
           website: url || '(none)',
+          link: url ? `http://${url}` : '',
           phone: state.detail.formatted_phone_number || '(none)',
         };
       }

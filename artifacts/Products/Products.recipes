@@ -6,6 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// here for demo-flow-test.js only
+import '../Common/List.recipes'
+
 import 'ShowProducts.recipes'
 import 'Recommend.recipes'
 import 'Manufacturer.recipes'

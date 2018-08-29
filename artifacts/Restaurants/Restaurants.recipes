@@ -5,56 +5,54 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'FindRestaurants.manifest'
-import 'RestaurantMasterDetail.manifest'
-import 'RestaurantList.manifest'
-import 'RestaurantDetail.manifest'
-import '../Places/ExtractLocation.manifest'
+import 'Restaurant.schema'
 
-recipe &displayRestaurants
-  ? as list
-  RestaurantMasterDetail.selected -> RestaurantList.selected
-  RestaurantDetail.selected -> RestaurantList.selected
-  RestaurantMasterDetail.list -> RestaurantList.list
-  RestaurantList
-    list <- list
+//
 
-recipe
-  create as location
-  ExtractLocation
-    location -> location
+import '../Places/Places.recipes'
+import '../Places/GeoCoordinates.schema'
 
-recipe &nearbyRestaurants
-  create #restaurants #nosync as restaurants
+particle FindRestaurants in 'source/FindRestaurants.js'
+  in GeoCoordinates location
+  inout [Restaurant] restaurants
+
+recipe FindRestaurants
+  create #tiles as restaurants
   FindRestaurants
     restaurants = restaurants
 
-import '../Events/Event.schema'
-import '../Events/PartySize.manifest'
-import 'ReservationForm.manifest'
-import 'ReservationAnnotation.manifest'
+//
 
-recipe &makeReservation
+particle RestaurantTile in 'source/RestaurantTile.js'
+  in Restaurant restaurant
+  consume tile
+    provide annotation
+
+recipe ShowRestaurantTile
+  RestaurantTile
+
+//
+
+particle RestaurantDetail in 'source/RestaurantDetail.js'
+  in Restaurant selected
+  consume content
+    //provide action
+
+recipe RestaurantDetail
+  RestaurantDetail
+
+//
+
+import '../Events/Event.schema'
+
+particle ReservationAnnotation in 'source/ReservationAnnotation.js'
+  in [Restaurant] list
+  inout Event event
+  consume annotation
+
+recipe RestaurantReservation
   create #event as event
-  use #restaurants as list
-  ReservationForm
-    event = event
+  use as restaurants
   ReservationAnnotation
     event = event
-    list = list
-  PartySize
-    event = event
-
-import '../Events/Calendar.manifest'
-
-recipe
-  Calendar
-
-import 'FavoriteFoodAnnotation.manifest'
-
-recipe
-  map #favorite as food
-  use as restaurants
-  FavoriteFoodAnnotation
-    restaurants <- restaurants
-    food <- food
+    list = restaurants
