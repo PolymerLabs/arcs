@@ -60,6 +60,8 @@ particle TileList in 'source/TileList.js'
   consume root #items
     must provide set of tile
     provide set of action
+    provide set of annotation
+      handle items
   description `show ${items} as tiles`
 
 particle SelectableTileList in 'source/TileList.js'
@@ -68,5 +70,7 @@ particle SelectableTileList in 'source/TileList.js'
   consume root #items
     must provide set of tile
     provide set of action
+    provide set of annotation
+      handle items
   description `show ${items} as tiles`
 
