@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Things/GeoCoordinates.schema'
+import '../Places/GeoCoordinates.schema'
 import 'Restaurant.schema'
 
 particle FindRestaurants in 'source/FindRestaurants.js'
