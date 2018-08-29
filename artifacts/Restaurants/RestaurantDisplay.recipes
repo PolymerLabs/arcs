@@ -18,7 +18,6 @@ recipe ShowRestaurantTile
 particle RestaurantDetail in 'source/RestaurantDetail.js'
   in Restaurant selected
   consume content
-    //provide action
 
 recipe RestaurantDetail
   RestaurantDetail
