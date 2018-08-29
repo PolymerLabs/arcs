@@ -113,11 +113,11 @@ const template = html`
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
   ></mi-toast-pipe>
-  
+
   <!-- pretend this is a processing arc -->
-  <bg-arc Xstyle="display: none;"></bg-arc>
+  <bg-arc style="display: none;"></bg-arc>
   <!-- pretend this is the login arc -->
-  <bg-arc Xstyle="display: none;"></bg-arc>
+  <bg-arc style="display: none;"></bg-arc>
 
   <shell-ui
     key="{{key}}"
