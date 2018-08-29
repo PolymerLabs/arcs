@@ -29,39 +29,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         wss://*.firebase.io wss://*.firebaseio.com
         https://*.firebaseio.com
         https://*.firebase.io
-        https://xenonjs.com
         https://raw.githubusercontent.com/shaper/
+        https://sjmiles.github.io
+        https://xenonjs.com
         https://*.tvmaze.com
         https://media.w3.org
-        Xttps://bost.ocks.org
-        Xttps://noelutz.github.io
         ;
     font-src
-      'self'
+        'self'
         https://fonts.googleapis.com
         https://fonts.gstatic.com
+        https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         ;
     img-src
         'self'
-        https://xenonjs.com
         https://raw.githubusercontent.com/shaper/
+        https://sjmiles.github.io
+        https://xenonjs.com
         https://*.tvmaze.com
         https://media.w3.org
-        Xttps://bost.ocks.org
-        Xttps://noelutz.github.io
         data:
         ;
-    style-src 'self'
+    style-src
+        'self'
         'unsafe-inline'
         https://fonts.googleapis.com
         https://fonts.gstatic.com
+        https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
-        https://raw.githubusercontent.com/shaper/
         https://media.w3.org
-        Xttps://bost.ocks.org
-        Xttps://noelutz.github.io
         ;
   `
   // (optional) compress whitespace
