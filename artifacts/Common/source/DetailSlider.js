@@ -55,9 +55,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     }
   }
   [${host}] > [modal] > [buttons] {
-    /* border-bottom: 1px solid lightgrey;
-    padding: 12px 12px 8px; */
-    padding: 8px;
+    padding: 8px 4px 4px 8px;
   }
   [${host}] > [modal] > [buttons] > [back-button] {
     background-color: transparent;
