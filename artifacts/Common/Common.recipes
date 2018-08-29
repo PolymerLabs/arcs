@@ -7,3 +7,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'List.recipes'
+import 'Detail.manifest'

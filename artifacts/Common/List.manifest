@@ -19,7 +19,7 @@ particle ItemMultiplexer in 'source/Multiplexer.js'
 
 particle List in 'source/List.js'
   in [~a] items
-  consume root #content
+  consume root #items
     provide preamble
     must provide set of item
       handle items
@@ -33,7 +33,7 @@ particle List in 'source/List.js'
 particle SelectableList in 'source/List.js'
   inout [~a] items
   inout ~a selected
-  consume root #content
+  consume root #items
     provide preamble
     must provide set of item
       handle items
@@ -57,7 +57,7 @@ particle TileMultiplexer in 'source/Multiplexer.js'
 
 particle TileList in 'source/TileList.js'
   inout [~a] items
-  consume root #content
+  consume root #items
     must provide set of tile
     provide set of action
   description `show ${items} as tiles`
@@ -65,7 +65,7 @@ particle TileList in 'source/TileList.js'
 particle SelectableTileList in 'source/TileList.js'
   inout [~a] items
   inout ~a selected
-  consume root #content
+  consume root #items
     must provide set of tile
     provide set of action
   description `show ${items} as tiles`

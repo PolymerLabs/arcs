@@ -13,13 +13,19 @@ recipe
     address = address
 
 import 'ExtractLocation.manifest'
-import 'GoogleMap.manifest'
 
 recipe
   use #user as person
   create as location
   ExtractLocation
-    person <- person
-    location -> location
+    person = person
+    location = location
+
+import 'GoogleMap.manifest'
+
+recipe
+  // TODO(sjmiles): without this, system adds `create as location` (not what we want)
+  //                `use` makes sense, but why is `?` ok?
+  ? as location
   GoogleMap
-    location <- location
+    location = location

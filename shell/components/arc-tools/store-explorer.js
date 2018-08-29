@@ -102,16 +102,22 @@ class StoreExplorer extends Xen.Base {
         //if (store.name === null) {
         //  continue;
         //}
-        let values = `(don't know how to dereference)`;
+        let values;
         if (store.toList) {
           const list = await store.toList();
           values = {};
-          list.forEach(item => values[item.id] = item.rawData);
+          list.forEach((item, i) => {
+            if (item) {
+              values[item.id] = item.rawData;
+            } else {
+              console.warn(`store::item[${i}] is null`, store);
+            }
+          });
           //values = list.map(item => item.rawData);
         } else if (store.get) {
           values = await store.get();
         } else {
-          // lint?
+          values = `(don't know how to dereference)`;
         }
         const data = {
           name: store.name,

@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../People/Person.schema'
-import '../Things/GeoCoordinates.schema'
+import 'GeoCoordinates.schema'
 
 particle ExtractLocation in 'source/ExtractLocation.js'
   in Person person
