@@ -38,7 +38,7 @@ if (useSw) {
 window.defaultManifest = `
 
 import '${window.arcsPath}/artifacts/Arcs/Arcs.recipes'
-//import '${window.arcsPath}/artifacts/canonical.manifest'
+import '${window.arcsPath}/artifacts/canonical.manifest'
 //import 'https://sjmiles.github.io/arcs-stories/0.4/canonical.manifest'
 
 `;
