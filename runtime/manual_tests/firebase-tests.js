@@ -335,8 +335,8 @@ describe('firebase', function() {
       await store('r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
  
       // Verifies that cursor.next() returns items matching the given list of ids (in order).
-      let checkNext = async (cursor, ids) => {
-        let {value, done} = await cursor.next();
+      let checkNext = async (cursorId, ids) => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isFalse(done);
         assert.equal(value.length, ids.length);
         for (let i = 0; i < value.length; i++) {
@@ -346,19 +346,19 @@ describe('firebase', function() {
       };
 
       // Verifies that cursor does not contain any more items.
-      let checkDone = async cursor => {
-        let {value, done} = await cursor.next();
+      let checkDone = async cursorId => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isTrue(done);
         assert.isUndefined(value);
       };
 
       // Verifies a full streamed read with the given page size.
       let checkStream = async (pageSize, ...idRows) => {
-        let cursor = await collection.stream(pageSize);
+        let cursorId = await collection.stream(pageSize);
         for (let ids of idRows) {
-          await checkNext(cursor, ids);
+          await checkNext(cursorId, ids);
         }
-        await checkDone(cursor);
+        await checkDone(cursorId);
       };
 
       // Test streamed reads with various page sizes.
@@ -371,18 +371,18 @@ describe('firebase', function() {
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cursor1 = await collection.stream(4);
+      let cursorId1 = await collection.stream(4);
 
       // Remove the item at the start of the first page and another from a later page.
       await collection.remove('r01');
       await collection.remove('p07');
       await store('t15');
-      await checkNext(cursor1, ['i02', 'z03', 'q04', 'h05']);
+      await checkNext(cursorId1, ['i02', 'z03', 'q04', 'h05']);
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cursor2 = await collection.stream(5);
-      assert.equal(cursor2.version, cursor1.version + 3);
+      let cursorId2 = await collection.stream(5);
+      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
       await store('s16');
 
       // For cursor1: remove one item from the page just returned and two at the edges of the next page.
@@ -390,37 +390,37 @@ describe('firebase', function() {
       await collection.remove('y06');
       await collection.remove('f11');
 
-      await checkNext(cursor2, ['i02', 'q04', 'h05', 'g08', 'x09']);
-      await checkNext(cursor1, ['g08', 'x09', 'o10', 'w12']);
+      await checkNext(cursorId2, ['i02', 'q04', 'h05', 'g08', 'x09']);
+      await checkNext(cursorId1, ['g08', 'x09', 'o10', 'w12']);
       
       // This uses up the remaining non-removed items for cursor2 ---> [*]
-      await checkNext(cursor2, ['o10', 'w12', 'e13', 'j14', 't15']);
+      await checkNext(cursorId2, ['o10', 'w12', 'e13', 'j14', 't15']);
 
       // For cursor1: the next page should include the two remaining items and two of the previously
       // removed ones (which are returned in reverse order of removal).
-      await checkNext(cursor1, ['e13', 'j14', 'f11', 'y06']);
+      await checkNext(cursorId1, ['e13', 'j14', 'f11', 'y06']);
 
       // Remove another previously-returned item; should have no effect on either cursor.
       await collection.remove('x09');
-      await checkNext(cursor1, ['p07', 'r01']);
+      await checkNext(cursorId1, ['p07', 'r01']);
       await store('m17');
-      await checkDone(cursor1);
+      await checkDone(cursorId1);
 
       // Streaming again should be up-to-date (even with cursor2 still in flight).
       await checkStream(12, ['i02', 'q04', 'h05', 'g08', 'o10', 'w12', 'e13', 'j14', 't15', 's16', 'm17']);
 
       // [*] ---> so that this page is only removed items.
-      await checkNext(cursor2, ['f11', 'y06', 'z03']);
-      await checkDone(cursor2);
+      await checkNext(cursorId2, ['f11', 'y06', 'z03']);
+      await checkDone(cursorId2);
 
       // Repeated next() calls on a finished cursor should be safe.
-      await checkDone(cursor2);
+      await checkDone(cursorId2);
 
       // close() should terminate a stream.
-      let cursor3 = await collection.stream(3);
-      await checkNext(cursor3, ['i02', 'q04', 'h05']);
-      await cursor3.close();
-      await checkDone(cursor3);
+      let cursorId3 = await collection.stream(3);
+      await checkNext(cursorId3, ['i02', 'q04', 'h05']);
+      await collection.cursorClose(cursorId3);
+      await checkDone(cursorId3);
     }).timeout(20000);
   });
 

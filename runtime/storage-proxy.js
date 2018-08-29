@@ -35,9 +35,13 @@ const SyncState = {none: 0, pending: 1, full: 2};
  */
 export class StorageProxy {
   constructor(id, type, port, pec, scheduler, name) {
-    return type.isCollection
-        ? new CollectionProxy(id, type, port, pec, scheduler, name)
-        : new VariableProxy(id, type, port, pec, scheduler, name);
+    if (type.isCollection) {
+      return new CollectionProxy(id, type, port, pec, scheduler, name);
+    }
+    if (type.isBigCollection) {
+      return new BigCollectionProxy(id, type, port, pec, scheduler, name);
+    }
+    return new VariableProxy(id, type, port, pec, scheduler, name);
   }
 }
 
@@ -298,8 +302,8 @@ class CollectionProxy extends StorageProxyBase {
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
-      return new Promise((resolve, reject) =>
-        this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+      return new Promise(resolve =>
+        this._port.HandleToList({callback: resolve, handle: this, particleId}));
     }
   }
 
@@ -418,7 +422,7 @@ class VariableProxy extends StorageProxyBase {
     if (this._synchronized == SyncState.full) {
       return Promise.resolve(this._model);
     } else {
-      return new Promise((resolve, reject) =>
+      return new Promise(resolve =>
         this._port.HandleGet({callback: resolve, handle: this, particleId}));
     }
   }
@@ -533,5 +537,37 @@ export class StorageProxyScheduler {
     }
 
     this._updateIdle();
+  }
+}
+
+// BigCollections are never synchronized. No local state is held and all operations are passed
+// directly through to the backing store.
+class BigCollectionProxy extends StorageProxyBase {
+  // BigCollections don't hold a local model so the sync/update mechanism isn't meaningful.
+  register(particle, handle) {
+  }
+
+  // TODO: surface get()
+
+  async store(value, keys, particleId) {
+    this._port.HandleStore({handle: this, data: {value, keys}, particleId});
+  }
+
+  async remove(id, particleId) {
+    this._port.HandleRemove({handle: this, data: {id, keys: []}, particleId});
+  }
+
+  async stream(pageSize) {
+    return new Promise(resolve =>
+      this._port.HandleStream({handle: this, callback: resolve, pageSize}));
+  }
+
+  async cursorNext(cursorId) {
+    return new Promise(resolve =>
+      this._port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
+  }
+
+  async cursorClose(cursorId) {
+    this._port.StreamCursorClose({handle: this, cursorId});
   }
 }

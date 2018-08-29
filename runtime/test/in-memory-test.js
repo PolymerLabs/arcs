@@ -297,8 +297,8 @@ describe('in-memory', function() {
       await collection.store({id: 'p07', data: 'vp07'}, ['kXX']);
       await collection.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let checkNext = async (cursor, ids) => {
-        let {value, done} = await cursor.next();
+      let checkNext = async (cursorId, ids) => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isFalse(done);
         assert.equal(value.length, ids.length);
         for (let i = 0; i < value.length; i++) {
@@ -307,33 +307,33 @@ describe('in-memory', function() {
         }
       };
 
-      let checkDone = async cursor => {
-        let {value, done} = await cursor.next();
+      let checkDone = async cursorId => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isTrue(done);
         assert.isUndefined(value);
       };
 
-      let cursor1 = await collection.stream(6);
-      await checkNext(cursor1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
+      let cursorId1 = await collection.stream(6);
+      await checkNext(cursorId1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
 
       await collection.store({id: 'f11', data: 'vf11'}, ['kf11']);
       await collection.remove('g08');
       await collection.remove('z03');
 
       // Interleave another cursor at a different version.
-      let cursor2 = await collection.stream(20);
-      assert.equal(cursor2.version, cursor1.version + 3);
-      await checkNext(cursor2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
+      let cursorId2 = await collection.stream(20);
+      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
+      await checkNext(cursorId2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
       
-      await checkNext(cursor1, ['x09', 'o10', 'p07', 'q04']);
-      await checkDone(cursor1);
-      await checkDone(cursor2);
+      await checkNext(cursorId1, ['x09', 'o10', 'p07', 'q04']);
+      await checkDone(cursorId1);
+      await checkDone(cursorId2);
 
       // Verify close().
-      let cursor3 = await collection.stream(3);
-      await checkNext(cursor3, ['r01', 'i02', 'h05']);
-      await cursor3.close();
-      await checkDone(cursor3);
+      let cursorId3 = await collection.stream(3);
+      await checkNext(cursorId3, ['r01', 'i02', 'h05']);
+      await collection.cursorClose(cursorId3);
+      await checkDone(cursorId3);
     });
   });
 });
