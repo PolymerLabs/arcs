@@ -9,7 +9,7 @@ import 'FindRestaurants.manifest'
 import 'RestaurantMasterDetail.manifest'
 import 'RestaurantList.manifest'
 import 'RestaurantDetail.manifest'
-import '../Places/ExtractLocation.manifest'
+import '../Places/ExtractLocation.recipes'
 
 recipe &displayRestaurants
   ? as list

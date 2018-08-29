@@ -782,7 +782,7 @@ describe('Automatic resolution', function() {
       import 'artifacts/TestRestaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
 
-      store User of Person 'User' in './artifacts/Things/empty.json'
+      store User of Person 'User' in './artifacts/Demo/Claire.json'
 
       recipe
         search \`${searchStr}\`
