@@ -6,9 +6,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'GeoCoordinates.schema'
+//import 'http://schema.org/PostalAddress'
+import 'PostalAddress.schema'
 
-particle GoogleMap in 'source/GoogleMap.js'
-  in GeoCoordinates location
+particle AddressForm in 'source/AddressForm.js'
+  inout PostalAddress address
   consume root
-  description `Show ${location} on a map`
+  description `edit address`
+
+recipe
+  create #address as address
+  AddressForm
+    address = address

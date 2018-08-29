@@ -14,3 +14,10 @@ particle ExtractLocation in 'source/ExtractLocation.js'
   out GeoCoordinates location
   description `extract ${person}'s location`
     location `${person}'s location`
+
+recipe
+  use #user as person
+  create as location
+  ExtractLocation
+    person = person
+    location = location

@@ -5,27 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'AddressForm.manifest'
-
-recipe
-  create #address as address
-  AddressForm
-    address = address
-
-import 'ExtractLocation.manifest'
-
-recipe
-  use #user as person
-  create as location
-  ExtractLocation
-    person = person
-    location = location
-
-import 'GoogleMap.manifest'
-
-recipe
-  // TODO(sjmiles): without this, system adds `create as location` (not what we want)
-  //                `use` makes sense, but why is `?` ok?
-  ? as location
-  GoogleMap
-    location = location
+import 'ExtractLocation.recipes'
+import 'GoogleMap.recipes'
+import 'AddressForm.recipes'
