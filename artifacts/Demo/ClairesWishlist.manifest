@@ -4,4 +4,4 @@ import '../People/Person.schema'
 store ClairesWishlist of [Product] #items #wishlist in 'wishlist.json'
   description `wishlist`
 
-store Claire of Person #claire in 'people.json'
+store Claire of Person #claire in 'Claire.json'
