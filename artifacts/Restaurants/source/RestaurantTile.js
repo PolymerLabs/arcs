@@ -56,15 +56,6 @@ defineParticle(({DomParticle, html}) => {
     [${host}] [col1] {
       overflow-x: hidden;
       text-align: right;
-      /*
-      flex: 1;
-      width: 56px;
-      align-items: flex-end;
-      display: flex;
-      flex-direction: column;
-      Xpadding-bottom: 4px;
-      Xpadding-right: 8px;
-      */
     }
     [${host}] [address] {
       font-size: 14px;
@@ -82,7 +73,6 @@ defineParticle(({DomParticle, html}) => {
       font-size: 32px;
       line-height: 36px;
       letter-spacing: 1.3px;
-      /* text-align: right; */
       margin-bottom: 2px;
       width: 100%;
     }
