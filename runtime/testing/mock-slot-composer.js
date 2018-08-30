@@ -166,14 +166,15 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   //TODO: reaching directly into data objects like this is super dodgy and we should
-  // fix.
+  // fix. It's particularly bad here as there's no guarantee that the backingStore
+  // exists - should await ensureBackingStore() before accessing it.
   _getHostedParticleNames(particle) {
     return Object.values(particle.connections)
         .filter(conn => conn.type.isInterface)
         .map(conn => {
           const store = this.arc.findStoreById(conn.handle.id);
           if (store.referenceMode) {
-            return store._backingStore._model.getValue(store._stored.id).name;
+            return store.backingStore._model.getValue(store._stored.id).name;
           }
           return store._stored.name;
         });
