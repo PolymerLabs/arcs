@@ -13,6 +13,7 @@ import './elements/arc-planner.js';
 import './elements/shell-ui.js';
 import './elements/shell-stores.js';
 import './elements/cloud-data.js';
+import './elements/background-arcs/bg-arc.js';
 
 // external data pipes (MiToast, ArcExtension)
 import './elements/pipes/mi-toast-pipe.js';
@@ -112,6 +113,11 @@ const template = html`
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
   ></mi-toast-pipe>
+
+  <!-- pretend this is a processing arc -->
+  <bg-arc></bg-arc>
+  <!-- pretend this is the login arc -->
+  <bg-arc></bg-arc>
 
   <shell-ui
     key="{{key}}"
