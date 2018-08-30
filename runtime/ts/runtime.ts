@@ -20,7 +20,7 @@ export class Runtime {
     this.arcs = [];
 
     // user information. One persona per runtime for now.
-  };
+  }
 
 
   // Stuff the shell needs
@@ -28,7 +28,7 @@ export class Runtime {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
     return new Description(arc).getArcDescription();
-  };
+  }
 
   // stuff the strategizer needs
 
