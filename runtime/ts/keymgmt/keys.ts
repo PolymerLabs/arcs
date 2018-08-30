@@ -1,5 +1,7 @@
 
 export interface Key {
+    algorithm(): string;
+    fingerprint(): PromiseLike<string>;
 }
 
 export interface PrivateKey extends Key {
@@ -8,30 +10,23 @@ export interface PrivateKey extends Key {
 export interface PublicKey extends Key {
 }
 
-export interface WrappedKey<T extends Key> extends Key {
-  unwrap(privKey:PrivateKey): T;
+export interface DeviceKey extends Key {
+    privateKey(): PrivateKey;
+    publicKey(): PublicKey;
 }
 
-export interface SessionKey {
-    exportWrappedForKey(pkey: PublicKey): string;
+export interface RecoveryKey extends DeviceKey {
 }
 
-class SessionKeyImpl implements SessionKey {
-    sessionKey: CryptoKey;
-
-    constructor(sessionKey: CryptoKey) {
-      this.sessionKey = sessionKey;
-    }
-
-    exportWrappedForKey(pkey: PublicKey): string {
-        return "";
-    }
+export interface WrappedKey extends Key {
+  rewrap(privKey:PrivateKey, cloudKey: PublicKey): PromiseLike<WrappedKey>;
+  export(): string;
 }
 
-export class KeyManager {
-    generateSessionKey(): PromiseLike<SessionKey> {
-      const generatedKey:PromiseLike<CryptoKey> = crypto.subtle.generateKey({name: 'AES-GCM', length: 256},
-          true, ["encrypt", "decrypt"]);
-      return generatedKey.then(key => new SessionKeyImpl(key));
-    }
+export interface SessionKey extends Key {
+    isDisposed(): boolean;
+    encrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer>;
+    decrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer>;
+    disposeToWrappedKeyUsing(pkey: PublicKey): PromiseLike<WrappedKey>;
 }
+
