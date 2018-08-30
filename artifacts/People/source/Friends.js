@@ -66,12 +66,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     }
     friendToModel(friend) {
       const {people, avatars} = this._props;
-      const ofFriend = person => {
-        const ownerid = person.$id.split('|')[0];
-        return ownerid == friend.id;
-      };
-      const friendsOfFriend = people.filter(ofFriend);
-      const avatarsOfFriend = avatars.filter(ofFriend);
+      const friendsOfFriend = this.boxQuery(people, friend.id);
+      const avatarsOfFriend = this.boxQuery(avatars, friend.id);
       return {
         name: friend.name,
         avatars: {
