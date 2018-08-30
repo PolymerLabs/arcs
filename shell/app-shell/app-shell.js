@@ -262,7 +262,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     this._setState({arc: null, key});
   }
   async _describeArc(arc, fallback) {
-    const description = (await new Arcs.Description(arc).getArcDescription()) || fallback;
+    const description = (await Arcs.Runtime.getArcDescription(arc)) || fallback;
     this._setState({description});
   }
   _onStateData(e, data) {

@@ -8,15 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Runtime} from '../../runtime/ts-build/runtime.js';
+
+// The following will be pulled into Runtime.
 import {Arc} from '../../runtime/arc.js';
-import {Description} from '../../runtime/description.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Planificator} from '../../runtime/planificator.js';
 import {Planner} from '../../runtime/planner.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
+
+
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
+
 // Keep in sync with runtime/ts/storage/firebase-storage.ts
 import firebase from 'firebase/app';
 import 'firebase/database';
@@ -28,7 +33,7 @@ import 'firebase/storage';
 const Arcs = {
   version: '0.3',
   Arc,
-  Description,
+  Runtime,
   Manifest,
   Planificator,
   Planner,
