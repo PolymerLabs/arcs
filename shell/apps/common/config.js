@@ -39,6 +39,16 @@ window.defaultManifest = `
 
 import '${window.arcsPath}/artifacts/Arcs/Arcs.recipes'
 import '${window.arcsPath}/artifacts/canonical.manifest'
+import 'https://sjmiles.github.io/arcs-stories/0.4/canonical.manifest'
+
+`;
+
+window.defaultManifest = `
+
+import '${window.arcsPath}/artifacts/Arcs/Launcher.recipe'
+import '${window.arcsPath}/artifacts/List/List.recipes'
+import '${window.arcsPath}/artifacts/Places/Places.recipes'
+import '${window.arcsPath}/artifacts/Restaurants/Restaurants.recipes'
 //import 'https://sjmiles.github.io/arcs-stories/0.4/canonical.manifest'
 
 `;

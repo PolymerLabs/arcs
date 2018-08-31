@@ -15,7 +15,7 @@ particle FindRestaurants in 'source/FindRestaurants.js'
   inout [Restaurant] restaurants
 
 recipe FindRestaurants
-  create #tiles as restaurants
+  create #items #tiles as restaurants
   FindRestaurants
     restaurants = restaurants
 

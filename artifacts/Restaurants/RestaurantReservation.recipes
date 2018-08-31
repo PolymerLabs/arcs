@@ -7,15 +7,34 @@
 
 import 'Restaurant.schema'
 import '../Events/Event.schema'
+import '../Common/Description.schema'
+
+particle ReservationForm in 'source/ReservationForm.js'
+//particle ReservationForm in 'source/ReservationInfo.js'
+  in Restaurant restaurant
+  inout Event event
+  out [Description] descriptions
+  consume action
+  description `make a reservation`
+    event `reservation`
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
-  in [Restaurant] list
+  in Restaurant restaurant
   inout Event event
   consume annotation
 
-recipe RestaurantReservation
-  create #event as event
-  use as restaurants
+recipe RestaurantReservationAnnotation
+  create #annotation as event
+  // TODO(sjmiles): `use` requires data to be part of the Arc (not just random context), is this improper?
+  use #selected as restaurant
   ReservationAnnotation
     event = event
-    list = restaurants
+    restaurant = restaurant
+
+recipe RestaurantReservationForm
+  create #annotation as event
+  use #selected as restaurant
+  ReservationForm
+    event = event
+    restaurant = restaurant
+

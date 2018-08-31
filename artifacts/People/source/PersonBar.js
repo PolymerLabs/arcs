@@ -38,7 +38,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   </style>
   <div>{{people}}</div>
   <template people>
-    <img style="{{order}}" src="{{avatar}}" title="{{name}}" active$="{{active}}">
+    <img xen:style="{{order}}" src="{{avatar}}" title="{{name}}" active$="{{active}}">
   </template>
 </div>
 

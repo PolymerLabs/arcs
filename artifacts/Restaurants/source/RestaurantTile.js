@@ -90,9 +90,7 @@ defineParticle(({DomParticle, html}) => {
       background-repeat: repeat no-repeat;
     }
   </style>
-
   <!-- <div slotid="modifier"></div> -->
-
   <div item xen:style="{{image}}">
     <div fade></div>
     <div columns>
@@ -108,8 +106,7 @@ defineParticle(({DomParticle, html}) => {
       </div>
     </div>
   </div>
-  <div slotid="annotation" subid$="{{id}}">
-
+  <!-- <div slotid="annotation" subid$="{{id}}"> -->
 </div>
     `;
 
