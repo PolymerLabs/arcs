@@ -9,12 +9,29 @@
 import {assert} from '../../../platform/assert-web.js';
 import {Tracing} from '../../../tracelib/trace.js';
 import {Type} from '../type';
+import {Id} from '../id.js';
+import {KeyBase} from './key-base.js';
+
 import * as util from '../../recipe/util.js';
 
 enum EventKind {
   Change = 'change'
 }
 type Callback = ({}) => void;
+
+export abstract class StorageBase {
+  constructor(protected readonly arcId: Id) {
+    assert(arcId !== undefined, 'Arcs with storage must have ids');
+  }
+  
+  abstract construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase>;
+  abstract connect(id: string, type: Type, key: string) : Promise<StorageProviderBase>;
+  abstract share(id: string, type: Type, key: string) : Promise<StorageProviderBase>;
+  abstract parseStringAsKey(s: string) : KeyBase;
+
+  // Provides graceful shutdown for tests.
+  shutdown() {}
+}
 
 export abstract class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;

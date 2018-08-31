@@ -8,7 +8,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Tracing} from '../../../tracelib/trace.js';
-import {StorageProviderBase} from './storage-provider-base.js';
+import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
@@ -53,16 +53,14 @@ class InMemoryKey extends KeyBase {
 // tslint:disable-next-line: variable-name
 const __storageCache = {};
 
-export class InMemoryStorage {
-  private readonly arcId: Id;
+export class InMemoryStorage extends StorageBase {
   _memoryMap: {[index: string]: InMemoryStorageProvider};
   _typeMap: {[index: string]: InMemoryCollection};
   private typePromiseMap: {[index: string]: Promise<InMemoryCollection>};
   localIDBase: number;
 
   constructor(arcId: Id) {
-    assert(arcId !== undefined, 'Arcs with storage must have ids');
-    this.arcId = arcId;
+    super(arcId);
     this._memoryMap = {};
     this._typeMap = {};
     this.localIDBase = 0;
@@ -72,7 +70,7 @@ export class InMemoryStorage {
     __storageCache[this.arcId.toString()] = this;
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string, type: Type, keyFragment: string) : Promise<InMemoryStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
     provider.enableReferenceMode();
     return provider;
@@ -95,39 +93,40 @@ export class InMemoryStorage {
     return provider;
   }
 
-  async connect(id, type, keyString) {
-    const key = new InMemoryKey(keyString);
-    if (key.arcId !== this.arcId.toString()) {
-      if (__storageCache[key.arcId] == undefined) {
+  async connect(id: string, type: Type, key: string) : Promise<InMemoryStorageProvider> {
+    const imKey = new InMemoryKey(key);
+    if (imKey.arcId !== this.arcId.toString()) {
+      if (__storageCache[imKey.arcId] == undefined) {
         return null;
       }
-      return __storageCache[key.arcId].connect(id, type, keyString);
+      return __storageCache[imKey.arcId].connect(id, type, key);
     }
-    if (this._memoryMap[keyString] == undefined) {
+    if (this._memoryMap[key] == undefined) {
       return null;
     }
     // TODO assert types match?
-    return this._memoryMap[keyString];
+    return this._memoryMap[key];
   }
 
-  async share(id, type, keyString) {
-    assert(keyString, "Must provide valid keyString to connect to underlying data");
-    const key = new InMemoryKey(keyString);
-    assert(key.arcId === this.arcId.toString(), `key's arcId ${key.arcId} doesn't match this storageProvider's arcId ${this.arcId.toString()}`);
-    if (this._memoryMap[keyString] == undefined) {
-      return this._construct(id, type, keyString);
+  async share(id: string, type: Type, key: string) : Promise<InMemoryStorageProvider> {
+    assert(key, "Must provide valid key to connect to underlying data");
+    const imKey = new InMemoryKey(key);
+    assert(imKey.arcId === this.arcId.toString(),
+           `key's arcId ${imKey.arcId} doesn't match this storageProvider's arcId ${this.arcId.toString()}`);
+    if (this._memoryMap[key] == undefined) {
+      return this._construct(id, type, key);
     }
-    return this._memoryMap[keyString];
+    return this._memoryMap[key];
   }
 
-  baseStorageKey(type) : string {
+  baseStorageKey(type: Type) : string {
     const key = new InMemoryKey('in-memory');
     key.arcId = this.arcId.toString();
     key.location = 'in-memory-' + type.toString();
     return key.toString();
   }
 
-  async baseStorageFor(type, key : string) {
+  async baseStorageFor(type: Type, key : string) {
     if (this._typeMap[key]) {
       return this._typeMap[key];
     }
@@ -141,12 +140,8 @@ export class InMemoryStorage {
     return storage;
   }
 
-  parseStringAsKey(s: string) {
+  parseStringAsKey(s: string) : InMemoryKey {
     return new InMemoryKey(s);
-  }
-
-  shutdown() {
-    // No-op
   }
 }
 

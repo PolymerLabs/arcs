@@ -8,4 +8,5 @@
 
 export abstract class KeyBase {
   abstract childKeyForHandle(id): KeyBase;
+  abstract toString(): string;
 }
