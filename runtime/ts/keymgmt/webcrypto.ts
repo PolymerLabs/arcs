@@ -1,7 +1,8 @@
 import {DeviceKey, Key, PrivateKey, PublicKey, RecoveryKey, SessionKey, WrappedKey} from "./keys";
 import {KeyGenerator, KeyStorage} from "./manager";
 import idb, {ObjectStore} from 'idb';
-import {encode} from './base64';
+import {decode, encode} from './base64';
+import rs from 'jsrsasign';
 
 class WebCryptoStorableKey<T> {
 
@@ -12,7 +13,8 @@ class WebCryptoStorableKey<T> {
     }
 
     algorithm(): string {
-       return (this.key as any).algorithm.name;
+        // @ts-ignore
+        return (this.key as CryptoKey).algorithm.name;
     }
 
     storableKey(): T {
@@ -56,7 +58,7 @@ class WebCryptoWrappedKey implements WrappedKey {
     }
 
     export(): string {
-        return "";
+        return encode(this.wrappedKeyData.buffer as ArrayBuffer);
     }
 
     fingerprint(): PromiseLike<string> {
@@ -107,7 +109,7 @@ class WebCryptoSessionKey implements SessionKey {
             {
                 name: this.algorithm(),
                 iv: this.iv
-        }, this.sessionKey, buffer);
+            }, this.sessionKey, buffer);
     }
 
     sessionKey: CryptoKey;
@@ -117,10 +119,12 @@ class WebCryptoSessionKey implements SessionKey {
     constructor(sessionKey: CryptoKey) {
         this.sessionKey = sessionKey;
         // hack for unit testing
-        this.iv = new Uint8Array([1,2,3,4,5,6,7,8,9,10,11,12]);
+        this.iv = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     }
 
-    algorithm(): string { return "AES-GCM"; }
+    algorithm(): string {
+        return "AES-GCM";
+    }
 
     disposeToWrappedKeyUsing(pkey: PublicKey): PromiseLike<WrappedKey> {
         try {
@@ -160,7 +164,7 @@ class WebCryptoDeviceKey extends WebCryptoStorableKey<CryptoKeyPair> implements 
     }
 
     privateKey(): PrivateKey {
-        return new WebCryptoPrivateKey(this.key.privateKey)
+        return new WebCryptoPrivateKey(this.key.privateKey);
     }
 
     publicKey(): PublicKey {
@@ -174,7 +178,7 @@ class WebCryptoDeviceKey extends WebCryptoStorableKey<CryptoKeyPair> implements 
 
 export class WebCryptoKeyGenerator implements KeyGenerator {
     generateWrappedStorageKey(deviceKey: DeviceKey): PromiseLike<WrappedKey> {
-        const generatedKey:PromiseLike<CryptoKey> = crypto.subtle.generateKey({name: 'AES-GCM', length: 256},
+        const generatedKey: PromiseLike<CryptoKey> = crypto.subtle.generateKey({name: 'AES-GCM', length: 256},
             true, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]);
         return generatedKey.then(key => new WebCryptoSessionKey(key))
             .then(skey => skey.disposeToWrappedKeyUsing(deviceKey.publicKey()));
@@ -189,7 +193,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
     }
 
     generateDeviceKey(): PromiseLike<DeviceKey> {
-        const generatedKey:PromiseLike<CryptoKeyPair> = crypto.subtle.generateKey(
+        const generatedKey: PromiseLike<CryptoKeyPair> = crypto.subtle.generateKey(
             {
                 hash: {name: "SHA-512"},
                 name: 'RSA-OAEP',
@@ -199,10 +203,22 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
             false, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]);
         return generatedKey.then(key => new WebCryptoDeviceKey(key));
     }
+
+    importKey(pemKey: string): PromiseLike<PublicKey> {
+        const key = rs.KEYUTIL.getKey(pemKey);
+        const jwk = rs.KEYUTIL.getJWKFromKey(key);
+
+        return crypto.subtle.importKey("jwk",
+            jwk as JsonWebKey,
+            {
+                name: "RSA-OAEP",
+                hash: {name: "SHA-1"}
+            }, true, ["encrypt", "wrapKey"]).then(ikey => new WebCryptoPublicKey(ikey));
+    }
 }
 
 export class WebCryptoMemoryKeyStorage implements KeyStorage {
-    storageMap: Map<String, Key>;
+    storageMap: Map<string, Key>;
 
     constructor() {
         this.storageMap = new Map();
@@ -223,18 +239,18 @@ export class WebCryptoMemoryKeyStorage implements KeyStorage {
     }
 }
 
-export class WebCryptoKeyStorage implements KeyStorage {
+export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
 
-    async runOnStore(fn: (store: ObjectStore<any, any>) => PromiseLike<any>) {
-        let db = await idb.open('ArcsKeyManagement', 1,
-                upgradeDB => upgradeDB.createObjectStore('ArcsKeyManagementStore',
-                    { autoIncrement: true }))
+    async runOnStore(fn: (store: ObjectStore<{}, IDBValidKey>) => PromiseLike<IDBValidKey>) {
+        const db = await idb.open('ArcsKeyManagement', 1,
+            upgradeDB => upgradeDB.createObjectStore('ArcsKeyManagementStore',
+                {autoIncrement: true}));
 
-        let tx = db.transaction('ArcsKeyManagementStore', 'readwrite');
-        let store = tx.objectStore('ArcsKeyManagementStore');
+        const tx = db.transaction('ArcsKeyManagementStore', 'readwrite');
+        const store = tx.objectStore('ArcsKeyManagementStore');
         const result = await fn(store);
         await tx.complete;
-        db.close()
+        db.close();
         return Promise.resolve(result);
     }
 
@@ -255,6 +271,6 @@ export class WebCryptoKeyStorage implements KeyStorage {
     }
 
     static getInstance() {
-        return new WebCryptoKeyStorage();
+        return new WebCryptoKeyIndexedDBStorage();
     }
 }

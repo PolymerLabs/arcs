@@ -111,7 +111,7 @@ const deviceKey = KeyManager.getStorage().find(deviceKeyId);
 const wrappedKey = receiveFromCloud(cloudNode);
 
 // Retrieve publically published GCP public key
-const gcpCert = await generator.importKey(cloudNodeGcpKey);
+const gcpCert = await generator.importKey(cloudNodeGcpKeyInPemFormat);
 const gcpWrappedKey = wrappedKey.rewrap(deviceKey, gcpCert);
-sendToCloud(cloudNode, gcpWrappedKey);
+sendToCloud(cloudNode, gcpWrappedKey.export());
 ```

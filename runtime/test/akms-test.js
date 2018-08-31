@@ -11,6 +11,7 @@
 import {KeyManager} from '../ts-build/keymgmt/manager.js';
 import {assert} from '../test/chai-web.js';
 import WebCrypto from 'node-webcrypto-ossl';
+import Fetch from 'node-fetch';
 
 global.crypto = new WebCrypto();
 
@@ -62,4 +63,22 @@ describe('arcs key management', function() {
         });
     });
 
+    it('supports importing GCP PEM keys and exporting a rewrapped key', async () => {
+        const keyGenerator = KeyManager.getGenerator();
+        const deviceKey = await keyGenerator.generateDeviceKey();
+
+        const storageKey = await KeyManager.getGenerator().generateWrappedStorageKey(deviceKey);
+        assert.isNotNull(storageKey);
+
+        const pemKey = await Fetch('https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem').then(resp => resp.text());
+        const gcpPublicKey = await keyGenerator.importKey(pemKey);
+
+        const rewrappedKey = await storageKey.rewrap(deviceKey.privateKey(), gcpPublicKey);
+        assert.isNotNull(rewrappedKey);
+
+        const exportedRewrappedKey = rewrappedKey.export();
+        assert.isNotNull(exportedRewrappedKey);
+
+        // TODO: add a docker container on GCP that we can test this against
+    });
 });

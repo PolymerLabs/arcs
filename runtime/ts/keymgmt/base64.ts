@@ -60,26 +60,26 @@ export function encode(bytes: ArrayBuffer): string {
     return base64.join('');
 }
 
-export function decode(string: string): Uint8Array {
-    let size = string.length;
+export function decode(str: string): Uint8Array {
+    let size = str.length;
     if (size === 0) {
         return new Uint8Array(new ArrayBuffer(0));
     }
     if (size % 4 !== 0) {
         throw new Error('Bad length: ' + size);
     }
-    if (!string.match(/^[a-zA-Z0-9+/]+={0,2}$/)) {
+    if (!str.match(/^[a-zA-Z0-9+/]+={0,2}$/)) {
         throw new Error('Invalid base64 encoded value');
     }
     // Every 4 base64 chars = 24 bits = 3 bytes. But, we also need to figure out
     // padding, if any.
     let bytes = 3 * (size / 4);
     let numPad = 0;
-    if (string.charAt(size - 1) === '=') {
+    if (str.charAt(size - 1) === '=') {
         numPad++;
         bytes--;
     }
-    if (string.charAt(size - 2) === '=') {
+    if (str.charAt(size - 2) === '=') {
         numPad++;
         bytes--;
     }
@@ -94,7 +94,7 @@ export function decode(string: string): Uint8Array {
     while (index < size) {
         quantum = 0;
         for (let i = 0; i < 4; ++i) {
-            quantum = (quantum << 6) | values[string.charAt(index + i)];
+            quantum = (quantum << 6) | values[str.charAt(index + i)];
         }
         // quantum is now a 24-bit value.
         buffer[bufferIndex++] = (quantum >> 16) & 0xff;
@@ -108,7 +108,7 @@ export function decode(string: string): Uint8Array {
         // First, grab my quantum.
         quantum = 0;
         for (let i = 0; i < 4 - numPad; ++i) {
-            quantum = (quantum << 6) | values[string.charAt(index + i)];
+            quantum = (quantum << 6) | values[str.charAt(index + i)];
         }
         if (numPad === 1) {
             // quantum is 18 bits, but really represents two bytes.
