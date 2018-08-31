@@ -71,7 +71,7 @@ export class CoalesceRecipes extends Strategy {
             let mergedSlot = cloneMap.get(providedSlot);
             slotConnection.connectToSlot(mergedSlot);
 
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -134,7 +134,7 @@ export class CoalesceRecipes extends Strategy {
               recipe.removeHandle(disconnectedHandle);
             }
 
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -194,7 +194,7 @@ export class CoalesceRecipes extends Strategy {
             cloneMap.get(otherHandle).mergeInto(handle);
 
             // Connect all other connectable handles.
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, true);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -209,8 +209,33 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
 
-      _connectOtherHandles(otherToHandle, cloneMap) {
-        otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
+      _connectOtherHandles(otherToHandle, cloneMap, verifyTypes) {
+        otherToHandle.forEach((otherHandle, handle) => {
+          // For coalescing that was triggered by handle coalescing (vs slot or slot connection)
+          // once the main handle (one that triggered coalescing) was coalesced, types may have changed.
+          // Need to verify all the type information for the "other" coalescable handles is still valid.
+
+          // TODO(mmandlis): This is relying on only ever considering a single "other" handles to coalesce,
+          // so the handle either is still a valid match or not.
+          // In order to do it right for multiple handles, we need to try ALL handles,
+          // then fallback to all valid N-1 combinations, then N-2 etc.
+
+          if (verifyTypes) {
+            let otherHandleClone = cloneMap.get(otherHandle);
+            let cloneCloneMap = new Map();
+            let recipeClone = handle.recipe.clone(cloneCloneMap);
+            recipeClone.normalize();
+            let handleCloneClone = cloneCloneMap.get(handle);
+            let otherHandleCloneClone = cloneCloneMap.get(otherHandleClone);
+            let effectiveType = Handle.effectiveType(
+              handleCloneClone.type, [...handleCloneClone.connections, ...otherHandleCloneClone.connections]);
+            if (!effectiveType) {
+              return;
+            }
+          }
+
+          cloneMap.get(otherHandle).mergeInto(handle);
+        });
       }
     }(Walker.Independent), this);
   }
