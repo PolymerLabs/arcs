@@ -10,7 +10,7 @@
 
 import './Cake.manifest'
 
-particle List in '../../../../artifacts/Common/source/List.js'
+particle List in '../../../../artifacts/List/source/List.js'
   in [~a] items
   consume root
     must provide set of item

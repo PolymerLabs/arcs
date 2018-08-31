@@ -11,7 +11,7 @@ import 'PostList.manifest'
 import 'PostTimeRanker.manifest'
 import 'WordsScoreRanker.manifest'
 import '../Common/CopyCollection.manifest'
-import '../Common/Detail.manifest'
+import '../Layout/Detail.recipes'
 
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.

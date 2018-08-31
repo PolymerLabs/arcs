@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/List.manifest'
+import '../List/List.recipes'
 import '../Common/data/Theme.schema'
 import '../People/Person.schema'
 import '../People/Avatar.schema'
@@ -47,7 +47,7 @@ particle WritePosts in 'source/WritePosts.js'
   description `write posts`
 
 particle EditPost in 'source/EditPost.js'
-  host HostedParticleShape renderParticle
+  host HostedItemShape renderParticle
   inout Post post
   inout [Post] posts
   in Person user

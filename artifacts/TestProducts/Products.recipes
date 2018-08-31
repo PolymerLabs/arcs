@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 // here for demo-flow-test.js only
-import '../Common/List.recipes'
+import '../List/List.recipes'
 
 import 'ShowProducts.recipes'
 import 'Recommend.recipes'

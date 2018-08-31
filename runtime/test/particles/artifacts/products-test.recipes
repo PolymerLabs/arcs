@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../../artifacts/Common/List.manifest'
+import '../../../../artifacts/List/List.recipes'
 import '../../../../artifacts/TestProducts/test/ProductFilter.manifest'
 import '../../../../artifacts/TestProducts/test/ProductIsBook.manifest'
 import '../../../../artifacts/TestProducts/ShowProducts.recipes'

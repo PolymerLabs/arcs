@@ -24,11 +24,14 @@ describe('demo flow', function() {
   it('flows like a demo', async function() {
     let helper = await TestHelper.createAndPlan({
       manifestFilename: './artifacts/TestProducts/Products.recipes',
-      expectedNumPlans: 1,
+      expectedNumPlans: 2,
       verify: async plans => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
-        assert.include(descriptions, `Show products from your browsing context (Minecraft Book plus 2 other items).`);
-                    //  'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
+        assert.include(descriptions,
+          `Show products from your browsing context (Minecraft Book plus 2 other items).`);
+        assert.include(descriptions,
+          `Show wishlist (Book: How to Draw plus 2 other items).`);
+                      //  'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
                     //  'and choose from products recommended based on products from your browsing context ' +
                     //  'and Claire\'s wishlist (Book: How to Draw plus 2 other items).');
       },

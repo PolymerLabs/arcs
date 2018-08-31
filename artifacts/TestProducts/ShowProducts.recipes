@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/List.manifest'
+import '../List/List.recipes'
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
@@ -18,9 +18,9 @@ recipe MuxedProductItem &muxProduct
 
 recipe ProductList &showShopList
   copy #shoplist as newlist
-  List
+  SelectableItems
     items = newlist
-  description `show ${List.items}`
+  description `show ${SelectableItems.items}`
 
 // Show [person]'s wishlist
 recipe

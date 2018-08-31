@@ -702,7 +702,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Common/List.recipes'
+      import 'artifacts/List/List.recipes'
       schema Thing
 
       particle ThingProducer
@@ -716,20 +716,20 @@ describe('Automatic resolution', function() {
         create #items as things
         ThingProducer`, arcRef => arc = arcRef);
 
-    assert.lengthOf(recipes, 2);
+    assert.lengthOf(recipes, 3);
     const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
-    assert.lengthOf(composedRecipes, 1);
+    assert.lengthOf(composedRecipes, 2);
 
-    assert.equal(composedRecipes[0].toString(), `recipe
+    assert.equal(composedRecipes[1].toString(), `recipe
   create #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedItemShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = handle2
     list <- handle0
     consume item as slot0
-  SelectableList as particle1
+  SelectableItems as particle1
     items = handle0
     selected = handle1
     consume root as slot1
@@ -744,7 +744,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-        import 'artifacts/Common/List.recipes'
+        import 'artifacts/List/List.recipes'
         schema Thing
 
         particle ThingRenderer
@@ -756,17 +756,17 @@ describe('Automatic resolution', function() {
           await arc.createStore(Thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 
-    assert.lengthOf(recipes, 1);
-    assert.equal(recipes[0].toString(), `recipe SelectableUseListRecipe
+    assert.lengthOf(recipes, 2);
+    assert.equal(recipes[1].toString(), `recipe SelectableUseItemsRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedItemShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = handle2
     list <- handle0
     consume item as slot0
-  SelectableList as particle1
+  SelectableItems as particle1
     items = handle0
     selected = handle1
     consume root as slot1
