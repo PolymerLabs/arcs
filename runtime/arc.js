@@ -130,10 +130,71 @@ export class Arc {
     return this._speculative;
   }
 
+  async _serializeHandle(handle, context, id) {
+    let type = handle.type;
+    if (type.isCollection) {
+      type = type.primitiveType();
+    }
+    if (type.isInterface) {
+      context.interfaces += type.interfaceShape.toString() + '\n';
+    }
+    let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
+    let tags = this._storeTags.get(handle) || [];
+    let handleTags = [...tags].map(a => `#${a}`).join(' ');
+
+    switch (key.protocol) {
+      case 'firebase':
+        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} at '${handle.storageKey}'\n`;
+        break;
+      case 'in-memory': {
+        // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
+        const nosync = handleTags.includes('nosync');
+        let serializedData = [];
+        if (!nosync) {
+          serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+            if (value == null) {
+              return null;
+            }
+            if (value.rawData) {
+              let result = {};
+              for (let field in value.rawData) {
+                result[field] = value.rawData[field];
+              }
+              result.$id = id;
+              return result;
+            } else {
+              return value;
+            }
+          });
+        }
+        if (handle.referenceMode && serializedData.length > 0) {
+          const storageKey = serializedData[0].storageKey;
+          if (!context.dataResources.has(storageKey)) {
+            const storeId = `${id}_Data`;
+            context.dataResources.set(storageKey, storeId);
+            // TODO: can't just reach into the store for the backing Store like this, should be an 
+            // accessor that loads-on-demand in the storage objects.
+            await this._serializeHandle(handle._backingStore, context, storeId);
+          }
+          const storeId = context.dataResources.get(storageKey);
+          serializedData.forEach(a => {a.storageKey = storeId;});
+        }
+  
+        context.resources += `resource ${id}Resource\n`;
+        let indent = '  ';
+        context.resources += indent + 'start\n';
+
+        let data = JSON.stringify(serializedData);
+        context.resources += data.split('\n').map(line => indent + line).join('\n');
+        context.resources += '\n';
+        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} in ${id}Resource\n`;
+        break;
+      }
+    }
+  }
+
   async _serializeHandles() {
-    let handles = '';
-    let resources = '';
-    let interfaces = '';
+    let context = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
 
     let id = 0;
     let importSet = new Set();
@@ -146,59 +207,18 @@ export class Arc {
       }
     }
     for (let url of importSet.values()) {
-      resources += `import '${url}'\n`;
+      context.resources += `import '${url}'\n`;
     }
 
     for (let handle of this._stores) {
       if (!handleSet.has(handle.id)) {
         continue;
       }
-      let type = handle.type;
-      if (type.isCollection) {
-        type = type.primitiveType();
-      }
-      if (type.isInterface) {
-        interfaces += type.interfaceShape.toString() + '\n';
-      }
-      let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
-      let handleTags = [...this._storeTags.get(handle)].map(a => `#${a}`).join(' ');
-      switch (key.protocol) {
-        case 'firebase':
-          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} at '${handle.storageKey}'\n`;
-          break;
-        case 'in-memory': {
-          resources += `resource Store${id}Resource\n`;
-          let indent = '  ';
-          resources += indent + 'start\n';
-          // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
-          const nosync = handleTags.includes('nosync');
-          let serializedData = nosync ?
-              [] :
-              (await handle.toLiteral()).model.map(({id, value}) => {
-                if (value == null) {
-                  return null;
-                }
-                if (value.rawData) {
-                  let result = {};
-                  for (let field in value.rawData) {
-                    result[field] = value.rawData[field];
-                  }
-                  result.$id = id;
-                  return result;
-                } else {
-                  return value;
-                }
-              });
-          let data = JSON.stringify(serializedData);
-          resources += data.split('\n').map(line => indent + line).join('\n');
-          resources += '\n';
-          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} in Store${id++}Resource\n`;
-          break;
-        }
-      }
+
+      await this._serializeHandle(handle, context, `Store${id++}`);
     }
 
-    return resources + interfaces + handles;
+    return context.resources + context.interfaces + context.handles;
   }
 
   _serializeParticles() {

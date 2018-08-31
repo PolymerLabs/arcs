@@ -28,7 +28,7 @@ describe('demo flow', function() {
       verify: async plans => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
         assert.include(descriptions, `Show products from your browsing context (Minecraft Book plus 2 other items).`);
-                    //   'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
+                    //  'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
                     //  'and choose from products recommended based on products from your browsing context ' +
                     //  'and Claire\'s wishlist (Book: How to Draw plus 2 other items).');
       },

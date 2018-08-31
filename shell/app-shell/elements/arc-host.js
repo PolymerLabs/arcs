@@ -25,7 +25,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, oldProps) {
     const {config, manifest, key, serialization} = props;
-    if (config && manifest && !state.context) {
+    if (config && manifest != null && !state.context) {
       this._prepareContext(config, manifest);
     }
     // dispose arc if key has changed, but we don't have a new key yet
@@ -117,7 +117,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _createSlotComposer(config) {
     return new Arcs.SlotComposer({
-      rootContainer: document.body,
+      rootContainer: config.rootContainer || document.body,
       affordance: config.affordance,
       containerKind: config.containerKind,
       // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config

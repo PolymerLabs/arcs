@@ -38,7 +38,7 @@ class TestVariable {
     return this._stored;
   }
 
-  toLiteral() {
+  modelForSynchronization() {
     let model = [];
     if (this._stored) {
       model = [{id: this._stored.id, value: this._stored}];
@@ -66,13 +66,14 @@ class TestVariable {
 
 // Test version of InMemoryCollection.
 class TestCollection {
-  constructor(type, name) {
+  constructor(type, name, arcId) {
     this.type = type;
     this.name = name;
     this._model = new CrdtCollectionModel();
     this._version = 0;
     this._listeners = [];
     this._nextKey = 0;
+    this._arcId = arcId;
   }
 
   attachListener(callback) {
@@ -83,7 +84,7 @@ class TestCollection {
     return this._model.toList();
   }
 
-  toLiteral() {
+  modelForSynchronization() {
     return {model: this._model.toLiteral(), version: this._version};
   }
 
@@ -115,7 +116,9 @@ class TestCollection {
     let effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let item = {value: entry, effective, keys};
+      let item = {value: {id, storageKey: `in-memory://${this._arcId}^^in-memory-Thing {Text value}`}, effective, keys};
+      // Hard coding the storageKey here is a bit cheeky, but the TestEngine class 
+      // enforces the schema and arcID is plumbed through.
       let event = {remove: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
@@ -166,7 +169,7 @@ class TestParticle {
 }
 
 class TestEngine {
-  constructor() {
+  constructor(arcId) {
     this.schema = new Schema({names: ['Thing'], fields: {value: 'Text'}});
     this.type = Type.newEntity(this.schema);
     this._idCounters = [1, 1, 1]; // particle, proxy, entity
@@ -174,6 +177,7 @@ class TestEngine {
     this._syncCallbacks = new Map();
     this._events = [];
     this._scheduler = new StorageProxyScheduler();
+    this._arcId = arcId;
   }
 
   newVariable(name) {
@@ -183,7 +187,9 @@ class TestEngine {
   }
 
   newCollection(name) {
-    let store = new TestCollection(this.type.collectionOf(), name);
+    // arcId is required to correctly generate remove events, as the arcId
+    // is part of the storageKey used by references.
+    let store = new TestCollection(this.type.collectionOf(), name, this._arcId);
     this._stores.set(name, store);
     return store;
   }
@@ -263,7 +269,7 @@ class TestEngine {
     assert(callbacks !== undefined && callbacks.length > 0,
            `Test bug: attempt to send sync response with no sync request for '${store.name}'`);
     if (data === undefined) {
-      data = store.toLiteral();
+      data = store.modelForSynchronization();
     }
     callbacks.shift()(data);
   }
@@ -299,7 +305,7 @@ describe('storage-proxy', function() {
   it('verify that the test storage API matches the real storage (variable)', async function() {
     // If this fails, most likely the InMemoryStorage classes have been changed
     // and TestVariable will need to be updated to match.
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
     let testEvent;
@@ -315,7 +321,7 @@ describe('storage-proxy', function() {
     assert.deepEqual(testEvent, realEvent);
 
     assert.deepEqual(testVariable.get(), await realVariable.get());
-    assert.deepEqual(testVariable.toLiteral(), await realVariable.toLiteral());
+    assert.deepEqual(testVariable.modelForSynchronization(), await realVariable.modelForSynchronization());
 
     testVariable.clear(2);
     await realVariable.clear();
@@ -325,7 +331,7 @@ describe('storage-proxy', function() {
   it('verify that the test storage API matches the real storage (collection)', async function() {
     // If this fails, most likely the InMemoryStorage classes have been changed
     // and TestCollection will need to be updated to match.
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
     let testEvent;
@@ -341,15 +347,16 @@ describe('storage-proxy', function() {
     assert.deepEqual(testEvent, realEvent);
 
     assert.deepEqual(testCollection.toList(), await realCollection.toList());
-    assert.deepEqual(testCollection.toLiteral(), await realCollection.toLiteral());
+    assert.deepEqual(testCollection.modelForSynchronization(), await realCollection.modelForSynchronization());
 
     testCollection.remove('id1');
     await realCollection.remove('id1');
+    console.log(testEvent);
     assert.deepEqual(testEvent, realEvent);
   });
 
   it('notifies for updates to initially empty handles', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -374,7 +381,7 @@ describe('storage-proxy', function() {
   });
 
   it('notifies for updates to initially populated handles', async () => {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -403,7 +410,7 @@ describe('storage-proxy', function() {
   });
 
   it('handles dropped updates on a Variable with immediate resync', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
     let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
@@ -425,7 +432,7 @@ describe('storage-proxy', function() {
   });
 
   it('handles dropped updates on a Collection with immediate resync', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
     let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
@@ -447,7 +454,7 @@ describe('storage-proxy', function() {
   });
 
   it('handles dropped updates on a Collection with delayed resync', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
     let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
@@ -470,7 +477,7 @@ describe('storage-proxy', function() {
     //   v1 (v2) v3 <desync> v4 v5 <resync-request> v6 v7 <resync-response>
     barStore.store('i4', engine.newEntity('v4'));
     barStore.store('i5', engine.newEntity('v5'));
-    let v5Data = barStore.toLiteral();
+    let v5Data = barStore.modelForSynchronization();
     barStore.store('i6', engine.newEntity('v6'));
     barStore.remove('i1');
     engine.sendSync(barStore, v5Data);
@@ -480,7 +487,7 @@ describe('storage-proxy', function() {
   });
 
   it('handles misordered updates on a Collection', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
     let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
@@ -509,7 +516,7 @@ describe('storage-proxy', function() {
   });
 
   it('sends update notifications with non-synced handles', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -537,7 +544,7 @@ describe('storage-proxy', function() {
   });
 
   it('non-readable handles are never synced', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -561,7 +568,7 @@ describe('storage-proxy', function() {
   });
 
   it('reading from a synced proxy should not call the backing store', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -583,7 +590,7 @@ describe('storage-proxy', function() {
   });
 
   it('reading from a desynced proxy should call the backing store', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -603,7 +610,7 @@ describe('storage-proxy', function() {
   });
 
   it('reading from a non-syncing proxy should call the backing store', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
@@ -623,7 +630,7 @@ describe('storage-proxy', function() {
   });
 
   it('does not notify about redundant concurrent operations (collection)', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
     let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
@@ -651,7 +658,7 @@ describe('storage-proxy', function() {
   });
 
   it('does not desync on a write when synchronized (variable)', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
     let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
@@ -691,7 +698,7 @@ describe('storage-proxy', function() {
   });
 
   it('multiple particles observing one proxy', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let barProxy = engine.newProxy(barStore);
 
@@ -728,7 +735,7 @@ describe('storage-proxy', function() {
   });
 
   it('multiple particles registering at different times', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let fooProxy = engine.newProxy(fooStore);
 
@@ -758,7 +765,7 @@ describe('storage-proxy', function() {
   });
 
   it('multiple particles with different handle configurations', async function() {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let fooStore = engine.newVariable('foo');
     let fooProxy = engine.newProxy(fooStore);
 
@@ -789,7 +796,7 @@ describe('storage-proxy', function() {
   });
 
   it('delivers the originator status to the originating particle', async () => {
-    let engine = new TestEngine();
+    let engine = new TestEngine('arc-id');
     let barStore = engine.newCollection('bar');
     let barProxy = engine.newProxy(barStore);
 

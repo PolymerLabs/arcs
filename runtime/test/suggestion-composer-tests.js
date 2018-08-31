@@ -120,6 +120,7 @@ describe('suggestion composer', function() {
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     await helper.acceptSuggestion({particles: ['LightCandles']});
+
     await helper.makePlans();
     assert.isEmpty(helper.plans);
     await suggestionComposer._updateSuggestions(helper.plans);

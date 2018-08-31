@@ -16,12 +16,13 @@ enum EventKind {
 }
 type Callback = ({}) => void;
 
-export class StorageProviderBase {
+export abstract class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private readonly _storageKey: string;
   private nextLocalID: number;
   private readonly _type: Type;
 
+  protected referenceMode = false;
   protected version: number|null;
   
   id: string;
@@ -42,6 +43,10 @@ export class StorageProviderBase {
     this._storageKey = key;
     this.nextLocalID = 0;
     trace.end();
+  }
+
+  enableReferenceMode() {
+    this.referenceMode = true;
   }
 
   get storageKey() {
@@ -132,5 +137,11 @@ export class StorageProviderBase {
 
   get apiChannelMappingId() {
     return this.id;
+  }
+
+  abstract toLiteral();
+
+  modelForSynchronization() {
+    return this.toLiteral();
   }
 }

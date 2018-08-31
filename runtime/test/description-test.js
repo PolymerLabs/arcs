@@ -89,6 +89,7 @@ recipe
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     let foosStore = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
     recipe.normalize();
+
     assert.isTrue(recipe.isResolved());
     let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
     let ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
@@ -150,16 +151,16 @@ ${recipeManifest}
       assert.equal('my-out-foos', await description.getHandleDescription(ofoosHandle));
 
       // Add value to a singleton handle.
-      fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos.', description);
 
       // Add values to a collection handle.
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key22']);
+      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key33']);
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).', description);
 
       // Add more values to the collection handle.
-      foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
+      await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).',
                                   description);
       assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
@@ -233,9 +234,9 @@ ${recipeManifest}
 
       let description = new Description(arc);
 
-      fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
+      await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
 
       await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
                             description);
@@ -376,8 +377,8 @@ recipe
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
       // Add values to the second handle.
-      fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
-      fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
+      await fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
+      await fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
       await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
@@ -628,7 +629,7 @@ recipe
       let hostedParticle = manifest.findParticleByName('NoDescription');
       let hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
       let newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
-      newStore.set(hostedParticle.clone().toLiteral());
+      await newStore.set(hostedParticle.clone().toLiteral());
 
       let description = new Description(arc);
       await test.verifySuggestion('Start with capital letter.', description);
@@ -723,23 +724,23 @@ recipe
       await test.verifySuggestion('Hello world.', description);
 
       // Particle (dynamic) description handle (override static description).
-      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my foo'}));
+      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my foo'}));
       await test.verifySuggestion('Return my foo.', description);
 
       // Particle description handle with handle connections.
-      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my temporary foo'}));
-      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my ${ofoo}'}));
+      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my temporary foo'}));
+      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my ${ofoo}'}));
       let ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
-      descriptionHandle.store(ofooDesc);
+      await descriptionHandle.store(ofooDesc);
       await test.verifySuggestion('Return my best-foo.', description);
 
       // Add value to connection's handle.
-      fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Return my best-foo (foo-name).', description);
 
       // Remove connection's description.
-      fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      descriptionHandle.remove(ofooDesc);
+      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await descriptionHandle.remove(ofooDesc);
       await test.verifySuggestion('Return my foo-name.', description);
     });
   });
@@ -747,12 +748,12 @@ recipe
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
       let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
-      descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));
-      descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
-      descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
+      await descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));
+      await descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
+      await descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
       await test.verifySuggestion(`Return my foo (${test.name}).`, description);
 
-      fooStore.set({id: 5, rawData: {name: 'foo-name'}});
+      await fooStore.set({id: 5, rawData: {name: 'foo-name'}});
       await test.verifySuggestion(`Return my foo-name (${test.name}).`, description);
     });
   });

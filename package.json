@@ -56,6 +56,7 @@
     "jsrsasign": "^8.0.12",
     "jsrsasign-util": "^1.0.0",
     "pouchdb": "^7.0.0",
+    "source-map-support": "^0.5.8",
     "typescript": "^3.0.1",
     "typescript-base64-arraybuffer": "^0.1.0",
     "ws": "^4.1.0"

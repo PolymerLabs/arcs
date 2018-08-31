@@ -2,6 +2,10 @@
     {
       "name": "Claire",
       "occasion": "Birthday",
-      "date": "2019-08-04"
+      "date": "2019-08-04",
+      "location": {
+        "latitude": 37.7610927,
+        "longitude": -122.4208173
+      }
     }
   ]

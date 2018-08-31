@@ -1,3 +1,4 @@
+// @license
 // Copyright (c) 2018 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -5,17 +6,22 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema UserName
-  Text username
+defineParticle(({DomParticle, html}) => {
 
-particle Login in 'source/Login.js'
-  in UserName username
-  consume root
+  const host = `bg-process`;
 
-recipe Login
-  create as username
-  slot 'rootslotid-root' as root
-  Login
-    username = username
-    consume root as root
-  description `user sign in`
+  const template = html`
+
+<div ${host}>
+  <span>Handling background processing...</span>
+</div>
+
+  `;
+
+  return class extends DomParticle {
+    get template() {
+      return template;
+    }
+  };
+
+});

@@ -1,0 +1,8 @@
+particle BackgroundProcess in 'source/BackgroundProcess.js'
+  consume root
+
+recipe
+  slot 'rootslotid-root' as root
+  BackgroundProcess
+    consume root as root
+
