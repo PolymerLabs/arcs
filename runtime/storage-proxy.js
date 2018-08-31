@@ -350,6 +350,7 @@ class VariableProxy extends StorageProxyBase {
     // If we have set a barrier, suppress updates until after
     // we have seen the barrier return via an update.
     if (this._barrier != null) {
+      console.log(`CMP barriers ${this._barrier} ${update.barrier}`);
       if (update.barrier == this._barrier) {
         this._barrier = null;
       }
@@ -381,6 +382,7 @@ class VariableProxy extends StorageProxyBase {
     // TODO: is this already a clone?
     this._model = JSON.parse(JSON.stringify(entity));
     this._barrier = barrier;
+    console.log(`SET barrier ${barrier}`);
     this._port.HandleSet({data: entity, handle: this, particleId, barrier});
     let update = {originatorId: particleId, data: entity};
     this._notify('update', update, options => options.notifyUpdate);

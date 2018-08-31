@@ -444,7 +444,9 @@ ${this.activeRecipe.toString()}`;
         storageKey = this.keyForId(recipeHandle.id);
       }
       assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
-      let store = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
+      let type = recipeHandle.type.resolvedType();
+      assert(type.isResolved());
+      let store = await this._storageProviderFactory.connect(recipeHandle.id, type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
     }
 
