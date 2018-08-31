@@ -29,6 +29,21 @@ recipe ItemMultiplexer
   ItemMultiplexer
     list = list
 
+// TODO(sjmiles): List vs Items, resolve the naming quandry
+particle List in 'source/List.js'
+  in [~any] items
+  consume root #items
+    must provide set of item
+      handle items
+  description `show ${items}`
+
+recipe List
+  use #items as items
+  List
+    items = items
+  ItemMultiplexer
+    list = items
+
 particle SelectableItems in 'source/List.js'
   inout [~any] items
   inout ~any selected
