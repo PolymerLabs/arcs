@@ -4,5 +4,5 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 
-import 'Detail.recipe'
-import 'TabbedLayout.recipe'
+import 'Detail.recipes'
+import 'TabbedLayout.recipes'
