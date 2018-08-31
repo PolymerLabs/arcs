@@ -1,0 +1,7 @@
+import 'Common.recipes'
+import 'List.manifest'
+import 'Multiplexer.manifest'
+
+import 'https://sjmiles.github.io/arcs-stories/0.4/PlaidAccounts/PlaidAccounts.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.4/Demo/PlaidData.manifest'
+
