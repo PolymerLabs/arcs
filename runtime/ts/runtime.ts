@@ -24,7 +24,7 @@ export class Runtime {
 
 
   // Stuff the shell needs
-  static getArcDescription(arc) : string {
+  static getArcDescription(arc) : Promise<string> {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
     return new Description(arc).getArcDescription();
