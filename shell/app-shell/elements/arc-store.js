@@ -33,7 +33,7 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
         state.manifest = options.manifest;
       }
       if (!state.manifest && options && options.schemas) {
-        state.manifest = await Arcs.Manifest.load(options.schemas, arc.loader);
+        state.manifest = await Arcs.Runtime.loadManifest(options.schemas, arc.loader);
       }
       if (options && (state.manifest || options.schema)) {
         state.store = await this._attachStore(arc, state.manifest, options);

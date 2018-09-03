@@ -9,10 +9,11 @@
  */
 
 import {Description} from '../description.js';
+import {Manifest} from '../manifest.js';
 
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
-// think about what the api should actually look like. 
+// think about what the api should actually look like.
 export class Runtime {
   // list of all the arcs this runtime knows about
   private arcs;
@@ -28,6 +29,14 @@ export class Runtime {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
     return new Description(arc).getArcDescription();
+  }
+
+  static parseManifest(content, options) : Manifest {
+    return Manifest.parse(content, options);
+  }
+
+  static loadManifest(fileName, loader, options) : Manifest {
+    return Manifest.load(fileName, loader, options);
   }
 
   // stuff the strategizer needs

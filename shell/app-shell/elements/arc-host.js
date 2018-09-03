@@ -85,10 +85,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // TODO(sjmiles): do we need to be able to `config` this value?
     const fileName = './in-memory.manifest';
     try {
-      return await Arcs.Manifest.parse(content, {loader, fileName});
+      return await Arcs.Runtime.parseManifest(content, {loader, fileName});
     } catch (x) {
       warn(x);
-      return await Arcs.Manifest.parse('', {loader, fileName});
+      return await Arcs.Runtime.parseManifest('', {loader, fileName});
     }
   }
   _teardownArc(arc) {
