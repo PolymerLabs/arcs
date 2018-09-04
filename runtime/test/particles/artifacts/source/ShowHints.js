@@ -17,7 +17,7 @@ defineParticle(({DomParticle, html}) => {
       return html`
 <div ${host}>
 <div slotid="question"></div>
-${['A', 'B', 'C', 'D', 'E'].map((id, index) => `<span slotid="hints" subid="${id}"><span>${index}</span>:</span>`).join('')}
+${['A', 'B', 'C', 'D', 'E'].map((id, index) => `<span slotid="hints" subid$="${id}"><span>${index}</span>:</span>`).join('')}
 </div>
       `;
     }

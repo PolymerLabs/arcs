@@ -111,7 +111,7 @@ defineParticle(({DomParticle, resolver}) => {
         <img src="{{image}}">
       </div>
     </div>
-    <div slotid="annotation" subid="{{subId}}">
+    <div slotid="annotation" subid$="{{subId}}">
     </div>
   </div>
 </template>
