@@ -13,10 +13,11 @@ import '../Places/GeoCoordinates.schema'
 particle FindRestaurants in 'source/FindRestaurants.js'
   in GeoCoordinates location
   inout [Restaurant] restaurants
+  //description `find restaurants near ${location}`
 
 recipe FindRestaurants
   create #items as restaurants
   FindRestaurants
     restaurants = restaurants
-  //description `find restaurants near ${FindRestaurants.location}`
+  description `find restaurants near ${FindRestaurants.location}`
 

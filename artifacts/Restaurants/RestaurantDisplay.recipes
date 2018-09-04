@@ -12,7 +12,7 @@ particle RestaurantTile in 'source/RestaurantTile.js'
   consume tile
     provide annotation
 
-recipe ShowRestaurantTile
+recipe RestaurantTile
   RestaurantTile
 
 particle RestaurantDetail in 'source/RestaurantDetail.js'
