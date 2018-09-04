@@ -91,7 +91,7 @@ defineParticle(({DomParticle, html}) => {
 <template time-picker>
   <div>
     <div class="x-select">
-      <select on-change="_onPartySizeChanged">
+      <select on-change="onPartySizeChanged">
         <option value="1" selected$={{selected1}}>For 1</option>
         <option value="2" selected$={{selected2}}>For 2</option>
         ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -99,7 +99,7 @@ defineParticle(({DomParticle, html}) => {
         <option value="21" selected$={{selected21}}>Larger party</option>
       </select>
     </div>
-    <input type="datetime-local" value="{{date}}" on-change="_onDateChanged">
+    <input type="datetime-local" value="{{date}}" on-change="onDateChanged">
   </div>
 </template>
 
@@ -142,7 +142,7 @@ defineParticle(({DomParticle, html}) => {
       } else {
         event = Object.assign({}, props.event.rawData);
       }
-      this._setState({currentEvent: event});
+      this.setState({currentEvent: event});
 
       this.setParticleDescription(
         props.restaurant
@@ -150,7 +150,7 @@ defineParticle(({DomParticle, html}) => {
           : ''); // Default description
 
       if (!props.event || JSON.stringify(event) !== JSON.stringify(props.event.rawData)) {
-        this._storeNewEvent(event);
+        this.storeNewEvent(event);
       }
     }
     toDateInputValue(date) {

@@ -16,9 +16,11 @@ recipe ShowRestaurantTile
   RestaurantTile
 
 particle RestaurantDetail in 'source/RestaurantDetail.js'
-  in Restaurant selected
+  in Restaurant restaurant
   consume content
 
 recipe RestaurantDetail
+  use #selected as restaurant
   RestaurantDetail
+
 
