@@ -386,4 +386,23 @@ describe('firebase', function() {
       await checkDone(cursor3);
     }).timeout(20000);
   });
+
+  describe('synthetic', () => {
+    it('smoke test', async () => {
+      // This uses a serialized manifest manually added to our test firebase db.
+      let fbKey = testUrl.replace('firebase-storage-test', 'synthetic-storage-data/manifest1');
+
+      let storage = createStorage('arc-id');
+      let synth = await storage.connect('id1', null, `synthetic://arc/handles/${fbKey}`);
+      let list = await synth.toList();
+      assert(list.length > 0, 'synthetic handle list should not be empty');
+      for (let item of list) {
+        assert(item.storageKey.startsWith('firebase:'));
+        assert(item.type.constructor.name == 'Type');
+        if (item.tags.length > 0) {
+          assert.isString(item.tags[0]);
+        }
+      }
+    });
+  });
 });

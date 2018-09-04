@@ -103,6 +103,11 @@ export class Type {
     return new Type('Reference', reference);
   }
 
+  // Provided only to get a Type object for SyntheticStorage; do not use otherwise.
+  static newSynthesized() {
+    return new Type('Synthesized', 1);
+  }
+
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     if (this.isVariable) {
       const name = this.variable.name;
@@ -543,6 +548,9 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Slot');
 addType('Reference', 'referredType');
+
+// Special case for SyntheticStorage, not a real Type in the usual sense.
+addType('Synthesized');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
