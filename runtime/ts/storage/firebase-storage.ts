@@ -204,11 +204,7 @@ baseStorageKey(type: Type, keyString: string): string {
       enableReferenceMode = referenceMode;
     }
 
-<<<<<<< HEAD
-    let provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist);
-=======
-    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
->>>>>>> lint & tslint fixes
+    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist);
     if (enableReferenceMode) {
       provider.enableReferenceMode();
     }
