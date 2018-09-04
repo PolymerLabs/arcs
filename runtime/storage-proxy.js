@@ -173,7 +173,7 @@ class StorageProxyBase {
         return true;
       }
       return false;
-    }
+    };
 
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
     while (this._updates.length > 0 && updateIsNext(this._updates[0])) {

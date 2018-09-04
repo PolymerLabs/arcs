@@ -456,7 +456,7 @@ ${this.activeRecipe.toString()}`;
       assert(type.isResolved());
       let store = await this._storageProviderFactory.connect(recipeHandle.id, type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
-      this._registerStore(store, recipeHandle.tags)
+      this._registerStore(store, recipeHandle.tags);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));

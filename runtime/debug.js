@@ -28,10 +28,11 @@ let rand255 = () => Math.round((Math.random() * 256) - 0.5);
 let newColor = () => `rgb(${rand255()}, ${rand255()}, ${rand255()})`;
 
 let getColor = (object) => {
-  if (!__reffedObjects.get(object))
+  if (!__reffedObjects.get(object)) {
     __reffedObjects.set(object, newColor());
-  return `background:${__reffedObjects.get(object)};color:white;`
-}
+  }
+  return `background:${__reffedObjects.get(object)};color:white;`;
+};
 
 export class DLog {
   static trace(object, string, args) {
@@ -46,26 +47,28 @@ export class DLog {
   static _logString(object, string, args) {
     let details = '';
     switch (object.constructor.name) {
-      case "FirebaseCollection":
-      case "FirebaseVariable":
-        let key = object.storageKey;
-        let keyBits = key.split('://');
-        details = keyBits[0];
-        if (keyBits[0] == 'firebase') {
-          keyBits = keyBits[1].split('/');
-          if (keyBits[5] == 'handles') {
-            let idBits = keyBits[6].split(':');
-            details += ` S${idBits[0]} I${idBits[2]}`;
-          } else {
-            details += ` ${keyBits.slice(2).join('/')}`;
+      case 'FirebaseCollection':
+      case 'FirebaseVariable':
+        {
+          let key = object.storageKey;
+          let keyBits = key.split('://');
+          details = keyBits[0];
+          if (keyBits[0] == 'firebase') {
+            keyBits = keyBits[1].split('/');
+            if (keyBits[5] == 'handles') {
+              let idBits = keyBits[6].split(':');
+              details += ` S${idBits[0]} I${idBits[2]}`;
+            } else {
+              details += ` ${keyBits.slice(2).join('/')}`;
+            }
           }
+          details += ` ${object.type}`;
+          break;
         }
-        details += ` ${object.type}`;
-        break;
-      case "CollectionProxy":
-      case "VariableProxy":
-      case "InMemoryCollection":
-      case "InMemoryVariable":
+      case 'CollectionProxy':
+      case 'VariableProxy':
+      case 'InMemoryCollection':
+      case 'InMemoryVariable':
         details = object.id;
         break;
     }

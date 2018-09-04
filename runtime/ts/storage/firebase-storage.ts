@@ -147,7 +147,9 @@ baseStorageKey(type: Type, keyString: string): string {
     return new FirebaseKey(s);
   }
 
-  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode: boolean = false) {
+  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
+  // but this _join creates the storage location. 
+  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
     assert(!type.isVariable);
     assert(!type.isCollection || !type.primitiveType().isVariable);
     const fbKey = new FirebaseKey(keyString);
@@ -202,7 +204,11 @@ baseStorageKey(type: Type, keyString: string): string {
       enableReferenceMode = referenceMode;
     }
 
+<<<<<<< HEAD
     let provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist);
+=======
+    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
+>>>>>>> lint & tslint fixes
     if (enableReferenceMode) {
       provider.enableReferenceMode();
     }
@@ -784,7 +790,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
         const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         this._fire('change', {originatorId: null, version: this.version, add: addPrimitives, remove: removePrimitives});
-      })
+      });
 
     } else {
       this._fire('change', {originatorId: null, version: this.version, add, remove});
@@ -983,7 +989,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     await this.initialized;
     if (this.referenceMode) {
       const items = (await this.toLiteral()).model;
-      if (items.length == 0) {
+      if (items.length === 0) {
         return [];
       }
       const referredType = this.type.primitiveType();

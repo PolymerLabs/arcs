@@ -43,7 +43,7 @@ export class CrdtCollectionModel {
   // or `value` is different to the value previously stored).
   add(id: string, value, keys): boolean {
     assert(keys.length > 0, 'add requires keys');
-    assert(typeof keys == 'object', 'add requires a list of keys');
+    assert(typeof keys === 'object', 'add requires a list of keys');
     let item = this.items.get(id);
     let effective = false;
     if (!item) {
