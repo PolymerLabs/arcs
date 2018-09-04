@@ -181,7 +181,7 @@ function waitForStillness() {
     }
     return matches > desiredMatches;
   };
-  browser.waitUntil(noGlow, 40000, `the glow can't stop won't stop`, 500);
+  browser.waitUntil(noGlow, 200000, `the glow can't stop won't stop`, 500);
 }
 
 function clickElement(selector) {
@@ -490,7 +490,7 @@ describe('Arcs demos', function() {
     let annotations = browser.getText('[slotid="annotation"]');
     assert.equal(6, annotations.length);
     //assert.ok(annotations.length > 0 && annotations.every(a => a.length > 0), 'missing annotations');
-  });
+  }).timeout(100000);
 });
 
 describe('Arcs system', function() {
