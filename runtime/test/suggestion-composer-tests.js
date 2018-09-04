@@ -83,7 +83,7 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestConsumer._content);
 
     // set the container of the suggestion context, resulting in the suggestion being rendered.
-    let suggestContext = slotComposer._contexts.find(context => context._slotConsumers.find(consumer => consumer == suggestConsumer));
+    let suggestContext = slotComposer._contexts.find(context => context.slotConsumers.find(consumer => consumer == suggestConsumer));
     assert.isNull(suggestContext.container);
     suggestContext.container = 'dummy-container';
     await suggestConsumer._setContentPromise;
@@ -116,7 +116,6 @@ describe('suggestion composer', function() {
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     let suggestConsumer = suggestionComposer._suggestConsumers[0];
     await suggestConsumer._setContentPromise;
-
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     await helper.acceptSuggestion({particles: ['LightCandles']});

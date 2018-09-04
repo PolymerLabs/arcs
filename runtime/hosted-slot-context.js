@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {SlotContext} from './slot-context.js';
+import {SlotContext} from './ts-build/slot-context.js';
 
 export class HostedSlotContext extends SlotContext {
   // This is a context of a hosted slot, can only contain a hosted slot.
   constructor(id, providedSpec, hostedSlotConsumer) {
     super(id, providedSpec.name, providedSpec.tags, /* container= */ null, providedSpec, hostedSlotConsumer);
     if (this.sourceSlotConsumer.storeId) {
-      this._handles = [{id: this.sourceSlotConsumer.storeId}];
+      this.handles = [{id: this.sourceSlotConsumer.storeId}];
     }
   }
   get container() {

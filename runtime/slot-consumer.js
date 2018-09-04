@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {SlotContext} from './slot-context.js';
+import {SlotContext} from './ts-build/slot-context.js';
 
 export class SlotConsumer {
   constructor(consumeConn, containerKind) {
