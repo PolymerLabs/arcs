@@ -180,7 +180,12 @@ export class SlotDomConsumer extends SlotConsumer {
 
   _observe(container) {
     assert(container, 'Cannot observe without a container');
-    this._observer && this._observer.observe(container, {childList: true, subtree: true});
+    this._observer && this._observer.observe(container, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['subid']
+    });
   }
 
   _stampTemplate(rendering, template) {

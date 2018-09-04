@@ -25,8 +25,8 @@ defineParticle(({DomParticle, resolver, html}) => {
   <div items>{{items}}</div>
   <template items>
     <div>
-      <div slotid="item" subid="{{id}}" key="{{id}}"></div>
-      <div slotid="action" subid="{{id}}"></div>
+      <div slotid="item" subid$="{{id}}" key="{{id}}"></div>
+      <div slotid="action" subid$="{{id}}"></div>
     </div>
   </template>
 </div>

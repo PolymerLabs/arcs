@@ -71,7 +71,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     <div message isme$="{{isme}}">
       <div name><span avatar><b>{{name}}</b><img src="{{src}}" title="{{name}}" alt="{{name}}"></span><i>{{blurb}}</i></div>
       <div content iscustom$="{{iscustom}}">{{content}}</div>
-      <div slotid="custom_message" subid="{{subId}}"></div>
+      <div slotid="custom_message" subid$="{{subId}}"></div>
     </div>
   </template>
   <div list>{{messages}}</div>

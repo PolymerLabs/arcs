@@ -54,8 +54,8 @@ defineParticle(({DomParticle, resolver, html}) => {
 
   <template items>
     <div item selected$="{{selected}}">
-      <div slotid="item" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
-      <div slotid="annotation" subid="{{id}}"></div>
+      <div slotid="item" subid$="{{id}}" key="{{id}}" on-click="_onSelect"></div>
+      <div slotid="annotation" subid$="{{id}}"></div>
     </div>
   </template>
 </div>

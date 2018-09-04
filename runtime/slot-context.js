@@ -64,6 +64,7 @@ export class SlotContext {
         return true;
       }
       return Object.keys(this.container).length == Object.keys(container).length &&
+             Object.keys(this.container).every(key => Object.keys(container).find(newKey => newKey == key)) &&
              Object.values(this.container).every(
                 currentContainer => Object.values(container).find(newContainer => newContainer == currentContainer));
     }
