@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageProviderBase} from './storage-provider-base';
+import {StorageBase, StorageProviderBase} from './storage-provider-base';
 
 // keep in sync with shell/source/ArcsLib.js
 import firebase from 'firebase/app';
@@ -91,24 +91,23 @@ class FirebaseKey extends KeyBase {
 
 let _nextAppNameSuffix = 0;
 
-export class FirebaseStorage {
-  private readonly arcId: Id;
+export class FirebaseStorage extends StorageBase {
   private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
   private baseStores: Map<Type, FirebaseCollection>;
 
   constructor(arcId: Id) {
-    this.arcId = arcId;
+    super(arcId);
     this.apps = {};
     this.sharedStores = {};
     this.baseStores = new Map();
   }
 
-  async construct(id, type, keyFragment) {
+  async construct(id: string, type: Type, keyFragment: string) : Promise<FirebaseStorageProvider> {
     return this._join(id, type, keyFragment, false);
   }
 
-  async connect(id, type, key) {
+  async connect(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
     return this._join(id, type, key, true);
   }
 
@@ -122,7 +121,7 @@ export class FirebaseStorage {
     }
   }
   
-  async share(id, type, key) {
+  async share(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
     if (!this.sharedStores[id]) {
       this.sharedStores[id] = await this._join(id, type, key, true);
     }
@@ -130,9 +129,9 @@ export class FirebaseStorage {
   }
 
   baseStorageKey(type, key) {
-    key = new FirebaseKey(key);
-    key.location = `backingStores/${type.toString()}`;
-    return key.toString();
+    const fbKey = new FirebaseKey(key);
+    fbKey.location = `backingStores/${type.toString()}`;
+    return fbKey.toString();
   }
 
   async baseStorageFor(type, key) {
@@ -150,32 +149,32 @@ export class FirebaseStorage {
 
   async _join(id, type, key, shouldExist) {
     assert(typeof id === 'string');
-    key = new FirebaseKey(key);
+    const fbKey = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
-    if (key.databaseUrl == undefined || key.apiKey == undefined) {
+    if (fbKey.databaseUrl == undefined || fbKey.apiKey == undefined) {
       throw new Error('Can\'t complete partial firebase keys');
     }
 
-    if (this.apps[key.projectId] == undefined) {
+    if (this.apps[fbKey.projectId] == undefined) {
       for (const app of firebase.apps) {
-        if (app.options['databaseURL'] === key.databaseUrl) {
-          this.apps[key.projectId] = {app, owned: false};
+        if (app.options['databaseURL'] === fbKey.databaseUrl) {
+          this.apps[fbKey.projectId] = {app, owned: false};
           break;
         }
       }
     }
 
-    if (this.apps[key.projectId] == undefined) {
+    if (this.apps[fbKey.projectId] == undefined) {
       const app = firebase.initializeApp({
-        apiKey: key.apiKey,
-        projectId: key.projectId,
-        databaseURL: key.databaseUrl
+        apiKey: fbKey.apiKey,
+        projectId: fbKey.projectId,
+        databaseURL: fbKey.databaseUrl
       }, `app${_nextAppNameSuffix++}`);
 
-      this.apps[key.projectId] = {app, owned: true};
+      this.apps[fbKey.projectId] = {app, owned: true};
     }
 
-    const reference = firebase.database(this.apps[key.projectId].app).ref(key.location);
+    const reference = firebase.database(this.apps[fbKey.projectId].app).ref(fbKey.location);
 
     let currentSnapshot: firebase.database.DataSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
