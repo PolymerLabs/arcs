@@ -109,7 +109,6 @@ ${style}
     <div share>
       <icon show$="{{self}}">account_circle</icon>
       <icon show$="{{friends}}">people</icon>
-
     </div>
   </div>
 </template>
@@ -135,7 +134,7 @@ ${style}
       const columns = [[], []];
       const chosen = [items, recent, starred, shared][selected || 0];
       chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
-      log(chosen);
+      //log(chosen);
       // method 1: left-to-right, top-to-bottom
       // chosen.forEach((item, i) => {
       //   columns[i % 2].push(item);

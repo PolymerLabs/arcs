@@ -5,21 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'AddressForm.manifest'
-
-recipe
-  create #address as address
-  AddressForm
-    address = address
-
-import 'ExtractLocation.manifest'
-import 'GoogleMap.manifest'
-
-recipe
-  use #user as person
-  create as location
-  ExtractLocation
-    person <- person
-    location -> location
-  GoogleMap
-    location <- location
+import 'ExtractLocation.recipes'
+import 'GoogleMap.recipes'
+import 'AddressForm.recipes'

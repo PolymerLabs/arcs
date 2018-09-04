@@ -23,6 +23,10 @@ const html = Xen.Template.html;
 const template = html`
 
   <style>
+    body {
+      --shell-bg: white;
+      --shell-color: black;
+    }
     :host {
       /*--max-width: 420px;*/
     }

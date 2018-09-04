@@ -100,6 +100,7 @@ export class TestHelper {
     planner.init(this.arc);
     this.plans = await planner.suggest();
     if (options) {
+      debugger;
       if (options.expectedNumPlans) {
         assert.lengthOf(this.plans, options.expectedNumPlans);
       }

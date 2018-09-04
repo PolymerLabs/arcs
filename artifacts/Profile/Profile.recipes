@@ -8,7 +8,7 @@
 import 'AvatarPicker.manifest'
 import 'FriendsPicker.manifest'
 import 'FavoriteFoodPicker.manifest'
-import '../Places/AddressForm.manifest'
+import '../Places/AddressForm.recipes'
 
 recipe BasicUserProfile
   create #address as address

@@ -38,7 +38,7 @@ particle FooAnnotationMuxer in '../../../../artifacts/Common/source/Multiplexer.
   in [Foo] list
   consume set of annotation
 
-particle FooList in '../../../../artifacts/Common/source/List.js'
+particle FooList in '../../../../artifacts/List/source/List.js'
   in [Foo] items
   consume root
     provide set of item

@@ -6,9 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'ArcMetadata.schema'
+import '../Places/GeoCoordinates.schema'
+import 'Restaurant.schema'
 
-particle Launcher in 'source/Launcher.js'
-  inout [ArcMetadata] arcs
+particle FindRestaurants in 'source/FindRestaurants.js'
+  in GeoCoordinates location
+  inout [Restaurant] restaurants
+  affordance dom
   consume root
-  description `arcs launcher`
+    must provide masterdetail
+      handle restaurants
+  description `find restaurants near ${location}`

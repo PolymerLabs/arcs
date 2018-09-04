@@ -10,14 +10,15 @@
 // grows the current alphabetized list will stop scaling, and we should
 // consider moving these into separate files or grouping by demo/test.
 
-import 'Common/Common.recipes'
+import 'List/List.recipes'
 import 'Events/Events.recipes'
 import 'hex/hex.manifest'
 import 'Layout/Layout.recipes'
 import 'Messages/Messages.recipes'
 import 'People/People.recipes'
-import 'Products/Products.recipes'
+import 'Places/Places.recipes'
 import 'Profile/Profile.recipes'
+import 'Products/Products.recipes'
 import 'Restaurants/Restaurants.recipes'
 import 'Social/Social.recipes'
 import 'VideoPlayer/VideoPlayer.recipes'

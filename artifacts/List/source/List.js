@@ -43,7 +43,6 @@ defineParticle(({DomParticle, resolver, html}) => {
       font-style: italic;
       padding: 10px 0;
     }
-
   </style>
 
   <div slotid="preamble"></div>
@@ -54,8 +53,8 @@ defineParticle(({DomParticle, resolver, html}) => {
 
   <template items>
     <div item selected$="{{selected}}">
-      <div slotid="item" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
-      <div slotid="annotation" subid="{{id}}"></div>
+      <div slotid="item" subid$="{{id}}" key="{{id}}" on-click="_onSelect"></div>
+      <div slotid="annotation" subid$="{{id}}"></div>
     </div>
   </template>
 </div>

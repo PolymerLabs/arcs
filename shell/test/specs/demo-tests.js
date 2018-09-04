@@ -431,8 +431,9 @@ function testAroundRefresh() {
 describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
-    searchSuggestions('restaurants');
-    acceptSuggestion('Find restaurants near selenium\'s location.$');
+    searchSuggestions('restaurant');
+    //acceptSuggestion('Find restaurants near selenium\'s location.$');
+    acceptSuggestion('Show restaurant list as tiles.');
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.

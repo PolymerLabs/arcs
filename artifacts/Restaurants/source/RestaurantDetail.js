@@ -106,6 +106,17 @@ defineParticle(({DomParticle, html}) => {
     display: flex;
     flex-direction: row;
   }
+  [${host}] [row0] {
+    margin-top: 22px;
+  }
+  [${host}] [row1] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 82px;
+    margin-top: 16px;
+    padding-bottom: 4px;
+  }
   [${host}] [flex] {
     flex: 1;
   }
@@ -140,18 +151,18 @@ ${styles}
   <div content>
     <div name>{{name}}</div>
     <div row>
-      <div flex style="margin-top: 22px;">
+      <div flex row0>
         <div detail-caption>Address</div>
         <div detail-content unsafe-html="{{addr}}"></div>
         <div detail-caption>Phone</div>
         <div detail-content>{{phone}}</div>
         <div detail-caption>Website</div>
-        <div detail-content>{{website}}</div>
+        <div detail-content><a href="{{link}}" target="_blank">{{website}}</a></div>
       </div>
-      <div style="margin-top: 16px; width: 82px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
+      <div row1>
         <div rating>{{rating}}</div>
         <div stars-container>
-          <div stars style="{{starStyle}}"></div>
+          <div stars xen:style="{{starStyle}}"></div>
         </div>
       </div>
     </div>
@@ -169,14 +180,13 @@ ${styles}
     get template() {
       return template;
     }
-    willReceiveProps(props) {
-      let {selected} = props;
-      if (selected) {
-        let item = selected;
-        if (item && item.id) {
-          this._fetchDetail(item.reference);
+    willReceiveProps({restaurant}) {
+      if (restaurant) {
+        let item = restaurant;
+        if (restaurant && restaurant.id) {
+          this._fetchDetail(restaurant.reference);
         }
-        this._setState({item});
+        this._setState({restaurant});
       }
     }
     _fetchDetail(reference) {
@@ -192,31 +202,31 @@ ${styles}
     shouldRender(props, state) {
       return Boolean(state.item);
     }
-    render(props, state) {
+    render(props, {restaurant, detail}) {
       let model = {
         style: {
-          backgroundImage: `url(${state.item.photo})`
+          backgroundImage: `url(${restaurant.photo})`
         },
-        name: state.item.name,
+        name: restaurant.name,
         rating: '',
         reviews: ''
       };
-      let detail;
-      if (state.detail) {
+      if (detail) {
         let url =
-            state.detail.website &&
-            state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
-        detail = {
-          rating: state.detail.rating,
-          starStyle: `width: ${Math.round( (state.detail.rating || 0) / 5 * 100)}%`,
-          reviews: state.detail.reviews ? state.detail.reviews.length : 0,
-          kind: state.detail.types ? state.detail.types.slice(0, 3).join(' - ').replace(/_/g, ' ') : '',
-          addr: state.detail.vicinity,
+            detail.website &&
+            detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+        Object.assign(model, {
+          rating: detail.rating,
+          starStyle: `width: ${Math.round( (detail.rating || 0) / 5 * 100)}%`,
+          reviews: detail.reviews ? detail.reviews.length : 0,
+          kind: detail.types ? detail.types.slice(0, 3).join(' - ').replace(/_/g, ' ') : '',
+          addr: detail.vicinity,
           website: url || '(none)',
-          phone: state.detail.formatted_phone_number || '(none)',
-        };
+          link: url ? `http://${url}` : '',
+          phone: detail.formatted_phone_number || '(none)',
+        });
       }
-      return Object.assign(model, detail);
+      return model;
     }
   };
 

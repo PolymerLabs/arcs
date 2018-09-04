@@ -6,9 +6,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Things/GeoCoordinates.schema'
+import 'GeoCoordinates.schema'
 
 particle GoogleMap in 'source/GoogleMap.js'
   in GeoCoordinates location
   consume root
   description `Show ${location} on a map`
+
+recipe
+  // TODO(sjmiles): without locatino declaration, system adds `create as location` (not what we want)
+  //                `use` makes sense, but why is `?` ok?
+  ? as location
+  GoogleMap
+    location = location

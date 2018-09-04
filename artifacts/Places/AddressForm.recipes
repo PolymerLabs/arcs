@@ -13,3 +13,8 @@ particle AddressForm in 'source/AddressForm.js'
   inout PostalAddress address
   consume root
   description `edit address`
+
+recipe
+  create #address as address
+  AddressForm
+    address = address

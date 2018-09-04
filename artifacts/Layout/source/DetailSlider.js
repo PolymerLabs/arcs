@@ -33,8 +33,8 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     bottom: -64px;
     left: 0;
     pointer-events: all;
-    background-color: gray;
-    opacity: 0.25;
+    background-color: var(--shell-bg, gray);
+    opacity: 0.8;
   }
   [${host}] > [modal] {
     display: flex;
@@ -47,7 +47,6 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     background-color: white;
     box-shadow: 0 0 8px 4px rgba(102,102,102,0.25);
     border-radius: 16px;
-    overflow: auto;
   }
   @media(min-width: 600px) {
     [${host}] > [modal] {
@@ -56,8 +55,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     }
   }
   [${host}] > [modal] > [buttons] {
-    border-bottom: 1px solid lightgrey;
-    padding: 12px 12px 8px;
+    padding: 8px 4px 4px 8px;
   }
   [${host}] > [modal] > [buttons] > [back-button] {
     background-color: transparent;
@@ -70,6 +68,8 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   [${host}] > [modal] > [slot-content] {
     flex: 1;
     display: flex;
+    overflow: auto;
+    padding-bottom: 16px;
   }
   [${host}] > [modal] > [slot-content] > [particle-host] {
     flex: 1;

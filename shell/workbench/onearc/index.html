@@ -58,6 +58,7 @@
     host.key = 'launcher';
     //
     const start = async e => {
+      console.log('index-start');
       const arc = e.detail;
       const manifestContent = `
         import '${window.arcsPath}/artifacts/Arcs/Login.recipe'

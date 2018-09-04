@@ -6,4 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'List.recipes'
+// Based on http://schema.org/GeoCoordinates
+
+schema GeoCoordinates
+  Number latitude
+  Number longitude

@@ -24,13 +24,16 @@ particle TVMazeShowTile in './source/TVMazeShowTile.js'
 
 particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
   in TVMazeShow show
-  consume root
+  consume content
     provide action
     provide items
   description `${show} details`
 
 recipe TVMazeShowPanel
+  // TODO(sjmiles): otherwise, it tries to map to multiplexer items
+  use #selected as show
   TVMazeShowPanel
+    show = show
 
 //
 
@@ -40,13 +43,16 @@ schema TVMazeQuery
 
 particle TVMazeSearchShows in './source/TVMazeSearchShows.js'
   in TVMazeQuery query
-  out [TVMazeShow] shows
+  inout [TVMazeShow] shows
   consume root
   description `find out about ${query.query} (from TVMaze)`
 
 recipe TVMazeSearchShows
+  use as query
   create #tiles #shows as shows
   TVMazeSearchShows
+    query = query
+    shows = shows
 
 //
 
@@ -66,6 +72,58 @@ particle TVMazeFindShow in './source/TVMazeFindShow.js'
   description `find out about ${find.name} (from TVMaze)`
 
 recipe TVMazeFindShow
+  use as find
   create as show
   TVMazeFindShow
+    // TODO(sjmiles): without next two lines, strategizer takes 10x longer and fails
+    // to produce the desired results
+    find = find
+    show = show
+
+//
+
+particle TVMazeSearchBar in './source/TVMazeSearchBar.js'
+  //inout [TVMazeShow] shows
+  out TVMazeQuery query
+  consume toproot
+  description `find tv shows (using TvMaze)`
+
+recipe TVMazeSearchBar
+  //create #tiles #shows as shows
+  create as query
+  TVMazeSearchBar
+    query = query
+    //shows = shows
+
+//
+
+schema TVMazeEpisode
+  Number episodeid
+  Text name
+  Number season
+  Number number
+  Text airdate
+  Number runtime
+  URL image
+  Text summary
+
+particle TVMazeFindEpisodes in 'source/TVMazeFindEpisodes.js'
+  in TVMazeShow show
+  inout [TVMazeEpisode] episodes
+  //consume root // doesn't need this at all, but has no relevancy if it doesn't suck up a slot
+  //description `find TV episodes`
+
+recipe TVMazeFindEpisodes
+  use #selected as show
+  create #items #episodes as episodes
+  TVMazeFindEpisodes
+    show = show
+    episodes = episodes
+
+particle TVMazeEpisodeItem in 'source/TVMazeEpisodeItem.js'
+  in TVMazeEpisode episode
+  consume item
+
+recipe TVMazeEpisodeItem
+  TVMazeEpisodeItem
 

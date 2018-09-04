@@ -6,8 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/List.manifest'
 import '../Common/data/Theme.schema'
+import '../List/List.recipes'
 import '../People/Person.schema'
 import '../Social/Post.schema'
 import 'Board.schema'
@@ -15,7 +15,7 @@ import 'Move.schema'
 import 'Stats.schema'
 
 particle GamePane in 'source/GamePane.js'
-  host HostedParticleShape renderParticle
+  host HostedItemShape renderParticle
   in Person person
   inout Board board
   inout Move move

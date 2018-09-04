@@ -55,7 +55,7 @@ const template = html`
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <span style="flex: 1;">Settings</span>
-        <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
+        <avatar title="{{avatar_title}}" xen:style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
       </div>
     </div>
     <div contents scrolltop="{{scrollTop:contentsScrollTop}}">
@@ -92,7 +92,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     return {
       showHintFor: 3500,
       intent: 'start',
-      barState: 'over',
+      barState: 'peek',
       toolState: 'main',
       // TODO(sjmiles): include manifest or other directives?
       launcherHref: `${location.origin}${location.pathname}`,
@@ -107,7 +107,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     // `start` intent means no minimization
     if (intent === 'start') {
       if (state.barState !== 'open') {
-        state.barState = props.showhint ? 'hint' : 'over';
+        state.barState = props.showhint ? 'hint' : 'peek';
       }
       if (state.barState === 'hint') {
         // only leave hint open for a short time, then hide it automagically
@@ -195,7 +195,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       if (this._props.showhint && this._state.toolState === 'main') {
         barState = 'hint';
       }
-      this._setState({barState});
+      this._setState({barState, intent: 'auto'});
     }
   }
   _onBarLeave(e) {

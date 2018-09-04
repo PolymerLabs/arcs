@@ -200,6 +200,7 @@ const StyleSheet = Xen.html`
     z-index: 0;
   }
   ::slotted([slotid=modal]) {
+    z-index: 1;
     position: fixed;
     top: 0;
     right: 0;

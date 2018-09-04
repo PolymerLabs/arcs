@@ -208,7 +208,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('maps untagged remote handle', async () => { 
+  it('maps untagged remote handle', async () => {
     await testManifest(`
       recipe
         map as list
@@ -216,7 +216,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 3);
   });
-  it('copies tagged remote handle', async () => { 
+  it('copies tagged remote handle', async () => {
     // copy one
     await testManifest(`
       recipe
@@ -237,7 +237,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('copies untagged remote handle', async () => { 
+  it('copies untagged remote handle', async () => {
     await testManifest(`
       recipe
         copy as list
@@ -281,7 +281,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     assert.lengthOf(plansB[0].handles, 1);
     assert.equal('copy', plansB[0].handles[0].fate);
   });
-  it('finds multiple remote handles', async () => { 
+  it('finds multiple remote handles', async () => {
     // both at once
     await testManifest(`
       recipe
@@ -702,7 +702,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Common/List.recipes'
+      import 'artifacts/List/List.recipes'
       schema Thing
 
       particle ThingProducer
@@ -716,20 +716,20 @@ describe('Automatic resolution', function() {
         create #items as things
         ThingProducer`, arcRef => arc = arcRef);
 
-    assert.lengthOf(recipes, 2);
+    assert.lengthOf(recipes, 3);
     const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
-    assert.lengthOf(composedRecipes, 1);
+    assert.lengthOf(composedRecipes, 2);
 
-    assert.equal(composedRecipes[0].toString(), `recipe
+    assert.equal(composedRecipes[1].toString(), `recipe
   create #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedItemShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = handle2
     list <- handle0
     consume item as slot0
-  SelectableList as particle1
+  SelectableItems as particle1
     items = handle0
     selected = handle1
     consume root as slot1
@@ -744,7 +744,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-        import 'artifacts/Common/List.recipes'
+        import 'artifacts/List/List.recipes'
         schema Thing
 
         particle ThingRenderer
@@ -756,17 +756,17 @@ describe('Automatic resolution', function() {
           await arc.createStore(Thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 
-    assert.lengthOf(recipes, 1);
-    assert.equal(recipes[0].toString(), `recipe SelectableUseListRecipe
+    assert.lengthOf(recipes, 2);
+    assert.equal(recipes[1].toString(), `recipe SelectableUseItemsRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedItemShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = handle2
     list <- handle0
     consume item as slot0
-  SelectableList as particle1
+  SelectableItems as particle1
     items = handle0
     selected = handle1
     consume root as slot1
@@ -779,10 +779,10 @@ describe('Automatic resolution', function() {
 
   let verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/TestRestaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
 
-      store User of Person 'User' in './artifacts/Things/empty.json'
+      store User of Person 'User' in './artifacts/Demo/Claire.json'
 
       recipe
         search \`${searchStr}\`
@@ -856,7 +856,7 @@ describe('Automatic resolution', function() {
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/TestRestaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
 
       store User of Person 'User' in './artifacts/Things/empty.json'

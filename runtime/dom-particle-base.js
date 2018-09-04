@@ -126,30 +126,30 @@ export class DomParticleBase extends Particle {
       handle.store(new entityClass(raw));
     });
   }
-  /** @method updateVariable(handleName, record)
+  /** @method updateVariable(handleName, rawData)
    * Modify value of named handle.
    */
-  updateVariable(handleName, record) {
+  updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
-    const newRecord = new (handle.entityClass)(record);
-    handle.set(newRecord);
-    return newRecord;
+    const entity = new (handle.entityClass)(rawData);
+    handle.set(entity);
+    return entity;
   }
-  /** @method updateSet(handleName, record)
-   * Modify or insert `record` into named handle.
+  /** @method updateSet(handleName, entity)
+   * Modify or insert `entity` into named handle.
    * Modification is done by removing the old record and reinserting the new one.
    */
-  updateSet(handleName, record) {
+  updateSet(handleName, entity) {
     // Set the record into the right place in the set. If we find it
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
     const records = this._props[handleName];
-    const target = records.find(r => r.id === record.id);
+    const target = records.find(r => r.id === entity.id);
     if (target) {
       handle.remove(target);
     }
-    handle.store(record);
+    handle.store(entity);
   }
   /** @method boxQuery(box, userid)
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`

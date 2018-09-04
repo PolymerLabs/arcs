@@ -6,24 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/List.manifest'
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
   in Product product
   consume item
 
-recipe MuxedProductItem &muxProduct
-  ItemMultiplexer
-
-recipe ProductList &showShopList
-  copy #shoplist as newlist
-  List
-    items = newlist
-  description `show ${List.items}`
-
-// Show [person]'s wishlist
-recipe
-  use #claire as person
-  map #wishlist as wishlist
-  &showShopList
