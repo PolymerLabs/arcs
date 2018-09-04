@@ -109,15 +109,17 @@ class StorageProxyBase {
       return;
     }
 
+    // Replace the stored data with the new one and notify handles that are configured for it.
+    if (!this._synchronizeModel(version, model)) {
+      return;
+    }
+
     // We may have queued updates that were received after a desync; discard any that are stale
     // with respect to the received model.
     this._synchronized = SyncState.full;
     while (this._updates.length > 0 && this._updates[0].version <= version) {
       this._updates.shift();
     }
-
-    // Replace the stored data with the new one and notify handles that are configured for it.
-    this._synchronizeModel(version, model);
 
     let syncModel = this._getModelForSync();
     this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
@@ -157,8 +159,24 @@ class StorageProxyBase {
   }
 
   _processUpdates() {
+
+    let updateIsNext = update => {
+      if (update.version == this._version + 1) {
+        return true;
+      }
+      // Holy Layering Violation Batman
+      // 
+      // If we are a variable waiting for a barriered set response
+      // then that set response *is* the next thing we're waiting for,
+      // regardless of version numbers. 
+      if (this._barrier && update.barrier == this._barrier) {
+        return true;
+      }
+      return false;
+    }
+
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
-    while (this._updates.length > 0 && this._updates[0].version === this._version + 1) {
+    while (this._updates.length > 0 && updateIsNext(this._updates[0])) {
       let update = this._updates.shift();
 
       // Fold the update into our stored model.
@@ -227,6 +245,7 @@ class CollectionProxy extends StorageProxyBase {
   _synchronizeModel(version, model) {
     this._version = version;
     this._model = new CrdtCollectionModel(model);
+    return true;
   }
 
   _processUpdate(update, apply=true) {
@@ -337,9 +356,15 @@ class VariableProxy extends StorageProxyBase {
   }
 
   _synchronizeModel(version, model) {
+    // If there's an active barrier then we shouldn't apply the model here, because
+    // there is a more recent write from the particle side that is still in flight.
+    if (this._barrier != null) {
+      return false;
+    }
     this._version = version;
     this._model = model.length == 0 ? null : model[0].value;
     assert(this._model !== undefined);
+    return true;
   }
 
   _processUpdate(update, apply=true) {
@@ -350,9 +375,19 @@ class VariableProxy extends StorageProxyBase {
     // If we have set a barrier, suppress updates until after
     // we have seen the barrier return via an update.
     if (this._barrier != null) {
-      console.log(`CMP barriers ${this._barrier} ${update.barrier}`);
       if (update.barrier == this._barrier) {
         this._barrier = null;
+
+        // HOLY LAYERING VIOLATION BATMAN
+        //
+        // We just cleared a barrier which means we are now synchronized. If we weren't
+        // synchronized already, then we need to tell the handles.
+        if (this._synchronized !== SyncState.full) {
+          this._synchronized = SyncState.full;
+          let syncModel = this._getModelForSync();
+          this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
+
+        }
       }
       return null;
     }
@@ -378,11 +413,20 @@ class VariableProxy extends StorageProxyBase {
     if (JSON.stringify(this._model) == JSON.stringify(entity)) {
       return;
     }
-    let barrier = this.generateID('barrier');
+    let barrier;
+
+    // If we're setting to this handle but we aren't listening to firebase, 
+    // then there's no point creating a barrier. In fact, if the response 
+    // to the set comes back before a listener is registered then this proxy will
+    // end up locked waiting for a barrier that will never arrive.
+    if (this._listenerAttached) {
+      barrier = this.generateID('barrier');
+    } else {
+      barrier = null;
+    }
     // TODO: is this already a clone?
     this._model = JSON.parse(JSON.stringify(entity));
     this._barrier = barrier;
-    console.log(`SET barrier ${barrier}`);
     this._port.HandleSet({data: entity, handle: this, particleId, barrier});
     let update = {originatorId: particleId, data: entity};
     this._notify('update', update, options => options.notifyUpdate);

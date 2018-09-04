@@ -21,8 +21,6 @@ import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 
-import {DLog} from '../../debug.js';
-
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
   const app = firebase.initializeApp({
@@ -245,19 +243,15 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   async ensureBackingStore(arg='') {
     if (this.backingStore) {
-      DLog.log(this, 'this.backingStore exists' + arg);
       return await this.backingStore;
     }
     if (!this.pendingBackingStore) {
-      DLog.log(this, 'no pendingBackingStore' + arg);
       const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
       this.backingStore = await this.pendingBackingStore;
     } else {
-      DLog.log(this, 'pendingBackingStore exists' + arg);
       await this.pendingBackingStore;
     }
-    DLog.log(this, 'returning backingStore' + arg);
     return this.backingStore;
   }
 
@@ -303,7 +297,8 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
       return;
     }
     if (this.persisting) {
-      return this.persisting;
+      await this.persisting;
+      return;
     }
     // Ensure we only have one persist process running at a time.
     this.persisting = this._persistChangesImpl(arg);
@@ -384,7 +379,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   remoteStateChanged(dataSnapshot: firebase.database.DataSnapshot) {
-    DLog.trace(this, ["referenceMode"]);
     if (this.localModified) {
       return;
     }
@@ -408,7 +402,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
       const version = this.version;
       this.ensureBackingStore().then(async store => {
         const data = await store.get(this.value.id);
-        DLog.logObject(this, data);
         this._fire('change', {data, version});
       });
       } else {
@@ -429,6 +422,20 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const version = this.version;
     const value = this.value;
     
+    // We have to write the underlying storage before the local value, or it won't be present
+    // when another connected storage object gets the update of the local value.
+    if (this.referenceMode && this.pendingWrites.length > 0) {
+      await this.ensureBackingStore(arg);
+  
+      // TODO(shans): mutating the storageKey here to provide unique keys is a hack
+      // that can be removed once entity mutation is distinct from collection updates.
+      // Once entity mutation exists, it shouldn't ever be possible to write
+      // different values with the same id.
+      const pendingWrites = this.pendingWrites.slice();
+      this.pendingWrites = [];
+      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localKeyId++])));
+    }
+
     const result = await this._transaction(data => {
       assert(this.version >= version);
       return {
@@ -442,8 +449,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
     assert(data !== 0);
     assert(data.version >= version);
  
-    console.log("COMMITTED", arg);
-
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
       return this._persistChangesImpl(arg);
@@ -454,17 +459,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // Firebase will return 'undefined' when data is set to null, but should
     this.value = data.value || null;
  
-    if (this.referenceMode && this.pendingWrites.length > 0) {
-      await this.ensureBackingStore(arg);
-  
-      // TODO(shans): mutating the storageKey here to provide unique keys is a hack
-      // that can be removed once entity mutation is distinct from collection updates.
-      // Once entity mutation exists, it shouldn't ever be possible to write
-      // different values with the same id.
-      const pendingWrites = this.pendingWrites.slice();
-      this.pendingWrites = [];
-      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localKeyId++])));
-    }
   }
 
   get versionForTesting() {
@@ -482,8 +476,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async set(value, originatorId=null, barrier=null) {
-    DLog.trace(this, ['version']);
-    console.log(barrier);
     assert(value !== undefined);
     if (this.version == null) {
       assert(!this.localModified);
@@ -498,8 +490,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
       if (JSON.stringify(this.value) === JSON.stringify(value)) {
          return;
       }
-      this.version++;
     }
+    this.version++;
+    const version = this.version;
     let storageKey;
     if (this.referenceMode && value) {
       storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
@@ -514,8 +507,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // flag reordering if done before persisting a change.
     await this._persistChanges(barrier);
 
-    DLog.log(this, `fire change event, barrier ${barrier}`);
-    this._fire('change', {data: value, version: this.version, originatorId, barrier});
+    this._fire('change', {data: value, version, originatorId, barrier});
   }
 
   async clear(originatorId=null, barrier=null) {
@@ -645,7 +637,6 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
-    DLog.trace(this);
 
     // Lists mapped by id containing membership keys that have been
     // added or removed by local modifications. Entries in this

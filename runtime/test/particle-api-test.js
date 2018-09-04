@@ -638,6 +638,7 @@ describe('particle-api', function() {
     recipe.handles[1].mapToStorage(resultsStore);
     recipe.normalize();
     await arc.instantiate(recipe);
+    await arc.idle;
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
 
     // TODO: how do i listen to inner arc's outStore handle-changes?

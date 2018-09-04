@@ -436,8 +436,16 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.id = newStore.id;
         recipeHandle.fate = 'use';
         recipeHandle.storageKey = newStore.storageKey;
+        continue;
         // TODO: move the call to ParticleExecutionHost's DefineHandle to here
       }
+
+      // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
+      // shell pre-populates all arcs with a set of handles so if a recipe explicitly
+      // asks for one of these there's a conflict.
+      if (this._storesById.has(recipeHandle.id)) {
+        continue;
+      } 
 
       let storageKey = recipeHandle.storageKey;
       if (!storageKey) {
@@ -448,6 +456,7 @@ ${this.activeRecipe.toString()}`;
       assert(type.isResolved());
       let store = await this._storageProviderFactory.connect(recipeHandle.id, type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
+      this._registerStore(store, recipeHandle.tags)
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
