@@ -422,7 +422,7 @@ ${this.activeRecipe.toString()}`;
           assert(recipeHandle.type.interfaceShape.particleMatches(particle));
           const particleClone = particle.clone().toLiteral();
           particleClone.id = recipeHandle.id;
-          newStore.set(particleClone);
+          await newStore.set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
           assert(copiedStore.version !== null);
