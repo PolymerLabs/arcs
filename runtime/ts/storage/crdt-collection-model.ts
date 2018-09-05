@@ -44,7 +44,7 @@ export class CrdtCollectionModel {
   add(id: string, value, keys: string[]): boolean {
     // Ensure that keys is actually an array, not a single string.
     // TODO(shans): remove this when all callers are implemented in typeScript.
-    assert(keys.length > 0 && typeof keys == 'object', 'add requires a list of keys');
+    assert(keys.length > 0 && typeof keys === 'object', 'add requires a list of keys');
     let item = this.items.get(id);
     let effective = false;
     if (!item) {
