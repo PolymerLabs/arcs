@@ -56,7 +56,7 @@ export class SlotContext {
   get container() { return this._container; }
 
   static createContextForContainer(id, name, container, tags) {
-    return new SlotContext(id, name, tags, container, undefined);
+    return new SlotContext(id, name, tags, container, null);
   }
 
   isSameContainer(container) : boolean {
