@@ -885,7 +885,7 @@ ${e.message}
           // Maybe a different function call in the storageEngine? Alternatively another
           // param to the connect/construct functions?
           store.referenceMode = false;
-          store.set(hostedParticleLiteral);
+          await store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
 
