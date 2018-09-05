@@ -65,9 +65,7 @@ describe('in-memory', function() {
       let key = newStoreKey('variable');
       let var1 = await storage.construct('test0', BarType, key);
       let var2 = await storage.connect('test0', BarType, var1.storageKey);
-      var1.set({id: 'id1', value: 'value1'});
-      var2.set({id: 'id2', value: 'value2'});
-      await synchronized(var1, var2);
+      await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
     });
 
