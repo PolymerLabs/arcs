@@ -67,7 +67,7 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
       fileName: './in-memory.manifest',
       loader: arc._loader
     };
-    const manifest = window.manifest = await Arcs.Manifest.parse(manifestContent, options);
+    const manifest = window.manifest = await Arcs.Runtime.parseManifest(manifestContent, options);
     //console.log(manifest);
     const recipe = manifest.recipes[0];
     // console.log(recipe);
