@@ -207,6 +207,7 @@ describe('FindHostedParticle', function() {
     await arc.instantiate(outRecipe);
     let particleSpecStore = arc._stores.find(store => store.type.isInterface);
     const particleSpec = await particleSpecStore.get();
+    await new Promise((resolve, reject) => setTimeout(resolve, 100));
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;
     assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
