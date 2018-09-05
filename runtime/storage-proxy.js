@@ -168,7 +168,9 @@ class StorageProxyBase {
       // 
       // If we are a variable waiting for a barriered set response
       // then that set response *is* the next thing we're waiting for,
-      // regardless of version numbers. 
+      // regardless of version numbers.
+      //
+      // TODO(shans): refactor this code so we don't need to layer-violate. 
       if (this._barrier && update.barrier == this._barrier) {
         return true;
       }
@@ -382,6 +384,8 @@ class VariableProxy extends StorageProxyBase {
         //
         // We just cleared a barrier which means we are now synchronized. If we weren't
         // synchronized already, then we need to tell the handles.
+        //
+        // TODO(shans): refactor this code so we don't need to layer-violate. 
         if (this._synchronized !== SyncState.full) {
           this._synchronized = SyncState.full;
           let syncModel = this._getModelForSync();

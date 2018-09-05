@@ -442,7 +442,8 @@ ${this.activeRecipe.toString()}`;
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
-      // asks for one of these there's a conflict.
+      // asks for one of these there's a conflict. Ideally these will end up as a 
+      // part of the context and will be populated on-demand like everything else.
       if (this._storesById.has(recipeHandle.id)) {
         continue;
       } 

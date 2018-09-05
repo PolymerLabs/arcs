@@ -243,18 +243,20 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
     this.persisting = null;
   }
 
-  async ensureBackingStore(arg='') {
+  // A consequence of awaiting this function is that this.backingStore
+  // is guaranteed to exist once the await completes. This is because
+  // if backingStore doesn't yet exist, the assignment in the then()
+  // is guaranteed to execute before anything awaiting this function.
+  async ensureBackingStore() {
     if (this.backingStore) {
-      return await this.backingStore;
+      return this.backingStore;
     }
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
-      this.backingStore = await this.pendingBackingStore;
-    } else {
-      await this.pendingBackingStore;
+      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
-    return this.backingStore;
+    return this.pendingBackingStore;
   }
 
   abstract backingType() : Type;
@@ -389,7 +391,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
     // NOTE that remoteStateChanged will be invoked immediately by the
     // this.reference.on(...) call in the constructor; this means that it's possible for this
-    // function to recieve data with storageKeys before referenceMode has been switched on (as 
+    // function to receive data with storageKeys before referenceMode has been switched on (as 
     // that happens after the constructor has completed). This doesn't matter as data can't
     // be accessed until the constructor's returned (nothing has a handle on the object before
     // that). 
@@ -422,12 +424,15 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // completes indicating that we need to continue the process of sending
     // local modifications.
     const version = this.version;
+
+    // the await required for fetching baseStorage can cause initialization/localModified
+    // flag reordering if done before persisting a change.
     const value = this.value;
     
     // We have to write the underlying storage before the local value, or it won't be present
     // when another connected storage object gets the update of the local value.
     if (this.referenceMode && this.pendingWrites.length > 0) {
-      await this.ensureBackingStore(arg);
+      await this.ensureBackingStore();
   
       // TODO(shans): mutating the storageKey here to provide unique keys is a hack
       // that can be removed once entity mutation is distinct from collection updates.
@@ -505,8 +510,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
     }
     this.localModified = true;
 
-    // the await required for fetching baseStorage can cause initialization/localModified
-    // flag reordering if done before persisting a change.
     await this._persistChanges(barrier);
 
     this._fire('change', {data: value, version, originatorId, barrier});

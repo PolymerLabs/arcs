@@ -149,6 +149,10 @@ abstract class InMemoryStorageProvider extends StorageProviderBase {
     return new InMemoryVariable(type, storageEngine, name, id, key);
   }
 
+  // A consequence of awaiting this function is that this.backingStore
+  // is guaranteed to exist once the await completes. This is because
+  // if backingStore doesn't yet exist, the assignment in the then()
+  // is guaranteed to execute before anything awaiting this function.
   async ensureBackingStore() {
     if (this.backingStore) {
       return this.backingStore;
@@ -156,11 +160,9 @@ abstract class InMemoryStorageProvider extends StorageProviderBase {
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType());
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
-      this.backingStore = await this.pendingBackingStore;
-    } else {
-      await this.pendingBackingStore;
+      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
-    return this.backingStore;
+    return this.pendingBackingStore;
   }
 
   abstract backingType(): Type;
