@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Affordance} from './affordance.js';
-import {SlotContext} from './slot-context.js';
+import {SlotContext} from './ts-build/slot-context.js';
 import {HostedSlotConsumer} from './hosted-slot-consumer.js';
 
 export class SlotComposer {
