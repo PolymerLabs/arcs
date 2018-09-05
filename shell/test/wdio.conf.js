@@ -162,7 +162,7 @@ exports.config = {
   mochaOpts: {
     ui: 'bdd',
     // debug hint: increase this timeout for debugging
-    timeout: debug ? 6000006 : 60006
+    timeout: debug ? 6000006 : 600006
   },
   //
   // =====
