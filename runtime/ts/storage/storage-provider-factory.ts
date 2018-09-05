@@ -25,10 +25,6 @@ export class StorageProviderFactory {
     return this._storageInstances[protocol];
   }
 
-  async share(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
-    return this._storageForKey(key).share(id, type, key);
-  }
-
   async construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase> {
     // TODO(shans): don't use reference mode once adapters are implemented
     return await this._storageForKey(keyFragment).construct(id, type, keyFragment);

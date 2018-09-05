@@ -1,4 +1,4 @@
-// @
+// @license
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -53,7 +53,7 @@ class FirebaseKey extends KeyBase {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol === 'firebase');
+    assert(this.protocol === 'firebase', `can't construct firebase key for protocol ${this.protocol} (input key ${key})`);
     if (parts[1]) {
       parts = parts[1].split('/');
       this.databaseUrl = parts[0];
@@ -95,16 +95,17 @@ export class FirebaseStorage extends StorageBase {
   private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
   private baseStores: Map<Type, FirebaseCollection>;
+  private baseStorePromises: Map<Type, Promise<FirebaseCollection>>;
 
   constructor(arcId: Id) {
     super(arcId);
     this.apps = {};
-    this.sharedStores = {};
     this.baseStores = new Map();
+    this.baseStorePromises = new Map();
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<FirebaseStorageProvider> {
-    return this._join(id, type, keyFragment, false);
+    return this._join(id, type, keyFragment, false, true);
   }
 
   async connect(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
@@ -121,35 +122,37 @@ export class FirebaseStorage extends StorageBase {
     }
   }
   
-  async share(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
-    if (!this.sharedStores[id]) {
-      this.sharedStores[id] = await this._join(id, type, key, true);
-    }
-    return this.sharedStores[id];
-  }
-
-  baseStorageKey(type, key) {
-    const fbKey = new FirebaseKey(key);
+baseStorageKey(type: Type, keyString: string): string {
+    const fbKey = new FirebaseKey(keyString);
     fbKey.location = `backingStores/${type.toString()}`;
     return fbKey.toString();
   }
 
-  async baseStorageFor(type, key) {
-    if (!this.baseStores.has(type)) {
-      const store = await this._join(type.toString(), type.collectionOf(), key, 'unknown') as FirebaseCollection;
-      this.baseStores.set(type, store);
+  async baseStorageFor(type, key: string) {
+    if (this.baseStores.has(type)) {
+      return this.baseStores.get(type);
     }
-
-    return this.baseStores.get(type);
+    if (this.baseStorePromises.has(type)) {
+      return this.baseStorePromises.get(type);
+    }
+    const storagePromise = this._join(type.toString(), type.collectionOf(), key, 'unknown') as Promise<FirebaseCollection>;
+    this.baseStorePromises.set(type, storagePromise);
+    const storage = await storagePromise;
+    assert(storage, 'baseStorageFor should not fail');
+    this.baseStores.set(type, storage); 
+    return storage;
   }
 
   parseStringAsKey(s: string) : FirebaseKey {
     return new FirebaseKey(s);
   }
 
-  async _join(id, type, key, shouldExist) {
-    assert(typeof id === 'string');
-    const fbKey = new FirebaseKey(key);
+  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
+  // but this _join creates the storage location. 
+  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
+    assert(!type.isVariable);
+    assert(!type.isCollection || !type.primitiveType().isVariable);
+    const fbKey = new FirebaseKey(keyString);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (fbKey.databaseUrl == undefined || fbKey.apiKey == undefined) {
       throw new Error('Can\'t complete partial firebase keys');
@@ -176,10 +179,15 @@ export class FirebaseStorage extends StorageBase {
 
     const reference = firebase.database(this.apps[fbKey.projectId].app).ref(fbKey.location);
 
+    let enableReferenceMode = false;
     let currentSnapshot: firebase.database.DataSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
+    }
+
+    if (currentSnapshot.exists() && currentSnapshot.val().referenceMode) {
+      enableReferenceMode = true;
     }
 
     if (shouldExist === false || (shouldExist === 'unknown' && currentSnapshot.exists() === false)) {
@@ -187,15 +195,20 @@ export class FirebaseStorage extends StorageBase {
         if (data != null) {
           return undefined;
         }
-        return {version: 0};
+        return {version: 0, referenceMode};
       }, undefined, false);
 
       if (!result.committed) {
         return null;
       }
+      enableReferenceMode = referenceMode;
     }
 
-    return FirebaseStorageProvider.newProvider(type, this, id, reference, key, shouldExist);
+    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist);
+    if (enableReferenceMode) {
+      provider.enableReferenceMode();
+    }
+    return provider;
   }
 
   static encodeKey(key: string): string {
@@ -215,6 +228,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   protected reference: firebase.database.Reference;
   protected backingStore: FirebaseCollection|null;
   protected storageEngine: FirebaseStorage;
+  private pendingBackingStore: Promise<FirebaseCollection>|null;
 
   protected constructor(type, storageEngine, id, reference, key) {
     super(type, undefined, id, key.toString());
@@ -222,11 +236,30 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
     this.firebaseKey = key;
     this.reference = reference;
     this.backingStore = null;
+    this.pendingBackingStore = null;
 
     // Resolved when local modifications complete being persisted
     // to firebase. Null when not persisting.
     this.persisting = null;
   }
+
+  // A consequence of awaiting this function is that this.backingStore
+  // is guaranteed to exist once the await completes. This is because
+  // if backingStore doesn't yet exist, the assignment in the then()
+  // is guaranteed to execute before anything awaiting this function.
+  async ensureBackingStore() {
+    if (this.backingStore) {
+      return this.backingStore;
+    }
+    if (!this.pendingBackingStore) {
+      const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
+      this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
+      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
+    }
+    return this.pendingBackingStore;
+  }
+
+  abstract backingType() : Type;
 
   static newProvider(type, storageEngine, id, reference, key, shouldExist) {
     if (type.isCollection) {
@@ -261,17 +294,18 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   abstract get _hasLocalChanges(): boolean;
 
-  abstract async _persistChangesImpl(): Promise<void>;
+  abstract async _persistChangesImpl(arg): Promise<void>;
 
-  async _persistChanges() {
+  async _persistChanges(arg='') {
     if (!this._hasLocalChanges) {
       return;
     }
     if (this.persisting) {
-      return this.persisting;
+      await this.persisting;
+      return;
     }
     // Ensure we only have one persist process running at a time.
-    this.persisting = this._persistChangesImpl();
+    this.persisting = this._persistChangesImpl(arg);
     await this.persisting;
     assert(!this._hasLocalChanges);
     this.persisting = null;
@@ -307,6 +341,8 @@ class FirebaseVariable extends FirebaseStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
+  private localKeyId = 0;
+  private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
 
@@ -342,53 +378,94 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
 
-  remoteStateChanged(dataSnapshot) {
+  backingType() {
+    return this.type;
+  }
+
+  remoteStateChanged(dataSnapshot: firebase.database.DataSnapshot) {
     if (this.localModified) {
       return;
     }
     const data = dataSnapshot.val();
     assert(this.version == null || data.version > this.version);
 
-    this.value = data.value;
+    // NOTE that remoteStateChanged will be invoked immediately by the
+    // this.reference.on(...) call in the constructor; this means that it's possible for this
+    // function to receive data with storageKeys before referenceMode has been switched on (as 
+    // that happens after the constructor has completed). This doesn't matter as data can't
+    // be accessed until the constructor's returned (nothing has a handle on the object before
+    // that). 
+
+    this.value = data.value || null;
     this.version = data.version;
 
     this.resolveInitialized();
     // Firebase doesn't maintain a distinction between null and undefined, but we explicitly
     // require empty variables to store 'null'.
-    this._fire('change', {data: data.value || null, version: this.version});
+    if (this.referenceMode && this.value) {
+      const version = this.version;
+      this.ensureBackingStore().then(async store => {
+        const data = await store.get(this.value.id);
+        this._fire('change', {data, version});
+      });
+      } else {
+      this._fire('change', {data: data.value || null, version: this.version});
+    }
   }
 
   get _hasLocalChanges() {
     return this.localModified;
   }
 
-  async _persistChangesImpl(): Promise<void> {
+  async _persistChangesImpl(arg): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
     // completes indicating that we need to continue the process of sending
     // local modifications.
     const version = this.version;
+
+    // the await required for fetching baseStorage can cause initialization/localModified
+    // flag reordering if done before persisting a change.
     const value = this.value;
+    
+    // We have to write the underlying storage before the local value, or it won't be present
+    // when another connected storage object gets the update of the local value.
+    if (this.referenceMode && this.pendingWrites.length > 0) {
+      await this.ensureBackingStore();
+  
+      // TODO(shans): mutating the storageKey here to provide unique keys is a hack
+      // that can be removed once entity mutation is distinct from collection updates.
+      // Once entity mutation exists, it shouldn't ever be possible to write
+      // different values with the same id.
+      const pendingWrites = this.pendingWrites.slice();
+      this.pendingWrites = [];
+      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localKeyId++])));
+    }
+
     const result = await this._transaction(data => {
       assert(this.version >= version);
       return {
         version: Math.max(data.version + 1, version),
         value,
+        referenceMode: this.referenceMode
       };
     });
     assert(result.committed, 'uncommited transaction (offline?) not supported yet');
     const data = result.snapshot.val();
     assert(data !== 0);
     assert(data.version >= version);
+ 
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
-      return this._persistChangesImpl();
+      return this._persistChangesImpl(arg);
     }
 
     this.localModified = false;
     this.version = data.version;
-    this.value = data.value;
+    // Firebase will return 'undefined' when data is set to null, but should
+    this.value = data.value || null;
+ 
   }
 
   get versionForTesting() {
@@ -397,30 +474,16 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
   async get() {
     await this.initialized;
-    if (this.referenceMode) {
+    if (this.referenceMode && this.value) {
       const referredType = this.type;
-      if (this.backingStore == null) {
-        const backingStore = await this.storageEngine.share(
-          referredType.toString(),
-          referredType.collectionOf(),
-          this.value.storageKey);
-        this.backingStore = backingStore as FirebaseCollection;
-      }
+      await this.ensureBackingStore();
       return await this.backingStore.get(this.value.id);  
     }
     return this.value;
   }
 
   async set(value, originatorId=null, barrier=null) {
-    let referredType;  
-    // the await required for fetching baseStorage can cause initialization/localModified
-    // flag reordering if done inline below. So we resolve backingStore if necessary
-    // first, before looking at anything else. 
-    if (this.referenceMode && this.backingStore == null) {
-      referredType = this.type;    
-      this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageEngine.baseStorageKey(referredType, this.storageKey));
-    }
-
+    assert(value !== undefined);
     if (this.version == null) {
       assert(!this.localModified);
       // If the first modification happens before init, this becomes
@@ -428,21 +491,28 @@ class FirebaseVariable extends FirebaseStorageProvider {
       // transaction in _persistChanges.
       this.version = 0;
       this.resolveInitialized();
-    } else {
+    } else if (!this.referenceMode) {
+      // If in reference mode, we can't actually determine if this value is identical to the previous
+      // one.
       if (JSON.stringify(this.value) === JSON.stringify(value)) {
          return;
       }
-      this.version++;
     }
-    if (this.referenceMode) {
-      await this.backingStore.store(value, [this.storageKey]);
-      value = {id: value.id, storageKey: this.backingStore.storageKey};
+    this.version++;
+    const version = this.version;
+    let storageKey;
+    if (this.referenceMode && value) {
+      storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
+      this.value = {id: value.id, storageKey};
+      this.pendingWrites.push({value, storageKey});
+    } else {
+      this.value = value;
     }
-
     this.localModified = true;
-    this.value = value;
-    this._fire('change', {data: this.value, version: this.version, originatorId, barrier});
-    await this._persistChanges();
+
+    await this._persistChanges(barrier);
+
+    this._fire('change', {data: value, version, originatorId, barrier});
   }
 
   async clear(originatorId=null, barrier=null) {
@@ -450,12 +520,43 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async cloneFrom(handle) {
+    this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
+    const data = literal.model[0].value;
+    if (this.referenceMode && literal.model.length > 0) {
+      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);  
+      literal.model = literal.model.map(({id, value}) => ({id, value: {id, storageKey: this.backingStore.storageKey}}));
+      const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
+      await this.backingStore.storeMultiple(underlying, [this.storageKey]);
+    }
     this.fromLiteral(literal);
     this.localModified = true;
     this.resolveInitialized();
-    this._fire('change', {data: this.value, version: this.version, originatorId: null, barrier: null});
+    // TODO: do we need to fire an event here?
+    if (this.referenceMode) {
+      this._fire('change', {data, version: this.version, originatorId: null, barrier: null});
+    } else {
+      this._fire('change', {data: this.value, version: this.version, originatorId: null, barrier: null});
+    }
     await this._persistChanges();
+  }
+
+  async modelForSynchronization() {
+    if (this.value && !this.referenceMode) {
+      assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
+    }
+    if (this.referenceMode && this.value !== null) {
+      const value = this.value as {id: string, storageKey: string};
+
+      await this.ensureBackingStore();
+      const result = await this.backingStore.get(value.id);
+      return {
+        version: this.version,
+        model: [{id: value.id, value: result}]
+      };
+    }
+
+    return super.modelForSynchronization();
   }
 
   // Returns {version, model: [{id, value}]}
@@ -471,6 +572,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   fromLiteral({version, model}) {
     const value = model.length === 0 ? null : model[0].value;
     assert(value !== undefined);
+    assert(this.referenceMode || !value.storageKey);
     this.value = value;
     this.version = version;
   }
@@ -534,7 +636,9 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private model: CrdtCollectionModel;
   private remoteState: {items: {[index: string]: {value: {}, keys: { [index: string]: null}}}};
   private readonly initialized: Promise<void>;
+  private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: () => void;
+  private localId = 0;
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -574,6 +678,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
 
+  backingType() {
+    return this.type.primitiveType();
+  }
+  
   remoteStateChanged(dataSnapshot) {
     const newRemoteState = dataSnapshot.val();
     if (!newRemoteState.items) {
@@ -672,12 +780,20 @@ class FirebaseCollection extends FirebaseStorageProvider {
       return;
     }
 
-    this._fire('change', {
-      originatorId: null,
-      version: this.version,
-      add,
-      remove,
-    });
+    if (this.referenceMode) {
+      const ids = add.map(({value}) => value.id).concat(remove.map(({value}) => value.id));
+      this.ensureBackingStore().then(async backingStore => {
+        const values = await backingStore.getMultiple(ids);
+        const valueMap = {};
+        values.forEach(value => valueMap[value.id] = value);
+        const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
+        const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
+        this._fire('change', {originatorId: null, version: this.version, add: addPrimitives, remove: removePrimitives});
+      });
+
+    } else {
+      this._fire('change', {originatorId: null, version: this.version, add, remove});
+    }
   }
 
   get versionForTesting() {
@@ -691,11 +807,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       if (ref == null) {
         return null;
       }
-      const referredType = this.type.primitiveType();
-      if (this.backingStore == null) {
-        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
-        this.backingStore = backingStore as FirebaseCollection;
-      }
+      await this.ensureBackingStore();
       const result = await this.backingStore.get(ref.id);
       return result;
     }
@@ -738,19 +850,19 @@ class FirebaseCollection extends FirebaseStorageProvider {
   async store(value, keys, originatorId=null) {
     assert(keys != null && keys.length > 0, 'keys required');
     await this.initialized;
-
+    const id = value.id;
+    let effective;
     // 1. Apply the change to the local model.
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
-      if (this.backingStore == null) {
-        this.backingStore = await this.storageEngine.baseStorageFor(referredType, this.storageEngine.baseStorageKey(referredType, this.storageKey));
-      }
-      await this.backingStore.store(value, [this.storageKey]);
-      value = {id: value.id, storageKey: this.backingStore.storageKey};
+      const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
+      effective = this.model.add(id, {id, storageKey}, keys);
+      this.version++;
+      this.pendingWrites.push({value, storageKey});
+    } else {
+      effective = this.model.add(id, value, keys);
+      this.version++;
     }
-    const id = value.id;
-    const effective = this.model.add(value.id, value, keys);
-    this.version++;
 
     // 2. Notify listeners.
     this._fire('change', {add: [{value, keys, effective}], version: this.version, originatorId});
@@ -764,6 +876,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       localChange.add.push(key);
     }
 
+
     // 4. Wait for persistence to complete.
     await this._persistChanges();
   }
@@ -773,6 +886,19 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async _persistChangesImpl(): Promise<void> {
+    if (this.pendingWrites.length > 0) {
+      await this.ensureBackingStore();      
+      assert(this.backingStore);
+      const pendingWrites = this.pendingWrites.slice();
+      this.pendingWrites = [];
+
+      // TODO(shans): mutating the storageKey here to provide unique keys is a hack
+      // that can be removed once entity mutation is distinct from collection updates.
+      // Once entity mutation exists, it shouldn't ever be possible to write
+      // different values with the same id.
+      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
+    }
+
     while (this.localChanges.size > 0) {
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
@@ -816,6 +942,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
             delete data.items[encId];
           }
         }
+        data.referenceMode = this.referenceMode;
         return data;
       });
 
@@ -857,33 +984,73 @@ class FirebaseCollection extends FirebaseStorageProvider {
     }
   }
 
-  async toList() {
+  async _toList() {
     await this.initialized;
     if (this.referenceMode) {
-      const items = this.model.toList();
+      const items = (await this.toLiteral()).model;
+      if (items.length === 0) {
+        return [];
+      }
       const referredType = this.type.primitiveType();
 
       const refSet = new Set();
 
-      items.forEach(item => refSet.add(item.storageKey));
+      items.forEach(item => refSet.add(item.value.storageKey));
       assert(refSet.size === 1);
       const ref = refSet.values().next().value;
 
-      if (this.backingStore == null) {
-        const backingStore = await this.storageEngine.share(referredType.toString(), referredType.collectionOf(), ref);
-        this.backingStore = backingStore as FirebaseCollection;
-      }
+      await this.ensureBackingStore();
       const retrieveItem = async item => {
-        return this.backingStore.get(item.id);
+        const ref = item.value;
+        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
       };
 
       return await Promise.all(items.map(retrieveItem));
     }
-    return this.model.toList();
+    return (await this.toLiteral()).model;
+  }
+
+  async modelForSynchronization() {
+    return {
+      version: this.version,
+      model: await this._toList()
+    };
+  }
+
+  async toList() {
+    return (await this._toList()).map(item => item.value);
+  }
+
+  async getMultiple(ids) {
+    assert(!this.referenceMode, "getMultiple not implemented for referenceMode stores");
+    await this.initialized;
+    return ids.map(id => this.model.getValue(id));
+  }
+
+  async storeMultiple(values, keys, originatorId=null) {
+    assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
+    values.map(value => {
+      this.model.add(value.id, value, keys);
+      const localChanges = this.localChanges.get(value.id);
+      for (const key of keys) {
+        localChanges.add.push(key);
+      }
+    });
+    await this._persistChanges();
   }
 
   async cloneFrom(handle) {
-    this.fromLiteral(await handle.toLiteral());
+    this.referenceMode = handle.referenceMode;
+    const literal = await handle.toLiteral();
+    if (this.referenceMode && literal.model.length > 0) {
+      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
+      if (this.backingStore !== handle.backingStore) {
+        literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
+        const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
+        await this.backingStore.storeMultiple(underlying, [this.storageKey]);
+      }
+    }
+    this.fromLiteral(literal);
     // Don't notify about the contents that have just been cloned.
     // However, do record local changes for persistence.
     for (const item of this.model.toLiteral()) {
@@ -1060,6 +1227,10 @@ class Cursor {
 class FirebaseBigCollection extends FirebaseStorageProvider {
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
+  }
+
+  backingType() {
+    return this.type.primitiveType();
   }
 
   async get(id) {

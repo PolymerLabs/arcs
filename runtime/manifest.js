@@ -877,6 +877,7 @@ ${e.message}
           const hostedParticleLiteral = hostedParticle.clone().toLiteral();
           let particleSpecHash = await digest(JSON.stringify(hostedParticleLiteral));
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
+          hostedParticleLiteral.id = id;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
           let store = await manifest.createStore(connection.type, null, id, []);
@@ -884,7 +885,7 @@ ${e.message}
           // Maybe a different function call in the storageEngine? Alternatively another
           // param to the connect/construct functions?
           store.referenceMode = false;
-          store.set(hostedParticleLiteral);
+          await store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
 

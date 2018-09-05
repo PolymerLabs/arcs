@@ -75,10 +75,10 @@ export class ResultInspector {
 
     let errors = [];
     if (expectations.length) {
-      errors.push(`Expected, not received: ${expectations.join(' ')}`);
+      errors.push(`Expected, not received: ${expectations.join(', ')}`);
     }
     if (misses.length) {
-      errors.push(`Received, not expected: ${misses.join(' ')}`);
+      errors.push(`Received, not expected: ${misses.join(', ')}`);
     }
 
     return new Promise((resolve, reject) => {

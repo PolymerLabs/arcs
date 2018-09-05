@@ -174,7 +174,8 @@ export class Arc {
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an 
             // accessor that loads-on-demand in the storage objects.
-            await this._serializeHandle(handle._backingStore, context, storeId);
+            await handle.ensureBackingStore();
+            await this._serializeHandle(handle.backingStore, context, storeId);
           }
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
@@ -406,9 +407,7 @@ ${this.activeRecipe.toString()}`;
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
         if (recipeHandle.fate == 'create') {
-          assert(
-              type.maybeEnsureResolved(),
-              `Can't assign resolved type to ${type}`);
+          assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
         }
 
         type = type.resolvedType();
@@ -421,7 +420,9 @@ ${this.activeRecipe.toString()}`;
           let particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
           let particle = this.context.findParticleByName(particleName);
           assert(recipeHandle.type.interfaceShape.particleMatches(particle));
-          newStore.set(particle.clone().toLiteral());
+          const particleClone = particle.clone().toLiteral();
+          particleClone.id = recipeHandle.id;
+          await newStore.set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
           assert(copiedStore.version !== null);
@@ -435,16 +436,28 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.id = newStore.id;
         recipeHandle.fate = 'use';
         recipeHandle.storageKey = newStore.storageKey;
+        continue;
         // TODO: move the call to ParticleExecutionHost's DefineHandle to here
       }
+
+      // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
+      // shell pre-populates all arcs with a set of handles so if a recipe explicitly
+      // asks for one of these there's a conflict. Ideally these will end up as a 
+      // part of the context and will be populated on-demand like everything else.
+      if (this._storesById.has(recipeHandle.id)) {
+        continue;
+      } 
 
       let storageKey = recipeHandle.storageKey;
       if (!storageKey) {
         storageKey = this.keyForId(recipeHandle.id);
       }
       assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
-      let store = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
+      let type = recipeHandle.type.resolvedType();
+      assert(type.isResolved());
+      let store = await this._storageProviderFactory.connect(recipeHandle.id, type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
+      this._registerStore(store, recipeHandle.tags);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));

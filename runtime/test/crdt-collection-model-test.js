@@ -73,7 +73,7 @@ describe('crdt-collection-model', () => {
 
   it('does not allow a value to be added without keys', async () => {
     let model = new CrdtCollectionModel();
-    assert.throws(() => model.add('id', 'value', []), /add requires keys/);
+    assert.throws(() => model.add('id', 'value', []), /add requires a list of keys/);
   });
 
   it('allows keys to be initialized empty', async () => {

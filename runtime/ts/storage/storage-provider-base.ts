@@ -26,7 +26,6 @@ export abstract class StorageBase {
   
   abstract construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase>;
   abstract connect(id: string, type: Type, key: string) : Promise<StorageProviderBase>;
-  abstract share(id: string, type: Type, key: string) : Promise<StorageProviderBase>;
   abstract parseStringAsKey(s: string) : KeyBase;
 
   // Provides graceful shutdown for tests.

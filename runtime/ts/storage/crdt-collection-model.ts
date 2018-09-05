@@ -41,8 +41,10 @@ export class CrdtCollectionModel {
   // Adds membership, `keys`, of `value` indexed by `id` to this collection.
   // Returns whether the change is effective (`id` is new to the collection,
   // or `value` is different to the value previously stored).
-  add(id: string, value, keys): boolean {
-    assert(keys.length > 0, 'add requires keys');
+  add(id: string, value, keys: string[]): boolean {
+    // Ensure that keys is actually an array, not a single string.
+    // TODO(shans): remove this when all callers are implemented in typeScript.
+    assert(keys.length > 0 && typeof keys === 'object', 'add requires a list of keys');
     let item = this.items.get(id);
     let effective = false;
     if (!item) {
