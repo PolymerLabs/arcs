@@ -64,10 +64,15 @@ export class DescriptionFormatter {
   async getDescription(recipe) {
     await this._updateDescriptionHandles(this._description);
 
-    if (recipe.pattern) {
-      let recipeDesc = await this.patternToSuggestion(recipe.pattern, {_recipe: recipe});
-      if (recipeDesc) {
-        return this._capitalizeAndPunctuate(recipeDesc);
+    if (recipe.patterns.length > 0) {
+      let recipePatterns = [];
+      for (let pattern of recipe.patterns) {
+        recipePatterns.push(await this.patternToSuggestion(pattern, {_recipe: recipe}));
+      }
+      recipePatterns = recipePatterns.filter(pattern => Boolean(pattern));
+      if (recipePatterns.length > 0) {
+        // TODO(mmandlis): Sort the descriptions.
+        return this._capitalizeAndPunctuate(this._joinDescriptions(recipePatterns));
       }
     }
 

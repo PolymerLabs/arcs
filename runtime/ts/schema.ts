@@ -50,7 +50,7 @@ export class Schema {
     this._model = model;
     this.description = {};
     if (model.description) {
-      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern);
+      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
   }
 

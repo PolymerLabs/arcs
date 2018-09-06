@@ -306,7 +306,7 @@ describe('CoalesceRecipes', function() {
         description \`output thing\`
     `);
     assert.isTrue(recipe.isResolved());
-    assert.equal('input thing and output thing', recipe.pattern);
+    assert.deepEqual(['input thing', 'output thing'], recipe.patterns);
   });
 
   it('coalesces for unresolved consume slots', async () => {
