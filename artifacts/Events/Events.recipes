@@ -8,9 +8,7 @@
 import 'Calendar.manifest'
 
 recipe
-  use as event
   Calendar
-    event = event
 
 //import 'EmbeddedCalendar.manifest'
 //recipe
