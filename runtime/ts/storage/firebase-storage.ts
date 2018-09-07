@@ -106,8 +106,9 @@ export class FirebaseStorage extends StorageBase {
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<FirebaseStorageProvider> {
     let referenceMode = !type.isReference;
-    if (type.isCollection && type.primitiveType().isReference)
+    if (type.isSomeSortOfCollection() && type.elementTypeIfCollection().isReference) {
       referenceMode = false;
+    }
     return this._join(id, type, keyFragment, false, referenceMode);
   }
 

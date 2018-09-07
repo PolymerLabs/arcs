@@ -69,7 +69,7 @@ describe('in-memory', function() {
       assert.deepEqual(await var1.get(), await var2.get());
     });
 
-    it('enables referenceMode by default', async() => {
+    it('enables referenceMode by default', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -189,7 +189,7 @@ describe('in-memory', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
-    it('enables referenceMode by default', async() => {
+    it('enables referenceMode by default', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
