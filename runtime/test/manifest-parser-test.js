@@ -168,4 +168,11 @@ describe('manifest parser', function() {
         Bytes profileImage
       `);
   });
+  it('parses reference types', () => {
+    parse(`
+      particle Foo
+        in Reference<Foo> in
+        out Reference<Bar> out
+    `);
+  });
 });
