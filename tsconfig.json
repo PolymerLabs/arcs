@@ -1,24 +1,13 @@
 {
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "alwaysStrict": true,
-    "esModuleInterop": true,
-
-    "outDir": "runtime/ts-build",
-
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "module": "es2015",
-    "moduleResolution": "Node",
-
-    "allowJs": false,
-    "sourceMap": true,
-    "target": "ES2017",
-    "lib": ["es2017", "dom"] 
-  },
+  "extends": "./config/tsconfig.base.json",
   "include": [
     "runtime/ts/**/*",
   ],
+  "compilerOptions": {
+    "outDir": "runtime/ts-build",
+  },
+  "exclude": [
+    "runtime/ts-build/**/*",
+    "server/**/*"
+  ]
 }

@@ -216,7 +216,7 @@ async function tsc() {
 
 async function tslint(args) {
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath)) {
+    if (/ts-build/.test(fullPath) || /server/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
