@@ -237,9 +237,8 @@ export class CoalesceRecipes extends Strategy {
         let cloneMap = new Map();
         let recipeClone = handle.recipe.clone(cloneMap);
         recipeClone.normalize();
-        let handleClone = cloneMap.get(handle);
-        return Handle.effectiveType(
-            handleClone.type, [...handleClone.connections, ...cloneMap.get(otherHandle).connections]);
+        return Handle.effectiveType(cloneMap.get(handle).type,
+            [...cloneMap.get(handle).connections, ...cloneMap.get(otherHandle).connections]);
       }
 
     }(Walker.Independent), this);
