@@ -211,6 +211,8 @@ export class CoalesceRecipes extends Strategy {
 
       _connectOtherHandles(otherToHandle, cloneMap, verifyTypes) {
         otherToHandle.forEach((otherHandle, handle) => {
+          let otherHandleClone = cloneMap.get(otherHandle);
+
           // For coalescing that was triggered by handle coalescing (vs slot or slot connection)
           // once the main handle (one that triggered coalescing) was coalesced, types may have changed.
           // Need to verify all the type information for the "other" coalescable handles is still valid.
@@ -219,24 +221,27 @@ export class CoalesceRecipes extends Strategy {
           // so the handle either is still a valid match or not.
           // In order to do it right for multiple handles, we need to try ALL handles,
           // then fallback to all valid N-1 combinations, then N-2 etc.
-
           if (verifyTypes) {
-            let otherHandleClone = cloneMap.get(otherHandle);
-            let cloneCloneMap = new Map();
-            let recipeClone = handle.recipe.clone(cloneCloneMap);
-            recipeClone.normalize();
-            let handleCloneClone = cloneCloneMap.get(handle);
-            let otherHandleCloneClone = cloneCloneMap.get(otherHandleClone);
-            let effectiveType = Handle.effectiveType(
-              handleCloneClone.type, [...handleCloneClone.connections, ...otherHandleCloneClone.connections]);
-            if (!effectiveType) {
+            if (!this._reverifyHandleTypes(handle, otherHandleClone)) {
               return;
             }
           }
 
-          cloneMap.get(otherHandle).mergeInto(handle);
+          otherHandleClone.mergeInto(handle);
         });
       }
+
+      // Returns true, if both handles have types that can be coalesced.
+      _reverifyHandleTypes(handle, otherHandle) {
+        assert(handle.recipe == otherHandle.recipe);
+        let cloneMap = new Map();
+        let recipeClone = handle.recipe.clone(cloneMap);
+        recipeClone.normalize();
+        let handleClone = cloneMap.get(handle);
+        return Handle.effectiveType(
+            handleClone.type, [...handleClone.connections, ...cloneMap.get(otherHandle).connections]);
+      }
+
     }(Walker.Independent), this);
   }
 }
