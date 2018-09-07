@@ -192,8 +192,13 @@ export class RecipeIndex {
     }
 
     // If types don't match.
-    if (!Handle.effectiveType(handle._mappedType, [...handle.connections, ...otherHandle.connections])) {
+    let t = Handle.effectiveType(handle._mappedType, [...handle.connections, ...otherHandle.connections]);
+    if (!t) {
       return false;
+    }
+    if (t.data && t.data.canWriteSuperset && t.data.canWriteSuperset.data && t.data.canWriteSuperset.data._model &&
+        t.data.canWriteSuperset.data._model.names.length == 2) {
+      debugger;
     }
 
     return true;
