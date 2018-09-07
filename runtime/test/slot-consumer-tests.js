@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {SlotConsumer} from '../slot-consumer.js';
+import {SlotConsumer} from '../ts-build/slot-consumer.js';
 
 describe('slot consumer', function() {
   it('setting container', async () => {

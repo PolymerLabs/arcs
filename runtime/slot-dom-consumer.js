@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {SlotConsumer} from './slot-consumer.js';
+import {SlotConsumer} from './ts-build/slot-consumer.js';
 import Template from '../shell/components/xen/xen-template.js';
 
 const templateByName = new Map();
@@ -191,7 +191,7 @@ export class SlotDomConsumer extends SlotConsumer {
   _stampTemplate(rendering, template) {
     if (!rendering.liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-      rendering.container._eventMapper = this._eventMapper.bind(this, this._eventHandler);
+      rendering.container._eventMapper = this._eventMapper.bind(this, this.eventHandler);
       rendering.liveDom = Template
           .stamp(template)
           .events(rendering.container._eventMapper)

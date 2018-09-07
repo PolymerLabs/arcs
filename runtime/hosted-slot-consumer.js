@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {SlotConsumer} from './slot-consumer.js';
+import {SlotConsumer} from './ts-build/slot-consumer.js';
 import {HostedSlotContext} from './ts-build/hosted-slot-context.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
