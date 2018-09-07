@@ -28,7 +28,6 @@ particle SelectableTiles in 'source/TileList.js'
     must provide set of tile
     provide set of annotation
       handle items
-  description `show ${items} as tiles`
 
 recipe SelectableCopyTilesRecipe
   copy #items as items
@@ -36,6 +35,7 @@ recipe SelectableCopyTilesRecipe
   SelectableTiles
     items = items
     selected = selected
+  description `show ${SelectableTiles.items}`
 
 recipe SelectableUseTilesRecipe
   use #items as items
@@ -43,3 +43,4 @@ recipe SelectableUseTilesRecipe
   SelectableTiles
     items = items
     selected = selected
+  description `show ${SelectableTiles.items}`

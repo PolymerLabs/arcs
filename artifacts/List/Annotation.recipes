@@ -16,7 +16,7 @@ particle AnnotationMultiplexer in 'source/Multiplexer.js'
   inout ~anyOther annotation
   host HostedAnnotationShape hostedParticle
   consume set of annotation
-  description `Annotations for ${list}`
+  //description `annotations for ${list}`
 
 recipe AnnotationMultiplexer
   use #items as list
