@@ -417,7 +417,7 @@ ${e.message}
           let aliases = [];
           let names = [];
           for (let name of node.names) {
-            let resolved = manifest.resolveReference(name);
+            let resolved = manifest.resolveTypeName(name);
             if (resolved && resolved.schema && resolved.schema.isAlias) {
               aliases.push(resolved.schema);
             } else {
@@ -478,12 +478,12 @@ ${e.message}
           node.model = Type.newSlot(slotInfo);
           return;
         }
-        case 'reference-type': {
-          let resolved = manifest.resolveReference(node.name);
+        case 'type-name': {
+          let resolved = manifest.resolveTypeName(node.name);
           if (!resolved) {
             throw new ManifestError(
                 node.location,
-                `Could not resolve type reference '${node.name}'`);
+                `Could not resolve type reference to schema '${node.name}'`);
           }
           if (resolved.schema) {
             node.model = Type.newEntity(resolved.schema);
@@ -607,7 +607,7 @@ ${e.message}
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
-  // TODO: Move this to a generic pass over the AST and merge with resolveReference.
+  // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   static _processShape(manifest, shapeItem) {
     if (shapeItem.interface) {
       let warning = new ManifestError(shapeItem.location, `Shape uses deprecated argument body`);
@@ -961,7 +961,7 @@ ${e.message}
       recipe.description = items.description.description;
     }
   }
-  resolveReference(name) {
+  resolveTypeName(name) {
     let schema = this.findSchemaByName(name);
     if (schema) {
       return {schema};
