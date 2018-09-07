@@ -147,7 +147,8 @@ export class FirebaseStorage extends StorageBase {
     return new FirebaseKey(s);
   }
 
-  // Exposed for SyntheticStorage. TODO: better API
+  // Exposed for SyntheticStorage to share this.apps.
+  // TODO: refactor storage so synthesized views can just use the standard API
   attach(keyString: string) : {fbKey: FirebaseKey, reference: firebase.database.Reference} {
     const fbKey = new FirebaseKey(keyString);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?

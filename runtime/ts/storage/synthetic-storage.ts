@@ -70,7 +70,7 @@ export class SyntheticStorage extends StorageBase {
   }
 
   async connect(id: string, type: Type, key: string) : Promise<SyntheticCollection> {
-    // TODO: fix the API so we don't need this workaround
+    // TODO: add handle type to the type system
     assert(type === null, 'synthetic storage does not accept a type parameter');
 
     const synthKey = new SyntheticKey(key);
