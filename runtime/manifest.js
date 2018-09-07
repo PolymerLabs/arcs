@@ -500,6 +500,9 @@ ${e.message}
         case 'big-collection-type':
           node.model = Type.newBigCollection(node.type.model);
           return;
+        case 'reference-type':
+          node.model = Type.newReference(node.type.model);
+          return;
         default:
           return;
         }
