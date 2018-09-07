@@ -151,7 +151,7 @@ export class SlotConsumer {
   isSameContainer(container, contextContainer) { return container === contextContainer; }
 
   // abstract
-  constructRenderRequest() {}
+  constructRenderRequest(hostedSlotConsumer = null): string[] { return []; }
   dispose() {}
   createNewContainer(contextContainer, subId): {} { return null; }
   deleteContainer(container) {}
