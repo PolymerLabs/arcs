@@ -135,6 +135,7 @@ export class Handle {
   set storageKey(key) { this._storageKey = key; }
   get pattern() { return this._pattern; }
   set pattern(pattern) { this._pattern = pattern; }
+  get mappedType() { return this._mappedType; }
 
   static effectiveType(handleType, connections) {
     let variableMap = new Map();

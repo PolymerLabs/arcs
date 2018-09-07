@@ -122,7 +122,7 @@ export class FirebaseStorage extends StorageBase {
     }
   }
   
-baseStorageKey(type: Type, keyString: string): string {
+  baseStorageKey(type: Type, keyString: string): string {
     const fbKey = new FirebaseKey(keyString);
     fbKey.location = `backingStores/${type.toString()}`;
     return fbKey.toString();
@@ -147,11 +147,9 @@ baseStorageKey(type: Type, keyString: string): string {
     return new FirebaseKey(s);
   }
 
-  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
-  // but this _join creates the storage location. 
-  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
-    assert(!type.isVariable);
-    assert(!type.isCollection || !type.primitiveType().isVariable);
+  // Exposed for SyntheticStorage to share this.apps.
+  // TODO: refactor storage so synthesized views can just use the standard API
+  attach(keyString: string) : {fbKey: FirebaseKey, reference: firebase.database.Reference} {
     const fbKey = new FirebaseKey(keyString);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (fbKey.databaseUrl == undefined || fbKey.apiKey == undefined) {
@@ -178,7 +176,16 @@ baseStorageKey(type: Type, keyString: string): string {
     }
 
     const reference = firebase.database(this.apps[fbKey.projectId].app).ref(fbKey.location);
+    return {fbKey, reference};
+  }
 
+  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
+  // but this _join creates the storage location. 
+  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
+    assert(!type.isVariable);
+    assert(!type.isCollection || !type.primitiveType().isVariable);
+
+    const {fbKey, reference} = this.attach(keyString);
     let enableReferenceMode = false;
     let currentSnapshot: firebase.database.DataSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
