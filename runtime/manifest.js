@@ -483,7 +483,7 @@ ${e.message}
           if (!resolved) {
             throw new ManifestError(
                 node.location,
-                `Could not resolve type reference to schema '${node.name}'`);
+                `Could not resolve type reference to type name '${node.name}'`);
           }
           if (resolved.schema) {
             node.model = Type.newEntity(resolved.schema);
