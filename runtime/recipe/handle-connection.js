@@ -121,7 +121,7 @@ export class HandleConnection {
       let connectionSpec = this.spec;
       if (!connectionSpec.isCompatibleType(this.rawType)) {
         if (options && options.errors) {
-          options.errors.set(this, `Type '${this.rawType} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type}'`);
+          options.errors.set(this, `Type '${this.rawType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
         }
         return false;
       }

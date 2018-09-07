@@ -357,34 +357,6 @@ describe('particle-api', function() {
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
-  it('can make use of references within a particle', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
-      manifest: `
-        schema Result
-          Text value  
-
-        particle Referencer in 'referencer.js'
-          in Result in
-          out Reference<Result> out
-
-        particle Dereferencer in 'dereferencer.js'
-          in Reference<Result> in
-          out Result out
-        
-        recipe
-          use 'input:1' as handle0
-          create 'reference:1' as handle1
-          use 'output:1' as handle2
-          Referencer
-            in <- handle0
-            out -> handle1
-          Dereference
-            in <- handle1
-            out -> handle2
-      `});
-    
-  });
-
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
