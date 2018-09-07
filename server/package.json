@@ -1,0 +1,56 @@
+{
+  "name": "arcs-server",
+  "version": "1.0.0",
+  "description": "Arcs Server with static content and data store",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "dev": "tsc -p .",
+    "lint": "tslint -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+    "lint:fix": "tslint --fix -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+    "prettier": "prettier --write 'src/**/*.js' 'test/**/*.js' 'src/**/*.ts' 'test/**/*.ts'",
+    "test": "mocha --reporter spec --require ts-node/register test/**/*.test.ts",
+    "start": "node dist/index.js",
+    "pretest": "npm run build",
+    "posttest": "npm run lint"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/PolymerLabs/arcs",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/arcs/issues"
+  },
+  "dependencies": {
+    "arcs": "file:../",
+    "debug": "^2.6.9",
+    "express": "^4.16.3",
+    "express-pouchdb": "^4.1.0",
+    "morgan": "^1.9.0",
+    "pouchdb-adapter-memory": "^7.0.0",
+    "prettier": "^1.14.2",
+    "tslint": "^5.11.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/chai-http": "^3.0.5",
+    "@types/debug": "0.0.29",
+    "@types/expect": "^1.20.3",
+    "@types/express": "^4.16.0",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^6.0.117",
+    "@types/pouchdb": "^6.3.2",
+    "chai": "^4.1.2",
+    "chai-http": "^4.2.0",
+    "mocha": "^5.2.0",
+    "ts-loader": "^5.0.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.0.3"
+  },
+  "engines": {
+    "node": ">= 9.4.0",
+    "npm": ">= 5.7.1"
+  }
+}

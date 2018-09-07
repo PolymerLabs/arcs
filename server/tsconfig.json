@@ -1,0 +1,12 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "dist",
+    "strictFunctionTypes": true,
+    "strictNullChecks": true
+  },
+  "exclude": [
+    "dist/**/*"
+  ]
+}
