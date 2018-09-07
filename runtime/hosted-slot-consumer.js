@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
-import {HostedSlotContext} from './hosted-slot-context.js';
+import {HostedSlotContext} from './ts-build/hosted-slot-context.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
   constructor(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, arc) {

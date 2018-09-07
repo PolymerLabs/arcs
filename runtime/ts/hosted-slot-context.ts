@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-import {SlotContext} from './ts-build/slot-context.js';
+import {assert} from '../../platform/assert-web.js';
+import {SlotContext} from './slot-context.js';
 
 export class HostedSlotContext extends SlotContext {
   // This is a context of a hosted slot, can only contain a hosted slot.
