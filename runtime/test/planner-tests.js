@@ -806,6 +806,52 @@ describe('Automatic resolution', function() {
     assert.lengthOf(recipe.slots, 1);
   });
 
+  it('reverifies other handle type while coalescing', async () => {
+    let recipes = await verifyResolvedPlans(`
+      schema Account
+      schema Transaction
+      particle TransactionFilter
+        in Account account
+        in [Transaction] transactions
+        inout [Transaction] accountTransactions
+      recipe TransacationsByAccount
+        create #xactions #items as accountTransactions
+        create #selected as account  //use #selected as account
+        map 'myTransactions' as transactions
+        TransactionFilter
+          account = account
+          transactions = transactions
+          accountTransactions = accountTransactions
+      store TransationList of [Transaction] 'myTransactions' in './artifacts/Things/empty.json'
+
+      shape HostedShape
+        in ~a *
+      particle ShowTransation
+        in Transaction transaction
+
+      particle ItemMultiplexer
+        host HostedShape hostedParticle
+        in [~a] list
+
+      particle List
+        inout [~a] items
+        inout ~a selected
+
+      recipe
+        use #items as items
+        create #selected as selected
+        List
+          items = items
+          selected = selected
+        ItemMultiplexer
+          list = items
+    `);
+    assert.lengthOf(recipes, 2);
+    let coalesced = recipes.find(r => r.particles.length == 3);
+    // Verify the #selected handles weren't coalesced - they are of different types.
+    assert.lengthOf(coalesced.handles.filter(h => h.tags.length == 1 && h.tags[0] == 'selected'), 2);
+  });
+
   let verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
       import 'artifacts/Restaurants/Restaurants.recipes'
