@@ -776,6 +776,35 @@ describe('Automatic resolution', function() {
       provide postamble as slot4
       provide preamble as slot5`);
   });
+  it('coalesces resolved recipe with no UI', async () => {
+    let recipes = await verifyResolvedPlans(`
+      schema Thing
+      particle A in 'a.js'
+        out Thing thing
+      recipe
+        create as thingHandle
+        A
+          thing -> thingHandle
+      particle B in 'b.js'
+        inout Thing thing
+        consume root
+      recipe
+        slot '0' as root
+        create as thingHandle
+        B
+          thing = thingHandle
+          consume root as root
+    `);
+    // Both explicit recipes are resolved, and a new coalesced one is produced.
+    assert.lengthOf(recipes, 3);
+    assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'A'));
+    assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'B'));
+    let recipe = recipes.find(recipe => recipe.particles.length == 2);
+    assert.deepEqual(['A', 'B'], recipe.particles.map(p => p.name).sort());
+    // Verify the `thing` handle was coalesced.
+    assert.lengthOf(recipe.handles, 1);
+    assert.lengthOf(recipe.slots, 1);
+  });
 
   let verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`

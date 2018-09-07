@@ -26,7 +26,8 @@ export class CoalesceRecipes extends Strategy {
   get arc() { return this._arc; }
 
   getResults(inputParams) {
-    return inputParams.terminal.filter(result => !result.result.isResolved());
+    // Coalescing for terminal recipes that are either unresolved recipes or have no UI.
+    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length == 0);
   }
 
   async generate(inputParams) {
