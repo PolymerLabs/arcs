@@ -20,3 +20,5 @@ enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
 runtime/ts-build
+.vscode
+devtools/build
