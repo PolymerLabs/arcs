@@ -14,7 +14,7 @@ import {SlotContext} from './slot-context.js';
 import {SlotConnection} from '../recipe/slot-connection.js';
 
 export class SlotConsumer {
-  readonly _consumeConn: SlotConnection;
+  _consumeConn: SlotConnection;
   slotContext: SlotContext;
   providedSlotContexts: SlotContext[] = [];
   startRenderCallback: ({}) => void;
@@ -158,6 +158,6 @@ export class SlotConsumer {
   clearContainer(rendering) {}
   setContainerContent(rendering, content, subId) {}
   formatContent(content, subId) {}
-  formatHostedContent(hostedSlot, content) {}
+  formatHostedContent(hostedSlot, content): {} { return null; }
   static clear(container) {}
 }

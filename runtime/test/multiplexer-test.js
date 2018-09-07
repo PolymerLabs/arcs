@@ -17,7 +17,7 @@ import {SlotConsumer} from '../ts-build/slot-consumer.js';
 import {SlotComposer} from '../slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 let loader = new Loader();

@@ -19,7 +19,7 @@ import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function initializeManifestAndArc(contextContainer) {

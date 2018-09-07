@@ -125,7 +125,6 @@ export class SlotDomConsumer extends SlotConsumer {
       this._observer.disconnect();
     }
 
-    // this.container && this.deleteContainer(this.container);
     this.renderings.forEach(([subId, {container}]) => this.deleteContainer(container));
   }
 
@@ -308,7 +307,7 @@ export class SlotDomConsumer extends SlotConsumer {
     });
   }
 
-  formatHostedContent(hostedSlot, content) {
+  formatHostedContent(hostedSlot, content): {} {
     if (content.templateName) {
       if (typeof content.templateName === 'string') {
         content.templateName = `${hostedSlot.consumeConn.particle.name}::${hostedSlot.consumeConn.name}::${content.templateName}`;

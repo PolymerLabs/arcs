@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
