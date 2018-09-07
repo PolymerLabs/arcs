@@ -72,6 +72,12 @@ export class InMemoryStorage extends StorageBase {
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<InMemoryStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
+    if (type.isReference) {
+      return provider;
+    }
+    if (type.isSomeSortOfCollection() && type.elementTypeIfCollection().isReference) {
+      return provider;
+    }
     provider.enableReferenceMode();
     return provider;
   }
