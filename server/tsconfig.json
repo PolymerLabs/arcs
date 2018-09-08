@@ -2,11 +2,13 @@
   "extends": "../config/tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strictFunctionTypes": true,
     "strictNullChecks": true
   },
   "exclude": [
-    "dist/**/*"
+    "dist/**/*",
+    "test/**/*"
   ]
 }
