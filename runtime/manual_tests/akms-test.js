@@ -10,10 +10,8 @@
 
 import {KeyManager} from '../ts-build/keymgmt/manager.js';
 import {assert} from '../test/chai-web.js';
-import WebCrypto from 'node-webcrypto-ossl';
+import {crypto} from '../../platform/crypto-web.js';
 import Fetch from 'node-fetch';
-
-global.crypto = new WebCrypto();
 
 describe('arcs key management', function() {
     describe('KeyManager', () => {
