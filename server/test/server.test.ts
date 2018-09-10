@@ -25,7 +25,6 @@ describe('baseRoute', () => {
       .request(app)
       .get('/')
       .then(res => {
-        console.log('aaa' + res.body.message);
         expect(res.text).to.include('Welcome to Arcs');
       });
   });

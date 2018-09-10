@@ -20,7 +20,8 @@ By default the server runs on port 8080.  You can override this by passing in th
   npm start -- 8000
 ```
 
-The server exposes a `/db` endpoint mapped to an in-memory pouchdb instance.
+The server exposes a `/db` endpoint mapped to an in-memory pouchdb instance.  A basic `index.html`
+page is provided with links to various functionality.
 
 ## Development
 
@@ -34,6 +35,7 @@ directories.  The following are common commands that you will want to use:
 - `npm run lint` just lints.
 - `npm run lint:fix` lints and fixes.
 - `npm run prettier` formats source code.
+- `npm run watch` starts a server and runs test as you make changes.
 
 For many of these commands you can pass optional arguments.  For
 example you can also pass the `--fix` argument to lint by executing
