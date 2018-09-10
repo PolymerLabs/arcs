@@ -57,7 +57,7 @@ export class OuterPortAttachment {
       {operation: 'toList', handle, particleId});
   }
 
-  onHandleSet({handle, data, particleId}) {
+  onHandleSet({handle, data, particleId, barrier}) {
     this._logHandleCall({operation: 'set', handle, data, particleId});
   }
 
@@ -65,7 +65,7 @@ export class OuterPortAttachment {
     this._logHandleCall({operation: 'store', handle, data, particleId});
   }
 
-  onHandleClear({handle, particleId}) {
+  onHandleClear({handle, particleId, barrier}) {
     this._logHandleCall({operation: 'clear', handle, particleId});
   }
 
