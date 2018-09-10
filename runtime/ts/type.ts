@@ -440,6 +440,7 @@ export class Type {
       case 'Entity':
         return Schema.fromLiteral;
       case 'Collection':
+      case 'BigCollection':
         return Type.fromLiteral;
       case 'Tuple':
         return TupleFields.fromLiteral;
@@ -532,7 +533,6 @@ export class Type {
       return JSON.stringify(this.data);
     }
     if (this.isCollection) {
-      // TODO: s/List/Collection/
       return `${this.collectionType.toPrettyString()} List`;
     }
     if (this.isBigCollection) {
