@@ -14,7 +14,6 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Loader} from '../../loader.js';
 import {Arc} from '../../arc.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
-import {handleFor} from '../../handle.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {

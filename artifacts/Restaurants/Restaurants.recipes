@@ -45,10 +45,7 @@ recipe &makeReservation
   PartySize
     event = event
 
-import '../Events/Calendar.manifest'
-
-recipe
-  Calendar
+import '../Events/Events.recipes'
 
 import 'FavoriteFoodAnnotation.manifest'
 

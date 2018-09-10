@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
+import {SlotDomConsumer} from './ts-build/slot-dom-consumer.js';
 
 export class SuggestDomConsumer extends SlotDomConsumer {
   constructor(containerKind, suggestion, suggestionContent, eventHandler) {

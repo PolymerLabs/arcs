@@ -245,13 +245,20 @@ export class DescriptionFormatter {
     // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
     if (!particleDescription._particle) {
       let particleName = handleNames.shift();
-      assert(particleName[0] === particleName[0].toUpperCase(), `Expected particle name, got '${particleName}' instead.`);
+      if (particleName[0] !== particleName[0].toUpperCase()) {
+        console.warn(`Invalid particle name '${particleName}' - must start with a capital letter.`);
+        return [];
+      }
       let particleDescriptions = this._particleDescriptions.filter(desc => {
         return desc._particle.name == particleName
             // The particle description is from the current recipe.
             && particleDescription._recipe.particles.find(p => p == desc._particle);
       });
-      assert(particleDescriptions.length > 0, `Cannot find particles with name ${particleName}.`);
+
+      if (particleDescriptions.length == 0) {
+        console.warn(`Cannot find particles with name ${particleName}.`);
+        return [];
+      }
       // Note: when an arc's active recipes contains several recipes, the last recipe's description
       // is used as the arc's description. If this last recipe's description has a description pattern
       // that references a particle that is also used in one of the previous recipes,
@@ -278,7 +285,15 @@ export class DescriptionFormatter {
     }
 
     // slot connection
-    assert(handleNames.length == 2, 'slot connections tokens must have 2 names');
+    if (handleNames.length != 2) {
+      if (handleNames.length == 1) {
+        console.warn(`Unknown handle connection name '${handleNames[0]}'`);
+      } else {
+        console.warn(`Slot connections tokens must have exactly 2 names, found ${handleNames.length} in '${handleNames.join('.')}'`);
+      }
+      return [];
+    }
+
     let providedSlotConn = particle.consumedSlotConnections[handleNames[0]].providedSlots[handleNames[1]];
     assert(providedSlotConn, `Could not find handle ${handleNames.join('.')}`);
     return [{

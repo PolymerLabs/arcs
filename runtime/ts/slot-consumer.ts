@@ -9,29 +9,28 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {SlotContext} from './ts-build/slot-context.js';
+import {assert} from '../../platform/assert-web.js';
+import {SlotContext} from './slot-context.js';
+import {SlotConnection} from '../recipe/slot-connection.js';
 
 export class SlotConsumer {
+  _consumeConn: SlotConnection;
+  slotContext: SlotContext;
+  providedSlotContexts: SlotContext[] = [];
+  startRenderCallback: ({}) => void;
+  stopRenderCallback: ({}) => void;
+  eventHandler: ({}) => void;
+  readonly containerKind: string;
+  // Contains `container` and other affordance specific rendering information
+  // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
+  private _renderingBySubId: Map<string, {container?: {}}> = new Map();
+  private _innerContainerBySlotName: {} = {};
+
   constructor(consumeConn, containerKind) {
     this._consumeConn = consumeConn;
-    this._slotContext = null; // SlotContext
-    this._providedSlotContexts = []; // SlotContext[]
-
-    this.startRenderCallback = null;
-    this.stopRenderCallback = null;
-
-    this._containerKind = containerKind;
-
-    // Contains `container` and other affordance specific rendering information
-    // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-    this._renderingBySubId = new Map();
-    this._eventHandler = null;
-    this._innerContainerBySlotName = {};
+    this.containerKind = containerKind;
   }
   get consumeConn() { return this._consumeConn; }
-  get slotContext() { return this._slotContext; }
-  set slotContext(slotContext) { this._slotContext = slotContext; }
   getRendering(subId) { return this._renderingBySubId.get(subId); } 
   get renderings() { return [...this._renderingBySubId.entries()]; }
 
@@ -44,19 +43,19 @@ export class SlotConsumer {
       }
     }
 
-    if (newContainer != originalContainer) {
-      let contextContainerBySubId = new Map();
+    if (newContainer !== originalContainer) {
+      const contextContainerBySubId = new Map();
       if (this.consumeConn && this.consumeConn.slotSpec.isSet) {
         Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
       } else {
         contextContainerBySubId.set(undefined, this.slotContext.container);
       }
 
-      for (let [subId, container] of contextContainerBySubId) {
+      for (const [subId, container] of contextContainerBySubId) {
         if (!this._renderingBySubId.has(subId)) {
           this._renderingBySubId.set(subId, {});
         }
-        let rendering = this.getRendering(subId);
+        const rendering = this.getRendering(subId);
         if (!rendering.container || !this.isSameContainer(rendering.container, container)) {
           if (rendering.container) {
             // The rendering already had a container, but it's changed. The original container needs to be cleared.
@@ -65,7 +64,7 @@ export class SlotConsumer {
           rendering.container = this.createNewContainer(container, subId);
         }
       }
-      for (let [subId, rendering] of this.renderings) {
+      for (const [subId, rendering] of this.renderings) {
         if (!contextContainerBySubId.has(subId)) {
           this.deleteContainer(rendering.container);
           this._renderingBySubId.delete(subId);
@@ -80,7 +79,7 @@ export class SlotConsumer {
   }
 
   updateProvidedContexts() {
-    this._providedSlotContexts.forEach(providedContext => {
+    this.providedSlotContexts.forEach(providedContext => {
       providedContext.container = this.getInnerContainer(providedContext.name);
     });
   }
@@ -107,17 +106,18 @@ export class SlotConsumer {
         content.descriptions = await this.populateHandleDescriptions(arc);
       }
     }
-    this._eventHandler = handler;
-    for (let [subId, rendering] of this.renderings) {
+    this.eventHandler = handler;
+    for (const [subId, rendering] of this.renderings) {
       this.setContainerContent(rendering, this.formatContent(content, subId), subId);
     }
   }
 
   async populateHandleDescriptions(arc) {
-    let descriptions = {};
+    const descriptions = {};
     await Promise.all(Object.values(this.consumeConn.particle.connections).map(async handleConn => {
-      if (handleConn.handle) {
-        descriptions[`${handleConn.name}.description`] = (await arc.description.getHandleDescription(handleConn.handle)).toString();
+      // TODO(mmandlis): convert back to .handle and .name after all recipe files converted to typescript.
+      if (handleConn['handle']) {
+        descriptions[`${handleConn['name']}.description`] = (await arc.description.getHandleDescription(handleConn['handle'])).toString();
       }
     }));
     return descriptions;
@@ -148,15 +148,16 @@ export class SlotConsumer {
     });
   }
 
-  isSameContainer(container, contextContainer) { return container == contextContainer; }
+  isSameContainer(container, contextContainer) { return container === contextContainer; }
 
   // abstract
-  constructRenderRequest() {}
+  constructRenderRequest(hostedSlotConsumer = null): string[] { return []; }
   dispose() {}
-  createNewContainer(contextContainer, subId) {}
-  deleteContainer(container, subId) {}
+  createNewContainer(contextContainer, subId): {} { return null; }
+  deleteContainer(container) {}
+  clearContainer(rendering) {}
   setContainerContent(rendering, content, subId) {}
   formatContent(content, subId) {}
-  formatHostedContent(hostedSlot, content) {}
+  formatHostedContent(hostedSlot, content): {} { return null; }
   static clear(container) {}
 }

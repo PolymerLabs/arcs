@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotSpec} from '../particle-spec.js';
-import {SlotConsumer} from '../slot-consumer.js';
 import {Handle} from '../recipe/handle.js';
 
 // Holds container (eg div element) and its additional info.
@@ -44,7 +44,7 @@ export class SlotContext {
     // The slot consumer providing this container (eg div)
     this.sourceSlotConsumer = sourceSlotConsumer;
     if (this.sourceSlotConsumer) {
-      this.sourceSlotConsumer._providedSlotContexts.push(this);
+      this.sourceSlotConsumer.providedSlotContexts.push(this);
     }
     // The list of handles this context is restricted to.
     this.handles = this.spec && this.sourceSlotConsumer

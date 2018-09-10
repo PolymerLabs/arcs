@@ -8,15 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-import {SlotContext} from './ts-build/slot-context.js';
+import {assert} from '../../platform/assert-web.js';
+import {SlotContext} from './slot-context.js';
+import {HostedSlotConsumer} from './hosted-slot-consumer.js';
 
 export class HostedSlotContext extends SlotContext {
   // This is a context of a hosted slot, can only contain a hosted slot.
   constructor(id, providedSpec, hostedSlotConsumer) {
     super(id, providedSpec.name, providedSpec.tags, /* container= */ null, providedSpec, hostedSlotConsumer);
-    if (this.sourceSlotConsumer.storeId) {
-      this.handles = [{id: this.sourceSlotConsumer.storeId}];
+    assert(this.sourceSlotConsumer instanceof HostedSlotConsumer);
+    const hostedSourceSlotConsumer = this.sourceSlotConsumer as HostedSlotConsumer;
+    if (hostedSourceSlotConsumer.storeId) {
+      this.handles = [{id: hostedSourceSlotConsumer.storeId}];
     }
   }
   get container() {
