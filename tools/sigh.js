@@ -243,7 +243,7 @@ async function lint(args) {
   });
 
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath)) {
+    if (/ts-build/.test(fullPath) || /server/.test(fullPath)) {
       return false;
     }
     return /\.js$/.test(fullPath);
