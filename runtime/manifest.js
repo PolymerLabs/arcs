@@ -232,8 +232,7 @@ export class Manifest {
     function typePredicate(store) {
       let resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
-        // TODO: update for BigCollection handling
-        return type.isCollection == store.type.isCollection;
+        return type.isCollection == store.type.isCollection && type.isBigCollection == store.type.isBigCollection;
       }
 
       if (subtype) {
@@ -1059,7 +1058,7 @@ ${e.message}
     // TODO(shans): Eventually the actual type will need to be part of the determination too.
     // TODO(shans): Need to take into account the possibility of multiple storage key mappings
     // at some point.
-    if (entities.length > 0 && (entities[0].rawData && entities[0].rawData.storageKey)) {
+    if (entities.length > 0 && entities[0].rawData && entities[0].rawData.storageKey) {
       let storageKey = entities[0].rawData.storageKey;
       storageKey = manifest.findStoreByName(storageKey).storageKey;
       entities = entities.map(({id, rawData}) => ({id, storageKey}));

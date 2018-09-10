@@ -110,11 +110,7 @@ class Handle {
  */
 class Collection extends Handle {
   constructor(proxy, name, particleId, canRead, canWrite) {
-    // TODO: this should talk to an API inside the PEC.
     super(proxy, name, particleId, canRead, canWrite);
-  }
-  query() {
-    // TODO: things
   }
 
   // Called by StorageProxy.
@@ -270,8 +266,9 @@ class Variable extends Handle {
   }
 }
 
-export function handleFor(proxy, isSet, name, particleId, canRead = true, canWrite = true) {
-  return (isSet || (isSet == undefined && proxy.type.isCollection))
-      ? new Collection(proxy, name, particleId, canRead, canWrite)
-      : new Variable(proxy, name, particleId, canRead, canWrite);
+export function handleFor(proxy, name, particleId, canRead = true, canWrite = true) {
+  if (proxy.type.isCollection) {
+    return new Collection(proxy, name, particleId, canRead, canWrite);
+  }
+  return new Variable(proxy, name, particleId, canRead, canWrite);
 }
