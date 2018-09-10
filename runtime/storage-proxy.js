@@ -57,6 +57,8 @@ class StorageProxyBase {
     this._synchronized = SyncState.none;
     this._observers = [];
     this._updates = [];
+
+    this.pec = pec;
   }
 
   raiseSystemException(exception, methodName, particleId) {
@@ -298,6 +300,15 @@ class CollectionProxy extends StorageProxyBase {
       //       sending a parallel request
       return new Promise((resolve, reject) =>
         this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+    }
+  }
+
+  get(id, particleId) {
+    if (this._synchronized == SyncState.full) {
+      return Promise.resolve(this._model.getValue(id));
+    } else {
+      return new Promise((resolve, reject) =>
+        this._port.HandleToList({callback: r => resolve(r.find(entity => entity.id === id)), handle: this, particleId}));
     }
   }
 

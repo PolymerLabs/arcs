@@ -206,12 +206,15 @@ export class Type {
     if (this.isBigCollection) {
       return this.bigCollectionType;
     }
+    if (this.isReference) {
+      return this.referenceReferredType;
+    }
     return null;
   }
 
   // TODO: naming is hard
   isSomeSortOfCollection() {
-    return this.isCollection || this.isBigCollection;
+    return this.isCollection || this.isBigCollection || this.isReference;
   }
 
   collectionOf() {
@@ -232,6 +235,11 @@ export class Type {
       const primitiveType = this.bigCollectionType;
       const resolvedPrimitiveType = primitiveType.resolvedType();
       return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.bigCollectionOf() : this;
+    }
+    if (this.isReference) {
+      const primitiveType = this.referenceReferredType;
+      const resolvedPrimitiveType = primitiveType.resolvedType();
+      return (primitiveType !== resolvedPrimitiveType) ? Type.newReference(resolvedPrimitiveType) : this;
     }
     if (this.isVariable) {
       const resolution = this.variable.resolution;
@@ -266,6 +274,9 @@ export class Type {
     if (this.isBigCollection) {
       return this.bigCollectionType.canEnsureResolved();
     }
+    if (this.isReference) {
+      return this.referenceReferredType.canEnsureResolved();
+    }
     return true;
   }
 
@@ -282,6 +293,9 @@ export class Type {
     if (this.isBigCollection) {
       return this.bigCollectionType.maybeEnsureResolved();
     }
+    if (this.isReference) {
+      return this.referenceReferredType.maybeEnsureResolved();
+    }
     return true;
   }
 
@@ -294,9 +308,6 @@ export class Type {
     }
     if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canWriteSuperset);
-    }
-    if (this.isReference) {
-      return this.referenceReferredType.canWriteSuperset;
     }
     throw new Error(`canWriteSuperset not implemented for ${this}`);
   }

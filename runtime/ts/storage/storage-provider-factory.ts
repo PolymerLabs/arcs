@@ -40,6 +40,10 @@ export class StorageProviderFactory {
     return await this._storageForKey(key).connect(id, type, key);
   }
 
+  async baseStorageFor(type: Type, keyString: string) : Promise<StorageProviderBase> {
+    return await this._storageForKey(keyString).baseStorageFor(type, keyString);
+  }
+
   parseStringAsKey(s: string) : KeyBase {
     return this._storageForKey(s).parseStringAsKey(s);
   }

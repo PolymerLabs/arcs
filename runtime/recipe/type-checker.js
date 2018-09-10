@@ -134,7 +134,7 @@ export class TypeChecker {
         // in order for type resolution to succeed.
         let newVar = Type.newVariable(new TypeVariable('a'));
         primitiveHandleType.variable.resolution = 
-            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : Type.newBigCollection(newVar);
+            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : (primitiveConnectionType.isBigCollection ? Type.newBigCollection(newVar) : Type.newReference(newVar));
         let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         [primitiveHandleType, primitiveConnectionType] = unwrap;
       }
