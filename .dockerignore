@@ -1,0 +1,17 @@
+node_modules
+*/node_modules
+dist
+*/dist
+manifest-railroad.html
+shell/build
+shell/test/errorShots
+devtools/deps
+enclave/bazel-*
+enclave/sdk
+enclave/toolchains
+enclave/host/storage/db.img
+enclave/host/storage/key
+runtime/ts-build
+.vscode
+devtools/build
+server/log.txt
