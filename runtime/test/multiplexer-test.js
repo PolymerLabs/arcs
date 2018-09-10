@@ -13,11 +13,11 @@ import {assert} from '../test/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {SlotConsumer} from '../slot-consumer.js';
+import {SlotConsumer} from '../ts-build/slot-consumer.js';
 import {SlotComposer} from '../slot-composer.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 let loader = new Loader();

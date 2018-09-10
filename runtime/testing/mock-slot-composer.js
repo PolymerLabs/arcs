@@ -11,7 +11,7 @@
 
 import {assert} from '../test/chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');

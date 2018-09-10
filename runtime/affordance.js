@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
+import {SlotDomConsumer} from './ts-build/slot-dom-consumer.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
 import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';

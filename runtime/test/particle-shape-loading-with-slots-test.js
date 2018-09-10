@@ -16,9 +16,9 @@ import {MessageChannel} from '../message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function initializeManifestAndArc(contextContainer) {

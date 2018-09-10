@@ -8,36 +8,40 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {HostedSlotContext} from './hosted-slot-context.js';
+import {Arc} from '../arc.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
+  readonly transformationSlotConsumer: SlotConsumer;
+  readonly hostedParticleName: string; 
+  readonly hostedSlotName: string;
+  readonly hostedSlotId: string;
+  readonly storeId: string;
+  readonly _arc: Arc;
+  renderCallback: ({}, {}, {}, {}) => void;
+
   constructor(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, arc) {
-    super();
-    this._transformationSlotConsumer = transformationSlotConsumer;
-    this._hostedParticleName = hostedParticleName;
-    this._hostedSlotName = hostedSlotName, 
-    this._hostedSlotId = hostedSlotId;
+    super(null, null);
+    this.transformationSlotConsumer = transformationSlotConsumer;
+    this.hostedParticleName = hostedParticleName;
+    this.hostedSlotName = hostedSlotName, 
+    this.hostedSlotId = hostedSlotId;
     // TODO: should this be a list?
-    this._storeId = storeId;
+    this.storeId = storeId;
     this._arc = arc;
   }
 
-  get transformationSlotConsumer() { return this._transformationSlotConsumer; }
-  get hostedParticleName() { return this._hostedParticleName; }
-  get hostedSlotName() { return this._hostedSlotName; }
-  get hostedSlotId() { return this._hostedSlotId; }
-  get storeId() { return this._storeId; }
   get arc() { return this._arc; }
 
   get consumeConn() { return this._consumeConn; }
   set consumeConn(consumeConn) {
-    assert(this.hostedSlotId == consumeConn.targetSlot.id,
+    assert(this.hostedSlotId === consumeConn.targetSlot.id,
       `Expected target slot ${this.hostedSlotId}, but got ${consumeConn.targetSlot.id}`);
-    assert(this.hostedParticleName == consumeConn.particle.name,
+    assert(this.hostedParticleName === consumeConn.particle.name,
       `Expected particle ${this.hostedParticleName} for slot ${this.hostedSlotId}, but got ${consumeConn.particle.name}`);
-    assert(this.hostedSlotName == consumeConn.name,
+    assert(this.hostedSlotName === consumeConn.name,
       `Expected slot ${this.hostedSlotName} for slot ${this.hostedSlotId}, but got ${consumeConn.name}`);
     this._consumeConn = consumeConn;
 
@@ -46,12 +50,15 @@ export class HostedSlotConsumer extends SlotConsumer {
     }
   }
 
-  setContent(content) {
-    this.renderCallback && this.renderCallback(
+  async setContent(content, handler, arc) {
+    if (this.renderCallback) {
+      this.renderCallback(
         this.transformationSlotConsumer.consumeConn.particle,
         this.transformationSlotConsumer.consumeConn.name,
         this.hostedSlotId,
         this.transformationSlotConsumer.formatHostedContent(this, content));
+    }
+    return null;
   }
 
   constructRenderRequest() {
@@ -59,9 +66,9 @@ export class HostedSlotConsumer extends SlotConsumer {
   }
 
   getInnerContainer(name) {
-    let innerContainer = this.transformationSlotConsumer.getInnerContainer(name);
+    const innerContainer = this.transformationSlotConsumer.getInnerContainer(name);
     if (innerContainer && this.storeId) {
-      let subId = this.arc.findStoreById(this.storeId)._stored.id;
+      const subId = this.arc.findStoreById(this.storeId)._stored.id;
       return innerContainer[subId];
     }
     return innerContainer;

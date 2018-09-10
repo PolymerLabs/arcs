@@ -9,22 +9,25 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
-import Template from '../shell/components/xen/xen-template.js';
+import Template from '../../shell/components/xen/xen-template.js';
 
 const templateByName = new Map();
 
 export class SlotDomConsumer extends SlotConsumer {
+  private _observer: MutationObserver;
+  private subId: string;
+
   constructor(consumeConn, containerKind) {
     super(consumeConn, containerKind);
 
     this._observer = this._initMutationObserver();
   }
 
-  constructRenderRequest(hostedSlotConsumer) { 
-    let request = ['model'];
-    let prefixes = [this.templatePrefix];
+  constructRenderRequest(hostedSlotConsumer): string[] { 
+    const request = ['model'];
+    const prefixes = [this.templatePrefix];
     if (hostedSlotConsumer) {
       prefixes.push(hostedSlotConsumer.consumeConn.particle.name);
       prefixes.push(hostedSlotConsumer.consumeConn.name);
@@ -40,11 +43,11 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   isSameContainer(container, contextContainer) {
-    return container.parentNode == contextContainer;
+    return container.parentNode === contextContainer;
   }
 
   createNewContainer(contextContainer, subId) {
-    let newContainer = document.createElement(this._containerKind || 'div');
+    const newContainer = document.createElement(this.containerKind || 'div');
     if (this.consumeConn) {
       newContainer.setAttribute('particle-host', this.consumeConn.getQualifiedName());
     }
@@ -59,7 +62,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   formatContent(content, subId) {
-    let newContent = {};
+    const newContent: {model?: string | {}, templateName?: string | {}, template?: string | {}} = {};
 
     // Format model.
     if (Object.keys(content).indexOf('model') >= 0) {
@@ -70,10 +73,10 @@ export class SlotDomConsumer extends SlotConsumer {
         // Replace items list by an single item corresponding to the given subId.
         if (subId && content.model.items) {
           assert(this.consumeConn.slotSpec.isSet);
-          let item = content.model.items.find(item => item.subId == subId);
+          const item = content.model.items.find(item => item.subId === subId);
           if (item) {
             newContent.model = Object.assign({}, newContent.model, item);
-            delete newContent.model.items;
+            delete newContent.model['items'];
           } else {
             newContent.model = undefined;
           }
@@ -87,7 +90,7 @@ export class SlotDomConsumer extends SlotConsumer {
     if (content.templateName) {
       newContent.templateName = typeof content.templateName === 'string' ? content.templateName : content.templateName[subId];
       if (content.template) {
-        newContent.template = typeof content.template === 'string' ? content.template : content.template[newContent.templateName];
+        newContent.template = typeof content.template === 'string' ? content.template : content.template[newContent.templateName as string];
       }
     }
 
@@ -99,7 +102,7 @@ export class SlotDomConsumer extends SlotConsumer {
       return;
     }
 
-    if (Object.keys(content).length == 0) {
+    if (Object.keys(content).length === 0) {
       this.clearContainer(rendering);
       return;
     }
@@ -118,9 +121,10 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   dispose() {
-    this._observer && this._observer.disconnect();
+    if (this._observer) {
+      this._observer.disconnect();
+    }
 
-    this.container && this.deleteContainer(this.container);
     this.renderings.forEach(([subId, {container}]) => this.deleteContainer(container));
   }
 
@@ -134,10 +138,10 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   static findRootContainers(topContainer) {
-    let containerBySlotId = {};
+    const containerBySlotId = {};
     Array.from(topContainer.querySelectorAll('[slotid]')).forEach(container => {
       //assert(this.isDirectInnerSlot(container), 'Unexpected inner slot');
-      let slotId = container.getAttribute('slotid');
+      const slotId = (container as HTMLElement).getAttribute('slotid');
       assert(!containerBySlotId[slotId], `Duplicate root slot ${slotId}`);
       containerBySlotId[slotId] = container;
     });
@@ -170,7 +174,7 @@ export class SlotDomConsumer extends SlotConsumer {
     this._observe(rendering.container);
 
     if (rendering.templateName) {
-      let template = templateByName.get(rendering.templateName);
+      const template = templateByName.get(rendering.templateName);
       assert(template, `No template for ${rendering.templateName}`);
       this._stampTemplate(rendering, template);
     }
@@ -180,18 +184,20 @@ export class SlotDomConsumer extends SlotConsumer {
 
   _observe(container) {
     assert(container, 'Cannot observe without a container');
-    this._observer && this._observer.observe(container, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['subid']
-    });
+    if (this._observer) {
+      this._observer.observe(container, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['subid']
+      });
+    }
   }
 
   _stampTemplate(rendering, template) {
     if (!rendering.liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-      rendering.container._eventMapper = this._eventMapper.bind(this, this._eventHandler);
+      rendering.container._eventMapper = this._eventMapper.bind(this, this.eventHandler);
       rendering.liveDom = Template
           .stamp(template)
           .events(rendering.container._eventMapper)
@@ -200,17 +206,16 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   _updateModel(rendering) {
-    let liveDom = rendering.liveDom;
-    if (liveDom) {
-      liveDom.set(rendering.model);
+    if (rendering.liveDom) {
+      rendering.liveDom.set(rendering.model);
     }
   }
 
   initInnerContainers(container) {
-    Array.from(container.querySelectorAll('[slotid]')).filter(innerContainer => {
+    Array.from(container.querySelectorAll('[slotid]')).forEach(innerContainer => {
       if (!this.isDirectInnerSlot(container, innerContainer)) {
         // Skip inner slots of an inner slot of the given slot.
-        return false;
+        return;
       }
       const slotId = this.getNodeValue(innerContainer, 'slotid');
       const providedSlotSpec = this.consumeConn.slotSpec.getProvidedSlotSpec(slotId);
@@ -231,7 +236,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }  
 
   _validateSubId(providedSlotSpec, subId) {
-    assert(!this.subId || !subId || this.subId == subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);
+    assert(!this.subId || !subId || this.subId === subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);
     assert(Boolean(this.subId || subId) === providedSlotSpec.isSet,
         `Sub-id ${subId} for provided slot ${providedSlotSpec.name} doesn't match set spec: ${providedSlotSpec.isSet}`);
   }
@@ -242,7 +247,7 @@ export class SlotDomConsumer extends SlotConsumer {
     }
     let parentNode = innerContainer.parentNode;
     while (parentNode) {
-      if (parentNode == container) {
+      if (parentNode === container) {
         return true;
       }
       if (parentNode.getAttribute('slotid')) {
@@ -261,13 +266,13 @@ export class SlotDomConsumer extends SlotConsumer {
       return new MutationObserver(async (records) => {
         this._observer.disconnect();
 
-        let updateContainersBySubId = new Map();
-        for (let [subId, {container}] of this.renderings) {
+        const updateContainersBySubId = new Map();
+        for (const [subId, {container}] of this.renderings) {
           if (records.some(r => this.isDirectInnerSlot(container, r.target))) {
             updateContainersBySubId.set(subId, container);
           }
         }
-        let containers = [...updateContainersBySubId.values()];
+        const containers = [...updateContainersBySubId.values()];
         if (containers.length > 0) {
           this._clearInnerSlotContainers([...updateContainersBySubId.keys()]);
           containers.forEach(container => this.initInnerContainers(container));
@@ -278,6 +283,7 @@ export class SlotDomConsumer extends SlotConsumer {
         }
       });
     }
+    return null;
   }
 
   _eventMapper(eventHandler, node, eventName, handlerName) {
@@ -301,9 +307,9 @@ export class SlotDomConsumer extends SlotConsumer {
     });
   }
 
-  formatHostedContent(hostedSlot, content) {
+  formatHostedContent(hostedSlot, content): {} {
     if (content.templateName) {
-      if (typeof content.templateName == 'string') {
+      if (typeof content.templateName === 'string') {
         content.templateName = `${hostedSlot.consumeConn.particle.name}::${hostedSlot.consumeConn.name}::${content.templateName}`;
       } else {
         // TODO(mmandlis): add support for hosted particle rendering set slot.
