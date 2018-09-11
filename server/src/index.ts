@@ -1,7 +1,7 @@
 import debug from 'debug';
 import http from 'http';
 
-import { app } from './App';
+import { app } from './app';
 
 /**
  * Basic code that sets up and configures a Arcs Cloud Instance.
