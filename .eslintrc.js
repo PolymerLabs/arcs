@@ -19,6 +19,10 @@ module.exports = {
     "no-undef": "off", // Particles use importScripts+globals, need to move to JS modules to fix
     "no-empty-pattern": "off", // No {} in patterns, but sometimes we use {} to denote an unused argument?
 
+    // eslint-config-google 0.10.0 introduced indent checks
+    // most projects are opting for prettier instead, so disable
+    'indent': "off",
+
     // Things we don't care about.
     "require-jsdoc": "off",
     "valid-jsdoc": "off",
