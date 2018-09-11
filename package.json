@@ -27,7 +27,7 @@
     "clang-format": "^1.2.4",
     "cross-env": "^5.2.0",
     "eslint": "^5.5.0",
-    "eslint-config-google": "^0.9.1",
+    "eslint-config-google": "^0.10.0",
     "grammkit": "0.6.1",
     "http-server": "^0.11.1",
     "minimist": "^1.2.0",
@@ -52,6 +52,7 @@
     "firebase": "^5.4.2",
     "node-fetch": "^1.7.2",
     "pouchdb": "^7.0.0",
+    "prettier": "^1.14.2",
     "source-map-support": "^0.5.9",
     "typescript": "^3.0.3",
     "ws": "^4.1.0"
