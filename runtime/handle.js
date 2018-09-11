@@ -138,11 +138,11 @@ class Collection extends Handle {
     }
   }
 
-    /** @method async get(id)
-   * Returns the Entitiy specified by id contained by the handle, or null if this id is not
+  /** @method async get(id)
+   * Returns the Entity specified by id contained by the handle, or null if this id is not
    * contained by the handle.
    * throws: Error if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async get(id) {
     if (!this.canRead) {

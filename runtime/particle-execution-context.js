@@ -42,8 +42,7 @@ export class ParticleExecutionContext {
     this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
       return [proxy, () => callback(proxy)];
-    }
-
+    };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);

@@ -19,7 +19,9 @@
     "interface-name": [true, "never-prefix"],
     "jsdoc-format": true,
     "label-position": true,
-    "member-access": [true, "no-public"],
+    // TODO: re-enable this when someone has time to go through and explicitly
+    // mark everything as public. Talk to shans@ if you disagree.
+    // "member-access": [true],
     "new-parens": true,
     "no-angle-bracket-type-assertion": true,
     "no-any": true,

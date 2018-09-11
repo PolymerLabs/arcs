@@ -199,7 +199,7 @@ export class Type {
     return this.collectionType;
   }
 
-  elementTypeIfCollection() {
+  getContainedType() {
     if (this.isCollection) {
       return this.collectionType;
     }
@@ -213,7 +213,7 @@ export class Type {
   }
 
   // TODO: naming is hard
-  isSomeSortOfCollection() {
+  isTypeContainer() {
     return this.isCollection || this.isBigCollection || this.isReference;
   }
 
@@ -532,7 +532,7 @@ export class Type {
     // Try extract the description from schema spec.
     const entitySchema = this.getEntitySchema();
     if (entitySchema) {
-      if (this.isSomeSortOfCollection() && entitySchema.description.plural) {
+      if (this.isTypeContainer() && entitySchema.description.plural) {
         return entitySchema.description.plural;
       }
       if (this.isEntity && entitySchema.description.pattern) {
