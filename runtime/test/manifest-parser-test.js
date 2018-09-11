@@ -168,6 +168,30 @@ describe('manifest parser', function() {
         Bytes profileImage
       `);
   });
+  it('parses a schema with a reference field', () => {
+    parse(`
+      schema Product
+        Reference<Review> review
+    `);
+  });
+  it('parses a schema with a referenced inline schema', () => {
+    parse(`
+      schema Product
+        Reference<Review {Text reviewText}> review
+    `);
+  });
+  it('parses an inline schema with a reference to a schema', () => {
+    parse(`
+      particle Foo
+        in Product {Reference<Review> review} in
+    `);
+  });
+  it('parses an inline schema with a referenced inline schema', () => {
+    parse(`
+    particle Foo
+      in Product {Reference<Review {Text reviewText}> review} in`
+    );
+  });
   it('parses reference types', () => {
     parse(`
       particle Foo

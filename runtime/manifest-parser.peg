@@ -1020,7 +1020,16 @@ SchemaField
   }
 
 SchemaType
-  = SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
+  = SchemaReferenceType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType 
+
+SchemaReferenceType = 'Reference<' schema:(SchemaInline / TypeName) '>'
+  {
+    return {
+      kind: 'schema-reference',
+      location: location(),
+      schema
+    };
+  }
 
 SchemaPrimitiveType
   = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes' / 'Object'
