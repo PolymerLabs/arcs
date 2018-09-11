@@ -34,10 +34,10 @@ export abstract class StorageBase {
 
 export abstract class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
-  private readonly _storageKey: string;
   private nextLocalID: number;
   private readonly _type: Type;
 
+  protected readonly _storageKey: string;
   protected referenceMode = false;
   protected version: number|null;
   

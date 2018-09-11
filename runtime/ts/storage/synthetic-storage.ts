@@ -102,11 +102,20 @@ class SyntheticCollection extends StorageProviderBase {
   }
 
   private async remoteStateChanged(snapshot) {
-    // TODO: remove the import-removal hack when import statements no longer appear in serialised
-    // manifests, or deal with them correctly if they end up staying
-    const manifest = await Manifest.parse(snapshot.val().replace(/\bimport .*\n/g, ''));
+    let handles;
+    try {
+      if (snapshot.exists() && snapshot.val()) {
+        // TODO: remove the import-removal hack when import statements no longer appear in
+        // serialised manifests, or deal with them correctly if they end up staying
+        const manifest = await Manifest.parse(snapshot.val().replace(/\bimport .*\n/g, ''));
+        handles = manifest.activeRecipe && manifest.activeRecipe.handles;
+      }
+    } catch (e) {
+      console.warn(`Error parsing manifest at ${this._storageKey}:\n${e.message}`);
+    }
+
     this.model = [];
-    for (const handle of manifest.activeRecipe.handles) {
+    for (const handle of handles || []) {
       if (isFirebaseKey(handle._storageKey)) {
         this.model.push({
           storageKey: handle.storageKey,
@@ -119,6 +128,7 @@ class SyntheticCollection extends StorageProviderBase {
       this.resolveInitialized();
       this.resolveInitialized = null;
     }
+    this._fire('change', {data: this.model});
   }
 
   async toList() {
