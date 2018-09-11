@@ -21,6 +21,7 @@ export class ParticleExecutionContext {
     this._idBase = idBase;
     this._nextLocalID = 0;
     this._loader = loader;
+    loader.setParticleExecutionContext(this);
     this._pendingLoads = [];
     this._scheduler = new StorageProxyScheduler();
     this._keyedProxies = {};
@@ -39,10 +40,12 @@ export class ParticleExecutionContext {
       return new StorageProxy(identifier, type, this._apiPort, this, this._scheduler, name);
     };
 
-    this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback}) => {
+    this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback, storageKey}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
-      return [proxy, () => callback(proxy)];
+      proxy.storageKey = storageKey;
+      return [proxy, () => callback(proxy, storageKey)];
     };
+
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
@@ -195,7 +198,7 @@ export class ParticleExecutionContext {
   getStorageProxy(storageKey, type) {
     if (!this._keyedProxies[storageKey]) {      
       this._keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this._apiPort.GetBackingStore({storageKey, type, callback: proxy => {
+        this._apiPort.GetBackingStore({storageKey, type, callback: (proxy, storageKey) => {
           this._keyedProxies[storageKey] = proxy;
           resolve(proxy);
         }});

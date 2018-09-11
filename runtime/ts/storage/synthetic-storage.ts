@@ -87,6 +87,11 @@ export class SyntheticStorage extends StorageBase {
     return Promise.reject();
   }
 
+  baseStorageKey(type: Type, key: string) {
+    assert(false, 'baseStorageKey not implemented for SyntheticStorage');
+    return '';
+  }
+
   parseStringAsKey(s: string) : SyntheticKey {
     return new SyntheticKey(s);
   }
