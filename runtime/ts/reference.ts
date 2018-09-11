@@ -57,7 +57,7 @@ export class Reference {
   }
 }
 
-enum ReferenceMode {Unstored, Stored};
+enum ReferenceMode {Unstored, Stored}
 
 export function newClientReference(context) {
   return class extends Reference {
@@ -80,7 +80,7 @@ export function newClientReference(context) {
     }
 
     async dereference() {
-      if (this.mode == ReferenceMode.Unstored) {
+      if (this.mode === ReferenceMode.Unstored) {
         return null;
       }
       return super.dereference();
@@ -89,6 +89,6 @@ export function newClientReference(context) {
     isIdentified() {
       return this.entity.isIdentified();
     }
-  }
+  };
 }
 
