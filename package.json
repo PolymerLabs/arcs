@@ -6,6 +6,9 @@
     "port": "8080",
     "host": "localhost"
   },
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "runtime/ts-build/runtime.d.ts",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
     "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
@@ -53,6 +56,9 @@
     "node-fetch": "^1.7.2",
     "pouchdb": "^7.0.0",
     "prettier": "^1.14.2",
+    "rollup": "^0.65.2",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-typescript2": "^0.17.0",
     "source-map-support": "^0.5.9",
     "typescript": "^3.0.3",
     "ws": "^4.1.0"
