@@ -154,7 +154,7 @@ export class ParticleExecutionContext {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
             let handle = handleFor(proxy, name, particleId);
-            handle.entityClass = (proxy.type.elementTypeIfCollection() || proxy.type).entitySchema.entityClass();
+            handle.entityClass = (proxy.type.getContainedType() || proxy.type).entitySchema.entityClass();
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -230,7 +230,7 @@ export class ParticleExecutionContext {
     proxies.forEach((proxy, name) => {
       let connSpec = spec.connectionMap.get(name);
       let handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
-      let type = proxy.type.elementTypeIfCollection() || proxy.type;
+      let type = proxy.type.getContainedType() || proxy.type;
       if (type.isEntity) {
         handle.entityClass = type.entitySchema.entityClass();
       }
