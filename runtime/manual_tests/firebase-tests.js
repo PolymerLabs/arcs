@@ -424,13 +424,48 @@ describe('firebase', function() {
     }).timeout(20000);
   });
 
+  // These tests use data manually added to our test firebase db.
   describe('synthetic', () => {
-    it('smoke test', async () => {
-      // This uses a serialized manifest manually added to our test firebase db.
-      let fbKey = testUrl.replace('firebase-storage-test', 'synthetic-storage-data/manifest1');
+    function getKey(manifestName) {
+      let fbKey = testUrl.replace('firebase-storage-test', `synthetic-storage-data/${manifestName}`);
+      return `synthetic://arc/handles/${fbKey}`;
+    }
 
+    it('simple test', async () => {
       let storage = createStorage('arc-id');
-      let synth = await storage.connect('id1', null, `synthetic://arc/handles/${fbKey}`);
+      let synth = await storage.connect('id1', null, getKey('simple-manifest'));
+      let list = await synth.toList();
+      assert.equal(list.length, 1);
+      let handle = list[0];
+      assert.equal(handle.storageKey, 'firebase://xxx.firebaseio.com/yyy');
+      let type = handle.type.elementTypeIfCollection();
+      assert(type && type.isEntity);
+      assert.equal(type.entitySchema.name, 'Thing');
+      assert.deepEqual(handle.tags, ['taggy']);
+    });
+
+    it('error test', async () => {
+      let storage = createStorage('arc-id');
+      let synth1 = await storage.connect('not-there', null, getKey('not-there'));
+      let list1 = await synth1.toList();
+      assert.isEmpty(list1, 'synthetic handle list should empty for non-existent storageKey');
+
+      let synth2 = await storage.connect('bad-manifest', null, getKey('bad-manifest'));
+      let list2 = await synth2.toList();
+      assert.isEmpty(list2, 'synthetic handle list should empty for invalid manifests');
+
+      let synth3 = await storage.connect('no-recipe', null, getKey('no-recipe'));
+      let list3 = await synth3.toList();
+      assert.isEmpty(list3, 'synthetic handle list should empty for manifests with no active recipe');
+
+      let synth4 = await storage.connect('no-handles', null, getKey('no-handles'));
+      let list4 = await synth4.toList();
+      assert.isEmpty(list4, 'synthetic handle list should empty for manifests with no handles');
+    });
+
+    it('large test', async () => {
+      let storage = createStorage('arc-id');
+      let synth = await storage.connect('id1', null, getKey('large-manifest'));
       let list = await synth.toList();
       assert(list.length > 0, 'synthetic handle list should not be empty');
       for (let item of list) {
