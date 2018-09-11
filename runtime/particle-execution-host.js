@@ -63,6 +63,15 @@ export class ParticleExecutionHost {
       }
     };
 
+    this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
+      let store = await this._arc._storageProviderFactory.baseStorageFor(type, storageKey);
+      // TODO(shans): THIS IS NOT SAFE!
+      //
+      // Without an auditor on the runtime side that inspects what is being fetched from
+      // this store, particles with a reference can access any data of that reference's type.
+      this._apiPort.GetBackingStoreCallback(store, {type: type.collectionOf(), name: type.toString(), callback, id: store.id});
+    };
+
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
       let arc = {particle};
       this._apiPort.ConstructArcCallback({callback, arc});

@@ -553,7 +553,7 @@ ${this.activeRecipe.toString()}`;
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type) {
-    let elementType = type.elementTypeIfCollection();
+    let elementType = type.getContainedType();
     if (elementType) {
       let key = this._typeToKey(elementType);
       if (key) {
@@ -584,7 +584,7 @@ ${this.activeRecipe.toString()}`;
         }
         // elementType will only be non-null if type is either Collection or BigCollection; the tag
         // comparison ensures that handle.type is the same sort of collection.
-        let elementType = type.elementTypeIfCollection();
+        let elementType = type.getContainedType();
         if (elementType && elementType.isVariable && !elementType.isResolved() && type.tag === handle.type.tag) {
           return true;
         }

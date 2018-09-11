@@ -438,7 +438,7 @@ describe('firebase', function() {
       assert.equal(list.length, 1);
       let handle = list[0];
       assert.equal(handle.storageKey, 'firebase://xxx.firebaseio.com/yyy');
-      let type = handle.type.elementTypeIfCollection();
+      let type = handle.type.getContainedType();
       assert(type && type.isEntity);
       assert.equal(type.entitySchema.name, 'Thing');
       assert.deepEqual(handle.tags, ['taggy']);

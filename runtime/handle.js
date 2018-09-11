@@ -8,7 +8,7 @@
  */
 'use strict';
 
-import {Entity} from './entity.js';
+import {Reference} from './ts-build/reference.js';
 import {Symbols} from './symbols.js';
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -138,6 +138,19 @@ class Collection extends Handle {
     }
   }
 
+  /** @method async get(id)
+   * Returns the Entity specified by id contained by the handle, or null if this id is not
+   * contained by the handle.
+   * throws: Error if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
+   * in the particle's manifest.
+   */
+  async get(id) {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
+    return this._restore([await this._proxy.get(id, this._particleId)])[0];
+  }
+
   /** @method async toList()
    * Returns a list of the Entities contained by the handle.
    * throws: Error if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
@@ -233,7 +246,13 @@ class Variable extends Handle {
     if (this.type.isEntity) {
       return restore(model, this.entityClass);
     }
-    return this.type.isInterface ? ParticleSpec.fromLiteral(model) : model;
+    if (this.type.isInterface) {
+      return ParticleSpec.fromLiteral(model);
+    }
+    if (this.type.isReference) {
+      return new Reference(model, this.type, this._proxy.pec);
+    }
+    assert(false, `Don't know how to deliver handle data of type ${this.type}`);
   }
 
   /** @method set(entity)

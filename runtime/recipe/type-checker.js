@@ -111,8 +111,8 @@ export class TypeChecker {
         return null;
       }
       return Type.newInterface(result);
-    } else if ((primitiveBase.isSomeSortOfCollection() && primitiveBase.hasVariable)
-               || (primitiveOnto.isSomeSortOfCollection() && primitiveOnto.hasVariable)) {
+    } else if ((primitiveBase.isTypeContainer() && primitiveBase.hasVariable)
+               || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
       // Cannot merge [~a] with a type that is not a variable and not a collection.
       return null;
     }
@@ -122,7 +122,7 @@ export class TypeChecker {
   static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType.isVariable) {
-      while (primitiveConnectionType.isSomeSortOfCollection()) {
+      while (primitiveConnectionType.isTypeContainer()) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
             || primitiveHandleType.variable.canWriteSuperset != null) {
@@ -134,7 +134,7 @@ export class TypeChecker {
         // in order for type resolution to succeed.
         let newVar = Type.newVariable(new TypeVariable('a'));
         primitiveHandleType.variable.resolution = 
-            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : Type.newBigCollection(newVar);
+            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : (primitiveConnectionType.isBigCollection ? Type.newBigCollection(newVar) : Type.newReference(newVar));
         let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         [primitiveHandleType, primitiveConnectionType] = unwrap;
       }
@@ -215,10 +215,10 @@ export class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType.isVariable && rightType.isSomeSortOfCollection()) {
+    if (leftType.isVariable && rightType.isTypeContainer()) {
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
     }
-    if (rightType.isVariable && leftType.isSomeSortOfCollection()) {
+    if (rightType.isVariable && leftType.isTypeContainer()) {
       return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
     }
 

@@ -10,6 +10,11 @@
 
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
+import {MessageChannel} from '../message-channel.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {Arc} from '../arc.js';
+import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
 describe('references', function() {
   it('can parse & validate a recipe containing references', async () => {
@@ -39,5 +44,72 @@ describe('references', function() {
     let recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
+    assert.equal(recipe.handles[0].id, 'reference:1');
+    recipe.handles[0].type.maybeEnsureResolved();
+    assert.isTrue(recipe.handles[0].type.isReference);
+    assert.equal(recipe.handles[0].type.resolvedType().referenceReferredType.data.name, 'Result');
+  });
+
+  it('exposes a dereference API to particles', async () => {
+    let loader = new StubLoader({
+      manifest: `
+        schema Result
+          Text value
+        
+        particle Dereferencer in 'dereferencer.js'
+          in Reference<Result> in
+          out Result out
+        
+        recipe
+          create 'input:1' as handle0
+          create 'output:1' as handle1
+          Dereferencer
+            in <- handle0
+            out -> handle1
+      `,
+      'dereferencer.js': `
+        defineParticle(({Particle}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('out');
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'in') {
+                await update.data.dereference();
+                this.output.set(update.data.entity);
+              }
+            }
+
+            onHandleDesync(handle) {
+            }
+          }
+        });
+      `
+    });
+
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test:0', pecFactory, loader});
+
+    let manifest = await Manifest.load('manifest', loader);
+    let recipe = manifest.recipes[0];    
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    assert.isTrue(arc._stores[0]._type.isReference);
+
+    const inMemoryEngine = arc._storageProviderFactory._storageInstances['in-memory'];
+    const backingStore = await inMemoryEngine.baseStorageFor(arc._stores[1]._type, inMemoryEngine.baseStorageKey(arc._stores[1]._type));
+    await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
+
+    const refStore = arc._stores[0];
+    await refStore.set({id: 'id:1', storageKey: backingStore.storageKey});
+
+    await assertSingletonWillChangeTo(arc, arc._stores[1], 'value', 'what a result!');
   });
 });

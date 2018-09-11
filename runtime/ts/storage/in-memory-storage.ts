@@ -75,7 +75,7 @@ export class InMemoryStorage extends StorageBase {
     if (type.isReference) {
       return provider;
     }
-    if (type.isSomeSortOfCollection() && type.elementTypeIfCollection().isReference) {
+    if (type.isTypeContainer() && type.getContainedType().isReference) {
       return provider;
     }
     provider.enableReferenceMode();

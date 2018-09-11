@@ -171,6 +171,7 @@ export class APIPort {
       }
     }
     let handlerName = 'on' + e.data.messageType;
+    assert(this[handlerName], `no handler named ${handlerName}`);
     let result = this[handlerName](args);
     if (this._debugAttachment && this._debugAttachment[handlerName]) {
       this._debugAttachment[handlerName](args);
@@ -265,6 +266,9 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
     this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
+    this.registerHandler('GetBackingStore', {callback: this.Direct, storageKey: this.Direct, type: this.ByLiteral(Type)});
+    this.registerInitializer('GetBackingStoreCallback', {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+
     this.registerHandler('ConstructInnerArc', {callback: this.Direct, particle: this.Mapped});
     this.registerCall('ConstructArcCallback', {callback: this.Direct, arc: this.LocalMapped});
 
@@ -313,6 +317,9 @@ export class PECInnerPort extends APIPort {
     this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerCall('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
     this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+
+    this.registerCall('GetBackingStore', {callback: this.LocalMapped, storageKey: this.Direct, type: this.ByLiteral(Type)});
+    this.registerInitializerHandler('GetBackingStoreCallback', {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
     this.registerCall('ConstructInnerArc', {callback: this.LocalMapped, particle: this.Mapped});
     this.registerHandler('ConstructArcCallback', {callback: this.LocalMapped, arc: this.Direct});
