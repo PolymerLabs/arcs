@@ -267,7 +267,7 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerHandler('GetBackingStore', {callback: this.Direct, storageKey: this.Direct, type: this.ByLiteral(Type)});
-    this.registerInitializer('GetBackingStoreCallback', {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerInitializer('GetBackingStoreCallback', {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct, storageKey: this.Direct});
 
     this.registerHandler('ConstructInnerArc', {callback: this.Direct, particle: this.Mapped});
     this.registerCall('ConstructArcCallback', {callback: this.Direct, arc: this.LocalMapped});
@@ -319,7 +319,7 @@ export class PECInnerPort extends APIPort {
     this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerCall('GetBackingStore', {callback: this.LocalMapped, storageKey: this.Direct, type: this.ByLiteral(Type)});
-    this.registerInitializerHandler('GetBackingStoreCallback', {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerInitializerHandler('GetBackingStoreCallback', {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct, storageKey: this.Direct});
 
     this.registerCall('ConstructInnerArc', {callback: this.LocalMapped, particle: this.Mapped});
     this.registerHandler('ConstructArcCallback', {callback: this.LocalMapped, arc: this.Direct});

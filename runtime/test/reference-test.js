@@ -13,6 +13,7 @@ import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {Type} from '../ts-build/type.js';
 import {Arc} from '../arc.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
@@ -111,5 +112,65 @@ describe('references', function() {
     await refStore.set({id: 'id:1', storageKey: backingStore.storageKey});
 
     await assertSingletonWillChangeTo(arc, arc._stores[1], 'value', 'what a result!');
+  });
+
+  it('exposes a reference API to particles', async () => {
+    let loader = new StubLoader({
+      manifest: `
+        schema Result
+          Text value
+        
+        particle Referencer in 'referencer.js'
+          in Result in
+          out Reference<Result> out
+        
+        recipe
+          create 'input:1' as handle0
+          create 'output:1' as handle1
+          Referencer
+            in <- handle0
+            out -> handle1
+      `,
+      'referencer.js': `
+        defineParticle(({Particle, Reference}) => {
+          return class Referencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('out');
+            }
+
+            async onHandleSync(handle, model) {
+              if (handle.name == 'in') {
+                let entity = await handle.get();
+                let reference = new Reference(entity);
+                await reference.stored;
+                await this.output.set(reference);
+              }
+            }
+
+            onHandleDesync(handle) {
+            }
+          }
+        });
+      `
+    });
+
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test:0', pecFactory, loader});
+
+    let manifest = await Manifest.load('manifest', loader);
+    let recipe = manifest.recipes[0];    
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const inputStore = arc._stores[0];
+    await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
+
+    const refStore = arc._stores[1];
+    await assertSingletonWillChangeTo(arc, refStore, 'storageKey', arc._storageProviderFactory.baseStorageKey(Type.newEntity(manifest.schemas.Result), 'in-memory'));
   });
 });
