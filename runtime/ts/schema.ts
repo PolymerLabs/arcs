@@ -91,7 +91,7 @@ export class Schema {
       case 'schema-tuple':
         return `(${type.types.join(', ')})`;
       case 'schema-reference':
-        return `Reference<${Schema._typeString(type.schema)}>`
+        return `Reference<${Schema._typeString(type.schema)}>`;
       case 'type-name':
       case 'schema-inline':
         return type.model.entitySchema.toInlineSchemaString();
