@@ -50,9 +50,9 @@ Polymer({
      --><div hidden\$="[[isDescriptionEmpty(shownRecipe.description)]]" class="description">
           <span inner-h-t-m-l="{{shownRecipe.description}}"></span>
           <hr>
-        </div>
-        <span inner-h-t-m-l="{{shownRecipe.result}}"></span>
-        <span class="hash" inner-h-t-m-l="{{shownRecipe.hash}}"></span><!--
+        </div><!--
+     --><div inner-h-t-m-l="{{shownRecipe.result}}"></div><hr><!--
+     --><div class="hash" inner-h-t-m-l="{{shownRecipe.hash}}"></div><!--
    --></div>
     </template>
 `,
@@ -79,31 +79,23 @@ Polymer({
       if (recipe.id == this.shownRecipe.id) {
         this.set('shownRecipe.result', this.pinnedResult);
         this.set('shownRecipe.hash', this.pinnedHash);
+        this.set('shownRecipe.description', this.pinnedDescription);
         this.strategyString = '';
         return;
       }
-      let left = recipe.result.replace(/</g, '&lt;');
-      let right = this.pinnedResult.replace(/</g, '&lt;');
-      let diff = this.over.strategyMap.has(this.to)
-          ? JsDiff.diffWords(right, left)
-          : JsDiff.diffWords(left, right);
-      diff = diff.map(entry => {
-        if (entry.added) {
-          return `<span class='added'>${entry.value}</span>`;
-        }
-        if (entry.removed) {
-          return `<span class='removed'>${entry.value}</span>`;
-        }
-        return entry.value;
-      });
-      this.set('shownRecipe.result', diff.join(''));
+      
+      this.set('shownRecipe.description', this.diffHtml(recipe.description, this.pinnedDescription));
+      this.set('shownRecipe.hash', this.diffHtml(recipe.hash, this.pinnedHash));
+      this.set('shownRecipe.result', this.diffHtml(
+        recipe.result.replace(/</g, '&lt;'),
+        this.pinnedResult.replace(/</g, '&lt;')));
+
       let strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
       if (strategies) {
         this.strategyString = 'Strategies: [' + strategies.join(']\n[') + ']\n';
       } else {
         this.strategyString = '';
       }
-      this.set('shownRecipe.hash', `<span class='added'>${this.pinnedHash}</span> <span class='removed'>${this.recipe.hash}</span>`);
     }
   },
 
@@ -122,6 +114,7 @@ Polymer({
     this.pinned = true;
     this.pinnedResult = this.recipe.result;
     this.pinnedHash = this.recipe.hash;
+    this.pinnedDescription = this.recipe.description;
     this.to = this.over;
   },
 
@@ -138,5 +131,21 @@ Polymer({
     this.shownRecipe = (({result, strategy, id, parent, score, description, hash}) => ({result, strategy, id, parent, score, description, hash}))(this.recipe);
     this.strategyString = '';
     this.to = undefined;
+  },
+
+  diffHtml: function(left, right) {
+    let diff = this.over.strategyMap.has(this.to)
+        ? JsDiff.diffWords(right, left)
+        : JsDiff.diffWords(left, right);
+    diff = diff.map(entry => {
+      if (entry.added) {
+        return `<span class='added'>${entry.value}</span>`;
+      }
+      if (entry.removed) {
+        return `<span class='removed'>${entry.value}</span>`;
+      }
+      return entry.value;
+    });
+    return diff.join('');
   }
 });
