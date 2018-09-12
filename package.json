@@ -19,7 +19,8 @@
     "test-mocha": "mocha-chrome shell/test/index.test.html",
     "test-extension": "mocha-chrome extension/test/index.test.html",
     "test-mocha-words": "mocha-chrome artifacts/Words/test/index.test.html",
-    "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js"
+    "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js",
+    "build:rollup": "rollup -c"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
