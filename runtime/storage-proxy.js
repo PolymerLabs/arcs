@@ -567,7 +567,7 @@ class BigCollectionProxy extends StorageProxyBase {
       this._port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
   }
 
-  async cursorClose(cursorId) {
+  cursorClose(cursorId) {
     this._port.StreamCursorClose({handle: this, cursorId});
   }
 }

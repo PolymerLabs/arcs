@@ -303,7 +303,7 @@ class Cursor {
    * Terminates the streamed read. This must be called if a cursor is no longer needed but has not
    * yet completed streaming (i.e. next() hasn't returned {done: true}).
    */
-  async close() {
+  close() {
     this._parent._proxy.cursorClose(this._cursorId);
   }
 }
