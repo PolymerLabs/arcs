@@ -232,8 +232,7 @@ export class Manifest {
     function typePredicate(store) {
       let resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
-        // TODO: update for BigCollection handling
-        return type.isCollection == store.type.isCollection;
+        return type.isCollection == store.type.isCollection && type.isBigCollection == store.type.isBigCollection;
       }
 
       if (subtype) {
@@ -417,7 +416,7 @@ ${e.message}
           let aliases = [];
           let names = [];
           for (let name of node.names) {
-            let resolved = manifest.resolveReference(name);
+            let resolved = manifest.resolveTypeName(name);
             if (resolved && resolved.schema && resolved.schema.isAlias) {
               aliases.push(resolved.schema);
             } else {
@@ -478,12 +477,12 @@ ${e.message}
           node.model = Type.newSlot(slotInfo);
           return;
         }
-        case 'reference-type': {
-          let resolved = manifest.resolveReference(node.name);
+        case 'type-name': {
+          let resolved = manifest.resolveTypeName(node.name);
           if (!resolved) {
             throw new ManifestError(
                 node.location,
-                `Could not resolve type reference '${node.name}'`);
+                `Could not resolve type reference to type name '${node.name}'`);
           }
           if (resolved.schema) {
             node.model = Type.newEntity(resolved.schema);
@@ -499,6 +498,9 @@ ${e.message}
           return;
         case 'big-collection-type':
           node.model = Type.newBigCollection(node.type.model);
+          return;
+        case 'reference-type':
+          node.model = Type.newReference(node.type.model);
           return;
         default:
           return;
@@ -607,7 +609,7 @@ ${e.message}
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
-  // TODO: Move this to a generic pass over the AST and merge with resolveReference.
+  // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   static _processShape(manifest, shapeItem) {
     if (shapeItem.interface) {
       let warning = new ManifestError(shapeItem.location, `Shape uses deprecated argument body`);
@@ -877,6 +879,7 @@ ${e.message}
           const hostedParticleLiteral = hostedParticle.clone().toLiteral();
           let particleSpecHash = await digest(JSON.stringify(hostedParticleLiteral));
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
+          hostedParticleLiteral.id = id;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
           let store = await manifest.createStore(connection.type, null, id, []);
@@ -884,7 +887,7 @@ ${e.message}
           // Maybe a different function call in the storageEngine? Alternatively another
           // param to the connect/construct functions?
           store.referenceMode = false;
-          store.set(hostedParticleLiteral);
+          await store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
 
@@ -960,7 +963,7 @@ ${e.message}
       recipe.description = items.description.description;
     }
   }
-  resolveReference(name) {
+  resolveTypeName(name) {
     let schema = this.findSchemaByName(name);
     if (schema) {
       return {schema};
@@ -1055,7 +1058,7 @@ ${e.message}
     // TODO(shans): Eventually the actual type will need to be part of the determination too.
     // TODO(shans): Need to take into account the possibility of multiple storage key mappings
     // at some point.
-    if (entities.length > 0 && (entities[0].rawData && entities[0].rawData.storageKey)) {
+    if (entities.length > 0 && entities[0].rawData && entities[0].rawData.storageKey) {
       let storageKey = entities[0].rawData.storageKey;
       storageKey = manifest.findStoreByName(storageKey).storageKey;
       entities = entities.map(({id, rawData}) => ({id, storageKey}));

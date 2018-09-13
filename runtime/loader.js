@@ -15,6 +15,7 @@ import {assert} from '../platform/assert-web.js';
 import {Particle} from './particle.js';
 import {DomParticle} from './dom-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
+import {newClientReference} from './ts-build/reference.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
@@ -94,8 +95,13 @@ export class Loader {
     return this.unwrapParticle(result[0]);
   }
 
+  setParticleExecutionContext(pec) {
+    this._pec = pec;
+  }
+
   unwrapParticle(particleWrapper) {
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, html});
+    assert(this._pec);
+    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: newClientReference(this._pec), html});
   }
 
 }

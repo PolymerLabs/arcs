@@ -65,13 +65,34 @@ describe('in-memory', function() {
       let key = newStoreKey('variable');
       let var1 = await storage.construct('test0', BarType, key);
       let var2 = await storage.connect('test0', BarType, var1.storageKey);
-      var1.set({id: 'id1', value: 'value1'});
-      var2.set({id: 'id2', value: 'value2'});
-      await synchronized(var1, var2);
+      await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
     });
 
-    it.skip('supports pointer dereferences', async () => {
+    it('enables referenceMode by default', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      let arc = new Arc({id: 'test'});
+      let storage = new StorageProviderFactory(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('variablePointer');
+  
+      let var1 = await storage.construct('test0', BarType, key1);
+      await var1.set({id: 'id1', value: 'underlying'});
+      
+      let result = await var1.get();
+      assert.equal('underlying', result.value);
+
+      assert.isTrue(var1.referenceMode);
+      assert.isNotNull(var1.backingStore);
+
+      assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
+    });
+
+    it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -83,17 +104,13 @@ describe('in-memory', function() {
       let key1 = newStoreKey('variablePointer');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
-      await var1.set({id: 'id1', value: 'underlying'});
+      await var1.set({id: 'id1', storageKey: 'underlying'});
       
       let result = await var1.get();
-      assert.equal('underlying', result.value);
+      assert.equal('underlying', result.storageKey);
 
-      let underlyingValue = await storage._storageInstances['in-memory']._typeMap.get(BarType).get('id1');
-      assert.equal('underlying', underlyingValue.value);
-
-      // force variable to reconnect to underlying storage
-      var1._backingStore = null;
-      assert.equal('underlying', (await var1.get()).value);
+      assert.isFalse(var1.referenceMode);
+      assert.isNull(var1.backingStore);
     });
   });
 
@@ -172,7 +189,33 @@ describe('in-memory', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
-    it.skip('supports pointer dereferences', async () => {
+    it('enables referenceMode by default', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      let arc = new Arc({id: 'test'});
+      let storage = new StorageProviderFactory(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('variablePointer');
+  
+      let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+  
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
+      
+      let result = await collection1.get('id1');
+      assert.equal('value1', result.value);
+      result = await collection1.get('id2');
+      assert.equal('value2', result.value);
+
+      assert.isTrue(collection1.referenceMode);
+      assert.isNotNull(collection1.backingStore);
+
+      assert.deepEqual(await collection1.backingStore.toList(), await collection1.toList());
+    });
+    it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -185,23 +228,16 @@ describe('in-memory', function() {
   
       let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
   
-      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
-      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
+      await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.value);
+      assert.equal('value1', result.storageKey);
       result = await collection1.get('id2');
-      assert.equal('value2', result.value);
+      assert.equal('value2', result.storageKey);
 
-      result = await collection1.toList();
-      let underlyingValues = await storage._storageInstances['in-memory']._typeMap.get(BarType);
-      assert.sameDeepMembers(result, await underlyingValues.toList());
-
-      // force collection to reconnect to Entity storage
-      collection1._backingStore = null;
-
-      result = await collection1.toList();
-      assert.sameDeepMembers(result, await underlyingValues.toList());
+      assert.isFalse(collection1.referenceMode);
+      assert.isNull(collection1.backingStore);
     }); 
   });
 
@@ -261,8 +297,8 @@ describe('in-memory', function() {
       await collection.store({id: 'p07', data: 'vp07'}, ['kXX']);
       await collection.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let checkNext = async (cursor, ids) => {
-        let {value, done} = await cursor.next();
+      let checkNext = async (cursorId, ids) => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isFalse(done);
         assert.equal(value.length, ids.length);
         for (let i = 0; i < value.length; i++) {
@@ -271,33 +307,33 @@ describe('in-memory', function() {
         }
       };
 
-      let checkDone = async cursor => {
-        let {value, done} = await cursor.next();
+      let checkDone = async cursorId => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isTrue(done);
         assert.isUndefined(value);
       };
 
-      let cursor1 = await collection.stream(6);
-      await checkNext(cursor1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
+      let cursorId1 = await collection.stream(6);
+      await checkNext(cursorId1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
 
       await collection.store({id: 'f11', data: 'vf11'}, ['kf11']);
       await collection.remove('g08');
       await collection.remove('z03');
 
       // Interleave another cursor at a different version.
-      let cursor2 = await collection.stream(20);
-      assert.equal(cursor2.version, cursor1.version + 3);
-      await checkNext(cursor2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
+      let cursorId2 = await collection.stream(20);
+      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
+      await checkNext(cursorId2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
       
-      await checkNext(cursor1, ['x09', 'o10', 'p07', 'q04']);
-      await checkDone(cursor1);
-      await checkDone(cursor2);
+      await checkNext(cursorId1, ['x09', 'o10', 'p07', 'q04']);
+      await checkDone(cursorId1);
+      await checkDone(cursorId2);
 
       // Verify close().
-      let cursor3 = await collection.stream(3);
-      await checkNext(cursor3, ['r01', 'i02', 'h05']);
-      await cursor3.close();
-      await checkDone(cursor3);
+      let cursorId3 = await collection.stream(3);
+      await checkNext(cursorId3, ['r01', 'i02', 'h05']);
+      await collection.cursorClose(cursorId3);
+      await checkDone(cursorId3);
     });
   });
 });

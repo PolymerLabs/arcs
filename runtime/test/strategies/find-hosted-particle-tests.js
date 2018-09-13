@@ -14,7 +14,6 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Loader} from '../../loader.js';
 import {Arc} from '../../arc.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
-import {handleFor} from '../../handle.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {
@@ -199,6 +198,7 @@ describe('FindHostedParticle', function() {
     let results = await strategy.generate({generated: [{result: inRecipe}]});
     assert.lengthOf(results, 1);
     let outRecipe = results[0].result;
+
     let particleSpecHandle = outRecipe.handles.find(h => h.fate === 'copy');
     assert(particleSpecHandle.id.endsWith(':test:particle-literal:TestParticle'));
     assert(outRecipe.isResolved());
@@ -206,8 +206,9 @@ describe('FindHostedParticle', function() {
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
     let particleSpecStore = arc._stores.find(store => store.type.isInterface);
-    assert.deepEqual(
-        manifest.findParticleByName('TestParticle').toLiteral(),
-        await particleSpecStore.get());
+    const particleSpec = await particleSpecStore.get();
+    assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
+    delete particleSpec.id;
+    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
   });
 });

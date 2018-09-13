@@ -13,8 +13,8 @@ defineParticle(({DomParticle}) => {
   let template = `
 <template participant>
   <a-entity name$="{{subId}}" position$="{{position}}" scale$="{{scale}}" rotation$="{{rotation}}">
-    <a-entity slotid="mouth" subid="{{subId}}"></a-entity>
-    <a-entity slotid="topofhead" subid="{{subId}}"></a-entity>
+    <a-entity slotid="mouth" subid$="{{subId}}"></a-entity>
+    <a-entity slotid="topofhead" subid$="{{subId}}"></a-entity>
   </a-entity>
 </template>
 

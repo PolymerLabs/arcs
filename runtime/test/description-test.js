@@ -643,7 +643,7 @@ recipe
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
-      arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), pattern: recipe.pattern});
+      arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), patterns: recipe.patterns});
       let description = new Description(arc);
 
       assert.equal(expectedDescription, await description.getRecipeSuggestion());
@@ -665,6 +665,55 @@ schema GitHubDash`));
     assert.equal('My TV Show', manifest.findTypeByName('MyTVShow').toPrettyString());
     assert.equal('My TV', manifest.findTypeByName('MyTV').toPrettyString());
     assert.equal('Git Hub Dash', manifest.findTypeByName('GitHubDash').toPrettyString());
+  });
+
+  it('fails gracefully (no asserts)', async () => {
+    let verifyNoAssert = async (manifestStr, expectedSuggestion) => {
+      let manifest = (await Manifest.parse(manifestStr));
+      assert.lengthOf(manifest.recipes, 1);
+      let recipe = manifest.recipes[0];
+      let arc = createTestArc();
+      recipe.normalize();
+      assert.isTrue(recipe.isResolved());
+      arc._activeRecipe = recipe;
+      let description = new Description(arc);
+      assert.equal(expectedSuggestion, await description.getArcDescription());
+    };
+
+    await verifyNoAssert(`
+      particle Foo in 'foo.js'
+      recipe
+        Foo
+        description \`\${Bar.things}\`
+    `, undefined);
+
+    await verifyNoAssert(`
+      particle Foo in 'foo.js'
+      recipe
+        Foo
+        description \`Hello \${Bar.things}\`
+    `, `Hello `);
+
+    await verifyNoAssert(`
+      particle Foo in 'foo.js'
+        description \`\${bar}\`
+      recipe
+        Foo
+    `, undefined);
+
+    await verifyNoAssert(`
+      particle Foo in 'foo.js'
+        description \`\${bar.baz.boo}\`
+      recipe
+        Foo
+    `, undefined);
+
+    await verifyNoAssert(`
+      particle Foo in 'foo.js'
+      recipe
+        Foo
+        description \`\${foo.bar}\`
+    `, undefined);
   });
 });
 

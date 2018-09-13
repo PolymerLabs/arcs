@@ -26,7 +26,8 @@ export class CoalesceRecipes extends Strategy {
   get arc() { return this._arc; }
 
   getResults(inputParams) {
-    return inputParams.terminal.filter(result => !result.result.isResolved());
+    // Coalescing for terminal recipes that are either unresolved recipes or have no UI.
+    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length == 0);
   }
 
   async generate(inputParams) {
@@ -70,7 +71,7 @@ export class CoalesceRecipes extends Strategy {
             let mergedSlot = cloneMap.get(providedSlot);
             slotConnection.connectToSlot(mergedSlot);
 
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -133,7 +134,7 @@ export class CoalesceRecipes extends Strategy {
               recipe.removeHandle(disconnectedHandle);
             }
 
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -193,7 +194,7 @@ export class CoalesceRecipes extends Strategy {
             cloneMap.get(otherHandle).mergeInto(handle);
 
             // Connect all other connectable handles.
-            this._connectOtherHandles(otherToHandle, cloneMap);
+            this._connectOtherHandles(otherToHandle, cloneMap, true);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -208,9 +209,38 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
 
-      _connectOtherHandles(otherToHandle, cloneMap) {
-        otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
+      _connectOtherHandles(otherToHandle, cloneMap, verifyTypes) {
+        otherToHandle.forEach((otherHandle, handle) => {
+          let otherHandleClone = cloneMap.get(otherHandle);
+
+          // For coalescing that was triggered by handle coalescing (vs slot or slot connection)
+          // once the main handle (one that triggered coalescing) was coalesced, types may have changed.
+          // Need to verify all the type information for the "other" coalescable handles is still valid.
+
+          // TODO(mmandlis): This is relying on only ever considering a single "other" handles to coalesce,
+          // so the handle either is still a valid match or not.
+          // In order to do it right for multiple handles, we need to try ALL handles,
+          // then fallback to all valid N-1 combinations, then N-2 etc.
+          if (verifyTypes) {
+            if (!this._reverifyHandleTypes(handle, otherHandleClone)) {
+              return;
+            }
+          }
+
+          otherHandleClone.mergeInto(handle);
+        });
       }
+
+      // Returns true, if both handles have types that can be coalesced.
+      _reverifyHandleTypes(handle, otherHandle) {
+        assert(handle.recipe == otherHandle.recipe);
+        let cloneMap = new Map();
+        let recipeClone = handle.recipe.clone(cloneMap);
+        recipeClone.normalize();
+        return Handle.effectiveType(cloneMap.get(handle).type,
+            [...cloneMap.get(handle).connections, ...cloneMap.get(otherHandle).connections]);
+      }
+
     }(Walker.Independent), this);
   }
 }

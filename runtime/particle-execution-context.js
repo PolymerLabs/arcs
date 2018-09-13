@@ -21,8 +21,10 @@ export class ParticleExecutionContext {
     this._idBase = idBase;
     this._nextLocalID = 0;
     this._loader = loader;
+    loader.setParticleExecutionContext(this);
     this._pendingLoads = [];
     this._scheduler = new StorageProxyScheduler();
+    this._keyedProxies = {};
 
     /*
      * This code ensures that the relevant types are known
@@ -37,6 +39,13 @@ export class ParticleExecutionContext {
     this._apiPort.onDefineHandle = ({type, identifier, name}) => {
       return new StorageProxy(identifier, type, this._apiPort, this, this._scheduler, name);
     };
+
+    this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback, storageKey}) => {
+      let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
+      proxy.storageKey = storageKey;
+      return [proxy, () => callback(proxy, storageKey)];
+    };
+
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
@@ -147,8 +156,8 @@ export class ParticleExecutionContext {
       createHandle: function(type, name, hostParticle) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let handle = handleFor(proxy, proxy.type.isCollection, name, particleId);
-            handle.entityClass = (proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
+            let handle = handleFor(proxy, name, particleId);
+            handle.entityClass = (proxy.type.getContainedType() || proxy.type).entitySchema.entityClass();
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -186,6 +195,18 @@ export class ParticleExecutionContext {
     };
   }
 
+  getStorageProxy(storageKey, type) {
+    if (!this._keyedProxies[storageKey]) {      
+      this._keyedProxies[storageKey] = new Promise((resolve, reject) => {
+        this._apiPort.GetBackingStore({storageKey, type, callback: (proxy, storageKey) => {
+          this._keyedProxies[storageKey] = proxy;
+          resolve(proxy);
+        }});
+      });
+      return this._keyedProxies[storageKey];
+    }
+  }
+
   defaultCapabilitySet() {
     return {
       constructInnerArc: particle => {
@@ -211,8 +232,8 @@ export class ParticleExecutionContext {
     let registerList = [];
     proxies.forEach((proxy, name) => {
       let connSpec = spec.connectionMap.get(name);
-      let handle = handleFor(proxy, proxy.type.isCollection, name, id, connSpec.isInput, connSpec.isOutput);
-      let type = proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type;
+      let handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
+      let type = proxy.type.getContainedType() || proxy.type;
       if (type.isEntity) {
         handle.entityClass = type.entitySchema.entityClass();
       }

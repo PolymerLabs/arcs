@@ -86,7 +86,29 @@ describe('firebase', function() {
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });
-    it.skip('supports pointer dereferences', async () => {
+    it('enables referenceMode by default', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('varPtr');
+  
+      let var1 = await storage.construct('test0', BarType, key1);
+      await var1.set({id: 'id1', value: 'underlying'});
+      
+      let result = await var1.get();
+      assert.equal('underlying', result.value);
+
+      assert.isTrue(var1.referenceMode);
+      assert.isNotNull(var1.backingStore);
+
+      assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
+    });
+    it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -98,17 +120,13 @@ describe('firebase', function() {
       let key1 = newStoreKey('varPtr');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
-      await var1.set({id: 'id1', value: 'underlying'});
+      await var1.set({id: 'id1', storageKey: 'underlying'});
 
       let result = await var1.get();
-      assert.equal('underlying', result.value);
+      assert.equal('underlying', result.storageKey);
 
-      let underlyingValue = await storage._storageInstances['firebase'].baseStores.get(BarType).get('id1');
-      assert.equal('underlying', underlyingValue.value);
-
-      // force variable to reconnect to underlying storage
-      var1._backingStore = null;
-      assert.equal('underlying', (await var1.get()).value);
+      assert.isFalse(var1.referenceMode);
+      assert.isNull(var1.backingStore);
     });
   });
 
@@ -187,7 +205,34 @@ describe('firebase', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
-    it.skip('supports pointer dereferences', async () => {
+    it('enables referenceMode by default', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('colPtr');
+  
+      let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+  
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
+      
+      let result = await collection1.get('id1');
+      assert.equal('value1', result.value);
+      result = await collection1.get('id2');
+      assert.equal('value2', result.value);
+
+      assert.isTrue(collection1.referenceMode);
+      assert.isNotNull(collection1.backingStore);
+
+      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
+      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
+    });
+    it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
@@ -200,24 +245,16 @@ describe('firebase', function() {
   
       let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
   
-      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
-      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
+      await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.value);
+      assert.equal('value1', result.storageKey);
       result = await collection1.get('id2');
-      assert.equal('value2', result.value);
-      
-      result = await collection1.toList();
-      let underlyingValues = await storage._storageInstances['firebase'].baseStores.get(BarType);
+      assert.equal('value2', result.storageKey);
 
-      assert.sameDeepMembers(result, await underlyingValues.toList());
-
-      // force collection to reconnect to Entity storage
-      collection1._backingStore = null;
-
-      result = await collection1.toList();
-      assert.sameDeepMembers(result, await underlyingValues.toList());
+      assert.isFalse(collection1.referenceMode);
+      assert.isNull(collection1.backingStore);
     }); 
   });
 
@@ -298,8 +335,8 @@ describe('firebase', function() {
       await store('r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
  
       // Verifies that cursor.next() returns items matching the given list of ids (in order).
-      let checkNext = async (cursor, ids) => {
-        let {value, done} = await cursor.next();
+      let checkNext = async (cursorId, ids) => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isFalse(done);
         assert.equal(value.length, ids.length);
         for (let i = 0; i < value.length; i++) {
@@ -309,19 +346,19 @@ describe('firebase', function() {
       };
 
       // Verifies that cursor does not contain any more items.
-      let checkDone = async cursor => {
-        let {value, done} = await cursor.next();
+      let checkDone = async cursorId => {
+        let {value, done} = await collection.cursorNext(cursorId);
         assert.isTrue(done);
         assert.isUndefined(value);
       };
 
       // Verifies a full streamed read with the given page size.
       let checkStream = async (pageSize, ...idRows) => {
-        let cursor = await collection.stream(pageSize);
+        let cursorId = await collection.stream(pageSize);
         for (let ids of idRows) {
-          await checkNext(cursor, ids);
+          await checkNext(cursorId, ids);
         }
-        await checkDone(cursor);
+        await checkDone(cursorId);
       };
 
       // Test streamed reads with various page sizes.
@@ -334,18 +371,18 @@ describe('firebase', function() {
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cursor1 = await collection.stream(4);
+      let cursorId1 = await collection.stream(4);
 
       // Remove the item at the start of the first page and another from a later page.
       await collection.remove('r01');
       await collection.remove('p07');
       await store('t15');
-      await checkNext(cursor1, ['i02', 'z03', 'q04', 'h05']);
+      await checkNext(cursorId1, ['i02', 'z03', 'q04', 'h05']);
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cursor2 = await collection.stream(5);
-      assert.equal(cursor2.version, cursor1.version + 3);
+      let cursorId2 = await collection.stream(5);
+      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
       await store('s16');
 
       // For cursor1: remove one item from the page just returned and two at the edges of the next page.
@@ -353,37 +390,91 @@ describe('firebase', function() {
       await collection.remove('y06');
       await collection.remove('f11');
 
-      await checkNext(cursor2, ['i02', 'q04', 'h05', 'g08', 'x09']);
-      await checkNext(cursor1, ['g08', 'x09', 'o10', 'w12']);
+      await checkNext(cursorId2, ['i02', 'q04', 'h05', 'g08', 'x09']);
+      await checkNext(cursorId1, ['g08', 'x09', 'o10', 'w12']);
       
       // This uses up the remaining non-removed items for cursor2 ---> [*]
-      await checkNext(cursor2, ['o10', 'w12', 'e13', 'j14', 't15']);
+      await checkNext(cursorId2, ['o10', 'w12', 'e13', 'j14', 't15']);
 
       // For cursor1: the next page should include the two remaining items and two of the previously
       // removed ones (which are returned in reverse order of removal).
-      await checkNext(cursor1, ['e13', 'j14', 'f11', 'y06']);
+      await checkNext(cursorId1, ['e13', 'j14', 'f11', 'y06']);
 
       // Remove another previously-returned item; should have no effect on either cursor.
       await collection.remove('x09');
-      await checkNext(cursor1, ['p07', 'r01']);
+      await checkNext(cursorId1, ['p07', 'r01']);
       await store('m17');
-      await checkDone(cursor1);
+      await checkDone(cursorId1);
 
       // Streaming again should be up-to-date (even with cursor2 still in flight).
       await checkStream(12, ['i02', 'q04', 'h05', 'g08', 'o10', 'w12', 'e13', 'j14', 't15', 's16', 'm17']);
 
       // [*] ---> so that this page is only removed items.
-      await checkNext(cursor2, ['f11', 'y06', 'z03']);
-      await checkDone(cursor2);
+      await checkNext(cursorId2, ['f11', 'y06', 'z03']);
+      await checkDone(cursorId2);
 
       // Repeated next() calls on a finished cursor should be safe.
-      await checkDone(cursor2);
+      await checkDone(cursorId2);
 
       // close() should terminate a stream.
-      let cursor3 = await collection.stream(3);
-      await checkNext(cursor3, ['i02', 'q04', 'h05']);
-      await cursor3.close();
-      await checkDone(cursor3);
+      let cursorId3 = await collection.stream(3);
+      await checkNext(cursorId3, ['i02', 'q04', 'h05']);
+      await collection.cursorClose(cursorId3);
+      await checkDone(cursorId3);
     }).timeout(20000);
+  });
+
+  // These tests use data manually added to our test firebase db.
+  describe('synthetic', () => {
+    function getKey(manifestName) {
+      let fbKey = testUrl.replace('firebase-storage-test', `synthetic-storage-data/${manifestName}`);
+      return `synthetic://arc/handles/${fbKey}`;
+    }
+
+    it('simple test', async () => {
+      let storage = createStorage('arc-id');
+      let synth = await storage.connect('id1', null, getKey('simple-manifest'));
+      let list = await synth.toList();
+      assert.equal(list.length, 1);
+      let handle = list[0];
+      assert.equal(handle.storageKey, 'firebase://xxx.firebaseio.com/yyy');
+      let type = handle.type.getContainedType();
+      assert(type && type.isEntity);
+      assert.equal(type.entitySchema.name, 'Thing');
+      assert.deepEqual(handle.tags, ['taggy']);
+    });
+
+    it('error test', async () => {
+      let storage = createStorage('arc-id');
+      let synth1 = await storage.connect('not-there', null, getKey('not-there'));
+      let list1 = await synth1.toList();
+      assert.isEmpty(list1, 'synthetic handle list should empty for non-existent storageKey');
+
+      let synth2 = await storage.connect('bad-manifest', null, getKey('bad-manifest'));
+      let list2 = await synth2.toList();
+      assert.isEmpty(list2, 'synthetic handle list should empty for invalid manifests');
+
+      let synth3 = await storage.connect('no-recipe', null, getKey('no-recipe'));
+      let list3 = await synth3.toList();
+      assert.isEmpty(list3, 'synthetic handle list should empty for manifests with no active recipe');
+
+      let synth4 = await storage.connect('no-handles', null, getKey('no-handles'));
+      let list4 = await synth4.toList();
+      assert.isEmpty(list4, 'synthetic handle list should empty for manifests with no handles');
+    });
+
+    it('large test', async () => {
+      let storage = createStorage('arc-id');
+      let synth = await storage.connect('id1', null, getKey('large-manifest'));
+      let list = await synth.toList();
+      assert(list.length > 0, 'synthetic handle list should not be empty');
+      for (let item of list) {
+        assert(item.storageKey.startsWith('firebase:'));
+        assert(item.type.constructor.name == 'Type');
+        if (item.tags.length > 0) {
+          assert.isString(item.tags[0]);
+        }
+      }
+    });
   });
 });

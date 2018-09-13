@@ -23,7 +23,7 @@ import {ParticleSpec} from '../particle-spec.js';
 
 describe('particle-shape-loading', function() {
 
-  it('loads shapes into particles', async () => {
+  it('loads interfaces into particles', async () => {
     let loader = new StubLoader({
       'outer-particle.js': `
           'use strict';
@@ -89,11 +89,10 @@ describe('particle-shape-loading', function() {
     });
 
     let shapeStore = await arc.createStore(shapeType);
-    shapeStore.set(manifest.particles[0].toLiteral());
+    await shapeStore.set(manifest.particles[0].toLiteral());
     let outStore = await arc.createStore(barType);
     let inStore = await arc.createStore(fooType);
-    let Foo = manifest.schemas.Foo.entityClass();
-    inStore.set({id: 'id', rawData: {value: 'a foo'}});
+    await inStore.set({id: 'id', rawData: {value: 'a foo'}});
 
     let recipe = new Recipe();
     let particle = recipe.newParticle('outerParticle');
@@ -148,8 +147,6 @@ describe('particle-shape-loading', function() {
     let fooType = manifest.findTypeByName('Foo');
     let barType = manifest.findTypeByName('Bar');
 
-    let shapeType = manifest.findTypeByName('TestShape');
-
     let recipe = manifest.recipes[0];
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
@@ -157,7 +154,7 @@ describe('particle-shape-loading', function() {
 
     await arc.instantiate(recipe);
 
-    arc.findStoresByType(fooType)[0].set({id: 'id', rawData: {value: 'a foo'}});
+    await arc.findStoresByType(fooType)[0].set({id: 'id', rawData: {value: 'a foo'}});
 
     await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });

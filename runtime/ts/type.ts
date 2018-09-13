@@ -103,6 +103,11 @@ export class Type {
     return new Type('Reference', reference);
   }
 
+  // Provided only to get a Type object for SyntheticStorage; do not use otherwise.
+  static newSynthesized() {
+    return new Type('Synthesized', 1);
+  }
+
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     if (this.isVariable) {
       const name = this.variable.name;
@@ -152,6 +157,9 @@ export class Type {
     if (type1.isBigCollection && type2.isBigCollection) {
       return Type.unwrapPair(type1.bigCollectionType, type2.bigCollectionType);
     }
+    if (type1.isReference && type2.isReference) {
+      return Type.unwrapPair(type1.referenceReferredType, type2.referenceReferredType);
+    }
     return [type1, type2];
   }
 
@@ -191,19 +199,22 @@ export class Type {
     return this.collectionType;
   }
 
-  elementTypeIfCollection() {
+  getContainedType() {
     if (this.isCollection) {
       return this.collectionType;
     }
     if (this.isBigCollection) {
       return this.bigCollectionType;
     }
+    if (this.isReference) {
+      return this.referenceReferredType;
+    }
     return null;
   }
 
   // TODO: naming is hard
-  isSomeSortOfCollection() {
-    return this.isCollection || this.isBigCollection;
+  isTypeContainer() {
+    return this.isCollection || this.isBigCollection || this.isReference;
   }
 
   collectionOf() {
@@ -224,6 +235,11 @@ export class Type {
       const primitiveType = this.bigCollectionType;
       const resolvedPrimitiveType = primitiveType.resolvedType();
       return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.bigCollectionOf() : this;
+    }
+    if (this.isReference) {
+      const primitiveType = this.referenceReferredType;
+      const resolvedPrimitiveType = primitiveType.resolvedType();
+      return (primitiveType !== resolvedPrimitiveType) ? Type.newReference(resolvedPrimitiveType) : this;
     }
     if (this.isVariable) {
       const resolution = this.variable.resolution;
@@ -258,6 +274,9 @@ export class Type {
     if (this.isBigCollection) {
       return this.bigCollectionType.canEnsureResolved();
     }
+    if (this.isReference) {
+      return this.referenceReferredType.canEnsureResolved();
+    }
     return true;
   }
 
@@ -273,6 +292,9 @@ export class Type {
     }
     if (this.isBigCollection) {
       return this.bigCollectionType.maybeEnsureResolved();
+    }
+    if (this.isReference) {
+      return this.referenceReferredType.maybeEnsureResolved();
     }
     return true;
   }
@@ -299,6 +321,9 @@ export class Type {
     }
     if (this.isInterface) {
       return Type.newInterface(this.interfaceShape.canReadSubset);
+    }
+    if (this.isReference) {
+      return this.referenceReferredType.canReadSubset;
     }
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
@@ -426,11 +451,14 @@ export class Type {
       case 'Entity':
         return Schema.fromLiteral;
       case 'Collection':
+      case 'BigCollection':
         return Type.fromLiteral;
       case 'Tuple':
         return TupleFields.fromLiteral;
       case 'Variable':
         return TypeVariable.fromLiteral;
+      case 'Reference':
+        return Type.fromLiteral;
       default:
         return a => a;
     }
@@ -477,6 +505,9 @@ export class Type {
     if (this.isSlot) {
       return 'Slot';
     }
+    if (this.isReference) {
+      return 'Reference<' + this.referenceReferredType.toString() + '>';
+    }
     throw new Error(`Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
@@ -501,7 +532,7 @@ export class Type {
     // Try extract the description from schema spec.
     const entitySchema = this.getEntitySchema();
     if (entitySchema) {
-      if (this.isSomeSortOfCollection() && entitySchema.description.plural) {
+      if (this.isTypeContainer() && entitySchema.description.plural) {
         return entitySchema.description.plural;
       }
       if (this.isEntity && entitySchema.description.pattern) {
@@ -513,7 +544,6 @@ export class Type {
       return JSON.stringify(this.data);
     }
     if (this.isCollection) {
-      // TODO: s/List/Collection/
       return `${this.collectionType.toPrettyString()} List`;
     }
     if (this.isBigCollection) {
@@ -543,6 +573,9 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Slot');
 addType('Reference', 'referredType');
+
+// Special case for SyntheticStorage, not a real Type in the usual sense.
+addType('Synthesized');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';

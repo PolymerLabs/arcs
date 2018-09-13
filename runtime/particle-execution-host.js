@@ -56,11 +56,33 @@ export class ParticleExecutionHost {
     this._apiPort.onHandleStore = ({handle, data: {value, keys}, particleId}) => handle.store(value, keys, particleId);
     this._apiPort.onHandleRemove = ({handle, data: {id, keys}, particleId}) => handle.remove(id, keys, particleId);
 
+    this._apiPort.onHandleStream = async ({handle, callback, pageSize}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize)});
+    };
+
+    this._apiPort.onStreamCursorNext = async ({handle, callback, cursorId}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.cursorNext(cursorId)});
+    };
+
+    this._apiPort.onStreamCursorClose = ({handle, cursorId}) => handle.cursorClose(cursorId);
+
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
         this._idlePromise = undefined;
         this._idleResolve(relevance);
       }
+    };
+
+    this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
+      if (!storageKey) {
+        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'in-memory');
+      }
+      let store = await this._arc._storageProviderFactory.baseStorageFor(type, storageKey);
+      // TODO(shans): THIS IS NOT SAFE!
+      //
+      // Without an auditor on the runtime side that inspects what is being fetched from
+      // this store, particles with a reference can access any data of that reference's type.
+      this._apiPort.GetBackingStoreCallback(store, {type: type.collectionOf(), name: type.toString(), callback, id: store.id, storageKey});
     };
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {

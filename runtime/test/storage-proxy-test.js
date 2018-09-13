@@ -207,7 +207,7 @@ class TestEngine {
   }
 
   newHandle(store, proxy, particle, canRead, canWrite) {
-    let handle = handleFor(proxy, store.type.isCollection, store.name, particle.id, canRead, canWrite);
+    let handle = handleFor(proxy, store.name, particle.id, canRead, canWrite);
     handle.entityClass = this.schema.entityClass();
     return handle;
   }
@@ -351,7 +351,6 @@ describe('storage-proxy', function() {
 
     testCollection.remove('id1');
     await realCollection.remove('id1');
-    console.log(testEvent);
     assert.deepEqual(testEvent, realEvent);
   });
 

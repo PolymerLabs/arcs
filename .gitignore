@@ -1,4 +1,5 @@
 **/node_modules
+**/dist
 **/*.swp
 **/*.swo
 **/.DS_Store
@@ -20,3 +21,6 @@ enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
 runtime/ts-build
+.vscode
+devtools/build
+server/log.txt

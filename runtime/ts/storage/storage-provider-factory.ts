@@ -6,15 +6,23 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
 import {InMemoryStorage} from './in-memory-storage.js';
 import {FirebaseStorage} from './firebase-storage.js';
+import {SyntheticStorage} from './synthetic-storage.js';
 import {Id} from '../id.js';
+import {Type} from '../type.js';
+import {KeyBase} from './key-base.js';
 
 export class StorageProviderFactory {
-  _storageInstances: {[index: string]: InMemoryStorage | FirebaseStorage};
+  _storageInstances: {[index: string]: StorageBase};
 
-  constructor(private readonly arcId:Id) {
-    this._storageInstances = {'in-memory': new InMemoryStorage(arcId), 'firebase': new FirebaseStorage(arcId)};
+  constructor(private readonly arcId: Id) {
+    // TODO: Pass this factory into storage objects instead of linking them directly together.
+    // This needs changes to the StorageBase API to facilitate the FirebaseStorage.open functionality.
+    const firebase = new FirebaseStorage(arcId);
+    const synthetic = new SyntheticStorage(arcId, firebase);
+    this._storageInstances = {'in-memory': new InMemoryStorage(arcId), firebase, synthetic};
   }
 
   _storageForKey(key) {
@@ -22,23 +30,25 @@ export class StorageProviderFactory {
     return this._storageInstances[protocol];
   }
 
-  async share(id, type, key) {
-    return this._storageForKey(key).share(id, type, key);
-  }
-
-  async construct(id, type, keyFragment) {
-    const storage = await this._storageForKey(keyFragment).construct(id, type, keyFragment);
+  async construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase> {
     // TODO(shans): don't use reference mode once adapters are implemented
-    return storage;
+    return await this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }
 
-  async connect(id, type, key) {
-    const storage = await this._storageForKey(key).connect(id, type, key);
+  async connect(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
     // TODO(shans): don't use reference mode once adapters are implemented
-    return storage;
+    return await this._storageForKey(key).connect(id, type, key);
   }
 
-  parseStringAsKey(s: string) {
+  async baseStorageFor(type: Type, keyString: string) : Promise<StorageProviderBase> {
+    return await this._storageForKey(keyString).baseStorageFor(type, keyString);
+  }
+
+  baseStorageKey(type: Type, keyString: string) : string {
+    return this._storageForKey(keyString).baseStorageKey(type, keyString);
+  }
+
+  parseStringAsKey(s: string) : KeyBase {
     return this._storageForKey(s).parseStringAsKey(s);
   }
 

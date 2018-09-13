@@ -12,22 +12,14 @@ Converts connection constraints (eg ParticleA.handleA -> particleB.handleB) in t
 Note: arrow direction are ignored at this time.<br/>
 [convert-constraints-to-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/convert-constraints-to-connections.js)
 
-## AssignHandlesByTagAndType
-Maps recipe handle with “use” fate to a local handle in the arc matching type and tags.<br/>
-[assign-handles-by-tag-and-type.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-handles-by-tag-and-type.js)
+## AssignHandles
+Maps recipe handle to a local or remote store with a matching type and tags.<br/>
+[assign-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-handles.js)
 
-## AssignRemoteHandles
-Maps recipe handle with “map” fate to a remote handle in the arc context matching type and tags.<br/>
-[assign-remote-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-remote-handles.js)
-
-## CopyRemoteHandles
-Maps recipe handle with “copy” fate to a remote handle in the arc context matching type and tags. On execution a new handle will be created and contents of the remote handle copied into it.<br/>
-[copy-remote-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/copy-remote-handles.js)
-
-## AddUseHandles
-Creates a new recipe handle with a “use” fate for each handle connection that is not bound to a recipe handle.
+## AddMissingHandles
+Creates a new recipe handle with a “?” fate for each handle connection that is not bound to a recipe handle.
 The strategy is not executed on recipes with outstanding constraints or with free handles (ie handle with no corresponding handle connections).<br/>
-[add-use-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-use-handles.js)
+[add-missing-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-missing-handles.js)
 
 ## CreateHandleGroup
 Creates a new 'create' handle connecting a broadest possible set of unresolved connections.
@@ -58,10 +50,6 @@ Each strategy is performed on leaf results of previously executed strategies. On
 
 Currently this strategy is used to execute SearchTokensToParticles together with GroupHandleConnections (that otherwise causes explosion of recipes in next generations).<br/>
 [combined-strategy.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/combined-strategy.js)
-
-## FallbackFate
-For user search query based recipes, if the handle’s fate wasn’t explicitly defined in the recipe and failed to resolve (while set to “use” by default), try to set the fate to “map” or “copy” (depending on the handle’s connections directions).<br/>
-[fallback-fate.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/fallback-fate.js)
 
 ## MatchParticleByVerb
 For recipe particles identified by verb rather than name, find particles matching the given verbs and names them.<br/>
