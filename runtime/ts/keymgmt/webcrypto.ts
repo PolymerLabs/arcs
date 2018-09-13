@@ -49,6 +49,15 @@ class WebCryptoStorableKey<T extends CryptoKey | CryptoKeyPair> {
 
 /**
  * An AES-GCM symmetric key in raw formatted encrypted using an RSA-OAEP public key.
+ * We use a symmetrically derived key for the shared secret instead of just random numbers. There are two
+ * reasons for this.
+ *
+ * First, WebCrypto treats CryptoKeys specially in that the material is can be setup to
+ * never be exposed the application, so when we generate these secrets, we can hide them from JS by declaring
+ * them non-extractable or usable for wrapping or encrypting only.
+ *
+ * Secondly, we eventually want to move off of RSA-OAEP and use ECDH, and ECDH doesn't support encryption or wrapping
+ * of randomly generated bits.
  */
 class WebCryptoWrappedKey implements WrappedKey {
     wrappedKeyData: Uint8Array;
