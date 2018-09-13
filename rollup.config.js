@@ -1,5 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
-import multiEntry from "rollup-plugin-multi-entry";
+import multiEntry from 'rollup-plugin-multi-entry';
 import ignore from 'rollup-plugin-ignore';
 
 import pkg from './package.json';
@@ -27,7 +27,7 @@ export default {
         // if nothing is returned, we fall back to default resolution
       }
     },
-    resolve({ jsnext: true, modulesOnly: true}),
+    resolve({jsnext: true, modulesOnly: true}),
     multiEntry()
   ]
 };
