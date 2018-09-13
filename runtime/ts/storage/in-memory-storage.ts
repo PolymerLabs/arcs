@@ -480,7 +480,7 @@ class InMemoryCursor {
     return {value: this.data.splice(0, this.pageSize), done: false};
   }
 
-  async close() {
+  close() {
     this.data = [];
   }
 }
@@ -517,7 +517,6 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
     data.index = this.version;
     data.value = value;
     keys.forEach(k => data.keys[k] = this.version);
-    return data;
   }
 
   async remove(id, keys, originatorId) {
@@ -545,11 +544,11 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
     return data;
   }
 
-  async cursorClose(cursorId) {
+  cursorClose(cursorId) {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);
-      await cursor.close();
+      cursor.close();
     }
   }
 
