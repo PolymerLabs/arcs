@@ -5,6 +5,13 @@ for Arc's Authentication, Identity, and Persona concepts. The underlying
 implementation may be backed by WebCrypto, Android native code, or
 other platform specific classes.
 
+<!--- TODO: Update this with consistent terminology
+  DeviceKeys (KEK/Key Encrytion Key)
+  CloudStorageKeys (Wrapped DEK/Decryption Key with KEK)
+  UserKey (Stable key fingerpint across all devices)
+  RecoveryKey
+  PersonaKey (used to identify users in sharing)
+-->
 ## Key Generation and Key Exchange
 
 There are four types of keys managed by _AKMS_, Storage keys,
