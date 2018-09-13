@@ -145,7 +145,7 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
         // reduce plans to descriptionText
         const suggestions = piped.map(metaplan => metaplan.descriptionText);
         log('piped suggestions', suggestions);
-        MiToast.foundSuggestions(suggestions);
+        MiToast.foundSuggestions(JSON.stringify(suggestions));
       }
     }
   }
