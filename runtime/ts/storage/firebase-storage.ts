@@ -89,6 +89,14 @@ class FirebaseKey extends KeyBase {
   }
 }
 
+// Firebase's 'once' API does not return a Promise; wrap it so we can await the invocation of the
+// callback that returns the snapshot.
+function getSnapshot(reference) : Promise<firebase.database.DataSnapshot> {
+  return new Promise(resolve => {
+    reference.once('value', snapshot => resolve(snapshot));
+  });
+}
+
 let _nextAppNameSuffix = 0;
 
 export class FirebaseStorage extends StorageBase {
@@ -106,7 +114,9 @@ export class FirebaseStorage extends StorageBase {
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<FirebaseStorageProvider> {
     let referenceMode = !type.isReference;
-    if (type.isTypeContainer() && type.getContainedType().isReference) {
+    if (type.isBigCollection) {
+      referenceMode = false;
+    } else if (type.isTypeContainer() && type.getContainedType().isReference) {
       referenceMode = false;
     }
     return this._join(id, type, keyFragment, false, referenceMode);
@@ -190,16 +200,12 @@ export class FirebaseStorage extends StorageBase {
     assert(!type.isCollection || !type.primitiveType().isVariable);
 
     const {fbKey, reference} = this.attach(keyString);
-    let enableReferenceMode = false;
-    let currentSnapshot: firebase.database.DataSnapshot;
-    await reference.once('value', snapshot => currentSnapshot = snapshot);
+    const currentSnapshot = await getSnapshot(reference);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
     }
 
-    if (currentSnapshot.exists() && currentSnapshot.val().referenceMode) {
-      enableReferenceMode = true;
-    }
+    let enableReferenceMode = currentSnapshot.exists() && currentSnapshot.val().referenceMode;
 
     if (shouldExist === false || (shouldExist === 'unknown' && currentSnapshot.exists() === false)) {
       const result = await reference.transaction(data => {
@@ -382,9 +388,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // Resolved when data is first available. The earlier of
     // * the initial value is supplied via firebase `reference.on`
     // * a value is written to the variable by a call to `set`.
-    this.initialized = new Promise(resolve => {
-      this.resolveInitialized = resolve;
-    });
+    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
@@ -1091,29 +1095,27 @@ class FirebaseCollection extends FirebaseStorageProvider {
 }
 
 
+enum CursorState {new, init, stream, removed, done}
 
-enum CursorState {'new', 'init', 'stream', 'removed', 'done'}
-
-// Cursor provides paginated reads over the contents of a BigCollection, locked to the version
-// of the collection at which the cursor was created.
+// FirebaseCursor provides paginated reads over the contents of a BigCollection, locked to the
+// version of the collection at which the cursor was created.
 //
 // This class technically conforms to the iterator protocol but is not marked as iterable because
 // next() is async, which is currently not supported by implicit iteration in Javascript.
 //
 // NOTE: entity mutation removes elements from a streamed read; the entity will be updated with an
 // index past the cursor's end but Firebase doesn't issue a child_removed event for it.
-class Cursor {
+class FirebaseCursor {
   private orderByIndex: firebase.database.Query;
   private readonly pageSize: number;
   private state: CursorState;
   private removed: {}[];
   private baseQuery: firebase.database.Query|null;
   private nextStart: string|null;
-  private end: string|null;
+  private end: number|null;
   private removedFn: ((removed: firebase.database.DataSnapshot) => void) | null;
 
   constructor(reference, pageSize) {
-    assert(!isNaN(pageSize) && pageSize > 0);
     this.orderByIndex = reference.child('items').orderByChild('index');
     this.pageSize = pageSize;
     this.state = CursorState.new;
@@ -1129,29 +1131,25 @@ class Cursor {
     assert(this.state === CursorState.new);
 
     // Retrieve the current last item to establish our streaming version.
-    await this.orderByIndex.limitToLast(1).once('value', snapshot => snapshot.forEach(entry => {
-      this.end = entry.val().index;
-      // don't cancel
-      return false;
-    }));
+    const lastEntry = await getSnapshot(this.orderByIndex.limitToLast(1));
+    lastEntry.forEach(entry => this.end = entry.val().index);
 
     // Read one past the page size each time to establish the starting index for the next page.
     this.baseQuery = this.orderByIndex.endAt(this.end).limitToFirst(this.pageSize + 1);
 
     // Attach a listener for removed items and capture any that occur ahead of our streaming
     // frame. These will be returned after the cursor reaches the item at this.end.
-    this.removedFn = snapshot => {
+    this.removedFn = this.orderByIndex.on('child_removed', snapshot => {
       if (snapshot.val().index <= this.end &&
           (this.nextStart === null || snapshot.val().index >= this.nextStart)) {
         this.removed.push(snapshot.val().value);
       }
-    };
-    await this.orderByIndex.on('child_removed', this.removedFn);
+    });
     this.state = CursorState.init;
   }
 
   // Returns the BigCollection version at which this cursor is reading.
-  get version(): string {
+  get version(): number {
     return this.end;
   }
 
@@ -1176,15 +1174,16 @@ class Cursor {
     const value = [];
     if (this.state === CursorState.stream) {
       this.nextStart = null;
-      await query.once('value', snapshot => snapshot.forEach(entry => {
+      const queryResults = await getSnapshot(query);
+      queryResults.forEach(entry => {
         if (value.length < this.pageSize) {
           value.push(entry.val().value);
         } else {
           this.nextStart = entry.val().index;
         }
-      }));
+      });
       if (this.nextStart === null) {
-        await this._detach();
+        this._detach();
         this.state = CursorState.removed;
       }
     }
@@ -1201,16 +1200,16 @@ class Cursor {
     return {value, done: false};
   }
 
-  // This must be called if a cursor is no longer needed but has not yet completed streaming
-  // (i.e. next() hasn't returned {done: true}).
-  async close() {
-    await this._detach();
+  // Terminates the streamed read. This must be called if a cursor is no longer needed but has not
+  // yet completed streaming (i.e. next() hasn't returned {done: true}).
+  close() {
+    this._detach();
     this.state = CursorState.done;
   }
 
-  async _detach() {
+  _detach() {
     if (this.removedFn) {
-      await this.orderByIndex.off('child_removed', this.removedFn);
+      this.orderByIndex.off('child_removed', this.removedFn);
       this.removedFn = null;
     }
   }
@@ -1221,8 +1220,8 @@ class Cursor {
 // get(), store() and remove() all call immediately through to the backing Firebase collection.
 // There is currently no option for bulk instantiations of these methods.
 //
-// The full collection can be read via a paginated Cursor returned by stream(). This views a
-// snapshot of the collection, locked to the version at which the cursor is created.
+// The full collection can be read via a paginated FirebaseCursor returned by stream(). This views
+// a snapshot of the collection, locked to the version at which the cursor is created.
 //
 // To get pagination working, we need to add an index field to items as they are stored, and that
 // field must be marked for indexing in the Firebase rules:
@@ -1236,24 +1235,28 @@ class Cursor {
 //      }
 //    }
 class FirebaseBigCollection extends FirebaseStorageProvider {
+  private cursors: Map<number, FirebaseCursor>;
+  private cursorIndex: number;
+
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
+    this.cursors = new Map();
+    this.cursorIndex = 0;
   }
 
   backingType() {
     return this.type.primitiveType();
   }
 
+  // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id
   async get(id) {
-    let value;
     const encId = FirebaseStorage.encodeKey(id);
-    await this.reference.child('items/' + encId).once('value', snapshot => {
-      value = (snapshot.val() !== null) ? snapshot.val().value : null;
-    });
-    return value;
+    const snapshot = await getSnapshot(this.reference.child('items/' + encId));
+    return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 
-  async store(value, keys) {
+  // originatorId is included to maintain parity with Collection.store but is not used.
+  async store(value, keys, originatorId) {
     // Technically we don't really need keys here; Firebase provides the central replicated storage
     // protocol and the mutating ops here are all pass-through (so no local CRDT management is
     // required). This may change in the future - we may well move to full CRDT support in the
@@ -1274,7 +1277,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     }, undefined, false);
 
     const encId = FirebaseStorage.encodeKey(value.id);
-    return this.reference.child('items/' + encId).transaction(data => {
+    await this.reference.child('items/' + encId).transaction(data => {
       if (data === null) {
         data = {value, keys: {}};
       } else {
@@ -1296,21 +1299,57 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     }, undefined, false);
   }
 
-  async remove(id) {
+  // keys and originatorId are included to maintain parity with Collection.remove but are not used.
+  async remove(id, keys, originatorId) {
     await this.reference.child('version').transaction(data => {
       return (data || 0) + 1;
     }, undefined, false);
 
     const encId = FirebaseStorage.encodeKey(id);
-    return this.reference.child('items/' + encId).remove();
+    await this.reference.child('items/' + encId).remove();
   }
 
-  // Returns a Cursor for paginated reads of the current version of this BigCollection.
+  // Returns a FirebaseCursor id for paginated reads of the current version of this BigCollection.
+  // The id should be passed to cursorNext() to retrive the contained entities. The cursor itself
+  // is held internally by this collection so we can discard it once the stream read has completed.
   async stream(pageSize) {
-    const cursor = new Cursor(this.reference, pageSize);
+    assert(!isNaN(pageSize) && pageSize > 0);
+    this.cursorIndex++;
+    const cursor = new FirebaseCursor(this.reference, pageSize);
     await cursor._init();
-    return cursor;
+    this.cursors.set(this.cursorIndex, cursor);
+    return this.cursorIndex;
   }
+
+  // Calls next() on the cursor identified by cursorId. The cursor will be discarded once the end
+  // of the stream has been reached.
+  async cursorNext(cursorId) {
+    const cursor = this.cursors.get(cursorId);
+    if (!cursor) {
+      return {done: true};
+    }
+    const data = await cursor.next();
+    if (data.done) {
+      this.cursors.delete(cursorId);
+    }
+    return data;
+  }
+
+  // Calls close() on and discards the cursor identified by cursorId.
+  cursorClose(cursorId) {
+    const cursor = this.cursors.get(cursorId);
+    if (cursor) {
+      this.cursors.delete(cursorId);
+      cursor.close();
+    }
+  }
+
+  // Returns the version at which the cursor identified by cursorId is reading.
+  cursorVersion(cursorId) {
+    const cursor = this.cursors.get(cursorId);
+    return cursor ? cursor.version : null;
+  }
+
   async _persistChangesImpl(): Promise<void> {
     throw new Error('FireBaseBigCollection does not implement _persistChangesImpl');
   }

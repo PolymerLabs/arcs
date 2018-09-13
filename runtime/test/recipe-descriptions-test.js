@@ -14,6 +14,7 @@ import {assert} from './chai-web.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {Recipe} from '../recipe/recipe.js';
 
 describe('recipe descriptions test', function() {
   let loader = new StubLoader({
@@ -81,7 +82,6 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
   async function testRecipeDescription(options, expectedDescription) {
     let description = await generateRecipeDescription(options);
-    // console.log('Description is: ', description);
     assert.equal(expectedDescription, description);
   }
 
@@ -286,5 +286,46 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     assert.lengthOf(helper.plans, 1);
 
     assert.equal('Show foo with dummy.', await helper.plans[0].description.getRecipeSuggestion());
+  });
+  it('joins recipe descriptions', async () => {
+    let helper = await TestHelper.createAndPlan({manifestString: `
+      particle A
+      particle B
+      particle C
+
+      recipe
+        A
+        description \`do A\`
+      recipe
+        B
+        description \`do B\`
+      recipe
+        C
+        description \`do C\`
+    `, loader});
+    assert.lengthOf(helper.plans, 3);
+    let recipe1 = new Recipe();
+    helper.plans[0].plan.mergeInto(recipe1);
+    assert.lengthOf(recipe1.particles, 1);
+    assert.lengthOf(recipe1.patterns, 1);
+
+    helper.plans[1].plan.mergeInto(recipe1);
+    assert.lengthOf(recipe1.particles, 2);
+    assert.lengthOf(recipe1.patterns, 2);
+
+    helper.plans[2].plan.mergeInto(recipe1);
+    assert.lengthOf(recipe1.particles, 3);
+    assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
+
+    let recipe2 = new Recipe();
+    helper.plans[2].plan.mergeInto(recipe2);
+    helper.plans[0].plan.mergeInto(recipe2);
+    helper.plans[1].plan.mergeInto(recipe2);
+    assert.deepEqual(['do C', 'do A', 'do B'], recipe2.patterns);
+    assert.notDeepEqual(recipe1.patterns, recipe2.patterns);
+
+    recipe1.normalize();
+    recipe2.normalize();
+    assert.deepEqual(recipe1.patterns, recipe2.patterns);
   });
 });

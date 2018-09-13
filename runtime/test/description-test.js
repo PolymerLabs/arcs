@@ -643,7 +643,7 @@ recipe
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
-      arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), pattern: recipe.pattern});
+      arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), patterns: recipe.patterns});
       let description = new Description(arc);
 
       assert.equal(expectedDescription, await description.getRecipeSuggestion());

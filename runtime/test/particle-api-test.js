@@ -650,4 +650,112 @@ describe('particle-api', function() {
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
+
+  it('big collection store and remove', async function() {
+    let {manifest, arc} = await loadFilesIntoNewArc({
+      manifest: `
+        schema Data
+          Text value
+
+        particle P in 'a.js'
+          inout BigCollection<Data> big
+
+        recipe
+          use 'test:0' as handle0
+          P
+            big = handle0
+      `,
+      'a.js': `
+        'use strict';
+
+        defineParticle(({Particle}) => {
+          return class P extends Particle {
+            async setHandles(handles) {
+              let collection = await handles.get('big');
+              await collection.store(new collection.entityClass({value: 'finn'}));
+              let toRemove = new collection.entityClass({value: 'barry'});
+              await collection.store(toRemove);
+              await collection.store(new collection.entityClass({value: 'jake'}));
+              await collection.remove(toRemove);
+              await collection.remove(new collection.entityClass({value: 'no one'}));
+            }
+          }
+        });
+      `
+    });
+
+    let Data = manifest.findSchemaByName('Data').entityClass();
+    let bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    let recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(bigStore);
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    let cursorId = await bigStore.stream(5);
+    let data = await bigStore.cursorNext(cursorId);
+    assert.deepEqual(data.value.map(item => item.rawData.value), ['finn', 'jake']);
+  });
+
+  it('big collection streamed reads', async function() {
+    let {manifest, arc} = await loadFilesIntoNewArc({
+      manifest: `
+        schema Data
+          Text value
+
+        particle P in 'a.js'
+          in BigCollection<Data> big
+          out [Data] res
+
+        recipe
+          use 'test:0' as handle0
+          use 'test:1' as handle1
+          P
+            big <- handle0
+            res -> handle1
+      `,
+      'a.js': `
+        'use strict';
+
+        defineParticle(({Particle}) => {
+          return class P extends Particle {
+            async setHandles(handles) {
+              this.resHandle = handles.get('res');
+              let cursor = await handles.get('big').stream(3);
+              for (let i = 0; i < 3; i++) {
+                let data = await cursor.next();
+                if (data.done) {
+                  this.addResult('done');
+                  return;
+                }
+                this.addResult(data.value.map(item => item.rawData.value).join(','));
+              }
+              this.addResult('error - cursor did not terminate correctly');
+            }
+
+            async addResult(value) {
+              await this.resHandle.store(new this.resHandle.entityClass({value}));
+            }
+          }
+        });
+      `
+    });
+
+    let Data = manifest.findSchemaByName('Data').entityClass();
+    let bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    let promises = [];
+    for (let i = 1; i <= 5; i++) {
+      promises.push(bigStore.store({id: 'i' + i, rawData: {value: 'v' + i}}, ['k' + i]));
+    }
+    await Promise.all(promises);
+
+    let resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
+    let inspector = new util.ResultInspector(arc, resStore, 'value');
+    let recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(bigStore);
+    recipe.handles[1].mapToStorage(resStore);
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await inspector.verify('v1,v2,v3', 'v4,v5', 'done');
+  });
 });

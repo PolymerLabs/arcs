@@ -410,6 +410,7 @@ ${e.message}
         // TODO(dstockwell): set up a scope and merge type variables here, so that
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
+
         switch (node.kind) {
         case 'schema-inline': {
           let schemas = [];
@@ -436,16 +437,12 @@ ${e.message}
                 // Validate that the specified or inferred type matches the schema.
                 let externalType = schema.fields[name];
                 if (externalType && !Schema.typesEqual(externalType, type)) {
-                  throw new ManifestError(
-                      node.location,
-                      `Type of '${name}' does not match schema (${type} vs ${externalType})`);
+                  throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                 }
               }
             }
             if (!type) {
-              throw new ManifestError(
-                  node.location,
-                  `Could not infer type of '${name}' field`);
+              throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
             }
             fields[name] = type;
           }
@@ -456,9 +453,7 @@ ${e.message}
           for (let alias of aliases) {
             schema = Schema.union(alias, schema);
             if (!schema) {
-              throw new ManifestError(
-                  node.location,
-                  `Could not merge schema aliases`);
+              throw new ManifestError(node.location, `Could not merge schema aliases`);
             }
           }
           node.model = Type.newEntity(schema);

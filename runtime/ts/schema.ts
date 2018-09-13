@@ -50,7 +50,7 @@ export class Schema {
     this._model = model;
     this.description = {};
     if (model.description) {
-      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern);
+      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
   }
 
@@ -90,6 +90,11 @@ export class Schema {
         return `(${type.types.join(' or ')})`;
       case 'schema-tuple':
         return `(${type.types.join(', ')})`;
+      case 'schema-reference':
+        return `Reference<${Schema._typeString(type.schema)}>`;
+      case 'type-name':
+      case 'schema-inline':
+        return type.model.entitySchema.toInlineSchemaString();
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
