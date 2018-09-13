@@ -332,7 +332,7 @@ describe('in-memory', function() {
       // Verify close().
       let cursorId3 = await collection.stream(3);
       await checkNext(cursorId3, ['r01', 'i02', 'h05']);
-      await collection.cursorClose(cursorId3);
+      collection.cursorClose(cursorId3);
       await checkDone(cursorId3);
     });
   });
