@@ -11,7 +11,7 @@ COPY . .
 #
 RUN npm install
 
-RUN ./tools/sigh
+RUN ./tools/sigh && npm run build:rollup
 
 WORKDIR /usr/src/app/server
 RUN npm install
@@ -19,4 +19,3 @@ RUN npm test
 
 EXPOSE 8080
 CMD [ "npm", "start" ]
-

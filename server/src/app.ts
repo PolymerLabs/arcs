@@ -13,6 +13,7 @@ import path from 'path';
 import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
+import { Runtime } from 'arcs';
 
 /**
  * Centralized class that configures and ExpressJS server.
@@ -21,6 +22,7 @@ import PouchDbServer from 'express-pouchdb';
 class App {
   // ref to Express instance
   express: express.Application;
+  runtime: Runtime;
 
   constructor() {
     this.express = express();
@@ -29,6 +31,7 @@ class App {
     this.addArcsRoutes();
     this.addStaticRoutes();
     this.addPouchRoutes();
+    this.runtime = new Runtime();
   }
 
   /** Configure Express middleware. */
@@ -58,14 +61,32 @@ class App {
   }
 
   /**
-   * Placeholder for creating an API endpoint to Arcs Runtime.
+   * Endpoints that end up mapped under /arcs are defined here.
    */
   private addArcsRoutes(): void {
     const router = express.Router();
-    // placeholder route handler
-    router.get('/arcs', (req, res, next) => {
-      res.json({ message: 'Hello World!' });
+
+    router.get('/manifest', async (req, res, next) => {
+      const content = `
+    schema Text
+      Text value
+
+    particle Hello in 'hello.js'
+      out Text text
+
+    recipe
+      create as handleA
+      Hello
+        text -> handleA`;
+
+      try {
+        const manifest = await Runtime.parseManifest(content, {});
+        res.json({ id: manifest.id, text: manifest.toString() });
+      } catch (err) {
+        next(err);
+      }
     });
+    // mounts router relative paths on /arcs
     this.express.use('/arcs', router);
   }
 }
