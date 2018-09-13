@@ -73,6 +73,8 @@ export class OuterPortAttachment {
     this._logHandleCall({operation: 'remove', handle, data, particleId});
   }
 
+  // TODO: add BigCollection stream APIs?
+
   _logHandleCall(args) {
     this._sendDataflowMessage(this._describeHandleCall(args), args.data);
   }

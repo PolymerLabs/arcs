@@ -109,10 +109,6 @@ class Handle {
  * which handles are connected.
  */
 class Collection extends Handle {
-  constructor(proxy, name, particleId, canRead, canWrite) {
-    super(proxy, name, particleId, canRead, canWrite);
-  }
-
   // Called by StorageProxy.
   _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -157,7 +153,6 @@ class Collection extends Handle {
      in the particle's manifest.
    */
   async toList() {
-    // TODO: remove this and use query instead
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
@@ -204,10 +199,6 @@ class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 class Variable extends Handle {
-  constructor(proxy, name, particleId, canRead, canWrite) {
-    super(proxy, name, particleId, canRead, canWrite);
-  }
-
   // Called by StorageProxy.
   _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -281,13 +272,100 @@ class Variable extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    await this._proxy.clear(this._particleId);
+    return this._proxy.clear(this._particleId);
+  }
+}
+
+/** @class Cursor
+ * Provides paginated read access to a BigCollection. Conforms to the javascript iterator protocol
+ * but is not marked as iterable because next() is async, which is currently not supported by
+ * implicit iteration in Javascript.
+ */
+class Cursor {
+  constructor(parent, cursorId) {
+    this._parent = parent;
+    this._cursorId = cursorId;
+  }
+
+  /** @method next()
+   * Returns {value: [items], done: false} while there are items still available, or {done: true}
+   * when the cursor has completed reading the collection.
+   */
+  async next() {
+    let data = await this._parent._proxy.cursorNext(this._cursorId);
+    if (!data.done) {
+      data.value = data.value.map(a => restore(a, this._parent.entityClass));
+    }
+    return data;
+  }
+
+  /** @method close()
+   * Terminates the streamed read. This must be called if a cursor is no longer needed but has not
+   * yet completed streaming (i.e. next() hasn't returned {done: true}).
+   */
+  async close() {
+    this._parent._proxy.cursorClose(this._cursorId);
+  }
+}
+
+/** @class BigCollection
+ * A handle on a large set of Entity data. Similar to Collection, except the complete set of
+ * entities is not available directly; use stream() to read the full set.
+ */
+class BigCollection extends Handle {
+  configure(options) {
+    throw new Error('BigCollections do not support sync/update configuration');
+  }
+
+  /** @method store(entity)
+   * Stores a new entity into the Handle.
+   * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * in the particle's manifest.
+   */
+  async store(entity) {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
+    let serialization = this._serialize(entity);
+    let keys = [this._proxy.generateID() + 'key'];
+    return this._proxy.store(serialization, keys, this._particleId);
+  }
+
+  /** @method remove(entity)
+   * Removes an entity from the Handle.
+   * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * in the particle's manifest.
+   */
+  async remove(entity) {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
+    let serialization = this._serialize(entity);
+    return this._proxy.remove(serialization.id, [], this._particleId);
+  }
+
+  /** @method stream(pageSize)
+   * Returns a Cursor instance that iterates over the full set of entities, reading `pageSize`
+   * entities at a time. The cursor views a snapshot of the collection, locked to the version
+   * at which the cursor is created.
+   * throws: Error if this variable is not configured as a readable handle (i.e. 'in' or 'inout')
+   * in the particle's manifest.
+   */
+  async stream(pageSize) {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
+    let cursorId = await this._proxy.stream(pageSize);
+    return new Cursor(this, cursorId);
   }
 }
 
 export function handleFor(proxy, name, particleId, canRead = true, canWrite = true) {
   if (proxy.type.isCollection) {
     return new Collection(proxy, name, particleId, canRead, canWrite);
+  }
+  if (proxy.type.isBigCollection) {
+    return new BigCollection(proxy, name, particleId, canRead, canWrite);
   }
   return new Variable(proxy, name, particleId, canRead, canWrite);
 }
