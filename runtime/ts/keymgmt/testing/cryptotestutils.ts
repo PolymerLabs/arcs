@@ -3,9 +3,9 @@ import {DeviceKey, Key, WrappedKey} from "../keys";
 
 export interface TestableKey {
     // Visible For Testing
-    encrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer>;
+    encrypt(buffer: ArrayBuffer, iv: Uint8Array): PromiseLike<ArrayBuffer>;
     // Visible for Testing
-    decrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer>;
+    decrypt(buffer: ArrayBuffer, iv: Uint8Array): PromiseLike<ArrayBuffer>;
 }
 
 /**
@@ -22,10 +22,9 @@ export class WebCryptoMemoryKeyStorage implements KeyStorage {
         return Promise.resolve(this.storageMap.get(keyFingerPrint));
     }
 
-    async write(key: DeviceKey|WrappedKey): Promise<string> {
-        const id = await key.fingerprint();
-        this.storageMap.set(id, key);
-        return Promise.resolve(key.fingerprint());
+    async write(keyFingerprint: string, key: DeviceKey|WrappedKey): Promise<string> {
+        this.storageMap.set(keyFingerprint, key);
+        return Promise.resolve(keyFingerprint);
     }
 
     static getInstance() {

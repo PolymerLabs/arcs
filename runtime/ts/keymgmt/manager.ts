@@ -40,9 +40,10 @@ export interface KeyStorage {
     /**
      * KeyStore can persist public keys, wrapped keys, and even DeviceKeys which contain private key
      * material securely.
+     * @param keyFingerPrint a string used to identify the key
      * @param key a public key, wrapped key, or device key pair.
      */
-    write(key: DeviceKey|WrappedKey|PublicKey): PromiseLike<string>;
+    write(keyFingerPrint: string, key: DeviceKey|WrappedKey|PublicKey): PromiseLike<string>;
     find(keyFingerPrint: string): PromiseLike<Key>;
 }
 

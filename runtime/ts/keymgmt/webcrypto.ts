@@ -51,8 +51,8 @@ class WebCryptoStorableKey<T extends CryptoKey | CryptoKeyPair> {
  * An AES-GCM symmetric key in raw formatted encrypted using an RSA-OAEP public key.
  */
 class WebCryptoWrappedKey implements WrappedKey {
-    private wrappedKeyData: Uint8Array;
-    private wrappedBy: PublicKey;
+    wrappedKeyData: Uint8Array;
+    wrappedBy: PublicKey;
 
     constructor(wrappedKeyData: Uint8Array, wrappedBy: PublicKey) {
         this.wrappedKeyData = wrappedKeyData;
@@ -128,30 +128,27 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
 
 class WebCryptoSessionKey implements SessionKey, TestableKey {
     // Visible/Used for testing only.
-    decrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer> {
+    decrypt(buffer: ArrayBuffer, iv: Uint8Array): PromiseLike<ArrayBuffer> {
         return crypto.subtle.decrypt({
             name: this.algorithm(),
-            iv: this.iv,
+            iv: iv,
         }, this.sessionKey, buffer);
     }
 
     // Visible/Used for testing only.
-    encrypt(buffer: ArrayBuffer): PromiseLike<ArrayBuffer> {
+    encrypt(buffer: ArrayBuffer, iv: Uint8Array): PromiseLike<ArrayBuffer> {
         return crypto.subtle.encrypt(
             {
                 name: this.algorithm(),
-                iv: this.iv
+                iv: iv
             }, this.sessionKey, buffer);
     }
 
     sessionKey: CryptoKey;
-    // Cached IV only for testing currently
-    iv: Uint8Array;
 
     constructor(sessionKey: CryptoKey) {
         this.sessionKey = sessionKey;
-        // hack, used for unit testing only
-        this.iv = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+
     }
 
     algorithm(): string {
@@ -266,6 +263,11 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
     }
 }
 
+interface KeyRecord {
+    keyFingerPrint: string;
+    key: CryptoKey|CryptoKeyPair|Uint8Array;
+    wrappingKeyFingerprint?: string;
+}
 
 /**
  * The Web Crypto spec states that IndexDB may be used to store CryptoKey objects without ever exposing
@@ -273,7 +275,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
  */
 export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
 
-    async runOnStore(fn: (store: ObjectStore<{}, IDBValidKey>) => PromiseLike<IDBValidKey>) {
+    async runOnStore<T>(fn: (store: ObjectStore<KeyRecord, IDBValidKey>) => PromiseLike<T>) {
         try {
             const db = await idb.open(ARCS_CRYPTO_INDEXDB_NAME, 1,
                 upgradeDB => upgradeDB.createObjectStore(ARCS_CRYPTO_STORE_NAME,
@@ -290,20 +292,41 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
         }
     }
 
-    find(keyId: string): PromiseLike<Key> {
-        return undefined;
+    async find(keyId: string): Promise<Key> {
+        const result:KeyRecord = await this.runOnStore(store => {
+            return store.get(keyId);
+        });
+
+        if (result.key instanceof CryptoKeyPair) {
+            return Promise.resolve(new WebCryptoDeviceKey(result.key as CryptoKeyPair));
+        } else if (result.key instanceof CryptoKey) {
+            return Promise.resolve(new WebCryptoPublicKey(result.key as CryptoKey));
+        } else if (result.key instanceof Uint8Array) {
+            const wrappedBy = await this.find(result.wrappingKeyFingerprint) as PublicKey;
+            return Promise.resolve(new WebCryptoWrappedKey(result.key as Uint8Array,
+                wrappedBy));
+        }
+        return Promise.reject("Unrecognized key type found in keystore.");
     }
 
-    async write(key: DeviceKey|WrappedKey): Promise<string> {
+    async write(keyFingerPrint: string, key: DeviceKey|WrappedKey): Promise<string> {
         if (key instanceof WebCryptoStorableKey) {
             const skey = key as WebCryptoStorableKey<CryptoKey>;
-            const fingerprint = await key.fingerprint();
             await this.runOnStore(store => {
-                return store.put({keyFingerPrint: fingerprint, key: skey.storableKey()});
+                return store.put({keyFingerPrint: keyFingerPrint, key: skey.storableKey()});
             });
-            return await key.fingerprint();
+            return keyFingerPrint;
+        } else if (key instanceof WebCryptoWrappedKey) {
+            const wrappedKey = key as WebCryptoWrappedKey;
+            const wrappingKeyFingerprint = await wrappedKey.wrappedBy.fingerprint();
+
+            await this.runOnStore(store => {
+                return store.put({keyFingerPrint: keyFingerPrint, key:wrappedKey.wrappedKeyData,
+                    wrappingKeyFingerprint: wrappingKeyFingerprint});
+            });
+            return keyFingerPrint;
         }
-        return Promise.reject("Can't write key that isn't StorableKey.");
+        return Promise.reject("Can't write key that isn't StorableKey or WrappedKey.");
     }
 
     static getInstance() {
