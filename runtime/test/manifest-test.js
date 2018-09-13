@@ -1296,6 +1296,8 @@ resource SomeName
     `);
 
     let [recipe] = manifest.recipes;
+    // TODO(shans): check the types on the schema instead of toString,
+    // once support for the reference type is added.
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
