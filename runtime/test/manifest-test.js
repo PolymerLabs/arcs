@@ -1284,6 +1284,43 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
   });
+  it('can resolve a particle with a schema reference', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        Text far
+      particle P
+        in Bar {Reference<Foo> foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    // TODO(shans): check the types on the schema instead of toString,
+    // once support for the reference type is added.
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {Reference<Foo {Text far}> foo} bar
+  affordance dom`);
+  });
+  it('can resolve a particle with an inline schema reference', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+      particle P
+        in Bar {Reference<Foo {Text far}> foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {Reference<Foo {Text far}> foo} bar
+  affordance dom`);
+  });
   it('can resolve inline schemas against out of line schemas', async () => {
     let manifest = await Manifest.parse(`
       schema T
