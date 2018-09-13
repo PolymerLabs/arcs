@@ -200,7 +200,7 @@ export class FirebaseStorage extends StorageBase {
     assert(!type.isCollection || !type.primitiveType().isVariable);
 
     const {fbKey, reference} = this.attach(keyString);
-    let currentSnapshot = await getSnapshot(reference);
+    const currentSnapshot = await getSnapshot(reference);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
     }
