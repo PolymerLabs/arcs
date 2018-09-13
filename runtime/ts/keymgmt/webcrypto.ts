@@ -131,7 +131,7 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
     decrypt(buffer: ArrayBuffer, iv: Uint8Array): PromiseLike<ArrayBuffer> {
         return crypto.subtle.decrypt({
             name: this.algorithm(),
-            iv: iv,
+            iv,
         }, this.sessionKey, buffer);
     }
 
@@ -140,7 +140,7 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
         return crypto.subtle.encrypt(
             {
                 name: this.algorithm(),
-                iv: iv
+                iv
             }, this.sessionKey, buffer);
     }
 
@@ -313,7 +313,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
         if (key instanceof WebCryptoStorableKey) {
             const skey = key as WebCryptoStorableKey<CryptoKey>;
             await this.runOnStore(store => {
-                return store.put({keyFingerPrint: keyFingerPrint, key: skey.storableKey()});
+                return store.put({keyFingerPrint, key: skey.storableKey()});
             });
             return keyFingerPrint;
         } else if (key instanceof WebCryptoWrappedKey) {
@@ -321,8 +321,8 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             const wrappingKeyFingerprint = await wrappedKey.wrappedBy.fingerprint();
 
             await this.runOnStore(store => {
-                return store.put({keyFingerPrint: keyFingerPrint, key:wrappedKey.wrappedKeyData,
-                    wrappingKeyFingerprint: wrappingKeyFingerprint});
+                return store.put({keyFingerPrint, key:wrappedKey.wrappedKeyData,
+                    wrappingKeyFingerprint});
             });
             return keyFingerPrint;
         }
