@@ -55,7 +55,8 @@ describe('manifest', function() {
       assert.equal(recipe.handles[1].fate, 'create');
       assert.lengthOf(recipe.handleConnections, 1);
       assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
-      assert.equal(recipe.pattern, 'hello world');
+      assert.lengthOf(recipe.patterns, 1);
+      assert.equal(recipe.patterns[0], 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best handle');
       let type = recipe.handleConnections[0].rawType;
       assert.lengthOf(Object.keys(manifest.schemas), 1);

@@ -145,8 +145,8 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     let result = {template: '', model: {}};
     let count = descs.length;
     descs.forEach((desc, i) => {
-      if (!desc.template || !desc.model) {
-        return;
+      if (typeof desc === 'string') {
+        desc = Object.assign({}, {template: desc, model: {}});
       }
 
       result.template += desc.template;

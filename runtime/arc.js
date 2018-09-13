@@ -344,7 +344,7 @@ ${this.activeRecipe.toString()}`;
    let slotIndex = 0;
 
    this._recipes.forEach(recipe => {
-     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), pattern: recipe.pattern};
+     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), patterns: recipe.patterns};
      recipe.particles.forEach(p => {
        arcRecipe.particles.push(particles[particleIndex++]);
        if (recipe.innerArcs.has(p)) {
@@ -400,7 +400,7 @@ ${this.activeRecipe.toString()}`;
       currentArc = innerArcs.get(innerArc.particle);
     }
     let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
-    currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), pattern: recipe.pattern});
+    currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), patterns: recipe.patterns});
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeHandle of handles) {

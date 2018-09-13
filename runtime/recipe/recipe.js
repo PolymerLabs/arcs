@@ -41,7 +41,7 @@ export class Recipe {
     // TODO: Change to array, if needed for search strings of merged recipes.
     this._search = null;
 
-    this._pattern = null;
+    this._patterns = [];
   }
 
   newConnectionConstraint(from, to, direction) {
@@ -221,12 +221,12 @@ export class Recipe {
       }
     }
   }
-  get pattern() { return this._pattern; }
-  set pattern(pattern) { this._pattern = pattern; }
+  get patterns() { return this._patterns; }
+  set patterns(patterns) { this._patterns = patterns; }
   set description(description) {
     let pattern = description.find(desc => desc.name == 'pattern');
     if (pattern) {
-      this._pattern = pattern.pattern;
+      pattern.patterns.forEach(pattern => this._patterns.push(pattern));
     }
     description.forEach(desc => {
       if (desc.name != 'pattern') {
@@ -349,6 +349,9 @@ export class Recipe {
     this._slots = slots;
     this._connectionConstraints.sort(util.compareComparables);
 
+    this._verbs.sort();
+    this._patterns.sort();
+
     Object.freeze(this._particles);
     Object.freeze(this._handles);
     Object.freeze(this._slots);
@@ -407,15 +410,8 @@ export class Recipe {
     if (this.search) {
       this.search._copyInto(recipe);
     }
-    if (this.pattern) {
-      if (recipe.pattern) {
-        // TODO(mmandlis): Support multiple patterns in a recipe.
-        // TODO(mmandlis): Join all patterns of the copied recipe's particles into a recipe pattern.
-        recipe.pattern += ` and ${this.pattern}`;
-      } else {
-        recipe.pattern = this.pattern;
-      }
-    }
+
+    recipe.patterns = recipe.patterns.concat(this.patterns);
   }
 
   updateToClone(dict) {
@@ -508,8 +504,11 @@ export class Recipe {
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
-    if (this.pattern || this.handles.find(h => h.pattern)) {
-      result.push(`  description \`${this.pattern}\``);
+    if (this.patterns.length > 0 || this.handles.find(h => h.pattern)) {
+      result.push(`  description \`${this.patterns[0]}\``);
+      for (let i = 1; i < this.patterns.length; ++i) {
+        result.push(`    _pattern_ \`${this.patterns[i]}\``);
+      }
       this.handles.forEach(h => {
         if (h.pattern) {
           result.push(`    ${h.localName} \`${h.pattern}\``);

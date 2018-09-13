@@ -291,7 +291,7 @@ ParticleDefinition
           kind: 'description?',
           location: 'FIXME',
         };
-        item.description.forEach(d => { description[d.name] = d.pattern; });
+        item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
       } else if (item.affordance) {
         affordance.push(item.affordance)
       } else {
@@ -561,6 +561,13 @@ ParticleProvidedSlotHandle
 Description
   = 'description' whiteSpace pattern:backquotedString eolWhiteSpace handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
+    handleDescriptions = optional(handleDescriptions, extractIndented, []);
+    let patterns = [];
+    if (pattern) {
+      patterns.push(pattern);
+      handleDescriptions.filter(desc => desc.name == '_pattern_').forEach(pattern => patterns.push(pattern));
+      handleDescriptions = handleDescriptions.filter(desc => desc.name != '_pattern_');
+    }
     return {
       kind: 'description',
       location: location(),
@@ -570,9 +577,9 @@ Description
           kind: 'default-description?',
           location: location(),
           name: 'pattern',
-          pattern: pattern,
+          patterns: patterns,
         },
-        ...optional(handleDescriptions, extractIndented, []),
+        ...handleDescriptions,
       ],
     };
   }
