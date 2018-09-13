@@ -13,7 +13,7 @@ import path from 'path';
 import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
-import {Runtime} from 'arcs';
+import { Runtime } from 'arcs';
 
 /**
  * Centralized class that configures and ExpressJS server.
@@ -67,8 +67,6 @@ class App {
     const router = express.Router();
 
     router.get('/manifest', async (req, res, next) => {
-
-      console.warn('here we are');
       const content = `
     schema Text
       Text value
@@ -83,8 +81,7 @@ class App {
 
       try {
         const manifest = await Runtime.parseManifest(content, {});
-        console.log(manifest);
-        res.json({ id: manifest.id, text: manifest.toString()});
+        res.json({ id: manifest.id, text: manifest.toString() });
       } catch (err) {
         next(err);
       }

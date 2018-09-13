@@ -10,10 +10,6 @@ import mocha from 'mocha';
 import chai from 'chai';
 import { expect } from 'chai';
 import chaiHttp from 'chai-http';
-
-// TODO figure out why this doesn't work yet..
-//import 'chai/register-expect';
-
 import { app } from '../src/app';
 
 chai.use(chaiHttp);

@@ -9,16 +9,14 @@
   "scripts": {
     "build": "tsc -p .",
     "clean": "rimraf ./dist/",
-    "dev": "ts-node src/index.ts",
-    "dev:watch": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node -P tsconfig.dev.json --require esm src/index.ts",
+    "dev:watch": "ts-node-dev -P tsconfig.dev.json --require esm --respawn src/index.ts",
     "lint": "tslint -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "lint:fix": "tslint --fix -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "prettier": "prettier --write 'src/**/*.js' 'test/**/*.js' 'src/**/*.ts' 'test/**/*.ts'",
-    "test": "mocha --reporter spec --require ts-node/register --require source-map-support/register test/**/*.test.ts",
-    "test:es6": "TS_NODE_PROJECT=tsconfig.es6.tsconfig mocha --reporter spec --require ts-node/register --require source-map-support/register test/**/*.test.ts",
+    "test": "TS_NODE_PROJECT=tsconfig.dev.json mocha --reporter spec -r ts-node/register -r source-map-support/register -r esm test/**/*.test.ts",
     "test:watch": "npm test -- --watch --watch-extensions=ts",
-    "start": "node dist/index.js",
-    "start:es6": "node --experimental-modules --loader ../tools/custom-loader.mjs dist/index.js",
+    "start": "node --require esm --require source-map-support/register dist/index.js",
     "pretest": "npm run build",
     "posttest": "npm run lint",
     "watch": "run-p dev:watch test:watch"
@@ -32,6 +30,7 @@
   "dependencies": {
     "arcs": "file:../",
     "debug": "^4.0.1",
+    "esm": "^3.0.82",
     "express": "^4.16.3",
     "express-pouchdb": "^4.1.0",
     "morgan": "^1.9.1",
