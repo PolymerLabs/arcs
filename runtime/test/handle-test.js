@@ -85,7 +85,6 @@ describe('Handle', function() {
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
     let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
-    fooHandle.entityClass = Foo;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
@@ -100,7 +99,6 @@ describe('Handle', function() {
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
     let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
-    fooHandle.entityClass = Foo;
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
@@ -115,7 +113,6 @@ describe('Handle', function() {
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
     let fooHandle = handleFor(await arc.createStore(Foo.type));
-    fooHandle.entityClass = Foo;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));

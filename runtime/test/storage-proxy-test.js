@@ -207,9 +207,7 @@ class TestEngine {
   }
 
   newHandle(store, proxy, particle, canRead, canWrite) {
-    let handle = handleFor(proxy, store.name, particle.id, canRead, canWrite);
-    handle.entityClass = this.schema.entityClass();
-    return handle;
+    return handleFor(proxy, store.name, particle.id, canRead, canWrite);
   }
 
   newProxyAndHandle(store, particle, canRead, canWrite) {

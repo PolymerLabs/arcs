@@ -361,11 +361,18 @@ class BigCollection extends Handle {
 }
 
 export function handleFor(proxy, name, particleId, canRead = true, canWrite = true) {
+  let handle;
   if (proxy.type.isCollection) {
-    return new Collection(proxy, name, particleId, canRead, canWrite);
+    handle = new Collection(proxy, name, particleId, canRead, canWrite);
+  } else if (proxy.type.isBigCollection) {
+    handle = new BigCollection(proxy, name, particleId, canRead, canWrite);
+  } else {
+    handle = new Variable(proxy, name, particleId, canRead, canWrite);
   }
-  if (proxy.type.isBigCollection) {
-    return new BigCollection(proxy, name, particleId, canRead, canWrite);
+
+  let type = proxy.type.getContainedType() || proxy.type;
+  if (type.isEntity) {
+    handle.entityClass = type.entitySchema.entityClass();
   }
-  return new Variable(proxy, name, particleId, canRead, canWrite);
+  return handle;
 }

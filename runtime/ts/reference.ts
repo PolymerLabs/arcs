@@ -32,7 +32,6 @@ export class Reference {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referenceReferredType);
       this.handle = handleFor(this.storageProxy);
-      this.handle.entityClass = this.type.referenceReferredType.entitySchema.entityClass();
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
       } else {
