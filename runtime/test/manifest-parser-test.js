@@ -82,9 +82,10 @@ describe('manifest parser', function() {
         description \`person\`
           plural \`people\`
           value \`\${firstName} \${lastName}\`
-      store Store0 of [Person] in 'person.json'
+      store Store0 of [Person] in 'people.json'
         description \`my store\`
-      store Store1 of Person 'some-id' @7 in 'people.json'`);
+      store Store1 of Person 'some-id' @7 in 'person.json'
+      store Store2 of BigCollection<Person> in 'population.json'`);
   });
   it('fails to parse an argument list that uses reserved words', () => {
     try {
