@@ -211,12 +211,12 @@ describe('schema', function() {
     let References = manifest.findSchemaByName('References').entityClass();
     
     let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
-    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null), two: null})});
-    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null)})}, TypeError,
+    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null), two: null}); });
+    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null)}); }, TypeError,
                   `Cannot set reference two with value '[object Object]' of mismatched type`);
-    assert.throws(() => {new References({one: 42, two: null})}, TypeError,
+    assert.throws(() => {new References({one: 42, two: null}); }, TypeError,
                   `Cannot set reference one with non-reference '42'`);
-  })
+  });
 
   it('tuple types', async function() {
     let manifest = await Manifest.parse(`

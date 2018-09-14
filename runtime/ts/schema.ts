@@ -58,30 +58,32 @@ export class Schema {
 
   toLiteral() {
     const fields = {};
-    for (const key in this._model.fields) {
+    for (const key of Object.keys(this._model.fields)) {
       const field = this._model.fields[key];
-      if (field.kind == 'schema-reference') {
+      if (field.kind === 'schema-reference') {
         const schema = field.schema;
         fields[key]  = {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
       } else {
         fields[key] = field;
       }
     } 
-    return {names: this._model.names, fields};
+    return {names: this._model.names, fields, description: this.description};
   }
 
   static fromLiteral(data) {
     const fields = {};
-    for (const key in data.fields) {
+    for (const key of Object.keys(data.fields)) {
       const field = data.fields[key];
-      if (field.kind == 'schema-reference') {
+      if (field.kind === 'schema-reference') {
         const schema = field.schema;
         fields[key] = {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
       } else {
         fields[key] = field;
       }
     }
-    return new Schema({names: data.names, fields});
+    const result = new Schema({names: data.names, fields});
+    result.description = data.description;
+    return result;
   }
 
   get fields() {
@@ -299,8 +301,21 @@ export class Schema {
         });
         assert(data, `can't construct entity with null data`);
         for (const [name, value] of Object.entries(data)) {
-          if (fieldTypes[name].kind == 'schema-reference' && value) {
-            this.rawData[name] = new Reference(value as any, Type.newReference(Type.fromLiteral(fieldTypes[name].schema.model)), context);
+          if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference' && value) {
+            let type;
+            if (value instanceof Reference) {
+              // Setting value as Reference (Particle side). This will enforce that the type provided for
+              // the handle matches the type of the reference.
+              type = value.type;
+            } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
+              // Setting value from raw data (Channel side).
+              // TODO(shans): This can't enforce type safety here as there isn't any type data available.
+              // Maybe this is OK because there's type checking on the other side of the channel?
+              type = fieldTypes[name].schema.model;
+            } else {
+              throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
+            }
+            this.rawData[name] = new Reference(value as {id, storageKey}, Type.newReference(type), context);
           } else {
             this.rawData[name] = value;
           }
@@ -311,7 +326,7 @@ export class Schema {
         const clone = {};
         for (const name of Object.keys(schema.fields)) {
           if (this.rawData[name] !== undefined) {
-            if (fieldTypes[name].kind == 'schema-reference') {
+            if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
               clone[name] = this.rawData[name].dataClone();
             } else {
               clone[name] = this.rawData[name];
