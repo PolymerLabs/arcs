@@ -41,6 +41,8 @@ export class Reference {
   }
 
   async dereference() {
+    assert(this.context, "Must have context to dereference");
+
     if (this.entity) {
       return this.entity;
     }
@@ -63,6 +65,7 @@ export function newClientReference(context) {
     private mode = ReferenceMode.Unstored;
     public stored: Promise<undefined>;
     constructor(entity) {
+      // TODO(shans): start carrying storageKey information around on Entity objects
       super({id: entity.id, storageKey: null}, Type.newReference(entity.constructor.type), context);
     
       this.entity = entity;

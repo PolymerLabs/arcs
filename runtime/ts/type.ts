@@ -351,9 +351,7 @@ export class Type {
         return false;
       }
       if (type1.canReadSubset.isEntity) {
-        return Schema.intersect(
-                   type1.canReadSubset.entitySchema,
-                   type2.canReadSubset.entitySchema) !== null;
+        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       }
       throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
@@ -411,16 +409,13 @@ export class Type {
       } else {
         const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
         if (this.variable.resolution) {
-          newTypeVariable.resolution =
-              this.variable.resolution._cloneWithResolutions(variableMap);
+          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
         }
         if (this.variable._canReadSubset) {
-          newTypeVariable.canReadSubset =
-              this.variable.canReadSubset._cloneWithResolutions(variableMap);
+          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
         }
         if (this.variable._canWriteSuperset) {
-          newTypeVariable.canWriteSuperset =
-              this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
+          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
         }
         variableMap.set(this.variable, newTypeVariable);
         return new Type('Variable', newTypeVariable);

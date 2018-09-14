@@ -202,8 +202,8 @@ export class ParticleExecutionContext {
           resolve(proxy);
         }});
       });
-      return this._keyedProxies[storageKey];
     }
+    return this._keyedProxies[storageKey];
   }
 
   defaultCapabilitySet() {
