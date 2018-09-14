@@ -87,7 +87,7 @@ export class APIPort {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._messageMap = new Map();
-    this._port.onmessage = async e => this._handle(e);
+    this._port.onmessage = async e => this._processMessage(e);
     this._debugAttachment = null;
     this.messageCount = 0;
 
@@ -149,7 +149,7 @@ export class APIPort {
     this._port.close();
   }
 
-  async _handle(e) {
+  async _processMessage(e) {
     assert(this._messageMap.has(e.data.messageType));
 
     this.messageCount++;
@@ -166,7 +166,7 @@ export class APIPort {
     // wait for them to complete before processing the message.
     for (let arg of Object.values(args)) {
       if (arg instanceof Promise) {
-        arg.then(() => this._handle(e));
+        arg.then(() => this._processMessage(e));
         return;
       }
     }
