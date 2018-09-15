@@ -1331,6 +1331,52 @@ resource SomeName
   in Bar {Reference<Foo {Text far}> foo} bar
   affordance dom`);
   });
+  it('can resolve a particle with a collection of schema references', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        Text far
+      particle P
+        in Bar {[Reference<Foo>] foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {[Reference<Foo {Text far}>] foo} bar
+  affordance dom`);
+  });
+  it('can resolve a particle with a collection of inline schema references', async () => {
+    let manifest = await Manifest.parse(`
+      particle P
+        in Bar {[Reference<Foo {Text far}>] foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {[Reference<Foo {Text far}>] foo} bar
+  affordance dom`);
+  });
   it('can resolve inline schemas against out of line schemas', async () => {
     let manifest = await Manifest.parse(`
       schema T

@@ -119,6 +119,8 @@ export class Schema {
       case 'type-name':
       case 'schema-inline':
         return type.model.entitySchema.toInlineSchemaString();
+      case 'schema-collection':
+        return `[${Schema._typeString(type.schema)}]`;
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
