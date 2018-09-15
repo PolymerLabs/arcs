@@ -148,6 +148,7 @@ export class Planner {
         // TODO(wkorman): Look at restoring trace.wait() here, and whether we
         // should do similar for the async getRecipeSuggestion() below as well?
         let relevance = await speculator.speculate(this._arc, plan, hash);
+        this._relevances.push(relevance);
         if (!relevance.isRelevant(plan)) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
