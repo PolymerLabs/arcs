@@ -211,11 +211,26 @@ describe('schema', function() {
     let References = manifest.findSchemaByName('References').entityClass();
     
     let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
-    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null), two: null}); });
-    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null)}); }, TypeError,
+    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null), two: null}); });
+    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null)}); }, TypeError,
                   `Cannot set reference two with value '[object Object]' of mismatched type`);
     assert.throws(() => {new References({one: 42, two: null}); }, TypeError,
                   `Cannot set reference one with non-reference '42'`);
+  });
+
+  it('collection types', async function() {
+    let manifest = await Manifest.parse(`
+      schema Collections
+        [Reference<Foo {Text value}>] collection
+    `);
+
+    let Collections = manifest.findSchemaByName('Collections').entityClass();
+    let FooType = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
+    let BarType = Type.newEntity(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
+    new Collections({collection: new Set()});
+    new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(FooType), null)])});
+    assert.throws(() => {new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(BarType), null)])}); }, TypeError,
+                  `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });
 
   it('tuple types', async function() {

@@ -219,8 +219,9 @@ export class Schema {
     };
 
     const fieldTypes = this.fields;
-    const validateFieldAndTypes = (op, name, value) => {
-      const fieldType = fieldTypes[name];
+    const validateFieldAndTypes = (op, name, value) => _validateFieldAndTypes(op, name, fieldTypes[name], value);
+
+    const _validateFieldAndTypes = (op, name, fieldType, value) => {
       if (fieldType === undefined) {
         throw new Error(`Can't ${op} field ${name}; not in schema ${className}`);
       }
@@ -276,7 +277,15 @@ export class Schema {
             throw new TypeError(`Cannot ${op} reference ${name} with value '${value}' of mismatched type`);
           }
           break;
-          default:
+        case 'schema-collection':
+          if (!(value instanceof Set)) {
+            throw new TypeError(`Cannot ${op} collection ${name} with non-Set '${value}'`);
+          }
+          for (const element of value) {
+            _validateFieldAndTypes(op, name, fieldType.schema, element);
+          }
+          break;
+        default:
           throw new Error(`Unknown kind ${fieldType.kind} in schema ${className}`);
       }
     };
@@ -308,16 +317,15 @@ export class Schema {
             if (value instanceof Reference) {
               // Setting value as Reference (Particle side). This will enforce that the type provided for
               // the handle matches the type of the reference.
-              type = value.type;
+              this.rawData[name] = value;
             } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
               // Setting value from raw data (Channel side).
               // TODO(shans): This can't enforce type safety here as there isn't any type data available.
               // Maybe this is OK because there's type checking on the other side of the channel?
-              type = fieldTypes[name].schema.model;
+              this.rawData[name] = new Reference(value as {id, storageKey}, Type.newReference(fieldTypes[name].schema.model), context);
             } else {
               throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
             }
-            this.rawData[name] = new Reference(value as {id, storageKey}, Type.newReference(type), context);
           } else {
             this.rawData[name] = value;
           }
