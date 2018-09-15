@@ -1297,8 +1297,12 @@ resource SomeName
     `);
 
     let [recipe] = manifest.recipes;
-    // TODO(shans): check the types on the schema instead of toString,
-    // once support for the reference type is added.
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
@@ -1316,6 +1320,12 @@ resource SomeName
     `);
 
     let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
@@ -1376,7 +1386,13 @@ resource SomeName
     let [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
+    // Although suspicious, this is valid because entities in the
+    // created handle just need to be able to be read as {Text value, Text value2}
+    // and {Text value, Text value3}. Hence, the recipe is valid and the type
+    // of the handle is * {Text value, Text value2, Text value3};
     assert(suspiciouslyValidRecipe.normalize());
+    let suspiciouslyValidFields = suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.entitySchema.fields;
+    assert.deepEqual(suspiciouslyValidFields, {value: 'Text', value2: 'Text', value3: 'Text'});
     assert(!invalidRecipe.normalize());
   });
 
