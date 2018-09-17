@@ -21,6 +21,15 @@ The webapp can be configured with URL parameters:
 * root=[path]
   * Override the root path used to locate CDN resources (advanced).
 
+Experimental features can be enabled using these query params
+
+* storage=1
+  * TBD
+* legacy=1
+  * TBD
+* storageKeyBase=[a storage key prefix]
+  * Override the prefix used for storage keys.  Defaults to firebase.
+
 Example:
 
 https://polymerlabs.github.io/arcs-live/shell/apps/web/?solo=local.manifest

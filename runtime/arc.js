@@ -148,6 +148,7 @@ export class Arc {
 
     switch (key.protocol) {
       case 'firebase':
+      case 'pouchdb':
         context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
       case 'in-memory': {

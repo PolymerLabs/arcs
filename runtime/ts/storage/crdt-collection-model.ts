@@ -17,10 +17,10 @@ import {assert} from '../../../platform/assert-web.js';
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
 
-interface Model {
+export interface Model {
   id: string;
   value: {};
-  keys: [];
+  keys: string[];
 }
 
 export class CrdtCollectionModel {
