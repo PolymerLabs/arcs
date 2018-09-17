@@ -71,6 +71,7 @@ export class Schema {
     for (const key of Object.keys(this._model.fields)) {
       fields[key] = updateField(this._model.fields[key]);
     } 
+
     return {names: this._model.names, fields, description: this.description};
   }
 
@@ -287,7 +288,10 @@ export class Schema {
           }
           break;
         case 'schema-collection':
-          if (!(value instanceof Set)) {
+          // WTF?! value instanceof Set is returning false sometimes here because the Set in
+          // this environment (a native code constructor) isn't equal to the Set that the value
+          // has been constructed with (another native code constructor)...
+          if (value.constructor.name !== 'Set') {
             throw new TypeError(`Cannot ${op} collection ${name} with non-Set '${value}'`);
           }
           for (const element of value) {
@@ -357,10 +361,16 @@ export class Schema {
             throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
           }
         } else if (type.kind === 'schema-collection' && value) {
-          if (value instanceof Set) {
+          // WTF?! value instanceof Set is returning false sometimes here because the Set in
+          // this environment (a native code constructor) isn't equal to the Set that the value
+          // has been constructed with (another native code constructor)...
+          if (value.constructor.name === 'Set') {
             return value;
           } else if (value.length && value instanceof Object) {
+            console.log('~~~~~', value.constructor, Set, value instanceof Set);
             return new Set(value.map(v => this.sanitizeEntry(type.schema, v, name)));
+          } else {
+            throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
           }
         } else {
           return value;
@@ -373,6 +383,8 @@ export class Schema {
           if (this.rawData[name] !== undefined) {
             if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
               clone[name] = this.rawData[name].dataClone();
+            } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
+              clone[name] = [...this.rawData[name]].map(a => a.dataClone());
             } else {
               clone[name] = this.rawData[name];
             }
