@@ -58,29 +58,38 @@ export class Schema {
 
   toLiteral() {
     const fields = {};
-    for (const key of Object.keys(this._model.fields)) {
-      const field = this._model.fields[key];
+    const updateField = field => {
       if (field.kind === 'schema-reference') {
         const schema = field.schema;
-        fields[key]  = {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
+        return {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
+      } else if (field.kind === 'schema-collection') {
+        return {kind: 'schema-collection', schema: updateField(field.schema)};
       } else {
-        fields[key] = field;
+        return field;
       }
+    }
+    for (const key of Object.keys(this._model.fields)) {
+      fields[key] = updateField(this._model.fields[key]);
     } 
     return {names: this._model.names, fields, description: this.description};
   }
 
   static fromLiteral(data) {
     const fields = {};
-    for (const key of Object.keys(data.fields)) {
-      const field = data.fields[key];
+    const updateField = field => {
       if (field.kind === 'schema-reference') {
         const schema = field.schema;
-        fields[key] = {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
+        return {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
+      } else if (field.kind === 'schema-collection') {
+        return {kind: 'schema-collection', schema: updateField(field.schema)};
       } else {
-        fields[key] = field;
+        return field;
       }
     }
+    for (const key of Object.keys(data.fields)) {
+      fields[key] = updateField(data.fields[key]);
+    }
+
     const result = new Schema({names: data.names, fields});
     result.description = data.description || {};
     return result;
@@ -311,24 +320,50 @@ export class Schema {
           }
         });
         assert(data, `can't construct entity with null data`);
+
+        // TODO: figure out how to do this only on wire-created entities.
+        const sanitizedData = this.sanitizeData(data);
+        for (const [name, value] of Object.entries(sanitizedData)) {
+          this.rawData[name] = value;
+        }
+
+      }
+
+      private sanitizeData(data) : any {
+        let sanitizedData = {};
         for (const [name, value] of Object.entries(data)) {
-          if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference' && value) {
-            let type;
-            if (value instanceof Reference) {
-              // Setting value as Reference (Particle side). This will enforce that the type provided for
-              // the handle matches the type of the reference.
-              this.rawData[name] = value;
-            } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
-              // Setting value from raw data (Channel side).
-              // TODO(shans): This can't enforce type safety here as there isn't any type data available.
-              // Maybe this is OK because there's type checking on the other side of the channel?
-              this.rawData[name] = new Reference(value as {id, storageKey}, Type.newReference(fieldTypes[name].schema.model), context);
-            } else {
-              throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
-            }
+          sanitizedData[name] = this.sanitizeEntry(fieldTypes[name], value, name)
+        }
+        return sanitizedData;
+      }
+
+      private sanitizeEntry(type, value, name) {
+        if (!type) {
+          // If there isn't a field type for this, the proxy will pick up
+          // that fact and report a meaningful error.
+          return value;
+        }
+        if (type.kind === 'schema-reference' && value) {
+          if (value instanceof Reference) {
+            // Setting value as Reference (Particle side). This will enforce that the type provided for
+            // the handle matches the type of the reference.
+            return value;
+          } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
+            // Setting value from raw data (Channel side).
+            // TODO(shans): This can't enforce type safety here as there isn't any type data available.
+            // Maybe this is OK because there's type checking on the other side of the channel?
+            return new Reference(value as {id, storageKey}, Type.newReference(type.schema.model), context);
           } else {
-            this.rawData[name] = value;
+            throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
           }
+        } else if (type.kind === 'schema-collection' && value) {
+          if (value instanceof Set) {
+            return value;
+          } else if (value.length && value instanceof Object) {
+            return new Set(value.map(v => this.sanitizeEntry(type.schema, v, name)));
+          }
+        } else {
+          return value;
         }
       }
 
