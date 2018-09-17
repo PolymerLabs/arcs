@@ -62,6 +62,7 @@
     "jsrsasign-util": "^1.0.0",
     "node-fetch": "^1.7.2",
     "pouchdb": "^7.0.0",
+    "pouchdb-adapter-memory": "^7.0.0",
     "prettier": "^1.14.2",
     "rollup": "^0.65.2",
     "rollup-plugin-multi-entry": "^2.0.2",

@@ -13,7 +13,7 @@
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('transformation slots', function() {
-  it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
+  it.skip('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     let helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/particles/artifacts/provide-hosted-particle-slots.manifest',
       expectedNumPlans: 1
