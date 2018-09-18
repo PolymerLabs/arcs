@@ -10,7 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Type} from './type.js';
+import {TypeChecker} from '../recipe/type-checker.js';
 import {Entity} from '../entity.js';
+import { Reference } from './reference.js';
 
 export class Schema {
   // tslint:disable-next-line: no-any
@@ -55,11 +57,33 @@ export class Schema {
   }
 
   toLiteral() {
-    return this._model;
+    const fields = {};
+    for (const key of Object.keys(this._model.fields)) {
+      const field = this._model.fields[key];
+      if (field.kind === 'schema-reference') {
+        const schema = field.schema;
+        fields[key]  = {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
+      } else {
+        fields[key] = field;
+      }
+    } 
+    return {names: this._model.names, fields, description: this.description};
   }
 
   static fromLiteral(data) {
-    return new Schema(data);
+    const fields = {};
+    for (const key of Object.keys(data.fields)) {
+      const field = data.fields[key];
+      if (field.kind === 'schema-reference') {
+        const schema = field.schema;
+        fields[key] = {kind: 'schema-reference', schema: {kind: schema.kind, model: Type.fromLiteral(schema.model)}};
+      } else {
+        fields[key] = field;
+      }
+    }
+    const result = new Schema({names: data.names, fields});
+    result.description = data.description;
+    return result;
   }
 
   get fields() {
@@ -170,7 +194,7 @@ export class Schema {
     return Type.newEntity(this);
   }
 
-  entityClass() {
+  entityClass(context = null) {
     const schema = this;
     const className = this.name;
     const classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
@@ -242,8 +266,15 @@ export class Schema {
             }
           });
           break;
-
-        default:
+        case 'schema-reference':
+          if (!(value instanceof Reference)) {
+            throw new TypeError(`Cannot ${op} reference ${name} with non-reference '${value}'`);
+          }
+          if (!TypeChecker.compareTypes({type: value.type}, {type: Type.newReference(fieldType.schema.model)})) {
+            throw new TypeError(`Cannot ${op} reference ${name} with value '${value}' of mismatched type`);
+          }
+          break;
+          default:
           throw new Error(`Unknown kind ${fieldType.kind} in schema ${className}`);
       }
     };
@@ -270,7 +301,24 @@ export class Schema {
         });
         assert(data, `can't construct entity with null data`);
         for (const [name, value] of Object.entries(data)) {
-          this.rawData[name] = value;
+          if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference' && value) {
+            let type;
+            if (value instanceof Reference) {
+              // Setting value as Reference (Particle side). This will enforce that the type provided for
+              // the handle matches the type of the reference.
+              type = value.type;
+            } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
+              // Setting value from raw data (Channel side).
+              // TODO(shans): This can't enforce type safety here as there isn't any type data available.
+              // Maybe this is OK because there's type checking on the other side of the channel?
+              type = fieldTypes[name].schema.model;
+            } else {
+              throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
+            }
+            this.rawData[name] = new Reference(value as {id, storageKey}, Type.newReference(type), context);
+          } else {
+            this.rawData[name] = value;
+          }
         }
       }
 
@@ -278,7 +326,11 @@ export class Schema {
         const clone = {};
         for (const name of Object.keys(schema.fields)) {
           if (this.rawData[name] !== undefined) {
-            clone[name] = this.rawData[name];
+            if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
+              clone[name] = this.rawData[name].dataClone();
+            } else {
+              clone[name] = this.rawData[name];
+            }
           }
         }
         return clone;

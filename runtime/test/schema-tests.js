@@ -11,7 +11,9 @@
 import {assert} from './chai-web.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
+import {Reference} from '../ts-build/reference.js';
 import {Schema} from '../ts-build/schema.js';
+import {Type} from '../ts-build/type.js';
 
 describe('schema', function() {
   let loader = new StubLoader({
@@ -194,6 +196,26 @@ describe('schema', function() {
     assert.throws(() => { new Unions({u2: 25}); }, TypeError, 'Type mismatch setting field u2');
     assert.throws(() => { unions.u1 = {a: 12}; }, TypeError, 'Type mismatch setting field u1');
     assert.throws(() => { unions.u2 = 25; }, TypeError, 'Type mismatch setting field u2');
+  });
+
+  it('reference types', async function() {
+    let manifest = await Manifest.parse(`
+      schema ReferencedOne
+        Text foo
+      schema ReferencedTwo
+        Number bar
+      schema References
+        Reference<ReferencedOne> one
+        Reference<ReferencedTwo> two`);
+
+    let References = manifest.findSchemaByName('References').entityClass();
+    
+    let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
+    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null), two: null}); });
+    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newEntity(ReferencedOneSchema), null)}); }, TypeError,
+                  `Cannot set reference two with value '[object Object]' of mismatched type`);
+    assert.throws(() => {new References({one: 42, two: null}); }, TypeError,
+                  `Cannot set reference one with non-reference '42'`);
   });
 
   it('tuple types', async function() {
