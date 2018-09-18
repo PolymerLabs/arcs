@@ -18,6 +18,8 @@ import './fb-data/fb-users.js';
 import './fb-data/fb-user.js';
 import './fb-data/fb-user-context.js';
 
+import './sharing/user-context.js';
+
 const html = Xen.Template.html;
 
 const template = html`
@@ -36,13 +38,18 @@ const template = html`
     on-user="_onForward"
   ></fb-user>
 
-  <fb-user-context
+  <!-- <fb-user-context
     config="{{config}}"
     userid="{{userid}}"
     context="{{context}}"
     arc="{{arc}}"
     on-friends="_onForward"
-  ></fb-user-context>
+  ></fb-user-context> -->
+
+  <user-context
+    context="{{context}}"
+    userid="{{userid}}"
+  ></user-context>
 
   <cloud-arc
     config="{{config}}"
