@@ -948,7 +948,7 @@ describe('Automatic resolution', function() {
 
 
  it.only('plan requiring recipe-resolver to be resolved', async () => {
-  let manifest = await Manifest.parse(`
+  let manifestStr = `
 particle ExtractLocation in './../../../artifacts/Restaurants/../Places/source/ExtractLocation.js'
   in Person Thing {Text id, Text friends, Text foods, Text avatar, Text active, Text occasion, Text date, Object location, Object arcs, Object profiles, Object shares, Text name, Text description, URL image, URL url, Text identifier} person
   out GeoCoordinates Thing {Number latitude, Number longitude, Text name, Text description, URL image, URL url, Text identifier} location
@@ -1012,7 +1012,8 @@ recipe
     consume masterdetail as slot5
       provide detail as slot0
       provide master as slot2
-    `);
+    `
+    let manifest = await Manifest.parse(manifestStr);
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -1028,5 +1029,31 @@ recipe
     let recipeResolver = new RecipeResolver(arc);
     let resolvedRecipe = await recipeResolver.resolve(recipe);
     assert.isTrue(resolvedRecipe.isResolved());
+    ////////////////////////
+    let manifestPrefix = `
+meta
+  name: '!186197856939754:app-shell-87j9bueuo194vg39f'
+  storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7'
+
+
+resource Store0Resource
+  start
+  []
+resource Store2Resource
+  start
+  []
+store Store0 of Person Thing {Text id, Text friends, Text foods, Text avatar, Text active, Text occasion, Text date, Object location, Object arcs, Object profiles, Object shares, Text name, Text description, URL image, URL url, Text identifier} 'User' @1 #user #nosync in Store0Resource
+store Store1 of GeoCoordinates Thing {Number latitude, Number longitude, Text name, Text description, URL image, URL url, Text identifier} '!186197856939754:app-shell-87j9bueuo194vg39f:63' @1  at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7/handles/!186197856939754:app-shell-87j9bueuo194vg39f:63'
+store Store2 of [Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier}] '!186197856939754:app-shell-87j9bueuo194vg39f:64' @0 #nosync #restaurants in Store2Resource
+store Store3 of Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier} '!186197856939754:app-shell-87j9bueuo194vg39f:65' @0  at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7/handles/!186197856939754:app-shell-87j9bueuo194vg39f:65'
+  `
+    let otherManifest = await Manifest.parse(`
+${manifestPrefix}
+${manifestStr}
+    `);
+    assert.lengthOf(otherManifest.recipes, 1);
+    let otherRecipe = otherManifest.recipes[0];
+    assert.isTrue(otherRecipe.normalize());
+    assert.isTrue(otherRecipe.isResolved());
   });
 });
