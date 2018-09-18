@@ -243,6 +243,13 @@ describe('references', function() {
   });
 
   it('can construct references in schemas', async () => {
+    // This test looks at different scenarios for creating references
+    // inside schemas. It:
+    // * reads a single value from the inout connection 'out'
+    // * reads the single 'inFoo'
+    // * reads a collction of Results from 'inResult'.
+    // * puts a Result into each of the Foos retrieved from 'out' and 'inFoo'
+    // * writes the Foos back to 'out'.
     let loader = new StubLoader({
       manifest: `
         schema Result
@@ -284,11 +291,11 @@ describe('references', function() {
               if (model.length == 0)
                 return;
               if (handle.name == 'inResult') {
-                this.model.forEach(item => this.models.push(item));
+                model.forEach(item => this.models.push(item));
               } else if (handle.name == 'inFoo') {
                 this.foos.push(model);
               } else {
-                this.model.forEach(item => this.foos.push(item));
+                model.forEach(item => this.foos.push(item));
               }
               this.maybeGenerateOutput();
             }
