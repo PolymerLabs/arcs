@@ -113,7 +113,7 @@ const template = html`
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-share="_onStateData"
-    on-serialization="_onStateData"
+    on-serialization="_onSerialization"
     on-suggestion="_onSuggestion"
   ></cloud-data>
 
@@ -168,6 +168,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     this._updateDebugGlobals(state);
     this._updateConfig(state, oldState);
     this._updateKey(state, oldState);
+    this._updateSerialization(state);
     this._updateDescription(state);
     this._updateSuggestions(state, oldState);
     this._updateLauncher(state, oldState);
@@ -256,6 +257,16 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
     }
   }
+  _updateSerialization(state) {
+    // TODO(sjmiles): wait 4s for context :(
+    if (!state.contextReady) {
+      setTimeout(() => this._setState({contextReady: true}), 4000);
+    }
+    const serialization = state.pendingSerialization;
+    if (state.contextReady && serialization) {
+      this._setState({pendingSerialization: null, serialization});
+    }
+  }
   _render({}, state) {
     const {userid, description, suggestions} = state;
     const render = {
@@ -290,6 +301,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSuggestion(e, suggestion) {
     this._setState({suggestion, search: ''});
+  }
+  _onSerialization(e, serialization) {
+    this._setState({pendingSerialization: serialization});
   }
 }
 
