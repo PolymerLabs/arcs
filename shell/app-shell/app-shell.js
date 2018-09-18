@@ -1,3 +1,13 @@
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
 // libs
 import Xen from '../components/xen/xen.js';
 import Arcs from './lib/arcs.js';
@@ -116,9 +126,9 @@ const template = html`
   ></mi-toast-pipe>
 
   <!-- pretend this is a processing arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
   <!-- pretend this is the login arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
 
   <shell-ui
     key="{{key}}"
@@ -183,7 +193,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _updateKey(state, oldState) {
-    let {config, user, key, arc} = state;
+    let {config, user, key} = state;
     if (config && user) {
       if (!key && !oldState.key) {
         key = config.key;
