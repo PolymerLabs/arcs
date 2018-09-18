@@ -191,7 +191,7 @@ describe('manifest parser', function() {
       particle Foo
         in Product {[Reference<Review>] review} in
     `);
-  })
+  });
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
@@ -203,7 +203,7 @@ describe('manifest parser', function() {
       particle Foo
         in Product {[Reference<Review {Text reviewText}>] review} in
     `);
-  })
+  });
   it('parses reference types', () => {
     parse(`
       particle Foo

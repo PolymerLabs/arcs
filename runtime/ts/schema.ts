@@ -67,7 +67,7 @@ export class Schema {
       } else {
         return field;
       }
-    }
+    };
     for (const key of Object.keys(this._model.fields)) {
       fields[key] = updateField(this._model.fields[key]);
     } 
@@ -86,7 +86,7 @@ export class Schema {
       } else {
         return field;
       }
-    }
+    };
     for (const key of Object.keys(data.fields)) {
       fields[key] = updateField(data.fields[key]);
     }
@@ -333,10 +333,10 @@ export class Schema {
 
       }
 
-      private sanitizeData(data) : any {
-        let sanitizedData = {};
+      private sanitizeData(data) {
+        const sanitizedData = {};
         for (const [name, value] of Object.entries(data)) {
-          sanitizedData[name] = this.sanitizeEntry(fieldTypes[name], value, name)
+          sanitizedData[name] = this.sanitizeEntry(fieldTypes[name], value, name);
         }
         return sanitizedData;
       }
