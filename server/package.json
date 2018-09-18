@@ -28,6 +28,7 @@
     "url": "https://github.com/PolymerLabs/arcs/issues"
   },
   "dependencies": {
+    "@google-cloud/compute": "^0.10.0",
     "arcs": "file:../",
     "debug": "^4.0.1",
     "esm": "^3.0.82",

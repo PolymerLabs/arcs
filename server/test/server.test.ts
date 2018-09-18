@@ -10,7 +10,7 @@ import mocha from 'mocha';
 import chai from 'chai';
 import { expect } from 'chai';
 import chaiHttp from 'chai-http';
-import { app } from '../src/app';
+import { app } from '../src/pouch-db-app';
 
 chai.use(chaiHttp);
 

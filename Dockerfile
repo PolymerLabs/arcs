@@ -14,7 +14,7 @@ RUN npm install
 RUN ./tools/sigh && npm run build:rollup
 
 WORKDIR /usr/src/app/server
-RUN npm install
+RUN npm install --no-package-lock && npm install --package-lock-only
 RUN npm test
 
 EXPOSE 8080

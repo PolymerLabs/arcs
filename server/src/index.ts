@@ -9,7 +9,10 @@
 import debug from 'debug';
 import http from 'http';
 
-import { app } from './app';
+import {app as dbapp} from './pouch-db-app';
+import {app as masterapp} from './arcs-master-app';
+
+const app = process.env.ARCS_MASTER ? masterapp : dbapp;
 
 /**
  * Basic code that sets up and configures a Arcs Cloud Instance.

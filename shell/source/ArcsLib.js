@@ -25,6 +25,7 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/storage';
 
+import {KeyManager} from '../../runtime/ts-build/keymgmt/manager.js';
 
 //Tracing.enable();
 
@@ -37,6 +38,7 @@ const Arcs = {
   Type,
   BrowserLoader,
   Tracing,
+  KeyManager
 };
 
 // TODO(sjmiles): can't export because WebPack won't make a built version with a module export
