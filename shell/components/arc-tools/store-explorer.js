@@ -92,16 +92,17 @@ class StoreExplorer extends Xen.Base {
     this._setState({contextStores});
   }
   async _queryArcStores(arc) {
-    const arcStores = await this._digestStores(arc._storeTags);
+    const arcStores = await this._digestStores(arc._storeTags, true);
     this._setState({arcStores});
   }
-  async _digestStores(stores) {
+  async _digestStores(stores, hideNamed) {
     const result = [];
     if (stores) {
       for (let [store, tags] of stores) {
         //if (store.name === null) {
-        //  continue;
-        //}
+        if (hideNamed && store.name) {
+          continue;
+        }
         let values = `(don't know how to dereference)`;
         if (store.toList) {
           const list = await store.toList();
@@ -127,7 +128,7 @@ class StoreExplorer extends Xen.Base {
         }
         let moniker = store.id.split(':').pop();
         if (!store.type || store.type.tag !== 'Interface') {
-          const label = data.name || `unnamed (${store.type.toPrettyString()})`;
+          const label = data.name || `${store.type.toPrettyString()}`; // (type)`;
           result.push({tags: data.tags, data: {[label]: data}, name: store.name || data.tags || moniker});
         }
       }
