@@ -1590,5 +1590,45 @@ resource SomeName
 
     let recipe = manifest.recipes[0];
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
- });
+  });
+
+  it.only('deserializes resolved plan with particle-literal handle', async () => {
+    let manifestString = `
+    store Store0 of [Product Thing {Text category, Text seller, Text price, Number shipDays, Text name, Text description, URL image, URL url, Text identifier}] '!122345661354229:app-shell-71jb6fn86j1nc2k:67' @2 #shoplist at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMeHzh_lBoFMmfYo_0l/handles/!122345661354229:app-shell-71jb6fn86j1nc2k:67'
+
+    shape HostedParticleShape
+      in Product Thing {Text category, Text seller, Text price, Number shipDays, Text name, Text description, URL image, URL url, Text identifier} *
+      consume item
+    particle ItemMultiplexer in './../../../artifacts/Products/../Common/source/Multiplexer.js'
+      host HostedParticleShape hostedParticle
+      in [~a] list
+      affordance dom
+      consume set of item
+    particle List in './../../../artifacts/Products/../Common/source/List.js'
+      in [~a] items
+      affordance dom
+      consume root #content
+        must provide set of item
+          handle items
+
+    recipe
+      copy '!122345661354229:app-shell-71jb6fn86j1nc2k:67' #shoplist as handle0 // [Product Thing {...}]
+      copy '!600214341561273:app-shell-722o5f0npx2opbs5ke:particle-literal:ShowProduct' as handle1 // HostedParticleShape
+      slot 'rootslotid-root' #root as slot1
+      ItemMultiplexer as particle0
+        hostedParticle = handle1
+        list <- handle0
+        consume item as slot0
+      List as particle1
+        items <- handle0
+        consume root as slot1
+          provide item as slot0
+    `;
+    let manifest = (await Manifest.parse(manifestString));
+    assert.lengthOf(manifest.recipes, 1);
+    let recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    console.log(recipe.toString({showUnresolved: true}));
+    assert.isTrue(recipe.isResolved());
+  });
 });
