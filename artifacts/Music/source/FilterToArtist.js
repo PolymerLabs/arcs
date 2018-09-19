@@ -20,7 +20,7 @@ defineParticle(({DomParticle}) => {
         entities.forEach(e => artistPlayHistory.remove(e));
         
         for (const entry of props.fullPlayHistory) {
-          if (entry.artist === props.artist.name) {
+          if (entry.artist.toLowerCase() === props.artist.name.toLowerCase()) {
             await artistPlayHistory.store(entry);
           }
         }
