@@ -102,6 +102,13 @@ ${styles}
     shouldRender(props) {
       return Boolean(props.artist);
     }
+    willReceiveProps(props) {
+      if (props.artistPlayHistory.length) {
+        const mostRecentTimestamp = Math.max(...props.artistPlayHistory.map(r => r.dateTime));
+        this.setParticleDescription(
+          `You've heard ${props.artist.name} on ${new Date(mostRecentTimestamp).toLocaleDateString()}`);
+      }
+    }
     render(props, state) {
       if (!props.artist) return;
 

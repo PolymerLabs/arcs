@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Common/List.manifest'
+import '../Common/Description.schema'
 import 'Artist.schema'
 import 'PlayRecord.schema'
 
@@ -14,8 +15,11 @@ store Store1 of [PlayRecord] 'myNowPlayingHistory' in 'playingNowHistory.json'
 
 particle ShowArtist in 'source/ShowArtist.js'
   in Artist artist
+  in [PlayRecord] artistPlayHistory
+  out [Description] descriptions
   consume root
     provide nowPlayingList
+  description `Learn more about ${artist}`
 
 particle FilterToArtist in 'source/FilterToArtist.js'
   in Artist artist
@@ -36,6 +40,7 @@ recipe
     artistPlayHistory = artistPlayHistory
   ShowArtist
     artist <- artist
+    artistPlayHistory <- artistPlayHistory
     consume root
       provide nowPlayingList as slot0
   List
@@ -44,4 +49,4 @@ recipe
   ItemMultiplexer
     list = artistPlayHistory
     hostedParticle = PlayRecordRenderer
-  description `Show more about the artist`
+  description `${ShowArtist}`
