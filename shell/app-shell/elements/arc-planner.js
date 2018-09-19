@@ -22,7 +22,7 @@ const error = Xen.logFactory('ArcPlanner', '#104a91', 'error');
 
 class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'arc', 'suggestion', 'search'];
+    return ['config', 'arc', 'suggestion', 'search', 'userid'];
   }
   _getInitialState() {
     return {
@@ -32,13 +32,13 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, oldProps) {
     const changed = name => props[name] !== oldProps[name];
-    const {arc, suggestion, search} = props;
+    const {arc, suggestion, search, userid} = props;
     if (suggestion && changed('suggestion')) {
       state.pendingPlans.push(suggestion.plan);
     }
-    if (arc) {
+    if (arc && userid) {
       let {planificator} = state;
-      if (changed('arc')) {
+      if (changed('arc') || changed('userid')) {
         state.pendingPlans = [];
         if (planificator) {
           planificator.dispose();
@@ -46,7 +46,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
         }
       }
       if (!planificator) {
-        planificator = this._createPlanificator(arc);
+        planificator = this._createPlanificator(arc, userid);
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
@@ -59,8 +59,8 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
   }
-  _createPlanificator(arc) {
-    const planificator = new Arcs.Planificator(arc);
+  _createPlanificator(arc, userid) {
+    const planificator = new Arcs.Planificator(arc, {userid});
     planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     return planificator;
