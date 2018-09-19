@@ -18,41 +18,47 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     get template() {
       return '&nbsp;'; //html`Searching`;
     }
-    update({query, shows}, state) {
+    update({query}, state) {
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (!state.receiving) {
-        if (query && query.query !== state.query) {
-          state.query = query.query;
-          this.fetchShows(query, shows);
+        if (query !== state.query) {
+          state.query = query;
+          this.fetchShows(query);
         }
       }
     }
-    async fetchShows(query, shows) {
+    async fetchShows(query) {
       this.setState({count: -1, receiving: true});
       const response = await fetch(`${service}/search/shows?q=${query.query}`);
-      const data = await response.json();
-      this.receiveShows(data, shows);
+      const shows = await response.json();
+      this.receiveShows(shows);
       this.setState({receiving: false});
     }
-    async receiveShows(data, shows) {
+    async receiveShows(shows) {
       //log('TVShows', shows);
+      const showsView = this.handles.get('shows');
+      // clear old data
+      //let entities = await showsView.toList();
+      //entities.forEach(e => showsView.remove(e));
       // add new data
-      data = data.filter(({show}) => show.image && show.image.medium && (!shows || !shows.find(s => show.id == s.showid)));
-      const rawData = data.map(({show}) => this.showToEntity(show));
-      //await this.clearHandle('shows');
-      await this.appendRawDataToHandle('shows', rawData);
-    }
-    showToEntity(show) {
-      return {
-        showid: String(show.id),
-        name: show.name,
-        description: show.summary,
-        image: show.image && show.image.medium.replace('http:', 'https:') || '',
-        network: show.network && show.network.name || show.webChannel && show.webChannel.name || '',
-        day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
-        time: show.schedule && show.schedule.time
-      };
+      const Show = showsView.entityClass;
+      shows.forEach(show => {
+        show = show.show;
+        if (show.image && show.image.medium) {
+          let entity = new Show({
+            showid: String(show.id),
+            name: show.name,
+            description: show.summary,
+            image: show.image && show.image.medium.replace('http:', 'https:') || '',
+            network: show.network && show.network.name || show.webChannel && show.webChannel.name || '',
+            day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
+            time: show.schedule && show.schedule.time
+          });
+          //log('TVShows', JSON.stringify(entity.dataClone(), null, '  '));
+          showsView.store(entity);
+        }
+      });
     }
   };
 });

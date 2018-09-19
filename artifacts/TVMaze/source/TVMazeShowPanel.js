@@ -12,34 +12,21 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  const host = `tv-maze-show-panel`;
+  let host = `show-panel`;
 
   const template = html`
-
+<style>
+  [${host}] {
+    padding: 16px;
+  }
+  [${host}] [description] p {
+    margin: 0;
+  }
+</style>
 <div ${host}>
-  <style>
-    [${host}] {
-      padding: 16px;
-    }
-    [${host}] > [slotid=action] {
-      margin-right: 40px;
-    }
-    [${host}] > [columns] {
-      /* display: flex; */
-      align-items: start;
-      padding-bottom: 8px;
-    }
-    [${host}] [img] {
-      vertical-align: middle;
-      padding-right: 8px;
-    }
-    [${host}] > [description] p {
-      margin: 0;
-    }
-  </style>
-  <div slotid="action"></div>
-  <div columns>
-    <img src="{{image}}">
+  <div slotid="action" style="margin-right: 40px;"></div>
+  <div style="display: flex; align-items: start; padding-bottom: 8px;">
+    <img src="{{image}}" style="vertical-align: middle; padding-right: 8px;">
     <div>
       <b>{{network}}</b>
       <br>
@@ -51,7 +38,7 @@ defineParticle(({DomParticle, html}) => {
   <div slotid="items"></div>
 </div>
 
-  `;
+  `.trim();
 
   return class extends DomParticle {
     get template() {
