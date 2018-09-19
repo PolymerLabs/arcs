@@ -13,9 +13,21 @@
 defineParticle(({DomParticle, html}) => {
 
   const template = html`
-    <div style="padding: 4px 0;">
+    <style>
+      [play-record] {
+        padding: 4px 0;
+        margin: -1px 0; /* removing the borders from the styling of the List.js */
+        background-color: white;
+      }
+      [play-record] [time] {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+      }
+    </style>
+    <div play-record>
       <div>{{song}}</div>
-      <div style="font-size: 12px">{{dateTime}}</div>
+      <div time>Heard on <span>{{dateTime}}</span></div>
     </div>
   `;
 
@@ -29,7 +41,7 @@ defineParticle(({DomParticle, html}) => {
     render({playRecord}) {
       return {
         song: playRecord.song,
-        dateTime: new Date(playRecord.dateTime).toUTCString()
+        dateTime: new Date(playRecord.dateTime).toLocaleDateString()
       };
     }
   };
