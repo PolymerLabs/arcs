@@ -13,7 +13,6 @@ import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
-import {resetInMemoryStorageForTesting} from '../ts-build/storage/in-memory-storage.js';
 import {resetPouchDbStorageForTesting} from '../ts-build/storage/pouchdb/pouch-db-memory-storage.js';
 
 // Resolves when the two stores are synchronzied with each other:
@@ -27,17 +26,17 @@ async function synchronized(store1, store2, delay=1) {
   }
 }
 
-describe('in-memory', function() {
+describe('pouchdb-memory', function() {
 
   let lastStoreId = 0;
   function newStoreKey(name) {
+    // TODO(lindner) replace with pouchdb-in-memory
     return `in-memory`;
   }
 
-  before(() => {
+  before(async () => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
-    resetInMemoryStorageForTesting();
-    resetPouchDbStorageForTesting();
+    await resetPouchDbStorageForTesting();
   });
 
   describe('variable', () => {
