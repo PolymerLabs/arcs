@@ -91,6 +91,7 @@ const defaultOptions = {
 export class Planificator {
   constructor(arc, options) {
     this._arc = arc;
+    this._userid = options ? options.userid : null;
     this._speculator = new Speculator();
     this._search = null;
 
@@ -146,6 +147,8 @@ export class Planificator {
     this._suggestChangedCallbacks = [];
     this._stateChangedCallbacks = [];
   }
+
+  get userid() { return this._userid; }
 
   get isPlanning() { return this._isPlanning; }
   set isPlanning(isPlanning) {

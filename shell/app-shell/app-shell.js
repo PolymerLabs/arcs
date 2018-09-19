@@ -66,6 +66,7 @@ const template = html`
     arc="{{arc}}"
     search="{{search}}"
     suggestion="{{suggestion}}"
+    userid="{{userid}}"
     on-metaplans="_onStateData"
     on-metaplan="_onStateData"
     on-suggestions="_onStateData"
