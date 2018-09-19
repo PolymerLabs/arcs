@@ -12,14 +12,26 @@ import {Disk} from "../disks";
 
 import {
   Core_v1Api,
-  KubeConfig, V1Container, V1ContainerPort, V1GCEPersistentDiskVolumeSource,
+  KubeConfig,
+  V1Container,
+  V1ContainerPort,
+  V1EnvVar,
+  V1GCEPersistentDiskVolumeSource,
   V1ObjectMeta,
-  V1PersistentVolume, V1PersistentVolumeSpec,
+  V1PersistentVolume,
+  V1PersistentVolumeSpec,
   V1Pod,
   V1PodSpec,
-  V1Service, V1ServicePort, V1ServiceSpec, V1Volume, V1VolumeMount
+  V1Service,
+  V1ServicePort,
+  V1ServiceSpec,
+  V1Volume,
+  V1VolumeMount
 } from "@kubernetes/client-node";
+import {ON_DISK_DB} from "../utils";
 
+const CONTAINER_PORT = 8080;
+const EXTERNAL_PORT = 80;
 
 /**
  * An implementation of the Container interface that uses Kubernetes for
@@ -87,8 +99,11 @@ export class K18sContainerManager implements ContainerManager {
        * TODO: need some kind of cloud-dns setup script so SSL cert has a domain name
        */
       const {body: createdPersistentVolume} = await this.requestNewPersistentVolume(encryptedDisk);
+      console.log("Created new persistent volume " + createdPersistentVolume.metadata.name);
       const {body: createdPod} = await this.requestCreatePod(encryptedDisk, fingerprint);
+      console.log("Created new pod " + createdPod.metadata.name);
       const {body: createdService} = await this.requestCreateService(fingerprint, createdPod);
+      console.log("Created new service " + createdService.metadata.name);
       return Promise.resolve(new K18sPod(createdPod, createdService));
     } catch (e) {
       return Promise.reject(e);
@@ -108,8 +123,8 @@ export class K18sContainerManager implements ContainerManager {
     service.spec.type = 'LoadBalancer';
 
     const v1ServicePort = new V1ServicePort();
-    v1ServicePort.port = 80;
-    v1ServicePort.targetPort = 8080;
+    v1ServicePort.port = EXTERNAL_PORT;
+    v1ServicePort.targetPort = CONTAINER_PORT;
 
     service.spec.ports = [v1ServicePort];
 
@@ -142,9 +157,12 @@ export class K18sContainerManager implements ContainerManager {
     container.name = 'container-image-' + fingerprint;
     const volumeMount = this.createVolumeMount(volumeName);
     container.volumeMounts = [volumeMount];
-
+    const targetDiskEnv = new V1EnvVar();
+    targetDiskEnv.name = ON_DISK_DB;
+    targetDiskEnv.value = "true";
+    container.env = [targetDiskEnv];
     const v1ContainerPort = new V1ContainerPort();
-    v1ContainerPort.containerPort = 8080;
+    v1ContainerPort.containerPort = CONTAINER_PORT;
     container.ports = [v1ContainerPort];
     return container;
   }

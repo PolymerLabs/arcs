@@ -16,3 +16,5 @@ const ARCS_KEY_PREFIX = 'arcs-key-';
 export function arcsKeyFor(fingerprint: string):string {
    return ARCS_KEY_PREFIX + fingerprint;
 }
+
+export const ON_DISK_DB = "TARGET_DISK";

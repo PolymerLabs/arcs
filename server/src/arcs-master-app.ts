@@ -26,11 +26,11 @@ class ArcsMasterApp extends AppBase {
     this.express.get('/deploy/:fingerprint/:wrappedkey', this.deploy.bind(this));
   }
 
-
-  register(req, res, next) {
-
-  }
-
+  /**
+   * GCP doesn't allow uppercase, +,-, or = characters in labels, it also doesn't allow them to exceed 61 characters,
+   * so we take a base64 fingerprint, remove illegal characters, and then shorten it to 32-characters.
+   * @param str a base64 string, usually a fingerprint.
+   */
   gcpSafeIdentifier(str) {
     return str.replace(/[ +-=]/g, '').toLowerCase().substring(0, 32);
   }
@@ -63,7 +63,9 @@ class ArcsMasterApp extends AppBase {
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().create(fingerprint, wrappedkey);
+      console.log("Disk successfully created with id " + disk.id());
       const container = await cloud.containers().deploy(fingerprint, disk);
+      console.log("Container successfully created with fingerprint " + fingerprint);
       res.send('{"status": "pending", "id": "' + fingerprint + '", "url": "/' + fingerprint + '"}');
     } catch (e) {
       res.send("Can't deploy because " + JSON.stringify(e));

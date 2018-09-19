@@ -12,6 +12,7 @@ import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
 import { Runtime } from 'arcs';
 import {AppBase} from "./app";
+import {ON_DISK_DB} from "./deployment/utils";
 
 /**
  * An app server that additionally configures a pouchdb.
@@ -35,10 +36,14 @@ class PouchDbApp extends AppBase {
    * https://github.com/pouchdb/pouchdb-server
    */
   private addPouchRoutes(): void {
-    const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
-
-    // TODO: add /personalcloud mount
-    this.express.use('/', PouchDbServer(inMemPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+    if (process.env[ON_DISK_DB]) {
+      const dboptions = {'prefix': '/personalcloud/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
+      const onDiskPouchDb = PouchDB.defaults(dboptions);
+      this.express.use('/', PouchDbServer(onDiskPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+    } else {
+      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
+      this.express.use('/', PouchDbServer(inMemPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+    }
   }
 }
 

@@ -6,7 +6,7 @@ Arcs runtime and encrypted storage provisioning.
 ## Design
 
 Arcs Cloud Deployment Managment (*ACDM*) maps client *StorageKey*
-fingerprints (see Arcs Key Management System) fingerprints 1-to-1 to 
+fingerprints (see Arcs Key Management System) 1-to-1 to 
 deployed NodeJS VMs with attached encrypted disk, available at an 
 externally available HTTP endpoint.
 
@@ -26,7 +26,7 @@ In order to support multiple cloud backends (GCP, AWS, Azure, etc) as well
 as multiple secure storage mechanisms (encrypted disks, bucket storage,
 Dropbox/Gdrive FUSE filesystems), high level APIs are coupled with 
 specific cloud 'drivers'. The first available implementation is for GCE 
-encrypted disks, and container orchestration is handed by kubernetes.
+encrypted disks, and container orchestration is handled by kubernetes.
 
 Most of the code in this directory runs in a single 'master' node vm that
 orchestrates individual user personal cloud deployments, each associated with
