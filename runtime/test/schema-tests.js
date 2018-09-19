@@ -170,7 +170,7 @@ describe('schema', function() {
                             shipDays: 4});
   });
 
-  it('union types', async function() {
+  it('enforces rules when storing union types', async function() {
     let manifest = await Manifest.parse(`
       schema Unions
         (Text or Number) u1
@@ -198,7 +198,7 @@ describe('schema', function() {
     assert.throws(() => { unions.u2 = 25; }, TypeError, 'Type mismatch setting field u2');
   });
 
-  it('reference types', async function() {
+  it('enforces rules when storing reference types', async function() {
     let manifest = await Manifest.parse(`
       schema ReferencedOne
         Text foo
@@ -218,7 +218,7 @@ describe('schema', function() {
                   `Cannot set reference one with non-reference '42'`);
   });
 
-  it('collection types', async function() {
+  it('enforces rules when storing collection types', async function() {
     let manifest = await Manifest.parse(`
       schema Collections
         [Reference<Foo {Text value}>] collection
@@ -233,7 +233,7 @@ describe('schema', function() {
                   `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });
 
-  it('tuple types', async function() {
+  it('enforces rules when storing tuple types', async function() {
     let manifest = await Manifest.parse(`
       schema Tuples
         (Text, Number) t1

@@ -367,7 +367,6 @@ export class Schema {
           if (value.constructor.name === 'Set') {
             return value;
           } else if (value.length && value instanceof Object) {
-            console.log('~~~~~', value.constructor, Set, value instanceof Set);
             return new Set(value.map(v => this.sanitizeEntry(type.schema, v, name)));
           } else {
             throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);

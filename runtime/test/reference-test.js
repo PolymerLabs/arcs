@@ -364,18 +364,18 @@ describe('references', function() {
         schema Result
           Text value
         
-        particle ExtractReference in 'extractReference.js'
+        particle ExtractReferences in 'extractReferences.js'
           in Foo {[Reference<Result>] result} referenceIn
           out [Result] rawOut
           
         recipe
           create 'input:1' as handle0
           create 'output:1' as handle1
-          ExtractReference
+          ExtractReferences
             referenceIn <- handle0
             rawOut -> handle1
         `,
-      'extractReference.js': `
+      'extractReferences.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -439,18 +439,18 @@ describe('references', function() {
         schema Result
           Text value
         
-        particle ExtractReference in 'extractReference.js'
+        particle ConstructReferenceCollection in 'constructReferenceCollection.js'
           out Foo {[Reference<Result>] result} referenceOut
           in [Result] rawIn
           
         recipe
           create 'input:1' as handle0
           create 'output:1' as handle1
-          ExtractReference
+          ConstructReferenceCollection
             referenceOut -> handle0
             rawIn <- handle1
         `,
-      'extractReference.js': `
+      'constructReferenceCollection.js': `
         defineParticle(({Particle, Reference}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
