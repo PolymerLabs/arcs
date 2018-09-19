@@ -14,6 +14,10 @@ import Arcs from './arcs.js';
 const log = Xen.logFactory('ArcsUtils', '#4a148c');
 
 const ArcsUtils = {
+  createArc({id, urlMap, slotComposer, context, loader, storageKey}) {
+    const pecFactory = ArcsUtils.createPecFactory(urlMap);
+    return new Arcs.Arc({id, pecFactory, slotComposer, context, loader, storageKey});
+  },
   createPecFactory(urlMap) {
     // worker paths are relative to worker location, remap urls from there to here
     const remap = ArcsUtils._expandUrls(urlMap);
