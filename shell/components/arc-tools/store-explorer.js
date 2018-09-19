@@ -103,11 +103,19 @@ class StoreExplorer extends Xen.Base {
         if (hideNamed && store.name) {
           continue;
         }
+        let malformed = false;
         let values = `(don't know how to dereference)`;
         if (store.toList) {
           const list = await store.toList();
           values = {};
-          list.forEach(item => values[item.id] = item.rawData);
+          list.forEach(item => {
+            if (item) {
+              values[item.id] = item.rawData;
+            } else if (!malformed) {
+              malformed = true;
+              console.warn('malformed store', tags, store);
+            }
+          });
           //values = list.map(item => item.rawData);
         } else if (store.get) {
           values = await store.get();

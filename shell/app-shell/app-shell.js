@@ -263,7 +263,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       setTimeout(() => this._setState({contextReady: true}), 4000);
     }
     const serialization = state.pendingSerialization;
-    if (state.contextReady && serialization) {
+    if (state.contextReady && serialization != null) {
       this._setState({pendingSerialization: null, serialization});
     }
   }

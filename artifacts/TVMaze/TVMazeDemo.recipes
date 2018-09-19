@@ -1,0 +1,34 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'TVMazeShow.recipes'
+import 'TVMazeQuery.recipes'
+import '../Common/List.recipes'
+import '../Common/Detail.manifest'
+
+recipe TVMazeSearchBar
+  create as query
+  TVMazeSearchBar
+    query = query
+  create #tiles #shows as shows
+  TVMazeSearchShows
+    query = query
+    shows = shows
+  create #selected as selected
+  SelectableTileList
+    items = shows
+    selected = selected
+  TileMultiplexer
+    list = shows
+    hostedParticle = TVMazeShowTile
+  DetailSlider as particle0
+    selected = selected
+  TVMazeShowPanel
+    show = selected
+  description `search TVMaze for show information`
+
