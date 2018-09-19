@@ -322,7 +322,9 @@ class Cursor {
 
 /** @class BigCollection
  * A handle on a large set of Entity data. Similar to Collection, except the complete set of
- * entities is not available directly; use stream() to read the full set.
+ * entities is not available directly; use stream() to read the full set. Particles wanting to
+ * operate on BigCollections should do so in the setHandles() call, since BigCollections do not
+ * trigger onHandleSync() or onHandleUpdate().
  */
 class BigCollection extends Handle {
   configure(options) {

@@ -14,6 +14,8 @@ import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -422,6 +424,78 @@ describe('firebase', function() {
       collection.cursorClose(cursorId3);
       await checkDone(cursorId3);
     }).timeout(20000);
+
+    it('big collection API works from inside the PEC', async function() {
+      let fileMap = {
+        manifest: `
+          schema Data
+            Text value
+
+          particle P in 'a.js'
+            inout BigCollection<Data> big
+
+          recipe
+            use 'test:0' as handle0
+            P
+              big = handle0
+        `,
+        'a.js': `
+          'use strict';
+
+          defineParticle(({Particle}) => {
+            return class P extends Particle {
+              async setHandles(handles) {
+                let collection = handles.get('big');
+
+                // Verify that store and remove work from a particle.
+                await collection.store(new collection.entityClass({value: 'rick'}));
+                let toRemove = new collection.entityClass({value: 'barry'});
+                await collection.store(toRemove);
+                await collection.store(new collection.entityClass({value: 'morty'}));
+                await collection.remove(toRemove);
+                await collection.remove(new collection.entityClass({value: 'no one'}));
+
+                // Verify that streamed reads work by writing back what we read.
+                let result = await this.read(collection);
+                await collection.store(new collection.entityClass({value: result}));
+              }
+
+              async read(collection) {
+                let items = [];
+                let cursor = await collection.stream(1);
+                for (let i = 0; i < 3; i++) {
+                  let data = await cursor.next();
+                  if (data.done) {
+                    return items.join('&');
+                  }
+                  items.push(...data.value.map(item => item.rawData.value));
+                }
+                return 'error - cursor did not terminate correctly';
+              }
+            }
+          });
+        `
+      };
+      let testHelper = await TestHelper.create({
+        manifestString: fileMap.manifest,
+        loader: new StubLoader(fileMap)
+      });
+      let arc = testHelper.arc;
+      let manifest = arc._context;
+
+      let storage = createStorage(arc.id);
+      let Data = Type.newEntity(manifest.schemas.Data);
+      let bigStore = await storage.construct('test0', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+      let recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(bigStore);
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      let cursorId = await bigStore.stream(5);
+      let data = await bigStore.cursorNext(cursorId);
+      assert.deepEqual(data.value.map(item => item.rawData.value), ['rick', 'morty', 'rick&morty']);
+    });
   });
 
   // These tests use data manually added to our test firebase db.

@@ -218,7 +218,7 @@ export class ParticleExecutionContext {
   async _instantiateParticle(id, spec, proxies) {
     let name = spec.name;
     let resolve = null;
-    let p = new Promise((res, rej) => resolve = res);
+    let p = new Promise(res => resolve = res);
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
@@ -240,11 +240,11 @@ export class ParticleExecutionContext {
     });
 
     return [particle, async () => {
-      resolve();
-      let idx = this._pendingLoads.indexOf(p);
-      this._pendingLoads.splice(idx, 1);
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
+      let idx = this._pendingLoads.indexOf(p);
+      this._pendingLoads.splice(idx, 1);
+      resolve();
     }];
   }
 
