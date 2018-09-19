@@ -7,3 +7,4 @@
 
 schema Artist
   Text name
+  description `${name}`
