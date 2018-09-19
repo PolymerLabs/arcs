@@ -18,7 +18,7 @@ import {Type} from '../ts-build/type.js';
 describe('schema', function() {
   let loader = new StubLoader({
     'Product.schema': `
-        import './artifacts/Things/Thing.schema'
+        import './runtime/test/artifacts/Things/Thing.schema'
         schema Product extends Thing
           Text category
           Text seller
@@ -209,7 +209,7 @@ describe('schema', function() {
         Reference<ReferencedTwo> two`);
 
     let References = manifest.findSchemaByName('References').entityClass();
-    
+
     let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
     assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null), two: null}); });
     assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null)}); }, TypeError,

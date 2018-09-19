@@ -834,7 +834,7 @@ ${particleStr1}
       return count;
     };
 
-    let shellParticlesPath = './artifacts/';
+    let shellParticlesPath = 'runtime/test/artifacts/';
     let shellParticleNames = [];
     fs.readdirSync(shellParticlesPath).forEach(name => {
       let manifestFolderName = path.join(shellParticlesPath, name);
