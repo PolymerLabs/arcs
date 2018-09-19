@@ -25,7 +25,7 @@ let loader = new Loader();
 describe('Multiplexer', function() {
   it('Processes multiple inputs', async () => {
     let manifest = await Manifest.parse(`
-      import './artifacts/Common/Multiplexer.manifest'
+      import 'runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe

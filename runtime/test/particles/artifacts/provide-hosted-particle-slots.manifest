@@ -27,18 +27,18 @@ shape FooAnnotationShape
   in Foo *
   consume
 
-particle Fooxer in '../../../../artifacts/Common/source/Multiplexer.js'
+particle Fooxer in '../../artifacts/Common/source/Multiplexer.js'
   host FooShape hostedParticle
   in [Foo] list
   consume set of item
     provide set of annotation
 
-particle FooAnnotationMuxer in '../../../../artifacts/Common/source/Multiplexer.js'
+particle FooAnnotationMuxer in '../../artifacts/Common/source/Multiplexer.js'
   host FooAnnotationShape hostedParticle
   in [Foo] list
   consume set of annotation
 
-particle FooList in '../../../../artifacts/Common/source/List.js'
+particle FooList in '../../artifacts/Common/source/List.js'
   in [Foo] items
   consume root
     provide set of item

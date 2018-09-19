@@ -10,7 +10,7 @@
 
 import './Cake.manifest'
 
-particle List in '../../../../artifacts/Common/source/List.js'
+particle List in '../Common/source/List.js'
   in [~a] items
   consume root
     must provide set of item
@@ -22,7 +22,7 @@ shape MakeCakeShape
   consume item
   provide special
 
-particle CakeMuxer in '../../../../artifacts/Common/source/Multiplexer.js'
+particle CakeMuxer in '../Common/source/Multiplexer.js'
   host MakeCakeShape hostedParticle
   in [Cake] list
   consume set of item
@@ -41,7 +41,7 @@ shape LightCandleShape
   in Cake *
   consume candles
 
-particle CandleMuxer in '../../../../artifacts/Common/source/Multiplexer.js'
+particle CandleMuxer in '../Common/source/Multiplexer.js'
   host LightCandleShape hostedParticle
   in [Cake] list
   consume set of candles
