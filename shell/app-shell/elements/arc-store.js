@@ -9,8 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import Arcs from '../lib/arcs.js';
-import ArcsUtils from '../lib/arcs-utils.js';
+import Arcs from '../../lib/arcs.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
 
 const log = Xen.logFactory('ArcStore', '#c6a700');
 

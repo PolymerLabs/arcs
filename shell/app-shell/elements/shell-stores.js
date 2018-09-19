@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import ArcsUtils from '../lib/arcs-utils.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
 import './arc-store.js';
 import {FbStore} from './fb-data/FbStore.js';
 

@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 const schemas = {
-  avatar: {
+  Avatar: {
     tag: 'Entity',
     data: {
       names: ['Avatar'],
@@ -19,7 +19,7 @@ const schemas = {
       }
     }
   },
-  user: {
+  User: {
     tag: 'Entity',
     data: {
       names: ['User0'],
@@ -51,6 +51,27 @@ const schemas = {
         profiles: 'Object',
         shares: 'Object',
         url: 'URL'
+      }
+    }
+  },
+  ArcMetadata: {
+    tag: 'Entity',
+    data: {
+      names: ['ArcMetadata'],
+      fields: {
+        description: 'Text',
+        icon: 'Text',
+        key: 'Text',
+        href: 'Text',
+        bg: 'Text',
+        color: 'Text',
+        profile: 'Text',
+        blurb: 'Text',
+        share: 'Number',
+        touched: 'Number',
+        deleted: 'Boolean',
+        starred: 'Boolean',
+        externalManifest: 'URL'
       }
     }
   }

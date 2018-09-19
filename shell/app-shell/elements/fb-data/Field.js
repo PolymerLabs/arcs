@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {FbGraph} from '../../../components/FbGraph/FbGraph.js';
-import Firebase from '../cloud-data/firebase.js';
+import Firebase from '../../../lib/firebase.js';
 
 const {Field} = FbGraph(Firebase.db);
 

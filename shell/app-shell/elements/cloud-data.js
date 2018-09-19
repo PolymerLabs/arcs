@@ -16,7 +16,6 @@ import './cloud-data/cloud-handles.js';
 
 import './fb-data/fb-users.js';
 import './fb-data/fb-user.js';
-import './fb-data/fb-user-context.js';
 
 import './sharing/user-context.js';
 
@@ -38,14 +37,6 @@ const template = html`
     on-user="_onForward"
   ></fb-user>
 
-  <!-- <fb-user-context
-    config="{{config}}"
-    userid="{{userid}}"
-    context="{{context}}"
-    arc="{{arc}}"
-    on-friends="_onForward"
-  ></fb-user-context> -->
-
   <user-context
     context="{{context}}"
     userid="{{userid}}"
@@ -65,7 +56,7 @@ const template = html`
     on-serialization="_onForward"
   ></cloud-arc>
 
-  <cloud-steps
+  <!-- <cloud-steps
     config="{{config}}"
     key="{{key}}"
     plans="{{plans}}"
@@ -78,7 +69,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     plans="{{plans}}"
-  ></cloud-handles>
+  ></cloud-handles> -->
 `;
 
 const log = Xen.logFactory('CloudData', '#004f00');
