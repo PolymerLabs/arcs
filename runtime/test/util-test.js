@@ -93,18 +93,18 @@ describe('util', function() {
     check(keyFn, [], [{a: 5}, {b: 9}], {add: [{a: 5}, {b: 9}], remove: []});
     check(keyFn, [{a: 7, b: 3}], [], {add: [], remove: [{b: 3, a: 7}]});
 
-    check(keyFn, [{a: 1, b: 2}], [{a: 1}], {add:[{a: 1}], remove:[{a: 1, b: 2}]});
-    check(keyFn, [{b: 8}], [{a: 5, b: 8}], {add:[{a: 5, b: 8}], remove:[{b: 8}]});
+    check(keyFn, [{a: 1, b: 2}], [{a: 1}], {add: [{a: 1}], remove: [{a: 1, b: 2}]});
+    check(keyFn, [{b: 8}], [{a: 5, b: 8}], {add: [{a: 5, b: 8}], remove: [{b: 8}]});
 
-    check(keyFn, [{a: 1, b: 2}], [{a: 6, b: 2}], {add:[{a: 6, b: 2}], remove:[{a: 1, b: 2}]});
-    check(keyFn, [{a: 1, b: 2}], [{a: 1, b: 6}], {add:[{a: 1, b: 6}], remove:[{a: 1, b: 2}]});
+    check(keyFn, [{a: 1, b: 2}], [{a: 6, b: 2}], {add: [{a: 6, b: 2}], remove: [{a: 1, b: 2}]});
+    check(keyFn, [{a: 1, b: 2}], [{a: 1, b: 6}], {add: [{a: 1, b: 6}], remove: [{a: 1, b: 2}]});
 
     // Duplicate objects are handled correctly.
     check(keyFn, [{a: 9, b: 8}, {a: 7}, {b: 6}, {a: 9, b: 8}, {b: 6}],
                  [{a: 9, b: 8}, {a: 1}, {a: 4, b: 6}],
-                 {add:[{a: 1}, {a: 4, b: 6}], remove:[{a: 7}, {b: 6}]});
+                 {add: [{a: 1}, {a: 4, b: 6}], remove: [{a: 7}, {b: 6}]});
 
     // Extra fields are ignored.
-    check(keyFn, [{a: 1, b: 2, c: 3}], [{a: 1, b: 2, c: 4}], {add:[], remove:[]});
+    check(keyFn, [{a: 1, b: 2, c: 3}], [{a: 1, b: 2, c: 4}], {add: [], remove: []});
   });
 });
