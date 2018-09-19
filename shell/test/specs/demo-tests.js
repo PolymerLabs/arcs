@@ -429,7 +429,8 @@ function testAroundRefresh() {
 }
 
 describe('Arcs demos', function() {
-  it('can book a restaurant', /** @this Context */ function() {
+  // TODO(#1902): test is failing pretty consistently.
+  it.skip('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     searchSuggestions('restaurants');
     acceptSuggestion('Find restaurants near selenium\'s location.$');

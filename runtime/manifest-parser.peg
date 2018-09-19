@@ -1027,9 +1027,18 @@ SchemaField
   }
 
 SchemaType
-  = SchemaReferenceType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType 
+  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType 
 
-SchemaReferenceType = 'Reference<' schema:(SchemaInline / TypeName) '>'
+SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
+  {
+    return {
+      kind: 'schema-collection',
+      location: location(),
+      schema
+    }
+  }
+
+SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
   {
     return {
       kind: 'schema-reference',
