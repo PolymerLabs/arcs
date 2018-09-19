@@ -113,7 +113,7 @@ class StoreExplorer extends Xen.Base {
               values[item.id] = item.rawData;
             } else if (!malformed) {
               malformed = true;
-              console.warn('malformed store', tags, store);
+              console.warn('malformed store', list, tags, store);
             }
           });
           //values = list.map(item => item.rawData);
