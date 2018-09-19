@@ -83,7 +83,7 @@ const template = html`
     on-search="_onStateData"
   ></arc-planner>
 
-  <shell-stores
+  <!-- <shell-stores
     config="{{config}}"
     users="{{users}}"
     user="{{user}}"
@@ -91,7 +91,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     on-theme="_onStateData"
-  ></shell-stores>
+  ></shell-stores> -->
 
   <cloud-data
     config="{{config}}"
