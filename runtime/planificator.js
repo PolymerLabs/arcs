@@ -12,6 +12,7 @@ import {logFactory} from '../platform/log-web.js';
 import {Planner} from './planner.js';
 import {Speculator} from './speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
+import {SuggestionStorage} from './suggestion-storage.js';
 
 let defaultTimeoutMs = 5000;
 
@@ -83,6 +84,18 @@ class ReplanQueue {
   }
 }
 
+const PlanningMode = {
+  // The original mode where suggestions are produced and consumed locally.
+  full: 'full',
+  // Consumes suggestions and suggestion updates from a storage..
+  // TODO: produce suggestions locally, if remotely produced ones not available for too long.
+  consumer: 'consumer',
+  // Monitors arc and context, produces suggestions and writes them into the storage.
+  // TODO: Implement search / contextual support (currently simply all possible suggestions
+  // are produced based on init-population).
+  producer: 'producer'
+};
+
 const defaultOptions = {
   defaultReplanDelayMs: 200,
   maxNoReplanMs: 10000
@@ -91,7 +104,9 @@ const defaultOptions = {
 export class Planificator {
   constructor(arc, options) {
     this._arc = arc;
-    this._userid = options ? options.userid : null;
+    options = options || defaultOptions;
+    this._userid = options.userid;
+    this._mode = options.mode || PlanningMode.full;
     this._speculator = new Speculator();
     this._search = null;
 
@@ -118,24 +133,44 @@ export class Planificator {
     this._isPlanning = false; // whether planning is ongoing
     this._valid = false; // whether replanning was requested (since previous planning was complete).
 
-    this._dataChangesQueue = new ReplanQueue(this, options || defaultOptions);
+    this._dataChangesQueue = new ReplanQueue(this, options);
 
     // Set up all callbacks that trigger re-planning.
     this._init();
+
+    // Suggestion storage, used by planificator consumer & provider modes.
+    this._storage = this._initSuggestionStorage();
   }
 
   _init() {
     // TODO(mmandlis): Planificator subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
-    this._arcCallback = this._onPlanInstantiated.bind(this);
-    this._arc.registerInstantiatePlanCallback(this._arcCallback);
-    this._arc.onDataChange(() => this._onDataChange(), this);
+    if (this.isFull) {
+      this._arcCallback = this._onPlanInstantiated.bind(this);
+      this._arc.registerInstantiatePlanCallback(this._arcCallback);
+      this._arc.onDataChange(() => this._onDataChange(), this);
+    }
 
     if (this._arc.pec.slotComposer) {
       let suggestionComposer = new SuggestionComposer(this._arc.pec.slotComposer);
       this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
     }
+  }
+
+  _initSuggestionStorage() {
+    if (this.isFull) {
+      // suggestion storage isn't used in full mode, everything is stored in memory.
+      return;
+    }
+
+    let suggestionStorage = new SuggestionStorage(this._arc, this.userid);
+    if (this.isConsumer) {
+      // Listen to suggestion-store updates, and update the `current` suggestions on change.
+      suggestionStorage.registerSuggestionsUpdatedCallback(
+          (current) => this._setCurrent(current, /* append= */false));
+    }
+    return suggestionStorage;
   }
 
   dispose() {
@@ -149,6 +184,9 @@ export class Planificator {
   }
 
   get userid() { return this._userid; }
+  get isFull() { return this._mode == PlanningMode.full; }
+  get isConsumer() { return this._mode == PlanningMode.consumer; }
+  get isProducer() { return this._mode == PlanningMode.producer; }
 
   get isPlanning() { return this._isPlanning; }
   set isPlanning(isPlanning) {
@@ -273,6 +311,13 @@ export class Planificator {
   }
 
   _requestPlanning(options) {
+    if (this.isConsumer) {
+      // Consumer-mode plannificator only consumes suggestions that are
+      // produced and stored by producer-mode planificator.
+      // TODO: Run planning locally, if no stored suggestions available.
+      return;
+    }
+
     options = options || {
       contextual: this._shouldRequestContextualPlanning()
     };
