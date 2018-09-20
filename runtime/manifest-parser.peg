@@ -200,8 +200,14 @@ ShapeArgumentList
   }
 
 ShapeArgument
-  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)?
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent)?
   {
+    if(direction) {
+      direction = direction[0]
+    }
+    if(type) {
+      type = type[0]
+    }
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
@@ -216,8 +222,14 @@ ShapeArgument
   }
 
 ShapeArgument2
-  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
   {
+    if(direction) {
+      direction = direction[0]
+    }
+    if(type) {
+      type = type[0]
+    }
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
@@ -436,7 +448,7 @@ SlotType
   };
 }
 
-SlotField 
+SlotField
   = name:lowerIdent whiteSpace? ':' whiteSpace? value:lowerIdent
 {
   return {
@@ -1019,7 +1031,7 @@ SchemaField
   }
 
 SchemaType
-  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType 
+  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
 
 SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
   {
