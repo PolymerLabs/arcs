@@ -889,14 +889,6 @@ ParticleRef
       verbs: [verb],
     };
   }
-  / verb:Verb
-  {
-    return {
-      kind: 'particle-ref',
-      location: location(),
-      verbs: [verb],
-    };
-  }
 
 HandleOrSlotRef
   = id:id tags:SpaceTagList?
