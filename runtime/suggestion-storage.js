@@ -54,6 +54,12 @@ export class SuggestionStorage {
   }
 
   async _onStoreUpdated() {
+    if (this._suggestionsUpdatedCallbacks.length == 0) {
+      // Suggestion store was updated, but there are no callback listening
+      // to the updates - do nothing.
+      return;
+    }
+
     let value = (await this._store.get()) || {};
     if (!value.current) {
       return;
@@ -91,6 +97,72 @@ export class SuggestionStorage {
         plan = resolvedPlan;
       }
     }
+    // TODO: Transformation particle hack.
+    // If recipe has hosted particles, manifest will have stores with particle specs.
+    // These stores need to be re-created in the current arc's context and
+    // handle connections need to be updated accordingly.
     return plan;
+  }
+
+  async storeCurrent(current) {
+    await this.ensureInitialized();
+
+    let plans = [];
+    for (let plan of current.plans) {
+      // TODO: Add all missing slot IDs
+      plans.push({
+        recipe: this._plantoString(plan.plan),
+        hash: plan.hash,
+        rank: plan.rank,
+        descriptionText: plan.descriptionText,
+        suggestionContent: {template: plan.descriptionText, model: {}}
+      });
+    }
+
+    await this._updateStore({current: {plans}});
+  }
+
+  _plantoString(plan) {
+    // No hosted particles.
+    if (!plan.handles.some(h => h.id && h.id.includes('particle-literal'))) {
+      return plan.toString();
+    }
+
+    // TODO: This is a transformation particle hack for plans resolved by
+    // FindHostedParticle strategy. Find a proper way to do this.
+    // Update hosted particle handles and connections.
+    let planClone = plan.clone();
+    let hostedParticleSpecs = [];
+    for (let i = 0; i < planClone.handles.length; ++i) {
+      let handle = planClone.handles[i];
+      if (handle.id && handle.id.includes('particle-literal')) {
+        let hostedParticleName = handle.id.substr(handle.id.lastIndexOf(':') + 1);
+        // Add particle spec to the list.
+        let hostedParticleSpec = this._arc._context.findParticleByName(hostedParticleName);
+        assert(hostedParticleSpec, `Cannot find spec for particle '${hostedParticleName}'.`);
+        hostedParticleSpecs.push(hostedParticleSpec.toString());
+
+        // Override handle conenctions with particle name as local name.
+        Object.values(handle.connections).forEach(conn => {
+          assert(conn.type.isInterface);
+          conn._handle = {localName: hostedParticleName};
+        });
+
+        // Remove the handle.
+        planClone.handles.splice(i, 1);
+        --i;
+      }
+    }
+    return `${hostedParticleSpecs.join('\n')}\n${planClone.toString()}`;
+  }
+
+  async _updateStore(value) {
+    await this.ensureInitialized();
+    try {
+      await this._store.set(value);
+    } catch (e) {
+      // debugger;
+      console.error(e);
+    }
   }
 }
