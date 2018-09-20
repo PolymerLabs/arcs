@@ -200,7 +200,7 @@ ShapeArgumentList
   }
 
 ShapeArgument
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent)?
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
       direction = direction[0]
