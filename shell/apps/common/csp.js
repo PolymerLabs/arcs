@@ -50,6 +50,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.tvmaze.com
         https://media.w3.org
         http://*.gstatic.com
+        https://s1.ticketm.net
         data:
         ;
     style-src

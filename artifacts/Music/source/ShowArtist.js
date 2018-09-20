@@ -86,6 +86,7 @@ ${styles}
     <div>5 of your friends like this artist</div>
     <div like>LIKE</div>
   </div>
+  <div slotid="nearbyShows"></div>
   <div now-playing>
     From <b>Now playing</b>
     <div list slotid="nowPlayingList"></div>

@@ -7,6 +7,8 @@
 
 import '../Common/List.manifest'
 import '../Common/Description.schema'
+import '../Places/ExtractLocation.manifest'
+import '../Things/GeoCoordinates.schema'
 import 'Artist.schema'
 import 'PlayRecord.schema'
 
@@ -18,7 +20,9 @@ particle ShowArtist in 'source/ShowArtist.js'
   in [PlayRecord] artistPlayHistory
   out [Description] descriptions
   consume root
+    provide nearbyShows
     provide nowPlayingList
+      handle artistPlayHistory
   description `Learn more about ${artist}`
 
 particle FilterToArtist in 'source/FilterToArtist.js'
@@ -50,3 +54,46 @@ recipe
     list = artistPlayHistory
     hostedParticle = PlayRecordRenderer
   description `${ShowArtist}`
+
+schema Show
+  Text name
+  Text venue
+  Text date
+  Text time
+  Text imageUrl
+
+particle FindShows in 'source/FindShows.js'
+  in Artist artist
+  in GeoCoordinates location
+  inout [Show] shows
+  consume nearbyShows
+    provide listing
+      handle shows
+  description `Find nearby shows by ${artist}`
+
+particle ShowRenderer in 'source/ShowRenderer.js'
+  in Show show
+  consume item
+
+recipe
+  use as artist
+  create as shows
+  use as user
+  create as location
+  ExtractLocation
+    person <- user
+    location -> location
+  FindShows
+    location <- location
+    artist <- artist
+    shows = shows
+    consume nearbyShows
+      provide listing as slot0
+  List
+    items = shows
+    consume root as slot0
+  ItemMultiplexer
+    list = shows
+    hostedParticle = ShowRenderer
+  description `${FindShows}`
+
