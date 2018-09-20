@@ -560,6 +560,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
+    await this.initialized;
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
