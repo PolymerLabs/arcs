@@ -37,10 +37,41 @@ but if for example you see test errors on a version that's a full release later
 patches that will allow more recent versions to operate, ideally without
 requiring an upgrade to our current version.
 
+### Installing from scratch
+
+1) Install nvm.
+
+   As per the [installation instructions](https://github.com/creationix/nvm/blob/master/README.md#installation),
+   download and run the installation script directly in your terminal (yes, you
+   read that correctly):
+
+   ```
+   $ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+   ```
+
+1) Install node.
+
+   ```
+   $ nvm install 9.4
+   ```
+
+1) If you need to update npm to a later version (our build checks for the
+  minimum required version):
+
+   ```
+   $ npm install -g npm   # can use npm@6.3.0 to install a specific version
+   ```
+
+### Installing within the Arcs project:
+
 ```
 $ npm install
 $ ./tools/sigh
 ```
+
+`npm install` is required on a fresh checkout. After that it only needs to be
+re-run infrequently as new dependencies are included, and usually a build
+failure will be the signal for that.
 
 ### Windows Installation Notes
 
