@@ -117,13 +117,13 @@ const template = html`
     on-suggestion="_onSuggestion"
   ></cloud-data>
 
-  <mi-toast-pipe
+  <device-client-pipe
     context="{{context}}"
     arc="{{arc}}"
     suggestions="{{suggestions}}"
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
-  ></mi-toast-pipe>
+  ></device-client-pipe>
 
   <!-- pretend this is a processing arc -->
   <!-- <bg-arc></bg-arc> -->
