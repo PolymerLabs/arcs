@@ -89,7 +89,7 @@ export class SuggestionStorage {
         planString, {loader: this._arc.loader, context: this._arc._context, fileName: ''});
     assert(manifest._recipes.length == 1);
     let plan = manifest._recipes[0];
-    assert(plan.normalize(), `can't normalize deserialized suggestion`);
+    assert(plan.normalize(), `can't normalize deserialized suggestion: ${plan.toString()}`);
     if (!plan.isResolved()) {
       let resolvedPlan = await this._recipeResolver.resolve(plan);
       assert(resolvedPlan, `can't resolve plan: ${plan.toString({showUnresolved: true})}`);
@@ -97,10 +97,12 @@ export class SuggestionStorage {
         plan = resolvedPlan;
       }
     }
-    // TODO: Transformation particle hack.
-    // If recipe has hosted particles, manifest will have stores with particle specs.
-    // These stores need to be re-created in the current arc's context and
-    // handle connections need to be updated accordingly.
+    for (let store of manifest.stores) {
+      // If recipe has hosted particles, manifest will have stores with hosted
+      // particle specs. Moving these stores into the current arc's context.
+      // TODO: This is a hack, find a proper way of doing this.
+      this._arc._context._addStore(store);
+    }
     return plan;
   }
 
@@ -109,9 +111,8 @@ export class SuggestionStorage {
 
     let plans = [];
     for (let plan of current.plans) {
-      // TODO: Add all missing slot IDs
       plans.push({
-        recipe: this._plantoString(plan.plan),
+        recipe: this._planToString(plan.plan),
         hash: plan.hash,
         rank: plan.rank,
         descriptionText: plan.descriptionText,
@@ -122,9 +123,11 @@ export class SuggestionStorage {
     await this._updateStore({current: {plans}});
   }
 
-  _plantoString(plan) {
-    // No hosted particles.
-    if (!plan.handles.some(h => h.id && h.id.includes('particle-literal'))) {
+  _planToString(plan) {
+    // Special handling is only needed for plans (1) with hosted particles or
+    // (2) local slot (ie missing slot IDs).
+    if (!plan.handles.some(h => h.id && h.id.includes('particle-literal')) &&
+        plan.slots.every(slot => Boolean(slot.id))) {
       return plan.toString();
     }
 
@@ -132,6 +135,8 @@ export class SuggestionStorage {
     // FindHostedParticle strategy. Find a proper way to do this.
     // Update hosted particle handles and connections.
     let planClone = plan.clone();
+    planClone.slots.forEach(slot => slot.id = slot.id || `slotid-${this._arc.generateID()}`);
+
     let hostedParticleSpecs = [];
     for (let i = 0; i < planClone.handles.length; ++i) {
       let handle = planClone.handles[i];
@@ -153,6 +158,7 @@ export class SuggestionStorage {
         --i;
       }
     }
+
     return `${hostedParticleSpecs.join('\n')}\n${planClone.toString()}`;
   }
 
