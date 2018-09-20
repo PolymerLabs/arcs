@@ -211,7 +211,6 @@ ShapeArgument
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
-
     return {
       kind: 'shape-argument',
       location: location(),
