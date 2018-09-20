@@ -312,21 +312,20 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   abstract get _hasLocalChanges(): boolean;
 
-  abstract async _persistChangesImpl(arg): Promise<void>;
+  abstract async _persistChangesImpl(): Promise<void>;
 
-  async _persistChanges(arg='') {
-    if (!this._hasLocalChanges) {
-      return;
+  // Only one invokation of _persistChangesImpl should ever
+  // be in-flight at a time. This loop preserves that property.
+  async _persistChanges() {
+    while (this._hasLocalChanges) {
+      if (!this.persisting) {
+        this.persisting = this._persistChangesImpl();
+        await this.persisting;
+        this.persisting = null;
+      } else {
+        await this.persisting;
+      }
     }
-    if (this.persisting) {
-      await this.persisting;
-      return;
-    }
-    // Ensure we only have one persist process running at a time.
-    this.persisting = this._persistChangesImpl(arg);
-    await this.persisting;
-    assert(!this._hasLocalChanges);
-    this.persisting = null;
   }
 }
 
@@ -433,7 +432,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.localModified;
   }
 
-  async _persistChangesImpl(arg): Promise<void> {
+  async _persistChangesImpl(): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
@@ -474,7 +473,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
  
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
-      return this._persistChangesImpl(arg);
+      return this._persistChangesImpl();
     }
 
     this.localModified = false;
@@ -526,7 +525,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     }
     this.localModified = true;
 
-    await this._persistChanges(barrier);
+    await this._persistChanges();
 
     this._fire('change', {data: value, version, originatorId, barrier});
   }
@@ -558,6 +557,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
+    await this.initialized;
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
@@ -878,7 +878,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   get _hasLocalChanges() {
-    return this.localChanges.size > 0;
+    return this.localChanges.size > 0 || this.pendingWrites.length > 0;
   }
 
   async _persistChangesImpl(): Promise<void> {
@@ -893,9 +893,16 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
       await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
+
+      // TODO(shans): Returning here prevents us from writing localChanges while there
+      // are pendingWrites. This in turn prevents change events for being generated for
+      // localChanges that have outstanding pendingWrites.
+      // A better approach would be to tie pendingWrites more closely to localChanges.
+      return;
     }
 
-    while (this.localChanges.size > 0) {
+    if (this.localChanges.size > 0) {
+
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
       const result = await this._transaction(data => {
