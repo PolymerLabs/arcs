@@ -15,8 +15,8 @@ import './elements/shell-stores.js';
 import './elements/cloud-data.js';
 import './elements/background-arcs/bg-arc.js';
 
-// external data pipes (MiToast, ArcExtension)
-import './elements/pipes/mi-toast-pipe.js';
+// external data pipes (DeviceClient, ArcExtension)
+import './elements/pipes/device-client-pipe.js';
 
 // templates
 const html = Xen.Template.html;
