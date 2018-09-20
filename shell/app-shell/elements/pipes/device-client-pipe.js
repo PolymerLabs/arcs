@@ -12,8 +12,8 @@ import Xen from '../../../components/xen/xen.js';
 // TODO(sjmiles): not actually dependent on `FB`: rename and relocate) this module
 import {FbStore} from '../fb-data/FbStore.js';
 
-// MiToast object supplied externally, otherwise a mock
-const MiToast = window.MiToast || {
+// DeviceClient object supplied externally, otherwise a mock
+const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
   },
   foundSuggestions(suggestions) {
@@ -46,9 +46,9 @@ const ShellApi = window.ShellApi = {
   }
 };
 
-const log = Xen.logFactory('MiToastPipe', '#a01a01');
+const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
-class MiToastPipe extends Xen.Debug(Xen.Base, log) {
+class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['context', 'arc', 'metaplans', 'suggestions'];
   }
@@ -145,7 +145,7 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
         // reduce plans to descriptionText
         const suggestions = piped.map(metaplan => metaplan.descriptionText);
         log('piped suggestions', suggestions);
-        MiToast.foundSuggestions(JSON.stringify(suggestions));
+        DeviceClient.foundSuggestions(JSON.stringify(suggestions));
       }
     }
   }
@@ -158,4 +158,4 @@ class MiToastPipe extends Xen.Debug(Xen.Base, log) {
     }
   }
 }
-customElements.define('mi-toast-pipe', MiToastPipe);
+customElements.define('device-client-pipe', DeviceClientPipe);
