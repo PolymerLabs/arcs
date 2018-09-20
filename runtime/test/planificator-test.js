@@ -93,7 +93,9 @@ class TestPlanificator extends Planificator {
 
 function createPlanificator(options) {
   let arc = new Arc({id: 'demo-test'});
-  return new TestPlanificator(arc, options);
+  let planificator = new TestPlanificator(arc, options);
+  assert.isTrue(planificator.isFull);
+  return planificator;
 }
 
 function newPlan(name, options) {
@@ -508,3 +510,5 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
   });
 });
+
+// TODO(mmandlis): add tests for Consumer and Provider planificator modes.
