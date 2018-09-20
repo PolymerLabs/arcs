@@ -20,6 +20,7 @@ import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
+import {setDiff} from '../util.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -593,26 +594,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 }
 
-
-function setDiff(from: string[], to: string[]) {
-  const add: string[] = [];
-  const remove: string[] = [];
-  const items = new Set([...from, ...to]);
-  const fromSet = new Set(from);
-  const toSet = new Set(to);
-  for (const item of items) {
-    if (fromSet.has(item)) {
-      if (toSet.has(item)) {
-        continue;
-      }
-      remove.push(item);
-      continue;
-    }
-    assert(toSet.has(item));
-    add.push(item);
-  }
-  return {remove, add};
-}
 
 // Models a Collection that is persisted to firebase in scheme similar
 // to the CRDT OR-set. We don't model sets of both observed
