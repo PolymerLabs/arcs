@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+// TODO: fix the filename... files under test starting with 'u' fail in mocha under Windows. Lol.
+
 import {assert} from './chai-web.js';
 import {setDiff, setDiffCustom} from '../ts-build/util.js';
 
