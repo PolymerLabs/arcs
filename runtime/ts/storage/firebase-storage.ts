@@ -315,10 +315,6 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   // Only one invokation of _persistChangesImpl should ever
   // be in-flight at a time. This loop preserves that property.
-  // Note that this relies strict ordering of release from awaiting -
-  // the call that sets up this.persisting has to be the first to
-  // be released so that it clears the old promise before anything
-  // else loops and waits on it again.
   async _persistChanges() {
     while (this._hasLocalChanges) {
       if (!this.persisting) {
