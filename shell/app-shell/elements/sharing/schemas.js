@@ -22,7 +22,7 @@ const schemas = {
   User: {
     tag: 'Entity',
     data: {
-      names: ['User0'],
+      names: ['User'],
       fields: {
         'id': 'Text',
         'name': 'Text',

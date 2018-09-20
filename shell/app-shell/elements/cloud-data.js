@@ -18,6 +18,7 @@ import './fb-data/fb-users.js';
 import './fb-data/fb-user.js';
 
 import './sharing/user-context.js';
+import './user-geolocation.js';
 
 const html = Xen.Template.html;
 
@@ -37,9 +38,11 @@ const template = html`
     on-user="_onForward"
   ></fb-user>
 
+  <user-geolocation on-coords="_onCoords"></user-geolocation>
   <user-context
     context="{{context}}"
     userid="{{userid}}"
+    coords="{{coords}}"
   ></user-context>
 
   <cloud-arc
@@ -87,6 +90,9 @@ class CloudData extends Xen.Debug(Xen.Base, log) {
   }
   _onForward(e, data) {
     this._fire(e.type, data);
+  }
+  _onCoords(e, data) {
+    this._setState({coords: data});
   }
 }
 

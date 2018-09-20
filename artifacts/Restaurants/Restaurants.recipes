@@ -20,10 +20,10 @@ recipe &displayRestaurants
     list <- list
 
 recipe
-  use as person
+  map 'SYSTEM_user' as user
   create as location
   ExtractLocation
-    person = person
+    user = user
     location -> location
 
 recipe &nearbyRestaurants
