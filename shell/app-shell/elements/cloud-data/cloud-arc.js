@@ -8,11 +8,11 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import WatchGroup from './watch-group.js';
-import ArcsUtils from '../../lib/arcs-utils.js';
 import Xen from '../../../components/xen/xen.js';
-import Const from '../../constants.js';
-import Firebase from './firebase.js';
+import ArcsUtils from '../../../lib/arcs-utils.js';
+import Firebase from '../../../lib/firebase.js';
+import Const from '../../../lib/constants.js';
+import WatchGroup from './watch-group.js';
 
 const log = Xen.logFactory('CloudArc', '#a30000');
 const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');

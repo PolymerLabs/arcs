@@ -10,16 +10,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Arcs from '../../../lib/arcs.js';
 
-export class FbStore {
+export class Stores {
   static async createContextStore(context, options) {
-    let type = options.type;
-    let setOf = false;
-    if (type[0] == '[') {
-      setOf = true;
-      type = type.slice(1, -1);
-    }
     const schemaType = Arcs.Type.fromLiteral(options.schema);
-    const typeOf = setOf ? schemaType.collectionOf() : schemaType;
+    const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
     const store = await this._requireStore(context, typeOf, options);
     return store;
   }

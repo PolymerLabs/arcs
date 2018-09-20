@@ -42,6 +42,7 @@ recipe SelectableCopyTilesRecipe
     selected = selected
   TileMultiplexer
     list = items
+  description `show ${SelectableTileList.items}`
 
 recipe SelectableUseTilesRecipe
   use #tiles as items
@@ -51,3 +52,4 @@ recipe SelectableUseTilesRecipe
     selected = selected
   TileMultiplexer
     list = items
+  description `show ${SelectableTileList.items}`

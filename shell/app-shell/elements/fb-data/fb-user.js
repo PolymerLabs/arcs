@@ -8,11 +8,13 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+import Xen from '../../../components/xen/xen.js';
+import Firebase from '../../../lib/firebase.js';
+import Const from '../../../lib/constants.js';
 import {FbUser} from './FbUser.js';
 import {FbStore} from './FbStore.js';
-import Firebase from '../cloud-data/firebase.js';
-import Const from '../../constants.js';
-import Xen from '../../../components/xen/xen.js';
+
+import {schemas} from '../sharing/schemas.js';
 
 const log = Xen.logFactory('fb-user', '#aa00ff');
 
@@ -86,27 +88,7 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
   }
   async _createArcStore(arc) {
     const options = {
-      schema: {
-        tag: 'Entity',
-        data: {
-          names: ['ArcMetadata'],
-          fields: {
-            'description': 'Text',
-            'icon': 'Text',
-            'key': 'Text',
-            'href': 'Text',
-            'bg': 'Text',
-            'color': 'Text',
-            'profile': 'Text',
-            'blurb': 'Text',
-            'share': 'Number',
-            'touched': 'Number',
-            'deleted': 'Boolean',
-            'starred': 'Boolean',
-            'externalManifest': 'URL'
-          }
-        }
-      },
+      schema: schemas.ArcMetadata,
       type: '[ArcMetadata]',
       name: 'ArcMetadata',
       tags: ['arcmetadata', 'nosync'],

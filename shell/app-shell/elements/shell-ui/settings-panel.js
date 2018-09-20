@@ -1,5 +1,5 @@
+import Const from '../../../lib/constants.js';
 import Xen from '../../../components/xen/xen.js';
-import Const from '../../constants.js';
 import IconStyle from '../../../components/icons.css.js';
 import {arcToRecipe} from './generalizer.js';
 

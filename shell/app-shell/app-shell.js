@@ -1,9 +1,19 @@
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
 // libs
 import Xen from '../components/xen/xen.js';
-import Arcs from './lib/arcs.js';
-import LinkJack from './lib/link-jack.js';
-import Const from './constants.js';
-import Firebase from './elements/cloud-data/firebase.js';
+import Arcs from '../lib/arcs.js';
+import LinkJack from '../lib/link-jack.js';
+import Const from '../lib/constants.js';
+import Firebase from '../lib/firebase.js';
 
 // elements
 import './elements/arc-config.js';
@@ -73,7 +83,7 @@ const template = html`
     on-search="_onStateData"
   ></arc-planner>
 
-  <shell-stores
+  <!-- <shell-stores
     config="{{config}}"
     users="{{users}}"
     user="{{user}}"
@@ -81,7 +91,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     on-theme="_onStateData"
-  ></shell-stores>
+  ></shell-stores> -->
 
   <cloud-data
     config="{{config}}"
@@ -103,7 +113,7 @@ const template = html`
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-share="_onStateData"
-    on-serialization="_onStateData"
+    on-serialization="_onSerialization"
     on-suggestion="_onSuggestion"
   ></cloud-data>
 
@@ -116,9 +126,9 @@ const template = html`
   ></mi-toast-pipe>
 
   <!-- pretend this is a processing arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
   <!-- pretend this is the login arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
 
   <shell-ui
     key="{{key}}"
@@ -158,6 +168,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     this._updateDebugGlobals(state);
     this._updateConfig(state, oldState);
     this._updateKey(state, oldState);
+    this._updateSerialization(state);
     this._updateDescription(state);
     this._updateSuggestions(state, oldState);
     this._updateLauncher(state, oldState);
@@ -183,7 +194,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _updateKey(state, oldState) {
-    let {config, user, key, arc} = state;
+    let {config, user, key} = state;
     if (config && user) {
       if (!key && !oldState.key) {
         key = config.key;
@@ -246,6 +257,16 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
     }
   }
+  _updateSerialization(state) {
+    // TODO(sjmiles): wait 4s for context :(
+    if (!state.contextReady) {
+      setTimeout(() => this._setState({contextReady: true}), 4000);
+    }
+    const serialization = state.pendingSerialization;
+    if (state.contextReady && serialization != null) {
+      this._setState({pendingSerialization: null, serialization});
+    }
+  }
   _render({}, state) {
     const {userid, description, suggestions} = state;
     const render = {
@@ -280,6 +301,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSuggestion(e, suggestion) {
     this._setState({suggestion, search: ''});
+  }
+  _onSerialization(e, serialization) {
+    this._setState({pendingSerialization: serialization});
   }
 }
 

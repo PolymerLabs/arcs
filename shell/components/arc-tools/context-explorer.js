@@ -18,35 +18,20 @@ import Xen from '../xen/xen.js';
 const html = Xen.Template.html;
 
 const template = html`
-  <style>
-    button {
-      margin: 8px;
-    }
-    [banner] {
-      padding: 6px 4px;
-      background-color: whitesmoke;
-      margin-bottom: 8px;
-      border-top: 1px dotted silver;
-    }
-  </style>
 
   <div><button on-click="_onUpdate">Update</button></div>
-
-  <div banner>Arc Stores</div>
-  <div style="padding: 8px;">{{arcStores}}</div>
-
-  <div banner>Context Stores</div>
-  <div style="padding: 8px;">{{contextStores}}</div>
+  <br>
+  <div>{{contextStores}}</div>
 `;
 
 const storeTemplate = html`
   <div style="border-bottom: 1px dashed silver; padding-bottom: 8px; margin-bottom: 8px;">
-    <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
+    <data-explorer style="font-size: 0.8em;" expand object="{{data}}"></data-explorer>
   </div>
 `;
 
-class StoreExplorer extends Xen.Base {
-  static get observedAttributes() { return ['arc', 'context']; }
+customElements.define('context-explorer', class extends Xen.Base {
+  static get observedAttributes() { return ['context']; }
   get template() {
     return template;
   }
@@ -58,10 +43,6 @@ class StoreExplorer extends Xen.Base {
   }
   _update({arc, context}, state) {
     if (state.needsQuery) {
-      if (arc) {
-        state.needsQuery = false;
-        this._queryArcStores(arc);
-      }
       if (context) {
         state.needsQuery = false;
         this._queryContextStores(context);
@@ -91,36 +72,23 @@ class StoreExplorer extends Xen.Base {
     const contextStores = await this._digestStores(find(context));
     this._setState({contextStores});
   }
-  async _queryArcStores(arc) {
-    const arcStores = await this._digestStores(arc._storeTags, true);
-    this._setState({arcStores});
-  }
-  async _digestStores(stores, hideNamed) {
+  async _digestStores(stores) {
     const result = [];
     if (stores) {
       for (let [store, tags] of stores) {
         //if (store.name === null) {
-        if (hideNamed && store.name) {
-          continue;
-        }
-        let malformed = false;
-        let values = `(don't know how to dereference)`;
+        //  continue;
+        //}
+        let values;
         if (store.toList) {
           const list = await store.toList();
           values = {};
-          list.forEach(item => {
-            if (item) {
-              values[item.id] = item.rawData;
-            } else if (!malformed) {
-              malformed = true;
-              console.warn('malformed store', list, tags, store);
-            }
-          });
+          list.forEach(item => values[item.id] = item.rawData);
           //values = list.map(item => item.rawData);
         } else if (store.get) {
           values = await store.get();
         } else {
-          // lint?
+          values = `(don't know how to dereference)`;
         }
         const data = {
           name: store.name,
@@ -136,7 +104,7 @@ class StoreExplorer extends Xen.Base {
         }
         let moniker = store.id.split(':').pop();
         if (!store.type || store.type.tag !== 'Interface') {
-          const label = data.name || `${store.type.toPrettyString()}`; // (type)`;
+          const label = data.name || `unnamed (${store.type.toPrettyString()})`;
           result.push({tags: data.tags, data: {[label]: data}, name: store.name || data.tags || moniker});
         }
       }
@@ -146,5 +114,4 @@ class StoreExplorer extends Xen.Base {
   _onUpdate() {
     this._setState({needsQuery: true});
   }
-}
-customElements.define('store-explorer', StoreExplorer);
+});
