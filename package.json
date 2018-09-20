@@ -51,6 +51,7 @@
     "webpack": "^4.17.2"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^0.6.0",
     "@types/pouchdb": "^6.3.2",
     "assert": "^1.4.1",
     "atob": "^2.1.2",
