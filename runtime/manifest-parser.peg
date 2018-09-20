@@ -221,7 +221,7 @@ ShapeArgument
   }
 
 ShapeArgument2
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
       direction = direction[0]
