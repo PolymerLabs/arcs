@@ -192,7 +192,7 @@ ShapeInterface
   }
 
 ShapeArgumentItem
-  = arg:ShapeArgumentWithName eolWhiteSpace
+  = arg:ShapeArgument eolWhiteSpace
   {
     return arg;
   }
@@ -204,28 +204,6 @@ ShapeArgumentList
   }
 
 ShapeArgument
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent)?
-  {
-    if(direction) {
-      direction = direction[0]
-    }
-    if(type) {
-      type = type[0]
-    }
-    if (direction == 'host') {
-      error(`Shape cannot have arguments with a 'host' direction.`);
-    }
-
-    return {
-      kind: 'shape-argument',
-      location: location(),
-      direction,
-      type,
-      name,
-    };
-  }
-
-ShapeArgumentWithName
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
