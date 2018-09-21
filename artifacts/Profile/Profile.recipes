@@ -5,29 +5,73 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'AvatarPicker.manifest'
-import 'FriendsPicker.manifest'
-import 'FavoriteFoodPicker.manifest'
-import '../Places/AddressForm.manifest'
+import 'UserName.schema'
 
-recipe BasicUserProfile
-  create #address as address
-  create #avatar as avatar
-  //create #friends as friends
-  //map 'SYSTEM_user' as user
-  //use 'SYSTEM_users' as users
-  //map 'BOXED_avatar' as avatars
-  AddressForm
-    address = address
-  AvatarPicker
-    avatar = avatar
-  //FriendsPicker
-  //  user = user
-  //  friends = friends
-  //  avatars = avatars
-  //  users = users
+particle UserNameForm in 'source/UserNameForm.js'
+  inout UserName userName
+  consume root
+
+import 'Avatar.schema'
+
+particle AvatarPicker in 'source/AvatarPicker.js'
+  inout Avatar avatar
+  consume root
+  description `select avatar`
+
+import 'User.schema'
+
+particle FriendsPicker in 'source/FriendsPicker.js'
+  in User user
+  in [User] users
+  in [Avatar] avatars
+  inout [User] friends
+  consume friends
+  description `select friends`
+
+//recipe BasicUserProfile
+//  create #userName as userName
+//  create #avatar as avatar
+//  create #friends as friends
+//  map 'SYSTEM_user' as user
+//  use 'SYSTEM_users' as users
+//  map 'BOXED_avatar' as avatars
+//  UserNameForm
+//    userName = userName
+//  AvatarPicker
+//    avatar = avatar
+//  FriendsPicker
+//    user = user
+//    users = users
+//    avatars = avatars
+//    friends = friends
+//  description `Edit user profile (name, avatar, and friends)`
+
+import 'FavoriteFood.schema'
+
+particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
+  inout FavoriteFood food
+  consume root
+  description `select favorite foods`
+    food `favorite food`
 
 recipe FavoriteFood
   create #favorite as food
   FavoriteFoodPicker
     food = food
+
+particle BasicProfile in 'source/BasicProfile.js'
+  consume root
+    provide friends
+
+recipe BasicProfile
+  map 'SYSTEM_user' as user
+  use 'SYSTEM_users' as users
+  map 'BOXED_avatar' as avatars
+  create #friends as friends
+  BasicProfile
+  FriendsPicker
+    user = user
+    users = users
+    avatars = avatars
+    friends = friends
+  description `Edit user profile (name, avatar, and friends)`

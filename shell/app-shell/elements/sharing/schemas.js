@@ -14,8 +14,7 @@ const schemas = {
     data: {
       names: ['Avatar'],
       fields: {
-        url: 'URL',
-        owner: 'Text'
+        url: 'URL'
       }
     }
   },

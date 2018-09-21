@@ -34,9 +34,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       state.initStores = true;
       this._requireStores(context);
     }
-    if (context && users && !usersStore) {
-      state.usersStore = true;
-      this._requireSystemUsers(context, users);
+    if (users && usersStore) {
+      this._updateSystemUsers(users, usersStore);
     }
     if (context && user && userid !== state.userid) {
       state.userid = userid;
@@ -59,6 +58,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     await Promise.all([
       this._requireProfileFriends(context),
       this._requireBoxedAvatar(context),
+      this._requireSystemUsers(context),
       this._requireSystemUser(context)
     ]);
     this._fire('stores');
@@ -76,13 +76,24 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
   }
   async _requireBoxedAvatar(context) {
     const options = {
-      schema: schemas.Person,
+      schema: schemas.Avatar,
       name: 'BOXED_avatar',
       id: 'BOXED_avatar',
       tags: ['BOXED_avatar'],
       isCollection: true
     };
     return await this._requireStore(context, 'boxedAvatar', options);
+  }
+  async _requireSystemUsers(context) {
+    const options = {
+      schema: schemas.User,
+      name: 'SYSTEM_users',
+      id: 'SYSTEM_users',
+      tags: ['SYSTEM_users'],
+      isCollection: true
+    };
+    const usersStore = await this._requireStore(context, 'systemUsers', options);
+    this._setState({usersStore});
   }
   async _requireSystemUser(context) {
     const options = {
@@ -102,24 +113,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     };
     this._setState({userStore, user});
   }
-  async _requireSystemUsers(context, users) {
-    const options = {
-      schema: schemas.User,
-      name: 'SYSTEM_users',
-      id: 'SYSTEM_users',
-      tags: ['SYSTEM_users'],
-      isCollection: true
-    };
-    const usersStore = await this._requireStore(context, 'systemUsers', options);
-    Object.values(users).forEach(user => usersStore.store({
-      id: usersStore.generateID(),
-      rawData: {
-        id: user.id,
-        name: user.name
-      }
-    }, ['users-stores-keys']));
-    this._setState({usersStore});
-  }
   async _requireStore(context, eventName, options, onchange) {
     const store = await Stores.createContextStore(context, options);
     if (onchange) {
@@ -127,6 +120,15 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     }
     this._fire(eventName, store);
     return store;
+  }
+  _updateSystemUsers(users, usersStore) {
+    Object.values(users).forEach(user => usersStore.store({
+      id: usersStore.generateID(),
+      rawData: {
+        id: user.id,
+        name: user.name
+      }
+    }, ['users-stores-keys']));
   }
   _updateSystemUser(user, userid, coords, userStore) {
     user.rawData.id = userid;
