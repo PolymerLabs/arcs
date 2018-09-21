@@ -17,7 +17,7 @@ const log = Xen.logFactory('UserContext', '#4f0433');
 
 customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'coords'];
+    return ['context', 'userid', 'coords', 'users'];
   }
   _getInitialState() {
     return {
@@ -28,11 +28,15 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       friendEntityIds: {}
     };
   }
-  _update({context, userid, coords}, state) {
-    const {user, userStore, userContext} = state;
+  _update({context, userid, coords, users}, state) {
+    const {user, userStore, usersStore, userContext} = state;
     if (context && !state.initStores) {
       state.initStores = true;
       this._requireStores(context);
+    }
+    if (context && users && !usersStore) {
+      state.usersStore = true;
+      this._requireSystemUsers(context, users);
     }
     if (context && user && userid !== state.userid) {
       state.userid = userid;
@@ -51,11 +55,11 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       //userStore.set({user});
     }
   }
-  async _requireStores(context, userid) {
+  async _requireStores(context) {
     await Promise.all([
       this._requireProfileFriends(context),
       this._requireBoxedAvatar(context),
-      this._requireSystemUser(context, userid)
+      this._requireSystemUser(context)
     ]);
     this._fire('stores');
   }
@@ -97,6 +101,24 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     };
     this._setState({userStore, user});
+  }
+  async _requireSystemUsers(context, users) {
+    const options = {
+      schema: schemas.User,
+      name: 'SYSTEM_users',
+      id: 'SYSTEM_users',
+      tags: ['SYSTEM_users'],
+      isCollection: true
+    };
+    const usersStore = await this._requireStore(context, 'systemUsers', options);
+    Object.values(users).forEach(user => usersStore.store({
+      id: usersStore.generateID(),
+      rawData: {
+        id: user.id,
+        name: user.name
+      }
+    }, ['users-stores-keys']));
+    this._setState({usersStore});
   }
   async _requireStore(context, eventName, options, onchange) {
     const store = await Stores.createContextStore(context, options);

@@ -7,11 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../People/Avatar.schema'
-import '../People/Person.schema'
 
 particle AvatarPicker in 'source/AvatarPicker.js'
-  in Person person
   inout Avatar avatar
   consume root
-  description `select ${person}'s avatar`
-    avatar `avatar`
+  description `select avatar`

@@ -81,6 +81,13 @@ function searchElementsForText(elements, textQuery) {
   return matches;
 }
 
+function queryAllElementText(elements) {
+  if (elements) {
+    return elements.map(value => browser.elementIdText(value.ELEMENT).value);
+  }
+  return [];
+}
+
 /** Load the selenium utils into the current page. */
 function loadSeleniumUtils() {
   // wait for the page to load a bit. In the future, if we use this with
@@ -208,7 +215,7 @@ function initTestWithNewArc(testTitle, useSolo) {
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
-    //`log`,
+    `log`,
     'user=*selenium'
   ];
   if (useSolo) {
@@ -319,7 +326,8 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
     try {
       const suggestion = searchElementsForText(suggestions.value, substring);
       if (!suggestion) {
-        console.log(`couldn't find suggestion '${substring}'.`);
+        const texts = queryAllElementText(suggestions.value);
+        console.log(`couldn't find suggestion '${substring}' from '${texts.join(', ')}'.`);
         return false;
       }
       console.log(`found suggestion "${suggestion.text}"`);
@@ -335,7 +343,7 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
       throw e;
     }
   };
-  browser.waitUntil(findSuggestion, 5000, `couldn't find suggestion ${substring}`);
+  browser.waitUntil(findSuggestion, 50000, `timed out looking find suggestion '${substring}'.`);
   //console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${substring}`);
   if (accept) {
     console.log(`accepted suggestion: ${substring}`);

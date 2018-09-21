@@ -43,6 +43,7 @@ const template = html`
     context="{{context}}"
     userid="{{userid}}"
     coords="{{coords}}"
+    users="{{users}}"
   ></user-context>
 
   <cloud-arc

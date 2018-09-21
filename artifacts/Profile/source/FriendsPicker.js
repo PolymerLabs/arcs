@@ -58,9 +58,9 @@ ${styles}
       return template;
     }
     render(props, state) {
-      let user = props.person || {};
+      let user = props.user || {};
       let friends = props.friends || [];
-      let people = (props.people || []).filter(p => p.id !== user.id);
+      let people = (props.users || []).filter(p => p.id !== user.id);
       let avatars = props.avatars || [];
       console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
       let avatarModels = people.map((p, i) => {

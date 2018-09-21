@@ -7,12 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../People/Avatar.schema'
-import '../People/Person.schema'
+import './User.schema'
 
 particle FriendsPicker in 'source/FriendsPicker.js'
-  in Person person
-  inout [Person] friends
-  in [Person] people
+  in User user
+  in [User] users
   in [Avatar] avatars
+  inout [User] friends
   consume root
   description `select friends`

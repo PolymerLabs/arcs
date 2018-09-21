@@ -13,24 +13,21 @@ import '../Places/AddressForm.manifest'
 recipe BasicUserProfile
   create #address as address
   create #avatar as avatar
-  create #friends as friends
-  use #user as person
-  use #identities as people
-  map #BOXED_avatar as avatars
-  AvatarPicker
-    avatar = avatar
-    person <- person
-  FriendsPicker
-    person <- person
-    friends = friends
-    avatars <- avatars
-    people <- people
+  //create #friends as friends
+  //map 'SYSTEM_user' as user
+  //use 'SYSTEM_users' as users
+  //map 'BOXED_avatar' as avatars
   AddressForm
     address = address
+  AvatarPicker
+    avatar = avatar
+  //FriendsPicker
+  //  user = user
+  //  friends = friends
+  //  avatars = avatars
+  //  users = users
 
 recipe FavoriteFood
-  use #user as person
   create #favorite as food
   FavoriteFoodPicker
     food = food
-    person <- person
