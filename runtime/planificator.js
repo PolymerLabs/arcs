@@ -150,6 +150,7 @@ export class Planificator {
       this._arcCallback = this._onPlanInstantiated.bind(this);
       this._arc.registerInstantiatePlanCallback(this._arcCallback);
       this._arc.onDataChange(() => this._onDataChange(), this);
+      this._onDataChange();
     }
 
     if (this._arc.pec.slotComposer) {
