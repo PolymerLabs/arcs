@@ -16,7 +16,10 @@ defineParticle(({DomParticle, html}) => {
   <style>
     [${host}] {
       display: flex;
-      min-height: calc(100vh - 56px);
+      min-height: calc(100vh);
+    }
+    [${host}] [center] {
+      text-align: center;
     }
     [${host}] > [left] {
       flex: 1;
@@ -28,28 +31,25 @@ defineParticle(({DomParticle, html}) => {
     [${host}] > [right] {
       flex: 2;
     }
-    [${host}] > [center] {
-      text-align: center;
+    [${host}] > [left] > [avatar] {
+      padding: 32px 0;
     }
-    [${host}] > [left] > [avatar] > img {
+    [${host}] > [left] > [avatar] img {
       width: 92px;
       height: 92px;
       border: 2px solid black;
       border-radius: 50%;
     }
-    [${host}] > [name] > cx-input {
-      --shell-bg: lightblue;
-    }
   </style>
+
   <div left>
     <div avatar center>
-      <img src="../../assets/avatars/user (0).png">
+      <firebase-upload on-upload="onUpload">
+        <img src="{{avatar}}">
+      </firebase-upload>
     </div>
     <div name center>
-      <cx-input>
-        <input slot="input" id="nameInput" value="{{userName}}" on-change="onNameInputChange">
-        <label slot="label" for="nameInput">User Name</label>
-      </cx-input>
+      <div slotid="userName"></div>
     </div>
   </div>
   <div right>
@@ -63,8 +63,13 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    onNameInputChange(e) {
-      this.updateVariable('userName', {userName: e.data.value});
+    render({avatar}) {
+      return {
+        avatar: avatar && avatar.url || `../../assets/avatars/user (0).png`
+      };
+    }
+    onUpload(e) {
+      this.updateVariable('avatar', {url: e.data.value.url});
     }
   };
 

@@ -17,7 +17,6 @@ const Main = html`
   user-item {
     display: block;
     cursor: pointer;
-    padding: 8px;
   }
   avatar {
     --size: 48px;

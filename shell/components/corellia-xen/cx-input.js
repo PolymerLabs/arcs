@@ -67,6 +67,7 @@ const template = html`
     pointer-events: none;
     opacity: 0.5;
     white-space: nowrap;
+    text-align: left;
     text-overflow: ellipsis;
     overflow: hidden;
     transform-origin: 0 0;

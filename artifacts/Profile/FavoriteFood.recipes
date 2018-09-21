@@ -5,5 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'BasicProfile.recipes'
-import 'FavoriteFood.recipes'
+import 'FavoriteFood.schema'
+
+particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
+  inout FavoriteFood food
+  consume root
+  description `select favorite foods`
+    food `favorite food`
+
+recipe FavoriteFood
+  create #favorite as food
+  FavoriteFoodPicker
+    food = food
+

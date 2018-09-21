@@ -15,17 +15,27 @@ defineParticle(({DomParticle, html}) => {
 <div ${host}>
   <style>
     [${host}] {
-      padding: 16px;
+      display: flex;
+      flex-direction: column;
     }
-    [${host}] > cx-input {
-      display: block;
-      margin-bottom: 40px;
+    [${host}] > input {
+      border: none;
+      text-align: center;
+      background-color: inherit;
+      font-size: 1.3em;
+      font-weight: bold;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+    [${host}] > input:focus {
+      cursor: auto;
+      text-align: left;
+      background-color: white;
+      font-weight: normal;
+      box-shadow: 1px 1px 3px 1px rgba(0,0,0,0.1);
     }
   </style>
-  <cx-input>
-    <input slot="input" id="nameInput" on-change="onNameInputChange">
-    <label slot="label" for="nameInput">User Name</label>
-  </cx-input>
+   <input value="{{userName}}" placeholder="User Name" on-change="onNameInputChange">
 </div>
 
   `;
@@ -33,6 +43,11 @@ defineParticle(({DomParticle, html}) => {
   return class extends DomParticle {
     get template() {
       return template;
+    }
+    render({userName}) {
+      return {
+        userName: userName ? userName.userName : ''
+      };
     }
     onNameInputChange(e) {
       this.updateVariable('userName', {userName: e.data.value});
