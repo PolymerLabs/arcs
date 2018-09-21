@@ -78,10 +78,10 @@ particle ShowRenderer in 'source/ShowRenderer.js'
 recipe
   use as artist
   create as shows
-  use as user
+  map 'SYSTEM_user' as user
   create as location
   ExtractLocation
-    person <- user
+    user <- user
     location -> location
   FindShows
     location <- location

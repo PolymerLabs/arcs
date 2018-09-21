@@ -109,7 +109,7 @@ ${styles}
       if (!state.fetching) {
         this._setState({fetching: true});
         fetch(`${eventsService}&keyword=${encodeURI(props.artist.name)}&geoPoint=${geohash}`)
-            .then(response => response.json)
+            .then(response => response.json())
             .then(response => this._processResponse(response));
       }
 
@@ -125,13 +125,13 @@ ${styles}
       }
 
       await this.clearHandle('shows');
-      this.appendRawDataToHandle('shows', {
+      this.appendRawDataToHandle('shows', [{
         name: nearest.name,
         venue: nearest._embedded.venues[0].name,
         date: nearest.dates.start.localDate,
         time: nearest.dates.start.localTime,
         imageUrl: this._pickImageUrl(nearest.images)
-      });
+      }]);
 
       this._setState({fetched: true});
     }
