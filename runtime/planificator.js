@@ -117,7 +117,7 @@ export class Planificator {
     this._next = {plans: [], generations: []}; // {plans, generations}
     // The current set plans to be presented to the user (full or subset)
     this._current = {plans: [], generations: []}; // {plans, generations}
-    this._suggestFilter = {showAll: false};
+    this._suggestFilter = {showAll: this.isProducer ? true : false};
     // The previous set of suggestions with the plan that was instantiated - copied over from the `current`
     // set, once suggestion is being accepted. Other sets of generated plans aren't stored.
     this._past = {}; // {plan, plans, generations}
@@ -143,12 +143,12 @@ export class Planificator {
   }
 
   _init() {
-    // TODO(mmandlis): Planificator subscribes to various change events.
-    // Later, it will evaluate and batch events and trigger replanning intelligently.
-    // Currently, just trigger replanning for each event.
+    this._arcCallback = this._onPlanInstantiated.bind(this);
+    this._arc.registerInstantiatePlanCallback(this._arcCallback);
     if (this.isFull) {
-      this._arcCallback = this._onPlanInstantiated.bind(this);
-      this._arc.registerInstantiatePlanCallback(this._arcCallback);
+      // TODO(mmandlis): Planificator subscribes to various change events.
+      // Later, it will evaluate and batch events and trigger replanning intelligently.
+      // Currently, just trigger replanning for each event.
       this._arc.onDataChange(() => this._onDataChange(), this);
       this._onDataChange();
     }
@@ -198,11 +198,17 @@ export class Planificator {
   }
   get suggestFilter() { return this._suggestFilter; }
   set suggestFilter(suggestFilter) {
+    // TODO: Implement search based decentralized planning.
+    assert(!this.isProducer, `Cannot set suggest filter in producer mode`);
+
     assert(!suggestFilter.showAll || !suggestFilter.search);
     this._suggestFilter = suggestFilter;
   }
 
   setSearch(search) {
+    // TODO: Implement search based decentralized planning.
+    assert(!this.isProducer, `Cannot set search in producer mode`);
+
     search = search ? search.toLowerCase().trim() : null;
     search = (search !== '') ? search : null;
     let showAll = search === '*';
@@ -316,6 +322,7 @@ export class Planificator {
       // Consumer-mode plannificator only consumes suggestions that are
       // produced and stored by producer-mode planificator.
       // TODO: Run planning locally, if no stored suggestions available.
+      // TODO: set isPlanning to TRUE. Producer will update timestamp, then set isPlanning to false.
       return;
     }
 
@@ -339,7 +346,7 @@ export class Planificator {
       await this._runPlanning(options);
 
       this.isPlanning = false;
-      this._setCurrent(Object.assign({}, this._next), options.append || false);
+      await this._setCurrent(Object.assign({}, this._next), options.append || false);
     }
   }
 
@@ -394,7 +401,7 @@ export class Planificator {
     this._planner = null;
   }
 
-  _setCurrent(current, append) {
+  async _setCurrent(current, append) {
     let hasChange = false;
     let newPlans = [];
     if (append) {
@@ -416,6 +423,10 @@ export class Planificator {
       let suggestions = this.getCurrentSuggestions();
       if (this._plansDiffer(suggestions, previousSuggestions)) {
         this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
+      }
+
+      if (this.isProducer) {
+        this._storage.storeCurrent(current);
       }
     } else {
       this._current.contextual = current.contextual;
