@@ -222,7 +222,7 @@ ShapeArgument
   }
 
 ShapeArgument2
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
       direction = direction[0]
@@ -1112,10 +1112,14 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
+//TODO Add ParticleArgumentDirection (rewrite recipies to not use directions as identifiers.
+ReservedWord
+  = Direction
+
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:([a-z][a-z0-9_]i*) {return text()}
+lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text()}
 whiteSpace
   = " "+
 eolWhiteSpace
