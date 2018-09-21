@@ -115,6 +115,7 @@ const template = html`
     on-share="_onStateData"
     on-serialization="_onSerialization"
     on-suggestion="_onSuggestion"
+    on-avatars="_onStateData"
   ></cloud-data>
 
   <device-client-pipe
@@ -142,6 +143,7 @@ const template = html`
     share="{{share}}"
     search="{{search}}"
     glows="{{glows}}"
+    avatars="{{avatars}}"
     on-search="_onStateData"
     on-suggestion="_onSuggestion"
     on-select-user="_onSelectUser"

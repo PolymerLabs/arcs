@@ -15,27 +15,28 @@ defineParticle(({DomParticle, html}) => {
 <div ${host}>
   <style>
     [${host}] {
-      display: flex;
-      flex-direction: column;
+      /* display: flex;
+      flex-direction: column; */
     }
     [${host}] > input {
       border: none;
+      /* border-bottom: 1px solid gray; */
       text-align: center;
       background-color: inherit;
-      font-size: 1.3em;
-      font-weight: bold;
+      font-size: 1.7em;
       padding: 4px 12px;
       cursor: pointer;
     }
     [${host}] > input:focus {
       cursor: auto;
-      text-align: left;
+      outline: none;
+      /* text-align: left; */
       background-color: white;
       font-weight: normal;
       box-shadow: 1px 1px 3px 1px rgba(0,0,0,0.1);
     }
   </style>
-   <input value="{{userName}}" placeholder="User Name" on-change="onNameInputChange">
+   <input value="{{userName}}" placeholder="User Name" spellcheck="false" on-change="onNameInputChange">
 </div>
 
   `;

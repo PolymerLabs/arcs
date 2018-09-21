@@ -25,7 +25,9 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       friends: {},
       // maps entityid's to userid's for friends to workaround missing data
       // in `remove` records
-      friendEntityIds: {}
+      friendEntityIds: {},
+      // snapshot of BOXED_avatar for use by shell
+      avatars: {},
     };
   }
   _update({context, userid, coords, users}, state) {
@@ -82,7 +84,9 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       tags: ['BOXED_avatar'],
       isCollection: true
     };
-    return await this._requireStore(context, 'boxedAvatar', options);
+    const store = await this._requireStore(context, 'boxedAvatar', options);
+    store.on('change', () => this._boxedAvatarChanged(store), this);
+    return store;
   }
   async _requireSystemUsers(context) {
     const options = {
@@ -159,5 +163,16 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
         }
       });
     }
+  }
+  async _boxedAvatarChanged(store) {
+    const avatars = await store.toList();
+    this._fire('avatars', avatars);
+    avatars.get = id => {
+      const avatar = avatars.find(avatar => {
+        const uid = avatar.id.split(':uid:').pop();
+        return uid === id;
+      });
+      return avatar && avatar.rawData;
+    };
   }
 });

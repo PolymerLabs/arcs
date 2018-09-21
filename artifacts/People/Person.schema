@@ -10,13 +10,14 @@ import '../Things/Thing.schema'
 
 schema Person extends Thing
   Text id
-  Text friends
-  Text foods
-  Text avatar
-  Text active
-  Text occasion
-  Text date
+  Text name
+  //Text friends
+  //Text foods
+  //Text active
+  //Text occasion
+  //Text date
+  URL avatar
   Object location
-  Object arcs
-  Object profiles
-  Object shares
+  //Object arcs
+  //Object profiles
+  //Object shares

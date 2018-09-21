@@ -7,14 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Things/GeoCoordinates.schema'
-
-schema User
-  Text id
-  Text name
-  Object location
+import '../People/Person.schema'
 
 particle ExtractLocation in 'source/ExtractLocation.js'
-  in User user
+  in Person person
   out GeoCoordinates location
-  description `extract ${user.name}'s location`
-    location `${user.name}'s location`
+  description `extract ${person.name}'s location`
+    location `${person.name}'s location`
+

@@ -16,43 +16,55 @@ defineParticle(({DomParticle, html}) => {
   <style>
     [${host}] {
       display: flex;
+      flex-direction: column;
       min-height: calc(100vh);
     }
     [${host}] [center] {
       text-align: center;
     }
-    [${host}] > [left] {
-      flex: 1;
+    [${host}] > [top] {
+      padding: 16px 16px 64px 16px;
       min-width: 160px;
-      padding: 16px;
       box-sizing: border-box;
-      background-color: lightblue;
     }
-    [${host}] > [right] {
-      flex: 2;
+    [${host}] > [bottom] {
+      flex: 1;
+      background-color: whitesmoke;
     }
-    [${host}] > [left] > [avatar] {
-      padding: 32px 0;
+    [${host}] > [top] > [title] {
+      text-align: left;
+      padding-bottom: 16px;
     }
-    [${host}] > [left] > [avatar] img {
-      width: 92px;
-      height: 92px;
+    [${host}] > [top] > [avatar] {
+      display: inline-block;
+    }
+    /* [${host}] > [top] > [avatar]:hover:after {
+      content: 'click to update';
+    } */
+    [${host}] > [top] > [avatar] img {
+      width: 156px;
+      height: 156px;
       border: 2px solid black;
       border-radius: 50%;
     }
+    [${host}] > [top] > [name] {
+      padding-top: 32px;
+    }
   </style>
 
-  <div left>
-    <div avatar center>
+  <div top center>
+    <div title>My profile</div>
+    <div avatar>
       <firebase-upload on-upload="onUpload">
         <img src="{{avatar}}">
       </firebase-upload>
+      <!-- <span style="display: inline-block; margin: -32px 0 0 -32px;">UPDATE</span> -->
     </div>
     <div name center>
       <div slotid="userName"></div>
     </div>
   </div>
-  <div right>
+  <div bottom>
     <div slotid="friends"></div>
   </div>
 </div>
