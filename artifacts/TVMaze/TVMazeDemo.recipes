@@ -11,7 +11,7 @@ import 'TVMazeQuery.recipes'
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
 
-recipe TVMazeSearchBar
+recipe TVMazeDemo
   create as query
   TVMazeSearchBar
     query = query
@@ -21,6 +21,7 @@ recipe TVMazeSearchBar
     shows = shows
   create #selected as selected
   SelectableTileList
+    consume root as root
     items = shows
     selected = selected
   TileMultiplexer
