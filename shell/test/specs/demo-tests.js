@@ -343,7 +343,7 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
       throw e;
     }
   };
-  browser.waitUntil(findSuggestion, 50000, `timed out looking find suggestion '${substring}'.`);
+  browser.waitUntil(findSuggestion, 5000, `timed out looking for suggestion '${substring}'.`);
   //console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${substring}`);
   if (accept) {
     console.log(`accepted suggestion: ${substring}`);
@@ -441,9 +441,8 @@ describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     searchSuggestions('restaurants');
-    // TODO: replace suggestion back to 'Find restaurants near selenium\'s location.$'
-    // as soon as person's description is fixed.
-    acceptSuggestion('Find restaurants near [a-zA-Z]{0,10}\'s location.$');
+    // `selenium` user has no profile, so we get a generic suggestion
+    acceptSuggestion('Find restaurants near geo coordinates.$');
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
@@ -461,7 +460,7 @@ describe('Arcs demos', function() {
     waitForStillnessAndOpenSystemUi();
     acceptSuggestion('from your calendar');
 
-    // TODO: this is flaky. investigate! 
+    // TODO: this is flaky. investigate!
     // testAroundRefresh();
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
