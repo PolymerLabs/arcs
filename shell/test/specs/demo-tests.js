@@ -188,7 +188,7 @@ function waitForStillness() {
     }
     return matches > desiredMatches;
   };
-  browser.waitUntil(noGlow, 50000, `the glow can't stop won't stop`, 500);
+  browser.waitUntil(noGlow, 5000, `the glow can't stop won't stop`, 500);
 }
 
 function clickElement(selector) {
