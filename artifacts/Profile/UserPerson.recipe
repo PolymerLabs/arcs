@@ -9,6 +9,8 @@ particle UserPerson in 'source/UserPerson.js'
   in [UserName] names
   in [Avatar] avatars
 
+// TODO(sjmiles): keep the below for reference, but we don't actually want to surface this recipe right now
+
 //recipe UserPerson
 //  map SYSTEM_user as user
 //  map PROFILE_avatar as avatars
