@@ -2,9 +2,21 @@ import {assert} from '../../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from "./pouch-db-storage-provider";
 import {PouchDbStorage} from "./pouch-db-storage";
 
+interface VariableStorage {
+  id: string;
+  storageKey?: string;  // optional for referencemode
+  rawData?: {};
+}
+
+interface VariableStorageMutator {
+  (value: VariableStorage) : VariableStorage;
+}
+
 export class PouchDbVariable extends PouchDbStorageProvider {
-  _stored: {id: string}|null;
+  _stored: VariableStorage|null;
+
   private localKeyId = 0;
+  
   constructor(type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, name, id, key);
     console.log("VAR new" + ' name='  + name + ' key=' + key + ' id=' + id + ' type=' + type);
@@ -24,7 +36,6 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   }
 
   async cloneFrom(handle) {
-
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     console.log('VAR cloneFrom');
@@ -38,7 +49,6 @@ export class PouchDbVariable extends PouchDbStorageProvider {
     this.fromLiteral(literal);
     // TODO(lindner): ask shane why this doesn't fire 'change' events like firebase does...
     if (literal && literal.model && literal.model.length === 1) {
-      
       const newvalue = literal.model[0].value;
       if (newvalue) {
         try {
@@ -49,8 +59,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
           // currently it checks if _stored == the new value and discards writes.
         try {
           const response = await this.retryIt({
-            _id: this.storageKey,
-            arcsId: this.id,
+            _id: this.pouchKeyLocation,
             type: this.type.toLiteral(),
             value: newvalue,
           });
@@ -70,7 +79,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   async modelForSynchronization() {
     console.log('VAR modelForSync');
     if (this.referenceMode && this._stored !== null) {
-      const value = this._stored as {id: string, storageKey: string};
+      const value = this._stored;
 
       await this.ensureBackingStore();
       const result = await this.backingStore.get(value.id);
@@ -119,17 +128,26 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * Returns a promise containing the variable value or null if it does not exist.
    */  
   async get() {
+    console.log('VAR get refmode=' + this.referenceMode);
+    // TODO(lindner): why do we need local _stored for refmode?
     if (this.referenceMode && this._stored) {
-      const value = this._stored as {id: string, storageKey: string};
+      try {
+        const doc = await this.db.get(this.pouchDbKey.location);
+        const value = doc['value'] as VariableStorage;
 
-      await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
-      return result;
+        await this.ensureBackingStore();
+        const result = await this.backingStore.get(value.id);
+        return result;
+      } catch (err) {
+        console.warn('VAR get', err);
+        throw err;
+      }
     }
 
     // Validate against pouchdb
     try {
-      const doc = await this.db.get(this.storageKey);
+      console.log('VAR GET');
+      const doc = await this.db.get(this.pouchDbKey.location);
 
       if (JSON.stringify(this._stored) !== JSON.stringify(doc['value'])) {
         console.log("VAR get diff: ", doc['value'], this._stored);
@@ -137,7 +155,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       }
       return doc['value'];
     } catch (err) {
-      // Not in db, contract says return nulll.
+      // Not in db, contract says return null.
       if (err.name === 'not_found') {
         return null;
       }
@@ -149,6 +167,8 @@ export class PouchDbVariable extends PouchDbStorageProvider {
 
   async set(value : {id: string}, originatorId=null, barrier=null) {
     assert(value !== undefined);
+    console.log('VAR set');
+
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have
@@ -157,11 +177,12 @@ export class PouchDbVariable extends PouchDbStorageProvider {
 
       const referredType = this.type;
 
-      const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType);
+      const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType, this.storageKey);
 
-      // It's important to store locally first, as the upstream consumers
-      // are set up to assume all writes are processed (at least locally) synchronously.
-      this._stored = {id: value.id, storageKey} as {id: string};
+      // Store the indirect pointer to the storageKey
+      await this.getStoredAndUpdate((stored) => {
+        return {id: value.id, storageKey};
+      });
 
       await this.ensureBackingStore();
       
@@ -177,6 +198,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
           barrier == null) {
         return;
       }
+
       // Store local value
       this._stored = value;
 
@@ -184,26 +206,26 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       if (value == null) {
         try {
           console.log('VAR remove');
-          const doc = await this.db.get(this.storageKey);
+          const doc = await this.db.get(this.pouchKeyLocation);
           await this.db.remove(doc);
         } catch (err) {
           // Deleting already deleted
           if (err.name !== 'not_found') {
-            console.log('VAR clear err=', err);
+            console.log('VAR remove err=', err);
           }
+          console.warn('VAR set err', err);
         }
       } else {
         // Write to Pouch Database
         try {
           const response = await this.retryIt({
-            _id: this.storageKey,
-            arcsId: this.id,
+            _id: this.pouchKeyLocation,
             type: this.type.toLiteral(),
             value,
           });
-          console.log('VAR put doc id=' + response.id + ' rev=' + response.rev + ' ok=' + response.ok);
+          console.log('VAR set doc id=' + response.id + ' rev=' + response.rev + ' ok=' + response.ok);
         } catch (err) {
-          console.log('VAR err putting id=', value, 'error', err);
+          console.log('VAR set err putting id=', value, 'error', err);
           throw err;
         }
       }
@@ -218,5 +240,86 @@ export class PouchDbVariable extends PouchDbStorageProvider {
 
   async clear(originatorId=null, barrier=null) {
     await this.set(null, originatorId, barrier);
+  }
+
+
+  /**
+   * Provides a way to apply changes to the model in a way that will result in the
+   * crdt being written to the underlying PouchDB.
+   * 
+   * - A new entry is stored if it doesn't exists.
+   * - If the existing entry is available it is fetched
+   * - If revisions differ a new item is written.
+   */
+  private async getStoredAndUpdate(variableStorageMutator: VariableStorageMutator): Promise<VariableStorage> {
+    console.log('UPDATING STORAGE', this._stored);
+    // Keep retrying the operation until it succeeds.
+    while (1) {
+      let doc;
+      //: PouchDB.Core.IdMeta & PouchDB.Core.GetMeta & Model & {referenceMode: boolean, type: {}};
+
+      let notFound = false;
+      try {
+        doc = await this.db.get(this.pouchDbKey.location);
+        // Check remote doc.
+        // TODO(lindner): refactor with getModel above.
+        if (this._rev !== doc._rev) {
+          // remote revision is different, update local copy.
+          this._stored = doc['value'];
+          this._rev = doc._rev;
+          this.version++;  // yuck.
+          console.log('VAR diff, updating model', doc['model']);
+          // TODO(lindner): fire change events here?
+        }
+
+      } catch (err) {
+        if (err.name !== 'not_found') {
+          throw err;
+        }
+        notFound = true;
+        // setup basic doc, model/version updated below.
+        doc = {
+          _id: this.pouchDbKey.location
+        };
+        console.log('NOT FOUND*****');
+      }
+
+      // Run the mutator on a copy of the existing model
+      const newValue = variableStorageMutator({ ...this._stored });
+      
+      // Check if the mutator made any changes..
+      if (!notFound && JSON.stringify(this._stored) === JSON.stringify(newValue)) {
+        // mutator didn't make any changes.
+        
+        console.log('NOT CHANGED', JSON.stringify(this._stored));
+        return this._stored;
+      }
+      
+      // Apply changes made by the mutator
+      doc['value'] = newValue;
+      doc['version'] = this.version;
+
+      // Update on pouchdb
+      try {
+        const putResult = await this.db.put(doc);
+        console.log('VARPUUUUT', putResult, doc);
+        // success! update local with new model
+        this._rev = putResult.rev;
+        this._stored = newValue;
+        
+        return this._stored;
+      } catch (err) {
+        if (err.name === 'conflict') {
+          // keep trying;
+        } else {
+          // failed to write new doc, give up.
+          console.warn('VAR getValue cannot write:', err, doc);
+          throw err;
+        }
+      }
+    } // end while (1)
+
+    // can never get here..
+    return null;
   }
 }

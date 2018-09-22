@@ -23,10 +23,19 @@ import PouchDbMemory from 'pouchdb-adapter-memory';
 function setupDb() {
   PouchDB.plugin(PouchDbMemory);
   const db = new PouchDB('device', {adapter: 'memory'});
-//  const db = new PouchDB('device');
+  const remoteDb = new PouchDB('http://localhost:8080/user');
+
   if (!db) {
     throw new Error('db not defined!');
   }
+
+  // Disable in tests
+  // db.sync(remoteDb, {live: true, retry: true}).on('complete', () => {
+  //   console.log("DB synced!");
+  // }).on('error', (err) => {
+  //   console.warn('DB sync error', err);
+  // });
+
   // console.log('INITIALIZED DB');
   // PouchDB.replicate(db, 'http://localhost:5984/device',
   //                          {live: true, retry: true });
@@ -68,6 +77,7 @@ export class PouchDbMemoryStorage extends StorageBase {
   private typePromiseMap: {[index: string]: Promise<PouchDbCollection>};
   localIDBase: number;
 
+  private static globaldb: PouchDB.Database;
   readonly db: PouchDB.Database;
 
   constructor(arcId: Id) {
@@ -77,7 +87,11 @@ export class PouchDbMemoryStorage extends StorageBase {
     this.localIDBase = 0;
     this.typePromiseMap = {};
 
-    this.db = setupDb();
+    if (!PouchDbMemoryStorage.globaldb) {
+      PouchDbMemoryStorage.globaldb = setupDb();
+    }
+    this.db = PouchDbMemoryStorage.globaldb;
+    
     // TODO(shans): re-add this assert once we have a runtime object to put it on.
     // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
     __storageCache[this.arcId.toString()] = this;

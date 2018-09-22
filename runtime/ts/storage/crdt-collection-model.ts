@@ -60,7 +60,7 @@ export class CrdtCollectionModel {
         item.keys.add(key);
       }
       if (JSON.stringify(item.value) !== JSON.stringify(value)) {
-        assert(newKeys, 'cannot add without new keys');
+        assert(newKeys, 'cannot add without new keys for id=' + id);
         item.value = value;
         effective = true;
       }

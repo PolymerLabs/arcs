@@ -2,36 +2,59 @@ import {assert} from '../../../../platform/assert-web.js';
 import {KeyBase} from '../key-base.js';
 
 /**
- * Keys for PouchDb entities.
+ * Keys for PouchDb entities.  A pouchdb key looks like a url. of the following form:
+ *
+ *    pouchdb://{dblocation}/{dbname}/{location}
+ *
+ * The scheme is pouchdb, followed by the database location which can be:
+ * 
+ * - memory (stores in local memory)
+ * - local (persistant stored in IDB (browser) or LevelDB (node) 
+ * - a hostname (stores on the remote host)
+ * 
+ * A slash separated database name and key location then follow.
+ * The default for dblocation is 'memory' and the default dbname is 'user'.
+ * 
+ * Some sample keys
+ *
+ * - pouchdb://memory/user/nice/long-storage-key
+ * - pouchdb://localhost:8080/user/storagekey123
+ * - pouchdb://local/user/storagekey123
  */
 export class PouchDbKey extends KeyBase {
-  private readonly protocol: string;
-  // TODO: this should be readonly, but pouch-db-storage manually sets this.
-  arcId: string;
+  dbLocation: string;
+  dbName: string;
+
+  // TODO make private
   location: string;
   
   constructor(key: string) {
     super();
-    let parts = key.split('://');
-    this.protocol = parts[0];
-    assert(this.protocol === 'pouchdb', `can't construct pouchdb key for protocol ${this.protocol} (input key ${key})`);
-    parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
-    this.arcId = parts[0];
-    this.location = parts[1];
-    assert(this.toString() === key);
+
+    assert(key.startsWith('pouchdb://'), `can't construct pouchdb key for input key ${key}`);
+
+    const parts = key.replace(/^pouchdb:\/\//, '').split('/');
+    this.dbLocation = parts[0] || 'memory';
+    this.dbName = parts[1] || 'user';
+    this.location = parts.slice(2).join('/') || '';
+
+    assert(this.toString() === key, 'PouchDb keys must match ' + this.toString() + ' vs '+ key);
   }
 
-  childKeyForHandle(id): PouchDbKey {
-    return new PouchDbKey('pouchdb://');
+  childKeyForHandle(id: string): PouchDbKey {
+    let location = '';
+    if (this.location != undefined && this.location.length > 0) {
+      location = this.location + '/';
+    }
+    location += `handles/${id}`;
+
+    const newKey = new PouchDbKey(this.toString());
+    newKey.location = location;
+    
+    return newKey;
   }
 
   toString(): string {
-    if (this.location !== undefined && this.arcId !== undefined) {
-      return `${this.protocol}://${this.arcId}^^${this.location}`;
-    }
-    if (this.arcId !== undefined) {
-      return `${this.protocol}://${this.arcId}`;
-    }
-    return `${this.protocol}`;
+    return 'pouchdb://' + [this.dbLocation, this.dbName, this.location].join('/');
   }
 }

@@ -19,69 +19,34 @@ import {PouchDbVariable} from "./pouch-db-variable.js";
 import PouchDB from 'pouchdb';
 import PouchDbMemory from 'pouchdb-adapter-memory';
 
-function setupDb() {
-  PouchDB.plugin(PouchDbMemory);
-  const db = new PouchDB('device', {adapter: 'memory'});
-//  const db = new PouchDB('device');
-  if (!db) {
-    throw new Error('db not defined!');
-  }
-  // console.log('INITIALIZED DB');
-  // PouchDB.replicate(db, 'http://localhost:5984/device',
-  //                          {live: true, retry: true });
-  //  db.changes({
-  //    since: 'now',
-  //    live: true,
-  //    include_docs: true
-  //  }).on('change', (c) => {console.log('change', c);
-  //  }).on('error', (c) => {console.log('error', c);});
-  // TODO FIRE EVENTS for remote changes
-
-  return db;
-}
-
-export async function resetPouchDbStorageForTesting() {
-  console.log('RESET storage for testing');
-  const db = setupDb();
-
-  for (const key of Object.keys(__storageCache)) {
-    __storageCache[key]._memoryMap = {};
-  }
-
-  await db.allDocs({include_docs: true}).then(allDocs => {
-    return allDocs.rows.map(row => {
-      console.log("Deleting " + row.id + ' ' + row.doc._rev);
-      return {_id: row.id, _rev: row.doc._rev, _deleted: true};
-    });
-  }).then(deleteDocs => {
-    return db.bulkDocs(deleteDocs);
-  });
-}
-
-// tslint:disable-next-line: variable-name
-const __storageCache = {};
 
 export class PouchDbStorage extends StorageBase {
-  _memoryMap: {[index: string]: PouchDbStorageProvider};
+  // TODO(lindner) add global weak map of keys and handle replication events.
   _typeMap: {[index: string]: PouchDbCollection};
   private typePromiseMap: {[index: string]: Promise<PouchDbCollection>};
-  localIDBase: number;
+  private localIDBase: number;
 
+  private static replicationHandler: PouchDB.Replication.Replication<{}>|undefined;
+  private static globaldb: PouchDB.Database;
+  
   readonly db: PouchDB.Database;
 
   constructor(arcId: Id) {
     super(arcId);
-    this._memoryMap = {};
     this._typeMap = {};
     this.localIDBase = 0;
     this.typePromiseMap = {};
 
-    this.db = setupDb();
-    // TODO(shans): re-add this assert once we have a runtime object to put it on.
-    // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-    __storageCache[this.arcId.toString()] = this;
+    if (!PouchDbStorage.globaldb) {
+      PouchDbStorage.globaldb = PouchDbStorage.setupDb();
+    }
+    
+    this.db = PouchDbStorage.globaldb;
   }
 
+  /**
+   * Instantiates a new key for id/type stored at keyFragment
+   */
   async construct(id: string, type: Type, keyFragment: string) : Promise<PouchDbStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
     if (type.isReference) {
@@ -96,43 +61,34 @@ export class PouchDbStorage extends StorageBase {
 
   async _construct(id: string, type: Type, keyFragment: string) {
     const key = new PouchDbKey(keyFragment);
-    if (key.arcId == undefined) {
-      key.arcId = this.arcId.toString();
-    }
-    if (key.location == undefined) {
-      key.location = 'pouchdb-' + this.localIDBase++;
-    }
+
     // TODO(shanestephens): should pass in factory, not 'this' here.
     const provider = this.newProvider(type, this, undefined, id, key.toString());
-    if (this._memoryMap[key.toString()] !== undefined) {
-      return null;
-    }
-    this._memoryMap[key.toString()] = provider;
     return provider;
   }
 
+  /**
+   * Connect with an existing storage key.  Returns a cached instance if available.
+   * Returns null if no such storage key exists.
+   */
   async connect(id: string, type: Type, key: string) : Promise<PouchDbStorageProvider> {
     const imKey = new PouchDbKey(key);
 
-    // Are we connecting to ourselves?
-    if (imKey.arcId !== this.arcId.toString()) {
-      if (__storageCache[imKey.arcId] == undefined) {
-        return null;
-      }
-      return __storageCache[imKey.arcId].connect(id, type, key);
-    }
-    if (this._memoryMap[key] == undefined) {
-      return null;
-    }
-    // TODO assert types match?
-    return this._memoryMap[key];
+    // TODO(lindner): fail if not created.
+    return this.construct(id, type, key);
   }
 
-  baseStorageKey(type: Type) : string {
-    // TODO consider storing keys in different databases..
-    const key = new PouchDbKey('pouchdb');
-    key.arcId = this.arcId.toString();
-    key.location = 'pouchdb-' + type.toString();
+  // Unit tests should call this in an 'after' block.
+  shutdown() {
+    console.log("SHUTDOWN");
+    if (PouchDbStorage.replicationHandler) {
+      PouchDbStorage.replicationHandler.cancel();
+    }
+  }
+
+  baseStorageKey(type: Type, keyString: string) : string {
+    const key = new PouchDbKey(keyString);
+    key.location = `backingStores/${type.toString()}`;
     return key.toString();
   }
 
@@ -155,7 +111,8 @@ export class PouchDbStorage extends StorageBase {
     return new PouchDbKey(s);
   }
 
-  newProvider(type, storageEngine, name, id, key) {
+  // TODO add 'must exist
+  newProvider(type, storageEngine, name, id, key) : PouchDbStorageProvider {
     if (type.isCollection) {
       return new PouchDbCollection(type, storageEngine, name, id, key);
     }
@@ -163,5 +120,78 @@ export class PouchDbStorage extends StorageBase {
       return new PouchDbBigCollection(type, storageEngine, name, id, key);
     }
     return new PouchDbVariable(type, storageEngine, name, id, key);
+  }
+
+
+  static async resetPouchDbStorageForTesting() {
+    console.log('RESET storage for testing');
+    const db = PouchDbStorage.setupDb();
+    
+    await db.allDocs({include_docs: true}).then(allDocs => {
+      return allDocs.rows.map(row => {
+        console.log("Deleting " + row.id + ' ' + row.doc._rev);
+        return {_id: row.id, _rev: row.doc._rev, _deleted: true};
+      });
+    }).then(deleteDocs => {
+      return db.bulkDocs(deleteDocs);
+    });
+  }
+
+
+  static setupDb() {
+    PouchDB.plugin(PouchDbMemory);
+
+    // const dboptions = {
+    //   fetch: function (url, opts) {
+    //     console.log('PDF: fetching from ' + url);
+    //     opts.headers.set('X-Some-Special-Header', 'foo');
+    //     return PouchDB.fetch(url, opts);
+    //   }
+    // } as PouchDB.Configuration.DatabaseConfiguration;
+    
+    // TODO(lindner) replace with map.
+    const memdb = new PouchDB('device', {adapter: 'memory'});
+    const localDb = new PouchDB('device', {adapter: 'memory'});
+    const remoteDb = new PouchDB('http://localhost:8080/user');
+    
+    if (!memdb || !localDb || !remoteDb) {
+      throw new Error('error initializing database not defined!');
+    }
+    
+    console.log('INITIALIZED DB');
+    PouchDbStorage.replicationHandler = PouchDB.replicate(remoteDb, localDb, {live: true})
+      .on('change', (info) => {
+        // handle change
+        console.log('XX change');
+      }).on('paused', (err) => {
+        // replication paused (e.g. replication up to date, user went offline)
+        console.log('XX paused', err);
+      }).on('active', () => {
+        // replicate resumed (e.g. new changes replicating, user went back online)
+        console.log('XX active');
+      }).on('denied', (err) => {
+        console.log('XX denied', err);
+        // a document failed to replicate (e.g. due to permissions)
+      }).on('complete', (info) => {
+        console.log('XX complete', info);
+        // handle complete
+      }).on('error', (err) => {
+        console.trace();
+        console.log('XX error', err);
+        // handle error
+      });
+
+    // db.changes({
+    //   since: 'now',
+    //   live: true,
+    //   include_docs: true
+    // }).on('change', (c) => {
+    //   console.log('PDB change', c);
+    // }).on('error', (c) => {
+    //   console.log('PDB sync error', c);
+    // });
+    // TODO FIRE EVENTS for remote changes
+    
+    return remoteDb;
   }
 }

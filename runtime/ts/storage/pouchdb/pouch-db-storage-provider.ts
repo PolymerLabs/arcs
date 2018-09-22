@@ -2,6 +2,7 @@ import {StorageProviderBase} from "../storage-provider-base.js";
 
 import {PouchDbCollection} from "./pouch-db-collection.js";
 import {PouchDbStorage} from "./pouch-db-storage.js";
+import {PouchDbKey} from "./pouch-db-key.js";
 import {Type} from "../../type.js";
 
 /**
@@ -13,6 +14,15 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   protected storageEngine: PouchDbStorage;
   private pendingBackingStore: Promise<PouchDbCollection>|null = null;
 
+  /** The PouchDbKey for this Collection */
+  protected readonly pouchDbKey: PouchDbKey;
+  protected _rev: string;
+  
+  constructor(type: Type, name: string, id: string, key: string) {
+    super(type, name, id, key);
+    this.pouchDbKey = new PouchDbKey(key);
+  }
+
   // A consequence of awaiting this function is that this.backingStore
   // is guaranteed to exist once the await completes. This is because
   // if backingStore doesn't yet exist, the assignment in the then()
@@ -22,7 +32,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
       return this.backingStore;
     }
     if (!this.pendingBackingStore) {
-      const key = this.storageEngine.baseStorageKey(this.backingType());
+      const key = this.storageEngine.baseStorageKey(this.backingType(), this.storageKey);
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
       this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
@@ -35,9 +45,14 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    * The active database for this provider.
    */
   protected get db(): PouchDB.Database {
+    // TODO(lindner) vary the db by the storage key
     return this.storageEngine.db;
   }
 
+  get pouchKeyLocation(): string {
+    return this.pouchDbKey.location;
+  }
+  
   protected async retryIt(doc): Promise<PouchDB.Core.Response> {
     let result = null;
     while (!result) {
@@ -59,6 +74,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
             }
           }
           // TODO merge keys?
+//          console.trace();
           console.log("Updating existing doc with rev=" + doc._rev);
         } else {
           console.log("Retrying error ", err);

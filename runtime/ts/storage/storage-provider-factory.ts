@@ -23,7 +23,8 @@ export class StorageProviderFactory {
     console.log("ARC id =" + arcId.toString());
     // TODO: Pass this factory into storage objects instead of linking them directly together.
     // This needs changes to the StorageBase API to facilitate the FirebaseStorage.open functionality.
-    const inmemory = new PouchDbMemoryStorage(arcId);
+    const inmemory = new InMemoryStorage(arcId);
+    const pouchinmemory = new PouchDbMemoryStorage(arcId);
     const firebase = new FirebaseStorage(arcId);
     const pouchdb = new PouchDbStorage(arcId);
     const synthetic = new SyntheticStorage(arcId, firebase);

@@ -14,7 +14,7 @@ import {Manifest} from '../manifest.js';
 
 let loader = new Loader();
 
-describe('loader', function() {
+describe.skip('loader', function() {
   it('correctly loads Thing as a dependency', async () => {
     let schemaString = await loader.loadResource('http://schema.org/Product');
     let manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Product'});
