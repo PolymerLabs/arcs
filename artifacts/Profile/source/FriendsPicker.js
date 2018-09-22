@@ -32,7 +32,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       width: 80px;
     }
     [${host}] [item] [selected] {
-      border: 10px solid blue;
+      border: 3px solid blue;
     }
   </style>
   <div grid>{{avatars}}</div>

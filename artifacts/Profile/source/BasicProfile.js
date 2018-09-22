@@ -23,13 +23,14 @@ defineParticle(({DomParticle, html}) => {
       text-align: center;
     }
     [${host}] > [top] {
-      padding: 16px 16px 64px 16px;
+      padding: 16px 16px 32px 16px;
       min-width: 160px;
       box-sizing: border-box;
     }
     [${host}] > [bottom] {
       flex: 1;
-      background-color: whitesmoke;
+      border-top: 1px solid silver;
+      padding-top: 32px;
     }
     [${host}] > [top] > [title] {
       text-align: left;
@@ -38,13 +39,10 @@ defineParticle(({DomParticle, html}) => {
     [${host}] > [top] > [avatar] {
       display: inline-block;
     }
-    /* [${host}] > [top] > [avatar]:hover:after {
-      content: 'click to update';
-    } */
     [${host}] > [top] > [avatar] img {
       width: 156px;
       height: 156px;
-      border: 2px solid black;
+      border: 1px solid black;
       border-radius: 50%;
     }
     [${host}] > [top] > [name] {
