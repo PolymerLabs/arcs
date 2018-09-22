@@ -59,6 +59,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
   async _requireStores(context) {
     await Promise.all([
       this._requireProfileFriends(context),
+      this._requireProfileUserName(context),
+      this._requireProfileAvatar(context),
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
       this._requireSystemUser(context)
@@ -75,6 +77,28 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     };
     const change = info => this._onFriendChange(context, info);
     return await this._requireStore(context, 'friends', options, change);
+  }
+  async _requireProfileUserName(context) {
+    const options = {
+      schema: schemas.UserName,
+      name: 'PROFILE_userName',
+      id: 'PROFILE_userName',
+      tags: ['userName'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, 'profileUserName', options);
+    return store;
+  }
+  async _requireProfileAvatar(context) {
+    const options = {
+      schema: schemas.Avatar,
+      name: 'PROFILE_avatar',
+      id: 'PROFILE_avatar',
+      tags: ['PROFILE_avatar'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, 'profileAvatar', options);
+    return store;
   }
   async _requireBoxedAvatar(context) {
     const options = {

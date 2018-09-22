@@ -9,6 +9,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 const schemas = {
+  UserName: {
+    tag: 'Entity',
+    data: {
+      names: ['UserName'],
+      fields: {
+        userName: 'Text'
+      }
+    }
+  },
   Avatar: {
     tag: 'Entity',
     data: {
