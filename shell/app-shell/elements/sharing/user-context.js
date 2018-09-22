@@ -17,7 +17,7 @@ const log = Xen.logFactory('UserContext', '#4f0433');
 
 customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'coords'];
+    return ['context', 'userid', 'coords', 'users'];
   }
   _getInitialState() {
     return {
@@ -25,14 +25,19 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       friends: {},
       // maps entityid's to userid's for friends to workaround missing data
       // in `remove` records
-      friendEntityIds: {}
+      friendEntityIds: {},
+      // snapshot of BOXED_avatar for use by shell
+      avatars: {},
     };
   }
-  _update({context, userid, coords}, state) {
-    const {user, userStore, userContext} = state;
+  _update({context, userid, coords, users}, state) {
+    const {user, userStore, usersStore, userContext} = state;
     if (context && !state.initStores) {
       state.initStores = true;
       this._requireStores(context);
+    }
+    if (users && usersStore) {
+      this._updateSystemUsers(users, usersStore);
     }
     if (context && user && userid !== state.userid) {
       state.userid = userid;
@@ -51,11 +56,14 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       //userStore.set({user});
     }
   }
-  async _requireStores(context, userid) {
+  async _requireStores(context) {
     await Promise.all([
       this._requireProfileFriends(context),
+      this._requireProfileUserName(context),
+      this._requireProfileAvatar(context),
       this._requireBoxedAvatar(context),
-      this._requireSystemUser(context, userid)
+      this._requireSystemUsers(context),
+      this._requireSystemUser(context)
     ]);
     this._fire('stores');
   }
@@ -70,15 +78,50 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     const change = info => this._onFriendChange(context, info);
     return await this._requireStore(context, 'friends', options, change);
   }
+  async _requireProfileUserName(context) {
+    const options = {
+      schema: schemas.UserName,
+      name: 'PROFILE_userName',
+      id: 'PROFILE_userName',
+      tags: ['userName'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, 'profileUserName', options);
+    return store;
+  }
+  async _requireProfileAvatar(context) {
+    const options = {
+      schema: schemas.Avatar,
+      name: 'PROFILE_avatar',
+      id: 'PROFILE_avatar',
+      tags: ['PROFILE_avatar'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, 'profileAvatar', options);
+    return store;
+  }
   async _requireBoxedAvatar(context) {
     const options = {
-      schema: schemas.Person,
+      schema: schemas.Avatar,
       name: 'BOXED_avatar',
       id: 'BOXED_avatar',
       tags: ['BOXED_avatar'],
       isCollection: true
     };
-    return await this._requireStore(context, 'boxedAvatar', options);
+    const store = await this._requireStore(context, 'boxedAvatar', options);
+    store.on('change', () => this._boxedAvatarChanged(store), this);
+    return store;
+  }
+  async _requireSystemUsers(context) {
+    const options = {
+      schema: schemas.User,
+      name: 'SYSTEM_users',
+      id: 'SYSTEM_users',
+      tags: ['SYSTEM_users'],
+      isCollection: true
+    };
+    const usersStore = await this._requireStore(context, 'systemUsers', options);
+    this._setState({usersStore});
   }
   async _requireSystemUser(context) {
     const options = {
@@ -105,6 +148,15 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     }
     this._fire(eventName, store);
     return store;
+  }
+  _updateSystemUsers(users, usersStore) {
+    Object.values(users).forEach(user => usersStore.store({
+      id: usersStore.generateID(),
+      rawData: {
+        id: user.id,
+        name: user.name
+      }
+    }, ['users-stores-keys']));
   }
   _updateSystemUser(user, userid, coords, userStore) {
     user.rawData.id = userid;
@@ -135,5 +187,16 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
         }
       });
     }
+  }
+  async _boxedAvatarChanged(store) {
+    const avatars = await store.toList();
+    this._fire('avatars', avatars);
+    avatars.get = id => {
+      const avatar = avatars.find(avatar => {
+        const uid = avatar.id.split(':uid:').pop();
+        return uid === id;
+      });
+      return avatar && avatar.rawData;
+    };
   }
 });

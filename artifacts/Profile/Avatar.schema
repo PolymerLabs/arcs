@@ -6,13 +6,5 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../People/Avatar.schema'
-import '../People/Person.schema'
-
-particle FriendsPicker in 'source/FriendsPicker.js'
-  in Person person
-  inout [Person] friends
-  in [Person] people
-  in [Avatar] avatars
-  consume root
-  description `select friends`
+schema Avatar
+  URL url

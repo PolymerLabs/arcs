@@ -8,14 +8,15 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// firebase runtime is provided by ArcsLib.js 
+import Arcs from '../../lib/Arcs.js';
+const {firebase} = Arcs;
 
 const config = (() => {
   const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');
   if (!testFirebaseKey) {
     return {
       // arc data is under this child node on database root
-      version: '0_4_1-alpha',
+      version: '0_5_0-alpha',
       server: 'arcs-storage.firebaseio.com',
       apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
       authDomain: 'arcs-storage.firebaseapp.com',

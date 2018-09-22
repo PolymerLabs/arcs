@@ -44,6 +44,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ;
     img-src
         'self'
+        blob:
+        data:
+        https://firebasestorage.googleapis.com
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
@@ -51,7 +54,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://media.w3.org
         http://*.gstatic.com
         https://s1.ticketm.net
-        data:
         ;
     style-src
         'self'

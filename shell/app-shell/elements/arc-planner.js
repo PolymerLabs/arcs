@@ -52,6 +52,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       } else if (changed('search')) {
         planificator.setSearch(search);
       }
+      planificator._onDataChange();
       this._setState({planificator});
     }
   }

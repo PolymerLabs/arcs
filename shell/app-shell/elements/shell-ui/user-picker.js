@@ -17,7 +17,6 @@ const Main = html`
   user-item {
     display: block;
     cursor: pointer;
-    padding: 8px;
   }
   avatar {
     --size: 48px;
@@ -45,7 +44,7 @@ const Main = html`
 
 const User = html`
   <user-item selected$="{{selected}}" on-click="_onSelect" key="{{key}}" user="{{user}}">
-    <avatar style="{{style}}"></avatar> <name>{{name}}</name>
+    <avatar xen:style="{{style}}"></avatar> <name>{{name}}</name>
   </user-item>
 `;
 
@@ -53,7 +52,7 @@ const log = Xen.logFactory('UserPicker', '#bb4d00');
 
 class UserPicker extends Xen.Base {
   static get observedAttributes() {
-    return ['users', 'friends'];
+    return ['users', 'avatars'];
   }
   get template() {
     return Main;
@@ -63,23 +62,21 @@ class UserPicker extends Xen.Base {
       selected: 0
     };
   }
-  _render({users, friends}, {selected}) {
+  _render({users, avatars}, {selected}) {
     const render = {
-      users: users && this._renderUsers(users, friends, selected)
+      users: users && this._renderUsers(users, avatars, selected)
     };
     return render;
   }
-  _renderUsers(users, friends, selected) {
+  _renderUsers(users, avatars, selected) {
     return {
       template: User,
-      models: Object.values(users).map((user) => this._renderUser(selected, user, friends))
+      models: Object.values(users).map((user) => this._renderUser(selected, user, avatars))
     };
   }
-  _renderUser(selected, user, friends) {
-    let url = user.avatar;
-    if (!url && friends) {
-      url = friends[user.id] && friends[user.id].avatar;
-    }
+  _renderUser(selected, user, avatars) {
+    const avatar = avatars && avatars.get(user.id);
+    let url = avatar && avatar.url;
     url = url || `https://$shell/assets/avatars/user (0).png`;
     url = url.replace(`https://$shell`, window.shellPath).replace(`https://$cdn`, window.shellPath);
     return {

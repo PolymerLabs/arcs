@@ -9,7 +9,6 @@ import 'FindRestaurants.manifest'
 import 'RestaurantMasterDetail.manifest'
 import 'RestaurantList.manifest'
 import 'RestaurantDetail.manifest'
-import '../Places/ExtractLocation.manifest'
 
 recipe &displayRestaurants
   ? as list
@@ -19,12 +18,23 @@ recipe &displayRestaurants
   RestaurantList
     list <- list
 
+import '../Places/ExtractLocation.manifest'
+import '../Profile/UserPerson.recipe'
+
 recipe
   map 'SYSTEM_user' as user
+  map 'PROFILE_avatar' as avatars
+  map 'PROFILE_userName' as names
   create as location
-  ExtractLocation
+  create as person
+  UserPerson
     user = user
-    location -> location
+    names = names
+    avatars = avatars
+    person = person
+  ExtractLocation
+    person = person
+    location = location
 
 recipe &nearbyRestaurants
   create #restaurants #nosync as restaurants

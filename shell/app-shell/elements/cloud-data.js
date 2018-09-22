@@ -38,11 +38,16 @@ const template = html`
     on-user="_onForward"
   ></fb-user>
 
-  <user-geolocation on-coords="_onCoords"></user-geolocation>
+  <user-geolocation
+    on-coords="_onCoords"
+  ></user-geolocation>
+
   <user-context
     context="{{context}}"
     userid="{{userid}}"
     coords="{{coords}}"
+    users="{{users}}"
+    on-avatars="_onForward"
   ></user-context>
 
   <cloud-arc
