@@ -17,8 +17,8 @@ schema Person extends Thing
   //Text friends
   //Text foods
   //Text active
-  //Text occasion
-  //Text date
+  Text occasion
+  Text date
   URL avatar
   Object location
   //Object arcs
