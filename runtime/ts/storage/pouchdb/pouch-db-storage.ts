@@ -22,30 +22,24 @@ import PouchDbMemory from 'pouchdb-adapter-memory';
 
 export class PouchDbStorage extends StorageBase {
   // TODO(lindner) add global weak map of keys and handle replication events.
-  _typeMap: {[index: string]: PouchDbCollection};
-  private typePromiseMap: {[index: string]: Promise<PouchDbCollection>};
+
+  // Used for reference mode
+  private readonly baseStores: Map<Type, PouchDbCollection> = new Map();
+  private readonly baseStorePromises: Map<Type, Promise<PouchDbCollection>> = new Map();
   private localIDBase: number;
 
-  private static replicationHandler: PouchDB.Replication.Replication<{}>|undefined;
-  private static globaldb: PouchDB.Database;
-  
-  readonly db: PouchDB.Database;
+  /** Global map of database types/name to Pouch Database Instances */
+  private static DbLocationToInstance: Map<string, PouchDB.Database> = new Map();
+  /** Tracks replication status and allows cancellation in tests */
+  private static ReplicationHandler: PouchDB.Replication.Replication<{}>|undefined;
 
   constructor(arcId: Id) {
     super(arcId);
-    this._typeMap = {};
     this.localIDBase = 0;
-    this.typePromiseMap = {};
-
-    if (!PouchDbStorage.globaldb) {
-      PouchDbStorage.globaldb = PouchDbStorage.setupDb();
-    }
-    
-    this.db = PouchDbStorage.globaldb;
   }
 
   /**
-   * Instantiates a new key for id/type stored at keyFragment
+   * Instantiates a new key for id/type stored at keyFragment.
    */
   async construct(id: string, type: Type, keyFragment: string) : Promise<PouchDbStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
@@ -81,8 +75,8 @@ export class PouchDbStorage extends StorageBase {
   // Unit tests should call this in an 'after' block.
   shutdown() {
     console.log("SHUTDOWN");
-    if (PouchDbStorage.replicationHandler) {
-      PouchDbStorage.replicationHandler.cancel();
+    if (PouchDbStorage.ReplicationHandler) {
+      PouchDbStorage.ReplicationHandler.cancel();
     }
   }
 
@@ -93,17 +87,19 @@ export class PouchDbStorage extends StorageBase {
   }
 
   async baseStorageFor(type: Type, key : string) {
-    if (this._typeMap[key]) {
-      return this._typeMap[key];
+    if (this.baseStores.has(type)) {
+      return this.baseStores.get(type);
     }
-    if (this.typePromiseMap[key]) {
-      return this.typePromiseMap[key];
+    if (this.baseStorePromises.has(type)) {
+      return this.baseStorePromises.get(type);
     }
+
     const storagePromise = this._construct(type.toString(), type.collectionOf(), key) as Promise<PouchDbCollection>;
-    this.typePromiseMap[key] = storagePromise;
+
+    this.baseStorePromises.set(type, storagePromise);
     const storage = await storagePromise;
-    assert(storage, `could not construct baseStorage for key ${key}`);
-    this._typeMap[key] = storage;
+    assert(storage, 'baseStorageFor should not fail');
+    this.baseStores.set(type, storage);
     return storage;
   }
 
@@ -111,9 +107,10 @@ export class PouchDbStorage extends StorageBase {
     return new PouchDbKey(s);
   }
 
-  // TODO add 'must exist
+  /** Ceates a new Variable or Colleciton given basic parameters */
   newProvider(type, storageEngine, name, id, key) : PouchDbStorageProvider {
-    if (type.isCollection) {
+    // TODO track keys...
+   if (type.isCollection) {
       return new PouchDbCollection(type, storageEngine, name, id, key);
     }
     if (type.isBigCollection) {
@@ -123,43 +120,59 @@ export class PouchDbStorage extends StorageBase {
   }
 
 
+  /** Removes everything that a test could have created. */
   static async resetPouchDbStorageForTesting() {
     console.log('RESET storage for testing');
-    const db = PouchDbStorage.setupDb();
-    
-    await db.allDocs({include_docs: true}).then(allDocs => {
-      return allDocs.rows.map(row => {
-        console.log("Deleting " + row.id + ' ' + row.doc._rev);
-        return {_id: row.id, _rev: row.doc._rev, _deleted: true};
+    for (const db of PouchDbStorage.DbLocationToInstance.values()) {
+      await db.allDocs({include_docs: true}).then(allDocs => {
+        return allDocs.rows.map(row => {
+          console.log("Deleting " + row.id + ' ' + row.doc._rev);
+          return {_id: row.id, _rev: row.doc._rev, _deleted: true};
+        });
+      }).then(deleteDocs => {
+        return db.bulkDocs(deleteDocs);
       });
-    }).then(deleteDocs => {
-      return db.bulkDocs(deleteDocs);
-    });
+    }
   }
 
 
-  static setupDb() {
-    PouchDB.plugin(PouchDbMemory);
+  /**
+   * Returns a database for the specific dbLocation/dbName of PouchDbKey and caches it.
+   */
+  public dbForKey(key: PouchDbKey): PouchDB.Database {
+    let db = PouchDbStorage.DbLocationToInstance.get(key.dbCacheKey());
 
-    // const dboptions = {
-    //   fetch: function (url, opts) {
-    //     console.log('PDF: fetching from ' + url);
-    //     opts.headers.set('X-Some-Special-Header', 'foo');
-    //     return PouchDB.fetch(url, opts);
-    //   }
-    // } as PouchDB.Configuration.DatabaseConfiguration;
-    
-    // TODO(lindner) replace with map.
-    const memdb = new PouchDB('device', {adapter: 'memory'});
-    const localDb = new PouchDB('device', {adapter: 'memory'});
-    const remoteDb = new PouchDB('http://localhost:8080/user');
-    
-    if (!memdb || !localDb || !remoteDb) {
-      throw new Error('error initializing database not defined!');
+    if (db) {
+      return db;
     }
     
-    console.log('INITIALIZED DB');
-    PouchDbStorage.replicationHandler = PouchDB.replicate(remoteDb, localDb, {live: true})
+    // New connect to a database
+    if (key.dbLocation === 'local') {
+      db = new PouchDB(key.dbName);
+    } else if (key.dbLocation === 'memory') {
+      PouchDB.plugin(PouchDbMemory);
+      db = new PouchDB(key.dbName, {adapter: 'memory'});
+    } else {
+      // Remote database
+      // TODO(lindner): sync local to remote instead of direct
+      db = new PouchDB(key.dbName);
+      const remoteDb = new PouchDB('http://' + key.dbLocation + '/' + key.dbName);
+      if (!remoteDb || !db) {
+        throw new Error('unable to connect to remote database for ' + key.toString());
+      }
+      this.setupReplication(db, remoteDb);
+    }
+    
+    if (!db) {
+      throw new Error("unable to connect to database for " + key.toString());
+    }
+    PouchDbStorage.DbLocationToInstance.set(key.dbCacheKey(), db);
+    return db;
+  }
+  
+  private setupReplication(localDb: PouchDB.Database, remoteDb: PouchDB.Database) {
+    console.log('Replicating DBs');
+    PouchDbStorage.ReplicationHandler = PouchDB.replicate(localDb, remoteDb, {live: true})
       .on('change', (info) => {
         // handle change
         console.log('XX change');

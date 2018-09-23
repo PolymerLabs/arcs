@@ -3,13 +3,14 @@ import {PouchDbCursor} from "./pouch-db-cursor";
 import {assert} from '../../../../platform/assert-web.js';
 
 
+// TODO(lindner): update to operate like the firebase version
 export class PouchDbBigCollection extends PouchDbStorageProvider {
   private items: Map<string, {index: number, value: {}, keys: {[index: string]: number}}>;
   private cursors: Map<number, PouchDbCursor>;
   private cursorIndex: number;
 
   constructor(type, storageEngine, name, id, key) {
-    super(type, name, id, key);
+    super(type, storageEngine, name, id, key);
     this.items = new Map();
     this.cursors = new Map();
     this.cursorIndex = 0;

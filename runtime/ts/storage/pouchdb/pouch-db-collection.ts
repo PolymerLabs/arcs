@@ -17,15 +17,12 @@ interface CrdtCollectionModelMutator {
 export class PouchDbCollection extends PouchDbStorageProvider {
   /** The local synced model */
   _model: CrdtCollectionModel;
-  /** The revision we received from the pouch server */
-  _rev: string|undefined;
 
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
-    super(type, name, id, key);
+    super(type, storageEngine, name, id, key);
     console.log("COL" + ' name='  + name + ' key=' + key + ' id=' + id + ' type=' + type);
 
-    this._model = new CrdtCollectionModel(); // XX
-    this.storageEngine = storageEngine;
+    this._model = new CrdtCollectionModel();
     assert(this.version !== null);
   }
 
@@ -33,11 +30,12 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     return this.type.primitiveType();
   }
 
-  clone() {
-    const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
-    handle.cloneFrom(this);
-    return handle;
-  }
+  // TODO(lindner): appears unused
+  // clone() {
+  //   const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
+  //   handle.cloneFrom(this);
+  //   return handle;
+  // }
 
   async cloneFrom(handle) {
     console.log('COL cloneFrom');
@@ -53,6 +51,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   }
 
   async modelForSynchronization() {
+    // TODO(lindner): should this change for reference mode??
     return {
       version: this.version,
       model: await this._toList()
@@ -100,7 +99,11 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     return (await this._toList()).map(item => item.value);
   }
 
-  async getMultiple(ids) {
+  /**
+   * @param ids items to fetch from the underlying CRDT model.
+   * @return an array of values from the underlying CRDT
+   */
+  async getMultiple(ids: string[]) {
     assert(!this.referenceMode, "getMultiple not implemented for referenceMode stores");
     const model = await this.getModel();
     return ids.map(id => model.getValue(id));
@@ -119,7 +122,6 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   async get(id) {
     console.log('COL get called id=' + id);
     if (this.referenceMode) {
-      console.log('REFERENCE');
       const ref = (await this.getModel()).getValue(id);
       if (ref == null) {
         return null;
@@ -130,7 +132,6 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     }
     
     const model = await this.getModel();
-    console.log('MODEL for id =', model);
     return model.getValue(id);
   }
 
@@ -142,13 +143,10 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
-      //const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType, this.storageKey);
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
 
-      console.log('HERE');
-
+      // Update the referred data
       await this.getModelAndUpdate((crdtmodel) => {
-        console.log("YY ", crdtmodel, value, keys);
         changeEvent.effective = crdtmodel.add(value.id, {id: value.id, storageKey}, keys);
         return crdtmodel;
       });
@@ -201,6 +199,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       }
     }
     this._model = new CrdtCollectionModel();
+    this._rev = undefined;
   }
 
   /**
@@ -272,7 +271,6 @@ export class PouchDbCollection extends PouchDbStorageProvider {
           referenceMode: this.referenceMode,
           type: this.type.toLiteral()
         };
-        console.log('NOT FOUND*****');
       }
 
       // Run the mutator on a copy of the existing model
@@ -293,7 +291,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       // Update on pouchdb
       try {
         const putResult = await this.db.put(doc);
-        console.log('PUUUUT', putResult, doc);
+        console.log('COL PUTRESULT', putResult, doc);
         // success! update local with new model
         this._rev = putResult.rev;
         this._model = newModel;

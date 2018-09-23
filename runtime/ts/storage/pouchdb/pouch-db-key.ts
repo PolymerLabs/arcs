@@ -22,10 +22,8 @@ import {KeyBase} from '../key-base.js';
  * - pouchdb://local/user/storagekey123
  */
 export class PouchDbKey extends KeyBase {
-  dbLocation: string;
-  dbName: string;
-
-  // TODO make private
+  readonly dbLocation: string;
+  readonly dbName: string;
   location: string;
   
   constructor(key: string) {
@@ -41,7 +39,12 @@ export class PouchDbKey extends KeyBase {
     assert(this.toString() === key, 'PouchDb keys must match ' + this.toString() + ' vs '+ key);
   }
 
+  /**
+   * Creates a new child PouchDbKey relative to the current key, based on the value of id.
+   */
   childKeyForHandle(id: string): PouchDbKey {
+    assert(id && id.length > 0, 'invalid id');
+
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
@@ -56,5 +59,9 @@ export class PouchDbKey extends KeyBase {
 
   toString(): string {
     return 'pouchdb://' + [this.dbLocation, this.dbName, this.location].join('/');
+  }
+
+  dbCacheKey(): string {
+    return [this.dbLocation, this.dbName].join('/');
   }
 }

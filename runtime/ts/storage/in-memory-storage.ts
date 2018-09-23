@@ -259,7 +259,15 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async storeMultiple(values, keys, originatorId=null) {
     assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
-    values.map(value => this._model.add(value.id, value, keys));
+
+    // TODO(lindner): shell is sending null values
+    values.map(value => {
+      if (value === null) {
+        console.warn('NULL in in-memory-storage storeMultiple', values, keys)
+      } else {
+        this._model.add(value.id, value, keys)
+      }
+    });
     this.version++;
   }
 

@@ -10,16 +10,21 @@ import {Type} from "../../type.js";
  * (PouchDbVariable/PouchDbCollection)
  */
 export abstract class PouchDbStorageProvider extends StorageProviderBase {
-  protected backingStore: PouchDbCollection|null = null;
+  /** The Storage Engine instance we were initialized with */
   protected storageEngine: PouchDbStorage;
+
+  // Manages backing store
+  protected backingStore: PouchDbCollection|null = null;
   private pendingBackingStore: Promise<PouchDbCollection>|null = null;
 
   /** The PouchDbKey for this Collection */
   protected readonly pouchDbKey: PouchDbKey;
-  protected _rev: string;
-  
-  constructor(type: Type, name: string, id: string, key: string) {
+  /** The Pouch revision of the data we have stored locally */
+  protected _rev: string | undefined;
+
+  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, name, id, key);
+    this.storageEngine = storageEngine;
     this.pouchDbKey = new PouchDbKey(key);
   }
 
@@ -46,42 +51,6 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    */
   protected get db(): PouchDB.Database {
     // TODO(lindner) vary the db by the storage key
-    return this.storageEngine.db;
-  }
-
-  get pouchKeyLocation(): string {
-    return this.pouchDbKey.location;
-  }
-  
-  protected async retryIt(doc): Promise<PouchDB.Core.Response> {
-    let result = null;
-    while (!result) {
-      // Check for existing doc
-      try {
-        // Assume new data.
-        result = await this.db.put(doc);
-      } catch (err) {
-        if (err.name === 'conflict') {
-          // Look up original doc and merge.
-          try {
-            const origDoc = await this.db.get(doc._id);
-            doc._rev = origDoc._rev;
-          } catch (err) {
-            console.log('UHOH', err);
-            delete doc._rev;
-            if (err.name !== 'not_found') {
-              throw err;
-            }
-          }
-          // TODO merge keys?
-//          console.trace();
-          console.log("Updating existing doc with rev=" + doc._rev);
-        } else {
-          console.log("Retrying error ", err);
-          throw err;
-        }
-      }
-    }
-    return result;
+    return this.storageEngine.dbForKey(this.pouchDbKey);;
   }
 }

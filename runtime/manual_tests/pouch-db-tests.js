@@ -19,6 +19,9 @@ import {PouchDbStorage} from '../ts-build/storage/pouchdb/pouch-db-storage.js';
 
 const testUrl = 'pouchdb://memory/user-test';
 
+// TODO(lindner): re-run tests for remote
+const testUrlReplicated = 'pouchdb://localhost:8080/user-test';
+
 // Resolves when the two stores are synchronized with each other:
 // * same version
 // * no pending changes

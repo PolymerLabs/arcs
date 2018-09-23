@@ -93,7 +93,13 @@ export abstract class StorageProviderBase {
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
-  async _fire(kindStr: string, details) {
+  /**
+   * Propogate updates to change listeners.
+   *
+   * @param kindStr the type of event, only 'change' is supported.
+   * @param details details about the change
+   */
+  protected async _fire(kindStr: 'change', details: {}) {
     const kind: EventKind = EventKind[kindStr];
     
     const listenerMap = this.listeners.get(kind);
