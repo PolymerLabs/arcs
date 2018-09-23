@@ -48,11 +48,11 @@ const SingleUserContext = class {
     this.handles = {};
     this.field = new Field(null, `/users/${userid}`, userid, this._userSchema).activate();
   }
-  dispose() {
+  async dispose() {
     // chuck all observers
     Object.values(this.observers).forEach(({key}) => this._unobserve(key));
     // chuck all data
-    this._removeUserEntities(this.context, this.userid, this.isProfile);
+    await this._removeUserEntities(this.context, this.userid, this.isProfile);
   }
   get _userSchema() {
     return {
@@ -276,7 +276,10 @@ const SingleUserContext = class {
     log(`removing entities for [${userid}]`);
     const jobs = [];
     for (let i=0, store; (store=context.stores[i]); i++) {
-      jobs.push(this._removeUserStoreEntities(userid, store, isProfile));
+      // SYSTEM_users persists across users
+      if (store.id !== 'SYSTEM_users') {
+        jobs.push(this._removeUserStoreEntities(userid, store, isProfile));
+      }
     }
     await Promise.all(jobs);
   }
