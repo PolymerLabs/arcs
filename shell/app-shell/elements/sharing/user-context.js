@@ -36,7 +36,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       state.initStores = true;
       this._requireStores(context);
     }
-    if (users && usersStore) {
+    if (users && usersStore && state.users !== users) {
+      state.users = users;
       this._updateSystemUsers(users, usersStore);
     }
     if (context && user && userid !== state.userid) {
@@ -150,6 +151,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     return store;
   }
   _updateSystemUsers(users, usersStore) {
+    log('updateSystemUsers');
     Object.values(users).forEach(user => usersStore.store({
       id: usersStore.generateID(),
       rawData: {
