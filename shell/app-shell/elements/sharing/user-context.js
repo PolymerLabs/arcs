@@ -38,6 +38,9 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     }
     if (users && usersStore && state.users !== users) {
       state.users = users;
+      // TODO(sjmiles): clear usersStore first, or modify _updateSystemStores to avoid
+      // duplication ... as of now this never happens since `users` is only generated
+      // once.
       this._updateSystemUsers(users, usersStore);
     }
     if (context && user && userid !== state.userid) {
