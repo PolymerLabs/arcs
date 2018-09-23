@@ -156,16 +156,20 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     }, ['users-stores-keys']));
   }
-  async _updateSystemUser(context, userid, coords, state) {
-    const {user, userStore, userContext} = state;
-    if (userContext) {
-      await userContext.dispose();
-      state.userContext = null;
-    }
-    // if the `userid` has changed before we finished cleaning up, re-validate
-    if (state.userid !== userid) {
-      this._invalidate();
-    } else {
+  async _updateSystemUser(state, props) {
+    if (!state.disposingUser) {
+      const {user, userStore, userContext} = state;
+      if (userContext) {
+        state.disposingUser = true;
+        state.userContext = null;
+        try {
+          await userContext.dispose();
+        } catch (x) {
+          //
+        }
+        state.disposingUser = false;
+      }
+      const {context, coords, userid} = props;
       if (userid) {
         state.userContext = new SingleUserContext(context, userid, true);
       }
