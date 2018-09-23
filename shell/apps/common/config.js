@@ -22,16 +22,18 @@ if (document.location.pathname.includes('projects')) {
   window.shellUrls['https://sjmiles.github.io/'] = `${window.arcsPath}/../`;
 }
 
-// optional service worker
-const useSw = params.has('sw');
-if (useSw) {
-  navigator.serviceWorker.register('../../sw.js');
-} else {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for (let registration of registrations) {
-      registration.unregister();
-    }
-  });
+// optional service worker, also disabled on insecure origins
+if ('serviceWorker' in navigator) {
+  const useSw = params.has('sw');
+  if (useSw) {
+    navigator.serviceWorker.register('../../sw.js');
+  } else {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    });
+  }
 }
 
 // default manifest!
