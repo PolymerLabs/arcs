@@ -51,6 +51,6 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    */
   protected get db(): PouchDB.Database {
     // TODO(lindner) vary the db by the storage key
-    return this.storageEngine.dbForKey(this.pouchDbKey);;
+    return this.storageEngine.dbForKey(this.pouchDbKey);
   }
 }

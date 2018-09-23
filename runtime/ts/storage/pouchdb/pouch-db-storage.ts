@@ -29,9 +29,9 @@ export class PouchDbStorage extends StorageBase {
   private localIDBase: number;
 
   /** Global map of database types/name to Pouch Database Instances */
-  private static DbLocationToInstance: Map<string, PouchDB.Database> = new Map();
+  private static dbLocationToInstance: Map<string, PouchDB.Database> = new Map();
   /** Tracks replication status and allows cancellation in tests */
-  private static ReplicationHandler: PouchDB.Replication.Replication<{}>|undefined;
+  private static replicationHandler: PouchDB.Replication.Replication<{}>|undefined;
 
   constructor(arcId: Id) {
     super(arcId);
@@ -75,8 +75,8 @@ export class PouchDbStorage extends StorageBase {
   // Unit tests should call this in an 'after' block.
   shutdown() {
     console.log("SHUTDOWN");
-    if (PouchDbStorage.ReplicationHandler) {
-      PouchDbStorage.ReplicationHandler.cancel();
+    if (PouchDbStorage.replicationHandler) {
+      PouchDbStorage.replicationHandler.cancel();
     }
   }
 
@@ -123,7 +123,7 @@ export class PouchDbStorage extends StorageBase {
   /** Removes everything that a test could have created. */
   static async resetPouchDbStorageForTesting() {
     console.log('RESET storage for testing');
-    for (const db of PouchDbStorage.DbLocationToInstance.values()) {
+    for (const db of PouchDbStorage.dbLocationToInstance.values()) {
       await db.allDocs({include_docs: true}).then(allDocs => {
         return allDocs.rows.map(row => {
           console.log("Deleting " + row.id + ' ' + row.doc._rev);
@@ -140,7 +140,7 @@ export class PouchDbStorage extends StorageBase {
    * Returns a database for the specific dbLocation/dbName of PouchDbKey and caches it.
    */
   public dbForKey(key: PouchDbKey): PouchDB.Database {
-    let db = PouchDbStorage.DbLocationToInstance.get(key.dbCacheKey());
+    let db = PouchDbStorage.dbLocationToInstance.get(key.dbCacheKey());
 
     if (db) {
       return db;
@@ -166,13 +166,13 @@ export class PouchDbStorage extends StorageBase {
     if (!db) {
       throw new Error("unable to connect to database for " + key.toString());
     }
-    PouchDbStorage.DbLocationToInstance.set(key.dbCacheKey(), db);
+    PouchDbStorage.dbLocationToInstance.set(key.dbCacheKey(), db);
     return db;
   }
   
   private setupReplication(localDb: PouchDB.Database, remoteDb: PouchDB.Database) {
     console.log('Replicating DBs');
-    PouchDbStorage.ReplicationHandler = PouchDB.replicate(localDb, remoteDb, {live: true})
+    PouchDbStorage.replicationHandler = PouchDB.replicate(localDb, remoteDb, {live: true})
       .on('change', (info) => {
         // handle change
         console.log('XX change');

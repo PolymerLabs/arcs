@@ -263,9 +263,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
     // TODO(lindner): shell is sending null values
     values.map(value => {
       if (value === null) {
-        console.warn('NULL in in-memory-storage storeMultiple', values, keys)
+        console.warn('NULL in in-memory-storage storeMultiple', values, keys);
       } else {
-        this._model.add(value.id, value, keys)
+        this._model.add(value.id, value, keys);
       }
     });
     this.version++;

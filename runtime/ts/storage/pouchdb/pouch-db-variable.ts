@@ -54,7 +54,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
     if (literal && literal.model && literal.model.length === 1) {
       const newvalue = literal.model[0].value;
       if (newvalue) {
-        this.getStoredAndUpdate((stored) => { return newvalue });
+        this.getStoredAndUpdate((stored) => newvalue);
       }
     }
   }
@@ -241,7 +241,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       }
     } catch (err) {
       if (err.name === 'not_found') {
-        this._stored = null
+        this._stored = null;
         this._rev = undefined;
       } else {
         console.warn('VAR getStored:', err);
