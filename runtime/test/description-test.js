@@ -795,6 +795,27 @@ recipe
   });
 
   tests.forEach((test) => {
+    it('particle recipe description ' + test.name, async () => {
+      let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
+
+      assert.isUndefined(await description.getArcDescription());
+
+      let recipeClone = recipe.clone();
+      description._arc._activeRecipe = recipeClone;
+      // Particle (static) spec pattern.
+      recipeClone.particles[0].spec.pattern = 'hello world';
+      await test.verifySuggestion('Hello world.', description);
+
+      recipeClone.patterns = [`Here it is: \${B}`];
+      await test.verifySuggestion('Here it is: hello world.', description);
+
+      // Particle (dynamic) description handle (override static description).
+      await descriptionHandle.store(new Description({key: '_pattern_', value: 'dynamic B description'}));
+      await test.verifySuggestion('Here it is: dynamic B description.', description);
+    });
+  });
+
+  tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
       let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
       await descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));

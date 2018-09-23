@@ -199,7 +199,6 @@ describe('references', function() {
             }
 
             async onHandleSync(handle, model) {
-              console.log('sync', handle.name, model);
             }
 
             async onHandleUpdate(handle, update) {
@@ -357,5 +356,164 @@ describe('references', function() {
         assert.isTrue(false);
       }
     }
+  });
+
+  it('can deal with collections of references in schemas', async () => {
+    let loader = new StubLoader({
+      manifest: `
+        schema Result
+          Text value
+        
+        particle ExtractReferences in 'extractReferences.js'
+          in Foo {[Reference<Result>] result} referenceIn
+          out [Result] rawOut
+          
+        recipe
+          create 'input:1' as handle0
+          create 'output:1' as handle1
+          ExtractReferences
+            referenceIn <- handle0
+            rawOut -> handle1
+        `,
+      'extractReferences.js': `
+        defineParticle(({Particle}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('rawOut');
+            }
+
+            async onHandleSync(handle, model) {
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'referenceIn') {
+                for (const result of update.data.result) {
+                  await result.dereference();
+                  this.output.store(result.entity);
+                }
+              }
+            }
+
+            onHandleDesync(handle) {
+            }
+          }
+        });
+      `
+    });
+
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test:0', pecFactory, loader});
+
+    let manifest = await Manifest.load('manifest', loader);
+    let recipe = manifest.recipes[0];    
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const inMemoryEngine = arc._storageProviderFactory._storageInstances['in-memory'];
+    const baseStoreType = Type.newEntity(manifest.schemas.Result);
+    const backingStore = await inMemoryEngine.baseStorageFor(baseStoreType, inMemoryEngine.baseStorageKey(baseStoreType));
+    await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
+    await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
+
+    const refStore = arc._stores[1];
+    assert.equal(refStore._type.entitySchema.name, 'Foo');
+    await refStore.set({id: 'id:a', rawData: {result: [{id: 'id:1', storageKey: backingStore.storageKey}, {id: 'id:2', storageKey: backingStore.storageKey}]}});
+
+    await arc.idle;
+    const outputStore = arc._stores[0];
+    assert.equal(outputStore._type.getContainedType().entitySchema.name, 'Result');
+    const values = await outputStore.toList();
+    assert.equal(values.length, 2);
+    assert.equal(values[0].rawData.value, 'what a result!');
+    assert.equal(values[1].rawData.value, 'what another result!');
+  });
+
+  it('can construct collections of references in schemas', async () => {
+    let loader = new StubLoader({
+      manifest: `
+        schema Result
+          Text value
+        
+        particle ConstructReferenceCollection in 'constructReferenceCollection.js'
+          out Foo {[Reference<Result>] result} referenceOut
+          in [Result] rawIn
+          
+        recipe
+          create 'input:1' as handle0
+          create 'output:1' as handle1
+          ConstructReferenceCollection
+            referenceOut -> handle0
+            rawIn <- handle1
+        `,
+      'constructReferenceCollection.js': `
+        defineParticle(({Particle, Reference}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('referenceOut');
+              this.results = [];
+            }
+
+            async onHandleSync(handle, model) {
+              model.forEach(result => this.results.push(result));
+              this.maybeGenerateOutput();
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'rawIn') {
+                update.added.forEach(result => this.results.push(result));
+                this.maybeGenerateOutput();
+              }
+            }
+
+            async maybeGenerateOutput() {
+              if (this.results.length == 2) {
+                const data = {result: new Set()};
+                for (const result of this.results) {
+                  const ref = new Reference(result);
+                  await ref.stored;
+                  data.result.add(ref);
+                }
+                this.results = [];
+                this.output.set(new this.output.entityClass(data));
+              }
+            }
+
+            onHandleDesync(handle) {
+            }
+          }
+        });
+      `
+    });
+
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test:0', pecFactory, loader});
+
+    let manifest = await Manifest.load('manifest', loader);
+    let recipe = manifest.recipes[0];    
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const inputStore = arc._stores[0];
+    assert.equal(inputStore._type.getContainedType().entitySchema.name, 'Result');
+    await inputStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
+    await inputStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
+
+    await arc.idle;
+    const outputStore = arc._stores[1];
+    assert.equal(outputStore._type.entitySchema.name, 'Foo');
+    const values = await outputStore.get();
+    assert(values.rawData.result.length == 2);
+    assert.equal(values.rawData.result[0].id, 'id:1');
+    assert.equal(values.rawData.result[1].id, 'id:2');
   });
 });

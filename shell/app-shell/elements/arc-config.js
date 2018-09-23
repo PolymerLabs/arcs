@@ -9,8 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import Const from '../constants.js';
-import ArcUtils from '../lib/arcs-utils.js';
+import Const from '../../lib/constants.js';
+import ArcUtils from '../../lib/arcs-utils.js';
 
 class ArcConfig extends Xen.Base {
   static get observedAttributes() {

@@ -9,9 +9,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import Arcs from '../lib/arcs.js';
-import ArcsUtils from '../lib/arcs-utils.js';
-import Firebase from './cloud-data/firebase.js';
+import Arcs from '../../lib/arcs.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
+import Firebase from '../../lib/firebase.js';
 
 const log = Xen.logFactory('ArcHost', '#007ac1');
 const groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
@@ -25,7 +25,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, oldProps) {
     const {config, manifest, key, serialization} = props;
-    if (config && manifest != null && !state.context) {
+    if (config && manifest != null && !state.context && !state.contextPreparing) {
+      state.contextPreparing = true;
       this._prepareContext(config, manifest);
     }
     // dispose arc if key has changed, but we don't have a new key yet
@@ -50,7 +51,20 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // empty serialization which is ''
     if (id && context && pendingSerialization != null) {
       state.pendingSerialization = null;
+      // TODO(sjmiles): if we `_setState` we trigger invalidation if the return
+      // value is non-empty, which is correct as non-empty return is a signal to retry.
+      // However, in brief testing, the retries came too fast and blew out the heap.
+      // We need a proper 'context-is-ready' signal, in the meantime we'll do a dumb timeout
+      // retry.
       state.pendingSerialization = await this._consumeSerialization(pendingSerialization);
+      if (!state.pendingSerialization) {
+        state.retried = false;
+      } else if (!state.retried) {
+        state.retried = true;
+        log('retrying deserialization in 2s');
+        setTimeout(() => this._invalidate(), 2000);
+      }
+      //this._setState({pendingSerialization: await this._consumeSerialization(pendingSerialization)});
     }
   }
   async _prepareContext(config, manifest) {

@@ -9,17 +9,14 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import logger from 'morgan';
-import path from 'path';
-import PouchDB from 'pouchdb';
-import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
-import PouchDbServer from 'express-pouchdb';
 import { Runtime } from 'arcs';
 
 /**
- * Centralized class that configures and ExpressJS server.
- * Adds static content, a database and api methods for Arcs.
+ * Centralized base class that configures and ExpressJS server.
+ * Adds static content, and api methods for Arcs. See pouchdbapp and arcsmasterapp
+ * for concrete examples.
  */
-class App {
+export abstract class AppBase {
   // ref to Express instance
   express: express.Application;
   runtime: Runtime;
@@ -27,11 +24,17 @@ class App {
   constructor() {
     this.express = express();
     this.middleware();
+    this.addRoutes();
     // TODO add webhook endpoints here
+    this.runtime = new Runtime();
+  }
+
+  /**
+   * Override this method to configure server specific routes.
+   */
+  protected addRoutes() {
     this.addArcsRoutes();
     this.addStaticRoutes();
-    this.addPouchRoutes();
-    this.runtime = new Runtime();
   }
 
   /** Configure Express middleware. */
@@ -50,15 +53,7 @@ class App {
     this.express.use(express.static('node_modules/arcs'));
   }
 
-  /**
-   * Adds support for a local PouchDB database service.  More information about setup is available at
-   * https://github.com/pouchdb/pouchdb-server
-   */
-  private addPouchRoutes(): void {
-    const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
 
-    this.express.use('/', PouchDbServer(inMemPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
-  }
 
   /**
    * Endpoints that end up mapped under /arcs are defined here.
@@ -91,4 +86,3 @@ class App {
   }
 }
 
-export const app = new App().express;

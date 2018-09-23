@@ -86,6 +86,20 @@ describe('manifest parser', function() {
         description \`my store\`
       store Store1 of Person 'some-id' @7 in 'people.json'`);
   });
+  it('fails to parse an argument list that uses reserved words', () => {
+    try {
+      parse(`
+        particle MyParticle
+          in MyThing consume
+          in MyThing? provide
+          out [MyThing] in
+          out BigCollection<MyThing>? out`);
+      assert.fail('this parse should have failed, identifiers should not be reserved words!');
+    } catch (e) {
+      assert.include(e.message, 'Expected',
+          `bad error: '${e}'`);
+    }
+  });
   it('fails to parse a nonsense argument list', () => {
     try {
       parse(`
@@ -186,11 +200,23 @@ describe('manifest parser', function() {
         in Product {Reference<Review> review} in
     `);
   });
+  it('parses an inline schema with a collection of references to schemas', () => {
+    parse(`
+      particle Foo
+        in Product {[Reference<Review>] review} in
+    `);
+  });
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
       in Product {Reference<Review {Text reviewText}> review} in`
     );
+  });
+  it('parses an inline schema with a collection of references to inline schemas', () => {
+    parse(`
+      particle Foo
+        in Product {[Reference<Review {Text reviewText}>] review} in
+    `);
   });
   it('parses reference types', () => {
     parse(`

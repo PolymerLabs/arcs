@@ -81,6 +81,13 @@ function searchElementsForText(elements, textQuery) {
   return matches;
 }
 
+function queryAllElementText(elements) {
+  if (elements) {
+    return elements.map(value => browser.elementIdText(value.ELEMENT).value);
+  }
+  return [];
+}
+
 /** Load the selenium utils into the current page. */
 function loadSeleniumUtils() {
   // wait for the page to load a bit. In the future, if we use this with
@@ -181,7 +188,7 @@ function waitForStillness() {
     }
     return matches > desiredMatches;
   };
-  browser.waitUntil(noGlow, 50000, `the glow can't stop won't stop`, 500);
+  browser.waitUntil(noGlow, 5000, `the glow can't stop won't stop`, 500);
 }
 
 function clickElement(selector) {
@@ -208,7 +215,7 @@ function initTestWithNewArc(testTitle, useSolo) {
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
-    //`log`,
+    `log`,
     'user=*selenium'
   ];
   if (useSolo) {
@@ -319,7 +326,8 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
     try {
       const suggestion = searchElementsForText(suggestions.value, substring);
       if (!suggestion) {
-        console.log(`couldn't find suggestion '${substring}'.`);
+        const texts = queryAllElementText(suggestions.value);
+        console.log(`couldn't find suggestion '${substring}' from '${texts.join(', ')}'.`);
         return false;
       }
       console.log(`found suggestion "${suggestion.text}"`);
@@ -335,7 +343,7 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
       throw e;
     }
   };
-  browser.waitUntil(findSuggestion, 5000, `couldn't find suggestion ${substring}`);
+  browser.waitUntil(findSuggestion, 5000, `timed out looking for suggestion '${substring}'.`);
   //console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${substring}`);
   if (accept) {
     console.log(`accepted suggestion: ${substring}`);
@@ -430,10 +438,11 @@ function testAroundRefresh() {
 
 describe('Arcs demos', function() {
   // TODO(#1902): test is failing pretty consistently.
-  it.skip('can book a restaurant', /** @this Context */ function() {
+  it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     searchSuggestions('restaurants');
-    acceptSuggestion('Find restaurants near selenium\'s location.$');
+    // `selenium` user has no profile, so we get a generic suggestion
+    acceptSuggestion('Find restaurants near geo coordinates.$');
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
@@ -450,7 +459,9 @@ describe('Arcs demos', function() {
     acceptSuggestion('table for 2 available[^\0]{0,30}$');
     waitForStillnessAndOpenSystemUi();
     acceptSuggestion('from your calendar');
-    testAroundRefresh();
+
+    // TODO: this is flaky. investigate!
+    // testAroundRefresh();
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
     // see the state at the end of the test:

@@ -1,6 +1,3 @@
-import {BrowserLoader} from '../../../source/browser-loader.js';
-import ArcsUtils from '../../lib/arcs-utils.js';
-
 const input = document.querySelector('[in]');
 const out = document.querySelector('[out]');
 const publish = document.querySelector('button');

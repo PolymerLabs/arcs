@@ -14,13 +14,10 @@ defineParticle(({DomParticle}) => {
           && (!lastProps.fullPlayHistory
               || lastProps.fullPlayHistory.length !== props.fullPlayHistory.length)) {
         
+        await this.clearHandle('artistPlayHistory');
         const artistPlayHistory = this.handles.get('artistPlayHistory');
-
-        let entities = await artistPlayHistory.toList();
-        entities.forEach(e => artistPlayHistory.remove(e));
-        
         for (const entry of props.fullPlayHistory) {
-          if (entry.artist === props.artist.name) {
+          if (entry.artist.toLowerCase() === props.artist.name.toLowerCase()) {
             await artistPlayHistory.store(entry);
           }
         }

@@ -36,6 +36,7 @@ module.exports = {
     "max-len": "off",
     "comma-dangle": "off",
     "linebreak-style": "off",
+    "no-multi-spaces": "off",
   },
   env: {
     browser: true,

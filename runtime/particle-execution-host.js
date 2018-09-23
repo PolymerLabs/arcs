@@ -57,12 +57,12 @@ export class ParticleExecutionHost {
     this._apiPort.onHandleStore = async ({handle, callback, data: {value, keys}, particleId}) => {
       await handle.store(value, keys, particleId);
       this._apiPort.SimpleCallback({callback});
-    }
+    };
 
     this._apiPort.onHandleRemove = async ({handle, callback, data: {id, keys}, particleId}) => {
       await handle.remove(id, keys, particleId);
       this._apiPort.SimpleCallback({callback});
-    }
+    };
 
     this._apiPort.onHandleStream = async ({handle, callback, pageSize}) => {
       this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize)});

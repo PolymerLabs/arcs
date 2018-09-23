@@ -111,7 +111,7 @@ describe('Arc', function() {
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
     let manifest = await Manifest.parse(`
-      import 'artifacts/Common/Multiplexer.manifest'
+      import 'runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe

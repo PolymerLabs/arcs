@@ -1,4 +1,4 @@
-import Arcs from '../../lib/arcs.js';
+import Arcs from '../../../lib/arcs.js';
 import Xen from '../../../components/xen/xen.js';
 
 const template = Xen.Template.html`
@@ -58,11 +58,20 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
       key: 'launcher'
     });
   }
+  _update(props, state) {
+    const {arc, manifest, lastManifest} = state;
+    if (!manifest) {
+      state.manifest = `import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'`;
+    }
+    if (arc && manifest !== lastManifest) {
+      state.lastManifest = manifest;
+      this._loadManifest(arc, manifest);
+    }
+  }
   async _onArc(e) {
-    const arc = e.detail;
-    const manifestContent = `
-      import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'
-    `;
+    this._setState({arc: e.detail});
+  }
+  async _loadManifest(arc, manifestContent) {
     const options = {
       fileName: './in-memory.manifest',
       loader: arc._loader

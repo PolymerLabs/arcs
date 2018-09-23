@@ -200,8 +200,14 @@ ShapeArgumentList
   }
 
 ShapeArgument
-  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)?
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent)?
   {
+    if(direction) {
+      direction = direction[0]
+    }
+    if(type) {
+      type = type[0]
+    }
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
@@ -216,8 +222,14 @@ ShapeArgument
   }
 
 ShapeArgument2
-  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
+    if(direction) {
+      direction = direction[0]
+    }
+    if(type) {
+      type = type[0]
+    }
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
@@ -436,7 +448,7 @@ SlotType
   };
 }
 
-SlotField 
+SlotField
   = name:lowerIdent whiteSpace? ':' whiteSpace? value:lowerIdent
 {
   return {
@@ -889,14 +901,6 @@ ParticleRef
       verbs: [verb],
     };
   }
-  / verb:Verb
-  {
-    return {
-      kind: 'particle-ref',
-      location: location(),
-      verbs: [verb],
-    };
-  }
 
 HandleOrSlotRef
   = id:id tags:SpaceTagList?
@@ -1027,9 +1031,18 @@ SchemaField
   }
 
 SchemaType
-  = SchemaReferenceType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType 
+  = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
 
-SchemaReferenceType = 'Reference<' schema:(SchemaInline / TypeName) '>'
+SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
+  {
+    return {
+      kind: 'schema-collection',
+      location: location(),
+      schema
+    }
+  }
+
+SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
   {
     return {
       kind: 'schema-reference',
@@ -1099,10 +1112,14 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
+//TODO Add ParticleArgumentDirection (rewrite recipies to not use directions as identifiers.
+ReservedWord
+  = Direction
+
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:([a-z][a-z0-9_]i*) {return text()}
+lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text()}
 whiteSpace
   = " "+
 eolWhiteSpace

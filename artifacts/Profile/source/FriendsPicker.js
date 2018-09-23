@@ -8,39 +8,34 @@
 
 defineParticle(({DomParticle, html, resolver}) => {
 
-  let host = `friends-picker`;
+  const host = `friends-picker`;
 
-  let styles = html`
-<style>
-  [${host}] {
-  }
-  [${host}] [item] {
-    display: inline-block;
-    width: 96px;
-    padding: 8px;
-    box-sizing: border-box;
-    color: inherit;
-    text-decoration: none;
-    text-align: center;
-  }
-  [${host}] [item] img {
-    box-sizing: border-box;
-    border-radius: 100%;
-    width: 80px;
-  }
-  [${host}] [item] [selected] {
-    border: 10px solid red;
-  }
-</style>
-  `;
-
-  let template = html`
-
-${styles}
+  const template = html`
 
 <div ${host}>
-  <div>{{avatars}}</div>
-  <hr>
+  <style>
+    [${host}] [grid] {
+      text-align: center;
+    }
+    [${host}] [item] {
+      display: inline-block;
+      width: 96px;
+      padding: 8px;
+      box-sizing: border-box;
+      color: inherit;
+      text-decoration: none;
+      text-align: center;
+    }
+    [${host}] [item] img {
+      box-sizing: border-box;
+      border-radius: 100%;
+      width: 80px;
+    }
+    [${host}] [item] [selected] {
+      border: 3px solid blue;
+    }
+  </style>
+  <div grid>{{avatars}}</div>
 </div>
 
 <template friend-avatars>
@@ -58,15 +53,16 @@ ${styles}
       return template;
     }
     render(props, state) {
-      let user = props.person || {};
-      let friends = props.friends || [];
-      let people = (props.people || []).filter(p => p.id !== user.id);
-      let avatars = props.avatars || [];
-      console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
+      const user = props.user || {};
+      const friends = props.friends || [];
+      const people = (props.users || []).filter(p => p.id !== user.id);
+      const avatars = props.avatars || [];
+      //console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
       let avatarModels = people.map((p, i) => {
-        let avatar = avatars.find(a => a.owner === p.id);
+        const avatar = this.boxQuery(avatars, p.id)[0];
+        //let avatar = avatars.find(a => a.owner === p.id);
         //console.log(p.id, avatar, avatars);
-        let url = (avatar && avatar.url) || `https://$cdn/assets/avatars/user (0).png`;
+        const url = (avatar && avatar.url) || `https://$cdn/assets/avatars/user (0).png`;
         return {
           key: i,
           value: p.id,
