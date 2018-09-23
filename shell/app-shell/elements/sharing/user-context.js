@@ -43,21 +43,14 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       // once.
       this._updateSystemUsers(users, usersStore);
     }
-    if (context && user && userid !== state.userid) {
+    if (context && user && userStore && userid !== state.userid) {
       state.userid = userid;
-      if (userContext) {
-        userContext.dispose();
-        state.userContext = null;
-      }
-      if (userid) {
-        state.userContext = new SingleUserContext(context, userid, true);
-      }
-      this._updateSystemUser(user, userid, coords, userStore);
+      this._updateSystemUser(context, userid, coords, state);
     }
-    if (user && coords && coords !== user.rawData.location) {
-      log('updating user coords:', user);
+    if (user && userStore && coords && coords !== user.rawData.location) {
       user.rawData.location = coords;
-      //userStore.set({user});
+      log('updating user coords:', user);
+      userStore.set({user});
     }
   }
   async _requireStores(context) {
@@ -163,11 +156,24 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     }, ['users-stores-keys']));
   }
-  _updateSystemUser(user, userid, coords, userStore) {
-    user.rawData.id = userid;
-    user.rawData.location = coords;
-    log(user);
-    userStore.set(user);
+  async _updateSystemUser(context, userid, coords, state) {
+    const {user, userStore, userContext} = state;
+    if (userContext) {
+      await userContext.dispose();
+      state.userContext = null;
+    }
+    // if the `userid` has changed before we finished cleaning up, re-validate
+    if (state.userid !== userid) {
+      this._invalidate();
+    } else {
+      if (userid) {
+        state.userContext = new SingleUserContext(context, userid, true);
+      }
+      user.rawData.id = userid;
+      user.rawData.location = coords;
+      log('updating user', user);
+      userStore.set(user);
+    }
   }
   _onFriendChange(context, info) {
     const {friends, friendEntityIds} = this._state;
