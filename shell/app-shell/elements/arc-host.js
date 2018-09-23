@@ -111,8 +111,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // make an id
     const id = 'app-shell-' + ArcsUtils.randomId();
     // construct storageKey
-    const storageKey = config.useStorage ?
-          config.storageKeyBase || `${Firebase.storageKey}/arcs/${key}` : null;
+    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
     // capture composer (so we can push suggestions there), loader, etc.
     this._setState({id, storageKey});
   }
