@@ -19,7 +19,7 @@ particle TVMazeSearchShows in './source/TVMazeSearchShows.js'
   //description `find out about ${query.query} (from TVMaze)`
 
 recipe TVMazeSearchShows
-  use as query
+  copy as query
   create #tiles #shows as shows
   TVMazeSearchShows
     query = query
@@ -44,7 +44,7 @@ particle TVMazeFindShow in './source/TVMazeFindShow.js'
   description `find out about ${find.name} (from TVMaze)`
 
 recipe TVMazeFindShow
-  use as find
+  copy as find
   create as show
   TVMazeFindShow
     // TODO(sjmiles): without next two lines, strategizer takes 10x longer and fails
