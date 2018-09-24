@@ -14,6 +14,13 @@
 const assert = require('assert');
 const seconds = 1000;
 
+function queryShellUi(selector) {
+  return browser.execute(function(selector) {
+    const host = document.querySelector('app-shell').shadowRoot.querySelector('shell-ui').shadowRoot;
+    return host.querySelector(selector);
+  }, selector);
+}
+
 function openNewArc(testTitle, useSolo) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
@@ -40,13 +47,51 @@ function openNewArc(testTitle, useSolo) {
   browser.url(`shell/apps/web/?${urlParams.join('&')}`);
 }
 
-describe('Smoke', function() {
-  it('loads', async function() {
+describe('demo', function() {
+  it('smoke', async function() {
     openNewArc(this.test.fullTitle());
     const title = await browser.title();
     assert.equal(title.value, 'Arcs');
-    //initTestWithNewArc(this.test.fullTitle());
-    //wait(5*seconds);
-    //assert.equal('Arcs', browser.getTitle());
+  });
+  it('restaurants', async function() {
+    const search = `restaurants`;
+    const suggestion1 = `[title^="Find restaurants"]`;
+    const particle1 = `#webtest-title`;
+    const suggestion2 = `[title*="ou are free"]`;
+    const particle2 = `[particle-host="Calendar::action"]`;
+    //
+    openNewArc(this.test.fullTitle());
+    browser.waitForVisible('app-shell');
+    queryShellUi('input[search]').click().keys(search);
+    await browser.waitForExist(suggestion1, 20000);
+    browser.click(suggestion1);
+    await browser.waitForExist(particle1, 10000);
+    browser.click(particle1);
+    await browser.waitForExist(suggestion2, 15000);
+    browser.click(suggestion2);
+    await browser.waitForExist(particle2, 5000);
+  });
+  it('gifts', async function() {
+    const search = `products`;
+    const suggestion1 = `[title^="Show products"]`;
+    const particle1 = `[particle-host="ItemMultiplexer::item"]`;
+    const suggestion2 = `[title^="Check shipping"]`;
+    const particle2 = `[particle-host="Multiplexer::annotation"]`;
+    const suggestion3= `[title^="Check manufacturer"]`;
+    const suggestion4= `[title^="Find out"]`;
+    //
+    openNewArc(this.test.fullTitle());
+    browser.waitForVisible('app-shell');
+    queryShellUi('input[search]').click().keys(search);
+    await browser.waitForExist(suggestion1, 20000);
+    browser.click(suggestion1);
+    await browser.waitForExist(particle1, 10000);
+    await browser.waitForExist(suggestion2, 15000);
+    browser.click(suggestion2);
+    await browser.waitForExist(particle2, 5000);
+    await browser.waitForExist(suggestion3, 15000);
+    browser.click(suggestion3);
+    await browser.waitForExist(suggestion4, 15000);
+    browser.click(suggestion4);
   });
 });
