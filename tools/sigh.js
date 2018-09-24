@@ -44,6 +44,7 @@ const steps = {
   tslint: [tslint],
   check: [check],
   clean: [clean],
+  importSpotify: [tsc, importSpotify],
   default: [check, peg, railroad, tsc, test, webpack, lint, tslint],
 };
 
@@ -81,6 +82,13 @@ function* findProjectFiles(dir, predicate) {
 
 function readProjectFile(relativePath) {
   return fs.readFileSync(path.resolve(projectRoot, relativePath), 'utf-8');
+}
+
+function fixPathForWindows(path) {
+  if (path[0] == '/') {
+    return path;
+  }
+  return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 }
 
 function targetIsUpToDate(relativeTarget, relativeDeps) {
@@ -378,13 +386,6 @@ function test(args) {
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 
-  function fixPathForWindows(path) {
-    if (path[0] == '/') {
-      return path;
-    }
-    return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
-  }
-
   function buildTestRunner() {
     let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     let chain = [];
@@ -462,6 +463,14 @@ function test(args) {
       {stdio: 'inherit'});
 }
 
+async function importSpotify() {
+  return saneSpawn('node', [
+    '--experimental-modules',
+    '--trace-warnings',
+    '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+    './tools/spotify-importer.js'
+  ], {stdio: 'inherit'});
+}
 
 // Watches `watchPaths` for changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
