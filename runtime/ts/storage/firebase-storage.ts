@@ -1032,6 +1032,9 @@ class FirebaseCollection extends FirebaseStorageProvider {
     assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
     values.map(value => {
       this.model.add(value.id, value, keys);
+      if (!this.localChanges.has(value.id)) {
+        this.localChanges.set(value.id, {add: [], remove: []});
+      }
       const localChanges = this.localChanges.get(value.id);
       for (const key of keys) {
         localChanges.add.push(key);
