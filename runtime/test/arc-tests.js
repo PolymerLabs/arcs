@@ -244,11 +244,11 @@ describe('Arc', function() {
 
     // Populate the stores, run the arc and get its serialization.
     // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
-    await handleFor(varStore).set(new Data({value:  'v1'}));
-    await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20 }}, ['i2']);
-    await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30 }}, ['i3']);
-    await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40 }}, ['i4']);
-    await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50 }}, ['i5']);
+    await handleFor(varStore).set(new Data({value: 'v1'}));
+    await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
+    await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
+    await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
+    await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50}}, ['i5']);
 
     let recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(varStore);
