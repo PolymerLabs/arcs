@@ -796,6 +796,25 @@ ${particleStr1}
     assert.lengthOf(slotB.consumeConnections, 1);
     assert.equal(slotB.sourceConnection, slotConnA);
   });
+  it('parses local slots with IDs', async () => {
+    let recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        consume slotA
+          provide slotB
+      particle P2 in 'some-particle.js'
+        consume slotB
+      recipe
+        slot 'rootslot-0' as slot0
+        slot 'local-slot-0' as slot1
+        P1
+          consume slotA as slot0
+            provide slotB as slot1
+        P2
+          consume slotB as slot1
+    `)).recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.slots, 2);
+  });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
     let loader = {

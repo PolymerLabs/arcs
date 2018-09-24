@@ -402,6 +402,9 @@ ${this.activeRecipe.toString()}`;
     }
     let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
     currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), patterns: recipe.patterns});
+
+    // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
+    // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeHandle of handles) {
@@ -426,7 +429,8 @@ ${this.activeRecipe.toString()}`;
           await newStore.set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
-          assert(copiedStore.version !== null);
+          assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
+          assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.findStoreTags(copiedStore));
           let copiedStoreDesc = this.getStoreDescription(copiedStore);

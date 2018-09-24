@@ -163,7 +163,7 @@ export class DescriptionFormatter {
   }
 
   _populateParticleDescription(particle, descriptionByName) {
-    let pattern = descriptionByName['_pattern_'] || particle.spec.pattern;
+    let pattern = descriptionByName['pattern'] || particle.spec.pattern;
     return pattern ? {pattern} : {};
   }
 

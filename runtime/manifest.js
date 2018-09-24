@@ -770,7 +770,23 @@ ${e.message}
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
             if (ps.name) {
-              items.byName.set(ps.name, providedSlot);
+              if (items.byName.has(ps.name)) {
+                // The slot was added to the recipe twice - once as part of the
+                // slots in the manifest, then as part of particle spec.
+                // Unifying both slots, updating name and source slot connection.
+                let theSlot = items.byName.get(ps.name);
+                assert(theSlot !== providedSlot);
+                assert(!theSlot.name && providedSlot);
+                assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
+                assert(theSlot.handleConnections.length == 0);
+                theSlot.name = providedSlot.name;
+                theSlot.sourceConnection = providedSlot.sourceConnection;
+                theSlot.sourceConnection.providedSlots[theSlot.name] = theSlot;
+                theSlot._handleConnections = providedSlot.handleConnections.slice();
+                theSlot.recipe.removeSlot(providedSlot);
+              } else {
+                items.byName.set(ps.name, providedSlot);
+              }
             }
             items.bySlot.set(providedSlot, ps);
           } else {

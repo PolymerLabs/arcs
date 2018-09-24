@@ -577,8 +577,8 @@ Description
     let patterns = [];
     if (pattern) {
       patterns.push(pattern);
-      handleDescriptions.filter(desc => desc.name == '_pattern_').forEach(pattern => patterns.push(pattern));
-      handleDescriptions = handleDescriptions.filter(desc => desc.name != '_pattern_');
+      handleDescriptions.filter(desc => desc.name == 'pattern').forEach(pattern => patterns.push(pattern));
+      handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
     }
     return {
       kind: 'description',

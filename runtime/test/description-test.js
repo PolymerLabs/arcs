@@ -305,7 +305,6 @@ particle A
 recipe
   create as fooHandle   // Foo
   slot 'r0' as slot0
-  slot 'action::slot' as slot1
   X1
     ofoo -> fooHandle
     consume action as slot1
@@ -410,7 +409,6 @@ recipe
   create as foosHandle    // [Foo]
   create as fooHandle2    // Foo
   slot 'r0' as slot0
-  slot 'action::slot' as slot1
   B
     ofoo -> fooHandle1
     consume action as slot1
@@ -773,12 +771,12 @@ recipe
       await test.verifySuggestion('Hello world.', description);
 
       // Particle (dynamic) description handle (override static description).
-      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my foo'}));
+      await descriptionHandle.store(new Description({key: 'pattern', value: 'Return my foo'}));
       await test.verifySuggestion('Return my foo.', description);
 
       // Particle description handle with handle connections.
-      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my temporary foo'}));
-      await descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my ${ofoo}'}));
+      await descriptionHandle.store(new Description({key: 'pattern', value: 'Return my temporary foo'}));
+      await descriptionHandle.store(new Description({key: 'pattern', value: 'Return my ${ofoo}'}));
       let ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
       await descriptionHandle.store(ofooDesc);
       await test.verifySuggestion('Return my best-foo.', description);
@@ -810,7 +808,7 @@ recipe
       await test.verifySuggestion('Here it is: hello world.', description);
 
       // Particle (dynamic) description handle (override static description).
-      await descriptionHandle.store(new Description({key: '_pattern_', value: 'dynamic B description'}));
+      await descriptionHandle.store(new Description({key: 'pattern', value: 'dynamic B description'}));
       await test.verifySuggestion('Here it is: dynamic B description.', description);
     });
   });
@@ -818,7 +816,7 @@ recipe
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
       let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
-      await descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));
+      await descriptionHandle.store(new Description({key: 'pattern', value: 'return my ${ofoo} (text)'}));
       await descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
       await descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
       await test.verifySuggestion(`Return my foo (${test.name}).`, description);
