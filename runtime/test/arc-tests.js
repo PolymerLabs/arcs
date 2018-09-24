@@ -17,6 +17,8 @@ import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {MessageChannel} from '../message-channel.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 let loader = new Loader();
 
@@ -70,7 +72,7 @@ describe('Arc', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
@@ -87,7 +89,7 @@ describe('Arc', function() {
   it('deserializing a simple serialized arc produces that arc', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']);
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
@@ -160,6 +162,7 @@ describe('Arc', function() {
     await newArc.idle;
     assert.equal(slotsCreated, 1);
   });
+
   it('copies store tags', async () => {
     let helper = await TestHelper.createAndPlan({
       manifestString: `
@@ -195,5 +198,96 @@ describe('Arc', function() {
     assert.equal(1, helper.arc._storesById.size);
     assert.equal(1, helper.arc._storeTags.size);
     assert.deepEqual(['best'], [...helper.arc._storeTags.get([...helper.arc._storesById.values()][0])]);
+  });
+
+  it('serialization roundtrip preserves store data', async function() {
+    let loader = new StubLoader({
+      manifest: `
+        schema Data
+          Text value
+          Number size
+
+        particle TestParticle in 'a.js'
+          in Data var
+          out [Data] col
+          inout BigCollection<Data> big
+
+        recipe
+          use as handle0
+          use as handle1
+          use as handle2
+          TestParticle
+            var <- handle0
+            col -> handle1
+            big = handle2
+      `,
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test', pecFactory, loader});
+    let manifest = await Manifest.load('manifest', loader);
+    let Data = manifest.findSchemaByName('Data').entityClass();
+
+    let varStore = await arc.createStore(Data.type, undefined, 'test:0');
+    let colStore = await arc.createStore(Data.type.collectionOf(), undefined, 'test:1');
+    let bigStore = await arc.createStore(Data.type.bigCollectionOf(), undefined, 'test:2');
+
+    // TODO: Reference Mode: Deal With It (TM)
+    varStore.referenceMode = false;
+    colStore.referenceMode = false;
+
+    // Populate the stores, run the arc and get its serialization.
+    // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
+    await handleFor(varStore).set(new Data({value: 'v1'}));
+    await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
+    await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
+    await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
+    await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50}}, ['i5']);
+
+    let recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(varStore);
+    recipe.handles[1].mapToStorage(colStore);
+    recipe.handles[2].mapToStorage(bigStore);
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    let serialization = await arc.serialize();
+    arc.stop();
+    
+    // Grab a snapshot of the current state from each store, then clear them.
+    let varData = JSON.parse(JSON.stringify(await varStore.toLiteral()));
+    let colData = JSON.parse(JSON.stringify(colStore.toLiteral()));
+    let bigData = JSON.parse(JSON.stringify(bigStore.toLiteral()));
+
+    await varStore.clear();
+    colStore.clearItemsForTesting();
+    bigStore.clearItemsForTesting();
+
+    // Deserialize into a new arc.
+    let arc2 = await Arc.deserialize({serialization, pecFactory});
+    let varStore2 = arc2.findStoreById(varStore.id);
+    let colStore2 = arc2.findStoreById(colStore.id);
+    let bigStore2 = arc2.findStoreById(bigStore.id);
+
+    // New storage providers should have been created.
+    assert.notStrictEqual(varStore2, varStore);
+    assert.notStrictEqual(colStore2, colStore);
+    assert.notStrictEqual(bigStore2, bigStore);
+
+    // The old ones should still be cleared.
+    assert.isNull(await varStore.get());
+    assert.isEmpty(await colStore.toList());
+    assert.isEmpty(await bigStore.toLiteral().model);
+
+    // The new ones should be populated from the serialized data.
+    assert.deepEqual(await varStore2.toLiteral(), varData);
+    assert.deepEqual(colStore2.toLiteral(), colData);
+    assert.deepEqual(bigStore2.toLiteral(), bigData);
   });
 });

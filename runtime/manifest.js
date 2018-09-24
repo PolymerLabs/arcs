@@ -1015,8 +1015,7 @@ ${e.message}
       source = item.source;
       json = manifest.resources[source];
       if (json == undefined) {
-        throw new Error(`Resource '${source}' referenced by store '${
-            id}' is not defined in this manifest`);
+        throw new Error(`Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
       }
     }
     let entities;
@@ -1026,17 +1025,19 @@ ${e.message}
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
 
-    // Note that BigCollection isn't relevant here (ManifestStorage cannot be of BigCollectionType).
+    // TODO: clean this up
     let unitType;
-    if (!type.isCollection) {
+    if (type.isCollection) {
+      unitType = type.collectionType;
+    } else if (type.isBigCollection) {
+      unitType = type.bigCollectionType;
+    } else {
       if (entities.length == 0) {
         await Manifest._createStore(manifest, type, name, id, tags, item);
         return;
       }
       entities = entities.slice(entities.length - 1);
       unitType = type;
-    } else {
-      unitType = type.collectionType;
     }
 
     if (unitType.isEntity) {
@@ -1079,10 +1080,19 @@ ${e.message}
 
     // For this store to be able to be treated as a CRDT, each item needs a key.
     // Using id as key seems safe, nothing else should do this.
-    store.fromLiteral({
-      version,
-      model: entities.map(value => ({id: value.id, value, keys: new Set([value.id])})),
-    });
+    let model;
+    if (type.isCollection) {
+      model = entities.map(value => ({id: value.id, value, keys: new Set([value.id])}));
+    } else if (type.isBigCollection) {
+      model = entities.map(value => {
+        let index = value.rawData.$index;
+        delete value.rawData.$index;
+        return {id: value.id, index, value, keys: new Set([value.id])};
+      });
+    } else {
+      model = entities.map(value => ({id: value.id, value}));
+    }
+    store.fromLiteral({version, model});
   }
   static async _createStore(manifest, type, name, id, tags, item) {
     let store = await manifest.createStore(type, name, id, tags);

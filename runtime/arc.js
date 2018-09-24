@@ -66,7 +66,7 @@ export class Arc {
     this._description = new Description(this);
 
     this._instantiatePlanCallbacks = [];
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, slotComposer && slotComposer.affordance);
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
         devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));
@@ -131,10 +131,7 @@ export class Arc {
   }
 
   async _serializeHandle(handle, context, id) {
-    let type = handle.type;
-    if (type.isCollection) {
-      type = type.primitiveType();
-    }
+    let type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
     }
@@ -151,20 +148,25 @@ export class Arc {
         const nosync = handleTags.includes('nosync');
         let serializedData = [];
         if (!nosync) {
-          serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+          // TODO: include keys in serialized [big]collections?
+          serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
             if (value == null) {
               return null;
             }
+            
+            let result;
             if (value.rawData) {
-              let result = {};
+              result = {$id: id};
               for (let field in value.rawData) {
                 result[field] = value.rawData[field];
               }
-              result.$id = id;
-              return result;
             } else {
-              return value;
+              result = value;
             }
+            if (index !== undefined) {
+              result.$index = index;
+            }
+            return result;
           });
         }
         if (handle.referenceMode && serializedData.length > 0) {
@@ -188,7 +190,7 @@ export class Arc {
         let data = JSON.stringify(serializedData);
         context.resources += data.split('\n').map(line => indent + line).join('\n');
         context.resources += '\n';
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version === null ? 0 : handle.version} ${handleTags} in ${id}Resource\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
     }
