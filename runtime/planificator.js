@@ -368,7 +368,7 @@ export class Planificator {
     if (this._next.plans) {
       // Can be null, if a new planning has already been scheduled.
       // TODO: this is a race condition, proper fix is part of #1620.
-      log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
+      log(`Produced ${this._next.plans.length}${options.append ? ' additional' : ''} plans [elapsed=${time}s].`);
     }
   }
 
