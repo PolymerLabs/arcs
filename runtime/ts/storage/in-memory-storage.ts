@@ -165,7 +165,7 @@ abstract class InMemoryStorageProvider extends StorageProviderBase {
     }
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType());
-      this.pendingBackingStore = this.storageEngine.baseStorageFor(this.type, key);
+      this.pendingBackingStore = this.storageEngine.baseStorageFor(this.backingType(), key);
       this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
     return this.pendingBackingStore;
@@ -206,10 +206,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async modelForSynchronization() {
-    return {
-      version: this.version,
-      model: await this._toList()
-    };
+    const model = await this._toList();
+    return {version: this.version, model};
   }
 
   // Returns {version, model: [{id, value, keys: []}]}
@@ -238,12 +236,13 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
       await this.ensureBackingStore();
 
-      const retrieveItem = async item => {
-        const ref = item.value;
-        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
-      };
-
-      return await Promise.all(items.map(retrieveItem));
+      const ids = items.map(item => item.value.id);
+      const results = await this.backingStore.getMultiple(ids);
+      const output = [];
+      for (let i = 0; i < results.length; i++) {
+        output.push({id: ids[i], value: results[i], keys: items[i].keys});
+      }
+      return output;
     }
     return this.toLiteral().model;
   }

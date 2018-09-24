@@ -78,11 +78,7 @@ particle ShowRenderer in 'source/ShowRenderer.js'
 recipe
   use as artist
   create as shows
-  map 'SYSTEM_user' as user
-  create as location
-  ExtractLocation
-    user <- user
-    location -> location
+  use as location
   FindShows
     location <- location
     artist <- artist
