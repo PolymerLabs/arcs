@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import Arcs from '../../lib/Arcs.js';
+import Arcs from '../../lib/arcs.js';
 const {firebase} = Arcs;
 
 const config = (() => {
