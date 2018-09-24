@@ -21,7 +21,7 @@ function queryShellUi(selector) {
   }, selector);
 }
 
-function openNewArc(testTitle, useSolo) {
+async function openNewArc(testTitle, useSolo) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
   browser.switchTab(openTabs[0]);
@@ -45,6 +45,7 @@ function openNewArc(testTitle, useSolo) {
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
   browser.url(`shell/apps/web/?${urlParams.join('&')}`);
+  await browser.pause(2000);
 }
 
 describe('demo', function() {
