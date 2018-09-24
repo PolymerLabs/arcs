@@ -200,6 +200,7 @@ export class Arc {
     let id = 0;
     let importSet = new Set();
     let handleSet = new Set();
+    const contextSet = new Set(this.context._stores.map(store => store.id));
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
@@ -212,7 +213,7 @@ export class Arc {
     }
 
     for (let handle of this._stores) {
-      if (!handleSet.has(handle.id)) {
+      if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
 
