@@ -213,11 +213,7 @@ export class Arc {
     }
 
     for (let handle of this._stores) {
-      if (!handleSet.has(handle.id)) {
-        continue;
-      }
-
-      if (contextSet.has(handle.id)) {
+      if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
 
