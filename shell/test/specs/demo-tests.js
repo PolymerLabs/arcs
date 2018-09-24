@@ -35,7 +35,7 @@ function wait(msToWait) {
   browser.waitUntil(() => {
     msWaited += msIncrement;
     return msWaited > msToWait;
-  }, 10000, `we should have exited after a few iterations`, msIncrement);
+  }, 10e3, `we should have exited after a few iterations`, msIncrement);
 }
 
 /**
@@ -148,7 +148,7 @@ function waitForVisible(selectors) {
           selected.value} of selector ${selectors})`);
       return true;
     }
-  }, 10000, `selectors ${selectors} never selected anything`, 500);
+  }, 10e3, `selectors ${selectors} never selected anything`, 500);
 }
 
 function glowElement() {
@@ -188,7 +188,7 @@ function waitForStillness() {
     }
     return matches > desiredMatches;
   };
-  browser.waitUntil(noGlow, 5000, `the glow can't stop won't stop`, 500);
+  browser.waitUntil(noGlow, 10e3, `the glow can't stop won't stop`, 500);
 }
 
 function clickElement(selector) {

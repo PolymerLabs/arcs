@@ -30,8 +30,9 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       avatars: {},
     };
   }
-  _update({context, userid, coords, users}, state) {
-    const {user, userStore, usersStore, userContext} = state;
+  _update(props, state) {
+    const {context, userid, coords, users} = props;
+    const {user, userStore, usersStore} = state;
     if (context && !state.initStores) {
       state.initStores = true;
       this._requireStores(context);
@@ -43,9 +44,9 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       // once.
       this._updateSystemUsers(users, usersStore);
     }
-    if (context && user && userStore && userid !== state.userid) {
+    if (user && userStore && userid !== state.userid) {
       state.userid = userid;
-      this._updateSystemUser(context, userid, coords, state);
+      this._updateSystemUser(props, state);
     }
     if (user && userStore && coords && coords !== user.rawData.location) {
       user.rawData.location = coords;
@@ -156,16 +157,20 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     }, ['users-stores-keys']));
   }
-  async _updateSystemUser(context, userid, coords, state) {
-    const {user, userStore, userContext} = state;
-    if (userContext) {
-      await userContext.dispose();
-      state.userContext = null;
-    }
-    // if the `userid` has changed before we finished cleaning up, re-validate
-    if (state.userid !== userid) {
-      this._invalidate();
-    } else {
+  async _updateSystemUser(props, state) {
+    if (!state.disposingUser) {
+      const {user, userStore, userContext} = state;
+      if (userContext) {
+        state.disposingUser = true;
+        state.userContext = null;
+        try {
+          await userContext.dispose();
+        } catch (x) {
+          //
+        }
+        state.disposingUser = false;
+      }
+      const {context, coords, userid} = props;
       if (userid) {
         state.userContext = new SingleUserContext(context, userid, true);
       }
