@@ -1014,10 +1014,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
-    return {
-      version: this.version,
-      model: await this._toList()
-    };
+    let model = await this._toList();
+    return {version: this.version, model};
   }
 
   async toList() {
