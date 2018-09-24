@@ -153,19 +153,31 @@ export class PouchDbStorage extends StorageBase {
       PouchDB.plugin(PouchDbMemory);
       db = new PouchDB(key.dbName, {adapter: 'memory'});
     } else {
-      // Remote database
-      // TODO(lindner): sync local to remote instead of direct
+      // Create a local db to sync to the remote
       db = new PouchDB(key.dbName);
-      const remoteDb = new PouchDB('http://' + key.dbLocation + '/' + key.dbName);
+
+      // Ensure a secure origin, http is okay for localhost, but other hosts need https
+      const httpScheme = key.dbLocation.startsWith('localhost') ? 'http://' : 'https://';
+
+      const remoteDb = new PouchDB(httpScheme + key.dbLocation + '/' + key.dbName);
       if (!remoteDb || !db) {
         throw new Error('unable to connect to remote database for ' + key.toString());
       }
+
+      // Make an early explicit connection to the database to catch bad configurations
+      remoteDb.info().then((info) => {
+        console.log("Connected to Remote Database", info);
+      }).catch((err) => {
+        console.warn("Error connecting to Remote Database", err);
+      });
+
       this.setupReplication(db, remoteDb);
     }
     
     if (!db) {
       throw new Error("unable to connect to database for " + key.toString());
     }
+
     PouchDbStorage.dbLocationToInstance.set(key.dbCacheKey(), db);
     return db;
   }
