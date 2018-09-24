@@ -1112,7 +1112,7 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
-//TODO Add ParticleArgumentDirection (rewrite recipies to not use directions as identifiers.
+//TODO Add ParticleArgumentDirection (rewrite recipes to not use directions as identifiers.
 ReservedWord
   = Direction
 
