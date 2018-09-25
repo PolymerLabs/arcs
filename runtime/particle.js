@@ -100,6 +100,14 @@ export class Particle {
     return this._idle;
   }
 
+  startBusy() {
+    this._busy += 1;
+  }
+
+  doneBusy() {
+    this._busy -= 1;
+  }
+
   set relevance(r) {
     this.relevances.push(r);
   }

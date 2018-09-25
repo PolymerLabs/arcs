@@ -264,6 +264,9 @@ export class ParticleExecutionContext {
     if (this._pendingLoads.length > 0 || this._scheduler.busy) {
       return true;
     }
+    if (this._particles.filter(particle => particle.busy).length > 0) {
+      return true;
+    }
     return false;
   }
 
