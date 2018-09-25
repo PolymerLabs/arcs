@@ -51,7 +51,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     if (user && userStore && coords && coords !== user.rawData.location) {
       user.rawData.location = coords;
       log('updating user coords:', user);
-      userStore.set({user});
+      userStore.set(user);
     }
   }
   async _requireStores(context) {
