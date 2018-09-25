@@ -151,7 +151,7 @@ ${styles}
       <div style="margin-top: 16px; width: 82px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
         <div rating>{{rating}}</div>
         <div stars-container>
-          <div stars style="{{starStyle}}"></div>
+          <div stars xen:style="{{starStyle}}"></div>
         </div>
       </div>
     </div>
