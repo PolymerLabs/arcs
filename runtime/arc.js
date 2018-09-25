@@ -139,9 +139,16 @@ export class Arc {
     let tags = this._storeTags.get(handle) || [];
     let handleTags = [...tags].map(a => `#${a}`).join(' ');
 
+    const actualHandle = this.activeRecipe.findHandle(handle.id);
+    const originalId = actualHandle ? actualHandle.originalId : null;
+    let combinedId = `'${handle.id}'`;
+    if (originalId) {
+      combinedId += `!!'${originalId}'`;
+    }
+
     switch (key.protocol) {
       case 'firebase':
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
       case 'in-memory': {
         // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
@@ -190,7 +197,7 @@ export class Arc {
         let data = JSON.stringify(serializedData);
         context.resources += data.split('\n').map(line => indent + line).join('\n');
         context.resources += '\n';
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
     }
