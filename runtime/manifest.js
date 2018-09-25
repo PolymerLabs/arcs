@@ -138,6 +138,9 @@ export class Manifest {
   get stores() {
     return this._stores;
   }
+  get allStores() {
+    return [...this._findAll(manifest => manifest._stores)];
+  }
   get shapes() {
     return this._shapes;
   }

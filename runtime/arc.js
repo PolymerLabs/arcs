@@ -629,19 +629,13 @@ ${this.activeRecipe.toString()}`;
     return this._storeDescriptions.get(store) || store.description;
   }
 
-  getStoresState() {
+  getStoresState(options) {
     let versionById = new Map();
     this._storesById.forEach((handle, id) => versionById.set(id, handle.version));
-    return versionById;
-  }
-
-  isSameState(storesState) {
-    for (let [id, version] of storesState ) {
-      if (!this._storesById.has(id) || this._storesById.get(id).version != version) {
-        return false;
-      }
+    if ((options || {}).includeContext) {
+      this._context.allStores.forEach(handle => versionById.set(handle.id, handle.version));
     }
-    return true;
+    return versionById;
   }
 
   keyForId(id) {
