@@ -24,21 +24,31 @@ export const FbUser = class {
   get _userSchema() {
     return {
       info: {
-        $changed: field => this._fire('info-changed', field)
+        $changed: field => this._onInfoChanged(field)
       },
       arcs: {
         '*': {
-          $changed: field => this._onArcChanged(field),
+          //$changed: field => this._onArcChanged(field),
           $key: (parent, key, datum) => ({
             $join: {
-              path: `/arcs/${parent}`
+              path: `/arcs/${parent}`,
+              schema: {
+                serialization: {
+                  $changed: field => this._onArcChanged(field)
+                }
+              }
             }
           })
         }
       }
     };
   }
+  _onInfoChanged(field) {
+    console.log('+*+*+*++ FbUser: info-changed');
+    this._fire('info-changed', field);
+  }
   _onArcChanged(field) {
+    console.log('+*+*+*++ FbUser: arc-changed');
     this._fire('arc-changed', field);
   }
 };

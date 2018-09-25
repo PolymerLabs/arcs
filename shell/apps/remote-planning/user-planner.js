@@ -30,11 +30,14 @@ class UserPlanner {
     }
   }
   onArcChanged(field) {
-    this.disposeArc(field.key);
+    // TODO(sjmiles): this is really `serializationChanged`, but the fields are weird
+    const key = field.parent.parent.key;
+    const serialization = field.parent.data.serialization;
+    //console.log(key, serialization, field);
+    this.disposeArc(key);
     if (!field.disposed) {
-      const serial = field.value.$key.serialization;
-      if (serial) {
-        this.marshalArc(field.key, this.userid, serial);
+      if (serialization) {
+        this.marshalArc(key, this.userid, serialization);
       } else {
         console.log(`Arc[${field.key}] has no serialization, skipping`);
       }
@@ -51,7 +54,7 @@ class UserPlanner {
     // TODO(sjmiles): we'll need a queue to handle change notifications that arrive while we are 'await'ing
     console.log(`Arc[${key}]: marshaling for user [${userid}]`); //, `${serialization.slice(0, 63)}...`);
     const arc = await this.deserializeArc(serialization);
-    const planificator =this.createPlanificator(userid, key, arc);
+    const planificator = this.createPlanificator(userid, key, arc);
     this.runners[key] = {arc, planificator};
   }
   async deserializeArc(serialization) {
