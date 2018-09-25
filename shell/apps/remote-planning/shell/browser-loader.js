@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../../../../runtime/loader.js';
+import {Loader} from '../runtime/loader.js';
 import {Particle} from '../../../../runtime/particle.js';
 import {DomParticle} from '../../../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
 import {TransformationDomParticle} from '../../../../runtime/transformation-dom-particle.js';
-import { fs } from '../../../../platform/fs-node.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
@@ -24,27 +23,12 @@ export class BrowserLoader extends Loader {
     super();
     this._urlMap = urlMap;
   }
-  _loadURL(url) {
-    // use URL to normalize the path for deduping
-    const cacheKey = url; //new URL(url, document.URL).href;
+  loadResource(name) {
+    const path = this._resolve(name);
+    const cacheKey = path; //new URL(url, document.URL).href;
     const resource = dumbCache[cacheKey];
-    return resource || (dumbCache[cacheKey] = this.__loadURL(url));
+    return resource || (dumbCache[cacheKey] = super.loadResource(path));
   }
-  __loadURL(url) {
-    if (url[0] === '.') {
-      return fs.readFileSync(url);
-    }
-    return super._loadURL(url);
-  }
-  /*
-  async loadParticleClass(spec) {
-    console.log(spec.implFile);
-    debugger;
-    let clazz = await this.requireParticle(spec.implFile);
-    clazz.spec = spec;
-    return clazz;
-  }
-  */
   _resolve(path) {
     //return new URL(path, this._base).href;
     let url = this._urlMap[path];
@@ -58,9 +42,6 @@ export class BrowserLoader extends Loader {
     url = url || path;
     //console.log(`browser-loader: resolve(${path}) = ${url}`);
     return url;
-  }
-  loadResource(name) {
-    return this._loadURL(this._resolve(name));
   }
   requireParticle(fileName) {
     const path = this._resolve(fileName);
