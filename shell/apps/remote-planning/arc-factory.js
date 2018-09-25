@@ -23,9 +23,6 @@ const ArcFactory = class {
       'https://sjmiles.github.io/': 'http://localhost/projects/arcs/'
     });
     //console.log(loader);
-    this.slotComposer = new ComposerKind({
-      affordance: 'dom'
-    });
     //console.log(slotComposer);
     this.pecFactory = function(id) {
       let channel = new MessageChannel();
@@ -41,11 +38,21 @@ const ArcFactory = class {
     return {
       id: `server-arc`,
       pecFactory,
-      slotComposer,
       loader,
       context,
-      storageKey: null
+      storageKey: null,
+      slotComposer: this.createComposer()
     };
+  }
+  createComposer() {
+    return new ComposerKind({
+      affordance: 'mock',
+      rootContainer: {
+        toproot: 'toproot-context',
+        root: 'root-context',
+        modal: 'modal-context'
+      }
+    });
   }
   spawn(context) {
     const params = this.getParams(context);
