@@ -8,15 +8,16 @@
   },
   "scripts": {
     "build": "tsc -p .",
+    "build:typedoc": "typedoc -out dist/apidocs",
     "clean": "rimraf ./dist/",
     "dev": "ts-node -P tsconfig.dev.json --require esm src/index.ts",
     "dev:watch": "ts-node-dev -P tsconfig.dev.json --require esm --respawn src/index.ts",
     "lint": "tslint -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "lint:fix": "tslint --fix -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "prettier": "prettier --write 'src/**/*.js' 'test/**/*.js' 'src/**/*.ts' 'test/**/*.ts'",
+    "start": "node --require esm --require source-map-support/register dist/index.js",
     "test": "TS_NODE_PROJECT=tsconfig.dev.json mocha --reporter spec -r ts-node/register -r source-map-support/register -r esm test/**/*.test.ts",
     "test:watch": "npm test -- --watch --watch-extensions=ts",
-    "start": "node --require esm --require source-map-support/register dist/index.js",
     "pretest": "npm run build",
     "posttest": "npm run lint",
     "watch": "run-p dev:watch test:watch"
@@ -58,6 +59,7 @@
     "ts-node": "^7.0.1",
     "ts-node-dev": "^1.0.0-pre.30",
     "tslint": "^5.11.0",
+    "typedoc": "^0.12.0",
     "typescript": "^3.0.3"
   },
   "engines": {
