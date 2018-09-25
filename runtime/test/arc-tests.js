@@ -200,7 +200,7 @@ describe('Arc', function() {
     assert.deepEqual(['best'], [...helper.arc._storeTags.get([...helper.arc._storesById.values()][0])]);
   });
 
-  it('serialization roundtrip preserves store data', async function() {
+  it('serialization roundtrip preserves data for in-memory stores', async function() {
     let loader = new StubLoader({
       manifest: `
         schema Data
