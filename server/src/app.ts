@@ -40,6 +40,8 @@ export abstract class AppBase {
   /** Configure Express middleware. */
   private middleware(): void {
     this.express.use(logger('dev'));
+    // This larger setting is required to support PouchDB replication.
+    // TODO(lindner): move to a config location and document this.
     this.express.use(bodyParser.json({limit: '5mb'}));
     this.express.use(bodyParser.urlencoded({ limit: '5mb', extended: false }));
   }
