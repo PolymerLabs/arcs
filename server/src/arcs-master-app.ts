@@ -24,6 +24,8 @@ class ArcsMasterApp extends AppBase {
     super.addRoutes();
     this.express.get('/:fingerprint', this.findDeployment.bind(this));
     this.express.get('/deploy/:fingerprint/:wrappedkey', this.deploy.bind(this));
+    this.express.get('/mount/:fingerprint/:wrappedkey', this.deploy.bind(this));
+
   }
 
   /**
@@ -40,18 +42,32 @@ class ArcsMasterApp extends AppBase {
 
     try {
       const cloud = CloudManager.forGCP();
-      const container: Container | null = await cloud.containers().find(fingerprint);
-      if (container != null) {
-        const url = container.url();
-        if (url === 'pending') {
-          res.send('Creation still in progress, refresh for status.');
+      const disk = await cloud.disks().find(fingerprint);
+      if (disk) {
+        const attached = await disk.isAttached();
+        const wrappedKey  = await disk.wrappedKeyFor(fingerprint);
+
+        if (attached) {
+          const container: Container | null = await cloud.containers().find(fingerprint);
+          if (container != null) {
+            const url = container.url();
+            if (url === 'pending') {
+              res.send('{"id": "' + fingerprint + '", "status": "pending"}');
+            } else {
+              res.send('{"id": "' + fingerprint + '", "status": "attached", "url" : "' + url + '"}');
+            }
+            return;
+          }
+          res.send('{"id": "' + fingerprint + '", "status": "container not found"}');
+          return;
         } else {
-          res.send(url);
+          res.send('{"id": "' + fingerprint + '", "status": "detached", "key": "' + wrappedKey + '"}');
+          return;
         }
       } else {
-        res.send('Container ' + fingerprint + ' not found.');
+        res.send('{"id": "' + fingerprint + '", "status": "disk not found"}');
+        return;
       }
-
     } catch (e) {
       console.log(e);
     }
@@ -64,9 +80,26 @@ class ArcsMasterApp extends AppBase {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().create(fingerprint, wrappedkey);
       console.log("Disk successfully created with id " + disk.id());
-      const container = await cloud.containers().deploy(fingerprint, disk);
+      const container = await cloud.containers().deploy(fingerprint, wrappedkey, disk);
       console.log("Container successfully created with fingerprint " + fingerprint);
-      res.send('{"status": "pending", "id": "' + fingerprint + '", "url": "/' + fingerprint + '"}');
+      res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
+    } catch (e) {
+      res.send("Can't deploy because " + JSON.stringify(e));
+    }
+  }
+
+  async mount(req, res, next) {
+    const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
+    const wrappedkey = req.params.wrappedkey;
+    try {
+      const cloud = CloudManager.forGCP();
+      const disk = await cloud.disks().create(fingerprint, wrappedkey);
+      if (disk && !await disk.isAttached()) {
+        const container = await cloud.containers().deploy(fingerprint, wrappedkey, disk);
+        console.log("Disk successfully mounted with id " + disk.id());
+        console.log("Container successfully created with fingerprint " + fingerprint);
+        res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
+      }
     } catch (e) {
       res.send("Can't deploy because " + JSON.stringify(e));
     }

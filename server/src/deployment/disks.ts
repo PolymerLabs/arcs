@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Container} from "./containers";
+
 /**
  * Represents a persistent disk volume in the cloud provider's infrastructure that is
  * capable of being attached to VMs.
@@ -15,8 +17,9 @@
 export interface Disk {
     id(): string;
     type(): string;
-    isAttached(): boolean;
-    mount(rewrappedKey: string):boolean;
+    isAttached(): PromiseLike<boolean>;
+    mount(rewrappedKey: string):PromiseLike<boolean>;
+    wrappedKeyFor(fingerprint:string): PromiseLike<string>;
 }
 
 export interface DiskManager {

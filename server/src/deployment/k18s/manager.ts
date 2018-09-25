@@ -12,11 +12,11 @@ import {Disk} from "../disks";
 
 import {
   Core_v1Api,
-  KubeConfig,
+  KubeConfig, V1Affinity,
   V1Container,
   V1ContainerPort,
   V1EnvVar,
-  V1GCEPersistentDiskVolumeSource,
+  V1GCEPersistentDiskVolumeSource, V1NodeAffinity,
   V1ObjectMeta,
   V1PersistentVolume,
   V1PersistentVolumeSpec,
@@ -40,8 +40,10 @@ const EXTERNAL_PORT = 80;
 class K18sPod implements Container {
   private v1Pod: V1Pod;
   private v1Service: V1Service;
+  private k8sApi: Core_v1Api;
 
-  constructor(v1Pod: V1Pod, v1Service: V1Service) {
+  constructor(k8sApi: Core_v1Api, v1Pod: V1Pod, v1Service: V1Service) {
+    this.k8sApi = k8sApi;
     this.v1Pod = v1Pod;
     this.v1Service = v1Service;
   }
@@ -62,6 +64,12 @@ class K18sPod implements Container {
     return Promise.reject("not yet implemented");
   }
 
+  async node(): Promise<string> {
+    const {response, body} = await this.k8sApi.readNamespacedPod(this.v1Pod.metadata.name, 'default',
+      undefined, false,false);
+    return body.spec.nodeName;
+  }
+
 }
 
 export class K18sContainerManager implements ContainerManager {
@@ -74,18 +82,21 @@ export class K18sContainerManager implements ContainerManager {
     this.k8sApi = kc.makeApiClient(Core_v1Api);
   }
 
-  async deploy(fingerprint: string, encryptedDisk: Disk): Promise<Container> {
+  async deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): Promise<Container> {
     if (encryptedDisk.type() !== 'gcePersistentDisk') {
       return Promise.reject(new Error('Cant use non-GCE disk on K8s yet'));
     }
 
+    // TODO: we should probably check to see if a container already exists with this id and is stuck
+    // waiting for an unmounted disk, or doesn't exist. We can delete and restart it in that case.
     try {
       /**
-       * We need to do 3 things:
+       * We need to do 4 things:
+       * 1. Attach a GCE disk to specific GCE node
        * 1. Create a Kubernetes PersistentVolume that references an already existing disk
        * (https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
        *
-       * 2. Create a Pod that mounts this Persistent Volume and deploys our docker image
+       * 2. Create a Pod that mounts this Persistent Volume and deploys our docker image to this specific node
        *
        * 3. A Kubernetes Service which acts as an Ingress so that our Pod is visible to the
        * external world with an external IP address.
@@ -98,15 +109,17 @@ export class K18sContainerManager implements ContainerManager {
        * TODO: use lets-encrypt to provision a cert and deploy it as a Kubernetes secret
        * TODO: need some kind of cloud-dns setup script so SSL cert has a domain name
        */
+      const mounted = await encryptedDisk.mount(rewrappedKey);
+      console.log("Disk mounted " + mounted);
       const {body: createdPersistentVolume} = await this.requestNewPersistentVolume(encryptedDisk);
       console.log("Created new persistent volume " + createdPersistentVolume.metadata.name);
       const {body: createdPod} = await this.requestCreatePod(encryptedDisk, fingerprint);
       console.log("Created new pod " + createdPod.metadata.name);
       const {body: createdService} = await this.requestCreateService(fingerprint, createdPod);
       console.log("Created new service " + createdService.metadata.name);
-      return Promise.resolve(new K18sPod(createdPod, createdService));
+      return Promise.resolve(new K18sPod(this.k8sApi, createdPod, createdService));
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(JSON.stringify(e));
     }
   }
 
@@ -140,6 +153,11 @@ export class K18sContainerManager implements ContainerManager {
     v1Pod.kind = 'Pod';
     v1Pod.apiVersion = 'v1';
     v1Pod.spec = new V1PodSpec();
+    // force POD to be deployed on arcs-node (where disks are attached)
+    v1Pod.spec.nodeSelector = {
+      "arcs-node": "true"
+    };
+
     v1Pod.spec.volumes = [gceVolume];
     v1Pod.spec.containers = [container];
     v1Pod.metadata = new V1ObjectMeta();
@@ -228,7 +246,7 @@ export class K18sContainerManager implements ContainerManager {
       const {response, body} = await k8sApi.listNamespacedService('default', undefined,
         undefined, "metadata.name=svc-"+fingerprint, true, undefined);
       if (body.items.length > 0) {
-        return Promise.resolve(new K18sPod(podList[0], body.items[0]));
+        return Promise.resolve(new K18sPod(k8sApi, podList[0], body.items[0]));
       }
     }
     return Promise.resolve(null);
