@@ -21,7 +21,6 @@ export function resetInMemoryStorageForTesting() {
 }
 
 class InMemoryKey extends KeyBase {
-  protocol: string;
   arcId: string;
   location: string;
   constructor(key: string) {
