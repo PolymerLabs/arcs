@@ -14,7 +14,7 @@ import {schemas} from '../../../app-shell/elements/sharing/schemas.js';
 import {SingleUserContext} from './single-user-context.js';
 
 //const log = Xen.logFactory('UserContext', '#4f0433');
-const log = console.log.bind(console);
+const log = () => {}; //console.log.bind(console);
 
 class Empty {}
 

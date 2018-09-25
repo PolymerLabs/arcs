@@ -13,7 +13,7 @@ import {Field} from './Field.js';
 import {StorageProviderFactory} from '../../../../runtime/ts-build/storage/storage-provider-factory.js';
 
 //const log = Xen.logFactory('SingleUserContext', '#6f2453');
-const log = console.log.bind(console);
+const log = () => {}; //console.log.bind(console);
 
 const storage = new StorageProviderFactory('shell');
 //
