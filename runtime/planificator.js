@@ -155,7 +155,7 @@ export class Planificator {
 
     const composer = this._arc.pec.slotComposer;
     if (composer) {
-      if (composer.findContextById('suggestions')) {
+      if (composer.findContextById('rootslotid-suggestions')) {
         const suggestionComposer = new SuggestionComposer(composer);
         this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
       }
