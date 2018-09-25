@@ -170,7 +170,8 @@ export class CoalesceRecipes extends Strategy {
           // generic recipes would apply - which we currently don't want here.
           if (otherHandle.type.hasVariable) {
             let resolved = otherHandle.type.resolvedType();
-            if (resolved.isCollection) resolved = resolved.collectionType;
+            // TODO: getContainedType returns non-null for references ... is that correct here?
+            resolved = resolved.getContainedType() || resolved;
             if (resolved.isVariable && !resolved.canReadSubset) continue;
           }
 
