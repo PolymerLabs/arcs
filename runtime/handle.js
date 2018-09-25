@@ -200,18 +200,30 @@ class Collection extends Handle {
  */
 class Variable extends Handle {
   // Called by StorageProxy.
-  _notify(kind, particle, details) {
+  async _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
-        particle.onHandleSync(this, this._restore(details));
+        try {
+          await particle.onHandleSync(this, this._restore(details));
+        } catch (e) {
+          this.raiseSystemException(e, `${particle.name}::onHandleSync`);
+        }
         return;
       case 'update': {
-        particle.onHandleUpdate(this, {data: this._restore(details.data)});
+        try {
+          await particle.onHandleUpdate(this, {data: this._restore(details.data)});
+        } catch (e) {
+          this.raiseSystemException(e, `${particle.name}::onHandleUpdate`);
+        }
         return;
       }
       case 'desync':
-        particle.onHandleDesync(this);
+        try {
+          await particle.onHandleDesync(this);
+        } catch (e) {
+          this.raiseSystemException(e, `${particle.name}::onHandleDesync`);
+        }
         return;
     }
   }
@@ -310,7 +322,9 @@ class Cursor {
 
 /** @class BigCollection
  * A handle on a large set of Entity data. Similar to Collection, except the complete set of
- * entities is not available directly; use stream() to read the full set.
+ * entities is not available directly; use stream() to read the full set. Particles wanting to
+ * operate on BigCollections should do so in the setHandles() call, since BigCollections do not
+ * trigger onHandleSync() or onHandleUpdate().
  */
 class BigCollection extends Handle {
   configure(options) {
@@ -372,7 +386,7 @@ export function handleFor(proxy, name, particleId, canRead = true, canWrite = tr
 
   let type = proxy.type.getContainedType() || proxy.type;
   if (type.isEntity) {
-    handle.entityClass = type.entitySchema.entityClass();
+    handle.entityClass = type.entitySchema.entityClass(proxy.pec);
   }
   return handle;
 }

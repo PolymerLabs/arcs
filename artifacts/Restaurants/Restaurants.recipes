@@ -20,8 +20,10 @@ recipe &displayRestaurants
     list <- list
 
 recipe
+  use as person
   create as location
   ExtractLocation
+    person = person
     location -> location
 
 recipe &nearbyRestaurants

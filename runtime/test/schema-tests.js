@@ -11,7 +11,9 @@
 import {assert} from './chai-web.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
+import {Reference} from '../ts-build/reference.js';
 import {Schema} from '../ts-build/schema.js';
+import {Type} from '../ts-build/type.js';
 
 describe('schema', function() {
   let loader = new StubLoader({
@@ -168,7 +170,7 @@ describe('schema', function() {
                             shipDays: 4});
   });
 
-  it('union types', async function() {
+  it('enforces rules when storing union types', async function() {
     let manifest = await Manifest.parse(`
       schema Unions
         (Text or Number) u1
@@ -196,7 +198,42 @@ describe('schema', function() {
     assert.throws(() => { unions.u2 = 25; }, TypeError, 'Type mismatch setting field u2');
   });
 
-  it('tuple types', async function() {
+  it('enforces rules when storing reference types', async function() {
+    let manifest = await Manifest.parse(`
+      schema ReferencedOne
+        Text foo
+      schema ReferencedTwo
+        Number bar
+      schema References
+        Reference<ReferencedOne> one
+        Reference<ReferencedTwo> two`);
+
+    let References = manifest.findSchemaByName('References').entityClass();
+    
+    let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
+    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null), two: null}); });
+    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null)}); }, TypeError,
+                  `Cannot set reference two with value '[object Object]' of mismatched type`);
+    assert.throws(() => {new References({one: 42, two: null}); }, TypeError,
+                  `Cannot set reference one with non-reference '42'`);
+  });
+
+  it('enforces rules when storing collection types', async function() {
+    let manifest = await Manifest.parse(`
+      schema Collections
+        [Reference<Foo {Text value}>] collection
+    `);
+
+    let Collections = manifest.findSchemaByName('Collections').entityClass();
+    let FooType = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
+    let BarType = Type.newEntity(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
+    new Collections({collection: new Set()});
+    new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(FooType), null)])});
+    assert.throws(() => {new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(BarType), null)])}); }, TypeError,
+                  `Cannot set reference collection with value '[object Object]' of mismatched type`);
+  });
+
+  it('enforces rules when storing tuple types', async function() {
     let manifest = await Manifest.parse(`
       schema Tuples
         (Text, Number) t1

@@ -319,7 +319,7 @@ class CollectionProxy extends StorageProxyBase {
   store(value, keys, particleId) {
     let id = value.id;
     let data = {value, keys};
-    this._port.HandleStore({data, handle: this, particleId});
+    this._port.HandleStore({handle: this, callback: () => {}, data, particleId});
 
     if (this._synchronized != SyncState.full) {
       return;
@@ -334,7 +334,7 @@ class CollectionProxy extends StorageProxyBase {
   remove(id, keys, particleId) {
     if (this._synchronized != SyncState.full) {
       let data = {id, keys: []};
-      this._port.HandleRemove({data, handle: this, particleId});
+      this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
       return;
     }
 
@@ -346,7 +346,7 @@ class CollectionProxy extends StorageProxyBase {
       keys = this._model.getKeys(id);
     }
     let data = {id, keys};
-    this._port.HandleRemove({data, handle: this, particleId});
+    this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
 
     if (!this._model.remove(id, keys)) {
       return;
@@ -550,11 +550,13 @@ class BigCollectionProxy extends StorageProxyBase {
   // TODO: surface get()
 
   async store(value, keys, particleId) {
-    this._port.HandleStore({handle: this, data: {value, keys}, particleId});
+    return new Promise(resolve =>
+      this._port.HandleStore({handle: this, callback: resolve, data: {value, keys}, particleId}));
   }
 
   async remove(id, particleId) {
-    this._port.HandleRemove({handle: this, data: {id, keys: []}, particleId});
+    return new Promise(resolve =>
+      this._port.HandleRemove({handle: this, callback: resolve, data: {id, keys: []}, particleId}));
   }
 
   async stream(pageSize) {
