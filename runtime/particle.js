@@ -104,6 +104,20 @@ export class Particle {
     this.relevances.push(r);
   }
 
+  startBusy() {
+    if (this._busy == 0) {
+      this._idle = new Promise(resolve => this._idleResolver = resolve);
+    }
+    this._busy++;
+  }
+  
+   doneBusy() {
+    this._busy--;
+    if (this._busy == 0) {
+      this._idleResolver();
+    }
+  }
+
   inputs() {
     return this.spec.inputs;
   }

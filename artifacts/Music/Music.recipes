@@ -66,6 +66,7 @@ particle FindShows in 'source/FindShows.js'
   in Artist artist
   in GeoCoordinates location
   inout [Show] shows
+  out [Description] descriptions
   consume nearbyShows
     provide listing
       handle shows

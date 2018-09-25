@@ -264,6 +264,9 @@ export class ParticleExecutionContext {
     if (this._pendingLoads.length > 0 || this._scheduler.busy) {
       return true;
     }
+    if (this._particles.filter(particle => particle.busy).length > 0) {
+      return true;
+    }
     return false;
   }
 
@@ -271,6 +274,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    return Promise.all([this._scheduler.idle, ...this._pendingLoads]).then(() => this.idle);
+    let busyParticlePromises = this._particles.filter(particle => particle.busy).map(particle => particle.idle);
+    return Promise.all([this._scheduler.idle, ...this._pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

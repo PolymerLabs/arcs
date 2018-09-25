@@ -12,7 +12,7 @@
 const eventsService = 'https://app.ticketmaster.com/discovery/v2/events?apikey=6g6GruAsAGU9RyT3lfjUFYtLSnvUITDe&radius=1000';
 const geohashCharMap = '0123456789bcdefghjkmnpqrstuvwxyz';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
   const host = `[find-shows]`;
   const styles = html`
   <style>
@@ -95,6 +95,14 @@ ${styles}
 </div>
   `;
   return class extends DomParticle {
+    constructor() {
+      super();
+      // We need to mark the particle as busy ASAP to get an opportunity to fetch concert data.
+      // It should be enough to do this around the fetch() call, but at that point it is too late.
+      // Let's track this in https://github.com/PolymerLabs/arcs/issues/1958.
+      this.startBusy();
+    }
+
     get template() {
       return template;
     }
@@ -102,27 +110,43 @@ ${styles}
     shouldRender(props) {
       return Boolean(props.artist && props.location);
     }
-    
-    render(props, state) {
+
+    willReceiveProps(props, state) {
+      if (state.fetching || !props.artist || !props.location) return;
+      this._setState({fetching: true});
+
+      // Note that it won't be possible to make those kind of fetches in production.
+      // We need privacy preserving, non-logging data sources to allow speculatively fetching data.
       const geohash = this._encodeGeohash(props.location.latitude, props.location.longitude);
-
-      if (!state.fetching) {
-        this._setState({fetching: true});
-        fetch(`${eventsService}&keyword=${encodeURI(props.artist.name)}&geoPoint=${geohash}`)
-            .then(response => response.json())
-            .then(response => this._processResponse(response));
-      }
-
-      return {};
+      fetch(`${eventsService}&keyword=${encodeURI(props.artist.name)}&geoPoint=${geohash}`)
+          .then(response => response.json())
+          .then(response => this._processResponse(response))
+          .finally(() => this.doneBusy());
     }
 
     async _processResponse(response) {
-      if (response.page.totalElements === 0) return;
+      if (response.page.totalElements === 0) {
+        // TBD: How do we communicate that this suggestion is irrelevant?
+        log('No nearby concerts available');
+        return;
+      }
 
       let nearest = null;
       for (const event of response._embedded.events) {
         if (!nearest || nearest.distance > event.distance) nearest = event;
       }
+
+      this.setParticleDescription(`Get ticket for concert on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
+
+      // Why doesn't this work?
+      // Tracked in https://github.com/PolymerLabs/arcs/issues/1965
+      // this.setParticleDescription({
+      //   template: 'Get ticket for concert on ${date} in ${venue}',
+      //   model: {
+      //     date: nearest.dates.start.localDate,
+      //     venue: nearest._embedded.venues[0].name
+      //   }
+      // });
 
       await this.clearHandle('shows');
       this.appendRawDataToHandle('shows', [{
