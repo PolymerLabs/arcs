@@ -191,7 +191,7 @@ ShapeInterface
   }
 
 ShapeArgumentItem
-  = arg:ShapeArgument2 eolWhiteSpace
+  = arg:ShapeArgumentWithName eolWhiteSpace
   {
     return arg;
   }
@@ -224,7 +224,7 @@ ShapeArgument
     };
   }
 
-ShapeArgument2
+ShapeArgumentWithName
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
@@ -1115,7 +1115,7 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
-//TODO Add ParticleArgumentDirection (rewrite recipies to not use directions as identifiers.
+//TODO Add ParticleArgumentDirection (rewrite recipes to not use directions as identifiers.
 ReservedWord
   = Direction
 
