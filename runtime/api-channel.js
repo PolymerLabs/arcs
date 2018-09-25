@@ -71,7 +71,7 @@ class ThingMapper {
   }
 
   identifierForThing(thing) {
-    assert(this._reverseIdMap.has(thing), `Missing thing ${thing}`);
+    assert(this._reverseIdMap.has(thing), `Missing thing [${thing}]`);
     return this._reverseIdMap.get(thing);
   }
 
@@ -137,7 +137,7 @@ export class APIPort {
         unconvert: a => clazz.fromLiteral(a)
       };
     };
-  
+
     this._testingHook();
   }
 
