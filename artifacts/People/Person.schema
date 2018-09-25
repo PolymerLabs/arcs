@@ -8,15 +8,19 @@
 
 import '../Things/Thing.schema'
 
+// TODO(sjmiles): fields commented out in an effort to reveal MVP
+// once the schema is stable, we can clean it up
+
 schema Person extends Thing
   Text id
-  Text friends
-  Text foods
-  Text avatar
-  Text active
+  Text name
+  //Text friends
+  //Text foods
+  //Text active
   Text occasion
   Text date
+  URL avatar
   Object location
-  Object arcs
-  Object profiles
-  Object shares
+  //Object arcs
+  //Object profiles
+  //Object shares

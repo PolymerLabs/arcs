@@ -18,12 +18,12 @@ import {TestHelper} from '../testing/test-helper.js';
 
 describe('demo flow', function() {
   it('can load the recipe manifest', async function() {
-    await Manifest.load('./artifacts/Products/Products.recipes', new Loader());
+    await Manifest.load('./runtime/test/artifacts/Products/Products.recipes', new Loader());
   });
 
   it('flows like a demo', async function() {
     let helper = await TestHelper.createAndPlan({
-      manifestFilename: './artifacts/Products/Products.recipes',
+      manifestFilename: './runtime/test/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
       verify: async plans => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));

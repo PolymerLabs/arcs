@@ -12,6 +12,7 @@ import {logFactory} from '../platform/log-web.js';
 import {Planner} from './planner.js';
 import {Speculator} from './speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
+import {SuggestionStorage} from './suggestion-storage.js';
 
 let defaultTimeoutMs = 5000;
 
@@ -83,6 +84,18 @@ class ReplanQueue {
   }
 }
 
+const PlanningMode = {
+  // The original mode where suggestions are produced and consumed locally.
+  full: 'full',
+  // Consumes suggestions and suggestion updates from a storage..
+  // TODO: produce suggestions locally, if remotely produced ones not available for too long.
+  consumer: 'consumer',
+  // Monitors arc and context, produces suggestions and writes them into the storage.
+  // TODO: Implement search / contextual support (currently simply all possible suggestions
+  // are produced based on init-population).
+  producer: 'producer'
+};
+
 const defaultOptions = {
   defaultReplanDelayMs: 200,
   maxNoReplanMs: 10000
@@ -91,6 +104,9 @@ const defaultOptions = {
 export class Planificator {
   constructor(arc, options) {
     this._arc = arc;
+    options = options || defaultOptions;
+    this._userid = options.userid;
+    this._mode = options.mode || PlanningMode.full;
     this._speculator = new Speculator();
     this._search = null;
 
@@ -101,7 +117,7 @@ export class Planificator {
     this._next = {plans: [], generations: []}; // {plans, generations}
     // The current set plans to be presented to the user (full or subset)
     this._current = {plans: [], generations: []}; // {plans, generations}
-    this._suggestFilter = {showAll: false};
+    this._suggestFilter = {showAll: this.isProducer ? true : false};
     // The previous set of suggestions with the plan that was instantiated - copied over from the `current`
     // set, once suggestion is being accepted. Other sets of generated plans aren't stored.
     this._past = {}; // {plan, plans, generations}
@@ -117,24 +133,45 @@ export class Planificator {
     this._isPlanning = false; // whether planning is ongoing
     this._valid = false; // whether replanning was requested (since previous planning was complete).
 
-    this._dataChangesQueue = new ReplanQueue(this, options || defaultOptions);
+    this._dataChangesQueue = new ReplanQueue(this, options);
 
     // Set up all callbacks that trigger re-planning.
     this._init();
+
+    // Suggestion storage, used by planificator consumer & provider modes.
+    this._storage = this._initSuggestionStorage();
   }
 
   _init() {
-    // TODO(mmandlis): Planificator subscribes to various change events.
-    // Later, it will evaluate and batch events and trigger replanning intelligently.
-    // Currently, just trigger replanning for each event.
     this._arcCallback = this._onPlanInstantiated.bind(this);
     this._arc.registerInstantiatePlanCallback(this._arcCallback);
-    this._arc.onDataChange(() => this._onDataChange(), this);
+    if (this.isFull) {
+      // TODO(mmandlis): Planificator subscribes to various change events.
+      // Later, it will evaluate and batch events and trigger replanning intelligently.
+      // Currently, just trigger replanning for each event.
+      this._arc.onDataChange(() => this._onDataChange(), this);
+      this._onDataChange();
+    }
 
     if (this._arc.pec.slotComposer) {
       let suggestionComposer = new SuggestionComposer(this._arc.pec.slotComposer);
       this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
     }
+  }
+
+  _initSuggestionStorage() {
+    if (this.isFull) {
+      // suggestion storage isn't used in full mode, everything is stored in memory.
+      return;
+    }
+
+    let suggestionStorage = new SuggestionStorage(this._arc, this.userid);
+    if (this.isConsumer) {
+      // Listen to suggestion-store updates, and update the `current` suggestions on change.
+      suggestionStorage.registerSuggestionsUpdatedCallback(
+          (current) => this._setCurrent(current, /* append= */false));
+    }
+    return suggestionStorage;
   }
 
   dispose() {
@@ -147,6 +184,11 @@ export class Planificator {
     this._stateChangedCallbacks = [];
   }
 
+  get userid() { return this._userid; }
+  get isFull() { return this._mode == PlanningMode.full; }
+  get isConsumer() { return this._mode == PlanningMode.consumer; }
+  get isProducer() { return this._mode == PlanningMode.producer; }
+
   get isPlanning() { return this._isPlanning; }
   set isPlanning(isPlanning) {
     if (this._isPlanning != isPlanning) {
@@ -156,11 +198,17 @@ export class Planificator {
   }
   get suggestFilter() { return this._suggestFilter; }
   set suggestFilter(suggestFilter) {
+    // TODO: Implement search based decentralized planning.
+    assert(!this.isProducer, `Cannot set suggest filter in producer mode`);
+
     assert(!suggestFilter.showAll || !suggestFilter.search);
     this._suggestFilter = suggestFilter;
   }
 
   setSearch(search) {
+    // TODO: Implement search based decentralized planning.
+    assert(!this.isProducer, `Cannot set search in producer mode`);
+
     search = search ? search.toLowerCase().trim() : null;
     search = (search !== '') ? search : null;
     let showAll = search === '*';
@@ -270,6 +318,14 @@ export class Planificator {
   }
 
   _requestPlanning(options) {
+    if (this.isConsumer) {
+      // Consumer-mode plannificator only consumes suggestions that are
+      // produced and stored by producer-mode planificator.
+      // TODO: Run planning locally, if no stored suggestions available.
+      // TODO: set isPlanning to TRUE. Producer will update timestamp, then set isPlanning to false.
+      return;
+    }
+
     options = options || {
       contextual: this._shouldRequestContextualPlanning()
     };
@@ -290,7 +346,7 @@ export class Planificator {
       await this._runPlanning(options);
 
       this.isPlanning = false;
-      this._setCurrent(Object.assign({}, this._next), options.append || false);
+      await this._setCurrent(Object.assign({}, this._next), options.append || false);
     }
   }
 
@@ -312,7 +368,7 @@ export class Planificator {
     if (this._next.plans) {
       // Can be null, if a new planning has already been scheduled.
       // TODO: this is a race condition, proper fix is part of #1620.
-      log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
+      log(`Produced ${this._next.plans.length}${options.append ? ' additional' : ''} plans [elapsed=${time}s].`);
     }
   }
 
@@ -345,7 +401,7 @@ export class Planificator {
     this._planner = null;
   }
 
-  _setCurrent(current, append) {
+  async _setCurrent(current, append) {
     let hasChange = false;
     let newPlans = [];
     if (append) {
@@ -367,6 +423,10 @@ export class Planificator {
       let suggestions = this.getCurrentSuggestions();
       if (this._plansDiffer(suggestions, previousSuggestions)) {
         this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
+      }
+
+      if (this.isProducer) {
+        this._storage.storeCurrent(current);
       }
     } else {
       this._current.contextual = current.contextual;

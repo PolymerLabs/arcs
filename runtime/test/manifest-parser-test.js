@@ -82,9 +82,34 @@ describe('manifest parser', function() {
         description \`person\`
           plural \`people\`
           value \`\${firstName} \${lastName}\`
-      store Store0 of [Person] in 'person.json'
+      store Store0 of [Person] in 'people.json'
         description \`my store\`
-      store Store1 of Person 'some-id' @7 in 'people.json'`);
+      store Store1 of Person 'some-id' @7 in 'person.json'
+      store Store2 of BigCollection<Person> in 'population.json'`);
+  });
+  it('fails to parse an argument list that use reserved word \'consume\' as an identifier', () => {
+    try {
+      parse(`
+        particle MyParticle
+          in MyThing consume
+          out BigCollection<MyThing>? out`);
+      assert.fail('this parse should have failed, identifiers should not be reserved words!');
+    } catch (e) {
+      assert.include(e.message, 'Expected',
+          `bad error: '${e}'`);
+    }
+  });
+  it('fails to parse an argument list that use reserved word \'provide\' as an identifier', () => {
+    try {
+      parse(`
+        particle MyParticle
+          in MyThing provide
+          out BigCollection<MyThing>? out`);
+      assert.fail('this parse should have failed, identifiers should not be reserved words!');
+    } catch (e) {
+      assert.include(e.message, 'Expected',
+          `bad error: '${e}'`);
+    }
   });
   it('fails to parse a nonsense argument list', () => {
     try {

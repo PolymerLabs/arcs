@@ -44,13 +44,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ;
     img-src
         'self'
+        blob:
+        data:
+        https://firebasestorage.googleapis.com
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
         https://*.tvmaze.com
         https://media.w3.org
         http://*.gstatic.com
-        data:
+        https://s1.ticketm.net
         ;
     style-src
         'self'

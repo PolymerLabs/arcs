@@ -104,6 +104,20 @@ export class Particle {
     this.relevances.push(r);
   }
 
+  startBusy() {
+    if (this._busy == 0) {
+      this._idle = new Promise(resolve => this._idleResolver = resolve);
+    }
+    this._busy++;
+  }
+  
+   doneBusy() {
+    this._busy--;
+    if (this._busy == 0) {
+      this._idleResolver();
+    }
+  }
+
   inputs() {
     return this.spec.inputs;
   }
@@ -141,7 +155,7 @@ export class Particle {
   }
 
   setParticleDescription(pattern) {
-    return this.setDescriptionPattern('_pattern_', pattern);
+    return this.setDescriptionPattern('pattern', pattern);
   }
   setDescriptionPattern(connectionName, pattern) {
     let descriptions = this.handles.get('descriptions');

@@ -20,6 +20,7 @@ import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
+import {setDiff} from '../util.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -197,7 +198,7 @@ export class FirebaseStorage extends StorageBase {
   // but this _join creates the storage location. 
   async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
     assert(!type.isVariable);
-    assert(!type.isCollection || !type.primitiveType().isVariable);
+    assert(!type.isTypeContainer() || !type.getContainedType().isVariable);
 
     const {fbKey, reference} = this.attach(keyString);
     const currentSnapshot = await getSnapshot(reference);
@@ -311,21 +312,20 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   abstract get _hasLocalChanges(): boolean;
 
-  abstract async _persistChangesImpl(arg): Promise<void>;
+  abstract async _persistChangesImpl(): Promise<void>;
 
-  async _persistChanges(arg='') {
-    if (!this._hasLocalChanges) {
-      return;
+  // Only one invokation of _persistChangesImpl should ever
+  // be in-flight at a time. This loop preserves that property.
+  async _persistChanges() {
+    while (this._hasLocalChanges) {
+      if (!this.persisting) {
+        this.persisting = this._persistChangesImpl();
+        await this.persisting;
+        this.persisting = null;
+      } else {
+        await this.persisting;
+      }
     }
-    if (this.persisting) {
-      await this.persisting;
-      return;
-    }
-    // Ensure we only have one persist process running at a time.
-    this.persisting = this._persistChangesImpl(arg);
-    await this.persisting;
-    assert(!this._hasLocalChanges);
-    this.persisting = null;
   }
 }
 
@@ -432,7 +432,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.localModified;
   }
 
-  async _persistChangesImpl(arg): Promise<void> {
+  async _persistChangesImpl(): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
@@ -473,7 +473,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
  
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
-      return this._persistChangesImpl(arg);
+      return this._persistChangesImpl();
     }
 
     this.localModified = false;
@@ -525,7 +525,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     }
     this.localModified = true;
 
-    await this._persistChanges(barrier);
+    await this._persistChanges();
 
     this._fire('change', {data: value, version, originatorId, barrier});
   }
@@ -557,6 +557,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
+    await this.initialized;
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
@@ -593,26 +594,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 }
 
-
-function setDiff(from: string[], to: string[]) {
-  const add: string[] = [];
-  const remove: string[] = [];
-  const items = new Set([...from, ...to]);
-  const fromSet = new Set(from);
-  const toSet = new Set(to);
-  for (const item of items) {
-    if (fromSet.has(item)) {
-      if (toSet.has(item)) {
-        continue;
-      }
-      remove.push(item);
-      continue;
-    }
-    assert(toSet.has(item));
-    add.push(item);
-  }
-  return {remove, add};
-}
 
 // Models a Collection that is persisted to firebase in scheme similar
 // to the CRDT OR-set. We don't model sets of both observed
@@ -897,7 +878,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   get _hasLocalChanges() {
-    return this.localChanges.size > 0;
+    return this.localChanges.size > 0 || this.pendingWrites.length > 0;
   }
 
   async _persistChangesImpl(): Promise<void> {
@@ -912,9 +893,16 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
       await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
+
+      // TODO(shans): Returning here prevents us from writing localChanges while there
+      // are pendingWrites. This in turn prevents change events for being generated for
+      // localChanges that have outstanding pendingWrites.
+      // A better approach would be to tie pendingWrites more closely to localChanges.
+      return;
     }
 
-    while (this.localChanges.size > 0) {
+    if (this.localChanges.size > 0) {
+
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
       const result = await this._transaction(data => {
@@ -1026,10 +1014,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
-    return {
-      version: this.version,
-      model: await this._toList()
-    };
+    const model = await this._toList();
+    return {version: this.version, model};
   }
 
   async toList() {
@@ -1046,6 +1032,9 @@ class FirebaseCollection extends FirebaseStorageProvider {
     assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
     values.map(value => {
       this.model.add(value.id, value, keys);
+      if (!this.localChanges.has(value.id)) {
+        this.localChanges.set(value.id, {add: [], remove: []});
+      }
       const localChanges = this.localChanges.get(value.id);
       for (const key of keys) {
         localChanges.add.push(key);
@@ -1246,6 +1235,10 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
 
   backingType() {
     return this.type.primitiveType();
+  }
+
+  enableReferenceMode() {
+    assert(false, 'referenceMode is not supported for BigCollection');
   }
 
   // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id

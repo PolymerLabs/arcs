@@ -93,7 +93,9 @@ class TestPlanificator extends Planificator {
 
 function createPlanificator(options) {
   let arc = new Arc({id: 'demo-test'});
-  return new TestPlanificator(arc, options);
+  let planificator = new TestPlanificator(arc, options);
+  assert.isTrue(planificator.isFull);
+  return planificator;
 }
 
 function newPlan(name, options) {
@@ -154,7 +156,6 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
 
     // Trigger replanning
-    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 1);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     // setTimeout is needed on data changes replanning is delayed.
@@ -188,7 +189,8 @@ describe('Planificator', function() {
     planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
     planificator._arc._onDataChange();
-    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    // First _onDataChange is triggered in ctor, then called directly 3 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 4);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -206,7 +208,8 @@ describe('Planificator', function() {
     planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 40));
     planificator._arc._onDataChange();
-    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    // First _onDataChange is triggered in ctor, then called directly 3 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 4);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -224,7 +227,8 @@ describe('Planificator', function() {
     // Add 2 data change events.
     planificator._arc._onDataChange();
     planificator._arc._onDataChange();
-    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
+    // First _onDataChange is triggered in ctor, then called directly 2 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -508,3 +512,5 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
   });
 });
+
+// TODO(mmandlis): add tests for Consumer and Provider planificator modes.

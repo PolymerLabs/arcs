@@ -6,10 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../../artifacts/Common/List.manifest'
-import '../../../../artifacts/Products/test/ProductFilter.manifest'
-import '../../../../artifacts/Products/test/ProductIsBook.manifest'
-import '../../../../artifacts/Products/ShowProducts.recipes'
+import '../../artifacts/Common/List.manifest'
+import '../../artifacts/Products/test/ProductFilter.manifest'
+import '../../artifacts/Products/test/ProductIsBook.manifest'
+import '../../artifacts/Products/ShowProducts.recipes'
 
 // Filter books and display them.
 recipe

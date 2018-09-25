@@ -19,7 +19,7 @@ export class Speculator {
 
   async speculate(arc, plan, hash) {
     if (this._relevanceByHash.has(hash)) {
-      let arcStoreVersionById = arc.getStoresState();
+      let arcStoreVersionById = arc.getStoresState({includeContext: true});
       let relevance = this._relevanceByHash.get(hash);
       let relevanceStoreVersionById = relevance.arcState;
       if (plan.handles.every(handle => arcStoreVersionById.get(handle.id) == relevanceStoreVersionById.get(handle.id))) {
@@ -28,7 +28,7 @@ export class Speculator {
     }
 
     let newArc = await arc.cloneForSpeculativeExecution();
-    let relevance = new Relevance(arc.getStoresState());
+    let relevance = new Relevance(arc.getStoresState({includeContext: true}));
     let relevanceByHash = this._relevanceByHash;
     async function awaitCompletion() {
       let messageCount = newArc.pec.messageCount;

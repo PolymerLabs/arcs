@@ -66,7 +66,7 @@ export class Arc {
     this._description = new Description(this);
 
     this._instantiatePlanCallbacks = [];
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, slotComposer && slotComposer.affordance);
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
         devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));
@@ -131,10 +131,7 @@ export class Arc {
   }
 
   async _serializeHandle(handle, context, id) {
-    let type = handle.type;
-    if (type.isCollection) {
-      type = type.primitiveType();
-    }
+    let type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
     }
@@ -142,29 +139,41 @@ export class Arc {
     let tags = this._storeTags.get(handle) || [];
     let handleTags = [...tags].map(a => `#${a}`).join(' ');
 
+    const actualHandle = this.activeRecipe.findHandle(handle.id);
+    const originalId = actualHandle ? actualHandle.originalId : null;
+    let combinedId = `'${handle.id}'`;
+    if (originalId) {
+      combinedId += `!!'${originalId}'`;
+    }
+
     switch (key.protocol) {
       case 'firebase':
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
       case 'in-memory': {
         // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
         const nosync = handleTags.includes('nosync');
         let serializedData = [];
         if (!nosync) {
-          serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+          // TODO: include keys in serialized [big]collections?
+          serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
             if (value == null) {
               return null;
             }
+            
+            let result;
             if (value.rawData) {
-              let result = {};
+              result = {$id: id};
               for (let field in value.rawData) {
                 result[field] = value.rawData[field];
               }
-              result.$id = id;
-              return result;
             } else {
-              return value;
+              result = value;
             }
+            if (index !== undefined) {
+              result.$index = index;
+            }
+            return result;
           });
         }
         if (handle.referenceMode && serializedData.length > 0) {
@@ -188,7 +197,7 @@ export class Arc {
         let data = JSON.stringify(serializedData);
         context.resources += data.split('\n').map(line => indent + line).join('\n');
         context.resources += '\n';
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version === null ? 0 : handle.version} ${handleTags} in ${id}Resource\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
     }
@@ -200,6 +209,7 @@ export class Arc {
     let id = 0;
     let importSet = new Set();
     let handleSet = new Set();
+    const contextSet = new Set(this.context._stores.map(store => store.id));
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
@@ -212,7 +222,7 @@ export class Arc {
     }
 
     for (let handle of this._stores) {
-      if (!handleSet.has(handle.id)) {
+      if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
 
@@ -401,6 +411,9 @@ ${this.activeRecipe.toString()}`;
     }
     let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
     currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), patterns: recipe.patterns});
+
+    // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
+    // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeHandle of handles) {
@@ -425,7 +438,8 @@ ${this.activeRecipe.toString()}`;
           await newStore.set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
-          assert(copiedStore.version !== null);
+          assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
+          assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.findStoreTags(copiedStore));
           let copiedStoreDesc = this.getStoreDescription(copiedStore);
@@ -622,19 +636,13 @@ ${this.activeRecipe.toString()}`;
     return this._storeDescriptions.get(store) || store.description;
   }
 
-  getStoresState() {
+  getStoresState(options) {
     let versionById = new Map();
     this._storesById.forEach((handle, id) => versionById.set(id, handle.version));
-    return versionById;
-  }
-
-  isSameState(storesState) {
-    for (let [id, version] of storesState ) {
-      if (!this._storesById.has(id) || this._storesById.get(id).version != version) {
-        return false;
-      }
+    if ((options || {}).includeContext) {
+      this._context.allStores.forEach(handle => versionById.set(handle.id, handle.version));
     }
-    return true;
+    return versionById;
   }
 
   keyForId(id) {

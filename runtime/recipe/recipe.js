@@ -507,7 +507,7 @@ export class Recipe {
     if (this.patterns.length > 0 || this.handles.find(h => h.pattern)) {
       result.push(`  description \`${this.patterns[0]}\``);
       for (let i = 1; i < this.patterns.length; ++i) {
-        result.push(`    _pattern_ \`${this.patterns[i]}\``);
+        result.push(`    pattern \`${this.patterns[i]}\``);
       }
       this.handles.forEach(h => {
         if (h.pattern) {

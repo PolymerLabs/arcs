@@ -78,7 +78,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 describe('Planner', function() {
   it('can map remote handles structurally', async () => {
     let results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -91,7 +91,7 @@ describe('Planner', function() {
 
   it('can copy remote handles structurally', async () => {
     let results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -208,7 +208,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('maps untagged remote handle', async () => { 
+  it('maps untagged remote handle', async () => {
     await testManifest(`
       recipe
         map as list
@@ -216,7 +216,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 3);
   });
-  it('copies tagged remote handle', async () => { 
+  it('copies tagged remote handle', async () => {
     // copy one
     await testManifest(`
       recipe
@@ -237,7 +237,7 @@ describe('AssignOrCopyRemoteHandles', function() {
           list <- list
     `, 0);
   });
-  it('copies untagged remote handle', async () => { 
+  it('copies untagged remote handle', async () => {
     await testManifest(`
       recipe
         copy as list
@@ -281,7 +281,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     assert.lengthOf(plansB[0].handles, 1);
     assert.equal('copy', plansB[0].handles[0].fate);
   });
-  it('finds multiple remote handles', async () => { 
+  it('finds multiple remote handles', async () => {
     // both at once
     await testManifest(`
       recipe
@@ -702,7 +702,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Common/List.recipes'
+      import './runtime/test/artifacts/Common/List.recipes'
       schema Thing
 
       particle ThingProducer
@@ -744,7 +744,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
-        import 'artifacts/Common/List.recipes'
+        import './runtime/test/artifacts/Common/List.recipes'
         schema Thing
 
         particle ThingRenderer
@@ -822,7 +822,7 @@ describe('Automatic resolution', function() {
           account = account
           transactions = transactions
           accountTransactions = accountTransactions
-      store TransationList of [Transaction] 'myTransactions' in './artifacts/Things/empty.json'
+      store TransationList of [Transaction] 'myTransactions' in './runtime/test/artifacts/Things/empty.json'
 
       shape HostedShape
         in ~a *
@@ -854,10 +854,10 @@ describe('Automatic resolution', function() {
 
   let verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
-      import 'artifacts/People/Person.schema'
+      import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
+      import './runtime/test/artifacts/People/Person.schema'
 
-      store User of Person 'User' in './artifacts/Things/empty.json'
+      store User of Person 'User' in './runtime/test/artifacts/Things/empty.json'
 
       recipe
         search \`${searchStr}\`
@@ -931,10 +931,10 @@ describe('Automatic resolution', function() {
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
     let recipes = await verifyResolvedPlans(`
-      import 'artifacts/Restaurants/Restaurants.recipes'
-      import 'artifacts/People/Person.schema'
+      import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
+      import './runtime/test/artifacts/People/Person.schema'
 
-      store User of Person 'User' in './artifacts/Things/empty.json'
+      store User of Person 'User' in './runtime/test/artifacts/Things/empty.json'
 
       recipe
         search \`find restaurants\`

@@ -9,17 +9,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import ArcsUtils from '../lib/arcs-utils.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
 import './arc-store.js';
 import {FbStore} from './fb-data/FbStore.js';
 
 // templates
 const template = Xen.html`
-  <arc-store arc="{{arc}}" data="{{themeData}}" options="{{themeStoreOptions}}" on-change="_onShellThemeChange"></arc-store>
+  <!-- <arc-store arc="{{arc}}" data="{{themeData}}" options="{{themeStoreOptions}}" on-change="_onShellThemeChange"></arc-store>
   <arc-store arc="{{arc}}" data="{{userStoreData}}" options="{{userStoreOptions}}"></arc-store>
-  <arc-store arc="{{arc}}" data="{{usersStoreData}}" options="{{usersStoreOptions}}"></arc-store>
+  <arc-store arc="{{arc}}" data="{{usersStoreData}}" options="{{usersStoreOptions}}"></arc-store>-->
   <!-- we require BOXED_avatar a-priori -->
-  <arc-store arc="{{arc}}" options="{{boxedAvatarOptions}}"></arc-store>
+  <!--<arc-store arc="{{arc}}" options="{{boxedAvatarOptions}}"></arc-store> -->
 `;
 
 const log = Xen.logFactory('ShellStores', '#004f00');

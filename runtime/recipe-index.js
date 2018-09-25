@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from './loader.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
@@ -73,11 +72,12 @@ const IndexStrategies = [
 ];
 
 export class RecipeIndex {
-  constructor(context, affordance) {
+  constructor(context, loader, affordance) {
     let trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     let arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
+      loader,
       slotComposer: affordance ? new SlotComposer({affordance, noRoot: true}) : null,
       recipeIndex: {},
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
