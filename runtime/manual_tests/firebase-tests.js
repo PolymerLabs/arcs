@@ -16,6 +16,8 @@ import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {MessageChannel} from '../message-channel.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -495,6 +497,86 @@ describe('firebase', function() {
       let cursorId = await bigStore.stream(5);
       let data = await bigStore.cursorNext(cursorId);
       assert.deepEqual(data.value.map(item => item.rawData.value), ['rick', 'morty', 'rick&morty']);
+    });
+
+    it('serialization roundtrip re-attaches to the same firebase stores', async function() {
+      let loader = new StubLoader({
+        manifest: `
+          schema Data
+            Text value
+
+          particle P in 'a.js'
+            in Data var
+            out [Data] col
+            inout BigCollection<Data> big
+
+          recipe
+            use as handle0
+            use as handle1
+            use as handle2
+            P
+              var <- handle0
+              col -> handle1
+              big = handle2
+        `,
+        'a.js': `
+          defineParticle(({Particle}) => class Noop extends Particle {});
+        `
+      });
+      let pecFactory = function(id) {
+        let channel = new MessageChannel();
+        new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+        return channel.port2;
+      };
+      let arc = new Arc({id: 'test', pecFactory, loader});
+      let manifest = await Manifest.load('manifest', loader);
+      let storage = createStorage(arc.id);
+      let Data = Type.newEntity(manifest.schemas.Data);
+
+      let varStore = await storage.construct('test0', Data, newStoreKey('variable'));
+      let colStore = await storage.construct('test1', Data.collectionOf(), newStoreKey('collection'));
+      let bigStore = await storage.construct('test2', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+
+      // Populate the stores, run the arc and get its serialization.
+      await varStore.set({id: 'i1', rawData: {value: 'v1'}});
+      await colStore.store({id: 'i2', rawData: {value: 'v2'}}, ['k2']);
+      await bigStore.store({id: 'i3', rawData: {value: 'v3'}}, ['k3']);
+
+      let recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(varStore);
+      recipe.handles[1].mapToStorage(colStore);
+      recipe.handles[2].mapToStorage(bigStore);
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      let serialization = await arc.serialize();
+      arc.stop();
+
+      // Update the stores between serializing and deserializing.
+      await varStore.set({id: 'i4', rawData: {value: 'v4'}});
+      await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
+      await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
+
+      let arc2 = await Arc.deserialize({serialization, pecFactory});
+      let varStore2 = arc2.findStoreById(varStore.id);
+      let colStore2 = arc2.findStoreById(colStore.id);
+      let bigStore2 = arc2.findStoreById(bigStore.id);
+
+      // New storage providers should have been created.
+      assert.notStrictEqual(varStore2, varStore);
+      assert.notStrictEqual(colStore2, colStore);
+      assert.notStrictEqual(bigStore2, bigStore);
+
+      // The new providers should reflect the updates made to the stores.
+      assert.equal((await varStore2.get()).rawData.value, 'v4');
+      assert.deepEqual((await colStore2.toList()).map(e => e.rawData.value), ['v2', 'v5']);
+
+      let cursorId = await bigStore.stream(5);
+      let {value, done} = await bigStore.cursorNext(cursorId);
+      assert.isFalse(done);
+      assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
+      assert.isTrue((await bigStore.cursorNext(cursorId)).done);
     });
   });
 
