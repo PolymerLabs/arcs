@@ -32,16 +32,19 @@ class ManifestError extends Error {
 }
 
 class StorageStub {
-  constructor(type, id, name, storageKey, storageProviderFactory) {
+  constructor(type, id, name, storageKey, storageProviderFactory, originalId) {
     this.type = type;
     this.id = id;
+    this.originalId = originalId;
     this.name = name;
     this.storageKey = storageKey;
     this.storageProviderFactory = storageProviderFactory;
   }
 
-  inflate() {
-    return this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  async inflate() {
+    let store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+    store.originalId = this.originalId;
+    return store;
   }
 }
 
@@ -175,8 +178,8 @@ export class Manifest {
     return store;
   }
 
-  newStorageStub(type, name, id, storageKey, tags) {
-    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory), tags);
+  newStorageStub(type, name, id, storageKey, tags, originalId) {
+    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId), tags);
   }
 
   _find(manifestFinder) {
@@ -991,6 +994,7 @@ ${e.message}
   static async _processStore(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
+    const originalId = item.originalId;
     let type = item.type.model;
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
@@ -1004,7 +1008,7 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin == 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags);
+      manifest.newStorageStub(type, name, id, item.source, tags, originalId);
       return;
     }
 
@@ -1036,7 +1040,7 @@ ${e.message}
       unitType = type.bigCollectionType;
     } else {
       if (entities.length == 0) {
-        await Manifest._createStore(manifest, type, name, id, tags, item);
+        await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
         return;
       }
       entities = entities.slice(entities.length - 1);
@@ -1066,7 +1070,7 @@ ${e.message}
     }
 
     let version = item.version || 0;
-    let store = await Manifest._createStore(manifest, type, name, id, tags, item);
+    let store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
 
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
@@ -1097,10 +1101,11 @@ ${e.message}
     }
     store.fromLiteral({version, model});
   }
-  static async _createStore(manifest, type, name, id, tags, item) {
+  static async _createStore(manifest, type, name, id, tags, item, originalId) {
     let store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
+    store.originalId = originalId;
     return store;
   }
   _newRecipe(name) {

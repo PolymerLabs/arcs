@@ -99,7 +99,7 @@ ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
-  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)?
+  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)? originalId:('!!' id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
@@ -110,6 +110,7 @@ ManifestStorage
       name,
       type,
       id: optional(id, id => id[1], null),
+      originalId: optional(originalId, originalId => originalId[1], null),
       version: optional(version, version => version[1], null),
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
