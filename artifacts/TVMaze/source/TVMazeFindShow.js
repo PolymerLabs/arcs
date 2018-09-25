@@ -9,7 +9,7 @@
 'use strict';
 
 /* global defineParticle, importScripts */
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({DomParticle, _fetch, resolver, log}) => {
 
   importScripts(resolver('TVMazeFindShow/TvMaze.js'));
   /* global service */
@@ -30,7 +30,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     }
     async fetchShow(find) {
       this.setState({receiving: true});
-      const response = await fetch(`${service}/search/shows?q=${find.name}`);
+      const response = await _fetch(`${service}/search/shows?q=${find.name}`);
       const shows = await response.json();
       if (shows && shows.length) {
         this.receiveShow(shows[0]);

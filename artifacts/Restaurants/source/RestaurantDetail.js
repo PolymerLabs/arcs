@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, _fetch}) => {
 
   let host = `restaurant-detail`;
 
@@ -180,7 +180,7 @@ ${styles}
       }
     }
     _fetchDetail(reference) {
-      fetch(`${detailsService}?reference=${reference}`)
+      _fetch(`${detailsService}?reference=${reference}`)
         .then(response => response.json())
         .then(json => this._receiveDetail(json.result))
         ;

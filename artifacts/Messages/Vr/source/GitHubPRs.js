@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, _fetch}) => {
 
   const template = html`
     <aframe-html id={{subId}} anchor="center" height="1" width="2" position="0 1 0" html="{{pr}}"></aframe-html>
@@ -61,7 +61,7 @@ defineParticle(({DomParticle, html, log}) => {
       };
     }
     async fetchPRs() {
-      const response = await fetch(`${service}/repos/PolymerLabs/arcs/pulls`);
+      const response = await _fetch(`${service}/repos/PolymerLabs/arcs/pulls`);
       const prs = await response.json();
       this.setState({prs});
     }

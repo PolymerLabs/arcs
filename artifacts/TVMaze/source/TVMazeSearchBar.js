@@ -87,7 +87,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     }
     // async fetchShows(query) {
     //   this.setState({count: -1});
-    //   let response = await fetch(`${service}/search/shows?q=${query}`);
+    //   let response = await _fetch(`${service}/search/shows?q=${query}`);
     //   let shows = await response.json();
     //   this.receiveShows(shows);
     // }
@@ -117,5 +117,5 @@ defineParticle(({DomParticle, resolver, html}) => {
     //   });
     // }
   };
-  
+
 });
