@@ -55,6 +55,9 @@ class UserPlanner {
     this.runners[key] = {arc, planificator};
   }
   async deserializeArc(serialization) {
+    // console.log('==============================================');
+    // console.log(serialization);
+    // console.log('==============================================');
     // TODO(sjmiles): elide attempt to import ephemeral manifest
     const contextManifest = `import './in-memory.manifest'`;
     if (serialization.includes(contextManifest)) {
