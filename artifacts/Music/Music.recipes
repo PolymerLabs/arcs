@@ -21,6 +21,7 @@ particle ShowArtist in 'source/ShowArtist.js'
   out [Description] descriptions
   consume root
     provide nearbyShows
+      handle artist
     provide nowPlayingList
       handle artistPlayHistory
   description `Learn more about ${artist}`
