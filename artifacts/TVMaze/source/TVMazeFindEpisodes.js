@@ -12,7 +12,8 @@
 defineParticle(({DomParticle, _fetch, resolver}) => {
 
   /* global service */
-  importScripts(resolver('TVMazeFindEpisodes/TvMaze.js'));
+  //importScripts(resolver('TVMazeFindShow/TvMaze.js'));
+  const service = `https://api.tvmaze.com`;
 
   return class extends DomParticle {
     // get template() {
