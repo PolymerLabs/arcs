@@ -44,11 +44,11 @@ export const FbUser = class {
     };
   }
   _onInfoChanged(field) {
-    console.log('+*+*+*++ FbUser: info-changed');
+    //console.log('+*+*+*++ FbUser: info-changed');
     this._fire('info-changed', field);
   }
   _onArcChanged(field) {
-    console.log('+*+*+*++ FbUser: arc-changed');
+    //console.log('+*+*+*++ FbUser: arc-changed');
     this._fire('arc-changed', field);
   }
 };

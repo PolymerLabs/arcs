@@ -52,10 +52,17 @@ class UserPlanner {
   }
   async marshalArc(key, userid, serialization) {
     // TODO(sjmiles): we'll need a queue to handle change notifications that arrive while we are 'await'ing
-    console.log(`Arc[${key}]: marshaling for user [${userid}]`); //, `${serialization.slice(0, 63)}...`);
-    const arc = await this.deserializeArc(serialization);
-    const planificator = this.createPlanificator(userid, key, arc);
-    this.runners[key] = {arc, planificator};
+    console.log(`Arc[${key}]: marshaling for user [${userid}]`);
+    try {
+      const arc = await this.deserializeArc(serialization);
+      const planificator = this.createPlanificator(userid, key, arc);
+      this.runners[key] = {arc, planificator};
+    } catch (x) {
+      // console.log('exception under: ==============================================');
+      // console.log(serialization);
+      // console.log('==============================================');
+      throw x;
+    }
   }
   async deserializeArc(serialization) {
     // console.log('==============================================');
@@ -76,7 +83,9 @@ class UserPlanner {
     return planificator;
   }
   showPlansForArc(key, metaplans) {
-    console.log(`Arc[${key}] plans\n`, metaplans.map(plan => plan.descriptionText));
+    console.log(`======= Arc[${key}] plans ======================================`);
+    console.log(metaplans.map(plan => plan.descriptionText));
+    console.log(`====================================================================================`);
   }
   showSuggestionsForArc(key, suggestions) {
     //console.log(`Arc[${key}] suggestions\n`, suggestions.map(plan => plan.descriptionText));
