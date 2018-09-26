@@ -352,7 +352,7 @@ export class DescriptionFormatter {
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
           // TODO: should this look at type.getContainedType() (which includes references), or maybe just type.isEntity?
-          if (storeValue && !this.excludeValues && !token._store.type.isCollection) { // && !token._store.type.isBigCollection) {
+          if (storeValue && !this.excludeValues && !token._store.type.isCollection && !token._store.type.isBigCollection) {
             return storeValue;
           }
         }
