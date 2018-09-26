@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { StorageProviderFactory } from '../ts-build/storage/storage-provider-factory.js';
-import { Arc } from '../arc.js';
-import { Manifest } from '../manifest.js';
-import { Type } from '../ts-build/type.js';
+import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
+import {Arc} from '../arc.js';
+import {Manifest} from '../manifest.js';
+import {Type} from '../ts-build/type.js';
 import 'chai/register-assert';
 
-import { PouchDbStorage } from '../ts-build/storage/pouchdb/pouch-db-storage.js';
+import {PouchDbStorage} from '../ts-build/storage/pouchdb/pouch-db-storage.js';
 
 const testUrl = 'pouchdb://memory/user-test';
 
@@ -54,12 +54,12 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value = 'Hi there' + Math.random();
       let variable = await storage.construct('test0', BarType, newStoreKey('variable'));
-      await variable.set({ id: 'test0:test', value });
+      await variable.set({id: 'test0:test', value});
       let result = await variable.get();
       assert.equal(result.value, value);
     });
@@ -69,7 +69,7 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('variable');
@@ -82,8 +82,8 @@ describe('pouchdb', function() {
       );
       assert.isNotNull(var2);
 
-      await var1.set({ id: 'id1', value: 'value1' });
-      await var2.set({ id: 'id2', value: 'value2' });
+      await var1.set({id: 'id1', value: 'value1'});
+      await var2.set({id: 'id2', value: 'value2'});
       const v1 = await var1.get();
       const v2 = await var2.get();
       assert.deepEqual(v1, v2);
@@ -94,13 +94,13 @@ describe('pouchdb', function() {
           Text value
       `);
 
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('varPtr');
 
       let var1 = await storage.construct('test0', BarType, key1);
-      await var1.set({ id: 'id1', value: 'underlying' });
+      await var1.set({id: 'id1', value: 'underlying'});
 
       let result = await var1.get();
       assert.equal(result.value, 'underlying');
@@ -116,13 +116,13 @@ describe('pouchdb', function() {
           Text value
       `);
 
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('varPtr');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
-      await var1.set({ id: 'id1', storageKey: 'underlying' });
+      await var1.set({id: 'id1', storageKey: 'underlying'});
 
       let result = await var1.get();
       assert.equal('underlying', result.storageKey);
@@ -138,14 +138,14 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value1 = 'Hi there' + Math.random();
       let value2 = 'Goodbye' + Math.random();
       let collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
-      await collection.store({ id: 'test0:test0', value: value1 }, ['key0']);
-      await collection.store({ id: 'test0:test1', value: value2 }, ['key1']);
+      await collection.store({id: 'test0:test0', value: value1}, ['key0']);
+      await collection.store({id: 'test0:test1', value: value2}, ['key1']);
       let result = await collection.get('test0:test0');
       assert.equal(result.value, value1);
       result = await collection.toList();
@@ -161,7 +161,7 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
@@ -171,8 +171,8 @@ describe('pouchdb', function() {
         BarType.collectionOf(),
         key
       );
-      const c1 = collection1.store({ id: 'id1', value: 'value' }, ['key3']);
-      await collection2.store({ id: 'id1', value: 'value' }, ['key4']);
+      const c1 = collection1.store({id: 'id1', value: 'value'}, ['key3']);
+      await collection2.store({id: 'id1', value: 'value'}, ['key4']);
       await c1;
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
@@ -182,7 +182,7 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
@@ -192,10 +192,7 @@ describe('pouchdb', function() {
         BarType.collectionOf(),
         key
       );
-      await Promise.all([
-        collection1.store({ id: 'id1', value: 'value' }, ['key1']),
-        collection2.store({ id: 'id1', value: 'value' }, ['key2'])
-      ]);
+      await Promise.all([collection1.store({id: 'id1', value: 'value'}, ['key1']), collection2.store({id: 'id1', value: 'value'}, ['key2'])]);
       await Promise.all([collection1.remove('id1', ['key1']), collection2.remove('id1', ['key2'])]);
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());
@@ -205,7 +202,7 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
@@ -215,8 +212,8 @@ describe('pouchdb', function() {
         BarType.collectionOf(),
         key
       );
-      await collection1.store({ id: 'id1', value: 'value1' }, ['key1']);
-      await collection2.store({ id: 'id2', value: 'value2' }, ['key2']);
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
@@ -226,15 +223,15 @@ describe('pouchdb', function() {
           Text value
       `);
 
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('colPtr');
 
       let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
 
-      await collection1.store({ id: 'id1', value: 'value1' }, ['key1']);
-      await collection1.store({ id: 'id2', value: 'value2' }, ['key2']);
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
       assert.equal('value1', result.value);
@@ -253,15 +250,15 @@ describe('pouchdb', function() {
           Text value
       `);
 
-      let arc = new Arc({ id: 'test' });
+      let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('colPtr');
 
       let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
 
-      await collection1.store({ id: 'id1', storageKey: 'value1' }, ['key1']);
-      await collection1.store({ id: 'id2', storageKey: 'value2' }, ['key2']);
+      await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
       let result = await collection1.get('id1');
       assert.equal('value1', result.storageKey);

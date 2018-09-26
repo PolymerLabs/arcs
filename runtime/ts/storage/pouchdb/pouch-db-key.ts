@@ -6,8 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import { assert } from '../../../../platform/assert-web.js';
-import { KeyBase } from '../key-base.js';
+import {assert} from '../../../../platform/assert-web.js';
+import {KeyBase} from '../key-base.js';
 
 /**
  * Keys for PouchDb entities.  A pouchdb key looks like a url. of the following form:

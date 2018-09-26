@@ -1,9 +1,9 @@
-import { CrdtCollectionModel, Model } from '../crdt-collection-model.js';
-import { Tracing } from '../../../../tracelib/trace.js';
-import { assert } from '../../../../platform/assert-web.js';
-import { PouchDbStorageProvider } from './pouch-db-storage-provider.js';
-import { Type } from '../../type.js';
-import { PouchDbStorage } from './pouch-db-storage';
+import {CrdtCollectionModel, Model} from '../crdt-collection-model.js';
+import {Tracing} from '../../../../tracelib/trace.js';
+import {assert} from '../../../../platform/assert-web.js';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
+import {Type} from '../../type.js';
+import {PouchDbStorage} from './pouch-db-storage';
 
 /**
  * Defines a callback interface to allow for modifying a
@@ -51,8 +51,8 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
-      literal.model = literal.model.map(({ id, value }) => ({ id, value: { id: value.id, storageKey: this.backingStore.storageKey } }));
-      const underlying = await handle.backingStore.getMultiple(literal.model.map(({ id }) => id));
+      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
+      const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
     }
     this.fromLiteral(literal);
@@ -80,7 +80,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   /**
    * Populate this collection with a provided version/model
    */
-  fromLiteral({ version, model }) {
+  fromLiteral({version, model}) {
     this.version = version;
     // TODO(lindner): this might not be initialized yet...
     this._model = new CrdtCollectionModel(model);
@@ -101,7 +101,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
       const retrieveItem = async item => {
         const ref = item.value;
-        return { id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys };
+        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
       };
 
       return await Promise.all(items.map(retrieveItem));
@@ -170,7 +170,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const id = value.id;
 
-    const changeEvent = { value, keys, effective: undefined };
+    const changeEvent = {value, keys, effective: undefined};
 
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
@@ -178,7 +178,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
       // Update the referred data
       await this.getModelAndUpdate(crdtmodel => {
-        changeEvent.effective = crdtmodel.add(value.id, { id: value.id, storageKey }, keys);
+        changeEvent.effective = crdtmodel.add(value.id, {id: value.id, storageKey}, keys);
         return crdtmodel;
       });
 
@@ -195,7 +195,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     this.version++;
 
     // Notify Listeners
-    this._fire('change', { add: [changeEvent], version: this.version, originatorId });
+    this._fire('change', {add: [changeEvent], version: this.version, originatorId});
   }
 
   /**
@@ -215,7 +215,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         const effective = crdtmodel.remove(id, keys);
         // TODO(lindner): isolate side effects...
         this.version++;
-        this._fire('change', { remove: [{ value, keys, effective }], version: this.version, originatorId });
+        this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId});
       }
       return crdtmodel;
     });
@@ -253,7 +253,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         this._rev = undefined;
       }
       // Unexpected error
-      console.warn("PouchDbCollection.getModel err=", err);
+      console.warn('PouchDbCollection.getModel err=', err);
       throw err;
     }
     return this._model;

@@ -6,15 +6,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import { assert } from '../../../../platform/assert-web.js';
-import { StorageBase, StorageProviderBase } from '../storage-provider-base.js';
-import { PouchDbKey } from './pouch-db-key.js';
-import { Id } from '../../id.js';
-import { Type } from '../../type.js';
-import { PouchDbCollection } from './pouch-db-collection.js';
-import { PouchDbStorageProvider } from './pouch-db-storage-provider.js';
-import { PouchDbBigCollection } from './pouch-db-big-collection.js';
-import { PouchDbVariable } from './pouch-db-variable.js';
+import {assert} from '../../../../platform/assert-web.js';
+import {StorageBase, StorageProviderBase} from '../storage-provider-base.js';
+import {PouchDbKey} from './pouch-db-key.js';
+import {Id} from '../../id.js';
+import {Type} from '../../type.js';
+import {PouchDbCollection} from './pouch-db-collection.js';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
+import {PouchDbBigCollection} from './pouch-db-big-collection.js';
+import {PouchDbVariable} from './pouch-db-variable.js';
 
 import PouchDB from 'pouchdb';
 import PouchDbMemory from 'pouchdb-adapter-memory';
@@ -135,10 +135,10 @@ export class PouchDbStorage extends StorageBase {
   static async resetPouchDbStorageForTesting() {
     for (const db of PouchDbStorage.dbLocationToInstance.values()) {
       await db
-        .allDocs({ include_docs: true })
+        .allDocs({include_docs: true})
         .then(allDocs => {
           return allDocs.rows.map(row => {
-            return { _id: row.id, _rev: row.doc._rev, _deleted: true };
+            return {_id: row.id, _rev: row.doc._rev, _deleted: true};
           });
         })
         .then(deleteDocs => {
@@ -163,7 +163,7 @@ export class PouchDbStorage extends StorageBase {
       db = new PouchDB(key.dbName);
     } else if (key.dbLocation === 'memory') {
       PouchDB.plugin(PouchDbMemory);
-      db = new PouchDB(key.dbName, { adapter: 'memory' });
+      db = new PouchDB(key.dbName, {adapter: 'memory'});
     } else {
       // Create a local db to sync to the remote
       db = new PouchDB(key.dbName);
@@ -205,7 +205,7 @@ export class PouchDbStorage extends StorageBase {
   private setupSync(localDb: PouchDB.Database, remoteDb: PouchDB.Database) {
     console.log('Replicating DBs');
 
-    const syncHandler = localDb.sync(remoteDb, { live: true, retry: true });
+    const syncHandler = localDb.sync(remoteDb, {live: true, retry: true});
 
     // Handle inbound changes.
     syncHandler.on('change', info => {

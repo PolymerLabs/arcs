@@ -1,9 +1,9 @@
-import { StorageProviderBase } from '../storage-provider-base.js';
+import {StorageProviderBase} from '../storage-provider-base.js';
 
-import { PouchDbCollection } from './pouch-db-collection.js';
-import { PouchDbStorage } from './pouch-db-storage.js';
-import { PouchDbKey } from './pouch-db-key.js';
-import { Type } from '../../type.js';
+import {PouchDbCollection} from './pouch-db-collection.js';
+import {PouchDbStorage} from './pouch-db-storage.js';
+import {PouchDbKey} from './pouch-db-key.js';
+import {Type} from '../../type.js';
 
 /**
  * Base class for PouchDb related Storage classes

@@ -1,6 +1,6 @@
-import { assert } from '../../../../platform/assert-web.js';
-import { PouchDbStorageProvider } from './pouch-db-storage-provider';
-import { PouchDbStorage } from './pouch-db-storage';
+import {assert} from '../../../../platform/assert-web.js';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider';
+import {PouchDbStorage} from './pouch-db-storage';
 
 /**
  * Loosely defines the object stored.
@@ -45,8 +45,8 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       // cloneFrom the backing store data by reading the model and writing it out.
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
 
-      literal.model = literal.model.map(({ id, value }) => ({ id, value: { id: value.id, storageKey: this.backingStore.storageKey } }));
-      const underlying = await handle.backingStore.getMultiple(literal.model.map(({ id }) => id));
+      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
+      const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
     }
 
@@ -73,7 +73,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       const result = await this.backingStore.get(value.id);
       return {
         version: this.version,
-        model: [{ id: value.id, value: result }]
+        model: [{id: value.id, value: result}]
       };
     }
 
@@ -84,7 +84,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * Returns the state of this variable based as an object of the form
    * {version, model: [{id, value}]}
    */
-  async toLiteral(): Promise<{ version: number; model: {}[] }> {
+  async toLiteral(): Promise<{version: number; model: {}[]}> {
     const value = await this.getStored();
 
     let model = [];
@@ -106,7 +106,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * Updates the internal state of this variable with data and stores
    * the data in the underlying Pouch Database.
    */
-  async fromLiteral({ version, model }): Promise<void> {
+  async fromLiteral({version, model}): Promise<void> {
     const value = model.length === 0 ? null : model[0].value;
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
@@ -147,7 +147,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: { id: string }, originatorId = null, barrier = null) {
+  async set(value: {id: string}, originatorId = null, barrier = null) {
     assert(value !== undefined);
 
     if (this.referenceMode && value) {
@@ -162,7 +162,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
 
       // Store the indirect pointer to the storageKey
       await this.getStoredAndUpdate(stored => {
-        return { id: value.id, storageKey };
+        return {id: value.id, storageKey};
       });
 
       await this.ensureBackingStore();
@@ -202,9 +202,9 @@ export class PouchDbVariable extends PouchDbStorageProvider {
     this.version++;
 
     if (this.referenceMode) {
-      await this._fire('change', { data: value, version: this.version, originatorId, barrier });
+      await this._fire('change', {data: value, version: this.version, originatorId, barrier});
     } else {
-      await this._fire('change', { data: this._stored, version: this.version, originatorId, barrier });
+      await this._fire('change', {data: this._stored, version: this.version, originatorId, barrier});
     }
   }
 
@@ -301,7 +301,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       }
 
       // Run the mutator on a copy of the existing model
-      const newValue = variableStorageMutator({ ...this._stored });
+      const newValue = variableStorageMutator({...this._stored});
 
       // Check if the mutator made any changes..
       // TODO(lindner): add a deep equals method for VariableStorage
