@@ -17,10 +17,10 @@ const ComposerKind = MockSlotComposer;
 const ArcFactory = class {
   constructor() {
     this.loader = new LoaderKind({
-      'https://$cdn/': 'http://localhost/projects/arcs/arcs/',
-      'https://$shell/': 'http://localhost/projects/arcs/arcs/',
-      'https://$artifacts/': 'http://localhost/projects/arcs/arcs/artifacts/',
-      'https://sjmiles.github.io/': 'http://localhost/projects/arcs/'
+      'https://$cdn/': '../../../',
+      'https://$shell/': '../../../',
+      'https://$artifacts/': '../../../artifacts/',
+      'https://sjmiles.github.io/': '../../../../'
     });
     //console.log(loader);
     //console.log(slotComposer);
