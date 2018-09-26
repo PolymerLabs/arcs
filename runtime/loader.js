@@ -18,6 +18,7 @@ import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
 import {newClientReference} from './ts-build/reference.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
+
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 function schemaLocationFor(name) {
@@ -88,6 +89,8 @@ export class Loader {
         result.push(particleWrapper);
       },
       console,
+      fetch,
+      setTimeout,
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self, {filename: fileName, displayErrors: true});
