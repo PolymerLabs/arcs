@@ -34,6 +34,9 @@ export abstract class StorageBase {
   shutdown() {}
 }
 
+/**
+ * Docs TBD
+ */
 export abstract class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
@@ -101,7 +104,13 @@ export abstract class StorageProviderBase {
   }
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
-  async _fire(kindStr: string, details) {
+  /**
+   * Propagate updates to change listeners.
+   *
+   * @param kindStr the type of event, only 'change' is supported.
+   * @param details details about the change
+   */
+  protected async _fire(kindStr: 'change', details: {}) {
     const kind: EventKind = EventKind[kindStr];
 
     const listenerMap = this.listeners.get(kind);
@@ -165,8 +174,12 @@ export abstract class StorageProviderBase {
     return this.id;
   }
 
+  /**
+   * @returns an object notation of this storage provider.
+   */
   abstract toLiteral();
 
+  /** TODO */
   modelForSynchronization() {
     return this.toLiteral();
   }

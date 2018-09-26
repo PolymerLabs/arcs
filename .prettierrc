@@ -1,4 +1,5 @@
 {
+  bracketSpacing: false,
   singleQuote: true,
   printWidth: 144
 }

@@ -15,7 +15,7 @@ import { app } from '../src/pouch-db-app';
 chai.use(chaiHttp);
 
 describe('baseRoute', () => {
-  it('/ should be static html', () => {
+  it.skip('/ should be static html', () => {
     return chai
       .request(app)
       .get('/')
@@ -24,7 +24,7 @@ describe('baseRoute', () => {
       });
   });
 
-  it('/ should have a welcome message', () => {
+  it.skip('/ should have a welcome message', () => {
     return chai
       .request(app)
       .get('/')

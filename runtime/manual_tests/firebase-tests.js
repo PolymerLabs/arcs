@@ -105,7 +105,7 @@ describe('firebase', function() {
       await var1.set({id: 'id1', value: 'underlying'});
       
       let result = await var1.get();
-      assert.equal('underlying', result.value);
+      assert.equal(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
