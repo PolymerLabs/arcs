@@ -229,6 +229,13 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     };
   }
 
+  _formatBigCollection(handleName, firstValue) {
+    return {
+      template: `collection of items like {{${handleName}FirstName}}`,
+      model: {[`${handleName}FirstName`]: firstValue.rawData.name}
+    };
+  }
+
   _formatSingleton(handleName, value, handleDescription) {
     let formattedValue = super._formatSingleton(handleName, value, handleDescription);
     if (formattedValue) {
