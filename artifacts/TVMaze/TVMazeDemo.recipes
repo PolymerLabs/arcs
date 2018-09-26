@@ -11,6 +11,27 @@ import 'TVMazeQuery.recipes'
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
 
+schema TVMazeShowAction
+  Text showid
+  Boolean favorite
+  Boolean delete
+
+particle TVMazeShowActions in './source/TVMazeShowActions.js'
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+shape HostedActionParticleShape
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+particle ActionMultiplexer in '../Common/source/Multiplexer.js'
+  host HostedActionParticleShape hostedParticle
+  in [~a] list
+  in [TVMazeShow] shows
+  consume set of action
+
 recipe TVMazeDemo
   create as query
   TVMazeSearchBar
@@ -27,6 +48,10 @@ recipe TVMazeDemo
   TileMultiplexer
     list = shows
     hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    list = shows
+    shows = shows
+    hostedParticle = TVMazeShowActions
   DetailSlider
     selected = selected
   TVMazeShowPanel

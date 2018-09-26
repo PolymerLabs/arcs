@@ -119,22 +119,25 @@ export class DomParticleBase extends Particle {
   /** @method appendRawDataToHandle(handleName, rawDataArray)
    * Create an entity from each rawData, and append to named handle.
    */
-  appendRawDataToHandle(handleName, rawDataArray) {
+  async appendRawDataToHandle(handleName, rawDataArray) {
     const handle = this.handles.get(handleName);
     const entityClass = handle.entityClass;
-    rawDataArray.forEach(raw => {
-      handle.store(new entityClass(raw));
-    });
+    for (const raw of rawDataArray) {
+      await handle.store(new entityClass(raw));
+    }
+    //rawDataArray.forEach(raw => {
+    //  handle.store(new entityClass(raw));
+    //});
   }
-  /** @method updateVariable(handleName, record)
+  /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
-   * from `record` (`new <EntityClass>(record)`).
+   * from `rawData` (`new <EntityClass>(rawData)`).
    */
-  updateVariable(handleName, record) {
+  updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
-    const newRecord = new (handle.entityClass)(record);
-    handle.set(newRecord);
-    return newRecord;
+    const entity = new (handle.entityClass)(rawData);
+    handle.set(entity);
+    return entity;
   }
   /** @method updateSet(handleName, record)
    * Modify or insert `record` into named handle.
