@@ -144,17 +144,12 @@ describe('pouchdb', function() {
       let value1 = 'Hi there' + Math.random();
       let value2 = 'Goodbye' + Math.random();
       let collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
-      await collection.store({id: 'test0:test0', value: value1}, ['key0']);
-      await collection.store({id: 'test0:test1', value: value2}, ['key1']);
-      let result = await collection.get('test0:test0');
+      await collection.store({id: 'id0', value: value1}, ['key0']);
+      await collection.store({id: 'id1', value: value2}, ['key1']);
+      let result = await collection.get('id0');
       assert.equal(result.value, value1);
       result = await collection.toList();
-      assert.lengthOf(result, 2);
-      assert.equal(result[0].value, value1);
-      assert.equal(result[0].id, 'test0:test0');
-      assert.equal(result[1].value, value2);
-      // TODO(lindner): firebase tests say that this should  be test1:test1 instead
-      assert.equal(result[1].id, 'test0:test1');
+      assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
       let manifest = await Manifest.parse(`
