@@ -62,8 +62,8 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   }
 
   /**
-   * Returns data about this variable in the same way as toLiteral,
-   * but varied for reference mode.
+   * Returns the model data in a format suitable for transport over
+   * the API channel (i.e. between execution host and context).
    */
   async modelForSynchronization() {
     const value = await this.getStored();
@@ -243,7 +243,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
         // remote revision is different, update local copy.
         this._stored = result['value'];
         this._rev = result._rev;
-        this.version++; // yuck.
+        this.version++;
         // TODO(lindner): fire change events here?
       }
     } catch (err) {
@@ -274,6 +274,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   private async getStoredAndUpdate(variableStorageMutator: VariableStorageMutator): Promise<VariableStorage> {
     // Keep retrying the operation until it succeeds.
     while (1) {
+      // TODO(lindner): add backoff and give up after a set period of time.
       let doc;
 
       let notFound = false;

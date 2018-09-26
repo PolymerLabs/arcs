@@ -39,12 +39,12 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     return this.type.primitiveType();
   }
 
-  // TODO(lindner): appears unused
-  // clone() {
-  //   const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
-  //   handle.cloneFrom(this);
-  //   return handle;
-  // }
+  // TODO(lindner): write tests
+  clone() {
+    const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
+    handle.cloneFrom(this);
+    return handle;
+  }
 
   async cloneFrom(handle) {
     this.referenceMode = handle.referenceMode;
@@ -194,7 +194,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
     this.version++;
 
-    // 2. Notify Listeners
+    // Notify Listeners
     this._fire('change', { add: [changeEvent], version: this.version, originatorId });
   }
 
@@ -248,9 +248,13 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         // TODO(lindner): fire change events here?
       }
     } catch (err) {
-      this._model = new CrdtCollectionModel();
-      this._rev = undefined;
-      // TODO(lindner): throw
+      if (err.name === 'not_found') {
+        this._model = new CrdtCollectionModel();
+        this._rev = undefined;
+      }
+      // Unexpected error
+      console.warn("PouchDbCollection.getModel err=", err);
+      throw err;
     }
     return this._model;
   }
@@ -271,6 +275,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   private async getModelAndUpdate(modelMutator: CrdtCollectionModelMutator): Promise<CrdtCollectionModel> {
     // Keep retrying the operation until it succeeds.
     while (1) {
+      // TODO(lindner): add backoff and error out if this goes on for too long
       let doc;
       //: PouchDB.Core.IdMeta & PouchDB.Core.GetMeta & Model & {referenceMode: boolean, type: {}};
 
@@ -285,7 +290,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
           // remote revision is different, update local copy.
           this._model = new CrdtCollectionModel(doc['model']);
           this._rev = doc._rev;
-          this.version++; // yuck.
+          this.version++;
           // TODO(lindner): fire change events here?
         }
       } catch (err) {
@@ -302,9 +307,11 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       }
 
       // Run the mutator on a copy of the existing model
+      // TODO(lindner): check about how many times we call toLiteral here.
       const newModel = modelMutator(new CrdtCollectionModel(this._model.toLiteral()));
 
       // Check if the mutator made any changes..
+      // TODO(lindner): consider changing the api to let the mutator tell us if changes were made.
       if (!notFound && JSON.stringify(this._model.toLiteral()) === JSON.stringify(newModel.toLiteral())) {
         // mutator didn't make any changes.
         return this._model;

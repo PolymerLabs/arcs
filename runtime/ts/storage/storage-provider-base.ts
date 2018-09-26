@@ -105,7 +105,7 @@ export abstract class StorageProviderBase {
 
   // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   /**
-   * Propogate updates to change listeners.
+   * Propagate updates to change listeners.
    *
    * @param kindStr the type of event, only 'change' is supported.
    * @param details details about the change

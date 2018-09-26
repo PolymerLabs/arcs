@@ -53,14 +53,11 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    * The active database for this provider.
    */
   protected get db(): PouchDB.Database {
-    // TODO(lindner) vary the db by the storage key
     return this.storageEngine.dbForKey(this.pouchDbKey);
   }
 
   /**
    * Called when the remote pouchdb server updates locally.
-   * TODO(lindner): pass in the pouchdb doc since it's in the change
-   * request.
    */
   public abstract onRemoteStateSynced();
 }

@@ -120,7 +120,7 @@ export class PouchDbStorage extends StorageBase {
     return new PouchDbKey(s);
   }
 
-  /** Ceates a new Variable or Colleciton given basic parameters */
+  /** Ceates a new Variable or Collection given basic parameters */
   newProvider(type: Type, name, id, key): PouchDbStorageProvider {
     if (type.isCollection) {
       return new PouchDbCollection(type, this, name, id, key);
@@ -133,13 +133,11 @@ export class PouchDbStorage extends StorageBase {
 
   /** Removes everything that a test could have created. */
   static async resetPouchDbStorageForTesting() {
-    console.log('RESET storage for testing');
     for (const db of PouchDbStorage.dbLocationToInstance.values()) {
       await db
         .allDocs({ include_docs: true })
         .then(allDocs => {
           return allDocs.rows.map(row => {
-            console.log('- deleting ' + row.id + ' ' + row.doc._rev);
             return { _id: row.id, _rev: row.doc._rev, _deleted: true };
           });
         })
@@ -201,7 +199,7 @@ export class PouchDbStorage extends StorageBase {
 
   /**
    * Starts syncing between the remote and local Pouch databases.
-   * Installs an event handler that propogates changes arriving from
+   * Installs an event handler that propagates changes arriving from
    * remote to local objects using matching location IDs.
    */
   private setupSync(localDb: PouchDB.Database, remoteDb: PouchDB.Database) {
@@ -214,10 +212,11 @@ export class PouchDbStorage extends StorageBase {
       const dir = info.direction; // push or pull.
       if (dir === 'pull') {
         // handle change from the server
-        console.log('DB change ' + dir, info);
         for (const doc of info.change.docs) {
           const handler = this.remoteStateChangedHandlers.get(doc._id);
           if (handler) {
+            // TODO(lindner): pass the doc into this method to avoid
+            // extra round-trip fetches.
             handler.onRemoteStateSynced();
           }
         }
