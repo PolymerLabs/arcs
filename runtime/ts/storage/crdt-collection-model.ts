@@ -59,13 +59,34 @@ export class CrdtCollectionModel {
         }
         item.keys.add(key);
       }
-      if (JSON.stringify(item.value) !== JSON.stringify(value)) {
+      if (!this._equals(item.value, value)) {
         assert(newKeys, 'cannot add without new keys');
         item.value = value;
         effective = true;
       }
     }
     return effective;
+  }
+
+  _equals(value1: string|{}, value2: string|{}) {
+    if (Boolean(value1) !== Boolean(value2)) {
+      return false;
+    }
+    if (!value1) {
+      return true;
+    }
+    const type1 = typeof(value1);
+    if (type1 !== typeof(value2)) {
+      return false;
+    }
+    if (type1 === 'object') {
+      const keys = Object.keys(value1);
+      if (keys.length !== Object.keys(value2).length) {
+        return false;
+      }
+      return keys.every(key => this._equals(value1[key], value2[key]));
+    }
+    return JSON.stringify(value1) === JSON.stringify(value2);
   }
 
   // Removes the membership, `keys`, of the value indexed by `id` from this collection.
