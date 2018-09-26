@@ -84,6 +84,8 @@ const template = html`
       background-color: #fefefe;
       border-radius: 24px;
       padding: 10px 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 
