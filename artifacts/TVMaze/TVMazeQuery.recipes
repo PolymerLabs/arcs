@@ -15,7 +15,7 @@ schema TVMazeQuery
 particle TVMazeSearchShows in './source/TVMazeSearchShows.js'
   in TVMazeQuery query
   inout [TVMazeShow] shows
-  consume root
+  //consume root
   //description `find out about ${query.query} (from TVMaze)`
 
 recipe TVMazeSearchShows
@@ -39,18 +39,18 @@ schema TVMazeFind
 particle TVMazeFindShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
-  out [Description] descriptions
+  //out [Description] descriptions
   consume root
   description `find out about ${find.name} (from TVMaze)`
 
-recipe TVMazeFindShow
-  copy as find
-  create as show
-  TVMazeFindShow
-    // TODO(sjmiles): without next two lines, strategizer takes 10x longer and fails
-    // to produce the desired results
-    find = find
-    show = show
+//recipe TVMazeFindShow
+//  copy as find
+//  create as show
+//  TVMazeFindShow
+//    // TODO(sjmiles): without next two lines, strategizer takes 10x longer and fails
+//    // to produce the desired results
+//    find = find
+//    show = show
 
 //
 

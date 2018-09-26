@@ -135,10 +135,8 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     if (metaplans.plans) {
       // find metaplans that use #piped stores
       const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
-        //log(handle._id);
         const tags = context.findStoreTags(context.findStoreById(handle._id));
-        //log(tags);
-        // TODO(sjmiles): tags is sometimes a Set, sometimes an Array
+        // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
         return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
       }));
       if (piped.length) {

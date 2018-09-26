@@ -27,9 +27,20 @@ recipe TVMazeDemo
   TileMultiplexer
     list = shows
     hostedParticle = TVMazeShowTile
-  DetailSlider as particle0
+  DetailSlider
     selected = selected
   TVMazeShowPanel
     show = selected
   description `search TVMaze for show information`
 
+recipe TVMazeFindDemo
+  copy #piped as find
+  create #show as show
+  TVMazeFindShow
+    find = find
+    show = show
+  DetailSlider
+    selected = show
+  TVMazeShowPanel
+    show = show
+  description `find ${TVMazeFindShow.find} in TVMaze`
