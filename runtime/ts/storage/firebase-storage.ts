@@ -135,7 +135,7 @@ export class FirebaseStorage extends StorageBase {
       }
     }
   }
-  
+
   baseStorageKey(type: Type, keyString: string): string {
     const fbKey = new FirebaseKey(keyString);
     fbKey.location = `backingStores/${type.toString()}`;
@@ -153,7 +153,7 @@ export class FirebaseStorage extends StorageBase {
     this.baseStorePromises.set(type, storagePromise);
     const storage = await storagePromise;
     assert(storage, 'baseStorageFor should not fail');
-    this.baseStores.set(type, storage); 
+    this.baseStores.set(type, storage);
     return storage;
   }
 
@@ -194,7 +194,7 @@ export class FirebaseStorage extends StorageBase {
   }
 
   // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
-  // but this _join creates the storage location. 
+  // but this _join creates the storage location.
   async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
     assert(!type.isVariable);
     assert(!type.isTypeContainer() || !type.getContainedType().isVariable);
@@ -357,7 +357,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
-  private localKeyId = 0;
+  // TODO(sjmiles): localId collisions occur when using device-client-pipe,
+  // so I'll randomize localId a bit
+  private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
@@ -405,10 +407,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
     // NOTE that remoteStateChanged will be invoked immediately by the
     // this.reference.on(...) call in the constructor; this means that it's possible for this
-    // function to receive data with storageKeys before referenceMode has been switched on (as 
+    // function to receive data with storageKeys before referenceMode has been switched on (as
     // that happens after the constructor has completed). This doesn't matter as data can't
     // be accessed until the constructor's returned (nothing has a handle on the object before
-    // that). 
+    // that).
 
     this.value = data.value || null;
     this.version = data.version;
@@ -442,12 +444,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // the await required for fetching baseStorage can cause initialization/localModified
     // flag reordering if done before persisting a change.
     const value = this.value;
-    
+
     // We have to write the underlying storage before the local value, or it won't be present
     // when another connected storage object gets the update of the local value.
     if (this.referenceMode && this.pendingWrites.length > 0) {
       await this.ensureBackingStore();
-  
+
       // TODO(shans): mutating the storageKey here to provide unique keys is a hack
       // that can be removed once entity mutation is distinct from collection updates.
       // Once entity mutation exists, it shouldn't ever be possible to write
@@ -469,7 +471,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const data = result.snapshot.val();
     assert(data !== 0);
     assert(data.version >= version);
- 
+
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
       return this._persistChangesImpl();
@@ -479,7 +481,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this.version = data.version;
     // Firebase will return 'undefined' when data is set to null, but should
     this.value = data.value || null;
- 
+
   }
 
   get versionForTesting() {
@@ -491,7 +493,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this.referenceMode && this.value) {
       const referredType = this.type;
       await this.ensureBackingStore();
-      return await this.backingStore.get(this.value.id);  
+      return await this.backingStore.get(this.value.id);
     }
     return this.value;
   }
@@ -538,7 +540,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const literal = await handle.toLiteral();
     const data = literal.model[0].value;
     if (this.referenceMode && literal.model.length > 0) {
-      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);  
+      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
       literal.model = literal.model.map(({id, value}) => ({id, value: {id, storageKey: this.backingStore.storageKey}}));
       const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
@@ -676,7 +678,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   backingType() {
     return this.type.primitiveType();
   }
-  
+
   remoteStateChanged(dataSnapshot) {
     const newRemoteState = dataSnapshot.val();
     if (!newRemoteState.items) {
@@ -882,7 +884,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async _persistChangesImpl(): Promise<void> {
     if (this.pendingWrites.length > 0) {
-      await this.ensureBackingStore();      
+      await this.ensureBackingStore();
       assert(this.backingStore);
       const pendingWrites = this.pendingWrites.slice();
       this.pendingWrites = [];
@@ -892,6 +894,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
       await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
+      //await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + Date.now()])));
 
       // TODO(shans): Returning here prevents us from writing localChanges while there
       // are pendingWrites. This in turn prevents change events for being generated for
@@ -1280,7 +1283,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
         const encKey = FirebaseStorage.encodeKey(key);
         data.keys[encKey] = version;
       }
-      
+
       // If we ever have bulk additions for BigCollection, the index will need to be changed to an
       // encoded string with version as the 'major' component and an index within the bulk add as
       // the 'minor' component:

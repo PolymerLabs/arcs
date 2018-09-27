@@ -61,7 +61,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       this._requireProfileAvatar(context),
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
-      this._requireSystemUser(context)
+      this._requireSystemUser(context),
+      this._requireProfileAllPipedAllTvShows(context)
     ]);
     this._fire('stores');
   }
@@ -139,12 +140,24 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
     };
     this._setState({userStore, user});
   }
+  async _requireProfileAllPipedAllTvShows(context) {
+    const options = {
+      schema: schemas.TVMazeShow,
+      name: 'PROFILE_all_piped-all_tv_shows',
+      id: 'PROFILE_all_piped-all_tv_shows',
+      tags: ['all_piped', 'all_tv_shows'],
+      isCollection: true
+    };
+    await this._requireStore(context, '', options);
+  }
   async _requireStore(context, eventName, options, onchange) {
     const store = await Stores.createContextStore(context, options);
     if (onchange) {
       store.on('change', onchange, this);
     }
-    this._fire(eventName, store);
+    if (eventName) {
+      this._fire(eventName, store);
+    }
     return store;
   }
   _updateSystemUsers(users, usersStore) {

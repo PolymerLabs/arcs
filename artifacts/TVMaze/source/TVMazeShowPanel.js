@@ -61,9 +61,9 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(show);
     }
     render({show}) {
-      show = show || {
-        image: ''
-      };
+      if (show.length) {
+        show = show[0];
+      }
       return {
         image: show.image,
         description: show.description,

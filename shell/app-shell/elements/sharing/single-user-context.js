@@ -106,16 +106,20 @@ const SingleUserContext = class {
     if (info.add) {
       info.add.forEach(async add => {
         const handle = add.value;
-        log('observing handle', handle);
-        const store = await getHandleStore(handle);
-        await this._observeStore(store, handle.storageKey, info => this._updateHandle(arcid, handle, info));
+        if (handle) {
+          log('observing handle', handle);
+          const store = await getHandleStore(handle);
+          await this._observeStore(store, handle.storageKey, info => this._updateHandle(arcid, handle, info));
+        }
       });
     }
     if (info.remove) {
       info.remove.forEach(async remove => {
         const handle = remove.value;
-        log('UNobserving handle', handle);
-        this._unobserve(handle.storageKey);
+        if (handle) {
+          log('UNobserving handle', handle);
+          this._unobserve(handle.storageKey);
+        }
       });
     }
   }

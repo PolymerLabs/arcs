@@ -58,14 +58,33 @@ recipe TVMazeDemo
     show = selected
   description `search TVMaze for show information`
 
-recipe TVMazeFindDemo
-  copy #piped as find
-  create #show as show
-  TVMazeFindShow
-    find = find
+particle TVMazePipeShowPanel in './source/TVMazeShowPanel.js'
+  in [TVMazeShow] show
+  consume content
+    provide action
+    provide items
+  description `${show} details`
+
+particle SelectableImmutableTileList in '../Common/source/TileList.js'
+  in [~a] items
+  inout ~a selected
+  consume root #content
+    must provide set of tile
+    provide set of action
+  description `show ${items} as tiles`
+
+recipe TVMazePipeDemo
+  copy #piped as show
+  map 'PROFILE_all_piped-all_tv_shows' as shows
+  slot 'rootslotid-root' as root
+  TVMazePipeShowPanel
     show = show
-  DetailSlider
-    selected = show
-  TVMazeShowPanel
-    show = show
-  description `find ${TVMazeFindShow.find} in TVMaze`
+    consume content as root
+  SelectableImmutableTileList
+    consume root as root
+    items = shows
+    selected = selected
+  TileMultiplexer
+    list = shows
+    hostedParticle = TVMazeShowTile
+  description `see info for ${TVMazePipeShowPanel.show} from TVMaze`

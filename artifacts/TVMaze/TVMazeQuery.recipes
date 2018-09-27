@@ -26,8 +26,6 @@ recipe TVMazeSearchShows
     shows = shows
   description `find out about ${TVMazeSearchShows.query} (from TVMaze)`
 
-//
-
 schema Description
   Text key
   Text value
@@ -37,7 +35,7 @@ schema TVMazeFind
   Text type
 
 particle TVMazeFindShow in './source/TVMazeFindShow.js'
-  in TVMazeFind find
+  in [TVMazeFind] find
   out TVMazeShow show
   //out [Description] descriptions
   consume root
@@ -51,8 +49,6 @@ particle TVMazeFindShow in './source/TVMazeFindShow.js'
 //    // to produce the desired results
 //    find = find
 //    show = show
-
-//
 
 particle TVMazeSearchBar in './source/TVMazeSearchBar.js'
   out TVMazeQuery query
