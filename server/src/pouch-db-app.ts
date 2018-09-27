@@ -11,11 +11,13 @@ import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
 import { Runtime } from 'arcs';
+import { ShellPlanningInterface } from 'arcs';
 import {AppBase} from "./app";
 import {ON_DISK_DB} from "./deployment/utils";
 
 /**
  * An app server that additionally configures a pouchdb.
+ * It also starts a remote planning thread (for now).
  */
 class PouchDbApp extends AppBase {
   // ref to Express instance
@@ -24,6 +26,10 @@ class PouchDbApp extends AppBase {
 
   constructor() {
     super();
+
+    // TODO(plindner): extract this into a separate coroutine instead
+    // of starting it here.
+    ShellPlanningInterface.start('../');
   }
 
   protected addRoutes() {

@@ -6,7 +6,7 @@ import pkg from './package.json';
 import path from 'path';
 
 export default {
-  input: ['runtime/ts-build/runtime.js', 'runtime/handle.js'],
+  input: ['runtime/ts-build/runtime.js', 'shell/apps/remote-planning/interface.js'],
   output: [
     {
       file: pkg.module,

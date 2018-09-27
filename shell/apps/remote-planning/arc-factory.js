@@ -15,12 +15,15 @@ LoaderKind.fetch = fetch;
 const ComposerKind = MockSlotComposer;
 
 const ArcFactory = class {
-  constructor() {
+  constructor(overridePath) {
+    // Allow caller to specify where to find assets
+    const path = overridePath ? overridePath : '../../../';
+
     this.loader = new LoaderKind({
-      'https://$cdn/': '../../../',
-      'https://$shell/': '../../../',
-      'https://$artifacts/': '../../../artifacts/',
-      'https://sjmiles.github.io/': '../../../../'
+      'https://$cdn/': path,
+      'https://$shell/': path,
+      'https://$artifacts/': path + 'artifacts/',
+      'https://sjmiles.github.io/': path + '../'
     });
     //console.log(loader);
     //console.log(slotComposer);
