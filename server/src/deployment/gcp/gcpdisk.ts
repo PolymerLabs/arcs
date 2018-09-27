@@ -76,12 +76,12 @@ class GCPDisk implements Disk {
 }
 
 class BetaCompute extends Compute {
-  private packageJson: any;
+  private packageJson: {};
   constructor(options?) {
     super(options);
     options = common.util.normalizeArguments(this, options);
 
-    var config = {
+    const config = {
       baseUrl: 'https://www.googleapis.com/compute/beta',
       scopes: ['https://www.googleapis.com/auth/compute'],
       packageJson: this.packageJson

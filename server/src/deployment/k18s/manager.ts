@@ -144,7 +144,7 @@ export class K18sContainerManager implements ContainerManager {
     path.backend.serviceName = service.metadata.name;
     path.backend.servicePort = EXTERNAL_PORT;
     rule.http.paths = ingress.spec.rules[0].http.paths;
-    rule.http.paths.push(path)
+    rule.http.paths.push(path);
     newIngress.spec = spec;
 
     const oldHeaders = this.k8sBetaApi['defaultHeaders'];

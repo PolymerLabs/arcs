@@ -40,7 +40,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
   let waiting = true;
   const timeout = maxTimeout / retries;
   try {
-    const [result] = await Promise.race([func(), delay(timeout)]);
+    const [result] = await Promise.race([func(), delay<[T]>(timeout)]);
 
     while (waiting && retries-- > 0) {
       try {
@@ -70,8 +70,8 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
 
 class Timeout extends Error {}
 
-export async function delay(duration: number):Promise<any> {
-  return new Promise((resolve, reject) => setTimeout(() => reject(new Timeout()), duration));
+export async function delay<T>(duration: number):Promise<T> {
+  return new Promise<T>((resolve, reject) => setTimeout(() => reject(new Timeout()), duration));
 }
 
 export const ON_DISK_DB = "TARGET_DISK";
