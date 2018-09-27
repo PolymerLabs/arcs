@@ -28,12 +28,12 @@ const log = Xen.logFactory('BgArc', '#00a300');
 
 class BgArc extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'manifest'];
+    return ['userid', 'key', 'manifest'];
   }
   get template() {
     return template;
   }
-  _update({key}, state) {
+  _update({userid, key}, state) {
     if (!state.config) {
       state.config = {
         affordance: 'dom',
@@ -43,10 +43,10 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
       };
     }
     // arc-host will supply `arc` (_onArc) when `key`, `manifest`, and `serialization` have values
-    const {arc, serialization} = state;
-    if (!arc && key && key !== state.key) {
+    const {arc} = state;
+    if (!arc && userid && key && key !== state.key) {
       state.key = key;
-      this._updateKey(key);
+      this._updateKey(userid, key);
     }
     if (arc && !state.hasSerialization) {
       state.hasSerialization = true;
@@ -56,7 +56,8 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
   _render(props, state) {
     return [props, state];
   }
-  async _updateKey(key) {
+  async _updateKey(userid, key) {
+    Firebase.db.child(`users/${userid}/arcs/${key}/touched`).set(Firebase.firebase.database.ServerValue.TIMESTAMP);
     const snap = await Firebase.db.child(`arcs/${key}/serialization`).once('value');
     const serialization = snap.val() || '';
     log('READ serialization', serialization);
