@@ -12,7 +12,7 @@ import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
 import { Runtime } from 'arcs';
 import {AppBase} from "./app";
-import {ON_DISK_DB} from "./deployment/utils";
+import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
 
 /**
  * An app server that additionally configures a pouchdb.
@@ -36,13 +36,27 @@ class PouchDbApp extends AppBase {
    * https://github.com/pouchdb/pouchdb-server
    */
   private addPouchRoutes(): void {
+    const urlPrefix = process.env[VM_URL_PREFIX] || '/';
+    const config = {
+      mode: 'fullCouchDB', inMemoryConfig: true,
+      "httpd": {
+        "enable_cors": true
+      },
+      "cors": {
+        "origins": "http://localhost:8888",
+        "credentials": true,
+        "headers": "accept, authorization, content-type, origin, referer",
+        "methods": "GET, PUT, POST, HEAD, DELETE"
+      }
+    };
+
     if (process.env[ON_DISK_DB]) {
-      const dboptions = {'prefix': '/personalcloud/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
+      const dboptions = {'prefix': DISK_MOUNT_PATH + '/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
-      this.express.use('/', PouchDbServer(onDiskPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+      this.express.use(urlPrefix, PouchDbServer(onDiskPouchDb, config));
     } else {
       const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
-      this.express.use('/', PouchDbServer(inMemPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+      this.express.use(urlPrefix, PouchDbServer(inMemPouchDb, config));
     }
   }
 }

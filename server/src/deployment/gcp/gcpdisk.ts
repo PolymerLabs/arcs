@@ -10,11 +10,11 @@
 import {Disk, DiskManager} from "../disks";
 import Compute from '@google-cloud/compute';
 
-import {arcsKeyFor} from "../utils";
+import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from "../utils";
 
 
 import common from "@google-cloud/common";
-import {Container} from "../containers";
+import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from "./gcp-constants";
 
 /**
  * Represents disk storage provisioned on a cloud provider.
@@ -30,7 +30,7 @@ class GCPDisk implements Disk {
   }
 
   async isAttached(): Promise<boolean> {
-    const [metadata, resp] = await this.diskApi.getMetadata();
+    const [metadata] = await this.diskApi.getMetadata();
     if (metadata['users'] && metadata['users'].length) {
       return true;
     }
@@ -38,26 +38,26 @@ class GCPDisk implements Disk {
   }
 
   async mount(rewrappedKey: string): Promise<boolean> {
-    // TODO: assert can only be mounted to one node at a time
-    const zone = this.computeApi.zone('us-central1-a');
+    const zone = this.computeApi.zone(GCP_ZONE);
 
     try {
       const [vms] = await zone.getVMs();
 
       if (vms !== undefined) {
         for (const vm of vms) {
-          if (vm.metadata.metadata.items.find(x => x.key === 'arcs-node') !== undefined) {
+          if (vm.metadata.metadata.items.find(x => x.key === ARCS_NODE_LABEL) !== undefined) {
             const [operation, apiResponse] = await vm.attachDisk(this.diskApi, {
               "diskEncryptionKey": {
                 "rsaEncryptedKey": rewrappedKey
               }
             });
-            return !apiResponse['httpErrorStatusCode'] || apiResponse['httpErrorStatusCode'] !== 200;
+            return Promise.resolve(!apiResponse['httpErrorStatusCode'] || apiResponse['httpErrorStatusCode'] !== 200);
           }
         }
       }
       return Promise.reject(new Error("Can't find arcs-node VM"));
     } catch(e) {
+      console.log("Error trying to mount disk");
       return Promise.reject(e);
     }
   }
@@ -67,11 +67,11 @@ class GCPDisk implements Disk {
   }
 
   type(): string {
-    return 'gcePersistentDisk';
+    return GCE_PERSISTENT_DISK_TYPE;
   }
 
   wrappedKeyFor(fingerprint:string): Promise<string> {
-    return Promise.resolve(this.diskApi['labels'][arcsKeyFor(fingerprint)]);
+    return Promise.resolve(this.diskApi['annotations'][arcsKeyFor(fingerprint)]);
   }
 }
 
@@ -92,6 +92,8 @@ class BetaCompute extends Compute {
   }
 }
 
+export const DEFAULT_GCP_DISK_SIZE = "10";
+
 /**
  * Allows the provisioning of encrypted disk storage in a
  * cloud provider.
@@ -102,23 +104,29 @@ export class GCPDiskManager implements DiskManager {
     const arcskey = arcsKeyFor(wrappedKey);
     const config = {
       "type": "projects/arcs-project/zones/us-central1-a/diskTypes/pd-standard",
-      "sizeGb": "10",
+      "sizeGb": DEFAULT_GCP_DISK_SIZE,
       "name": arcskey,
       "diskEncryptionKey": {
         "rsaEncryptedKey": rewrappedKey
+      },
+      "annotations": {
       },
       "labels": {
       }
     };
 
-    config['labels'][arcskey] = rewrappedKey;
+    config['labels'][arcskey] = true;
+    config['annotations'][arcskey] = rewrappedKey;
 
     try {
       const compute:Compute = new BetaCompute();
-      const zone = compute.zone('us-central1-a');
-      const [disk, operation, resp] = await zone.createDisk(arcskey, config);
+      const zone = compute.zone(GCP_ZONE);
+      const disk = await waitForGcp(() => zone.createDisk(arcskey, config),
+        async (d:Compute.Disk) => {
+          const [metadata] = await d.getMetadata();
+          return Promise.resolve(metadata.status === 'READY');
+        });
       return Promise.resolve(new GCPDisk(compute, disk));
-
     } catch (e) {
       return Promise.reject(e);
     }
@@ -126,9 +134,9 @@ export class GCPDiskManager implements DiskManager {
 
   async find(fingerprint: string): Promise<Disk | null> {
     const compute:Compute = new BetaCompute();
-    const zone = compute.zone('us-central1-a');
+    const zone = compute.zone(GCP_ZONE);
 
-    const [disks, nextQuery, apiResponse] = await zone.getDisks({autoPaginate: false});
+    const [disks] = await zone.getDisks({autoPaginate: false});
     for (const disk of disks) {
       const metadata = await disk.getMetadata().then(data => data[0]);
       if (metadata['labels'] && metadata['labels'][arcsKeyFor(fingerprint)] === true ||

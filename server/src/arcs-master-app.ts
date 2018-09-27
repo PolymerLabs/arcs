@@ -84,6 +84,8 @@ class ArcsMasterApp extends AppBase {
       console.log("Container successfully created with fingerprint " + fingerprint);
       res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
     } catch (e) {
+      console.log("Error");
+      console.dir(e);
       res.send("Can't deploy because " + JSON.stringify(e));
     }
   }

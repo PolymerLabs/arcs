@@ -12,11 +12,18 @@ import {Disk} from "../disks";
 
 import {
   Core_v1Api,
-  KubeConfig, V1Affinity,
+  Extensions_v1beta1Api,
+  KubeConfig,
+  V1beta1HTTPIngressPath,
+  V1beta1HTTPIngressRuleValue,
+  V1beta1Ingress,
+  V1beta1IngressBackend,
+  V1beta1IngressRule,
+  V1beta1IngressSpec,
   V1Container,
   V1ContainerPort,
   V1EnvVar,
-  V1GCEPersistentDiskVolumeSource, V1NodeAffinity,
+  V1GCEPersistentDiskVolumeSource,
   V1ObjectMeta,
   V1PersistentVolume,
   V1PersistentVolumeSpec,
@@ -28,10 +35,18 @@ import {
   V1Volume,
   V1VolumeMount
 } from "@kubernetes/client-node";
-import {ON_DISK_DB} from "../utils";
 
-const CONTAINER_PORT = 8080;
-const EXTERNAL_PORT = 80;
+import {ARCS_NODE_LABEL, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+import {
+  ARCS_DOCKER_IMAGE,
+  ARCS_INGRESS_PREFIX,
+  ARCS_MASTER_INGRESS,
+  CONTAINER_PORT,
+  EXTERNAL_PORT,
+  K18S_NAMESPACE
+} from "./k18s-constants";
+import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
+import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
 
 /**
  * An implementation of the Container interface that uses Kubernetes for
@@ -41,23 +56,17 @@ class K18sPod implements Container {
   private v1Pod: V1Pod;
   private v1Service: V1Service;
   private k8sApi: Core_v1Api;
+  private ingress: V1beta1Ingress;
 
-  constructor(k8sApi: Core_v1Api, v1Pod: V1Pod, v1Service: V1Service) {
+  constructor(k8sApi: Core_v1Api, v1Pod: V1Pod, v1Service: V1Service, ingress: V1beta1Ingress) {
     this.k8sApi = k8sApi;
     this.v1Pod = v1Pod;
     this.v1Service = v1Service;
+    this.ingress = ingress;
   }
 
   url(): string {
-    // TODO: hacky, we should use JSON
-    if (this.v1Service.status && this.v1Service.status.loadBalancer &&
-      this.v1Service.status.loadBalancer.ingress && this.v1Service.status.loadBalancer.ingress.length) {
-      const ingress = this.v1Service.status.loadBalancer.ingress[0];
-      // TODO: this needs to be HTTPS, which requires an Ingress server + DNS + TLS cert to be configured
-      return 'http://' + ingress.ip + ':' + this.v1Service.spec.ports[0].port;
-    } else {
-      return 'pending';
-    }
+      return 'https://' + this.ingress.spec.rules[0].host + '/' + this.v1Service.metadata.name;
   }
 
   disk(): PromiseLike<Disk> {
@@ -65,25 +74,26 @@ class K18sPod implements Container {
   }
 
   async node(): Promise<string> {
-    const {response, body} = await this.k8sApi.readNamespacedPod(this.v1Pod.metadata.name, 'default',
+    const {body:v1Pod} = await this.k8sApi.readNamespacedPod(this.v1Pod.metadata.name, K18S_NAMESPACE,
       undefined, false,false);
-    return body.spec.nodeName;
+    return v1Pod.spec.nodeName;
   }
-
 }
 
 export class K18sContainerManager implements ContainerManager {
 
   k8sApi: Core_v1Api;
+  k8sBetaApi: Extensions_v1beta1Api;
 
   constructor() {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     this.k8sApi = kc.makeApiClient(Core_v1Api);
+    this.k8sBetaApi = kc.makeApiClient(Extensions_v1beta1Api);
   }
 
   async deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): Promise<Container> {
-    if (encryptedDisk.type() !== 'gcePersistentDisk') {
+    if (encryptedDisk.type() !== GCE_PERSISTENT_DISK_TYPE) {
       return Promise.reject(new Error('Cant use non-GCE disk on K8s yet'));
     }
 
@@ -91,35 +101,60 @@ export class K18sContainerManager implements ContainerManager {
     // waiting for an unmounted disk, or doesn't exist. We can delete and restart it in that case.
     try {
       /**
-       * We need to do 4 things:
+       * We need to do 5 things:
        * 1. Attach a GCE disk to specific GCE node
-       * 1. Create a Kubernetes PersistentVolume that references an already existing disk
+       * 2. Create a Kubernetes PersistentVolume that references an already existing disk
        * (https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
        *
-       * 2. Create a Pod that mounts this Persistent Volume and deploys our docker image to this specific node
+       * 3. Create a Pod that mounts this Persistent Volume and deploys our docker image to this specific node
        *
-       * 3. A Kubernetes Service which acts as an Ingress so that our Pod is visible to the
-       * external world with an external IP address.
+       * 4. A Kubernetes Service which exposes our Pod is visible to the Ingress
        *
-       * TODO: rather than give each Pod their own external IP, we can create an Ingress object
-       * that does virtual hosting. We use a single external load balancer IP, and map
-       * /<user key fingerprint/pathInfo to each deployed pod. So Container addresses returned to client
-       * will be https://<load balancer ip>:443/<base64 user key/<action, e.g. pouchdb>.
-       *
-       * TODO: use lets-encrypt to provision a cert and deploy it as a Kubernetes secret
-       * TODO: need some kind of cloud-dns setup script so SSL cert has a domain name
+       * 5. Update Ingress to map /cloud/fingerprint -> Service so the external world can find out service
        */
       const mounted = await encryptedDisk.mount(rewrappedKey);
       console.log("Disk mounted " + mounted);
       const {body: createdPersistentVolume} = await this.requestNewPersistentVolume(encryptedDisk);
       console.log("Created new persistent volume " + createdPersistentVolume.metadata.name);
-      const {body: createdPod} = await this.requestCreatePod(encryptedDisk, fingerprint);
+      const {body: createdPod} = await this.requestCreatePod(encryptedDisk, fingerprint, rewrappedKey);
       console.log("Created new pod " + createdPod.metadata.name);
       const {body: createdService} = await this.requestCreateService(fingerprint, createdPod);
       console.log("Created new service " + createdService.metadata.name);
-      return Promise.resolve(new K18sPod(this.k8sApi, createdPod, createdService));
+      const {body: updatedIngress} = await this.requestUpdateIngress(fingerprint, createdService);
+      console.log("Ingress updated " + JSON.stringify(updatedIngress));
+      return Promise.resolve(new K18sPod(this.k8sApi, createdPod, createdService, updatedIngress));
     } catch (e) {
+      console.dir(e);
       return Promise.reject(JSON.stringify(e));
+    }
+  }
+
+  private async requestUpdateIngress(fingerprint: string, service: V1Service) {
+    const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(ARCS_MASTER_INGRESS, K18S_NAMESPACE,
+      undefined, false, false);
+    const newIngress = new V1beta1Ingress();
+    const spec = new V1beta1IngressSpec();
+    const rule = new V1beta1IngressRule();
+    spec.rules = [rule];
+    rule.http = new V1beta1HTTPIngressRuleValue();
+
+    const path = new V1beta1HTTPIngressPath();
+    path.path = ARCS_INGRESS_PREFIX + fingerprint + '/*';
+    path.backend = new V1beta1IngressBackend();
+    path.backend.serviceName = service.metadata.name;
+    path.backend.servicePort = EXTERNAL_PORT;
+    rule.http.paths = ingress.spec.rules[0].http.paths;
+    rule.http.paths.push(path)
+    newIngress.spec = spec;
+
+    const oldHeaders = this.k8sBetaApi['defaultHeaders'];
+    this.k8sBetaApi['defaultHeaders'] = Object.assign({'Content-Type': 'application/strategic-merge-patch+json'},
+      oldHeaders);
+    try {
+      return await this.k8sBetaApi.patchNamespacedIngress(ARCS_MASTER_INGRESS, K18S_NAMESPACE,
+        newIngress, undefined);
+    } finally {
+      this.k8sBetaApi['defaultHeaders'] = oldHeaders;
     }
   }
 
@@ -133,7 +168,7 @@ export class K18sContainerManager implements ContainerManager {
     service.metadata.name = 'svc-' + fingerprint;
     service.spec.selector = {};
     service.spec.selector['app'] = pod.metadata.name;
-    service.spec.type = 'LoadBalancer';
+    service.spec.type = 'NodePort';
 
     const v1ServicePort = new V1ServicePort();
     v1ServicePort.port = EXTERNAL_PORT;
@@ -141,10 +176,10 @@ export class K18sContainerManager implements ContainerManager {
 
     service.spec.ports = [v1ServicePort];
 
-    return this.k8sApi.createNamespacedService('default', service);
+    return this.k8sApi.createNamespacedService(K18S_NAMESPACE, service);
   }
 
-  private async requestCreatePod(encryptedDisk: Disk, fingerprint: string) {
+  private async requestCreatePod(encryptedDisk: Disk, fingerprint: string, rewrappedKey: string) {
     const volumeName = encryptedDisk.id();
     const gceVolume = this.createGCEVolume(volumeName, encryptedDisk);
     const container = this.createContainer(fingerprint, volumeName);
@@ -154,9 +189,8 @@ export class K18sContainerManager implements ContainerManager {
     v1Pod.apiVersion = 'v1';
     v1Pod.spec = new V1PodSpec();
     // force POD to be deployed on arcs-node (where disks are attached)
-    v1Pod.spec.nodeSelector = {
-      "arcs-node": "true"
-    };
+    v1Pod.spec.nodeSelector = {};
+    v1Pod.spec.nodeSelector[ARCS_NODE_LABEL] = "true";
 
     v1Pod.spec.volumes = [gceVolume];
     v1Pod.spec.containers = [container];
@@ -164,20 +198,25 @@ export class K18sContainerManager implements ContainerManager {
     v1Pod.metadata.name = 'pod-' + fingerprint;
     v1Pod.metadata.labels = {};
     v1Pod.metadata.labels['app'] = v1Pod.metadata.name;
-
-    return this.k8sApi.createNamespacedPod('default', v1Pod);
+    v1Pod.metadata.annotations = {};
+    v1Pod.metadata.annotations[arcsKeyFor(fingerprint)] = rewrappedKey;
+    return this.k8sApi.createNamespacedPod(K18S_NAMESPACE, v1Pod);
   }
 
   private createContainer(fingerprint: string, volumeName) {
     const container = new V1Container();
     // TODO: use SHA-1/commit hash based tagging?
-    container.image = 'gcr.io/arcs-project/deployment:latest';
+    container.image = ARCS_DOCKER_IMAGE;
     container.name = 'container-image-' + fingerprint;
     const volumeMount = this.createVolumeMount(volumeName);
     container.volumeMounts = [volumeMount];
     const targetDiskEnv = new V1EnvVar();
     targetDiskEnv.name = ON_DISK_DB;
     targetDiskEnv.value = "true";
+    const urlPrefix = new V1EnvVar();
+    urlPrefix.name = VM_URL_PREFIX;
+    urlPrefix.value = ARCS_INGRESS_PREFIX + fingerprint;
+
     container.env = [targetDiskEnv];
     const v1ContainerPort = new V1ContainerPort();
     v1ContainerPort.containerPort = CONTAINER_PORT;
@@ -188,7 +227,7 @@ export class K18sContainerManager implements ContainerManager {
   private createVolumeMount(volumeName) {
     const volumeMount = new V1VolumeMount();
     volumeMount.name = volumeName;
-    volumeMount.mountPath = '/personalcloud';
+    volumeMount.mountPath = DISK_MOUNT_PATH;
     return volumeMount;
   }
 
@@ -224,7 +263,7 @@ export class K18sContainerManager implements ContainerManager {
   private makePersistentVolumeSpec(encryptedDisk: Disk) {
     const spec = new V1PersistentVolumeSpec();
     spec.accessModes = ["ReadWriteOnce"];
-    spec.capacity = {storage: '10Gi'};
+    spec.capacity = {storage: DEFAULT_GCP_DISK_SIZE + 'Gi'};
     spec.gcePersistentDisk = new V1GCEPersistentDiskVolumeSource();
     spec.gcePersistentDisk.fsType = 'ext4';
     spec.gcePersistentDisk.pdName = encryptedDisk.id();
@@ -236,17 +275,19 @@ export class K18sContainerManager implements ContainerManager {
     kc.loadFromDefault();
 
     const k8sApi = kc.makeApiClient(Core_v1Api);
-    const {response, body} = await k8sApi.listNamespacedPod('default', undefined,
+    const {body:v1Pod} = await k8sApi.listNamespacedPod(K18S_NAMESPACE, undefined,
       undefined, undefined,
       true, undefined);
+    const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(ARCS_MASTER_INGRESS, K18S_NAMESPACE,
+      undefined, false, false);
 
-    const podList = body.items;
+    const podList = v1Pod.items;
     if (podList.length > 0) {
 
-      const {response, body} = await k8sApi.listNamespacedService('default', undefined,
+      const {body:v1Service} = await k8sApi.listNamespacedService(K18S_NAMESPACE, undefined,
         undefined, "metadata.name=svc-"+fingerprint, true, undefined);
-      if (body.items.length > 0) {
-        return Promise.resolve(new K18sPod(k8sApi, podList[0], body.items[0]));
+      if (v1Service.items.length > 0) {
+        return Promise.resolve(new K18sPod(k8sApi, podList[0], v1Service.items[0], ingress));
       }
     }
     return Promise.resolve(null);
