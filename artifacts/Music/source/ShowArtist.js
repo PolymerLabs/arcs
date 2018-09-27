@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, html}) => {
+defineParticle(({DomParticle, _fetch, html}) => {
 
   const host = `[show-artist]`;
 
@@ -115,10 +115,10 @@ ${styles}
 
       if (!state.fetching) {
         this._setState({fetching: true});
-        fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
+        _fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
             .then(async response => this._processResponse(await response.json()));
       }
-      
+
       return {
         name: props.artist.name,
         description: state.description || '',
@@ -140,7 +140,7 @@ ${styles}
         console.log('No results in the knowledge graph.');
         return;
       }
-      
+
       let result = response.itemListElement[0].result;
       this._setState({
         description: result.description,

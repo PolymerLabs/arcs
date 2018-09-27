@@ -7,17 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {fs} from '../platform/fs-web.js';
-import {vm} from '../platform/vm-web.js';
-import {fetch} from './fetch-web.js';
+import {fs} from '../../../../platform/fs-node.js';
+import {vm} from '../../../../platform/vm-node.js';
+import {fetch} from '../../../../runtime/fetch-node.js';
 
-import {assert} from '../platform/assert-web.js';
-import {Particle} from './particle.js';
-import {DomParticle} from './dom-particle.js';
-import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
-import {newClientReference} from './ts-build/reference.js';
-import {TransformationDomParticle} from './transformation-dom-particle.js';
-import {JsonldToManifest} from './converters/jsonldToManifest.js';
+import {assert} from '../../../../platform/assert-web.js';
+import {Particle} from '../../../../runtime/particle.js';
+import {DomParticle} from '../../../../runtime/dom-particle.js';
+import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
+import {newClientReference} from '../../../../runtime/ts-build/reference.js';
+import {TransformationDomParticle} from '../../../../runtime/transformation-dom-particle.js';
+import {JsonldToManifest} from '../../../../runtime/converters/jsonldToManifest.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
@@ -89,8 +89,6 @@ export class Loader {
         result.push(particleWrapper);
       },
       console,
-      fetch,
-      setTimeout,
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self, {filename: fileName, displayErrors: true});

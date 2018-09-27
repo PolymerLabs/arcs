@@ -12,9 +12,6 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  /* global service */
-  importScripts(resolver('TVMazeSearchBar/TvMaze.js'));
-
   const host = 'tv-maze-search-bar';
 
   const template = html`
@@ -75,47 +72,10 @@ defineParticle(({DomParticle, resolver, html}) => {
     }
     commit(text) {
       this.updateVariable('query', {query: text || ''});
-      //this.setState({query: text || '', count: 0});
     }
-    // update(props, state) {
-    //   if (props.shows && state.query && !state.count) {
-    //     this.fetchShows(state.query);
-    //   }
-    // }
     render(props, state) {
       return state;
     }
-    // async fetchShows(query) {
-    //   this.setState({count: -1});
-    //   let response = await fetch(`${service}/search/shows?q=${query}`);
-    //   let shows = await response.json();
-    //   this.receiveShows(shows);
-    // }
-    // async receiveShows(shows) {
-    //   console.log('TVShows', shows);
-    //   let showsView = this.handles.get('shows');
-    //   // clear old data
-    //   //let entities = await showsView.toList();
-    //   //entities.forEach(e => showsView.remove(e));
-    //   // add new data
-    //   let Show = showsView.entityClass;
-    //   shows.forEach(show => {
-    //     show = show.show;
-    //     if (show.image && show.image.medium) {
-    //       let entity = new Show({
-    //         showid: String(show.id),
-    //         name: show.name,
-    //         description: show.summary,
-    //         image: show.image && show.image.medium.replace('http:', 'https:') || '',
-    //         network: show.network && show.network.name || show.webChannel && show.webChannel.name || '',
-    //         day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
-    //         time: show.schedule && show.schedule.time
-    //       });
-    //       //console.log('TVShows', JSON.stringify(entity.dataClone(), null, '  '));
-    //       showsView.store(entity);
-    //     }
-    //   });
-    // }
   };
-  
+
 });

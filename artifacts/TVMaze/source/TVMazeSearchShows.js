@@ -9,10 +9,11 @@
 'use strict';
 
 /* global defineParticle, importScripts */
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({DomParticle, _fetch, resolver, log}) => {
 
-  importScripts(resolver('TVMazeSearchShows/TvMaze.js'));
+  const service = `https://api.tvmaze.com`;
   /* global service */
+  //importScripts(resolver('TVMazeSearchShows/TvMaze.js'));
 
   return class extends DomParticle {
     get template() {
@@ -31,7 +32,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       }
     }
     async fetchShows(query, shows) {
-      const response = await fetch(`${service}/search/shows?q=${query.query}`);
+      const response = await _fetch(`${service}/search/shows?q=${query.query}`);
       const data = await response.json();
       this.receiveShows(data, shows);
       this.setState({receiving: false});

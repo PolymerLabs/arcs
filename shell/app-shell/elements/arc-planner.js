@@ -66,6 +66,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     const planificator = new Arcs.Planificator(arc, {userid, mode: planificatorMode});
     planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    window.planificator = planificator;
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {

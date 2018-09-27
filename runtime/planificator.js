@@ -153,9 +153,12 @@ export class Planificator {
       this._onDataChange();
     }
 
-    if (this._arc.pec.slotComposer) {
-      let suggestionComposer = new SuggestionComposer(this._arc.pec.slotComposer);
-      this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
+    const composer = this._arc.pec.slotComposer;
+    if (composer) {
+      if (composer.findContextById('rootslotid-suggestions')) {
+        const suggestionComposer = new SuggestionComposer(composer);
+        this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
+      }
     }
   }
 

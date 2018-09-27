@@ -12,10 +12,10 @@ const changeDebounceMs = 16;
 
 const debounce = (key, action, delay) => {
   if (key) {
-    window.clearTimeout(key);
+    clearTimeout(key);
   }
   if (action && delay) {
-    return window.setTimeout(action, delay);
+    return setTimeout(action, delay);
   }
 };
 
@@ -53,17 +53,17 @@ export const FbGraph = Firedb => {
     _attach(db) {
       let started;
       const added = db.on('child_added', (snap, prevKey) => {
-        //console.log('FireBase: child-added', snap.key);
+        //console.log('+*+*+*+*+*+ Firebase: child-added', snap.key);
         this._replaceSubProperties(this.data, snap.key, snap.val());
         this._fire('child-added', snap.key);
       });
       const changed = db.on('child_changed', (snap, prevKey) => {
-        //console.log('FireBase: child-changed', this.path, snap.key, snap.val());
+        //console.log('+*+*+*+*+*+ Firebase: child-changed', this.path, snap.key); //, snap.val());
         this._replaceSubProperties(this.data, snap.key, snap.val());
         this._fire('child-changed', snap.key);
       });
       const removed = db.on('child_removed', snap => {
-        //console.warn('FireBase: child-removed', this.path, snap.key);
+        //console.log('+*+*+*+*+*+ Firebase: child-removed', this.path, snap.key);
         delete this.data[snap.key];
         this._fire('child-removed', snap.key);
       });

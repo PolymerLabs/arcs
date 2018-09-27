@@ -12,7 +12,7 @@
 const eventsService = 'https://app.ticketmaster.com/discovery/v2/events?apikey=6g6GruAsAGU9RyT3lfjUFYtLSnvUITDe&radius=1000';
 const geohashCharMap = '0123456789bcdefghjkmnpqrstuvwxyz';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, log, _fetch}) => {
   const host = `[find-shows]`;
   const styles = html`
   <style>
@@ -118,7 +118,7 @@ ${styles}
       // Note that it won't be possible to make those kind of fetches in production.
       // We need privacy preserving, non-logging data sources to allow speculatively fetching data.
       const geohash = this._encodeGeohash(props.location.latitude, props.location.longitude);
-      fetch(`${eventsService}&keyword=${encodeURI(props.artist.name)}&geoPoint=${geohash}`)
+      _fetch(`${eventsService}&keyword=${encodeURI(props.artist.name)}&geoPoint=${geohash}`)
           .then(response => response.json())
           .then(response => this._processResponse(response))
           .finally(() => this.doneBusy());
@@ -184,11 +184,11 @@ ${styles}
       let latMax = 90;
       let lonMin = -180;
       let lonMax = 180;
-      
+
       let geohash = '';
       let bit = 0;
       let idx = 0;
-    
+
       do {
         if (bit && bit % 5 === 0) {
           geohash += geohashCharMap.charAt(idx);

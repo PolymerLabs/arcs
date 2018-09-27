@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver, log}) => {
+defineParticle(({DomParticle, _fetch, log}) => {
 
   let host = `find-restaurants`;
 
@@ -37,7 +37,7 @@ defineParticle(({DomParticle, resolver, log}) => {
       log('fetching places near', loc);
       const radius = `1000`;
       const type = `restaurant`;
-      fetch(`${placesService}?location=${loc}&radius=${radius}&type=${type}`)
+      _fetch(`${placesService}?location=${loc}&radius=${radius}&type=${type}`)
         .then(response => response.json())
         .then(places => this._receivePlaces(places));
     }
