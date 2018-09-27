@@ -1,4 +1,5 @@
 import {FbUser} from './shell/FbUser.js';
+import {Firebase} from './shell/firebase.js';
 import {Planificator} from '../../../runtime/planificator.js';
 
 class UserPlanner {
@@ -7,9 +8,17 @@ class UserPlanner {
     this.context = context;
     this.userid = userid;
     this.runners = {};
+
     const fbuser = new FbUser((type, detail) => this.onEvent(type, detail));
     this.field = fbuser.queryUser(userid);
     this.field.activate();
+
+    // Create the launcher arc and planificator.
+    const launcherArc = this.factory.spawn(this.context);
+    let launcherKey = `launcher`;
+    launcherArc._storageKey = `${Firebase.storageKey}/arcs/${launcherKey}`;
+    const launcherPlanificator = this.createPlanificator(userid, launcherKey, launcherArc);
+    this.runners[launcherKey] = {arc: launcherArc, planificator: launcherPlanificator};
   }
   dispose() {
     this.field.dispose();
@@ -35,6 +44,7 @@ class UserPlanner {
     const serialization = field.parent.data.serialization;
     //console.log(key, serialization, field);
     this.disposeArc(key);
+    // TODO: cleanup disposed arc's suggestions?
     if (!field.disposed) {
       if (serialization) {
         this.marshalArc(key, this.userid, serialization);
@@ -48,6 +58,7 @@ class UserPlanner {
     if (runner) {
       runner.planificator.dispose();
       runner.arc.dispose();
+      delete this.runners[key];
     }
   }
   async marshalArc(key, userid, serialization) {
@@ -78,18 +89,18 @@ class UserPlanner {
   createPlanificator(userid, key, arc) {
     const planificator = new Planificator(arc, {userid, mode: 'producer'});
     planificator.registerPlansChangedCallback(current => this.showPlansForArc(key, current.plans));
-    planificator.registerSuggestChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
+    // planificator.registerSuggestChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
     planificator._requestPlanning();
     return planificator;
   }
   showPlansForArc(key, metaplans) {
-    console.log(`======= Arc[${key}] plans ======================================`);
-    console.log(metaplans.map(plan => plan.descriptionText));
+    console.log(`======= Arc[${key}] ${metaplans.length} plans ======================================`);
+    console.log(metaplans.map(plan => `${plan.descriptionText}    [${plan.plan.particles.map(p => p.name).join(', ')}]`));
     console.log(`====================================================================================`);
   }
-  showSuggestionsForArc(key, suggestions) {
-    //console.log(`Arc[${key}] suggestions\n`, suggestions.map(plan => plan.descriptionText));
-  }
+  // showSuggestionsForArc(key, suggestions) {
+  //   console.log(`Arc[${key}] suggestions\n`, suggestions.map(plan => plan.descriptionText));
+  // }
 }
 
 export {UserPlanner};

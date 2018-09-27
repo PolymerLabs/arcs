@@ -31,7 +31,7 @@ const ArcFactory = class {
       'https://$cdn/': path,
       'https://$shell/': path,
       'https://$artifacts/': path + 'artifacts/',
-      'https://sjmiles.github.io/': path + '../'
+      // 'https://sjmiles.github.io/': path + '../'
     });
     //console.log(loader);
     //console.log(slotComposer);
@@ -45,7 +45,7 @@ const ArcFactory = class {
     //const arcsURL = 'http://localhost/projects/arcs/arcs';
   }
   getParams(context) {
-    const {pecFactory, slotComposer, loader} = this;
+    const {pecFactory, loader} = this;
     return {
       id: `server-arc`,
       pecFactory,
