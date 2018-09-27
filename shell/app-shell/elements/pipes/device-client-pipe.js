@@ -55,7 +55,7 @@ const ShellApi = window.ShellApi = {
 };
 
 const template = Xen.Template.html`
-  <bg-arc key="{{key}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
+  <bg-arc userid="{{userid}}" key="{{key}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
@@ -82,7 +82,6 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
       if (arc && !state.stores) {
         state.stores = true;
         this._requireFindStore(arc);
-        this._requireAllfindsStore(arc);
       }
       if (state.findStore && entity.name && entity.name !== state.lastFind) {
         state.lastFind = entity.name;
@@ -94,7 +93,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     }
   }
   _render(props, state) {
-    return state;
+    return [props, state];
   }
   _setPipedEntity(store, rawData) {
     const entity = {
@@ -106,20 +105,6 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
     // force replanning here
     this._fire('replan');
-  }
-  async _requireQueryStore(context) {
-    const options = {
-      schema: schemas.TVMazeQuery,
-      name: 'TVMazeQuery',
-      id: 'TVMazeQuery',
-      tags: ['piped']
-    };
-    const schemaType = Arcs.Type.fromLiteral(options.schema);
-    const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const queryStore = (context.findStoresByType(typeOf) || [])[0];
-    //const queryStore = await Stores.createContextStore(context, options);
-    log(`${queryStore ? 'found' : 'MISSING'} queryStore`);
-    this._setState({queryStore});
   }
   async _requireFindStore(context) {
     const options = {
@@ -134,14 +119,6 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     //const findStore = await Stores.createContextStore(context, options);
     log(`${findStore ? 'found' : 'MISSING'} findStore`);
     this._setState({findStore});
-  }
-  async _requireAllfindsStore(context) {
-    const schemaType = Arcs.Type.fromLiteral(schemas.TVMazeFind);
-    const typeOf = schemaType.collectionOf();
-    const allfindsStore = (context.findStoresByType(typeOf) || [])[0];
-    //const findStore = await Stores.createContextStore(context, options);
-    log(`${allfindsStore ? 'found' : 'MISSING'} allfindsStore`);
-    this._setState({allfindsStore});
   }
   _updateMetaplans(metaplans, context) {
     if (metaplans.plans) {
