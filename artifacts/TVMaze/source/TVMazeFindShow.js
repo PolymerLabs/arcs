@@ -22,9 +22,14 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (!state.receiving) {
-        if (find && find !== state.find) {
-          state.find = find;
-          this.fetchShow(find);
+        if (find) {
+          if (find.length) {
+            find = find[0];
+          }
+          if (find && find !== state.find) {
+            state.find = find;
+            this.fetchShow(find);
+          }
         }
       }
     }

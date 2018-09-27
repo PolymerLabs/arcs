@@ -11,6 +11,27 @@ import 'TVMazeQuery.recipes'
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
 
+schema TVMazeShowAction
+  Text showid
+  Boolean favorite
+  Boolean delete
+
+particle TVMazeShowActions in './source/TVMazeShowActions.js'
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+shape HostedActionParticleShape
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+particle ActionMultiplexer in '../Common/source/Multiplexer.js'
+  host HostedActionParticleShape hostedParticle
+  in [~a] list
+  in [TVMazeShow] shows
+  consume set of action
+
 recipe TVMazeDemo
   create as query
   TVMazeSearchBar
@@ -27,20 +48,43 @@ recipe TVMazeDemo
   TileMultiplexer
     list = shows
     hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    list = shows
+    shows = shows
+    hostedParticle = TVMazeShowActions
   DetailSlider
     selected = selected
   TVMazeShowPanel
     show = selected
   description `search TVMaze for show information`
 
-recipe TVMazeFindDemo
-  copy #piped as find
-  create #show as show
-  TVMazeFindShow
-    find = find
+particle TVMazePipeShowPanel in './source/TVMazeShowPanel.js'
+  in [TVMazeShow] show
+  consume content
+    provide action
+    provide items
+  description `${show} details`
+
+particle SelectableImmutableTileList in '../Common/source/TileList.js'
+  in [~a] items
+  inout ~a selected
+  consume root #content
+    must provide set of tile
+    provide set of action
+  description `show ${items} as tiles`
+
+recipe TVMazePipeDemo
+  copy #piped as show
+  map 'PROFILE_all_piped-all_tv_shows' as shows
+  slot 'rootslotid-root' as root
+  TVMazePipeShowPanel
     show = show
-  DetailSlider
-    selected = show
-  TVMazeShowPanel
-    show = show
-  description `find ${TVMazeFindShow.find} in TVMaze`
+    consume content as root
+  SelectableImmutableTileList
+    consume root as root
+    items = shows
+    selected = selected
+  TileMultiplexer
+    list = shows
+    hostedParticle = TVMazeShowTile
+  description `see info for ${TVMazePipeShowPanel.show} from TVMaze`

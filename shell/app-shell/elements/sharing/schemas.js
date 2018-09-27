@@ -82,6 +82,43 @@ const schemas = {
         externalManifest: 'URL'
       }
     }
+  },
+  TVMazeQuery: {
+    tag: 'Entity',
+    data: {
+      names: ['TVMazeQuery'],
+      fields: {
+        'query': 'Text',
+        'type': 'Text'
+      }
+    }
+  },
+  TVMazeFind: {
+    tag: 'Entity',
+    data: {
+      names: ['TVMazeFind'],
+      fields: {
+        'name': 'Text',
+        'type': 'Text'
+      }
+    }
+  },
+  TVMazeShow: {
+    tag: 'Entity',
+    data: {
+      names: ['TVMazeShow'],
+      fields: {
+        'showid': 'Text',
+        'name': 'Text',
+        'description': 'Text',
+        'image': 'Text',
+        'network': 'Text',
+        'day': 'Text',
+        'time': 'Text',
+        'favorite': 'Boolean',
+        'delete': 'Boolean'
+      }
+    }
   }
 };
 

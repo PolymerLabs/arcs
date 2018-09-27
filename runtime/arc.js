@@ -161,7 +161,7 @@ export class Arc {
             if (value == null) {
               return null;
             }
-            
+
             let result;
             if (value.rawData) {
               result = {$id: id};
@@ -182,7 +182,7 @@ export class Arc {
           if (!context.dataResources.has(storageKey)) {
             const storeId = `${id}_Data`;
             context.dataResources.set(storageKey, storeId);
-            // TODO: can't just reach into the store for the backing Store like this, should be an 
+            // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
             await handle.ensureBackingStore();
             await this._serializeHandle(handle.backingStore, context, storeId);
@@ -190,7 +190,7 @@ export class Arc {
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
         }
-  
+
         context.resources += `resource ${id}Resource\n`;
         let indent = '  ';
         context.resources += indent + 'start\n';
@@ -457,11 +457,11 @@ ${this.activeRecipe.toString()}`;
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
-      // asks for one of these there's a conflict. Ideally these will end up as a 
+      // asks for one of these there's a conflict. Ideally these will end up as a
       // part of the context and will be populated on-demand like everything else.
       if (this._storesById.has(recipeHandle.id)) {
         continue;
-      } 
+      }
 
       let storageKey = recipeHandle.storageKey;
       if (!storageKey) {
@@ -520,7 +520,7 @@ ${this.activeRecipe.toString()}`;
     }
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(store, 'store with id ${id} already exists');
+    assert(store, `failed to create store with id [${id}]`);
     store.name = name;
 
     this._registerStore(store, tags);

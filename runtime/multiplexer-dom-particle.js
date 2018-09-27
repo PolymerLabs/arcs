@@ -38,11 +38,11 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // (perhaps id to index) to make sure we don't map a handle into the inner
       // arc multiple times unnecessarily.
       otherMappedHandles.push(
-          `map '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
+          `use '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
       let hostedOtherConnection = hostedParticle.connections.find(
           conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
-        otherConnections.push(`${hostedOtherConnection.name} <- v${index++}`);
+        otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
         // TODO(wkorman): For items with embedded recipes where we may have a
         // different particle rendering each item, we need to track
         // |connByHostedConn| keyed on the particle type.

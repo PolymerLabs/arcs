@@ -123,7 +123,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     log('arc preparation');
     log('---------------');
     // make an id
-    const id = 'app-shell-' + ArcsUtils.randomId();
+    //const id = 'app-shell-' + ArcsUtils.randomId();
+    const id = key;
     // construct storageKey
     const storageKeyBase = config.storageKeyBase || Firebase.storageKey;
     const storageKey = config.useStorage ? `${storageKeyBase}/arcs/${key}` : null;

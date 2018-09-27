@@ -120,10 +120,13 @@ const template = html`
 
   <device-client-pipe
     context="{{context}}"
+    userid="{{userid}}"
     arc="{{arc}}"
     suggestions="{{suggestions}}"
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
+    on-key="_onStateData"
+    on-replan="_onReplan"
   ></device-client-pipe>
 
   <!-- pretend this is a processing arc -->
@@ -306,6 +309,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSerialization(e, serialization) {
     this._setState({pendingSerialization: serialization});
+  }
+  _onReplan() {
+    // hackity hack
+    this.shadowRoot.querySelector('arc-planner')._state.planificator._onDataChange();
   }
 }
 
