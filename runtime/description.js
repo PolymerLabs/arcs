@@ -351,7 +351,8 @@ export class DescriptionFormatter {
         let storeValue = await this._formatStoreValue(token.handleName, token._store);
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
-          if (storeValue && !token._store.type.isCollection && !this.excludeValues) {
+          // TODO: should this look at type.getContainedType() (which includes references), or maybe just type.isEntity?
+          if (storeValue && !this.excludeValues && !token._store.type.isCollection && !token._store.type.isBigCollection) {
             return storeValue;
           }
         }
@@ -393,7 +394,8 @@ export class DescriptionFormatter {
   }
 
   async _propertyTokenToString(handleName, store, properties) {
-    assert(!store.type.isCollection, `Cannot return property ${properties.join(',')} for collection`);
+    assert(!store.type.isCollection && !store.type.isBigCollection,
+           `Cannot return property ${properties.join(',')} for Collection or BigCollection`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     let valueVar = await store.get();
     if (valueVar) {
@@ -422,6 +424,13 @@ export class DescriptionFormatter {
       if (values && values.length > 0) {
         return this._formatCollection(handleName, values);
       }
+    } else if (store.type.isBigCollection) {
+      let cursorId = await store.stream(1);
+      let {value, done} = await store.cursorNext(cursorId);
+      store.cursorClose(cursorId);
+      if (!done && value[0].rawData.name) {
+        return await this._formatBigCollection(handleName, value[0]);
+      }
     } else {
       let value = await store.get();
       if (value) {
@@ -439,6 +448,10 @@ export class DescriptionFormatter {
     } else {
       return `${values.length} items`;
     }
+  }
+
+  _formatBigCollection(handleName, firstValue) {
+    return `collection of items like ${firstValue.rawData.name}`;
   }
 
   _formatSingleton(handleName, value, handleDescription) {

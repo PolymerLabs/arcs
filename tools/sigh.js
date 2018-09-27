@@ -480,18 +480,19 @@ async function watch([arg, ...moreArgs]) {
     ignored: /(node_modules|\/build\/|ts-build|\.git)/,
     persistent: true
   });
-  let version = 0;
-  let task = Promise.resolve(true);
+  let timerId = 0;
   let changes = new Set();
-  watcher.on('change', async (path, stats) => {
-    let current = ++version;
-    changes.add(path);
-    await task;
-    if (current <= version) {
-      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
-      changes.clear();
-      task = run(funsAndArgs);
+  watcher.on('change', path => {
+    if (timerId) {
+      clearTimeout(timerId);
     }
+    changes.add(path);
+    timerId = setTimeout(async () => {
+      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
+      changes.clear();
+      await run(funsAndArgs);
+      timerId = 0;
+    }, 500);
   });
 
   // TODO: Is there a better way to keep the process alive?

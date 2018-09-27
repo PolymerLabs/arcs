@@ -44,7 +44,6 @@ export async function resetStorageForTesting(key) {
 }
 
 class FirebaseKey extends KeyBase {
-  private protocol: string;
   databaseUrl?: string;
   projectId?: string;
   apiKey?: string;

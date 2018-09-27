@@ -40,8 +40,10 @@ export abstract class AppBase {
   /** Configure Express middleware. */
   private middleware(): void {
     this.express.use(logger('dev'));
-    this.express.use(bodyParser.json());
-    this.express.use(bodyParser.urlencoded({ extended: false }));
+    // This larger setting is required to support PouchDB replication.
+    // TODO(lindner): move to a config location and document this.
+    this.express.use(bodyParser.json({limit: '5mb'}));
+    this.express.use(bodyParser.urlencoded({ limit: '5mb', extended: false }));
   }
 
   /**
@@ -49,7 +51,10 @@ export abstract class AppBase {
    * checked first.  If not found then the legacy arcs directory is searched.
    */
   private addStaticRoutes(): void {
-    this.express.use(express.static('public'));
+    // TODO(lindner): disabling because pouchdb needs to access the root level json
+    // and fauxton cannot run under a subdirectory.
+    // see https://github.com/pouchdb/pouchdb-fauxton/issues/18
+    // this.express.use(express.static('public'));
     this.express.use(express.static('node_modules/arcs'));
   }
 

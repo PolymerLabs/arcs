@@ -216,7 +216,6 @@ const StyleSheet = Xen.html`
   ::slotted([slotid=suggestions]) {
     display: flex;
     flex-direction: column;
-    padding: 10px;
   }
   [tools] {
     position: fixed;

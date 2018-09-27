@@ -12,30 +12,40 @@ import {StorageProviderFactory} from '../ts-build/storage/storage-provider-facto
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
-import {assert} from '../test/chai-web.js';
-import {resetInMemoryStorageForTesting} from '../ts-build/storage/in-memory-storage.js';
+import 'chai/register-assert';
 
-// Resolves when the two stores are synchronzied with each other:
-// * same version
-// * no pending changes
-async function synchronized(store1, store2, delay=1) {
-  while (store1._hasLocalChanges || store2._hasLocalChanges || store1.versionForTesting != store2.versionForTesting) {
-    await new Promise(resolve => {
-      setTimeout(resolve, delay);
-    });
-  }
-}
+import {PouchDbStorage} from '../ts-build/storage/pouchdb/pouch-db-storage.js';
 
-describe('in-memory', function() {
+const testUrl = 'pouchdb://memory/user-test';
+
+// TODO(lindner): run tests for remote and local variants
+const testUrlReplicated = 'pouchdb://memory/user-test';
+
+describe('pouchdb', function() {
+  this.timeout(10000); // eslint-disable-line no-invalid-this
 
   let lastStoreId = 0;
   function newStoreKey(name) {
-    return `in-memory`;
+    return `${testUrl}/${name}-${lastStoreId++}`;
   }
 
-  before(() => {
+  // TODO(lindner): switch back to before()?
+  beforeEach(async () => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
-    resetInMemoryStorageForTesting();
+    await PouchDbStorage.resetPouchDbStorageForTesting(testUrl);
+  });
+
+  let storageInstances = [];
+
+  function createStorage(id) {
+    let storage = new StorageProviderFactory(id);
+    storageInstances.push(storage);
+    return storage;
+  }
+
+  after(() => {
+    storageInstances.map(s => s.shutdown());
+    storageInstances = [];
   });
 
   describe('variable', () => {
@@ -45,13 +55,13 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value = 'Hi there' + Math.random();
       let variable = await storage.construct('test0', BarType, newStoreKey('variable'));
       await variable.set({id: 'test0:test', value});
       let result = await variable.get();
-      assert.equal(value, result.value);
+      assert.equal(result.value, value);
     });
 
     it('resolves concurrent set', async () => {
@@ -60,15 +70,24 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('variable');
       let var1 = await storage.construct('test0', BarType, key);
-      let var2 = await storage.connect('test0', BarType, var1.storageKey);
-      await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
-      assert.deepEqual(await var1.get(), await var2.get());
-    });
+      assert.isNotNull(var1);
+      let var2 = await storage.connect(
+        'test0',
+        BarType,
+        key
+      );
+      assert.isNotNull(var2);
 
+      await var1.set({id: 'id1', value: 'value1'});
+      await var2.set({id: 'id2', value: 'value2'});
+      const v1 = await var1.get();
+      const v2 = await var2.get();
+      assert.deepEqual(v1, v2);
+    });
     it('enables referenceMode by default', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
@@ -76,22 +95,21 @@ describe('in-memory', function() {
       `);
 
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
-  
+      let key1 = newStoreKey('varPtr');
+
       let var1 = await storage.construct('test0', BarType, key1);
       await var1.set({id: 'id1', value: 'underlying'});
-      
+
       let result = await var1.get();
-      assert.equal('underlying', result.value);
+      assert.equal(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
       assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
     });
-
     it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
@@ -99,13 +117,13 @@ describe('in-memory', function() {
       `);
 
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
+      let key1 = newStoreKey('varPtr');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
       await var1.set({id: 'id1', storageKey: 'underlying'});
-      
+
       let result = await var1.get();
       assert.equal('underlying', result.storageKey);
 
@@ -121,7 +139,7 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value1 = 'Hi there' + Math.random();
       let value2 = 'Goodbye' + Math.random();
@@ -129,7 +147,7 @@ describe('in-memory', function() {
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
-      assert.equal(value1, result.value);
+      assert.equal(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
@@ -139,32 +157,38 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
       let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
-      collection1.store({id: 'id1', value: 'value'}, ['key1']);
-      await collection2.store({id: 'id1', value: 'value'}, ['key2']);
-      await synchronized(collection1, collection2);
+      let collection2 = await storage.connect(
+        'test1',
+        BarType.collectionOf(),
+        key
+      );
+      const c1 = collection1.store({id: 'id1', value: 'value'}, ['key3']);
+      await collection2.store({id: 'id1', value: 'value'}, ['key4']);
+      await c1;
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
+
     it('resolves concurrent add/remove of same id', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
       let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
-      collection1.store({id: 'id1', value: 'value'}, ['key1']);
-      collection2.store({id: 'id1', value: 'value'}, ['key2']);
-      collection1.remove('id1', ['key1']);
-      collection2.remove('id1', ['key2']);
-      await synchronized(collection1, collection2);
+      let collection2 = await storage.connect(
+        'test1',
+        BarType.collectionOf(),
+        key
+      );
+      await Promise.all([collection1.store({id: 'id1', value: 'value'}, ['key1']), collection2.store({id: 'id1', value: 'value'}, ['key2'])]);
+      await Promise.all([collection1.remove('id1', ['key1']), collection2.remove('id1', ['key2'])]);
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());
     });
@@ -174,14 +198,17 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
       let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      let collection2 = await storage.connect(
+        'test1',
+        BarType.collectionOf(),
+        key
+      );
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
-      await synchronized(collection1, collection2);
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
@@ -192,15 +219,15 @@ describe('in-memory', function() {
       `);
 
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
-  
+      let key1 = newStoreKey('colPtr');
+
       let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
-  
+
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.equal('value1', result.value);
       result = await collection1.get('id2');
@@ -209,24 +236,25 @@ describe('in-memory', function() {
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
 
-      assert.deepEqual(await collection1.backingStore.toList(), await collection1.toList());
+      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
+      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
     });
     it('supports references', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-  
+
       let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
+      let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
-  
+      let key1 = newStoreKey('colPtr');
+
       let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
-  
+
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.equal('value1', result.storageKey);
       result = await collection1.get('id2');
@@ -234,102 +262,7 @@ describe('in-memory', function() {
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
-    }); 
-  });
-
-  describe('big collection', () => {
-    it('supports get, store and remove (including concurrently)', async () => {
-      let manifest = await Manifest.parse(`
-        schema Bar
-          Text data
-      `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('bigcollection');
-      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
-      let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
-
-      // Concurrent writes to different ids.
-      await Promise.all([
-        collection1.store({id: 'id1', data: 'ab'}, ['k34']),
-        collection2.store({id: 'id2', data: 'cd'}, ['k12'])
-      ]);
-      assert.equal((await collection2.get('id1')).data, 'ab');
-      assert.equal((await collection1.get('id2')).data, 'cd');
-
-      await collection1.remove('id2');
-      assert.isNull(await collection2.get('id2'));
-
-      // Concurrent writes to the same id.
-      await Promise.all([
-        collection1.store({id: 'id3', data: 'xx'}, ['k65']),
-        collection2.store({id: 'id3', data: 'yy'}, ['k87'])
-      ]);
-      assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
-
-      assert.isNull(await collection1.get('non-existent'));
-      await collection1.remove('non-existent');
-    });
-
-    it('supports version-stable streamed reads', async () => {
-      let manifest = await Manifest.parse(`
-        schema Bar
-          Text data
-      `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('bigcollection');
-      let collection = await storage.construct('test0', BarType.bigCollectionOf(), key);
-
-      let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
-      for (let i = 0; i < ids.length; i++) {
-        await collection.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
-      }
-
-      // Re-store a couple of ids to change the insertion order of the collection's internal map
-      // so we know the cursor is correctly ordering results based on the index.
-      await collection.store({id: 'p07', data: 'vp07'}, ['kXX']);
-      await collection.store({id: 'q04', data: 'vq04'}, ['kYY']);
-
-      let checkNext = async (cursorId, ids) => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isFalse(done);
-        assert.equal(value.length, ids.length);
-        for (let i = 0; i < value.length; i++) {
-          assert.equal(value[i].id, ids[i]);
-          assert.equal(value[i].data, 'v' + ids[i]);
-        }
-      };
-
-      let checkDone = async cursorId => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isTrue(done);
-        assert.isUndefined(value);
-      };
-
-      let cursorId1 = await collection.stream(6);
-      await checkNext(cursorId1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
-
-      await collection.store({id: 'f11', data: 'vf11'}, ['kf11']);
-      await collection.remove('g08');
-      await collection.remove('z03');
-
-      // Interleave another cursor at a different version.
-      let cursorId2 = await collection.stream(20);
-      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
-      await checkNext(cursorId2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
-      
-      await checkNext(cursorId1, ['x09', 'o10', 'p07', 'q04']);
-      await checkDone(cursorId1);
-      await checkDone(cursorId2);
-
-      // Verify close().
-      let cursorId3 = await collection.stream(3);
-      await checkNext(cursorId3, ['r01', 'i02', 'h05']);
-      collection.cursorClose(cursorId3);
-      await checkDone(cursorId3);
     });
   });
+  // TODO(lindner): add big collection tests here when implemented.
 });

@@ -68,7 +68,7 @@ describe('demo', function() {
     browser.click(suggestion1);
     await browser.waitForExist(particle1, 10000);
     browser.click(particle1);
-    await browser.waitForExist(suggestion2, 15000);
+    await browser.waitForExist(suggestion2, 30000);
     browser.click(suggestion2);
     await browser.waitForExist(particle2, 5000);
   });
