@@ -54,6 +54,7 @@ const ArcsUtils = {
       './': './',
       'assets': `${arcsRoot}/shell/assets`,
       'https://$shell': `${arcsRoot}`,
+      'https://$artifacts': `${arcsRoot}/artifacts`,
       // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
       'worker-entry.js': `${arcsRoot}/shell/${lib}/worker-entry.js`,
       // BC
