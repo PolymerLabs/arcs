@@ -16,14 +16,10 @@ const template = html`
     :host {
       display: flex;
       align-items: center;
-      padding: 6px 16px 4px 16px;
-      margin: 6px;
+      padding: 6px;
       line-height: 20px;
       font-size: 14px;
       letter-spacing: 0.25px;
-      border: 1px solid #E6E6E6;
-      border-radius: 16px;
-      background-color: white;
       color: black;
       cursor: pointer;
       transition: all 150ms;
@@ -37,11 +33,68 @@ const template = html`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: var(--suggestion-wrap);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    :host > div > div {
+      background: rgba(3,169,244,0.05);
+      border: 1px solid rgba(0,0,0,.1);
+      border-radius: 24px;
+      min-height: 40px;
+      position: relative;
+      transition: all 0.3s ease-in-out;
+      width: 100%;
+    }
+    :host([inline]) > div > div {
+      width: auto;
+    }
+    @-webkit-keyframes glowing {
+      0% {
+        background: rgba(3,169,244,0.05);
+        // background: rgba(3,169,244,0);
+        box-shadow: 0 0 20px rgba(3, 169, 244, 0);
+      }
+      25% {
+        background: rgba(3,169,244,0.2);
+        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+      }
+      50% {
+        background: rgba(3,169,244,.3);
+        box-shadow: 0 0 20px rgba(3, 169, 244, .3);
+      }
+      75% {
+        background: rgba(3,169,244,0.2);
+        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+      }
+      100% {
+        background: rgba(3,169,244,0.05);
+        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+      }
+    }
+    :host([inline]) > div > div > div {
+      -webkit-animation-name: glowing;
+      -webkit-animation-fill-mode: forwards;
+      -webkit-animation-duration: 1.8s;
+      -webkit-animation-timing-function: ease-in-out;
+      -webkit-animation-iteration-count: 2;
+      text-align: center;
+    }
+    :host > div > div > div {
+      background-color: #fefefe;
+      border-radius: 24px;
+      padding: 10px 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 
   <div>
-    <slot on-mouseover="_onMouseover" on-mouseout="_onMouseout"></slot>
+    <div>
+      <div>
+        <slot on-mouseover="_onMouseover" on-mouseout="_onMouseout"></slot>
+      </div>
+    </div>
   </div>
 `;
 
