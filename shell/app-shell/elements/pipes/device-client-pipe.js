@@ -180,7 +180,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     this._setState({arc});
     const {key} = this._state;
     // TODO(sjmiles): mark this arc as shared
-    Firebase.db.child(`arcs/${key}/metadata`).update({/*description: 'Piped Data',*/ share: 2});
+    Firebase.db.child(`arcs/${key}/metadata`).update({/*description: 'Piped Data', */share: 2});
   }
 }
 customElements.define('device-client-pipe', DeviceClientPipe);
