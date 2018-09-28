@@ -242,7 +242,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       return;
     }
     if (key === Const.SHELLKEYS.launcher) {
-      if (launcherPlan && !state.launched) {
+      if (arc && arc.findStoreById('SYSTEM_arcs') && launcherPlan && !state.launched) {
         log('instantiating launcher');
         state.launched = true;
         arc.instantiate(launcherPlan);
