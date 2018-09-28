@@ -82,7 +82,7 @@ defineParticle(({DomParticle, html, log}) => {
     render({items, selected}) {
       const sorted = items.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
       const selectedId = selected && selected.id;
-      log(`selected: ${selectedId}`);
+      //log(`selected: ${selectedId}`);
       return {
         items: {
           $template: 'tiled-items',

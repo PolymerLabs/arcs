@@ -62,7 +62,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
       this._requireSystemUser(context),
-      this._requireProfileAllPipedAllTvShows(context)
+      this._requireProfileAllPipedAllTvShows(context),
+      this._requireBoxedShowsTiles(context)
     ]);
     this._fire('stores');
   }
@@ -139,6 +140,16 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     };
     this._setState({userStore, user});
+  }
+  async _requireBoxedShowsTiles(context) {
+    const options = {
+      schema: schemas.TVMazeShow,
+      name: 'BOXED_shows-tiles',
+      id: 'BOXED_shows-tiles',
+      tags: ['BOXED_shows-tiles'],
+      isCollection: true
+    };
+    await this._requireStore(context, '', options);
   }
   async _requireProfileAllPipedAllTvShows(context) {
     const options = {

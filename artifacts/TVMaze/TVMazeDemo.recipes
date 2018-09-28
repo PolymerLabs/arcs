@@ -8,6 +8,7 @@
 
 import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'
+
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
 
@@ -88,3 +89,101 @@ recipe TVMazePipeDemo
     list = shows
     hostedParticle = TVMazeShowTile
   description `see info for ${TVMazePipeShowPanel.show} from TVMaze`
+
+schema User
+  Text id
+  Text name
+  Object location
+
+particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
+  in User user
+  in [TVMazeShow] boxed
+  inout [TVMazeShow] display
+  consume root
+    provide shows
+    provide recommended
+    provide searchbar
+    provide search
+
+particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
+  out TVMazeQuery query
+  consume root
+
+recipe TVMazeUberDemo
+  map 'BOXED_shows-tiles' as boxedShows
+  map 'PROFILE_all_piped-all_tv_shows' as pipedShows
+  map 'SYSTEM_user' as user
+  create #display as display
+  create #selected as selected
+  //
+  TVMazeDemoShell
+    user = user
+    boxed = boxedShows
+    display = display
+    consume root as root
+      provide recommended as recommended
+      provide shows as shows
+      provide searchbar as searchbar
+      provide search as search
+  //
+  // slot `shows` holds my primary show list
+  // which is filtered out of `boxedShows`
+  SelectableImmutableTileList
+    consume root as shows
+      provide tile as tile1
+      provide action as action1
+    items = display
+    selected = selected
+  TileMultiplexer
+    list = display
+    hostedParticle = TVMazeShowTile
+    consume tile as tile1
+  //
+  // slot `recommended` holds recommendations
+  // which are pulled from `pipedShows`
+  SelectableImmutableTileList
+    consume root as recommended
+      provide tile as tile2
+      provide action as action2
+    items = pipedShows
+    selected = selected
+  TileMultiplexer
+    list = pipedShows
+    hostedParticle = TVMazeShowTile
+    consume tile as tile2
+  ActionMultiplexer
+    list = pipedShows
+    shows = pipedShows
+    hostedParticle = TVMazeShowActions
+    consume action as action2
+  //
+  // slot `search` contains search ui
+  create as query
+  TVMazeSearchBarRoot
+    consume root as searchbar
+    query = query
+  create as foundshows
+  TVMazeSearchShows
+    query = query
+    shows = foundshows
+  SelectableImmutableTileList
+    consume root as search
+      provide tile as tile3
+      provide action as action3
+    items = foundshows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile3
+    list = foundshows
+    hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    consume action as action3
+    list = foundshows
+    shows = foundshows
+    hostedParticle = TVMazeShowActions
+  // Detail View
+  DetailSlider
+    selected = selected
+  TVMazeShowPanel
+    show = selected
+  description `uber TV!`
