@@ -38,18 +38,40 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({user, boxed, display, recommended}) {
-      if (user && boxed && display) {
-        const myShows = this.boxQuery(boxed, user.id);
-        this.clearHandle('display');
-        this.appendRawDataToHandle('display', myShows);
+    update({user, boxed, display, recentShows}, state) {
+      if (recentShows) {
+        const show = recentShows[0];
+        if (show && (!state.lastShow || show.showid !== state.lastShow.showid)) {
+          state.lastShow = show;
+          log('selecting', show);
+          this.handles.get('selected').set(show);
+        }
       }
-    }
-    render({}, {}) {
-    }
-    async onHandleUpdate(handle, update) {
-      log(handle, update);
-      await this._handlesToProps();
+      if (user && boxed) {
+        // (1) filter out shows not shared by me from the boxed shows
+        const myShows = this.boxQuery(boxed, user.id);
+        // (2) update display to match myShows with minimal change events
+        const toDelete = [];
+        const toAdd = {};
+        // build a map of wanted shows by id
+        myShows.forEach(show => toAdd[show.id] = show);
+        // for existing shows,
+        display.forEach(show => {
+          if (toAdd[show.id]) {
+            // if the show is already in display, do nothing
+            toAdd[show.id] = null;
+          } else {
+            // if this show is not part of myShows, remove it
+            toDelete.push(show);
+          }
+        });
+        // this is the output handle
+        const displayHandle = this.handles.get('display');
+        // remove old shows
+        toDelete.forEach(show => displayHandle.remove(show));
+        // add new shows
+        Object.values(toAdd).forEach(show => show && displayHandle.store(show));
+      }
     }
   };
 });

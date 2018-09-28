@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, _fetch, html}) => {
+defineParticle(({DomParticle, html}) => {
 
   const host = `[show-artist]`;
 
@@ -115,7 +115,7 @@ ${styles}
 
       if (!state.fetching) {
         this._setState({fetching: true});
-        _fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
+        fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
             .then(async response => this._processResponse(await response.json()));
       }
 

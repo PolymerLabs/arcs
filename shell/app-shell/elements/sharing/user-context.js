@@ -62,6 +62,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
       this._requireSystemUser(context),
+      this._requireProfilePipedTvShow(context),
       this._requireProfileAllPipedAllTvShows(context),
       this._requireBoxedShowsTiles(context)
     ]);
@@ -147,6 +148,16 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       name: 'BOXED_shows-tiles',
       id: 'BOXED_shows-tiles',
       tags: ['BOXED_shows-tiles'],
+      isCollection: true
+    };
+    await this._requireStore(context, '', options);
+  }
+  async _requireProfilePipedTvShow(context) {
+    const options = {
+      schema: schemas.TVMazeShow,
+      name: 'PROFILE_piped-tv_show',
+      id: 'PROFILE_piped-tv_show',
+      tags: ['piped', 'tv_show'],
       isCollection: true
     };
     await this._requireStore(context, '', options);

@@ -46,7 +46,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
       }
-      if (plan && plan.plan && plan !== oldProps.plan && !Const.SHELLKEYS[key]) {
+      if (arc && plan && plan.plan && plan !== oldProps.plan && !Const.SHELLKEYS[key]) {
         log('plan changed, good time to serialize?');
         const serialization = await arc.serialize();
         // on return from asynchrony, validate serialization

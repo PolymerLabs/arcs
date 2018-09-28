@@ -16,7 +16,7 @@ defineParticle(({DomParticle, html}) => {
 
   const template = html`
 
-<div ${host}>
+<div ${host} hidden="{{hidden}}">
   <style>
     [${host}] {
       padding: 16px;
@@ -61,11 +61,16 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(show);
     }
     render({show}) {
-      if (show.length) {
+      if ('length' in show) {
         show = show[0];
       }
+      const hidden = Boolean(!show);
+      if (hidden) {
+        show = Object;
+      }
       return {
-        image: show.image,
+        hidden,
+        image: show.image || '',
         description: show.description,
         network: show.network,
         day: show.day ? `${show.day}s` : '(n/a)',

@@ -437,7 +437,7 @@ export class Planificator {
       }
     } else {
       this._current.contextual = current.contextual;
-      console.log(`Plans were not updated (total: ${current.plans.length}, append: ${append})`);
+      current.plans && console.log(`Plans were not updated (total: ${current.plans.length}, append: ${append})`);
     }
   }
 
