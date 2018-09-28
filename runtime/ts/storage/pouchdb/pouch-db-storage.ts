@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../../../platform/assert-web.js';
-import {StorageBase, StorageProviderBase} from '../storage-provider-base.js';
+import {StorageBase} from '../storage-provider-base.js';
 import {PouchDbKey} from './pouch-db-key.js';
 import {Id} from '../../id.js';
 import {Type} from '../../type.js';
@@ -20,8 +20,11 @@ import PouchDB from 'pouchdb';
 import PouchDbMemory from 'pouchdb-adapter-memory';
 
 export class PouchDbStorage extends StorageBase {
-  // TODO(lindner) add global weak map of keys and handle replication events.
-  private readonly remoteStateChangedHandlers: Map<string, PouchDbStorageProvider> = new Map();
+  /**
+   * A map of the key location to the actual provider.
+   * Used for replication callbacks and as a short-circuit for the connect method.
+   */
+  private readonly providerByLocationCache: Map<string, PouchDbStorageProvider> = new Map();
 
   // Used for reference mode
   private readonly baseStores: Map<Type, PouchDbCollection> = new Map();
@@ -56,12 +59,10 @@ export class PouchDbStorage extends StorageBase {
 
   async _construct(id: string, type: Type, keyFragment: string) {
     const key = new PouchDbKey(keyFragment);
-    const keystr = key.toString();
-
     const provider = this.newProvider(type, undefined, id, key.toString());
 
     // Used to track changes for the key.
-    this.remoteStateChangedHandlers.set(key.location, provider);
+    this.providerByLocationCache.set(key.location, provider);
 
     return provider;
   }
@@ -71,10 +72,25 @@ export class PouchDbStorage extends StorageBase {
    * Returns null if no such storage key exists.
    */
   async connect(id: string, type: Type, key: string): Promise<PouchDbStorageProvider> {
-    const imKey = new PouchDbKey(key);
+    const pouchKey = new PouchDbKey(key);
 
-    // TODO(lindner): fail if not created.
-    return this.construct(id, type, key);
+    // Check if we have an already allocated instance
+    const provider = this.providerByLocationCache.get(pouchKey.location);
+    if (provider) {
+      return provider;
+    }
+
+    // Use a simple fetch to see if the document exists
+    try {
+      // TODO(lindner): optimize away this call.
+      await this.dbForKey(pouchKey).get(pouchKey.toString());
+      return this.construct(id, type, key);
+    } catch (err) {
+      if (err === 'not_found') {
+        return null;
+      }
+      throw err;
+    }
   }
 
   /** Unit tests should call this in an 'after' block. */
@@ -120,7 +136,7 @@ export class PouchDbStorage extends StorageBase {
     return new PouchDbKey(s);
   }
 
-  /** Ceates a new Variable or Collection given basic parameters */
+  /** Creates a new Variable or Collection given basic parameters */
   newProvider(type: Type, name, id, key): PouchDbStorageProvider {
     if (type.isCollection) {
       return new PouchDbCollection(type, this, name, id, key);
@@ -213,11 +229,10 @@ export class PouchDbStorage extends StorageBase {
       if (dir === 'pull') {
         // handle change from the server
         for (const doc of info.change.docs) {
-          const handler = this.remoteStateChangedHandlers.get(doc._id);
+          // Find the handler for the id and pass the changed doc to it.
+          const handler = this.providerByLocationCache.get(doc._id);
           if (handler) {
-            // TODO(lindner): pass the doc into this method to avoid
-            // extra round-trip fetches.
-            handler.onRemoteStateSynced();
+            handler.onRemoteStateSynced(doc);
           }
         }
       }
