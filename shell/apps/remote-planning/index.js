@@ -6,6 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import ShellPlanningInterface from './interface.js';
+import {ShellPlanningInterface} from './interface.js';
 
 ShellPlanningInterface.start();
