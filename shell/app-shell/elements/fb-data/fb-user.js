@@ -91,6 +91,7 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
       schema: schemas.ArcMetadata,
       type: '[ArcMetadata]',
       name: 'ArcMetadata',
+      id: 'SYSTEM_arcs',
       tags: ['arcmetadata', 'nosync'],
       storageKey: 'in-memory'
     };
