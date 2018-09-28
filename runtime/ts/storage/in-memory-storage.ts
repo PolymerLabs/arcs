@@ -548,8 +548,7 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-		// TODO
-    throw new Error('InMemoryBigCollection does not yet implement cloneFrom');
+    // TODO
   }
 
   // Returns {version, model: [{id, index, value, keys: []}]}
