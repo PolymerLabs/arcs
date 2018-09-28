@@ -83,9 +83,8 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
         state.stores = true;
         this._requireFindStore(arc);
       }
-      if (state.findStore && entity.name && entity.name !== state.lastFind) {
-        state.lastFind = entity.name;
-        this._setPipedEntity(state.findStore, entity);
+      if (state.stores) {
+        this._updateEntity(entity, state);
       }
       if (metaplans && context) {
         this._updateMetaplans(metaplans, context);
@@ -94,6 +93,16 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   }
   _render(props, state) {
     return [props, state];
+  }
+  _updateEntity(entity, state) {
+    const stores = {
+      show: state.findStore
+    };
+    const store = stores[entity.type];
+    if (store) {
+      state.entity = entity;
+      this._setPipedEntity(store, entity);
+    }
   }
   _setPipedEntity(store, rawData) {
     const entity = {
