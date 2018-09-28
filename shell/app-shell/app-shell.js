@@ -242,19 +242,18 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       return;
     }
     if (key === Const.SHELLKEYS.launcher) {
-      if (launcherPlan && !state.launched) {
+      if (!state.launched && launcherPlan && arc && arc.findStoreById('SYSTEM_arcs')) {
         log('instantiating launcher');
         state.launched = true;
         arc.instantiate(launcherPlan);
-      }
-    } else {
-      state.launched = false;
-      if (suggestion && suggestion !== oldState.suggestion) {
+      } else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
         state.suggestion = null;
         state.pendingSuggestion = suggestion;
         this._setKey('*');
       }
+    } else {
+      state.launched = false;
     }
     if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.plans.length) {
       log('matching pending launcher suggestion');
