@@ -81,19 +81,31 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     if (entity) {
       if (arc && !state.stores) {
         state.stores = true;
-        this._requireFindStore(arc);
+        this._requireFindShowStore(arc);
+        this._requireFindShowcaseArtistStore(arc);
       }
-      if (state.findStore && entity.name && entity.name !== state.lastFind) {
-        state.lastFind = entity.name;
-        this._setPipedEntity(state.findStore, entity);
+      if (state.stores) {
+        this._updateEntity(entity, state);
+        state.entity = null;
       }
-      if (metaplans && context) {
-        this._updateMetaplans(metaplans, context);
-      }
+    }
+    if (metaplans && context) {
+      this._updateMetaplans(metaplans, context);
     }
   }
   _render(props, state) {
     return [props, state];
+  }
+  _updateEntity(entity, state) {
+    const stores = {
+      tv_show: state.findShowStore,
+      artist: state.findShowcaseArtistStore
+    };
+    const store = stores[entity.type];
+    if (store) {
+      state.entity = entity;
+      this._setPipedEntity(store, entity);
+    }
   }
   _setPipedEntity(store, rawData) {
     const entity = {
@@ -106,19 +118,34 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     // force replanning here
     this._fire('replan');
   }
-  async _requireFindStore(context) {
+  async _requireFindShowStore(context) {
     const options = {
-      schema: schemas.TVMazeFind,
-      name: 'TVMazeFind',
-      id: 'TVMazeFind',
-      tags: ['piped']
+      schema: schemas.TVMazeFind
     };
+    const store = this._requireStore(context, options);
+    this._setState({findShowStore: store});
+  }
+  async _requireFindShowcaseArtistStore(context) {
+    const options = {
+      schema: schemas.ShowcaseArtistFind
+    };
+    const store = this._requireStore(context, options);
+    this._setState({findShowcaseArtistStore: store});
+  }
+  async _requirePlayRecordStore(context) {
+    const options = {
+      schema: schemas.ShowcasePlayRecord
+    };
+    const store = this._requireStore(context, options);
+    this._setState({findArtistStore: store});
+  }
+  _requireStore(context, options) {
     const schemaType = Arcs.Type.fromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const findStore = (context.findStoresByType(typeOf) || [])[0];
-    //const findStore = await Stores.createContextStore(context, options);
-    log(`${findStore ? 'found' : 'MISSING'} findStore`);
-    this._setState({findStore});
+    const store = (context.findStoresByType(typeOf) || [])[0];
+    //const store = await Stores.createContextStore(context, options);
+    log(`${store ? 'found' : 'MISSING'} ${options.schema.data.names[0]}`);
+    return store;
   }
   _updateMetaplans(metaplans, context) {
     if (metaplans.plans) {
@@ -161,3 +188,5 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   }
 }
 customElements.define('device-client-pipe', DeviceClientPipe);
+
+//ShellApi.receiveEntity('{"type": "artist", "name": "alice in chains"}')

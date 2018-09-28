@@ -88,8 +88,8 @@ const schemas = {
     data: {
       names: ['TVMazeQuery'],
       fields: {
-        'query': 'Text',
-        'type': 'Text'
+        'type': 'Text',
+        'query': 'Text'
       }
     }
   },
@@ -98,8 +98,8 @@ const schemas = {
     data: {
       names: ['TVMazeFind'],
       fields: {
-        'name': 'Text',
-        'type': 'Text'
+        'type': 'Text',
+        'name': 'Text'
       }
     }
   },
@@ -117,6 +117,43 @@ const schemas = {
         'time': 'Text',
         'favorite': 'Boolean',
         'delete': 'Boolean'
+      }
+    }
+  },
+  ShowcaseArtistFind: {
+    tag: 'Entity',
+    data: {
+      names: ['ShowcaseArtistFind'],
+      fields: {
+        'type': 'Text',
+        'name': 'Text'
+      }
+    }
+  },
+  ShowcaseArtist: {
+    tag: 'Entity',
+    data: {
+      names: ['ShowcaseArtist'],
+      fields: {
+        'artistid': 'Text',
+        'type': 'Text',
+        'name': 'Text',
+        'url': 'URL',
+        'imageUrl': 'URL',
+        'description': 'Text',
+        'detailedDescription': 'Text'
+      }
+    }
+  },
+  ShowcasePlayRecord: {
+    tag: 'Entity',
+    data: {
+      names: ['ShowcasePlayRecord'],
+      fields: {
+        'type': 'Text',
+        'artist': 'Text',
+        'song': 'Text',
+        'dateTime': 'Text'
       }
     }
   }

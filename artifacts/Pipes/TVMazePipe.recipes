@@ -1,0 +1,26 @@
+schema TVMazeFind
+  Text name
+  Text type
+
+particle BackgroundProcess in 'source/BackgroundProcess.js'
+  consume root
+
+schema TVMazeShow
+  Text showid
+  Text name
+  Text description
+  Text image
+  Text network
+  Text day
+  Text time
+  Boolean favorite
+  Boolean delete
+
+particle TVMazeFindShow in '../TVMaze/source/TVMazeFindShow.js'
+  in TVMazeFind find
+  out TVMazeShow show
+  //out [Description] descriptions
+
+particle AddToTvMazeCollection in './source/AddToCollection.js'
+  in TVMazeShow item
+  inout [TVMazeShow] collection

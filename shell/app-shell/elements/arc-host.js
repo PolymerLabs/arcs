@@ -164,6 +164,12 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       storageKey: state.storageKey
     };
     log('about to construct an arc; # context stores:', state.context.stores.length);
+    // notify console
+    if (serialization) {
+      groupCollapsed('serialization:');
+      log('serialization:', serialization);
+      groupEnd();
+    }
     // attempt to construct arc
     let arc;
     try {
@@ -172,12 +178,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       warn('failed to deserialize arc, will retry');
       warn(x);
       return serialization;
-    }
-    // notify console
-    if (serialization) {
-      groupCollapsed('deserialized arc:');
-      log('serialization:', serialization);
-      groupEnd();
     }
     // cache new objects
     this._setState({slotComposer, arc});

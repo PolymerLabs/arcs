@@ -116,18 +116,37 @@ export class DomParticleBase extends Particle {
       }
     }
   }
+  /** @method mergeEntitiesToHandle(handleName, entityArray)
+   * Merge entities from Array into named handle.
+   */
+  async mergeEntitiesToHandle(handleName, entities) {
+    //const handle = this.handles.get(handleName);
+    const idMap = {};
+    const handleEntities = this._props[handleName];
+    handleEntities.forEach(entity => idMap[entity.id] = entity);
+    const handle = this.handles.get(handleName);
+    for (const entity of entities) {
+      if (!idMap[entity.id]) {
+        handle.store(entity);
+      }
+    }
+    //Promise.all(entities.map(entity => !idMap[entity.id] && handle.store(entity)));
+    //Promise.all(entities.map(entity => handle.store(entity)));
+  }
+  /** @method appendEntitiesToHandle(handleName, entityArray)
+   * Append entities from Array to named handle.
+   */
+  async appendEntitiesToHandle(handleName, entities) {
+    const handle = this.handles.get(handleName);
+    Promise.all(entities.map(entity => handle.store(entity)));
+  }
   /** @method appendRawDataToHandle(handleName, rawDataArray)
    * Create an entity from each rawData, and append to named handle.
    */
   async appendRawDataToHandle(handleName, rawDataArray) {
     const handle = this.handles.get(handleName);
     const entityClass = handle.entityClass;
-    for (const raw of rawDataArray) {
-      await handle.store(new entityClass(raw));
-    }
-    //rawDataArray.forEach(raw => {
-    //  handle.store(new entityClass(raw));
-    //});
+    Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
@@ -139,9 +158,9 @@ export class DomParticleBase extends Particle {
     handle.set(entity);
     return entity;
   }
-  /** @method updateSet(handleName, record)
-   * Modify or insert `record` into named handle.
-   * Modification is done by removing the old record and reinserting the new one.
+  /** @method updateSet(handleName, entity)
+   * Modify or insert `entity` into named handle.
+   * Modification is done by removing the old entity and reinserting the new one.
    */
   updateSet(handleName, entity) {
     // Set the entity into the right place in the set. If we find it

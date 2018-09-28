@@ -8,6 +8,7 @@
 
 import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'
+
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
 
@@ -32,32 +33,6 @@ particle ActionMultiplexer in '../Common/source/Multiplexer.js'
   in [TVMazeShow] shows
   consume set of action
 
-recipe TVMazeDemo
-  create as query
-  TVMazeSearchBar
-    query = query
-  create #tiles #shows as shows
-  TVMazeSearchShows
-    query = query
-    shows = shows
-  create #selected as selected
-  SelectableTileList
-    consume root as root
-    items = shows
-    selected = selected
-  TileMultiplexer
-    list = shows
-    hostedParticle = TVMazeShowTile
-  ActionMultiplexer
-    list = shows
-    shows = shows
-    hostedParticle = TVMazeShowActions
-  DetailSlider
-    selected = selected
-  TVMazeShowPanel
-    show = selected
-  description `search TVMaze for show information`
-
 particle TVMazePipeShowPanel in './source/TVMazeShowPanel.js'
   in [TVMazeShow] show
   consume content
@@ -73,18 +48,115 @@ particle SelectableImmutableTileList in '../Common/source/TileList.js'
     provide set of action
   description `show ${items} as tiles`
 
-recipe TVMazePipeDemo
-  copy #piped as show
-  map 'PROFILE_all_piped-all_tv_shows' as shows
-  slot 'rootslotid-root' as root
-  TVMazePipeShowPanel
-    show = show
-    consume content as root
-  SelectableImmutableTileList
+schema User
+  Text id
+  Text name
+  Object location
+
+particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
+  in [TVMazeShow] recentShows
+  inout TVMazeShow selected
+  in User user
+  in [TVMazeShow] boxed
+  inout [TVMazeShow] display
+  consume root
+    provide shows
+    provide recommended
+    provide searchbar
+    provide search
+
+particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
+  out TVMazeQuery query
+  consume root
+
+recipe TVMazeUberDemo
+  // all shows shared with me
+  map 'BOXED_shows-tiles' as boxedShows
+  // filter out 'my' shows from boxedShows using user.id
+  map 'SYSTEM_user' as user
+  // all shows I've looked at on my device
+  map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
+  // most recent show(s)
+  map 'PROFILE_piped-tv_show' as pipedShows
+  // shows to display (all my collected shows)
+  create #display as display
+  // selected show (for detail)
+  create #selected as selected
+  // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
+  create #shows #tiles as myshows
+  //
+  TVMazeDemoShell
+    user = user
+    boxed = boxedShows
+    display = display
+    selected = selected
+    recentShows = pipedShows
     consume root as root
-    items = shows
+      provide recommended as recommended
+      provide shows as shows
+      provide searchbar as searchbar
+      provide search as search
+  //
+  // slot `shows` holds my primary show list
+  // which is filtered out of `boxedShows`
+  SelectableImmutableTileList
+    consume root as shows
+      provide tile as tile1
+      provide action as action1
+    items = display
     selected = selected
   TileMultiplexer
-    list = shows
+    list = display
     hostedParticle = TVMazeShowTile
-  description `see info for ${TVMazePipeShowPanel.show} from TVMaze`
+    consume tile as tile1
+  //
+  // slot `recommended` holds recommendations
+  // which are pulled from `allPipedShows`
+  SelectableImmutableTileList
+    consume root as recommended
+      provide tile as tile2
+      provide action as action2
+    items = allPipedShows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile2
+    list = allPipedShows
+    hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    consume action as action2
+    list = allPipedShows
+    shows = myshows
+    hostedParticle = TVMazeShowActions
+  //
+  // slot `search` contains search ui
+  create as query
+  TVMazeSearchBarRoot
+    consume root as searchbar
+    query = query
+  create as foundshows
+  TVMazeSearchShows
+    query = query
+    shows = foundshows
+  SelectableImmutableTileList
+    consume root as search
+      provide tile as tile3
+      provide action as action3
+    items = foundshows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile3
+    hostedParticle = TVMazeShowTile
+    list = foundshows
+  ActionMultiplexer
+    consume action as action3
+    hostedParticle = TVMazeShowActions
+    list = foundshows
+    shows = myshows
+  //
+  // Detail View
+  DetailSlider
+    selected = selected
+  TVMazeShowPanel
+    show = selected
+  //
+  description `find out about ${TVMazeShowPanel.show} from TVMaze`
