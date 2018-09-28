@@ -1,21 +1,11 @@
-import {UserPlanner} from './user-planner.js';
-import {UserContext} from './shell/user-context.js';
-import {ArcFactory} from './arc-factory.js';
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
 
-//const userid = '-LMtek9Mdy1iAc3MAkNx'; // Doug
-//const userid = '-LMtek9Nzp8f5pwiLuF6'; // Maria
-const userid = '-LMtek9LSN6eSMg97nXV'; // Cletus
+import ShellPlanningInterface from './interface.js';
 
-const manifest = `
-  import 'https://$artifacts/canonical.manifest'
-`;
-
-const start = async () => {
-  const factory = new ArcFactory();
-  const context = await factory.createContext(manifest);
-  const user = new UserContext();
-  user._setProps({userid, context});
-  const planner = new UserPlanner(factory, context, userid);
-};
-
-start();
+ShellPlanningInterface.start();

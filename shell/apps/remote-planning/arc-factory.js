@@ -1,3 +1,11 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
 import {Arc} from '../../../runtime/arc.js';
 import {BrowserLoader} from './shell/browser-loader.js';
 import {MockSlotComposer} from './runtime/mock-slot-composer.js';
@@ -15,12 +23,15 @@ LoaderKind.fetch = fetch;
 const ComposerKind = MockSlotComposer;
 
 const ArcFactory = class {
-  constructor() {
+  constructor(overridePath) {
+    // Allow caller to specify where to find assets
+    const path = overridePath ? overridePath : '../../../';
+
     this.loader = new LoaderKind({
-      'https://$cdn/': '../../../',
-      'https://$shell/': '../../../',
-      'https://$artifacts/': '../../../artifacts/',
-      'https://sjmiles.github.io/': '../../../../'
+      'https://$cdn/': path,
+      'https://$shell/': path,
+      'https://$artifacts/': path + 'artifacts/',
+      'https://sjmiles.github.io/': path + '../'
     });
     //console.log(loader);
     //console.log(slotComposer);
