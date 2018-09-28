@@ -49,6 +49,8 @@ requiring an upgrade to our current version.
    $ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
    ```
 
+   If you're using zsh you may need to `source ~/.nvm/nvm.sh` after this.
+
 1) Install node.
 
    ```
