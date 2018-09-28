@@ -96,6 +96,15 @@ export class SuggestionStorage {
     this._suggestionsUpdatedCallbacks.forEach(callback => callback({plans}));
   }
 
+  dispose() {
+    if (this._store) {
+      this._store.off('change', this._storeCallback);
+      this._store = null;
+    }
+    this._storePromise = null;
+    this._suggestionsUpdatedCallbacks = [];
+  }
+
   registerSuggestionsUpdatedCallback(callback) {
     this._suggestionsUpdatedCallbacks.push(callback);
   }

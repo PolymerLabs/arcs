@@ -185,6 +185,10 @@ export class Planificator {
     this._plansChangedCallbacks = [];
     this._suggestChangedCallbacks = [];
     this._stateChangedCallbacks = [];
+    if (this._storage) {
+      this._storage.dispose();
+      this._storage = null;
+    }
   }
 
   get userid() { return this._userid; }
