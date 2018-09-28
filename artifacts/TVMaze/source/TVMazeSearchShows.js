@@ -23,7 +23,7 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (!state.receiving) {
-        if (query && query.query !== state.query) {
+        if (query && query.query && query.query !== state.query) {
           state.receiving = true;
           state.query = query.query;
           log('fetching for query', query.query);
