@@ -36,7 +36,7 @@ import {
   V1VolumeMount
 } from "@kubernetes/client-node";
 
-import {ARCS_NODE_LABEL, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+import {ARCS_KEY_PREFIX, ARCS_NODE_LABEL, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
 import {
   ARCS_DOCKER_IMAGE,
   ARCS_INGRESS_PREFIX,
@@ -47,6 +47,7 @@ import {
 } from "./k18s-constants";
 import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
 import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
+import {CloudManager} from "../cloud";
 
 /**
  * An implementation of the Container interface that uses Kubernetes for
@@ -69,8 +70,21 @@ class K18sPod implements Container {
       return 'https://' + this.ingress.spec.rules[0].host + '/' + this.v1Service.metadata.name;
   }
 
-  disk(): PromiseLike<Disk> {
-    return Promise.reject("not yet implemented");
+  status(): string {
+    return this.v1Pod.status.phase;
+  }
+
+  async disk(): Promise<Disk> {
+    const diskManager = CloudManager.forGCP().disks();
+
+    const disks = await Promise.all(Object.keys(this.v1Pod.metadata.labels)
+       .filter(x => x.startsWith(ARCS_KEY_PREFIX))
+       .map(x => diskManager.find(x.substring(ARCS_KEY_PREFIX.length))));
+    if (disks != null && disks.length > 0) {
+      const disk:Disk = disks[0] as Disk;
+      return Promise.resolve(disk);
+    }
+    return Promise.reject(new Error("Container has no disk associated"));
   }
 
   async node(): Promise<string> {

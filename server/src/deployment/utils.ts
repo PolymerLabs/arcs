@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-const ARCS_KEY_PREFIX = 'arcs-key-';
+export const ARCS_KEY_PREFIX = 'arcs-key-';
 
 /**
  * Used to tag which compute VM hosts the kubernetes pods holding NodeJS VMs,

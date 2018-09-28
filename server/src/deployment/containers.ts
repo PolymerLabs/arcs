@@ -24,6 +24,8 @@ export interface Container {
    */
   disk(): PromiseLike<Disk>;
 
+  status(): string;
+  
   /**
    * Return an externally accessible URL that maps to the running
    * node VM.

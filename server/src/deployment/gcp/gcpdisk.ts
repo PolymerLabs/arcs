@@ -116,7 +116,6 @@ export class GCPDiskManager implements DiskManager {
     };
 
     config['labels'][arcskey] = true;
-    config['annotations'][arcskey] = rewrappedKey;
 
     try {
       const compute:Compute = new BetaCompute();

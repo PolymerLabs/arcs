@@ -9,6 +9,7 @@
 import {AppBase} from "./app";
 import {Cloud, CloudManager} from "./deployment/cloud";
 import {Container} from "./deployment/containers";
+import express from "express";
 
 /**
  * A server for managing a collection of pouchdbapp VMs, including creating and deploying new ones,
@@ -22,10 +23,10 @@ class ArcsMasterApp extends AppBase {
 
   protected addRoutes() {
     super.addRoutes();
-    this.express.get('/:fingerprint', this.findDeployment.bind(this));
+    this.express.get('/find/:fingerprint', this.findDeployment.bind(this));
     this.express.get('/deploy/:fingerprint/:wrappedkey', this.deploy.bind(this));
     this.express.get('/mount/:fingerprint/:wrappedkey', this.deploy.bind(this));
-
+    this.express.use(express.static('public'));
   }
 
   /**
@@ -50,11 +51,11 @@ class ArcsMasterApp extends AppBase {
         if (attached) {
           const container: Container | null = await cloud.containers().find(fingerprint);
           if (container != null) {
-            const url = container.url();
-            if (url === 'pending') {
+            const status = container.status();
+            if (status !== 'Running') {
               res.send('{"id": "' + fingerprint + '", "status": "pending"}');
             } else {
-              res.send('{"id": "' + fingerprint + '", "status": "attached", "url" : "' + url + '"}');
+              res.send('{"id": "' + fingerprint + '", "status": "attached", "url" : "' + container.url() + '"}');
             }
             return;
           }
@@ -82,7 +83,7 @@ class ArcsMasterApp extends AppBase {
       console.log("Disk successfully created with id " + disk.id());
       const container = await cloud.containers().deploy(fingerprint, wrappedkey, disk);
       console.log("Container successfully created with fingerprint " + fingerprint);
-      res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
+      res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/find/' + fingerprint + '"}');
     } catch (e) {
       console.log("Error");
       console.dir(e);
