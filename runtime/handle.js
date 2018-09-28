@@ -331,6 +331,12 @@ class BigCollection extends Handle {
     throw new Error('BigCollections do not support sync/update configuration');
   }
 
+  async _notify(kind, particle, details) {
+    assert(this.canRead, '_notify should not be called for non-readable handles');
+    assert(kind === 'sync', 'BigCollection._notify only supports sync events');
+    await particle.onHandleSync(this, []);
+  }
+
   /** @method store(entity)
    * Stores a new entity into the Handle.
    * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
