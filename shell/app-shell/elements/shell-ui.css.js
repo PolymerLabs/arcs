@@ -201,11 +201,11 @@ const StyleSheet = Xen.html`
   }
   ::slotted([slotid=modal]) {
     position: fixed;
+    z-index: 1000;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    /* width: 100vw; */
     max-width: var(--max-width);
     margin: 0 auto;
     padding-bottom: var(--bar-space-width);

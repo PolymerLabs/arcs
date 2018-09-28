@@ -39,10 +39,11 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
     }
     async receiveShows(data, shows) {
       log('receiveShows', data);
+      // chuck old data
+      await this.clearHandle('shows');
       // add new data
       data = data.filter(({show}) => show.image && show.image.medium && (!shows || !shows.find(s => show.id == s.showid)));
       const rawData = data.map(({show}) => this.showToEntity(show));
-      //await this.clearHandle('shows');
       await this.appendRawDataToHandle('shows', rawData);
     }
     showToEntity(show) {

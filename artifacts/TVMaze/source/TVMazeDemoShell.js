@@ -24,13 +24,13 @@ defineParticle(({DomParticle, html, log}) => {
           padding: 8px;
         }
       </style>
+      <!-- <div banner>Find Shows</div> -->
+      <div slotid="searchbar"></div>
+      <div slotid="search"></div>
       <div banner>My Shows</div>
       <div slotid="shows"></div>
       <div banner>Recommendations</div>
       <div slotid="recommended"></div>
-      <div banner>Find Shows</div>
-      <div slotid="searchbar"></div>
-      <div slotid="search"></div>
     </div>
   `;
 

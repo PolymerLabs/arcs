@@ -110,11 +110,18 @@ particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
   consume root
 
 recipe TVMazeUberDemo
+  // all shows shared with me
   map 'BOXED_shows-tiles' as boxedShows
-  map 'PROFILE_all_piped-all_tv_shows' as pipedShows
+  // filter out 'my' shows from boxedShows using user.id
   map 'SYSTEM_user' as user
+  // all shows I've looked at on my device
+  map 'PROFILE_all_piped-all_tv_shows' as pipedShows
+  // shows to display (all my collected shows)
   create #display as display
+  // selected show (for detail)
   create #selected as selected
+  // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
+  create #shows #tiles as myshows
   //
   TVMazeDemoShell
     user = user
