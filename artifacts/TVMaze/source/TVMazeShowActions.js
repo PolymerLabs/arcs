@@ -35,7 +35,7 @@ defineParticle(({DomParticle, html}) => {
       </style>
       <div bar>
         <icon>{{favorite}}</icon>
-        <icon on-click="onDelete">delete</icon>
+        <icon key="{{id}}" on-click="onDelete">delete</icon>
       </div>
     </div>
   `;
@@ -50,17 +50,18 @@ defineParticle(({DomParticle, html}) => {
           const original = shows.find(s => s.showid === show.showid);
           if (original) {
             original.favorite = !original.favorite;
-            this.updateSet('shows', original);
+            // this.updateSet('shows', original);
           }
         }
         return {
+          id: show.id,
           favorite: show.favorite ? `favorite` : `favorite_border`
         };
       }
     }
-    onDelete() {
+    onDelete(e) {
       const {show, shows} = this._props;
-      if (show && shows) {
+      if (show && shows && show.id == e.data.key) {
         console.log('DELETE', show.rawData);
       }
     }
