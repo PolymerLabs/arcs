@@ -12,7 +12,10 @@ particle Launcher in 'source/Launcher.js'
   description `arcs launcher`
 
 recipe Launcher
-  use #arcmetadata as arcs
+  // literal ids needed to avoid resolution
+  use 'SYSTEM_arcs' as arcs
+  slot 'rootslotid-root' as root
   Launcher
     arcs = arcs
+    consume root as root
 

@@ -89,8 +89,9 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
   async _createArcStore(arc) {
     const options = {
       schema: schemas.ArcMetadata,
+      name: 'SYSTEM_arcs',
+      id: 'SYSTEM_arcs',
       type: '[ArcMetadata]',
-      name: 'ArcMetadata',
       tags: ['arcmetadata', 'nosync'],
       storageKey: 'in-memory'
     };

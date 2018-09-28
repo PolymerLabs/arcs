@@ -26,7 +26,6 @@ const ArcFactory = class {
   constructor(overridePath) {
     // Allow caller to specify where to find assets
     const path = overridePath ? overridePath : '../../../';
-
     this.loader = new LoaderKind({
       'https://$cdn/': path,
       'https://$shell/': path,
