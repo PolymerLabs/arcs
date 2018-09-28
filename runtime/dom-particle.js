@@ -110,11 +110,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
   async _handlesToProps() {
     let config = this.config;
-    // acquire (async) list data from handles
+    // acquire (async) list data from handles; BigCollections map to the handle itself
     let data = await Promise.all(
       config.handleNames
       .map(name => this.handles.get(name))
-      .map(handle => handle.toList ? handle.toList() : handle.get())
+      .map(handle => {
+        if (handle.toList) return handle.toList();
+        if (handle.get) return handle.get();
+        return handle;
+      })
     );
     // convert handle data (array) into props (dictionary)
     let props = Object.create(null);

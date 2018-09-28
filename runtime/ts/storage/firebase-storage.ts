@@ -60,7 +60,7 @@ class FirebaseKey extends KeyBase {
       if (this.databaseUrl && this.databaseUrl.endsWith('.firebaseio.com')) {
         this.projectId = this.databaseUrl.split('.')[0];
       } else {
-        throw new Error("FirebaseKey must end with .firebaseio.com");
+        throw new Error('FirebaseKey must end with .firebaseio.com');
       }
       this.apiKey = parts[1];
       this.location = parts.slice(2).join('/');
@@ -1025,13 +1025,13 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async getMultiple(ids) {
-    assert(!this.referenceMode, "getMultiple not implemented for referenceMode stores");
+    assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
     await this.initialized;
     return ids.map(id => this.model.getValue(id));
   }
 
   async storeMultiple(values, keys, originatorId=null) {
-    assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
+    assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
     values.map(value => {
       this.model.add(value.id, value, keys);
       if (!this.localChanges.has(value.id)) {
@@ -1353,11 +1353,19 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     return false;
   }
 
-  // TODO: cloneFrom, toLiteral, fromLiteral ?
+  // TODO: cloneFrom, toLiteral, fromLiteral
   // A cloned instance will probably need to reference the same Firebase URL but collect all
   // modifications locally for speculative execution.
 
+  async cloneFrom(handle) {
+    throw new Error('FirebaseBigCollection does not yet implement cloneFrom');
+  }
+
   toLiteral() {
-    assert(false, "no toLiteral implementation on bigCollection");
+    throw new Error('FirebaseBigCollection does not yet implement toLiteral');
+  }
+
+  fromLiteral({version, model}) {
+    throw new Error('FirebaseBigCollection does not yet implement fromLiteral');
   }
 }
