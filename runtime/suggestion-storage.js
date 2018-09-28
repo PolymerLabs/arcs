@@ -28,21 +28,33 @@ export class SuggestionStorage {
     this._recipeResolver = new RecipeResolver(this._arc);
     this._suggestionsUpdatedCallbacks = [];
 
-    let suggestionsSchema = new Schema({
-      names: ['Suggestions'],
-      fields: {current: 'Object'}
+    this._storeCallback = () => this._onStoreUpdated();
+    this._storePromise = this._initStore(`${userid}-suggestions`, this._storageKey, async (store) => {
+      this._store = store;
+      await this._onStoreUpdated();
+      this._store.on('change', this._storeCallback, this);
     });
-    this._storePromise = this._arc._storageProviderFactory._storageForKey(this.storageKey)._join(
-        `${this.userid}-suggestions`,
-        Type.newEntity(suggestionsSchema),
-        this._storageKey,
-        /* shoudExist= */ 'unknown',
-        /* referenceMode= */ false);
-    this._storePromise.then((store) => {
-        this._store = store;
-        this._store.on('change', () => this._onStoreUpdated(), this);
-      },
-      (e) => console.error(`Failed to initialize suggestion store at '${this._storageKey}' with error: ${e}`));
+
+    // Fallback to 'launcher' suggestions, if the arc is empty.
+    // TODO: consider alternative solutions, e.g (1) store empty serialization for the new arc or
+    // (2) monitor arc existence under /users/userid/arcs/.
+    if (this._arcKey != 'launcher' && this._arc.activeRecipe.particles.length == 0 && this._arc._stores.length == 0) {
+      this._initStore(
+          `${userid}-launchersuggestions`,
+          this._storageKey.replace(this._arcKey, 'launcher'),
+          async (store) => await this._onStoreUpdated(store));
+    }
+  }
+
+  _initStore(id, storageKey, callback) {
+    let schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
+    let type = Type.newEntity(schema);
+    const promise = this._arc._storageProviderFactory._storageForKey(storageKey)._join(
+        id, type, storageKey, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
+    promise.then(
+      async (store) => await callback(store),
+      (e) => console.error(`Failed to initialize suggestions store '${storageKey}' with error: ${e}`));
+    return promise;
   }
 
   get storageKey() { return this._storageKey; }
@@ -53,28 +65,32 @@ export class SuggestionStorage {
     assert(this._store, `Store couldn't be initialized`);
   }
 
-  async _onStoreUpdated() {
+  async _onStoreUpdated(store) {
     if (this._suggestionsUpdatedCallbacks.length == 0) {
       // Suggestion store was updated, but there are no callback listening
       // to the updates - do nothing.
       return;
     }
 
-    let value = (await this._store.get()) || {};
+    let value = (await (store || this._store).get()) || {};
     if (!value.current) {
       return;
     }
 
     let plans = [];
     for (let {descriptionText, recipe, hash, rank, suggestionContent} of value.current.plans) {
-      plans.push({
-        plan: await this._planFromString(recipe),
-        descriptionText,
-        recipe,
-        hash,
-        rank,
-        suggestionContent
-      });
+      try {
+        plans.push({
+          plan: await this._planFromString(recipe),
+          descriptionText,
+          recipe,
+          hash,
+          rank,
+          suggestionContent
+        });
+      } catch (e) {
+        console.error(`Failed to parse plan ${e}.`);
+      }
     }
     console.log(`Suggestions store was updated, ${plans.length} suggestions fetched.`);
     this._suggestionsUpdatedCallbacks.forEach(callback => callback({plans}));
