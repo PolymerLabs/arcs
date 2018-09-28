@@ -9,4 +9,7 @@ schema PlayRecord
   Text artist
   Text song
   Number dateTime
-
+  // The location at which the song was played, as
+  // { geoCoords: latitude: X, longitude: Y }
+  Object location
+  Text formattedAddress
