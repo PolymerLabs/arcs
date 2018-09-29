@@ -154,6 +154,9 @@ const schemas = {
         'artist': 'Text',
         'song': 'Text',
         'dateTime': 'Text'
+      },
+      description: {
+        pattern: '${song} from ${artist}'
       }
     }
   }

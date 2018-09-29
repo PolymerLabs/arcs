@@ -16,6 +16,7 @@ schema TVMazeShow
   Text time
   Boolean favorite
   Boolean delete
+  description `${name} is on ${network} at ${time} on {$day}`
 
 particle TVMazeShowTile in './source/TVMazeShowTile.js'
   in TVMazeShow show
