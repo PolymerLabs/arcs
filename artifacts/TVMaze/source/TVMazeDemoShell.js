@@ -48,30 +48,31 @@ defineParticle(({DomParticle, html, log}) => {
         }
       }
       if (user && boxed) {
-        // (1) filter out shows not shared by me from the boxed shows
-        const myShows = this.boxQuery(boxed, user.id);
-        // (2) update display to match myShows with minimal change events
-        const toDelete = [];
-        const toAdd = {};
-        // build a map of wanted shows by id
-        myShows.forEach(show => toAdd[show.id] = show);
-        // for existing shows,
-        display.forEach(show => {
-          if (toAdd[show.id]) {
-            // if the show is already in display, do nothing
-            toAdd[show.id] = null;
-          } else {
-            // if this show is not part of myShows, remove it
-            toDelete.push(show);
-          }
-        });
-        // this is the output handle
-        const displayHandle = this.handles.get('display');
-        // remove old shows
-        toDelete.forEach(show => displayHandle.remove(show));
-        // add new shows
-        Object.values(toAdd).forEach(show => show && displayHandle.store(show));
+        this.findMyBoxedShows(user, boxed, display, this.handles.get('display'));
       }
+    }
+    findMyBoxedShows(user, boxed, display, output) {
+      // (1) filter out shows not shared by me from the boxed shows
+      const myShows = this.boxQuery(boxed, user.id);
+      // (2) update display to match myShows with minimal change events
+      const toDelete = [];
+      const toAdd = {};
+      // build a map of wanted shows by id
+      myShows.forEach(show => toAdd[show.id] = show);
+      // for existing shows,
+      display.forEach(show => {
+        if (toAdd[show.id]) {
+          // if the show is already in display, do nothing
+          toAdd[show.id] = null;
+        } else {
+          // if this show is not part of myShows, remove it
+          toDelete.push(show);
+        }
+      });
+      // remove old shows
+      toDelete.forEach(show => output.remove(show));
+      // add new shows
+      Object.values(toAdd).forEach(show => show && output.store(show));
     }
   };
 });

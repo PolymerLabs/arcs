@@ -5,16 +5,27 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'ShowcaseShow.recipes'
-
-particle ShowcaseArtistPeelPanel in './source/ShowcaseArtistPanel.js'
-  in [ShowcaseArtist] artist
-  consume root #content
-    provide action
-    provide items
+import 'ShowcaseArtist.recipes'
+import 'ShowcasePlayRecord.recipes'
+import '../Pipes/PopCollectionItem.manifest'
 
 recipe ShowcaseArtistDemo
   map 'PROFILE_piped-showcase_artist' as artists
-  ShowcaseArtistPeelPanel
-    artist = artists
-  description `see info about ${ShowcaseArtistPeelPanel.artist}`
+  create as artist
+  PopCollectionItem
+    collection = artists
+    item = artist
+  ShowcaseArtistPanel
+    artist = artist
+  description `see info about ${ShowcaseArtistPanel.artist}`
+
+recipe ShowcasePlayRecordDemo
+  map 'PROFILE_piped-showcase_play_record' as playRecords
+  create as playRecord
+  PopCollectionItem
+    collection = playRecords
+    item = playRecord
+  ShowcasePlayRecordItem
+    playRecord = playRecord
+  description `you listened to ${ShowcasePlayRecordItem}`
+

@@ -13,9 +13,8 @@ import Firebase from '../../../lib/firebase.js';
 import Arcs from '../../../lib/arcs.js';
 import '../background-arcs/bg-arc.js';
 import {schemas} from '../sharing/schemas.js';
-import {Stores} from '../sharing/stores.js';
 
-// DeviceClient object supplied externally, otherwise a mock
+// DeviceClient object supplied externally, otherwise a fake
 const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
   },
@@ -83,6 +82,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
         state.stores = true;
         this._requireFindShowStore(arc);
         this._requireFindShowcaseArtistStore(arc);
+        this._requireShowcasePlayRecordStore(arc);
       }
       if (state.stores) {
         this._updateEntity(entity, state);
@@ -99,7 +99,8 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   _updateEntity(entity, state) {
     const stores = {
       tv_show: state.findShowStore,
-      artist: state.findShowcaseArtistStore
+      artist: state.findShowcaseArtistStore,
+      play_record: state.playRecordStore
     };
     const store = stores[entity.type];
     if (store) {
@@ -132,12 +133,12 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     const store = this._requireStore(context, options);
     this._setState({findShowcaseArtistStore: store});
   }
-  async _requirePlayRecordStore(context) {
+  async _requireShowcasePlayRecordStore(context) {
     const options = {
       schema: schemas.ShowcasePlayRecord
     };
     const store = this._requireStore(context, options);
-    this._setState({findArtistStore: store});
+    this._setState({playRecordStore: store});
   }
   _requireStore(context, options) {
     const schemaType = Arcs.Type.fromLiteral(options.schema);

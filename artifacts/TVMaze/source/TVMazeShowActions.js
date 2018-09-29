@@ -42,17 +42,21 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    render({show, shows}) {
+    render({show}, state) {
       if (show) {
+        if (!('favorite' in state)) {
+          state.favorite = show.favorite;
+        }
         return {
           showid: show.id,
-          favorite: show.favorite ? `favorite` : `favorite_border`
+          favorite: state.favorite ? `favorite` : `favorite_border`
         };
       }
     }
     onFavorite() {
       const {show} = this._props;
       if (show) {
+        this._setState({favorite: true});
         this.updateSet('shows', show);
       }
     }

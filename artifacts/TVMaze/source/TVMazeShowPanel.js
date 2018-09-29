@@ -10,7 +10,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
 
   const host = `tv-maze-show-panel`;
 
@@ -59,6 +59,18 @@ defineParticle(({DomParticle, html}) => {
     }
     shouldRender({show}) {
       return Boolean(show);
+    }
+    update({show, boxed, user}) {
+      if (show && boxed && user) {
+        boxed.forEach(item => {
+          if (item.showid === show.showid) {
+            const owner = item.getUserID().split('|')[0];
+            if (owner !== user.id) {
+              log(`${owner} is also watching ${show.name}`);
+            }
+          }
+        });
+      }
     }
     render({show}) {
       if ('length' in show) {

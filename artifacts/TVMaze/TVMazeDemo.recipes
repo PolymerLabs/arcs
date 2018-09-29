@@ -33,13 +33,6 @@ particle ActionMultiplexer in '../Common/source/Multiplexer.js'
   in [TVMazeShow] shows
   consume set of action
 
-particle TVMazePipeShowPanel in './source/TVMazeShowPanel.js'
-  in [TVMazeShow] show
-  consume content
-    provide action
-    provide items
-  description `${show} details`
-
 particle SelectableImmutableTileList in '../Common/source/TileList.js'
   in [~a] items
   inout ~a selected
@@ -68,6 +61,15 @@ particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
 particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
   out TVMazeQuery query
   consume root
+
+particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
+  in TVMazeShow show
+  in [TVMazeShow] boxed
+  in User user
+  consume content
+    provide action
+    provide items
+  description `${show} details`
 
 recipe TVMazeUberDemo
   // all shows shared with me
@@ -156,7 +158,10 @@ recipe TVMazeUberDemo
   // Detail View
   DetailSlider
     selected = selected
-  TVMazeShowPanel
+  TVMazeShowMultiPanel
     show = selected
+    boxed = boxedShows
+    user = user
   //
-  description `find out about ${TVMazeShowPanel.show} from TVMaze`
+  //description `find out about ${TVMazeShowPanel.show} from TVMaze`
+  description `${TVMazeShowMultiPanel.show.name} is on ${TVMazeShowMultiPanel.show.network} at ${TVMazeShowMultiPanel.show.time} on ${TVMazeShowMultiPanel.show.day}`
