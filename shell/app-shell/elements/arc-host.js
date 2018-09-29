@@ -152,6 +152,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     }
     // TODO(sjmiles): temporarily elide search info, it seems to choke the deserializer
     serialization = serialization.replace(/search `[^`]*`/, '').replace(/tokens \/\/ `[^`]*`/, '');
+    // Tearing down the existing arc, so that the DOM gets cleared before initializing
+    // slot composer.
+    // TODO: investigate why it didn't already happen.
+    this._teardownArc(state.arc);
     //
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
