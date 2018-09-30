@@ -43,7 +43,6 @@ defineParticle(({DomParticle, log}) => {
           alsoWatch = `. ${watchers.slice(0, -1).join(', ')}, and ${watchers.pop()} ${alsoWatch}`;
           break;
       }
-
       return `${show.name} is on ${show.network}${show.time ? ` at ${show.time}` : ''} on ${show.day}${alsoWatch}`;
       //return {
       //  template: `<b>${show.name}</b> is on <b>${show.network}</b> at <b>${show.time}</b> on <b>${show.day}</b>${alsoWatch} <b>${alsoShow}.</b>`,
