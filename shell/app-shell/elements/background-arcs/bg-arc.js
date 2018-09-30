@@ -28,7 +28,7 @@ const log = Xen.logFactory('BgArc', '#00a300');
 
 class BgArc extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['userid', 'key', 'manifest'];
+    return ['userid', 'key', 'context', 'manifest'];
   }
   get template() {
     return template;

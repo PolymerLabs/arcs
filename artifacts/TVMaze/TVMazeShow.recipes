@@ -14,9 +14,11 @@ schema TVMazeShow
   Text network
   Text day
   Text time
+  Text suggestion
+  Text extra
   Boolean favorite
   Boolean delete
-  description `${name} is on ${network} at ${time} on {$day}`
+  //description `${name} is on ${network} at ${time} on {$day}`
 
 particle TVMazeShowTile in './source/TVMazeShowTile.js'
   in TVMazeShow show
@@ -30,8 +32,9 @@ particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
     provide items
   description `${show} details`
 
-recipe TVMazeShowPanel
+// TODO(sjmiles): temporarily hide from coalescer
+//recipe TVMazeShowPanel
   // TODO(sjmiles): force #selected; otherwise, it tries to map to multiplexer items
-  use #selected as show
-  TVMazeShowPanel
-    show = show
+  //use #selected as show
+  //TVMazeShowPanel
+  //  show = show

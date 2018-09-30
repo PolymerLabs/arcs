@@ -43,14 +43,10 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
       }
       this.setState({receiving: false});
     }
-    async receiveShow(show) {
+    async receiveShow({show}) {
       //log(show);
-      // set show data
-      const showHandle = this.handles.get('show');
-      const Show = showHandle.entityClass;
-      show = show.show;
       if (show.image && show.image.medium) {
-        const entity = new Show({
+        this.updateVariable('show', {
           showid: String(show.id),
           name: show.name,
           description: show.summary,
@@ -59,9 +55,6 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
         });
-        //log('TVShows', JSON.stringify(entity.dataClone(), null, '  '));
-        showHandle.set(entity);
-        this.setParticleDescription(show.summary);
       }
     }
   };
