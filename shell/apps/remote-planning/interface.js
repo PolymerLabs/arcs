@@ -15,9 +15,11 @@ import {UserPlanner} from './user-planner.js';
 import {UserContext} from './shell/user-context.js';
 import {ArcFactory} from './arc-factory.js';
 
+// TODO: allow for configuration injection here.
 //const userid = '-LMtek9Mdy1iAc3MAkNx'; // Doug
 //const userid = '-LMtek9Nzp8f5pwiLuF6'; // Maria
-const userid = '-LMtek9LSN6eSMg97nXV'; // Cletus
+//const userid = '-LMtek9LSN6eSMg97nXV'; // Cletus
+const userid = '-LMtek9Mdy1iAc3MAkNw'; // Berni
 
 const manifest = `
   import 'https://$artifacts/canonical.manifest'
