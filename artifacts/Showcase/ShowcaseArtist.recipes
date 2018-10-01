@@ -20,8 +20,8 @@ particle ShowcaseArtistPanel in './source/ShowcaseArtistPanel.js'
     provide nearbyShows
     provide nowPlayingList
 
-recipe ShowcaseArtistPanel
-  map as artist
-  ShowcaseArtistPanel
-    artist = artist
-  description `see info about ${ShowcaseArtistPanel.artist}`
+//recipe ShowcaseArtistPanel
+//  map as artist
+//  ShowcaseArtistPanel
+//    artist = artist
+//  description `see info about ${ShowcaseArtistPanel.artist}`

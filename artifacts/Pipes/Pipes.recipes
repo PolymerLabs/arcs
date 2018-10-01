@@ -1,17 +1,22 @@
 import 'TVMazePipe.recipes'
 import 'ShowcaseArtistPipe.recipes'
 import 'ShowcasePlayRecordPipe.recipes'
+import 'AddCollectionItem.manifest'
 
 particle BackgroundProcess in 'source/BackgroundProcess.js'
   consume root
   in ShowcasePlayRecord playRecord
 
 recipe BackgroundPipe
-  create #piped #showcase_play_record as playRecord
   slot 'rootslotid-root' as root
+  create #piped #showcase_play_record as playRecord
+  create #all_piped #all_showcase_play_record as playRecords
   BackgroundProcess
-    playRecord = playRecord
     consume root as root
+    playRecord = playRecord
+  AddCollectionItem
+    item = playRecord
+    collection = playRecords
   //
   create as findShow
   create #piped #tv_show as show
@@ -19,15 +24,18 @@ recipe BackgroundPipe
   TVMazeFindShow
     find = findShow
     show = show
-  TvMazeAddToCollection
+  AddCollectionItem
     item = show
     collection = shows
   //
   create as findArtist
   create #piped #showcase_artist as artist
-  //create #all_piped #all_showcase_artists as artists
+  create #all_piped #all_showcase_artists as artists
   ShowcaseFindArtist
     find = findArtist
     artist = artist
+  AddCollectionItem
+    item = artist
+    collection = artists
 
 
