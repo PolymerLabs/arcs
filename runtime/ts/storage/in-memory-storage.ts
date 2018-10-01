@@ -343,6 +343,14 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async cloneFrom(handle) {
     this.referenceMode = handle.referenceMode;
+    // TODO(shans): if the handle has local modifications then cloning can fail because
+    // underlying backingStore data isn't yet available to be read. However, checking the
+    // localModified flag and calling persistChanges is really not the correct way to
+    // mitigate this problem - instead, the model provided by await handle.toLiteral() should
+    // remove local modifications that haven't been persisted.
+    if (handle.referenceMode && handle.localModified) {
+      await handle._persistChanges();
+    }
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
