@@ -11,9 +11,11 @@ import '../Places/ExtractLocation.manifest'
 import '../Things/GeoCoordinates.schema'
 import 'Artist.schema'
 import 'PlayRecord.schema'
+import 'Playlist.schema'
 
 store Store0 of Artist 'gleamedArtist' in 'artist.json'
 store Store1 of [PlayRecord] 'myNowPlayingHistory' in 'playingNowHistory.json'
+store Store2 of [Playlist] 'playlists' in 'playlists.json'
 
 particle ShowArtist in 'source/ShowArtist.js'
   in Artist artist
@@ -24,6 +26,8 @@ particle ShowArtist in 'source/ShowArtist.js'
       handle artist
     provide nowPlayingList
       handle artistPlayHistory
+    provide extrasForArtist
+      handle artist
   description `Learn more about ${artist}`
 
 particle FilterToArtist in 'source/FilterToArtist.js'
@@ -95,3 +99,31 @@ recipe
     hostedParticle = ShowRenderer
   description `${FindShows}`
 
+particle FilterPlaylists in 'source/FilterPlaylists.js'
+  in Artist artist
+  in [Playlist] allPlaylists
+  inout [Playlist] artistsPlaylists
+  consume extrasForArtist
+    provide playlistsListing
+
+particle PlaylistRenderer in 'source/PlaylistRenderer.js'
+  in Playlist playlist
+  consume item
+
+recipe ArtistsPlaylists
+  use as artist
+  map 'playlists' as allPlaylists
+  create as artistsPlaylists
+  FilterPlaylists
+    artist <- artist
+    allPlaylists <- allPlaylists
+    artistsPlaylists = artistsPlaylists
+    consume extrasForArtist
+      provide playlistsListing as slot0
+  List
+    items = artistsPlaylists
+    consume root as slot0
+  ItemMultiplexer
+    list = artistsPlaylists
+    hostedParticle = PlaylistRenderer
+  description `Listen to ${FilterPlaylists.artist} on ${FilterPlaylists.artistsPlaylists}`

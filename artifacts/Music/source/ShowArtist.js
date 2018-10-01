@@ -91,6 +91,7 @@ ${styles}
     From <b>Now playing</b>
     <div list slotid="nowPlayingList"></div>
   </div>
+  <div slotid="extrasForArtist"></div>
 </div>
   `;
 
