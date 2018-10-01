@@ -348,7 +348,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     // localModified flag and calling persistChanges is really not the correct way to
     // mitigate this problem - instead, the model provided by await handle.toLiteral() should
     // remove local modifications that haven't been persisted.
-    if (handle.localModified) {
+    if (handle.referenceMode && handle.localModified) {
       await handle._persistChanges();
     }
     const literal = await handle.toLiteral();
