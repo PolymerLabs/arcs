@@ -82,9 +82,6 @@ ${styles}
   <div slotid="extrasForArtist"></div>
 </div>
   `;
-
-  const knowledgeGraphService = 'https://kgsearch.googleapis.com/v1/entities:search?key=AIzaSyDVu27xQSI7fQ-_VvZpCH6sdVMe1mueN54&limit=1';
-
   return class extends DomParticle {
     get template() {
       return template;
@@ -95,47 +92,18 @@ ${styles}
     willReceiveProps(props) {
       if (props.artistPlayHistory.length) {
         const mostRecentTimestamp = Math.max(...props.artistPlayHistory.map(r => r.dateTime));
-        this.setParticleDescription(
-          `You've heard ${props.artist.name} on ${new Date(mostRecentTimestamp).toLocaleDateString()}`);
+        this.setParticleDescription(`You've heard ${props.artist.name} on ${new Date(mostRecentTimestamp).toLocaleDateString()}`);
       }
     }
-    render(props, state) {
-      if (!props.artist) return;
-
-      if (!state.fetching) {
-        this._setState({fetching: true});
-        fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
-            .then(async response => this._processResponse(await response.json()));
-      }
-
+    render({artist}) {
       return {
-        name: props.artist.name,
-        description: state.description || '',
-        imageUrl: state.imageUrl || '',
-        detailedDescription: state.detailedDescription || '',
+        name: artist.name,
+        description: artist.description,
+        detailedDescription: artist.detailedDescription || '',
         photoStyle: {
-          backgroundImage: state.imageUrl ? `url(${state.imageUrl})` : 'none'
+          backgroundImage: artist.imageUrl ? `url(${artist.imageUrl})` : 'none'
         },
       };
-    }
-
-    async _processResponse(response) {
-      if (response.error) {
-        console.log(response.error);
-        return;
-      }
-
-      if (response.itemListElement.length === 0) {
-        console.log('No results in the knowledge graph.');
-        return;
-      }
-
-      let result = response.itemListElement[0].result;
-      this._setState({
-        description: result.description,
-        imageUrl: result.image && result.image.contentUrl,
-        detailedDescription: result.detailedDescription && result.detailedDescription.articleBody
-      });
     }
   };
 });

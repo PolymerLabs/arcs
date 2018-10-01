@@ -9,16 +9,6 @@ import 'ShowcaseArtist.recipes'
 import 'ShowcasePlayRecord.recipes'
 import '../Pipes/PopCollectionItem.manifest'
 
-recipe ShowcaseArtistDemo
-  map 'PROFILE_piped-showcase_artist' as artists
-  create as artist
-  PopCollectionItem
-    collection = artists
-    item = artist
-  ShowcaseArtistPanel
-    artist = artist
-  description `see info about ${ShowcaseArtistPanel.artist}`
-
 recipe ShowcasePlayRecordDemo
   map 'PROFILE_piped-showcase_play_record' as playRecords
   create as playRecord
@@ -28,4 +18,3 @@ recipe ShowcasePlayRecordDemo
   ShowcasePlayRecordItem
     playRecord = playRecord
   description `you listened to ${ShowcasePlayRecordItem}`
-

@@ -9,12 +9,7 @@
 defineParticle(({DomParticle}) => {
   return class FilterToArtist extends DomParticle {
     async willReceiveProps(props, state, lastProps) {
-      if (props.artist && props.fullPlayHistory
-          // Below check is good enough for now.
-          && (!lastProps.fullPlayHistory
-              || lastProps.fullPlayHistory.length !== props.fullPlayHistory.length)) {
-        
-        await this.clearHandle('artistPlayHistory');
+      if (props.artist && props.fullPlayHistory && props.artistPlayHistory.length === 0) {
         const artistPlayHistory = this.handles.get('artistPlayHistory');
         for (const entry of props.fullPlayHistory) {
           if (entry.artist.toLowerCase() === props.artist.name.toLowerCase()) {
