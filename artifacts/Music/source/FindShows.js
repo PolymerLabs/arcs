@@ -17,7 +17,7 @@ defineParticle(({DomParticle, html, log, _fetch}) => {
   const styles = html`
   <style>
     ${host} {
-      padding: 0 24px 24px;
+      padding: 24px;
       overflow: auto;
     }
     ${host} [logo] {
@@ -52,7 +52,7 @@ defineParticle(({DomParticle, html, log, _fetch}) => {
       -webkit-animation-name: glowing;
       -webkit-animation-duration: 1.8s;
       -webkit-animation-timing-function: ease-in-out;
-      -webkit-animation-iteration-count: 2;
+      -webkit-animation-iteration-count: 1;
     }
     ${host} [glowing]:hover {
       background: rgba(3,169,244,.3);
