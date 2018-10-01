@@ -302,7 +302,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async removeMultiple(items, originatorId=null) {
-    if (items.length == 0) {
+    if (items.length === 0) {
       items = this._model.toList().map(item => ({id: item.id, keys: []}));
     }
     items.forEach(item => {

@@ -813,7 +813,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async removeMultiple(items, originatorId=null) {
     await this.initialized;
-    if (items.length == 0) {
+    if (items.length === 0) {
       items = this.model.toList().map(item => ({id: item.id, keys: []}));
     }
     items.forEach(item => {

@@ -67,7 +67,7 @@ export class ParticleExecutionHost {
     this._apiPort.onHandleRemoveMultiple = async ({handle, callback, data, particleId}) => {
       await handle.removeMultiple(data, particleId);
       this._apiPort.SimpleCallback({callback});
-    }
+    };
 
     this._apiPort.onHandleStream = async ({handle, callback, pageSize}) => {
       this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize)});
