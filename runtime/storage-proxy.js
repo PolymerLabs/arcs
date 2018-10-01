@@ -334,7 +334,6 @@ class CollectionProxy extends StorageProxyBase {
   clear(particleId) {
     if (this._synchronized != SyncState.full) {
       this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: [], particleId});
-      remove;
     }
 
     let items = this._model.toList().map(item => ({id: item.id, keys: this._model.getKeys(item.id)}));
