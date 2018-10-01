@@ -331,6 +331,21 @@ class CollectionProxy extends StorageProxyBase {
     this._notify('update', update, options => options.notifyUpdate);
   }
 
+  clear(particleId) {
+    if (this._synchronized != SyncState.full) {
+      this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: [], particleId});
+    }
+
+    let items = this._model.toList().map(item => ({id: item.id, keys: this._model.getKeys(item.id)}));
+    this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: items, particleId});
+
+    items = items.map(({id, keys}) => ({rawData: this._model.getValue(id).rawData, id, keys}));
+    items = items.filter(item => this._model.remove(item.id, item.keys));
+    if (items.length > 0) {
+      this._notify('update', {originatorId: particleId, remove: items}, options => options.notifyUpdate);
+    }
+  }
+
   remove(id, keys, particleId) {
     if (this._synchronized != SyncState.full) {
       let data = {id, keys: []};

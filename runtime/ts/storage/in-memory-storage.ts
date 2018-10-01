@@ -301,6 +301,24 @@ class InMemoryCollection extends InMemoryStorageProvider {
     trace.end({args: {value}});
   }
 
+  async removeMultiple(items, originatorId=null) {
+    if (items.length === 0) {
+      items = this._model.toList().map(item => ({id: item.id, keys: []}));
+    }
+    items.forEach(item => {
+      if (item.keys.length === 0) {
+        item.keys = this._model.getKeys(item.id);
+      }
+      item.value = this._model.getValue(item.id);
+      if (item.value !== null) {
+        item.effective = this._model.remove(item.id, item.keys);
+      }
+    });
+    this.version++;      
+
+    this._fire('change', {remove: items, version: this.version, originatorId});
+  }
+
   async remove(id, keys:string[] = [], originatorId=null) {
     const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (keys.length === 0) {

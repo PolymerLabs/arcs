@@ -177,6 +177,18 @@ class Collection extends Handle {
     return this._proxy.store(serialization, keys, this._particleId);
   }
 
+  /** @method clear()
+   * Removes all known entities from the Handle. 
+   * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
+   * in the particle's manifest.
+   */
+  async clear() {
+    if (!this.canWrite) {
+      throw new Error('Handle not writeable');
+    }
+    return this._proxy.clear();
+  }
+
   /** @method remove(entity)
    * Removes an entity from the Handle.
    * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')

@@ -811,6 +811,46 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.model.getValue(id);
   }
 
+  async removeMultiple(items, originatorId=null) {
+    await this.initialized;
+    if (items.length === 0) {
+      items = this.model.toList().map(item => ({id: item.id, keys: []}));
+    }
+    items.forEach(item => {
+      // 1. Apply the change to the local model.
+      item.value = this.model.getValue(item.id);
+      if (item.value === null) {
+        return;
+      }
+      if (item.keys.length === 0) {
+        item.keys = this.model.getKeys(item.id);
+      }
+
+      // TODO: These keys might already have been removed (concurrently).
+      // We should exit early in that case.
+      item.effective = this.model.remove(item.id, item.keys);
+    });
+    this.version++;
+
+    // 2. Notify listeners.
+    items = items.filter(item => item.value);
+    this._fire('change', {remove: items, version: this.version, originatorId});
+
+    // 3. Add this modification to the set of local changes that need to be persisted.
+    items.forEach(item => {
+      if (!this.localChanges.has(item.id)) {
+        this.localChanges.set(item.id, {add: [], remove: []});
+      }
+      const localChange = this.localChanges.get(item.id);
+      for (const key of item.keys) {
+        localChange.remove.push(key);
+      }
+    });
+
+    // 4. Wait for the changes to persist.
+    await this._persistChanges();
+  }
+
   async remove(id, keys:string[] = [], originatorId=null) {
     await this.initialized;
 
