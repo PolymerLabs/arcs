@@ -54,14 +54,6 @@ defineParticle(({DomParticle, html}) => {
     ${host} [header] [description] {
       font-size: 16px;
     }
-    ${host} [social] {
-      display: flex;
-      justify-content: space-between;
-      padding: 24px;
-    }
-    ${host} [social] [like] {
-      font-weight: bold;
-    }
     ${host} [now-playing] {
       border-top: 1px solid #ddd;
       padding: 24px 24px 16px;
@@ -81,10 +73,6 @@ ${styles}
     <div description>{{description}}</div>
     <div name>{{name}}</div>
     <div description>{{detailedDescription}}</div>
-  </div>
-  <div social>
-    <div>5 of your friends like this artist</div>
-    <div like>LIKE</div>
   </div>
   <div slotid="nearbyShows"></div>
   <div now-playing>
