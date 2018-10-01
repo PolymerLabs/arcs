@@ -1,24 +1,10 @@
 import '../Profile/User.schema'
+import '../TVMaze/TVMazeShow.schema'
+import '../Common/Description.schema'
 
 schema TVMazeFind
   Text name
   Text type
-
-schema TVMazeShow
-  Text showid
-  Text name
-  Text description
-  Text image
-  Text network
-  Text day
-  Text time
-  Text suggestion
-  Text extra
-  Boolean favorite
-  Boolean delete
-  //description `${name} is on ${network} at ${time} on {$day}`
-
-import '../Common/Description.schema'
 
 particle TVMazeFindShow in '../TVMaze/source/TVMazeFindShow.js'
   in TVMazeFind find

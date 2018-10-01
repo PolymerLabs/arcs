@@ -16,6 +16,3 @@ particle ShowcaseFindArtist in '../Showcase/source/ShowcaseFindArtist.js'
   out ShowcaseArtist artist
   //out [Description] descriptions
 
-particle AddToShowcaseCollection in './source/AddToCollection.js'
-  in ShowcaseArtist item
-  inout [ShowcaseArtist] collection

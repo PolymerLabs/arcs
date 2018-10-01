@@ -67,30 +67,30 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     return template;
   }
   _update({context, userid, metaplans}, state) {
-    const {arc, entity} = state;
     if (userid) {
       state.key = `${userid}-pipes`;
       state.manifest = `import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'`;
     }
-    if (arc && !state.registered) {
+    if (state.arc && !state.registered) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (entity) {
-      if (arc && !state.stores) {
+    if (state.entity) {
+      if (state.arc && !state.stores) {
         state.stores = true;
-        this._requireFindShowStore(arc);
-        this._requireFindShowcaseArtistStore(arc);
-        this._requireShowcasePlayRecordStore(arc);
+        this._requireFindShowStore(state.arc);
+        this._requireFindShowcaseArtistStore(state.arc);
+        this._requireShowcasePlayRecordStore(state.arc);
       }
       if (state.stores) {
-        this._updateEntity(entity, state);
+        this._updateEntity(state.entity, state);
+        state.lastEntity = state.entity;
         state.entity = null;
       }
     }
-    if (metaplans && context) {
-      this._updateMetaplans(metaplans, context);
+    if (context && state.lastEntity && metaplans && metaplans.plans) {
+      this._updateMetaplans(metaplans, context, state.lastEntity);
     }
   }
   _render(props, state) {
@@ -148,17 +148,25 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     log(`${store ? 'found' : 'MISSING'} ${options.schema.data.names[0]}`);
     return store;
   }
-  _updateMetaplans(metaplans, context) {
-    if (metaplans.plans) {
-      // find metaplans that use #piped stores
-      const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
-        const tags = context.findStoreTags(context.findStoreById(handle._id));
-        // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
-        return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
-      }));
-      if (piped.length) {
+  _updateMetaplans(metaplans, context, entity) {
+    // find metaplans that use #piped stores
+    const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
+      const tags = context.findStoreTags(context.findStoreById(handle._id));
+      // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
+      return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+    }));
+    if (piped.length) {
+      log('piped metaplans', piped);
+      const demoPlan = {
+        tv_show: 'TVMazeUberDemo',
+        artist: 'ShowcaseArtistDemo',
+        play_record: 'ShowcasePlayRecordDemo'
+      }[entity.type];
+      const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
+      log(`searching metaplans for [${demoPlan}] found`, metaplan);
+      if (metaplan) {
         // reduce plans to descriptionText
-        const suggestions = piped.map(metaplan => metaplan.descriptionText);
+        const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
         log('piped suggestions', suggestions);
         DeviceClient.foundSuggestions(JSON.stringify(suggestions));
       }
