@@ -51,25 +51,35 @@ const template = html`
     }
     @-webkit-keyframes glowing {
       0% {
-        background: rgba(3,169,244,0.05);
+        // background: rgba(3,169,244,0.05);
         // background: rgba(3,169,244,0);
-        box-shadow: 0 0 20px rgba(3, 169, 244, 0);
+        // box-shadow: 0 0 20px rgba(3, 169, 244, 0);
+        background: rgba(255,242,204,0.05);
+        box-shadow: 0 0 20px rgba(255,242,204, 0);
       }
       25% {
-        background: rgba(3,169,244,0.2);
-        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        // background: rgba(3,169,244,0.2);
+        // box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        background: rgba(255,242,204,0.5);
+        box-shadow: 0 0 40px rgba(255,242,204, 0.8);
       }
       50% {
-        background: rgba(3,169,244,.3);
-        box-shadow: 0 0 20px rgba(3, 169, 244, .3);
+        // background: rgba(3,169,244,.3);
+        // box-shadow: 0 0 20px rgba(3, 169, 244, .3);
+        background: rgba(255,242,204,1.0);
+        box-shadow: 0 0 80px rgba(255,242,204, 1);
       }
       75% {
-        background: rgba(3,169,244,0.2);
-        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        // background: rgba(3,169,244,0.2);
+        // box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        background: rgba(255,242,204,1.0);
+        box-shadow: 0 0 40px rgba(255,242,204, 0.8);
       }
       100% {
-        background: rgba(3,169,244,0.05);
-        box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        // background: rgba(3,169,244,0.05);
+        // box-shadow: 0 0 20px rgba(3, 169, 244, 0.2);
+        background: rgba(255,242,204,0.8);
+        box-shadow: 0 0 40px rgba(255,242,204, 1);
       }
     }
     :host([inline]) > div > div > div {
