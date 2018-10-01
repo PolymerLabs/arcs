@@ -1,9 +1,8 @@
+import '../Profile/User.schema'
+
 schema TVMazeFind
   Text name
   Text type
-
-particle BackgroundProcess in 'source/BackgroundProcess.js'
-  consume root
 
 schema TVMazeShow
   Text showid
@@ -13,15 +12,19 @@ schema TVMazeShow
   Text network
   Text day
   Text time
+  Text suggestion
+  Text extra
   Boolean favorite
   Boolean delete
-  description `${name} is on ${network} at ${time} on {$day}`
+  //description `${name} is on ${network} at ${time} on {$day}`
+
+import '../Common/Description.schema'
 
 particle TVMazeFindShow in '../TVMaze/source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
-  //out [Description] descriptions
 
-particle AddToTvMazeCollection in './source/AddToCollection.js'
+particle TvMazeAddToCollection in './source/AddToCollection.js'
   in TVMazeShow item
   inout [TVMazeShow] collection
+

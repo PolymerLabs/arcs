@@ -19,7 +19,7 @@ recipe BackgroundPipe
   TVMazeFindShow
     find = findShow
     show = show
-  AddToTvMazeCollection
+  TvMazeAddToCollection
     item = show
     collection = shows
   //

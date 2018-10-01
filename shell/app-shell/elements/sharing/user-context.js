@@ -70,7 +70,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
   }
   async _requireProfileFriends(context) {
     const options = {
-      schema: schemas.Person,
+      schema: schemas.User,
       name: 'PROFILE_friends',
       id: 'PROFILE_friends',
       tags: ['friends'],

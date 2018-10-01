@@ -115,6 +115,8 @@ const schemas = {
         'network': 'Text',
         'day': 'Text',
         'time': 'Text',
+        'suggestion': 'Text',
+        'extra': 'Text',
         'favorite': 'Boolean',
         'delete': 'Boolean'
       }

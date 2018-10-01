@@ -6,11 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'TVMazeShow.recipes'
-import 'TVMazeQuery.recipes'
-
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
+import '../Common/Description.schema'
+import '../Profile/User.schema'
+import '../Profile/UserName.schema'
+
+import 'TVMazeShow.recipes'
+import 'TVMazeQuery.recipes'
 
 schema TVMazeShowAction
   Text showid
@@ -41,11 +44,6 @@ particle SelectableImmutableTileList in '../Common/source/TileList.js'
     provide set of action
   description `show ${items} as tiles`
 
-schema User
-  Text id
-  Text name
-  Object location
-
 particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
   in [TVMazeShow] recentShows
   inout TVMazeShow selected
@@ -70,6 +68,13 @@ particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
     provide action
     provide items
   description `${show} details`
+
+particle TVMazeShowDecorator in './source/TVMazeShowDecorator.js'
+  in TVMazeShow show
+  in [TVMazeShow] boxedShows
+  in [UserName] boxedUserNames
+  in [User] friends
+  out [Description] descriptions
 
 recipe TVMazeUberDemo
   // all shows shared with me
@@ -163,5 +168,13 @@ recipe TVMazeUberDemo
     boxed = boxedShows
     user = user
   //
+  map 'PROFILE_friends' as friends
+  map 'BOXED_userName' as boxedUserNames
+  TVMazeShowDecorator
+    show = selected
+    boxedShows = boxedShows
+    boxedUserNames = boxedUserNames
+    friends = friends
   //description `find out about ${TVMazeShowPanel.show} from TVMaze`
-  description `${TVMazeShowMultiPanel.show.name} is on ${TVMazeShowMultiPanel.show.network} at ${TVMazeShowMultiPanel.show.time} on ${TVMazeShowMultiPanel.show.day}`
+  //description `${TVMazeShowMultiPanel.show.name} is on ${TVMazeShowMultiPanel.show.network} at ${TVMazeShowMultiPanel.show.time} on ${TVMazeShowMultiPanel.show.day}`
+  description `${TVMazeShowDecorator}`

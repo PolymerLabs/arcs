@@ -54,7 +54,7 @@ const ShellApi = window.ShellApi = {
 };
 
 const template = Xen.Template.html`
-  <bg-arc userid="{{userid}}" key="{{key}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
+  <bg-arc userid="{{userid}}" key="{{key}}" context="{{context}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');

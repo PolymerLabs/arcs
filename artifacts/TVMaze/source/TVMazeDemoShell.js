@@ -21,11 +21,21 @@ defineParticle(({DomParticle, html, log}) => {
     <div ${host}>
       <style>
         [${host}] [banner] {
-          padding: 8px;
+          padding: 8px 16px;
+        }
+        [${host}] [slotid="search"] [card] {
+          width: 128px !important;
+        }
+        [${host}] [slotid="shows"] [card] {
+          width: 224px !important;
+        }
+        [${host}] [slotid="recommended"] [card] {
+          width: 128px !important;
         }
       </style>
       <!-- <div banner>Find Shows</div> -->
       <div slotid="searchbar"></div>
+      <div banner>Search Results</div>
       <div slotid="search"></div>
       <div banner>My Shows</div>
       <div slotid="shows"></div>
