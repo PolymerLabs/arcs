@@ -2,6 +2,9 @@ import 'TVMazePipe.recipes'
 import 'ShowcaseArtistPipe.recipes'
 import 'ShowcasePlayRecordPipe.recipes'
 import 'AddCollectionItem.manifest'
+import '../Showcase/ShowcasePlayRecord.schema'
+
+store Store0 of [ShowcasePlayRecord] 'nowPlayingHistory' in 'playingNowHistory.json'
 
 particle BackgroundProcess in 'source/BackgroundProcess.js'
   consume root
@@ -10,7 +13,7 @@ particle BackgroundProcess in 'source/BackgroundProcess.js'
 recipe BackgroundPipe
   slot 'rootslotid-root' as root
   create #piped #showcase_play_record as playRecord
-  create #all_piped #all_showcase_play_record as playRecords
+  copy 'nowPlayingHistory' #all_piped #all_showcase_play_record as playRecords
   BackgroundProcess
     consume root as root
     playRecord = playRecord
