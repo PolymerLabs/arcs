@@ -27,7 +27,7 @@ defineParticle(({DomParticle, html}) => {
     </style>
     <div play-record>
       <div>{{song}}</div>
-      <div time>Heard on <span>{{dateTime}}</span></div>
+      <div time>Heard <span>{{dateTime}}</span></div>
     </div>
   `;
 
@@ -41,8 +41,21 @@ defineParticle(({DomParticle, html}) => {
     render({playRecord}) {
       return {
         song: playRecord.song,
-        dateTime: new Date(Number(playRecord.dateTime)).toLocaleDateString()
+        dateTime: this._formatTime(Number(playRecord.dateTime))
       };
+    }
+    _formatTime(dateTime) {
+      let delta = Date.now() - dateTime;
+      if (delta < 60 * 60 * 1000) {
+        let minutes =  Math.round(delta / (60 * 1000));
+        if (minutes === 0) minutes = 1;
+        return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+      } else if (delta < 24 * 60 * 60 * 1000) {
+        let hours =  Math.round(delta / (60 * 60 * 1000));
+        return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      } else {
+        return `on ${new Date(Number(dateTime)).toLocaleDateString()}`;
+      }
     }
   };
 });
