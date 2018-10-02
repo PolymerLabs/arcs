@@ -6,8 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {Handle} from '../handle.js';
+
 export class SlotInfo {
-  constructor({formFactor, handle}) {
+  formFactor: string;
+  handle: Handle;
+
+  constructor({formFactor, handle}: {formFactor: string, handle: Handle}) {
     this.formFactor = formFactor;
     this.handle = handle;
   }
