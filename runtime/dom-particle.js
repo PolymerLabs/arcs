@@ -155,4 +155,16 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       this[handler]({data}, this._state);
     }
   }
+  _debounce(key, func, delay) {
+    const subkey = `_debounce_${key}`;
+    if (!this._state[subkey]) {
+      this.startBusy();
+    }
+    const idleThenFunc = () => {
+      this.doneBusy();
+      func();
+      this._state[subkey] = null;
+    };
+    super._debounce(key, idleThenFunc, delay);
+  }
 }
