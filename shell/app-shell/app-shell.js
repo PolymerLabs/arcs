@@ -126,6 +126,7 @@ const template = html`
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
     on-key="_onStateData"
+    on-search="_onStateData"
     on-replan="_onReplan"
   ></device-client-pipe>
 

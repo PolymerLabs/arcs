@@ -66,7 +66,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
-  _update({context, userid, metaplans}, state) {
+  _update({context, userid, metaplans, suggestions}, state) {
     if (userid) {
       state.key = `${userid}-pipes`;
       state.manifest = `import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'`;
@@ -75,6 +75,24 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
+    }
+    if (context && state.lastEntity && metaplans && metaplans.plans) {
+      if (state.lastEntity.type !== 'search') {
+        this._updateMetaplans(metaplans, context, state.lastEntity);
+      }
+    }
+    if (context && state.lastEntity && suggestions) {
+      if (state.lastEntity.type === 'search') {
+        state.lastEntity.type = 'usedup';
+        const texts = suggestions.map(suggestion => suggestion.descriptionText);
+        log('piped suggestions', texts);
+        DeviceClient.foundSuggestions(JSON.stringify(texts));
+      }
+    }
+    if (state.entity && state.entity.type === 'search') {
+      this._updateSearch(state.entity);
+      state.lastEntity = state.entity;
+      state.entity = null;
     }
     if (state.entity) {
       if (state.arc && !state.stores) {
@@ -89,12 +107,12 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
         state.entity = null;
       }
     }
-    if (context && state.lastEntity && metaplans && metaplans.plans) {
-      this._updateMetaplans(metaplans, context, state.lastEntity);
-    }
   }
   _render(props, state) {
     return [props, state];
+  }
+  _updateSearch(entity) {
+    this._fire('search', entity.query);
   }
   _updateEntity(entity, state) {
     const stores = {
@@ -161,13 +179,15 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
         artist: 'ShowcaseArtistDemo',
         play_record: 'ShowcasePlayRecordDemo'
       }[entity.type];
-      const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
-      log(`searching metaplans for [${demoPlan}] found`, metaplan);
-      if (metaplan) {
-        // reduce plans to descriptionText
-        const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
-        log('piped suggestions', suggestions);
-        DeviceClient.foundSuggestions(JSON.stringify(suggestions));
+      if (demoPlan) {
+        const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
+        log(`searching metaplans for [${demoPlan}] found`, metaplan);
+        if (metaplan) {
+          // reduce plans to descriptionText
+          const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
+          log('piped suggestions', suggestions);
+          DeviceClient.foundSuggestions(JSON.stringify(suggestions));
+        }
       }
     }
   }
