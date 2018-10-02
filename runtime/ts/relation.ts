@@ -5,23 +5,26 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-'use strict';
 
-import {Entity} from './entity.js';
-import {Type} from './ts-build/type.js';
-import {Symbols} from './symbols.js';
+import {Entity} from '../entity.js';
+import {Type} from './type.js';
+import {Symbols} from '../symbols.js';
 
 // TODO: Should relations normalized by another layer, or here?
 export class Relation extends Entity {
+  entities: Entity[];
+
   constructor(...entities) {
     super();
     this.entities = entities;
   }
+
   get data() {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
   }
+
   static typeFor(relation) {
-    let result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
+    const result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
     return result;
   }
 }
