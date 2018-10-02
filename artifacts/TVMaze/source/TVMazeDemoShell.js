@@ -35,7 +35,7 @@ defineParticle(({DomParticle, html, log}) => {
       </style>
       <!-- <div banner>Find Shows</div> -->
       <div slotid="searchbar"></div>
-      <div banner>Search Results</div>
+      <div banner hidden="{{emptySearchResults}}">Search Results</div>
       <div slotid="search"></div>
       <div banner>My Shows</div>
       <div slotid="shows"></div>
@@ -48,18 +48,24 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({user, boxed, display, recentShows}, state) {
+    update({user, boxedShows, display, recentShows, boxedUserNames, friends}, state) {
       if (recentShows) {
         const show = recentShows[0];
         if (show && (!state.lastShow || show.showid !== state.lastShow.showid)) {
+          this.updateDescription(show, boxedShows, boxedUserNames, friends);
           state.lastShow = show;
           log('selecting', show);
           this.handles.get('selected').set(show);
         }
       }
-      if (user && boxed) {
-        this.findMyBoxedShows(user, boxed, display, this.handles.get('display'));
+      if (user && boxedShows) {
+        this.findMyBoxedShows(user, boxedShows, display, this.handles.get('display'));
       }
+    }
+    render({foundShows}) {
+      return {
+        emptySearchResults: !foundShows || !foundShows.length
+      };
     }
     findMyBoxedShows(user, boxed, display, output) {
       // (1) filter out shows not shared by me from the boxed shows
@@ -83,6 +89,58 @@ defineParticle(({DomParticle, html, log}) => {
       toDelete.forEach(show => output.remove(show));
       // add new shows
       Object.values(toAdd).forEach(show => show && output.store(show));
+    }
+    updateDescription(show, boxedShows, boxedUserNames, friends) {
+      log(show, boxedShows, boxedUserNames, friends);
+      if (show && boxedShows && boxedUserNames && friends) {
+        //
+        const getUserName = id => (this.boxQuery(boxedUserNames, id)[0] || Object).userName || id;
+        //
+        const watchers = [];
+        friends.forEach(friend => {
+          const friendShows = this.boxQuery(boxedShows, friend.id);
+          if (friendShows.find(friendShow => friendShow.showid === show.showid)) {
+            watchers.push({
+              id: friend.id,
+              name: getUserName(friend.id)
+            });
+          }
+        });
+        //log(watchers);
+        //this.clearHandle('watchers');
+        //this.appendRawDataToHandle('watchers', watchers);
+        //
+        const alsoWatch = watchers && show ? this.buildDescription(watchers, show) : '';
+        log(alsoWatch);
+        this.updateVariable('watcherText', {text: alsoWatch});
+        //
+        let description = '';
+        if (watchers && show) {
+          description = `${show.name} is on ${show.network}${show.time ? ` at ${show.time}` : ''}${show.day ? ` on ${show.day}` : ''}${description ? `. ${description}` : ''}.`;
+        }
+        description += ` ${alsoWatch.replace(/<b>|<\/b>/g, '')}`;
+        log('description', description);
+        this.setParticleDescription(description);
+        //this.setParticleDescription({template: description, model: {}});
+      }
+    }
+    buildDescription(watchers, show) {
+      let alsoWatch = `also watch <b>${show.name}</b>.`;
+      switch (watchers.length) {
+        case 0:
+          alsoWatch = '';
+          break;
+        case 1:
+          alsoWatch = `<b>${watchers[0].name}</b> also watches <b>${show.name}</b>.`;
+          break;
+        case 2:
+          alsoWatch = `<b>${watchers[0].name}</b> and <b>${watchers[1]}</b> ${alsoWatch}`;
+          break;
+        default:
+          alsoWatch = `<b>${watchers.slice(0, -1).map(w => w.name).join('</b>, <b>')}</b>, and <b>${watchers.pop().name}</b> ${alsoWatch}`;
+          break;
+      }
+      return alsoWatch;
     }
   };
 });

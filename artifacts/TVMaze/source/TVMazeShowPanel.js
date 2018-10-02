@@ -44,9 +44,14 @@ defineParticle(({DomParticle, html, log}) => {
       <b>{{network}}</b>
       <br>
       <span>{{day}}</span> <span>{{time}}</span>
+      <br>
     </div>
   </div>
-  <div description style="margin: 16px 0;" unsafe-html="{{description}}"></div>
+  <!-- <div>
+    <icon>{{glyph}}</icon>
+  </div> -->
+  <div style="padding-top: 16px;" unsafe-html="{{alsoWatch}}"></div>
+  <div description style="padding: 16px 0;" unsafe-html="{{description}}"></div>
   <!-- <div style="color: #333; font-size: 1.5em; margin: 16px 0;">Episodes</div> -->
   <div slotid="items"></div>
 </div>
@@ -57,36 +62,28 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    shouldRender({show}) {
-      return Boolean(show);
-    }
-    update({show, boxed, user}) {
-      if (show && boxed && user) {
-        boxed.forEach(item => {
-          if (item.showid === show.showid) {
-            const owner = item.getUserID().split('|')[0];
-            if (owner !== user.id) {
-              log(`${owner} is also watching ${show.name}`);
-            }
-          }
-        });
+    update({show}, state) {
+      if (show) {
+        if ('length' in show) {
+          show = show[0];
+        }
+        state.show = show;
       }
     }
-    render({show}) {
-      if ('length' in show) {
-        show = show[0];
-      }
+    render({alsoWatch}, {show}) {
       const hidden = Boolean(!show);
       if (hidden) {
         show = Object;
       }
       return {
+        glyph: show.favorite ? 'favorite' : 'favorite_border',
+        alsoWatch: alsoWatch ? alsoWatch.text : '',
         hidden,
         image: show.image || '',
-        description: show.description,
-        network: show.network,
-        day: show.day ? `${show.day}s` : '(n/a)',
-        time: show.time,
+        description: show.description || '',
+        network: show.network || '',
+        day: show.day ? `${show.day}s` : '',
+        time: show.time || '',
         id: show.id
       };
     }
