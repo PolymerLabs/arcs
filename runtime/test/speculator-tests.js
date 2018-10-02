@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Speculator} from '../speculator.js';
+import {Speculator} from '../ts-build/speculator.js';
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {Loader} from '../loader.js';

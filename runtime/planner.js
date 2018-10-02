@@ -29,7 +29,7 @@ import {CombinedStrategy} from './strategies/combined-strategy.js';
 import {FindHostedParticle} from './strategies/find-hosted-particle.js';
 import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {Speculator} from './speculator.js';
+import {Speculator} from './ts-build/speculator.js';
 import {Tracing} from '../tracelib/trace.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
