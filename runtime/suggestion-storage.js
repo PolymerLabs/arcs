@@ -49,8 +49,17 @@ export class SuggestionStorage {
   _initStore(id, storageKey, callback) {
     let schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     let type = Type.newEntity(schema);
-    const promise = this._arc._storageProviderFactory._storageForKey(storageKey)._join(
+    let storage = this._arc._storageProviderFactory._storageForKey(storageKey);
+    let promise;
+    // TODO: the _join method exists for firebase storage and either connects or constructs
+    // depending on whether the storage exists. For pouch, the connect method does it.
+    // Should have a unified interface for this.
+    if (storage._join) {
+      promise = storage._join(
         id, type, storageKey, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
+    } else {
+      promise = storage.connect(id, type, storageKey);
+    }
     promise.then(
       async (store) => await callback(store),
       (e) => console.error(`Failed to initialize suggestions store '${storageKey}' with error: ${e}`));
