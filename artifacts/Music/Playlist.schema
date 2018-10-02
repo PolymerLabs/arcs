@@ -8,7 +8,7 @@
 schema Playlist
   Text name
   Text description
-  Text thumbnail
-  Text link
-  // Array of artist names
-  Object artists
+  URL thumbnail
+  URL link
+  // '|'-separated list of artist names
+  Text artists
