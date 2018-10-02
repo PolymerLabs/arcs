@@ -54,7 +54,7 @@ describe('demo', function() {
     const title = await browser.title();
     assert.equal(title.value, 'Arcs');
   });
-  it('restaurants', async function() {
+  it.skip('restaurants', async function() {
     const search = `restaurants`;
     const suggestion1 = `[title^="Find restaurants"]`;
     const particle1 = `#webtest-title`;
@@ -72,7 +72,7 @@ describe('demo', function() {
     browser.click(suggestion2);
     await browser.waitForExist(particle2, 5000);
   });
-  it('gifts', async function() {
+  it.skip('gifts', async function() {
     const search = `products`;
     const suggestion1 = `[title^="Show products"]`;
     const particle1 = `[particle-host="ItemMultiplexer::item"]`;
