@@ -30,7 +30,7 @@ particle ShowArtist in 'source/ShowArtist.js'
   description `Learn more about ${artist}`
 
 particle ShowArtistSimple in 'source/ShowArtistSimple.js'
-  in Artist artist
+  in ShowcaseArtist artist
   consume item
 
 particle FilterToArtist in 'source/FilterToArtist.js'
@@ -39,7 +39,7 @@ particle FilterToArtist in 'source/FilterToArtist.js'
   inout [ShowcasePlayRecord] artistPlayHistory
 
 particle ExtractArtists in 'source/ExtractArtists.js'
-  in [PlayRecord] fullPlayHistory
+  in [ShowcasePlayRecord] fullPlayHistory
   inout [RankedArtist {Text name, Number score}] artists
 
 particle PlayRecordRenderer in 'source/PlayRecordRenderer.js'
