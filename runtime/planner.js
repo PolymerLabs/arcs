@@ -228,7 +228,7 @@ Planner.ResolutionStrategies = [
   CreateDescriptionHandle,
   MatchFreeHandlesToConnections,
   ResolveRecipe,
-  FindHostedParticle,
+  // FindHostedParticle <- Disable for M1, it produces some crazy stuff.
   CoalesceRecipes
 ];
 
