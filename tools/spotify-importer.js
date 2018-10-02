@@ -25,7 +25,7 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
 
   async function showPlaylists(collection) {
     let cursorId = await collection.stream(50);
-    while (true) {
+    for (;;) {
       let {value, done} = await collection.cursorNext(cursorId);
       if (done) return;
       for (let item of value) {
