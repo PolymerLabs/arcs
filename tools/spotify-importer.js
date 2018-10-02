@@ -24,13 +24,18 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
   let baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
 
   async function showPlaylists(collection) {
+    let count = 0;
     let cursorId = await collection.stream(50);
     for (;;) {
       let {value, done} = await collection.cursorNext(cursorId);
-      if (done) return;
+      if (done) {
+        console.log(`-- ${count} playlists`);
+        return;
+      }
       for (let item of value) {
         let m = item.artists && item.artists.match(/\|/g);
-        console.log(`${item.name} (${m ? (m.length + 1) : 0} artists)`);
+        console.log(`${item.name}: ${m ? (m.length + 1) : 0} artists`);
+        count++;
       }
     }
   }
