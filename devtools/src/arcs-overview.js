@@ -105,7 +105,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       let m = msg.messageBody;
       switch (msg.messageType) {
         case 'InstantiateParticle': {
-          if (m.speculative) continue;
+          if (m.speculative || m.arcId.endsWith('-pipes')) continue;
 
           if (!this._particles.has(m.id)) {
             this._particles.set(m.id, {
