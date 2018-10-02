@@ -61,6 +61,9 @@ particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
     provide recommended
     provide searchbar
     provide search
+  // TODO: add better description,
+  // or fix recipe description to not crash if one is missing.
+  description `TV shows`
 
 particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
   out TVMazeQuery query
