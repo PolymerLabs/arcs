@@ -14,8 +14,8 @@ particle ShowcasePlayRecordItem in './source/ShowcasePlayRecordItem.js'
   consume root #content
   description `${playRecord.song} from ${playRecord.artist}`
 
-recipe ShowcasePlayRecordItem
-  map as playRecord
-  ShowcasePlayRecordItem
-    playRecord = playRecord
-  description `you listened to ${ShowcasePlayRecordItem}`
+//recipe ShowcasePlayRecordItem
+//  map as playRecord
+//  ShowcasePlayRecordItem
+//    playRecord = playRecord
+//  description `you listened to ${ShowcasePlayRecordItem}`

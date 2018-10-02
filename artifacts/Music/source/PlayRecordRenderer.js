@@ -41,7 +41,7 @@ defineParticle(({DomParticle, html}) => {
     render({playRecord}) {
       return {
         song: playRecord.song,
-        dateTime: new Date(playRecord.dateTime).toLocaleDateString()
+        dateTime: new Date(Number(playRecord.dateTime)).toLocaleDateString()
       };
     }
   };
