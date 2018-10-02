@@ -47,7 +47,7 @@ particle PlayRecordRenderer in 'source/PlayRecordRenderer.js'
   consume item
 
 recipe
-  map 'myNowPlayingHistory' as fullPlayHistory
+  map 'PROFILE_all_piped-all_showcase_play_record' as fullPlayHistory
   create as artists
   create as shows
   use as location
