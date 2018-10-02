@@ -20,7 +20,7 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
 (async () => {
   let usage = 'Usage: importSpotify [--clear] <json-files>\n' +
               '       importSpotify --list';
-
+  let schemaFile = 'artifacts/Music/Playlist.schema';
   let baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
 
   async function showPlaylists(collection) {
@@ -53,32 +53,35 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
         continue;
       }
 
+      let description = playlist.description.replace(/ (Cover:|Related:|Related lists:|Also see:).*/, '');
+      description = description.replace(/<[^>]+>/g, '');
+
       let thumbnail;
       if (playlist.images && playlist.images.length > 0) {
         thumbnail = playlist.images[0].url;
       }
 
-      let artists = [];
+      let artists = new Set();
       if (playlist.tracks && playlist.tracks.items) {
         for (let item of playlist.tracks.items) {
           if (item.track) {
             for (let artist of item.track.artists) {
               if (artist.name) {
-                artists.push(artist.name);
+                artists.add(artist.name);
               }
             }
           }
         }
       }
 
-      console.log(`${playlist.name}: ${artists.length} artists`);
+      console.log(`${playlist.name}: ${artists.size} artists`);
       await collection.store({
         id: `${idBase}:${index}`,
         name: playlist.name,
-        description: playlist.description,
+        description,
         thumbnail,
         link: playlist.external_urls && playlist.external_urls.spotify,
-        artists: artists.join('|')
+        artists: [...artists].join('|')
       }, [`k${index}`]);
       index++;
     }
@@ -86,14 +89,15 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
 
   async function main() {
     let key = `${baseUrl}/playlists`;
-    let manifest = await Manifest.parse(`
-      schema Playlist
-        Text name
-        Text description
-        URL thumbnail
-        URL link
-        Text artists  // '|'-separated list
-    `);
+    let manifest;
+    try {
+      manifest = await Manifest.parse(fs.readFileSync(schemaFile, 'utf-8'));
+    } catch (err) {
+      console.error(`Error parsing '${schemaFile}':`);
+      console.error(err);
+      return;
+    }
+
     let PlaylistType = Type.newEntity(manifest.schemas.Playlist);
     let storage = new StorageProviderFactory('import');
     let construct = () => storage.construct('import', PlaylistType.bigCollectionOf(), key);

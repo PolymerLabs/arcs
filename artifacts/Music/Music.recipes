@@ -14,8 +14,7 @@ import '../Showcase/ShowcaseArtist.schema'
 import '../Showcase/ShowcasePlayRecord.schema'
 import 'Playlist.schema'
 
-// TODO: connect to 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections/playlists'
-store Store2 of BigCollection<Playlist> 'playlists' in 'playlists.json'
+store Store2 of BigCollection<Playlist> 'playlists' at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections/playlists'
 
 particle ShowArtist in 'source/ShowArtist.js'
   in ShowcaseArtist artist
