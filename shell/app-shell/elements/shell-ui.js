@@ -34,10 +34,10 @@ const template = html`
   <!-- -->
   <slot name="modal"></slot>
   <slot></slot>
-  <!-- -->
-  <voice-driver on-search="_onVoiceSearch"></voice-driver>
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
+  <!-- -->
+  <voice-driver on-search="_onVoiceSearch"></voice-driver>
   <!-- -->
   <div bar glowing$="{{glows}}" glowable state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>

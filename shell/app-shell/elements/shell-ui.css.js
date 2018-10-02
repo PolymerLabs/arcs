@@ -72,7 +72,8 @@ const StyleSheet = Xen.html`
     opacity: 0.8;
   }
   [barSpacer] {
-    height: var(--bar-space-height);
+    height: 256px;
+    /*height: var(--bar-space-height);*/
   }
   [touchbar] {
     margin-top: calc(var(--bar-touch-height) * -1);
