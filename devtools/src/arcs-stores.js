@@ -128,7 +128,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
     for (let msg of messages) {
       switch (msg.messageType) {
         case 'arc-available':
-          if (!this.arcId && !msg.messageBody.isSpeculative) {
+          if (!this.arcId && !msg.messageBody.isSpeculative && !msg.messageBody.id.endsWith('-pipes')) {
             this.arcId = msg.messageBody.id;
             this._fetchStores();
           }

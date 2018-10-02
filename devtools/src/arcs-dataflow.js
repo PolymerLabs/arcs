@@ -239,7 +239,7 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
           let e = msg.messageBody;
           // If user hasn't selected an arc, and this event is not from
           // a speculative execution, select this arc.
-          if (!this.selectedArcId && !e.speculative) {
+          if (!this.selectedArcId && !e.speculative && !e.arcId.endsWith('-pipes')) {
             this.set('selectedArcId', e.arcId);
           }
           if (this.selectedArcId === e.arcId) {
