@@ -13,3 +13,4 @@ schema ShowcaseArtist
   URL imageUrl
   Text description
   Text detailedDescription
+

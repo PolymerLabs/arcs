@@ -48,8 +48,14 @@ particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
   in [TVMazeShow] recentShows
   inout TVMazeShow selected
   in User user
-  in [TVMazeShow] boxed
+  in [TVMazeShow] boxedShows
   inout [TVMazeShow] display
+  in [TVMazeShow] foundShows
+  in [User] friends
+  in [UserName] boxedUserNames
+  inout [User] watchers
+  out Text watcherText
+  out [Description] descriptions
   consume root
     provide shows
     provide recommended
@@ -60,21 +66,21 @@ particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
   out TVMazeQuery query
   consume root
 
+schema Text
+  Text text
+
 particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
   in TVMazeShow show
-  in [TVMazeShow] boxed
-  in User user
+  in [TVMazeShow] shows
+  in Text alsoWatch
   consume content
     provide action
     provide items
   description `${show} details`
 
-particle TVMazeShowDecorator in './source/TVMazeShowDecorator.js'
-  in TVMazeShow show
-  in [TVMazeShow] boxedShows
-  in [UserName] boxedUserNames
-  in [User] friends
-  out [Description] descriptions
+particle TVMazeDeduplicate in './source/TVMazeDeduplicate.js'
+  in [TVMazeShow] shows
+  inout [TVMazeShow] uniqueShows
 
 recipe TVMazeUberDemo
   // all shows shared with me
@@ -91,13 +97,28 @@ recipe TVMazeUberDemo
   create #selected as selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
   create #shows #tiles as myshows
+  // search results
+  create as foundshows
+  // friends ids
+  map 'PROFILE_friends' as friends
+  // all the userNames
+  map 'BOXED_userName' as boxedUserNames
+  // friends also watching selected show
+  create as watchers
+  // text about friends watching selected show
+  create as alsoWatch
   //
   TVMazeDemoShell
     user = user
-    boxed = boxedShows
+    boxedShows = boxedShows
     display = display
     selected = selected
     recentShows = pipedShows
+    foundShows = foundshows
+    boxedUserNames = boxedUserNames
+    friends = friends
+    watchers = watchers
+    watcherText = alsoWatch
     consume root as root
       provide recommended as recommended
       provide shows as shows
@@ -119,19 +140,23 @@ recipe TVMazeUberDemo
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
+  create #uniquePipedShows as uniquePipedShows
+  TVMazeDeduplicate
+    shows = allPipedShows
+    uniqueShows = uniquePipedShows
   SelectableImmutableTileList
     consume root as recommended
       provide tile as tile2
       provide action as action2
-    items = allPipedShows
+    items = uniquePipedShows
     selected = selected
   TileMultiplexer
     consume tile as tile2
-    list = allPipedShows
+    list = uniquePipedShows
     hostedParticle = TVMazeShowTile
   ActionMultiplexer
     consume action as action2
-    list = allPipedShows
+    list = uniquePipedShows
     shows = myshows
     hostedParticle = TVMazeShowActions
   //
@@ -140,7 +165,6 @@ recipe TVMazeUberDemo
   TVMazeSearchBarRoot
     consume root as searchbar
     query = query
-  create as foundshows
   TVMazeSearchShows
     query = query
     shows = foundshows
@@ -160,21 +184,12 @@ recipe TVMazeUberDemo
     list = foundshows
     shows = myshows
   //
-  // Detail View
+  // standard slot 'modal' holds detail view
   DetailSlider
     selected = selected
   TVMazeShowMultiPanel
     show = selected
-    boxed = boxedShows
-    user = user
+    shows = myshows
+    alsoWatch = alsoWatch
   //
-  map 'PROFILE_friends' as friends
-  map 'BOXED_userName' as boxedUserNames
-  TVMazeShowDecorator
-    show = selected
-    boxedShows = boxedShows
-    boxedUserNames = boxedUserNames
-    friends = friends
-  //description `find out about ${TVMazeShowPanel.show} from TVMaze`
-  //description `${TVMazeShowMultiPanel.show.name} is on ${TVMazeShowMultiPanel.show.network} at ${TVMazeShowMultiPanel.show.time} on ${TVMazeShowMultiPanel.show.day}`
-  description `${TVMazeShowDecorator}`
+  description `${TVMazeDemoShell}`
