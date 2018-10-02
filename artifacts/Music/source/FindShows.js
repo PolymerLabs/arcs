@@ -136,7 +136,7 @@ ${styles}
         if (!nearest || nearest.distance > event.distance) nearest = event;
       }
 
-      this.setParticleDescription(`Get ticket for concert on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
+      this.setParticleDescription(`Ticketmaster: Get ticket for "${nearest.name}" on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
 
       // Why doesn't this work?
       // Tracked in https://github.com/PolymerLabs/arcs/issues/1965

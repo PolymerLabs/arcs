@@ -112,7 +112,7 @@ particle FindShowsMultipleArtists in 'source/FindShowsMultipleArtists.js'
   consume root
     provide listing
       handle shows
-  description `Find nearby shows`
+  description `Ticketmaster: Find nearby shows`
 
 
 particle FindShows in 'source/FindShows.js'
@@ -123,7 +123,7 @@ particle FindShows in 'source/FindShows.js'
   consume nearbyShows
     provide listing
       handle shows
-  description `Find nearby shows by ${artist}`
+  description `Ticketmaster: Find nearby shows by ${artist}`
 
 particle ShowRenderer in 'source/ShowRenderer.js'
   in Show show
