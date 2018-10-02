@@ -15,23 +15,39 @@ import {UserPlanner} from './user-planner.js';
 import {UserContext} from './shell/user-context.js';
 import {ArcFactory} from './arc-factory.js';
 
-// TODO: allow for configuration injection here.
-//const userid = '-LMtek9Mdy1iAc3MAkNx'; // Doug
-//const userid = '-LMtek9Nzp8f5pwiLuF6'; // Maria
-//const userid = '-LMtek9LSN6eSMg97nXV'; // Cletus
-const userid = '-LMtek9Mdy1iAc3MAkNw'; // Berni
-
 const manifest = `
   import 'https://$artifacts/canonical.manifest'
 `;
 
 export class ShellPlanningInterface {
-  static async start(assetsPath) {
-
-    const factory = new ArcFactory(assetsPath);
-    const context = await factory.createContext(manifest);
-    const user = new UserContext();
-    user._setProps({userid, context});
-    const planner = new UserPlanner(factory, context, userid);
+  /**
+   * Starts a continuous shell planning import.
+   *
+   * @param assetsPath a path (relative or absolute) to locate planning assets.
+   * @param userId the User Id to do planning for.
+   */
+  static async start(assetsPath, userId) {
+    if (!assetsPath || !userId) {
+      throw new Error('assetsPath and userId required');
+    }
+    // eslint-disable-next-line
+    while (1) {
+      try {
+        const factory = new ArcFactory(assetsPath);
+        const context = await factory.createContext(manifest);
+        const user = new UserContext();
+        user._setProps({userid, context});
+        const planner = new UserPlanner(factory, context, userid);
+      } catch (err) {
+        console.warn('Error in Shell Planning, pausing for 5s', err);
+        await new Promise((resolve) => setTimeout(() => resolve(), 5000));
+      }
+    }
   }
 }
+
+// These are sample users for testing.
+ShellPlanningInterface.USER_ID_DOUG = '-LMtek9Mdy1iAc3MAkNx';
+ShellPlanningInterface.USER_ID_MARIA = '-LMtek9Nzp8f5pwiLuF6';
+ShellPlanningInterface.USER_ID_CLETUS = '-LMtek9LSN6eSMg97nXV';
+ShellPlanningInterface.USER_ID_BERNI = '-LMtek9Mdy1iAc3MAkNw';
