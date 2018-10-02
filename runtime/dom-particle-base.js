@@ -39,7 +39,7 @@ export class DomParticleBase extends Particle {
     // TODO: only supports a single template for now. add multiple templates support.
     return `default`;
   }
-  /** @method shouldRender(props, state, oldProps, oldState)
+  /** @method shouldRender()
    * Override to return false if the Particle won't use
    * it's slot.
    */
@@ -110,9 +110,9 @@ export class DomParticleBase extends Particle {
     if (handle.clear) {
       handle.clear();
     } else {
-      const data = this._props[handleName];
-      if (data) {
-        return Promise.all(data.map(entity => handle.remove(entity)));
+      const entities = await handle.toList();
+      if (entities) {
+        return Promise.all(entities.map(entity => handle.remove(entity)));
       }
     }
   }
@@ -120,11 +120,10 @@ export class DomParticleBase extends Particle {
    * Merge entities from Array into named handle.
    */
   async mergeEntitiesToHandle(handleName, entities) {
-    //const handle = this.handles.get(handleName);
     const idMap = {};
-    const handleEntities = this._props[handleName];
-    handleEntities.forEach(entity => idMap[entity.id] = entity);
     const handle = this.handles.get(handleName);
+    const handleEntities = await handle.toList();
+    handleEntities.forEach(entity => idMap[entity.id] = entity);
     for (const entity of entities) {
       if (!idMap[entity.id]) {
         handle.store(entity);
@@ -162,13 +161,13 @@ export class DomParticleBase extends Particle {
    * Modify or insert `entity` into named handle.
    * Modification is done by removing the old entity and reinserting the new one.
    */
-  updateSet(handleName, entity) {
+  async updateSet(handleName, entity) {
     // Set the entity into the right place in the set. If we find it
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    const records = this._props[handleName];
-    const target = records.find(r => r.id === entity.id);
+    const entities = await handle.toList();
+    const target = entities.find(r => r.id === entity.id);
     if (target) {
       handle.remove(target);
     }
