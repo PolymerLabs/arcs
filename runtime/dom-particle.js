@@ -127,7 +127,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       //console.warn(handle, update);
       this._handlesToProps();
     };
-    this.debounce('handleUpdateDebounce', work, 100);
+    this._debounce('handleUpdateDebounce', work, 100);
   }
   async _handlesToProps() {
     let config = this.config;
@@ -154,5 +154,17 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
+  }
+  _debounce(key, func, delay) {
+    const subkey = `_debounce_${key}`;
+    if (!this._state[subkey]) {
+      this.startBusy();
+    }
+    const idleThenFunc = () => {
+      this.doneBusy();
+      func();
+      this._state[subkey] = null;
+    };
+    super._debounce(key, idleThenFunc, delay);
   }
 }

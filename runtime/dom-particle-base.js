@@ -179,21 +179,4 @@ export class DomParticleBase extends Particle {
   boxQuery(box, userid) {
     return box.filter(item => userid === item.getUserID().split('|')[0]);
   }
-
-  // TODO(sjmiles): there's a debounce() here and a _debounce() in xen-state. This
-  // isn't ideal.
-  // This debounce signals to the arc that this particle isn't done yet; the one
-  // in xen-state is a commodity version that doesn't do this.
-  debounce(key, func, delay) {
-    const subkey = `_debounce_${key}`;
-    if (!this._state[subkey]) {
-      this.startBusy();
-    }
-    const idleThenFunc = () => {
-      this.doneBusy();
-      func();
-      this._state[subkey] = null;
-    }
-    this._debounce(key, idleThenFunc, delay);
-  }
 }
