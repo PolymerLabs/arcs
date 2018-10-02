@@ -90,7 +90,7 @@ ${styles}
       return Boolean(props.artist);
     }
     willReceiveProps(props) {
-      if (props.artistPlayHistory.length) {
+      if (props.artistPlayHistory.length && props.artist) {
         let mostRecent = props.artistPlayHistory[0];
         for (let song of props.artistPlayHistory) {
           if (Number(song.dateTime) > Number(mostRecent.dateTime)) mostRecent = song;
