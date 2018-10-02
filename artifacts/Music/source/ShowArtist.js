@@ -95,13 +95,10 @@ ${styles}
         for (let song of props.artistPlayHistory) {
           if (Number(song.dateTime) > Number(mostRecent.dateTime)) mostRecent = song;
         }
-        this.setParticleDescription(`You listened to ${mostRecent.song} by ${props.artist.name} ${this._formatTime(Number(mostRecent.dateTime))}`);
-        // Why this doesn't work?
-        //
-        // this.setParticleDescription({
-        //     template: `You listened to <b>${mostRecent.song}</b> by <b>${props.artist.name}</b> on ${new Date(Number(mostRecent.dateTime)).toLocaleDateString()}`,
-        //     model: {}
-        // });
+        this.setParticleDescription({
+            template: `You listened to <b>${mostRecent.song}</b> by <b>${props.artist.name}</b> ${this._formatTime(Number(mostRecent.dateTime))}`,
+            model: {}
+        });
       }
     }
 
