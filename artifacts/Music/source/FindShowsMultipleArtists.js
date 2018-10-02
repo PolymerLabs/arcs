@@ -132,6 +132,7 @@ ${styles}
             break;
           }
         } catch (e) {
+          // comment here because lint
         }
       }
       this.doneBusy();
