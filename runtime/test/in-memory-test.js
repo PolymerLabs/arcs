@@ -218,7 +218,7 @@ describe('in-memory', function() {
           Text value
       `);
       let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
+      let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key = newStoreKey('collection');
       let collection = await storage.construct('test1', BarType.collectionOf(), key);
