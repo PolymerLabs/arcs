@@ -109,10 +109,9 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
     }
   }
   _setPipedEntity(store, rawData) {
-    const entity = {
-      id: store.generateID(),
-      rawData
-    };
+    //const id = store.generateID();
+    const id = `${Date.now()}-${Math.floor(Math.random()*1e6)}`;
+    const entity = {id, rawData};
     log('storing piped entity', entity);
     store.set(entity);
     // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
