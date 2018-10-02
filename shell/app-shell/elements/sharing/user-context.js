@@ -59,6 +59,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       this._requireProfileFriends(context),
       this._requireProfileUserName(context),
       this._requireProfileAvatar(context),
+      this._requireBoxedUserName(context),
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
       this._requireSystemUser(context),
@@ -88,6 +89,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       isCollection: true
     };
     const store = await this._requireStore(context, 'profileUserName', options);
+    return store;
+  }
+  async _requireBoxedUserName(context) {
+    const options = {
+      schema: schemas.UserName,
+      name: 'BOXED_userName',
+      id: 'BOXED_userName',
+      tags: ['userName'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, null, options);
     return store;
   }
   async _requireProfileAvatar(context) {
