@@ -16,13 +16,15 @@ defineParticle(({DomParticle}) => {
         
         await this.clearHandle('artists');
         const artists = this.handles.get('artists');
-        const artistSet = new Set();
+        const artistSet = {};
         for (const entry of props.fullPlayHistory) {
-          if (!artistSet.has(entry.artist)) {
-            artistSet.add(entry.artist);
-            await artists.store(new artists.entityClass({name: entry.artist}));
+          if (!artistSet[entry.artist]) {
+            artistSet[entry.artist] = 1;
+          } else {
+            artistSet[entry.artist]++;
           }
         }
+        await Promise.all(Object.keys(artistSet).map(artist => artists.store(new artists.entityClass({name: artist, score: artistSet[artist]}))));
       }
     }
   };

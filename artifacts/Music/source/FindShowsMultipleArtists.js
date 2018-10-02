@@ -111,26 +111,34 @@ ${styles}
       return Boolean(props.artists && props.location);
     }
 
-    willReceiveProps(props, state) {
+    async willReceiveProps(props, state) {
       if (state.fetching || !props.artists || !props.location) return;
       this._setState({fetching: true});
 
       // Note that it won't be possible to make those kind of fetches in production.
       // We need privacy preserving, non-logging data sources to allow speculatively fetching data.
       const geohash = this._encodeGeohash(props.location.latitude, props.location.longitude);
-      this.clearHandle('shows').then(() => {
-        props.artists.forEach(artist => {
-          _fetch(`${eventsService}&keyword=${encodeURI(artist.name)}&geoPoint=${geohash}`)
-              .then(response => response.json())
-              .then(response => this._processResponse(response))
-              .finally(() => this.doneBusy());
-        });
-      });
+      const artists = props.artists.slice();
+
+      artists.sort((a, b) => a.score < b.score ? 1 : (a.score > b.score ? -1 : 0));
+
+      await this.clearHandle('shows');
+      for (const artist of artists) {
+        try {
+          const response = await _fetch(`${eventsService}&keyword=${encodeURI(artist.name)}&geoPoint=${geohash}`);
+          const json = await response.json();
+          if (this._processResponse(json, artist.name)) {
+            break;
+          }
+        } catch (e) {
+        }
+      }
+      this.doneBusy();
     }
 
-    async _processResponse(response) {
+    async _processResponse(response, artist) {
       if (response.page.totalElements === 0) {
-        return;
+        return false;
       }
 
       let nearest = null;
@@ -138,17 +146,7 @@ ${styles}
         if (!nearest || nearest.distance > event.distance) nearest = event;
       }
 
-      this.setParticleDescription(`Get ticket for concert on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
-
-      // Why doesn't this work?
-      // Tracked in https://github.com/PolymerLabs/arcs/issues/1965
-      // this.setParticleDescription({
-      //   template: 'Get ticket for concert on ${date} in ${venue}',
-      //   model: {
-      //     date: nearest.dates.start.localDate,
-      //     venue: nearest._embedded.venues[0].name
-      //   }
-      // });
+      this.setParticleDescription(`Get ticket for ${artist} concert on ${nearest.dates.start.localDate}`);
 
       this.appendRawDataToHandle('shows', [{
         name: nearest.name,
@@ -159,6 +157,7 @@ ${styles}
       }]);
 
       this._setState({fetched: true});
+      return true;
     }
 
     async moreShows() {

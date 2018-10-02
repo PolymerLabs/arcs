@@ -40,7 +40,7 @@ particle FilterToArtist in 'source/FilterToArtist.js'
 
 particle ExtractArtists in 'source/ExtractArtists.js'
   in [PlayRecord] fullPlayHistory
-  inout [Artist] artists
+  inout [RankedArtist {Text name, Number score}] artists
 
 particle PlayRecordRenderer in 'source/PlayRecordRenderer.js'
   in ShowcasePlayRecord playRecord
@@ -66,7 +66,7 @@ recipe
   ItemMultiplexer
     list = shows
     hostedParticle = ShowRenderer
-  description `show my artists`
+  description `${FindShowsMultipleArtists}`
 
 // Feed the artist and play records to Arcs by invoking
 // below in the Chrome console when in Arcs Launcher:
@@ -105,7 +105,7 @@ schema Show
   Text imageUrl
 
 particle FindShowsMultipleArtists in 'source/FindShowsMultipleArtists.js'
-  in [Artist] artists
+  in [RankedArtist {Text name, Number score}] artists
   in GeoCoordinates location
   inout [Show] shows
   out [Description] descriptions
