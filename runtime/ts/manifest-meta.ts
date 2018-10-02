@@ -10,10 +10,14 @@
 
 
 export class ManifestMeta {
+  storageKey: string;
+  name: string;
+
   constructor() {
     this.storageKey = null;
     this.name = null;
   }
+
   apply(items) {
     items.forEach(item => { this[item.key] = item.value; });
   }
