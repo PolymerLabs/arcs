@@ -51,8 +51,6 @@ ${styles}
       return Boolean(props.artist);
     }
     render(props, state) {
-      if (!props.artist) return;
-
       return {
         name: props.artist.name,
       };

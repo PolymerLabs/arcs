@@ -12,6 +12,7 @@
 const eventsService = 'https://app.ticketmaster.com/discovery/v2/events?apikey=6g6GruAsAGU9RyT3lfjUFYtLSnvUITDe&radius=1000';
 const geohashCharMap = '0123456789bcdefghjkmnpqrstuvwxyz';
 
+// TODO: Unify this with FindShows.js
 defineParticle(({DomParticle, html, log, _fetch}) => {
   const host = `[find-shows]`;
   const styles = html`
