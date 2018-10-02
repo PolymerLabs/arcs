@@ -21,6 +21,7 @@ import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
+const backingStoreUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/backingStores';
 
 // Resolves when the two stores are synchronized with each other:
 // * same version
@@ -44,6 +45,8 @@ describe('firebase', function() {
   before(async () => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     await resetStorageForTesting(testUrl);
+    await resetStorageForTesting(backingStoreUrl);
+
   });
 
   let storageInstances = [];

@@ -35,11 +35,6 @@ export async function resetStorageForTesting(key) {
     reference.remove(resolve);
   });
 
-  reference = firebase.database(app).ref('backingStores');
-  await new Promise(resolve => {
-    reference.remove(resolve);
-  });
-
   app.delete();
 }
 
