@@ -197,6 +197,27 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     this._fire('change', {add: [changeEvent], version: this.version, originatorId});
   }
 
+  async removeMultiple(items, originatorId=null) {
+    await this.getModelAndUpdate(crdtmodel => {
+      
+      if (items.length === 0) {
+        items = crdtmodel.toList().map(item => ({id: item.id, keys: []}));
+      }
+      items.forEach(item => {
+        if (item.keys.length === 0) {
+          item.keys = crdtmodel.getKeys(item.id);
+        }
+        item.value = crdtmodel.getValue(item.id);
+        if (item.value !== null) {
+          item.effective = crdtmodel.remove(item.id, item.keys);
+        }
+      });
+      return crdtmodel;
+    }).then(() => {
+      this._fire('change', {remove: items, version: this.version, originatorId});
+    });
+  }
+
   /**
    * Remove ids from a collection for specific keys.
    * @param id the id to remove.

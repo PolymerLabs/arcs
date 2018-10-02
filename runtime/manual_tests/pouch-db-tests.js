@@ -263,6 +263,23 @@ describe('pouchdb', function() {
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
     });
+    it('supports removeMultiple', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key = newStoreKey('collection');
+      let collection = await storage.construct('test1', BarType.collectionOf(), key);
+      await collection.store({id: 'id1', value: 'value'}, ['key1']);
+      await collection.store({id: 'id2', value: 'value'}, ['key2']);
+      await collection.removeMultiple([
+        {id: 'id1', keys: ['key1']}, {id: 'id2', keys: ['key2']}
+      ]);
+      assert.isEmpty(await collection.toList());
+    });
   });
   // TODO(lindner): add big collection tests here when implemented.
 });
