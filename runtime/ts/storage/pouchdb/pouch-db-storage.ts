@@ -83,7 +83,7 @@ export class PouchDbStorage extends StorageBase {
     // Use a simple fetch to see if the document exists
     try {
       // TODO(lindner): optimize away this call.
-      await this.dbForKey(pouchKey).get(pouchKey.toString());
+      await this.dbForKey(pouchKey).get(pouchKey.location);
       return this.construct(id, type, key);
     } catch (err) {
       if (err === 'not_found') {
