@@ -54,9 +54,15 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
       }
 
       let artists = [];
-      for (let item of playlist.tracks.items) {
-        for (let artist of item.track.artists) {
-          artists.push(artist.name);
+      if (playlist.tracks && playlist.tracks.items) {
+        for (let item of playlist.tracks.items) {
+          if (item.track) {
+            for (let artist of item.track.artists) {
+              if (artist.name) {
+                artists.push(artist.name);
+              }
+            }
+          }
         }
       }
 
