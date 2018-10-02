@@ -122,7 +122,12 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
   async onHandleUpdate(handle, update) {
-    await this._handlesToProps();
+    // TODO(sjmiles): debounce handles updates
+    const work = () => {
+      //console.warn(handle, update);
+      this._handlesToProps();
+    };
+    this._debounce('handleUpdateDebounce', work, 100);
   }
   async _handlesToProps() {
     let config = this.config;
