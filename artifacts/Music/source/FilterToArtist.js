@@ -8,8 +8,18 @@
 
 defineParticle(({DomParticle}) => {
   return class FilterToArtist extends DomParticle {
+    constructor() {
+      super();
+      // We need to mark the particle as busy ASAP to get an opportunity to filter the data before the speculator terminates.
+      this.startBusy();
+    }
+
     async willReceiveProps(props, state, lastProps) {
-      if (props.artist && props.fullPlayHistory && props.artistPlayHistory.length === 0) {
+      if (props.artist && props.fullPlayHistory) {
+        this.doneBusy();
+
+        if (props.artistPlayHistory.length !== 0)  return;
+
         const artistPlayHistory = this.handles.get('artistPlayHistory');
         for (const entry of props.fullPlayHistory) {
           if (entry.artist.toLowerCase() === props.artist.name.toLowerCase()) {
