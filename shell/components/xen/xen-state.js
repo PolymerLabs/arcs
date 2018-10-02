@@ -151,7 +151,15 @@ const XenStateMixin = Base => class extends Base {
   }
   _debounce(key, func, delay) {
     key = `_debounce_${key}`;
-    this._state[key] = debounce(this._state[key], func, delay != null ? delay : 16);
+    if (!this._state[key]) {
+      this.startBusy && this.startBusy();
+    }
+    const idleThenFunc = () => {
+      this.doneBusy && this.doneBusy();
+      func();
+      this._state[key] = null;
+    }
+    this._state[key] = debounce(this._state[key], idleThenFunc, delay != null ? delay : 16);
   }
 };
 
