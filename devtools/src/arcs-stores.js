@@ -80,8 +80,8 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
       <template is="dom-if" if="{{item.expanded}}">
         <div class="group-content">
           <template is="dom-repeat" items="{{item.items}}">
-            <div class="item-title" expanded$="{{item.expanded}}" on-click="_handleExpand">
-              <span class="triangle devtools-small-icon"></span>
+            <div class="item-title" on-click="_handleExpand">
+              <span class="triangle devtools-small-icon" expanded$="{{item.expanded}}"></span>
               <span name>[[item.store.name]]</span>
               <span tags>[[_tagsString(item.store.tags)]]</span>
               <span type>[[_typeString(item.store.type)]]</span>
