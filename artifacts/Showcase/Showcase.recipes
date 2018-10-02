@@ -5,6 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'ShowcaseArtist.recipes'
+import 'ShowcaseArtist.schema'
 import 'ShowcasePlayRecord.recipes'
 import 'ShowcaseDemo.recipes'

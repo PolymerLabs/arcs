@@ -10,16 +10,15 @@ import '../Common/Description.schema'
 import '../Places/ExtractLocation.manifest'
 import '../Things/GeoCoordinates.schema'
 import '../Pipes/PopCollectionItem.manifest'
-import '../Showcase/ShowcaseArtist.recipes'
-import 'PlayRecord.schema'
+import '../Showcase/ShowcaseArtist.schema'
+import '../Showcase/ShowcasePlayRecord.schema'
 import 'Playlist.schema'
 
-store Store1 of [PlayRecord] 'myNowPlayingHistory' in 'playingNowHistory.json'
 store Store2 of [Playlist] 'playlists' in 'playlists.json'
 
 particle ShowArtist in 'source/ShowArtist.js'
   in ShowcaseArtist artist
-  in [PlayRecord] artistPlayHistory
+  in [ShowcasePlayRecord] artistPlayHistory
   out [Description] descriptions
   consume root
     provide nearbyShows
@@ -32,19 +31,21 @@ particle ShowArtist in 'source/ShowArtist.js'
 
 particle FilterToArtist in 'source/FilterToArtist.js'
   in ShowcaseArtist artist
-  in [PlayRecord] fullPlayHistory
-  inout [PlayRecord] artistPlayHistory
+  in [ShowcasePlayRecord] fullPlayHistory
+  inout [ShowcasePlayRecord] artistPlayHistory
 
 particle PlayRecordRenderer in 'source/PlayRecordRenderer.js'
-  in PlayRecord playRecord
+  in ShowcasePlayRecord playRecord
   consume item
 
-// Feed the artist to Arcs by invoking below in the Chrome console when in Arcs Launcher:
+// Feed the artist and play records to Arcs by invoking
+// below in the Chrome console when in Arcs Launcher:
 // ShellApi.receiveEntity('{"type": "artist", "name": "Led Zeppelin"}');
+// ShellApi.receiveEntity(`{"type": "play_record", "artist": "Led Zeppelin", "song": "Kashmir", "dateTime": "${String(Date.now())}"}`);
 recipe ShowcaseArtistDemo
   map 'PROFILE_piped-showcase_artist' as artists
   create as artist
-  map 'myNowPlayingHistory' as fullPlayHistory
+  map 'PROFILE_all_piped-all_showcase_play_record' as fullPlayHistory
   create as artistPlayHistory
   PopCollectionItem
     collection = artists

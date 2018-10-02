@@ -91,8 +91,11 @@ ${styles}
     }
     willReceiveProps(props) {
       if (props.artistPlayHistory.length) {
-        const mostRecentTimestamp = Math.max(...props.artistPlayHistory.map(r => r.dateTime));
-        this.setParticleDescription(`You've heard ${props.artist.name} on ${new Date(mostRecentTimestamp).toLocaleDateString()}`);
+        let mostRecent = props.artistPlayHistory[0];
+        for (let song of props.artistPlayHistory) {
+          if (Number(song.dateTime) > Number(mostRecent.dateTime)) mostRecent = song;
+        }
+        this.setParticleDescription(`You listened to ${mostRecent.song} by ${props.artist.name} on ${new Date(Number(mostRecent.dateTime)).toLocaleDateString()}`);
       }
     }
     render({artist}) {
