@@ -24,25 +24,18 @@ export class ShellPlanningInterface {
    * Starts a continuous shell planning import.
    *
    * @param assetsPath a path (relative or absolute) to locate planning assets.
-   * @param userId the User Id to do planning for.
+   * @param userid the User Id to do planning for.
    */
-  static async start(assetsPath, userId) {
-    if (!assetsPath || !userId) {
-      throw new Error('assetsPath and userId required');
+  static async start(assetsPath, userid) {
+    if (!assetsPath || !userid) {
+      throw new Error('assetsPath and userid required');
     }
-    // eslint-disable-next-line
-    while (1) {
-      try {
-        const factory = new ArcFactory(assetsPath);
-        const context = await factory.createContext(manifest);
-        const user = new UserContext();
-        user._setProps({userid, context});
-        const planner = new UserPlanner(factory, context, userid);
-      } catch (err) {
-        console.warn('Error in Shell Planning, pausing for 5s', err);
-        await new Promise((resolve) => setTimeout(() => resolve(), 5000));
-      }
-    }
+    
+    const factory = new ArcFactory(assetsPath);
+    const context = await factory.createContext(manifest);
+    const user = new UserContext();
+    user._setProps({userid, context});
+    const planner = new UserPlanner(factory, context, userid);
   }
 }
 
