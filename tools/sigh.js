@@ -463,12 +463,13 @@ function test(args) {
       {stdio: 'inherit'});
 }
 
-async function importSpotify() {
+async function importSpotify(args) {
   return saneSpawn('node', [
     '--experimental-modules',
     '--trace-warnings',
     '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-    './tools/spotify-importer.js'
+    './tools/spotify-importer.js',
+    ...args
   ], {stdio: 'inherit'});
 }
 
