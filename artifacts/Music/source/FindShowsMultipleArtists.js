@@ -148,7 +148,7 @@ ${styles}
         if (!nearest || nearest.distance > event.distance) nearest = event;
       }
 
-      this.setParticleDescription(`Get ticket for ${artist} concert on ${nearest.dates.start.localDate}`);
+      this.setParticleDescription(`Ticketmaster: Get ticket for ${artist} concert on ${nearest.dates.start.localDate}`);
 
       this.appendRawDataToHandle('shows', [{
         name: nearest.name,
