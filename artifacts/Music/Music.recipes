@@ -14,7 +14,8 @@ import '../Showcase/ShowcaseArtist.schema'
 import '../Showcase/ShowcasePlayRecord.schema'
 import 'Playlist.schema'
 
-store Store2 of [Playlist] 'playlists' in 'playlists.json'
+// TODO: connect to 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections/playlists'
+store Store2 of BigCollection<Playlist> 'playlists' in 'playlists.json'
 
 particle ShowArtist in 'source/ShowArtist.js'
   in ShowcaseArtist artist
@@ -149,7 +150,7 @@ recipe
 
 particle FilterPlaylists in 'source/FilterPlaylists.js'
   in ShowcaseArtist artist
-  in [Playlist] allPlaylists
+  in BigCollection<Playlist> allPlaylists
   inout [Playlist] artistsPlaylists
   consume extrasForArtist
     provide playlistsListing

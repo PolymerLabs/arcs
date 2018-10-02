@@ -37,12 +37,26 @@ ${styles}
     }
     async willReceiveProps(props, state, lastProps) {
       if (props.artist && props.allPlaylists && props.artistsPlaylists.length === 0) {
+        const artistName = props.artist.name.toLowerCase();
         const artistsPlaylists = this.handles.get('artistsPlaylists');
-        for (const playlist of props.allPlaylists) {
-          if (playlist.artists.some(artist => artist.toLowerCase() === props.artist.name.toLowerCase())) {
-            await artistsPlaylists.store(playlist);
+        const cursor = await props.allPlaylists.stream(40);
+        const promises = [];
+        for (;;) {
+          let {value, done} = await cursor.next();
+          for (const playlist of value || []) {
+            const artists = playlist.artists ? playlist.artists.split('|') : [];
+            if (artists.some(artist => artist.toLowerCase() === artistName)) {
+              promises.push(artistsPlaylists.store(playlist));
+              if (promises.length == 5) {
+                cursor.close();
+                done = true;
+                break;
+              }
+            }
           }
+          if (done) break;
         }
+        await Promise.all(promises);
       }
     }
     shouldRender(props) {
