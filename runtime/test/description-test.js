@@ -850,7 +850,6 @@ recipe
       // Particle (static) spec pattern.
       recipeClone.particles[0].spec.pattern = 'hello world';
       await test.verifySuggestion(description, 'Hello world.');
-
       recipeClone.patterns = [`Here it is: \${B}`];
       await test.verifySuggestion(description, 'Here it is: hello world.');
 
