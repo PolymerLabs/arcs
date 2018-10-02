@@ -35,18 +35,17 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     return result;
   }
 
-  async _combineSelectedDescriptions(selectedDescriptions) {
+  async _combineSelectedDescriptions(selectedDescriptions, options) {
     let suggestionByParticleDesc = new Map();
     for (let particleDesc of selectedDescriptions) {
       if (this.seenParticles.has(particleDesc._particle)) {
         continue;
       }
 
-      let {template, model} = this._retrieveTemplateAndModel(particleDesc, suggestionByParticleDesc.size);
+      let {template, model} = this._retrieveTemplateAndModel(particleDesc, suggestionByParticleDesc.size, options || {});
 
       let success = await Promise.all(Object.keys(model).map(async tokenKey => {
         let tokens = this._initSubTokens(model[tokenKey], particleDesc);
-        let token = tokens[0];
         return (await Promise.all(tokens.map(async token => {
           let tokenValue = await this.tokenToString(token);
           if (tokenValue == undefined) {
@@ -82,12 +81,14 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
     if (suggestions.length > 0) {
       let result = this._joinDescriptions(suggestions);
-      result.template += '.';
+      if (!options || !options.skipFormatting) {
+        result.template += '.';
+      }
       return result;
     }
   }
 
-  _retrieveTemplateAndModel(particleDesc, index) {
+  _retrieveTemplateAndModel(particleDesc, index, options) {
     if (particleDesc.template && particleDesc.model) {
       return {template: particleDesc.template, model: particleDesc.model};
     }
@@ -98,12 +99,13 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
     tokens.forEach((token, i) => {
       if (token.text) {
-        template = template.concat(`${index == 0 && i == 0 ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
+        template = template.concat(
+            `${(index == 0 && i == 0 && !options.skipFormatting) ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
       } else { // handle or slot handle.
         let sanitizedFullName = token.fullName.replace(/[.{}_$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.
-        if (i == 0) {
+        if (i == 0 && !options.skipFormatting) {
           // Capitalize the first letter in the token.
           template = template.concat(`<style>
             [firstletter]::first-letter { text-transform: capitalize; }

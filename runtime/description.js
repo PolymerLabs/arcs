@@ -167,7 +167,7 @@ export class DescriptionFormatter {
     return pattern ? {pattern} : {};
   }
 
-  async _combineSelectedDescriptions(selectedDescriptions) {
+  async _combineSelectedDescriptions(selectedDescriptions, options) {
     let suggestions = [];
     await Promise.all(selectedDescriptions.map(async particle => {
       if (!this.seenParticles.has(particle._particle)) {
@@ -176,7 +176,11 @@ export class DescriptionFormatter {
     }));
     let jointDescription = this._joinDescriptions(suggestions);
     if (jointDescription) {
-      return this._capitalizeAndPunctuate(jointDescription);
+      if ((options || {}).skipFormatting) {
+        return jointDescription;
+      } else {
+        return this._capitalizeAndPunctuate(jointDescription);
+      }
     }
   }
 
@@ -241,6 +245,7 @@ export class DescriptionFormatter {
     return results;
   }
 
+  //async
   _initSubTokens(pattern, particleDescription) {
     let valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
     let handleNames = valueTokens[1].split('.');
@@ -273,8 +278,11 @@ export class DescriptionFormatter {
     let particle = particleDescription._particle;
 
     if (handleNames.length == 0) {
-      // Use the full particle description
-      return this._initTokens(particleDescription.pattern || particle.spec.pattern || '', particleDescription);
+      // return a  particle token
+      return {
+        particleName: particle.spec.name,
+        particleDescription
+      };
     }
 
     let handleConn = particle.connections[handleNames[0]];
@@ -314,12 +322,19 @@ export class DescriptionFormatter {
     if (token.text) {
       return token.text;
     }
+    if (token.particleName) {
+      return this._particleTokenToString(token);
+    }
     if (token.handleName) {
       return this._handleTokenToString(token);
     } else if (token.consumeSlotName && token.provideSlotName) {
       return this._slotTokenToString(token);
     }
     throw new Error('no handle or slot name');
+  }
+
+  async _particleTokenToString(token) {
+    return this._combineSelectedDescriptions([token.particleDescription], {skipFormatting: true}); //debug;
   }
 
   async _handleTokenToString(token) {
