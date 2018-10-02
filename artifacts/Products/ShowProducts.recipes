@@ -13,13 +13,19 @@ particle ShowProduct in 'source/ShowProduct.js'
   in Product product
   consume item
 
-recipe MuxedProductItem &muxProduct
-  ItemMultiplexer
+// This recipe is supposed to be coalesced with &showShopList recipe.
+// However uncommenting it causes useless suggestions to be created for
+// for lists that aren't produces.
+// TODO: reworking muxing should fix this.
+// recipe MuxedProductItem &muxProduct
+//   ItemMultiplexer
 
 recipe ProductList &showShopList
   copy #shoplist as newlist
   List
     items = newlist
+  ItemMultiplexer
+    list = newlist
   description `show ${List.items}`
 
 // Show [person]'s wishlist
