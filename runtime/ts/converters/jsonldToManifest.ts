@@ -8,56 +8,57 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
+const supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
 export class JsonldToManifest {
-  static convert(jsonld, theClass) {
-    let obj = JSON.parse(jsonld);
-    let classes = {};
-    let properties = {};
+
+  static convert(jsonld: string, theClass) {
+    const obj = JSON.parse(jsonld);
+    const classes = {};
+    const properties = {};
 
     if (!obj['@graph']) {
       obj['@graph'] = [obj];
     }
 
-    for (let item of obj['@graph']) {
-      if (item['@type'] == 'rdf:Property') {
+    for (const item of obj['@graph']) {
+      if (item['@type'] === 'rdf:Property') {
         properties[item['@id']] = item;
-      } else if (item['@type'] == 'rdfs:Class') {
+      } else if (item['@type'] === 'rdfs:Class') {
         classes[item['@id']] = item;
-        item.subclasses = [];
-        item.superclass = null;
+        item['subclasses'] = [];
+        item['superclass'] = null;
       }
     }
 
-    for (let clazz of Object.values(classes)) {
+    for (const clazz of Object.values(classes)) {
       if (clazz['rdfs:subClassOf'] !== undefined) {
         if (clazz['rdfs:subClassOf'].length == undefined) {
           clazz['rdfs:subClassOf'] = [clazz['rdfs:subClassOf']];
         }
-        for (let subClass of clazz['rdfs:subClassOf']) {
-          let superclass = subClass['@id'];
-          if (clazz.superclass == undefined) {
-            clazz.superclass = [];
+        for (const subClass of clazz['rdfs:subClassOf']) {
+          const superclass = subClass['@id'];
+          if (clazz['superclass'] == undefined) {
+            clazz['superclass'] = [];
           }
           if (classes[superclass]) {
             classes[superclass].subclasses.push(clazz);
-            clazz.superclass.push(classes[superclass]);
+            clazz['superclass'].push(classes[superclass]);
           } else {
-            clazz.superclass.push({'@id': superclass});
+            clazz['superclass'].push({'@id': superclass});
           }
         }
       }
     }
 
-    for (let clazz of Object.values(classes)) {
-      if (clazz.subclasses.length == 0 && theClass == undefined) {
+    for (const clazz of Object.values(classes)) {
+      if (clazz['subclasses'].length === 0 && theClass == undefined) {
         theClass = clazz;
       }
     }
 
-    let relevantProperties = [];
-    for (let property of Object.values(properties)) {
+    const relevantProperties = [];
+    for (const property of Object.values(properties)) {
       let domains = property['schema:domainIncludes'];
       if (!domains) {
         domains = {'@id': theClass['@id']};
@@ -67,7 +68,7 @@ export class JsonldToManifest {
       }
       domains = domains.map(a => a['@id']);
       if (domains.includes(theClass['@id'])) {
-        let name = property['@id'].split(':')[1];
+        const name = property['@id'].split(':')[1];
         let type = property['schema:rangeIncludes'];
         if (!type) {
           console.log(property);
@@ -84,11 +85,11 @@ export class JsonldToManifest {
       }
     }
 
-    let className = theClass['@id'].split(':')[1];
-    let superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
+    const className = theClass['@id'].split(':')[1];
+    const superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
 
     let s = '';
-    for (let superName of superNames) {
+    for (const superName of superNames) {
       s += `import 'https://schema.org/${superName}'\n\n`;
     }
 
@@ -98,7 +99,7 @@ export class JsonldToManifest {
     }
 
     if (relevantProperties.length > 0) {
-      for (let property of relevantProperties) {
+      for (const property of relevantProperties) {
         let type;
         if (property.type.length > 1) {
           type = '(' + property.type.join(' or ') + ')';
