@@ -16,7 +16,7 @@ import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {MessageChannel} from '../message-channel.js';
+import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test

@@ -16,7 +16,7 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
-import {MessageChannel} from '../message-channel.js';
+import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import * as util from '../testing/test-util.js';

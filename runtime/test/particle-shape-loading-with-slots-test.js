@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
-import {MessageChannel} from '../message-channel.js';
+import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
