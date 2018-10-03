@@ -32,11 +32,13 @@
     "@google-cloud/compute": "^0.10.0",
     "@kubernetes/client-node": "^0.7.1",
     "arcs": "file:../",
+    "cors": "^2.8.4",
     "debug": "^4.1.0",
     "esm": "^3.0.84",
     "express": "^4.16.4",
     "express-pouchdb": "^4.1.0",
     "morgan": "^1.9.1",
+    "node-fetch": "^2.2.0",
     "pouchdb-adapter-memory": "^7.0.0",
     "source-map-support": "^0.5.9"
   },

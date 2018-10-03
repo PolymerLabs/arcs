@@ -13,7 +13,9 @@ import PouchDbServer from 'express-pouchdb';
 import {Runtime} from 'arcs';
 import {ShellPlanningInterface} from 'arcs';
 import {AppBase} from './app';
-import {ON_DISK_DB} from './deployment/utils';
+import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
+import url from "url";
+import path from "path";
 
 /**
  * An app server that additionally configures a pouchdb.
@@ -62,13 +64,48 @@ class PouchDbApp extends AppBase {
    * https://github.com/pouchdb/pouchdb-server
    */
   private addPouchRoutes(): void {
+    const urlPrefix = process.env[VM_URL_PREFIX] || '/';
+    const config = {
+      mode: 'fullCouchDB', inMemoryConfig: true,
+      "httpd": {
+        "enable_cors": true
+      },
+      "cors": {
+        "origins": "https://skarabrae.org",
+        "credentials": true,
+        "headers": "accept, authorization, content-type, origin, referer",
+        "methods": "GET, PUT, POST, HEAD, DELETE"
+      }
+    };
+
+
     if (process.env[ON_DISK_DB]) {
-      const dboptions = {prefix: '/personalcloud/'} as PouchDB.Configuration.RemoteDatabaseConfiguration;
+      const dboptions = {'prefix': DISK_MOUNT_PATH + '/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
-      this.express.use('/', PouchDbServer(onDiskPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
+      const pouchDbRouter = PouchDbServer(onDiskPouchDb, config);
+      this.express.use(urlPrefix, pouchDbRouter);
+      if (urlPrefix !== '/') {
+        // For LB healthcheck
+        this.express.get('/', (req, res) => res.send("OK"));
+
+
+        // workaround fauxton not like living at subresource locations
+        const fauxtonIntercept = (req, res, next) => {
+          const referer = req.header('Referer');
+          if (!referer) return next();
+
+          const  parsed = url.parse(referer);
+          if (0 === parsed.pathname.indexOf(path.join(urlPrefix, '_utils/'))) {
+            return pouchDbRouter(req, res);
+          }
+          return next();
+        };
+
+        this.express.use(fauxtonIntercept);
+      }
     } else {
-      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
-      this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
+      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
+      this.express.use(urlPrefix, PouchDbServer(inMemPouchDb, config));
     }
   }
 }

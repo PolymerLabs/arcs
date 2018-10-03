@@ -14,11 +14,18 @@ import {Disk} from "./disks";
  */
 export interface Container {
   /**
+   * Cloud specific identifier (usually the underlying cluster VM.
+   */
+  node(): PromiseLike<string>;
+
+  /**
    * Return the storage volume currently attached to this container
    * (possibly unmounted).
    */
   disk(): PromiseLike<Disk>;
 
+  status(): string;
+  
   /**
    * Return an externally accessible URL that maps to the running
    * node VM.
@@ -36,5 +43,5 @@ export interface ContainerManager {
    */
   find(fingerprint: string): PromiseLike<Container | null>;
 
-  deploy(fingerprint: string, encryptedDisk: Disk): PromiseLike<Container>;
+  deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): PromiseLike<Container>;
 }
