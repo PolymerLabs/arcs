@@ -7,16 +7,19 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
+import {Particle} from '../particle.js';
 
 export class Relevance {
+  arcState: {};
+  private relevanceMap: Map<Particle, number[]>;
+
   constructor(arcState) {
     this.arcState = arcState;
     this.relevanceMap = new Map();
   }
 
   apply(relevance) {
-    for (let key of relevance.keys()) {
+    for (const key of relevance.keys()) {
       if (this.relevanceMap.has(key)) {
         this.relevanceMap.set(
             key, this.relevanceMap.get(key).concat(relevance.get(key)));
@@ -29,8 +32,8 @@ export class Relevance {
   calcRelevanceScore() {
     let relevance = 1;
     let hasNegative = false;
-    for (let rList of this.relevanceMap.values()) {
-      let particleRelevance = Relevance.particleRelevance(rList);
+    for (const rList of this.relevanceMap.values()) {
+      const particleRelevance = Relevance.particleRelevance(rList);
       if (particleRelevance < 0) {
         hasNegative = true;
       }
@@ -41,17 +44,19 @@ export class Relevance {
 
   // Returns false, if at least one of the particles relevance lists ends with a negative score.
   isRelevant(plan) {
-    let hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
+    const hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
     let rendersUi = false;
     this.relevanceMap.forEach((rList, particle) => {
       if (rList[rList.length - 1] < 0) {
         return false;
       } else if (Object.keys(particle.consumedSlotConnections).length) {
         rendersUi = true;
+        return false;
       }
+      return false;
     });
     // If the recipe has UI rendering particles, at least one of the particles must render UI.
-    return hasUi == rendersUi;
+    return hasUi === rendersUi;
   }
 
   static scaleRelevance(relevance) {
@@ -67,7 +72,7 @@ export class Relevance {
     let relevance = 1;
     let hasNegative = false;
     relevanceList.forEach(r => {
-      let scaledRelevance = Relevance.scaleRelevance(r);
+      const scaledRelevance = Relevance.scaleRelevance(r);
       if (scaledRelevance < 0) {
         hasNegative = true;
       }
@@ -76,7 +81,7 @@ export class Relevance {
     return relevance * (hasNegative ? -1 : 1);
   }
 
-  calcParticleRelevance(particle) {
+  calcParticleRelevance(particle: Particle) {
     if (this.relevanceMap.has(particle)) {
       return Relevance.particleRelevance(this.relevanceMap.get(particle));
     }
