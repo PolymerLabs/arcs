@@ -7,13 +7,18 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {Type} from './ts-build/type.js';
-import {assert} from '../platform/assert-web.js';
-import {Schema} from './ts-build/schema.js';
+import {Type} from './type.js';
+import {assert} from '../../platform/assert-web.js';
+import {Schema} from './schema.js';
 
 export class TypeVariable {
-  constructor(name, canWriteSuperset, canReadSubset) {
-    assert(typeof name == 'string');
+  name: string;
+  _canWriteSuperset: Type|null;
+  _canReadSubset: Type|null;
+  _resolution: Type|null;
+
+  constructor(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
+    assert(typeof name === 'string');
     assert(canWriteSuperset == null || canWriteSuperset instanceof Type);
     assert(canReadSubset == null || canReadSubset instanceof Type);
     this.name = name;
@@ -51,7 +56,7 @@ export class TypeVariable {
       return true;
     }
 
-    let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
+    const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
     if (!mergedSchema) {
       return false;
     }
@@ -77,7 +82,7 @@ export class TypeVariable {
       return true;
     }
 
-    let mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
     if (!mergedSchema) {
       return false;
     }
@@ -87,7 +92,7 @@ export class TypeVariable {
   }
 
   isSatisfiedBy(type) {
-    let constraint = this._canWriteSuperset;
+    const constraint = this._canWriteSuperset;
     if (!constraint) {
       return true;
     }
@@ -107,9 +112,9 @@ export class TypeVariable {
   set resolution(value) {
     assert(value instanceof Type);
     assert(!this._resolution);
-    let elementType = value.resolvedType().getContainedType();
+    const elementType = value.resolvedType().getContainedType();
     if (elementType !== null && elementType.isVariable) {
-      assert(elementType.variable != this, 'variable cannot resolve to collection of itself');
+      assert(elementType.variable !== this, 'variable cannot resolve to collection of itself');
     }
 
     let probe = value;
@@ -117,7 +122,7 @@ export class TypeVariable {
       if (!probe.isVariable) {
         break;
       }
-      if (probe.variable == this) {
+      if (probe.variable === this) {
         return;
       }
       probe = probe.variable.resolution;

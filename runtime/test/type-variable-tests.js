@@ -13,7 +13,7 @@ import {assert} from './chai-web.js';
 
 import {Type} from '../ts-build/type.js';
 import {Schema} from '../ts-build/schema.js';
-import {TypeVariable} from '../type-variable.js';
+import {TypeVariable} from '../ts-build/type-variable.js';
 
 const resolutionAssertMsg = 'variable cannot resolve to collection of itself';
 
