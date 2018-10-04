@@ -20,7 +20,7 @@ import {Shape} from './ts-build/shape.js';
 import {Type} from './ts-build/type.js';
 import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
-import {ManifestMeta} from './manifest-meta.js';
+import {ManifestMeta} from './ts-build/manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 
