@@ -47,9 +47,7 @@ export class Relevance {
     const hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
     let rendersUi = false;
 
-    for (const kvpair of this.relevanceMap) {
-      const [particle, rList] = kvpair;
-
+    for (const [particle, rList] of this.relevanceMap) {
       if (rList[rList.length - 1] < 0) {
         continue;
       } else if (Object.keys(particle.consumedSlotConnections).length) {
