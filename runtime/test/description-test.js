@@ -14,7 +14,7 @@ import {Description} from '../description.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
-import {Relevance} from '../relevance.js';
+import {Relevance} from '../ts-build/relevance.js';
 import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
