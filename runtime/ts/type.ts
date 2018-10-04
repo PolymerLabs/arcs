@@ -576,4 +576,4 @@ import {Schema} from './schema.js';
 import {TypeVariable} from '../type-variable.js';
 import {TupleFields} from './tuple-fields.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {SlotInfo} from '../slot-info.js';
+import {SlotInfo} from './slot-info.js';
