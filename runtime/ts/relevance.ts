@@ -46,15 +46,18 @@ export class Relevance {
   isRelevant(plan) {
     const hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
     let rendersUi = false;
-    this.relevanceMap.forEach((rList, particle) => {
+
+    for (const particle of this.relevanceMap.keys()) {
+      const rList = this.relevanceMap.get(particle);
+      
       if (rList[rList.length - 1] < 0) {
-        return false;
+        continue;
       } else if (Object.keys(particle.consumedSlotConnections).length) {
         rendersUi = true;
-        return false;
+        break;
       }
-      return false;
-    });
+    }
+
     // If the recipe has UI rendering particles, at least one of the particles must render UI.
     return hasUi === rendersUi;
   }
