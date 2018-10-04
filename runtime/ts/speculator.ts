@@ -15,7 +15,7 @@ import {Recipe} from '../recipe/recipe.js';
 
 export class Speculator {
   _relevanceByHash: Map<string, Relevance>;
-
+  
   constructor() {
     this._relevanceByHash = new Map();
   }

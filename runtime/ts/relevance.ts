@@ -7,13 +7,18 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {Arc} from '../arc.js';
 import {Particle} from '../particle.js';
 
 export class Relevance {
-  arcState: {};
+  // stores a copy of arc.getStoresState
+  arcState: Map<string, string>|undefined;
+  // temp use by speculator, figure out why this is here.
+  newArc: Arc;
+
   private relevanceMap: Map<Particle, number[]>;
 
-  constructor(arcState) {
+  constructor(arcState?: Map<string, string>) {
     this.arcState = arcState;
     this.relevanceMap = new Map();
   }
