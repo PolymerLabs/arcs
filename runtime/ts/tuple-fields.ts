@@ -8,14 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type} from './ts-build/type.js';
+import {Type} from './type.js';
 
 export class TupleFields {
-  constructor(fieldList) {
+  fieldList: Type[];
+
+  constructor(fieldList: Type[]) {
     this.fieldList = fieldList;
   }
 
-  static fromLiteral(literal) {
+  static fromLiteral(literal: []) {
     return new TupleFields(literal.map(a => Type.fromLiteral(a)));
   }
 
@@ -23,11 +25,11 @@ export class TupleFields {
     return this.fieldList.map(a => a.toLiteral());
   }
 
-  clone() {
-    return new TupleFields(this.fieldList.map(a => a.clone()));
+  clone(): TupleFields {
+    return new TupleFields(this.fieldList.map(a => a.clone({})));
   }
 
-  equals(other) {
+  equals(other: TupleFields): boolean {
     if (this.fieldList.length !== other.fieldList.length) {
       return false;
     }
