@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let systemHandlers = [];
+const systemHandlers = [];
 
 export function reportSystemException(exception, methodName, particle) {
-  for (let handler of systemHandlers) {
+  for (const handler of systemHandlers) {
     handler(exception, methodName, particle);
   }
 }
@@ -23,7 +23,7 @@ export function registerSystemExceptionHandler(handler) {
 }
 
 export function removeSystemExceptionHandler(handler) {
-  let idx = systemHandlers.indexOf(handler);
+  const idx = systemHandlers.indexOf(handler);
   if (idx > -1) {
     systemHandlers.splice(idx, 1);
   }
