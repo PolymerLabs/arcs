@@ -477,12 +477,15 @@ class VolatileCursor {
   private readonly pageSize: number;
   private data;
 
-  constructor(version, data, pageSize) {
+  constructor(version, data, pageSize, forward) {
     this.version = version;
     this.pageSize = pageSize;
     const copy = [...data];
     copy.sort((a, b) => a.index - b.index);
     this.data = copy.map(v => v.value);
+    if (!forward) {
+      this.data.reverse();
+    }
   }
 
   async next() {
@@ -540,10 +543,10 @@ class VolatileBigCollection extends VolatileStorageProvider {
     this.items.delete(id);
   }
 
-  async stream(pageSize) {
+  async stream(pageSize, {forward = true} = {}) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
-    const cursor = new VolatileCursor(this.version, this.items.values(), pageSize);
+    const cursor = new VolatileCursor(this.version, this.items.values(), pageSize, forward);
     this.cursors.set(this.cursorIndex, cursor);
     return this.cursorIndex;
   }
