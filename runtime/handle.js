@@ -9,7 +9,7 @@
 'use strict';
 
 import {Reference} from './ts-build/reference.js';
-import {Symbols} from './symbols.js';
+import {Symbols} from './ts-build/symbols.js';
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 
