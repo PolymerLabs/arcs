@@ -8,7 +8,7 @@
 
 import {Entity} from '../entity.js';
 import {Type} from './type.js';
-import {Symbols} from '../symbols.js';
+import {Symbols} from './symbols.js';
 
 // TODO: Should relations normalized by another layer, or here?
 export class Relation extends Entity {
