@@ -65,7 +65,7 @@ describe('OuterPortAttachment', function() {
         foo: {
           direction: 'inout',
           id: 'fooStore',
-          storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
+          storageKey: 'volatile://!158405822139616:demo^^volatile-0',
           type: 'Foo'
         },
       },
@@ -90,7 +90,7 @@ describe('OuterPortAttachment', function() {
       },
       handle: {
         id: 'fooStore',
-        storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
+        storageKey: 'volatile://!158405822139616:demo^^volatile-0',
         type: 'Foo'
       },
       data: '{"id":"!158405822139616:demo:0:inner:0:0","rawData":{"value":"FooBar"}}',

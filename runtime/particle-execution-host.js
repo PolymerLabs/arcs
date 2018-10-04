@@ -88,7 +88,7 @@ export class ParticleExecutionHost {
 
     this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
       if (!storageKey) {
-        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'in-memory');
+        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'volatile');
       }
       let store = await this._arc._storageProviderFactory.baseStorageFor(type, storageKey);
       // TODO(shans): THIS IS NOT SAFE!
@@ -106,9 +106,9 @@ export class ParticleExecutionHost {
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
       // At the moment, inner arcs are not persisted like their containers, but are instead
       // recreated when an arc is deserialized. As a consequence of this, dynamically 
-      // created handles for inner arcs must always be in-memory to prevent storage 
+      // created handles for inner arcs must always be volatile to prevent storage 
       // in firebase.
-      let store = await this._arc.createStore(type, name, null, [], 'in-memory');
+      let store = await this._arc.createStore(type, name, null, [], 'volatile');
       this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 

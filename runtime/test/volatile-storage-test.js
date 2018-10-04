@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
-import {resetInMemoryStorageForTesting} from '../ts-build/storage/in-memory-storage.js';
+import {resetVolatileStorageForTesting} from '../ts-build/storage/volatile-storage.js';
 
 // Resolves when the two stores are synchronzied with each other:
 // * same version
@@ -26,16 +26,13 @@ async function synchronized(store1, store2, delay=1) {
   }
 }
 
-describe('in-memory', function() {
+describe('volatile', function() {
 
-  let lastStoreId = 0;
-  function newStoreKey(name) {
-    return `in-memory`;
-  }
+  const storeKey = 'volatile';
 
   before(() => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
-    resetInMemoryStorageForTesting();
+    resetVolatileStorageForTesting();
   });
 
   describe('variable', () => {
@@ -48,7 +45,7 @@ describe('in-memory', function() {
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value = 'Hi there' + Math.random();
-      let variable = await storage.construct('test0', BarType, newStoreKey('variable'));
+      let variable = await storage.construct('test0', BarType, storeKey);
       await variable.set({id: 'test0:test', value});
       let result = await variable.get();
       assert.equal(value, result.value);
@@ -62,8 +59,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('variable');
-      let var1 = await storage.construct('test0', BarType, key);
+      let var1 = await storage.construct('test0', BarType, storeKey);
       let var2 = await storage.connect('test0', BarType, var1.storageKey);
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
@@ -78,9 +74,8 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
-  
-      let var1 = await storage.construct('test0', BarType, key1);
+
+      let var1 = await storage.construct('test0', BarType, storeKey);
       await var1.set({id: 'id1', value: 'underlying'});
       
       let result = await var1.get();
@@ -101,9 +96,8 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
 
-      let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
+      let var1 = await storage.construct('test0', Type.newReference(BarType), storeKey);
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
       let result = await var1.get();
@@ -126,7 +120,7 @@ describe('in-memory', function() {
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let value1 = 'Hi there' + Math.random();
       let value2 = 'Goodbye' + Math.random();
-      let collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
+      let collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -142,8 +136,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
@@ -158,8 +151,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       collection2.store({id: 'id1', value: 'value'}, ['key2']);
@@ -177,8 +169,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -195,9 +186,8 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
   
-      let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+      let collection1 = await storage.construct('test0', BarType.collectionOf(), storeKey);
   
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -220,8 +210,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection = await storage.construct('test1', BarType.collectionOf(), key);
+      let collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -238,9 +227,8 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
   
-      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
+      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), storeKey);
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -264,8 +252,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('bigcollection');
-      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
+      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
       let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
 
       // Concurrent writes to different ids.
@@ -298,8 +285,7 @@ describe('in-memory', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('bigcollection');
-      let collection = await storage.construct('test0', BarType.bigCollectionOf(), key);
+      let collection = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
       let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {

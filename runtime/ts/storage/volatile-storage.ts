@@ -14,28 +14,28 @@ import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 
-export function resetInMemoryStorageForTesting() {
+export function resetVolatileStorageForTesting() {
   for (const key of Object.keys(__storageCache)) {
     __storageCache[key]._memoryMap = {};
   }
 }
 
-class InMemoryKey extends KeyBase {
+class VolatileKey extends KeyBase {
   arcId: string;
   location: string;
   constructor(key: string) {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol === 'in-memory', `can't construct in-memory key for protocol ${this.protocol} (input key ${key})`);
+    assert(this.protocol === 'volatile', `can't construct volatile key for protocol ${this.protocol} (input key ${key})`);
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
     assert(this.toString() === key);
   }
 
-  childKeyForHandle(id): InMemoryKey {
-    return new InMemoryKey('in-memory://');
+  childKeyForHandle(id): VolatileKey {
+    return new VolatileKey('volatile://');
   }
 
   toString() {
@@ -52,10 +52,10 @@ class InMemoryKey extends KeyBase {
 // tslint:disable-next-line: variable-name
 const __storageCache = {};
 
-export class InMemoryStorage extends StorageBase {
-  _memoryMap: {[index: string]: InMemoryStorageProvider};
-  _typeMap: {[index: string]: InMemoryCollection};
-  private typePromiseMap: {[index: string]: Promise<InMemoryCollection>};
+export class VolatileStorage extends StorageBase {
+  _memoryMap: {[index: string]: VolatileStorageProvider};
+  _typeMap: {[index: string]: VolatileCollection};
+  private typePromiseMap: {[index: string]: Promise<VolatileCollection>};
   localIDBase: number;
 
   constructor(arcId: Id) {
@@ -69,7 +69,7 @@ export class InMemoryStorage extends StorageBase {
     __storageCache[this.arcId.toString()] = this;
   }
 
-  async construct(id: string, type: Type, keyFragment: string) : Promise<InMemoryStorageProvider> {
+  async construct(id: string, type: Type, keyFragment: string) : Promise<VolatileStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
     if (type.isReference || type.isBigCollection) {
       return provider;
@@ -82,15 +82,15 @@ export class InMemoryStorage extends StorageBase {
   }
 
   async _construct(id, type, keyFragment) {
-    const key = new InMemoryKey(keyFragment);
+    const key = new VolatileKey(keyFragment);
     if (key.arcId == undefined) {
       key.arcId = this.arcId.toString();
     }
     if (key.location == undefined) {
-      key.location = 'in-memory-' + this.localIDBase++;
+      key.location = 'volatile-' + this.localIDBase++;
     }
     // TODO(shanestephens): should pass in factory, not 'this' here.
-    const provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
+    const provider = VolatileStorageProvider.newProvider(type, this, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined) {
       return null;
     }
@@ -98,8 +98,8 @@ export class InMemoryStorage extends StorageBase {
     return provider;
   }
 
-  async connect(id: string, type: Type, key: string) : Promise<InMemoryStorageProvider> {
-    const imKey = new InMemoryKey(key);
+  async connect(id: string, type: Type, key: string) : Promise<VolatileStorageProvider> {
+    const imKey = new VolatileKey(key);
     if (imKey.arcId !== this.arcId.toString()) {
       if (__storageCache[imKey.arcId] == undefined) {
         return null;
@@ -114,9 +114,9 @@ export class InMemoryStorage extends StorageBase {
   }
 
   baseStorageKey(type: Type) : string {
-    const key = new InMemoryKey('in-memory');
+    const key = new VolatileKey('volatile');
     key.arcId = this.arcId.toString();
-    key.location = 'in-memory-' + type.toString();
+    key.location = 'volatile-' + type.toString();
     return key.toString();
   }
 
@@ -127,7 +127,7 @@ export class InMemoryStorage extends StorageBase {
     if (this.typePromiseMap[key]) {
       return this.typePromiseMap[key];
     }
-    const storagePromise = this._construct(type.toString(), type.collectionOf(), key) as Promise<InMemoryCollection>;
+    const storagePromise = this._construct(type.toString(), type.collectionOf(), key) as Promise<VolatileCollection>;
     this.typePromiseMap[key] = storagePromise;
     const storage = await storagePromise;
     assert(storage, `could not construct baseStorage for key ${key}`);
@@ -135,23 +135,23 @@ export class InMemoryStorage extends StorageBase {
     return storage;
   }
 
-  parseStringAsKey(s: string) : InMemoryKey {
-    return new InMemoryKey(s);
+  parseStringAsKey(s: string) : VolatileKey {
+    return new VolatileKey(s);
   }
 }
 
-abstract class InMemoryStorageProvider extends StorageProviderBase {
-  protected backingStore: InMemoryCollection|null = null;
-  protected storageEngine: InMemoryStorage;
-  private pendingBackingStore: Promise<InMemoryCollection>|null = null;
+abstract class VolatileStorageProvider extends StorageProviderBase {
+  protected backingStore: VolatileCollection|null = null;
+  protected storageEngine: VolatileStorage;
+  private pendingBackingStore: Promise<VolatileCollection>|null = null;
   static newProvider(type, storageEngine, name, id, key) {
     if (type.isCollection) {
-      return new InMemoryCollection(type, storageEngine, name, id, key);
+      return new VolatileCollection(type, storageEngine, name, id, key);
     }
     if (type.isBigCollection) {
-      return new InMemoryBigCollection(type, storageEngine, name, id, key);
+      return new VolatileBigCollection(type, storageEngine, name, id, key);
     }
-    return new InMemoryVariable(type, storageEngine, name, id, key);
+    return new VolatileVariable(type, storageEngine, name, id, key);
   }
 
   // A consequence of awaiting this function is that this.backingStore
@@ -173,7 +173,7 @@ abstract class InMemoryStorageProvider extends StorageProviderBase {
   abstract backingType(): Type;
 }
 
-class InMemoryCollection extends InMemoryStorageProvider {
+class VolatileCollection extends VolatileStorageProvider {
   _model: CrdtCollectionModel;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
@@ -187,7 +187,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    const handle = new InMemoryCollection(this.type, this.storageEngine, this.name, this.id, null);
+    const handle = new VolatileCollection(this.type, this.storageEngine, this.name, this.id, null);
     handle.cloneFrom(this);
     return handle;
   }
@@ -277,7 +277,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async store(value, keys, originatorId=null) {
     assert(keys != null && keys.length > 0, 'keys required');
-    const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
+    const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::store', args: {name: this.name}});
 
     const changeEvent = {value, keys, effective: undefined};
     if (this.referenceMode) {
@@ -320,7 +320,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {
-    const trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
+    const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::remove', args: {name: this.name}});
     if (keys.length === 0) {
       keys = this._model.getKeys(id);
     }
@@ -339,7 +339,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 }
 
-class InMemoryVariable extends InMemoryStorageProvider {
+class VolatileVariable extends VolatileStorageProvider {
   _stored: {id: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
@@ -354,7 +354,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   clone() {
-    const variable = new InMemoryVariable(this.type, this.storageEngine, this.name, this.id, null);
+    const variable = new VolatileVariable(this.type, this.storageEngine, this.name, this.id, null);
     variable.cloneFrom(this);
     return variable;
   }
@@ -471,8 +471,8 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 }
 
-// In-memory version of the BigCollection API; primarily for testing.
-class InMemoryCursor {
+// Volatile version of the BigCollection API; primarily for testing.
+class VolatileCursor {
   public readonly version: number;
   private readonly pageSize: number;
   private data;
@@ -497,9 +497,9 @@ class InMemoryCursor {
   }
 }
 
-class InMemoryBigCollection extends InMemoryStorageProvider {
+class VolatileBigCollection extends VolatileStorageProvider {
   private items: Map<string, {index: number, value: {}, keys: {[index: string]: number}}>;
-  private cursors: Map<number, InMemoryCursor>;
+  private cursors: Map<number, VolatileCursor>;
   private cursorIndex: number;
 
   constructor(type, storageEngine, name, id, key) {
@@ -543,7 +543,7 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
   async stream(pageSize) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
-    const cursor = new InMemoryCursor(this.version, this.items.values(), pageSize);
+    const cursor = new VolatileCursor(this.version, this.items.values(), pageSize);
     this.cursors.set(this.cursorIndex, cursor);
     return this.cursorIndex;
   }
@@ -574,7 +574,7 @@ class InMemoryBigCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    // TODO: clone from non in-memory versions
+    // TODO: clone from non-volatile versions
     if (handle.items) {
       this.fromLiteral(handle.toLiteral());
     }
