@@ -360,7 +360,7 @@ describe('firebase', function() {
 
     // Verifies a full streamed read with the given page size.
     async function checkStream(col, items, pageSize, forward, ...idRows) {
-      let cid = await col.stream(pageSize, {forward});
+      let cid = await col.stream(pageSize, forward);
       for (let ids of idRows) {
         await checkNext(col, items, cid, ids);
       }
@@ -468,7 +468,7 @@ describe('firebase', function() {
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cid1 = await col.stream(4, {forward: false});
+      let cid1 = await col.stream(4, false);
 
       // Remove the item at the start of the first page and another from a later page.
       await col.remove('j14');
@@ -478,7 +478,7 @@ describe('firebase', function() {
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cid2 = await col.stream(5, {forward: false});
+      let cid2 = await col.stream(5, false);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await store(col, items, 's16');
 
@@ -515,7 +515,7 @@ describe('firebase', function() {
       await checkDone(col, cid2);
 
       // close() should terminate a stream.
-      let cid3 = await col.stream(3, {forward: false});
+      let cid3 = await col.stream(3, false);
       await checkNext(col, items, cid3, ['m17', 's16', 't15']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
@@ -544,10 +544,10 @@ describe('firebase', function() {
                 let collection = handles.get('big');
 
                 // Verify that store and remove work from a particle.
-                await collection.store(new collection.entityClass({value: 'rick'}));
+                await collection.store(new collection.entityClass({value: 'morty'}));
                 let toRemove = new collection.entityClass({value: 'barry'});
                 await collection.store(toRemove);
-                await collection.store(new collection.entityClass({value: 'morty'}));
+                await collection.store(new collection.entityClass({value: 'rick'}));
                 await collection.remove(toRemove);
                 await collection.remove(new collection.entityClass({value: 'no one'}));
 
@@ -558,13 +558,13 @@ describe('firebase', function() {
 
               async read(collection) {
                 let items = [];
-                let cursor = await collection.stream(1);
+                let cursor = await collection.stream({pageSize: 1, forward: false});
                 for (let i = 0; i < 3; i++) {
-                  let data = await cursor.next();
-                  if (data.done) {
+                  let {value, done} = await cursor.next();
+                  if (done) {
                     return items.join('&');
                   }
-                  items.push(...data.value.map(item => item.rawData.value));
+                  items.push(...value.map(item => item.rawData.value));
                 }
                 return 'error - cursor did not terminate correctly';
               }
@@ -590,7 +590,7 @@ describe('firebase', function() {
 
       let cursorId = await bigStore.stream(5);
       let data = await bigStore.cursorNext(cursorId);
-      assert.deepEqual(data.value.map(item => item.rawData.value), ['rick', 'morty', 'rick&morty']);
+      assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
     it('serialization roundtrip re-attaches to the same firebase stores', async function() {

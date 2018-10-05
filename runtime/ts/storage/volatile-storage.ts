@@ -543,7 +543,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     this.items.delete(id);
   }
 
-  async stream(pageSize, {forward = true} = {}) {
+  async stream(pageSize, forward = true) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
     const cursor = new VolatileCursor(this.version, this.items.values(), pageSize, forward);

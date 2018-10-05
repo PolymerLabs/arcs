@@ -69,8 +69,8 @@ export class ParticleExecutionHost {
       this._apiPort.SimpleCallback({callback});
     };
 
-    this._apiPort.onHandleStream = async ({handle, callback, pageSize}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize)});
+    this._apiPort.onHandleStream = async ({handle, callback, pageSize, forward}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize, forward)});
     };
 
     this._apiPort.onStreamCursorNext = async ({handle, callback, cursorId}) => {
