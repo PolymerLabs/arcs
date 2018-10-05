@@ -58,10 +58,14 @@ export class SuggestionStorage {
       promise = storage._join(
         id, type, storageKey, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
     } else {
-      promise = storage.connect(id, type, storageKey);
+      promise = storage.construct(id, type, storageKey);
     }
     promise.then(
-      async (store) => await callback(store),
+      async (store) => {
+        // TODO: this is temporary needed to turn off reference mode in Pouch storage.
+        this.referenceMode = false;
+        await callback(store);
+      },
       (e) => console.error(`Failed to initialize suggestions store '${storageKey}' with error: ${e}`));
     return promise;
   }
