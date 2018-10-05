@@ -802,7 +802,7 @@ recipe
       recipe,
       description: new Description(arc),
       fooStore,
-      Description: descriptionStore.type.primitiveType().entitySchema.entityClass(),
+      Description: descriptionStore.type.collectionType.entitySchema.entityClass(),
       descriptionHandle: handleFor(descriptionStore)
     };
   }

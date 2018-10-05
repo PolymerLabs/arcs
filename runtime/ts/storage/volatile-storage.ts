@@ -183,7 +183,7 @@ class VolatileCollection extends VolatileStorageProvider {
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.collectionType;
   }
 
   clone() {
@@ -281,7 +281,7 @@ class VolatileCollection extends VolatileStorageProvider {
 
     const changeEvent = {value, keys, effective: undefined};
     if (this.referenceMode) {
-      const referredType = this.type.primitiveType();
+      const referredType = this.type.collectionType;
 
       const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType);
 
@@ -514,7 +514,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.bigCollectionType;
   }
 
   async get(id) {

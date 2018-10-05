@@ -194,11 +194,6 @@ export class Type {
     return this._applyExistenceTypeTest(type => type.isVariableReference);
   }
 
-  // TODO: remove this in favor of a renamed collectionType
-  primitiveType() {
-    return this.collectionType;
-  }
-
   getContainedType() {
     if (this.isCollection) {
       return this.collectionType;
