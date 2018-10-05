@@ -15,6 +15,7 @@ import {Arc} from '../../runtime/arc.js';
 import {Planificator} from '../../runtime/planificator.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
+import {Manifest} from '../../runtime/manifest.js';
 
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
@@ -35,6 +36,7 @@ const Arcs = {
   version: '0.4',
   Tracing,
   Arc,
+  Manifest,
   Runtime,
   Planificator,
   SlotComposer,
