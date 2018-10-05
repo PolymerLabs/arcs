@@ -41,10 +41,9 @@ export class Handle {
   name: string;
   canRead: boolean;
   canWrite: boolean;
-  _particleId: null;
+  _particleId: string|null;
   options: {};
-  entityClass: null;
-
+  entityClass: string|null;
 
   constructor(proxy, name, particleId, canRead, canWrite) {
     assert(!(proxy instanceof Handle));
