@@ -8,10 +8,11 @@
  */
 'use strict';
 
-import {Reference} from './ts-build/reference.js';
-import {Symbols} from './ts-build/symbols.js';
-import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './particle-spec.js';
+import {Reference} from './reference.js';
+import {Symbols} from './symbols.js';
+import {assert} from '../../platform/assert-web.js';
+import {ParticleSpec} from '../particle-spec.js';
+import {StorageProxy} from '../storage-proxy.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -21,8 +22,8 @@ function cloneData(data) {
 
 function restore(entry, entityClass) {
   assert(entityClass, 'Handles need entity classes for deserialization');
-  let {id, rawData} = entry;
-  let entity = new entityClass(cloneData(rawData));
+  const {id, rawData} = entry;
+  const entity = new entityClass(cloneData(rawData));
   if (entry.id) {
     entity.identify(entry.id);
   }
@@ -35,7 +36,15 @@ function restore(entry, entityClass) {
 /** @class Handle
  * Base class for Collections and Variables.
  */
-class Handle {
+export class Handle {
+  _proxy: StorageProxy;
+  name: string;
+  canRead: boolean;
+  canWrite: boolean;
+  _particleId: string|null;
+  options: {};
+  entityClass: string|null;
+
   constructor(proxy, name, particleId, canRead, canWrite) {
     assert(!(proxy instanceof Handle));
     this._proxy = proxy;
@@ -63,8 +72,8 @@ class Handle {
   configure(options) {
     assert(this.canRead, 'configure can only be called on readable Handles');
     try {
-      let keys = Object.keys(this.options);
-      let badKeys = Object.keys(options).filter(o => !keys.includes(o));
+      const keys = Object.keys(this.options);
+      const badKeys = Object.keys(options).filter(o => !keys.includes(o));
       if (badKeys.length > 0) {
         throw new Error(`Invalid option in Handle.configure(): ${badKeys}`);
       }
@@ -80,8 +89,8 @@ class Handle {
     if (!entity.isIdentified()) {
       entity.createIdentity(this._proxy.generateIDComponents());
     }
-    let id = entity[Symbols.identifier];
-    let rawData = entity.dataClone();
+    const id = entity[Symbols.identifier];
+    const rawData = entity.dataClone();
     return {
       id,
       rawData
@@ -117,20 +126,24 @@ class Collection extends Handle {
         particle.onHandleSync(this, this._restore(details));
         return;
       case 'update': {
-        let update = {};
+        // tslint:disable-next-line: no-any
+        const update: {added?: any, removed?: any, originator?: any} = {};
+
         if ('add' in details) {
           update.added = this._restore(details.add);
         }
         if ('remove' in details) {
           update.removed = this._restore(details.remove);
         }
-        update.originator = details.originatorId == this._particleId;
+        update.originator = details.originatorId === this._particleId;
         particle.onHandleUpdate(this, update);
         return;
       }
       case 'desync':
         particle.onHandleDesync(this);
         return;
+      default:
+        throw new Error('unsupported');
     }
   }
 
@@ -150,7 +163,7 @@ class Collection extends Handle {
   /** @method async toList()
    * Returns a list of the Entities contained by the handle.
    * throws: Error if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async toList() {
     if (!this.canRead) {
@@ -166,14 +179,14 @@ class Collection extends Handle {
   /** @method store(entity)
    * Stores a new entity into the Handle.
    * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async store(entity) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    let serialization = this._serialize(entity);
-    let keys = [this._proxy.generateID() + 'key'];
+    const serialization = this._serialize(entity);
+    const keys = [this._proxy.generateID() + 'key'];
     return this._proxy.store(serialization, keys, this._particleId);
   }
 
@@ -192,15 +205,15 @@ class Collection extends Handle {
   /** @method remove(entity)
    * Removes an entity from the Handle.
    * throws: Error if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async remove(entity) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    let serialization = this._serialize(entity);
+    const serialization = this._serialize(entity);
     // Remove the keys that exist at storage/proxy.
-    let keys = [];
+    const keys = [];
     return this._proxy.remove(serialization.id, keys, this._particleId);
   }
 }
@@ -237,20 +250,22 @@ class Variable extends Handle {
           this.raiseSystemException(e, `${particle.name}::onHandleDesync`);
         }
         return;
+      default:
+        throw new Error('unsupported');
     }
   }
 
   /** @method async get()
-  * Returns the Entity contained by the Variable, or undefined if the Variable
-  * is cleared.
-  * throws: Error if this variable is not configured as a readable handle (i.e. 'in' or 'inout')
-    in the particle's manifest.
+   * Returns the Entity contained by the Variable, or undefined if the Variable
+   * is cleared.
+   * throws: Error if this variable is not configured as a readable handle (i.e. 'in' or 'inout')
+   * in the particle's manifest.
    */
   async get() {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    let model = await this._proxy.get(this._particleId);
+    const model = await this._proxy.get(this._particleId);
     return this._restore(model);
   }
 
@@ -273,7 +288,7 @@ class Variable extends Handle {
   /** @method set(entity)
    * Stores a new entity into the Variable, replacing any existing entity.
    * throws: Error if this variable is not configured as a writeable handle (i.e. 'out' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async set(entity) {
     try {
@@ -290,7 +305,7 @@ class Variable extends Handle {
   /** @method clear()
    * Clears any entity currently in the Variable.
    * throws: Error if this variable is not configured as a writeable handle (i.e. 'out' or 'inout')
-     in the particle's manifest.
+   * in the particle's manifest.
    */
   async clear() {
     if (!this.canWrite) {
@@ -306,6 +321,9 @@ class Variable extends Handle {
  * implicit iteration in Javascript.
  */
 class Cursor {
+  _parent: Handle;
+  _cursorId: number;
+
   constructor(parent, cursorId) {
     this._parent = parent;
     this._cursorId = cursorId;
@@ -316,7 +334,7 @@ class Cursor {
    * when the cursor has completed reading the collection.
    */
   async next() {
-    let data = await this._parent._proxy.cursorNext(this._cursorId);
+    const data = await this._parent._proxy.cursorNext(this._cursorId);
     if (!data.done) {
       data.value = data.value.map(a => restore(a, this._parent.entityClass));
     }
@@ -358,8 +376,8 @@ class BigCollection extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    let serialization = this._serialize(entity);
-    let keys = [this._proxy.generateID() + 'key'];
+    const serialization = this._serialize(entity);
+    const keys = [this._proxy.generateID() + 'key'];
     return this._proxy.store(serialization, keys, this._particleId);
   }
 
@@ -372,7 +390,7 @@ class BigCollection extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    let serialization = this._serialize(entity);
+    const serialization = this._serialize(entity);
     return this._proxy.remove(serialization.id, [], this._particleId);
   }
 
@@ -383,16 +401,16 @@ class BigCollection extends Handle {
    * throws: Error if this variable is not configured as a readable handle (i.e. 'in' or 'inout')
    * in the particle's manifest.
    */
-  async stream(pageSize) {
+  async stream(pageSize: number) {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    let cursorId = await this._proxy.stream(pageSize);
+    const cursorId = await this._proxy.stream(pageSize);
     return new Cursor(this, cursorId);
   }
 }
 
-export function handleFor(proxy, name, particleId, canRead = true, canWrite = true) {
+export function handleFor(proxy: StorageProxy, name: string = null, particleId = 0, canRead = true, canWrite = true) {
   let handle;
   if (proxy.type.isCollection) {
     handle = new Collection(proxy, name, particleId, canRead, canWrite);
@@ -402,7 +420,7 @@ export function handleFor(proxy, name, particleId, canRead = true, canWrite = tr
     handle = new Variable(proxy, name, particleId, canRead, canWrite);
   }
 
-  let type = proxy.type.getContainedType() || proxy.type;
+  const type = proxy.type.getContainedType() || proxy.type;
   if (type.isEntity) {
     handle.entityClass = type.entitySchema.entityClass(proxy.pec);
   }
