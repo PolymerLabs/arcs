@@ -9,10 +9,12 @@
  */
 import {Tracing} from '../../tracelib/trace.js';
 
+const allowTracing = false;
+
 let streamingToDevtools = false;
 
 export function enableTracingAdapter(devtoolsChannel) {
-  if (!streamingToDevtools) {
+  if (allowTracing && !streamingToDevtools) {
     if (!Tracing.enabled) Tracing.enable();
 
     devtoolsChannel.send({
