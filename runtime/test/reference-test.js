@@ -104,8 +104,8 @@ describe('references', function() {
 
     assert.isTrue(arc._stores[0]._type.isReference);
 
-    const inMemoryEngine = arc._storageProviderFactory._storageInstances['in-memory'];
-    const backingStore = await inMemoryEngine.baseStorageFor(arc._stores[1]._type, inMemoryEngine.baseStorageKey(arc._stores[1]._type));
+    const volatileEngine = arc._storageProviderFactory._storageInstances['volatile'];
+    const backingStore = await volatileEngine.baseStorageFor(arc._stores[1]._type, volatileEngine.baseStorageKey(arc._stores[1]._type));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
     const refStore = arc._stores[0];
@@ -171,7 +171,9 @@ describe('references', function() {
     await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
 
     const refStore = arc._stores[1];
-    await assertSingletonWillChangeTo(arc, refStore, 'storageKey', arc._storageProviderFactory.baseStorageKey(Type.newEntity(manifest.schemas.Result), 'in-memory'));
+    const baseStoreType = Type.newEntity(manifest.schemas.Result);
+    await assertSingletonWillChangeTo(arc, refStore, 'storageKey', 
+                                      arc._storageProviderFactory.baseStorageKey(baseStoreType, 'volatile'));
   });
 
   it('can deal with references in schemas', async () => {
@@ -229,9 +231,9 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inMemoryEngine = arc._storageProviderFactory._storageInstances['in-memory'];
+    const volatileEngine = arc._storageProviderFactory._storageInstances['volatile'];
     const baseStoreType = Type.newEntity(manifest.schemas.Result);
-    const backingStore = await inMemoryEngine.baseStorageFor(baseStoreType, inMemoryEngine.baseStorageKey(baseStoreType));
+    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     
     const refStore = arc._stores[1];
@@ -414,9 +416,9 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inMemoryEngine = arc._storageProviderFactory._storageInstances['in-memory'];
+    const volatileEngine = arc._storageProviderFactory._storageInstances['volatile'];
     const baseStoreType = Type.newEntity(manifest.schemas.Result);
-    const backingStore = await inMemoryEngine.baseStorageFor(baseStoreType, inMemoryEngine.baseStorageKey(baseStoreType));
+    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 

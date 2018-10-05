@@ -14,13 +14,13 @@ import {Schema} from '../ts-build/schema.js';
 import {Type} from '../ts-build/type.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {handleFor} from '../handle.js';
-import {InMemoryStorage} from '../ts-build/storage/in-memory-storage.js';
+import {VolatileStorage} from '../ts-build/storage/volatile-storage.js';
 import {CrdtCollectionModel} from '../ts-build/storage/crdt-collection-model.js';
 
 const CAN_READ = true;
 const CAN_WRITE = true;
 
-// Test version of InMemoryVariable.
+// Test version of VolatileVariable.
 class TestVariable {
   constructor(type, name) {
     this.type = type;
@@ -64,7 +64,7 @@ class TestVariable {
   }
 }
 
-// Test version of InMemoryCollection.
+// Test version of VolatileCollection.
 class TestCollection {
   constructor(type, name, arcId) {
     this.type = type;
@@ -116,7 +116,7 @@ class TestCollection {
     let effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let item = {value: {id, storageKey: `in-memory://${this._arcId}^^in-memory-Thing {Text value}`}, effective, keys};
+      let item = {value: {id, storageKey: `volatile://${this._arcId}^^volatile-Thing {Text value}`}, effective, keys};
       // Hard coding the storageKey here is a bit cheeky, but the TestEngine class 
       // enforces the schema and arcID is plumbed through.
       let event = {remove: [item], version: this._version, originatorId};
@@ -301,16 +301,16 @@ class TestEngine {
 // TODO: test with handles changing config options over time
 describe('storage-proxy', function() {
   it('verify that the test storage API matches the real storage (variable)', async function() {
-    // If this fails, most likely the InMemoryStorage classes have been changed
+    // If this fails, most likely the VolatileStorage classes have been changed
     // and TestVariable will need to be updated to match.
     let engine = new TestEngine('arc-id');
     let entity = engine.newEntity('abc');
-    let realStorage = new InMemoryStorage('arc-id');
+    let realStorage = new VolatileStorage('arc-id');
     let testEvent;
     let realEvent;
 
     let testVariable = engine.newVariable('v');
-    let realVariable = await realStorage.construct('vid', engine.type, 'in-memory');
+    let realVariable = await realStorage.construct('vid', engine.type, 'volatile');
     testVariable.attachListener(event => testEvent = event);
     realVariable._fire = (kind, event) => realEvent = event;
 
@@ -327,16 +327,16 @@ describe('storage-proxy', function() {
   });
 
   it('verify that the test storage API matches the real storage (collection)', async function() {
-    // If this fails, most likely the InMemoryStorage classes have been changed
+    // If this fails, most likely the VolatileStorage classes have been changed
     // and TestCollection will need to be updated to match.
     let engine = new TestEngine('arc-id');
     let entity = engine.newEntity('abc');
-    let realStorage = new InMemoryStorage('arc-id');
+    let realStorage = new VolatileStorage('arc-id');
     let testEvent;
     let realEvent;
 
     let testCollection = engine.newCollection('c');
-    let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'in-memory');
+    let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'volatile');
     testCollection.attachListener(event => testEvent = event);
     realCollection._fire = (kind, event) => realEvent = event;
 

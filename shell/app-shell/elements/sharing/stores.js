@@ -20,7 +20,7 @@ export class Stores {
     return store;
   }
   static async _requireStore(context, type, {name, id, tags, storageKey}) {
-    //const store = await storage.connect(id, type, storageKey || `in-memory://${context.id}`);
+    //const store = await storage.connect(id, type, storageKey || `volatile://${context.id}`);
     const store = context.findStoreById(id);
     return store || await context.createStore(type, name, id, tags, storageKey);
   }
