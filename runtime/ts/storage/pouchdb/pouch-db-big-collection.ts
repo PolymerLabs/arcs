@@ -8,7 +8,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider {
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.bigCollectionType;
   }
 
   async get(id) {

@@ -38,7 +38,7 @@ defineParticle(({TransformationDomParticle}) => {
           // The element already exists.
           continue;
         }
-        let fooHandle = await arc.createHandle(type.primitiveType(), 'foo' + index);
+        let fooHandle = await arc.createHandle(type.collectionType, 'foo' + index);
         this._handleIds.add(foo.id);
         let hostedSlotName = [...hostedParticle.slots.keys()][0];
         let slotName = [...this.spec.slots.values()][0].name;
