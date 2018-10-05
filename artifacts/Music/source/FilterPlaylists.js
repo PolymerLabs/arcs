@@ -39,7 +39,7 @@ ${styles}
       if (props.artist && props.allPlaylists && props.artistsPlaylists.length === 0) {
         const artistName = props.artist.name.toLowerCase();
         const artistsPlaylists = this.handles.get('artistsPlaylists');
-        const cursor = await props.allPlaylists.stream(40);
+        const cursor = await props.allPlaylists.stream({pageSize: 40});
         const promises = [];
         for (;;) {
           let {value, done} = await cursor.next();
