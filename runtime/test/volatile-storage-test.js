@@ -277,7 +277,23 @@ describe('volatile', function() {
       await collection1.remove('non-existent');
     });
 
-    it('supports version-stable streamed reads', async () => {
+    async function checkNext(col, cid, ids) {
+      let {value, done} = await col.cursorNext(cid);
+      assert.isFalse(done);
+      assert.equal(value.length, ids.length);
+      for (let i = 0; i < value.length; i++) {
+        assert.equal(value[i].id, ids[i]);
+        assert.equal(value[i].data, 'v' + ids[i]);
+      }
+    }
+
+    async function checkDone(col, cid) {
+      let {value, done} = await col.cursorNext(cid);
+      assert.isTrue(done);
+      assert.isUndefined(value);
+    }
+
+    it('supports version-stable streamed reads forwards', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text data
@@ -285,55 +301,82 @@ describe('volatile', function() {
       let arc = new Arc({id: 'test'});
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      let col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
       let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {
-        await collection.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
+        await col.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
       }
 
       // Re-store a couple of ids to change the insertion order of the collection's internal map
       // so we know the cursor is correctly ordering results based on the index.
-      await collection.store({id: 'p07', data: 'vp07'}, ['kXX']);
-      await collection.store({id: 'q04', data: 'vq04'}, ['kYY']);
+      await col.store({id: 'p07', data: 'vp07'}, ['kXX']);
+      await col.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let checkNext = async (cursorId, ids) => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isFalse(done);
-        assert.equal(value.length, ids.length);
-        for (let i = 0; i < value.length; i++) {
-          assert.equal(value[i].id, ids[i]);
-          assert.equal(value[i].data, 'v' + ids[i]);
-        }
-      };
+      let cid1 = await col.stream(6);
+      await checkNext(col, cid1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
 
-      let checkDone = async cursorId => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isTrue(done);
-        assert.isUndefined(value);
-      };
-
-      let cursorId1 = await collection.stream(6);
-      await checkNext(cursorId1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
-
-      await collection.store({id: 'f11', data: 'vf11'}, ['kf11']);
-      await collection.remove('g08');
-      await collection.remove('z03');
+      await col.store({id: 'f11', data: 'vf11'}, ['kf11']);
+      await col.remove('g08');
+      await col.remove('z03');
 
       // Interleave another cursor at a different version.
-      let cursorId2 = await collection.stream(20);
-      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
-      await checkNext(cursorId2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
+      let cid2 = await col.stream(20);
+      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      await checkNext(col, cid2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
       
-      await checkNext(cursorId1, ['x09', 'o10', 'p07', 'q04']);
-      await checkDone(cursorId1);
-      await checkDone(cursorId2);
+      await checkNext(col, cid1, ['x09', 'o10', 'p07', 'q04']);
+      await checkDone(col, cid1);
+      await checkDone(col, cid2);
 
       // Verify close().
-      let cursorId3 = await collection.stream(3);
-      await checkNext(cursorId3, ['r01', 'i02', 'h05']);
-      collection.cursorClose(cursorId3);
-      await checkDone(cursorId3);
+      let cid3 = await col.stream(3);
+      await checkNext(col, cid3, ['r01', 'i02', 'h05']);
+      col.cursorClose(cid3);
+      await checkDone(col, cid3);
+    });
+
+    it('supports version-stable streamed reads backwards', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text data
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = new StorageProviderFactory(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+
+      let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
+      for (let i = 0; i < ids.length; i++) {
+        await col.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
+      }
+
+      // Re-store a couple of ids to change the insertion order of the collection's internal map
+      // so we know the cursor is correctly ordering results based on the index.
+      await col.store({id: 'p07', data: 'vp07'}, ['kXX']);
+      await col.store({id: 'q04', data: 'vq04'}, ['kYY']);
+
+      let cid1 = await col.stream(6, {forward: false});
+      await checkNext(col, cid1, ['q04', 'p07', 'o10', 'x09', 'g08', 'y06']);
+
+      await col.store({id: 'f11', data: 'vf11'}, ['kf11']);
+      await col.remove('y06');
+      await col.remove('o10');
+
+      // Interleave another cursor at a different version.
+      let cid2 = await col.stream(20, {forward: false});
+      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      await checkNext(col, cid2, ['f11', 'q04', 'p07', 'x09', 'g08', 'h05', 'z03', 'i02', 'r01']);
+      
+      await checkNext(col, cid1, ['h05', 'z03', 'i02', 'r01']);
+      await checkDone(col, cid1);
+      await checkDone(col, cid2);
+
+      // Verify close().
+      let cid3 = await col.stream(3, {forward: false});
+      await checkNext(col, cid3, ['f11', 'q04', 'p07']);
+      col.cursorClose(cid3);
+      await checkDone(col, cid3);
     });
   });
 });
