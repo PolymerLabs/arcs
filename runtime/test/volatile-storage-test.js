@@ -356,7 +356,7 @@ describe('volatile', function() {
       await col.store({id: 'p07', data: 'vp07'}, ['kXX']);
       await col.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let cid1 = await col.stream(6, {forward: false});
+      let cid1 = await col.stream(6, false);
       await checkNext(col, cid1, ['q04', 'p07', 'o10', 'x09', 'g08', 'y06']);
 
       await col.store({id: 'f11', data: 'vf11'}, ['kf11']);
@@ -364,7 +364,7 @@ describe('volatile', function() {
       await col.remove('o10');
 
       // Interleave another cursor at a different version.
-      let cid2 = await col.stream(20, {forward: false});
+      let cid2 = await col.stream(20, false);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['f11', 'q04', 'p07', 'x09', 'g08', 'h05', 'z03', 'i02', 'r01']);
       
@@ -373,7 +373,7 @@ describe('volatile', function() {
       await checkDone(col, cid2);
 
       // Verify close().
-      let cid3 = await col.stream(3, {forward: false});
+      let cid3 = await col.stream(3, false);
       await checkNext(col, cid3, ['f11', 'q04', 'p07']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);

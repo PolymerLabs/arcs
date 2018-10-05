@@ -500,9 +500,9 @@ class BigCollectionProxy extends StorageProxyBase {
       this._port.HandleRemove({handle: this, callback: resolve, data: {id, keys: []}, particleId}));
   }
 
-  async stream(pageSize) {
+  async stream(pageSize, forward) {
     return new Promise(resolve =>
-      this._port.HandleStream({handle: this, callback: resolve, pageSize}));
+      this._port.HandleStream({handle: this, callback: resolve, pageSize, forward}));
   }
 
   async cursorNext(cursorId) {

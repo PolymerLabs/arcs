@@ -1371,7 +1371,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   // By default items are returned in order of original insertion into the collection (with the
   // caveat that items removed during a streamed read may be returned at the end). Set forward to
   // false to return items in reverse insertion order.
-  async stream(pageSize, {forward = true} = {}) {
+  async stream(pageSize, forward = true) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
     const cursor = new FirebaseCursor(this.reference, pageSize, forward);

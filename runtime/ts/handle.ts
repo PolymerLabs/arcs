@@ -394,18 +394,26 @@ class BigCollection extends Handle {
     return this._proxy.remove(serialization.id, [], this._particleId);
   }
 
-  /** @method stream(pageSize)
+  /** @method stream({pageSize, forward})
    * Returns a Cursor instance that iterates over the full set of entities, reading `pageSize`
    * entities at a time. The cursor views a snapshot of the collection, locked to the version
    * at which the cursor is created.
+   *
+   * By default items are returned in order of original insertion into the collection (with the
+   * caveat that items removed during a streamed read may be returned at the end). Set `forward`
+   * to false to return items in reverse insertion order.
+   *
    * throws: Error if this variable is not configured as a readable handle (i.e. 'in' or 'inout')
    * in the particle's manifest.
    */
-  async stream(pageSize: number) {
+  async stream({pageSize, forward = true}) {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    const cursorId = await this._proxy.stream(pageSize);
+    if (isNaN(pageSize) || pageSize < 1) {
+      throw new Error('Streamed reads require a positive pageSize');
+    }
+    const cursorId = await this._proxy.stream(pageSize, forward);
     return new Cursor(this, cursorId);
   }
 }
