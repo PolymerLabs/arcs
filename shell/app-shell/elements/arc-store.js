@@ -87,7 +87,7 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
     }
     typeOf = setOf ? typeOf.collectionOf() : typeOf;
     // work out storageKey
-    storageKey = storageKey || 'in-memory';
+    storageKey = storageKey || 'volatile';
     // work out tags
     if (!asContext) {
       tags = tags.concat(['nosync']);

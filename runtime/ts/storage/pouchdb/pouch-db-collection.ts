@@ -1,9 +1,9 @@
 import {CrdtCollectionModel, Model} from '../crdt-collection-model.js';
-import {Tracing} from '../../../../tracelib/trace.js';
 import {assert} from '../../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {Type} from '../../type.js';
 import {PouchDbStorage} from './pouch-db-storage';
+import PouchDB from 'pouchdb';
 
 /**
  * Defines a callback interface to allow for modifying a
@@ -151,8 +151,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         return null;
       }
       await this.ensureBackingStore();
-      const result = await this.backingStore.get(ref.id);
-      return result;
+      return await this.backingStore.get(ref.id);
     }
 
     const model = await this.getModel();
@@ -164,7 +163,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
    *
    * @param value A data object with an id entry that is used as a key.
    * @param keys The CRDT keys used to store this object
-   * @param orginatorId TBD passed to event listeners
+   * @param originatorId TBD passed to event listeners
    */
   async store(value, keys: string[], originatorId = null): Promise<void> {
     assert(keys != null && keys.length > 0, 'keys required');
@@ -198,6 +197,27 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     this._fire('change', {add: [changeEvent], version: this.version, originatorId});
   }
 
+  async removeMultiple(items, originatorId=null) {
+    await this.getModelAndUpdate(crdtmodel => {
+      
+      if (items.length === 0) {
+        items = crdtmodel.toList().map(item => ({id: item.id, keys: []}));
+      }
+      items.forEach(item => {
+        if (item.keys.length === 0) {
+          item.keys = crdtmodel.getKeys(item.id);
+        }
+        item.value = crdtmodel.getValue(item.id);
+        if (item.value !== null) {
+          item.effective = crdtmodel.remove(item.id, item.keys);
+        }
+      });
+      return crdtmodel;
+    }).then(() => {
+      this._fire('change', {remove: items, version: this.version, originatorId});
+    });
+  }
+
   /**
    * Remove ids from a collection for specific keys.
    * @param id the id to remove.
@@ -226,9 +246,25 @@ export class PouchDbCollection extends PouchDbStorageProvider {
    * just refetch and trigger listeners.  This is fast since the data
    * is synced locally.
    */
-  public onRemoteStateSynced() {
+  public onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<{}>) {
     // updates internal state
-    this.getModel();
+    const previousRev = this._rev;
+    const previousModel = this._model;
+
+    if (this._rev === doc._rev) {
+      return;
+    }
+    // remote revision is different, update local copy.
+    const model = doc['model'];
+
+    this._model = new CrdtCollectionModel(model);
+    this._rev = doc._rev;
+    this.version++;
+
+    // TODO(lindner): handle referenceMode
+    // TODO(lindner): calculate added/removed keys from previousModel/model
+    // TODO(lindner): fire change events here?
+    //   this._fire('change', {originatorId: null, version: this.version, add, remove});
   }
 
   /**
@@ -356,7 +392,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       await this.db.remove(doc);
     } catch (err) {
       if (err.name !== 'not_found') {
-        console.log('clearItemsForTesting: error removing', err);
+        console.warn('clearItemsForTesting: error removing', err);
       }
     }
     this._model = new CrdtCollectionModel();

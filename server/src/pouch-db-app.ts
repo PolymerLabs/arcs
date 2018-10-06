@@ -10,14 +10,18 @@ import express from 'express';
 import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
-import { Runtime } from 'arcs';
-import { ShellPlanningInterface } from 'arcs';
-import {AppBase} from "./app";
-import {ON_DISK_DB} from "./deployment/utils";
+import {Runtime} from 'arcs';
+import {ShellPlanningInterface} from 'arcs';
+import {AppBase} from './app';
+import {ON_DISK_DB} from './deployment/utils';
 
 /**
  * An app server that additionally configures a pouchdb.
  * It also starts a remote planning thread (for now).
+ *
+ * Environment variables recognized:
+ * - `TARGET_DISK` used to store an on-disk pouch database.
+ * - `ARCS_USER_ID` used to specify the user that owns this instance.
  */
 class PouchDbApp extends AppBase {
   // ref to Express instance
@@ -27,9 +31,17 @@ class PouchDbApp extends AppBase {
   constructor() {
     super();
 
+    let userId = process.env['ARCS_USER_ID'];
+
+    // Default to USER_ID_CLETUS for now.
+    // TODO(lindner): make this required, use base64'd public key
+    if (!userId) {
+      userId = ShellPlanningInterface.USER_ID_CLETUS;
+    }
+
     // TODO(plindner): extract this into a separate coroutine instead
     // of starting it here.
-    ShellPlanningInterface.start('../');
+    ShellPlanningInterface.start('../', userId);
   }
 
   protected addRoutes() {
@@ -43,12 +55,12 @@ class PouchDbApp extends AppBase {
    */
   private addPouchRoutes(): void {
     if (process.env[ON_DISK_DB]) {
-      const dboptions = {'prefix': '/personalcloud/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
+      const dboptions = {prefix: '/personalcloud/'} as PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
-      this.express.use('/', PouchDbServer(onDiskPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+      this.express.use('/', PouchDbServer(onDiskPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
     } else {
-      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
-      this.express.use('/', PouchDbServer(inMemPouchDb, { mode: 'fullCouchDB', inMemoryConfig: true }));
+      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
+      this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
     }
   }
 }

@@ -59,16 +59,19 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       this._requireProfileFriends(context),
       this._requireProfileUserName(context),
       this._requireProfileAvatar(context),
+      this._requireBoxedUserName(context),
       this._requireBoxedAvatar(context),
       this._requireSystemUsers(context),
       this._requireSystemUser(context),
-      this._requireProfileAllPipedAllTvShows(context)
+      this._requireProfilePipedTvShow(context),
+      this._requireProfileAllPipedAllTvShows(context),
+      this._requireBoxedShowsTiles(context)
     ]);
     this._fire('stores');
   }
   async _requireProfileFriends(context) {
     const options = {
-      schema: schemas.Person,
+      schema: schemas.User,
       name: 'PROFILE_friends',
       id: 'PROFILE_friends',
       tags: ['friends'],
@@ -86,6 +89,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       isCollection: true
     };
     const store = await this._requireStore(context, 'profileUserName', options);
+    return store;
+  }
+  async _requireBoxedUserName(context) {
+    const options = {
+      schema: schemas.UserName,
+      name: 'BOXED_userName',
+      id: 'BOXED_userName',
+      tags: ['userName'],
+      isCollection: true
+    };
+    const store = await this._requireStore(context, null, options);
     return store;
   }
   async _requireProfileAvatar(context) {
@@ -139,6 +153,26 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Base, log) {
       }
     };
     this._setState({userStore, user});
+  }
+  async _requireBoxedShowsTiles(context) {
+    const options = {
+      schema: schemas.TVMazeShow,
+      name: 'BOXED_shows-tiles',
+      id: 'BOXED_shows-tiles',
+      tags: ['BOXED_shows-tiles'],
+      isCollection: true
+    };
+    await this._requireStore(context, '', options);
+  }
+  async _requireProfilePipedTvShow(context) {
+    const options = {
+      schema: schemas.TVMazeShow,
+      name: 'PROFILE_piped-tv_show',
+      id: 'PROFILE_piped-tv_show',
+      tags: ['piped', 'tv_show'],
+      isCollection: true
+    };
+    await this._requireStore(context, '', options);
   }
   async _requireProfileAllPipedAllTvShows(context) {
     const options = {

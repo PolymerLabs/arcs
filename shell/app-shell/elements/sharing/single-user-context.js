@@ -252,10 +252,10 @@ const SingleUserContext = class {
         store.set({id: decoratedId, rawData});
       }
     };
-    if (data.id) {
+    if (data && data.id) {
       storeDecoratedEntity(data, uid);
     } else {
-      Object.values(data).forEach(entity => storeDecoratedEntity(entity, uid));
+      Object.values(data).forEach(entity => entity && storeDecoratedEntity(entity, uid));
     }
     return ids;
   }
@@ -268,8 +268,8 @@ const SingleUserContext = class {
     };
     if (store.type.isCollection) {
       if (Array.isArray(data)) {
-        data.forEach(entity => removeDecoratedEntity(entity, uid));
-      } else {
+        data.forEach(entity => entity && removeDecoratedEntity(entity, uid));
+      } else if (data && data.id) {
         removeDecoratedEntity(data, uid);
       }
     } else {

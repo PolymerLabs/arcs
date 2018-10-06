@@ -126,6 +126,7 @@ const template = html`
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
     on-key="_onStateData"
+    on-search="_onStateData"
     on-replan="_onReplan"
   ></device-client-pipe>
 
@@ -229,19 +230,31 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       this._describeArc(arc, description);
     }
   }
-  _updateLauncher(state, oldState) {
-    const {key, metaplan, metaplans, suggestion, pendingSuggestion} = state;
+  async _updateLauncher(state, oldState) {
+    const {key, arc, metaplans, suggestion, pendingSuggestion, launcherPlan} = state;
+    if (arc && !launcherPlan) {
+      log('loading launcher recipe');
+      const loader = arc._loader;
+      const fileName = './in-memory.manifest';
+      const manny = await Arcs.Runtime.parseManifest(`import 'https://$artifacts/Arcs/Launcher.recipe'`, {loader, fileName});
+      const launcherPlan = manny.recipes[0];
+      launcherPlan.normalize();
+      this._setState({launcherPlan});
+      return;
+    }
     if (key === Const.SHELLKEYS.launcher) {
-      if (!suggestion && (!metaplan || !metaplan.plan) && metaplans && metaplans.plans && metaplans.plans.length) {
-        // TODO(sjmiles): need a better way to find the launcher suggestion
-        state.suggestion = metaplans.plans.find(s => s.descriptionText === 'Arcs launcher.');
-      }
-      else if (suggestion && suggestion !== oldState.suggestion) {
+      if (!state.launched && launcherPlan && arc && arc.findStoreById('SYSTEM_arcs')) {
+        log('instantiating launcher');
+        state.launched = true;
+        arc.instantiate(launcherPlan);
+      } else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
         state.suggestion = null;
         state.pendingSuggestion = suggestion;
         this._setKey('*');
       }
+    } else {
+      state.launched = false;
     }
     if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.plans.length) {
       log('matching pending launcher suggestion');

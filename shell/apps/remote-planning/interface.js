@@ -14,18 +14,30 @@
 import {UserPlanner} from './user-planner.js';
 import {UserContext} from './shell/user-context.js';
 import {ArcFactory} from './arc-factory.js';
-
-//const userid = '-LMtek9Mdy1iAc3MAkNx'; // Doug
-//const userid = '-LMtek9Nzp8f5pwiLuF6'; // Maria
-const userid = '-LMtek9LSN6eSMg97nXV'; // Cletus
+import {DevtoolsConnection} from '../../../runtime/debug/devtools-connection.js';
 
 const manifest = `
   import 'https://$artifacts/canonical.manifest'
 `;
 
 export class ShellPlanningInterface {
-  static async start(assetsPath) {
+  /**
+   * Starts a continuous shell planning import.
+   *
+   * @param assetsPath a path (relative or absolute) to locate planning assets.
+   * @param userid the User Id to do planning for.
+   */
+  static async start(assetsPath, userid) {
+    if (!assetsPath || !userid) {
+      throw new Error('assetsPath and userid required');
+    }
 
+    if (process.argv.includes('--explore')) {
+      console.log('Waiting for Arcs Explorer');
+      DevtoolsConnection.ensure();
+      await DevtoolsConnection.onceConnected;  
+    }
+    
     const factory = new ArcFactory(assetsPath);
     const context = await factory.createContext(manifest);
     const user = new UserContext();
@@ -33,3 +45,9 @@ export class ShellPlanningInterface {
     const planner = new UserPlanner(factory, context, userid);
   }
 }
+
+// These are sample users for testing.
+ShellPlanningInterface.USER_ID_DOUG = '-LMtek9Mdy1iAc3MAkNx';
+ShellPlanningInterface.USER_ID_MARIA = '-LMtek9Nzp8f5pwiLuF6';
+ShellPlanningInterface.USER_ID_CLETUS = '-LMtek9LSN6eSMg97nXV';
+ShellPlanningInterface.USER_ID_BERNI = '-LMtek9Mdy1iAc3MAkNw';

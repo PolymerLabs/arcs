@@ -32,7 +32,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider {
    * Triggered when the storage key has been modified.  For now we
    * just refetch.  This is fast since the data is synced locally.
    */
-  onRemoteStateSynced() {
+  onRemoteStateSynced(doc) {
     throw new Error('NotImplemented');
   }
 }

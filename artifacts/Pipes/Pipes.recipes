@@ -1,43 +1,44 @@
-schema TVMazeFind
-  Text name
-  Text type
+import 'TVMazePipe.recipes'
+import 'ShowcaseArtistPipe.recipes'
+import 'ShowcasePlayRecordPipe.recipes'
+import 'AddCollectionItem.manifest'
+import '../Showcase/ShowcasePlayRecord.schema'
+
+store Store0 of [ShowcasePlayRecord] 'nowPlayingHistory' in 'playingNowHistory.json'
 
 particle BackgroundProcess in 'source/BackgroundProcess.js'
   consume root
-
-schema TVMazeShow
-  Text showid
-  Text name
-  Text description
-  Text image
-  Text network
-  Text day
-  Text time
-  Boolean favorite
-  Boolean delete
-
-particle TVMazeFindShow in '../TVMaze/source/TVMazeFindShow.js'
-  in TVMazeFind find
-  out TVMazeShow show
-  //out [Description] descriptions
-
-particle AddToTvMazeCollection in './source/AddToCollection.js'
-  in TVMazeShow item
-  inout [TVMazeShow] collection
+  in ShowcasePlayRecord playRecord
 
 recipe BackgroundPipe
-  create #piped #tv_show as show
-  create #all_piped #all_tv_shows as shows
-  create as find
   slot 'rootslotid-root' as root
+  create #piped #showcase_play_record as playRecord
+  copy 'nowPlayingHistory' #all_piped #all_showcase_play_record as playRecords
   BackgroundProcess
     consume root as root
+    playRecord = playRecord
+  AddCollectionItem
+    item = playRecord
+    collection = playRecords
+  //
+  create as findShow
+  create #piped #tv_show as show
+  create #all_piped #all_tv_shows as shows
   TVMazeFindShow
-    find = find
+    find = findShow
     show = show
-  AddToTvMazeCollection
+  AddCollectionItem
     item = show
     collection = shows
-
+  //
+  create as findArtist
+  create #piped #showcase_artist as artist
+  create #all_piped #all_showcase_artists as artists
+  ShowcaseFindArtist
+    find = findArtist
+    artist = artist
+  AddCollectionItem
+    item = artist
+    collection = artists
 
 

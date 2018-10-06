@@ -4,6 +4,7 @@ import {PouchDbCollection} from './pouch-db-collection.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
 import {PouchDbKey} from './pouch-db-key.js';
 import {Type} from '../../type.js';
+import PouchDB from 'pouchdb';
 
 /**
  * Base class for PouchDb related Storage classes
@@ -59,5 +60,5 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /**
    * Called when the remote pouchdb server updates locally.
    */
-  public abstract onRemoteStateSynced();
+  public abstract onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<{}>): void;
 }

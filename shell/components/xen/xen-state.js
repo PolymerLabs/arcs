@@ -12,10 +12,10 @@ const nob = () => Object.create(null);
 
 const debounce = (key, action, delay) => {
   if (key) {
-    window.clearTimeout(key);
+    clearTimeout(key);
   }
   if (action && delay) {
-    return window.setTimeout(action, delay);
+    return setTimeout(action, delay);
   }
 };
 

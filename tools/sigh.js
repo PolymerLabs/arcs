@@ -366,7 +366,7 @@ function test(args) {
     inspect: ['inspect'],
     explore: ['explore'],
     exceptions: ['exceptions'],
-    boolean: ['manual'],
+    boolean: ['manual', 'all'],
     alias: {g: 'grep'},
   });
 
@@ -382,7 +382,7 @@ function test(args) {
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
-    const isSelectedTest = options.manual == fullPath.includes('manual_test');
+    const isSelectedTest = options.all || (options.manual == fullPath.includes('manual_test'));
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 
@@ -463,12 +463,13 @@ function test(args) {
       {stdio: 'inherit'});
 }
 
-async function importSpotify() {
+async function importSpotify(args) {
   return saneSpawn('node', [
     '--experimental-modules',
     '--trace-warnings',
     '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-    './tools/spotify-importer.js'
+    './tools/spotify-importer.js',
+    ...args
   ], {stdio: 'inherit'});
 }
 

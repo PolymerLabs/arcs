@@ -12,12 +12,12 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';
-import {handleFor} from '../handle.js';
+import {handleFor} from '../ts-build/handle.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {MessageChannel} from '../message-channel.js';
+import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 let loader = new Loader();
@@ -200,7 +200,7 @@ describe('Arc', function() {
     assert.deepEqual(['best'], [...helper.arc._storeTags.get([...helper.arc._storesById.values()][0])]);
   });
 
-  it('serialization roundtrip preserves data for in-memory stores', async function() {
+  it('serialization roundtrip preserves data for volatile stores', async function() {
     let loader = new StubLoader({
       manifest: `
         schema Data

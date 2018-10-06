@@ -6,10 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'TVMazeShow.recipes'
-import 'TVMazeQuery.recipes'
 import '../Common/List.recipes'
 import '../Common/Detail.manifest'
+import '../Common/Description.schema'
+import '../Profile/User.schema'
+import '../Profile/UserName.schema'
+
+import 'TVMazeShow.recipes'
+import 'TVMazeQuery.recipes'
 
 schema TVMazeShowAction
   Text showid
@@ -32,39 +36,6 @@ particle ActionMultiplexer in '../Common/source/Multiplexer.js'
   in [TVMazeShow] shows
   consume set of action
 
-recipe TVMazeDemo
-  create as query
-  TVMazeSearchBar
-    query = query
-  create #tiles #shows as shows
-  TVMazeSearchShows
-    query = query
-    shows = shows
-  create #selected as selected
-  SelectableTileList
-    consume root as root
-    items = shows
-    selected = selected
-  TileMultiplexer
-    list = shows
-    hostedParticle = TVMazeShowTile
-  ActionMultiplexer
-    list = shows
-    shows = shows
-    hostedParticle = TVMazeShowActions
-  DetailSlider
-    selected = selected
-  TVMazeShowPanel
-    show = selected
-  description `search TVMaze for show information`
-
-particle TVMazePipeShowPanel in './source/TVMazeShowPanel.js'
-  in [TVMazeShow] show
-  consume content
-    provide action
-    provide items
-  description `${show} details`
-
 particle SelectableImmutableTileList in '../Common/source/TileList.js'
   in [~a] items
   inout ~a selected
@@ -73,18 +44,155 @@ particle SelectableImmutableTileList in '../Common/source/TileList.js'
     provide set of action
   description `show ${items} as tiles`
 
-recipe TVMazePipeDemo
-  copy #piped as show
-  map 'PROFILE_all_piped-all_tv_shows' as shows
-  slot 'rootslotid-root' as root
-  TVMazePipeShowPanel
-    show = show
-    consume content as root
-  SelectableImmutableTileList
+particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
+  in [TVMazeShow] recentShows
+  inout TVMazeShow selected
+  in User user
+  in [TVMazeShow] boxedShows
+  inout [TVMazeShow] display
+  in [TVMazeShow] foundShows
+  in [User] friends
+  in [UserName] boxedUserNames
+  inout [User] watchers
+  out Text watcherText
+  out [Description] descriptions
+  consume root
+    provide shows
+    provide recommended
+    provide searchbar
+    provide search
+  // TODO: add better description,
+  // or fix recipe description to not crash if one is missing.
+  description `TV shows`
+
+particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
+  out TVMazeQuery query
+  consume root
+
+schema Text
+  Text text
+
+particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
+  in TVMazeShow show
+  in [TVMazeShow] shows
+  in Text alsoWatch
+  consume content
+    provide action
+    provide items
+  description `${show} details`
+
+particle TVMazeDeduplicate in './source/TVMazeDeduplicate.js'
+  in [TVMazeShow] shows
+  inout [TVMazeShow] uniqueShows
+
+recipe TVMazeUberDemo
+  // all shows shared with me
+  map 'BOXED_shows-tiles' as boxedShows
+  // filter out 'my' shows from boxedShows using user.id
+  map 'SYSTEM_user' as user
+  // all shows I've looked at on my device
+  map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
+  // most recent show(s)
+  map 'PROFILE_piped-tv_show' as pipedShows
+  // shows to display (all my collected shows)
+  create #display as display
+  // selected show (for detail)
+  create #selected as selected
+  // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
+  create #shows #tiles as myshows
+  // search results
+  create as foundshows
+  // friends ids
+  map 'PROFILE_friends' as friends
+  // all the userNames
+  map 'BOXED_userName' as boxedUserNames
+  // friends also watching selected show
+  create as watchers
+  // text about friends watching selected show
+  create as alsoWatch
+  //
+  TVMazeDemoShell
+    user = user
+    boxedShows = boxedShows
+    display = display
+    selected = selected
+    recentShows = pipedShows
+    foundShows = foundshows
+    boxedUserNames = boxedUserNames
+    friends = friends
+    watchers = watchers
+    watcherText = alsoWatch
     consume root as root
-    items = shows
+      provide recommended as recommended
+      provide shows as shows
+      provide searchbar as searchbar
+      provide search as search
+  //
+  // slot `shows` holds my primary show list
+  // which is filtered out of `boxedShows`
+  SelectableImmutableTileList
+    consume root as shows
+      provide tile as tile1
+      provide action as action1
+    items = display
     selected = selected
   TileMultiplexer
-    list = shows
+    list = display
     hostedParticle = TVMazeShowTile
-  description `see info for ${TVMazePipeShowPanel.show} from TVMaze`
+    consume tile as tile1
+  //
+  // slot `recommended` holds recommendations
+  // which are pulled from `allPipedShows`
+  create #uniquePipedShows as uniquePipedShows
+  TVMazeDeduplicate
+    shows = allPipedShows
+    uniqueShows = uniquePipedShows
+  SelectableImmutableTileList
+    consume root as recommended
+      provide tile as tile2
+      provide action as action2
+    items = uniquePipedShows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile2
+    list = uniquePipedShows
+    hostedParticle = TVMazeShowTile
+  ActionMultiplexer
+    consume action as action2
+    list = uniquePipedShows
+    shows = myshows
+    hostedParticle = TVMazeShowActions
+  //
+  // slot `search` contains search ui
+  create as query
+  TVMazeSearchBarRoot
+    consume root as searchbar
+    query = query
+  TVMazeSearchShows
+    query = query
+    shows = foundshows
+  SelectableImmutableTileList
+    consume root as search
+      provide tile as tile3
+      provide action as action3
+    items = foundshows
+    selected = selected
+  TileMultiplexer
+    consume tile as tile3
+    hostedParticle = TVMazeShowTile
+    list = foundshows
+  ActionMultiplexer
+    consume action as action3
+    hostedParticle = TVMazeShowActions
+    list = foundshows
+    shows = myshows
+  //
+  // standard slot 'modal' holds detail view
+  DetailSlider
+    selected = selected
+  TVMazeShowMultiPanel
+    show = selected
+    shows = myshows
+    alsoWatch = alsoWatch
+  //
+  description `${TVMazeDemoShell}`

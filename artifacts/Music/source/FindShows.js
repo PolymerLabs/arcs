@@ -17,7 +17,7 @@ defineParticle(({DomParticle, html, log, _fetch}) => {
   const styles = html`
   <style>
     ${host} {
-      padding: 0 24px 24px;
+      padding: 24px;
       overflow: auto;
     }
     ${host} [logo] {
@@ -52,7 +52,7 @@ defineParticle(({DomParticle, html, log, _fetch}) => {
       -webkit-animation-name: glowing;
       -webkit-animation-duration: 1.8s;
       -webkit-animation-timing-function: ease-in-out;
-      -webkit-animation-iteration-count: 2;
+      -webkit-animation-iteration-count: 1;
     }
     ${host} [glowing]:hover {
       background: rgba(3,169,244,.3);
@@ -136,7 +136,7 @@ ${styles}
         if (!nearest || nearest.distance > event.distance) nearest = event;
       }
 
-      this.setParticleDescription(`Get ticket for concert on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
+      this.setParticleDescription(`Ticketmaster: Get ticket for "${nearest.name}" on ${nearest.dates.start.localDate} in ${nearest._embedded.venues[0].name}`);
 
       // Why doesn't this work?
       // Tracked in https://github.com/PolymerLabs/arcs/issues/1965

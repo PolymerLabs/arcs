@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {handleFor} from './handle.js';
+import {handleFor} from './ts-build/handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';

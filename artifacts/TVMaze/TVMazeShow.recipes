@@ -6,16 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema TVMazeShow
-  Text showid
-  Text name
-  Text description
-  Text image
-  Text network
-  Text day
-  Text time
-  Boolean favorite
-  Boolean delete
+import 'TVMazeShow.schema'
 
 particle TVMazeShowTile in './source/TVMazeShowTile.js'
   in TVMazeShow show
@@ -29,8 +20,9 @@ particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
     provide items
   description `${show} details`
 
-recipe TVMazeShowPanel
+// TODO(sjmiles): temporarily hide from coalescer
+//recipe TVMazeShowPanel
   // TODO(sjmiles): force #selected; otherwise, it tries to map to multiplexer items
-  use #selected as show
-  TVMazeShowPanel
-    show = show
+  //use #selected as show
+  //TVMazeShowPanel
+  //  show = show

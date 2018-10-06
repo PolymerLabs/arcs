@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, _fetch, html}) => {
+defineParticle(({DomParticle, html}) => {
 
   const host = `[show-artist]`;
 
@@ -54,14 +54,6 @@ defineParticle(({DomParticle, _fetch, html}) => {
     ${host} [header] [description] {
       font-size: 16px;
     }
-    ${host} [social] {
-      display: flex;
-      justify-content: space-between;
-      padding: 24px;
-    }
-    ${host} [social] [like] {
-      font-weight: bold;
-    }
     ${host} [now-playing] {
       border-top: 1px solid #ddd;
       padding: 24px 24px 16px;
@@ -82,20 +74,14 @@ ${styles}
     <div name>{{name}}</div>
     <div description>{{detailedDescription}}</div>
   </div>
-  <div social>
-    <div>5 of your friends like this artist</div>
-    <div like>LIKE</div>
-  </div>
   <div slotid="nearbyShows"></div>
   <div now-playing>
     From <b>Now playing</b>
     <div list slotid="nowPlayingList"></div>
   </div>
+  <div slotid="extrasForArtist"></div>
 </div>
   `;
-
-  const knowledgeGraphService = 'https://kgsearch.googleapis.com/v1/entities:search?key=AIzaSyDVu27xQSI7fQ-_VvZpCH6sdVMe1mueN54&limit=1';
-
   return class extends DomParticle {
     get template() {
       return template;
@@ -104,49 +90,40 @@ ${styles}
       return Boolean(props.artist);
     }
     willReceiveProps(props) {
-      if (props.artistPlayHistory.length) {
-        const mostRecentTimestamp = Math.max(...props.artistPlayHistory.map(r => r.dateTime));
-        this.setParticleDescription(
-          `You've heard ${props.artist.name} on ${new Date(mostRecentTimestamp).toLocaleDateString()}`);
+      if (props.artistPlayHistory.length && props.artist) {
+        let mostRecent = props.artistPlayHistory[0];
+        for (let song of props.artistPlayHistory) {
+          if (Number(song.dateTime) > Number(mostRecent.dateTime)) mostRecent = song;
+        }
+        this.setParticleDescription({
+            template: `You listened to <b>${mostRecent.song}</b> by <b>${props.artist.name}</b> ${this._formatTime(Number(mostRecent.dateTime))}`,
+            model: {}
+        });
       }
     }
-    render(props, state) {
-      if (!props.artist) return;
 
-      if (!state.fetching) {
-        this._setState({fetching: true});
-        _fetch(`${knowledgeGraphService}&query=${encodeURI(props.artist.name)}`)
-            .then(async response => this._processResponse(await response.json()));
+    _formatTime(dateTime) {
+      let delta = Date.now() - dateTime;
+      if (delta < 60 * 60 * 1000) {
+        let minutes =  Math.round(delta / (60 * 1000));
+        if (minutes === 0) minutes = 1;
+        return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+      } else if (delta < 24 * 60 * 60 * 1000) {
+        let hours =  Math.round(delta / (60 * 60 * 1000));
+        return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      } else {
+        return `on ${new Date(Number(dateTime)).toLocaleDateString()}`;
       }
-
+    }
+    render({artist}) {
       return {
-        name: props.artist.name,
-        description: state.description || '',
-        imageUrl: state.imageUrl || '',
-        detailedDescription: state.detailedDescription || '',
+        name: artist.name,
+        description: artist.description,
+        detailedDescription: artist.detailedDescription || '',
         photoStyle: {
-          backgroundImage: state.imageUrl ? `url(${state.imageUrl})` : 'none'
+          backgroundImage: artist.imageUrl ? `url(${artist.imageUrl})` : 'none'
         },
       };
-    }
-
-    async _processResponse(response) {
-      if (response.error) {
-        console.log(response.error);
-        return;
-      }
-
-      if (response.itemListElement.length === 0) {
-        console.log('No results in the knowledge graph.');
-        return;
-      }
-
-      let result = response.itemListElement[0].result;
-      this._setState({
-        description: result.description,
-        imageUrl: result.image && result.image.contentUrl,
-        detailedDescription: result.detailedDescription && result.detailedDescription.articleBody
-      });
     }
   };
 });

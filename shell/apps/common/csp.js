@@ -54,6 +54,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://media.w3.org
         http://*.gstatic.com
         https://s1.ticketm.net
+        https://i.scdn.co
         ;
     style-src
         'self'

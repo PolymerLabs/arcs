@@ -16,11 +16,12 @@ import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {MessageChannel} from '../message-channel.js';
+import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
+const backingStoreUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/backingStores';
 
 // Resolves when the two stores are synchronized with each other:
 // * same version
@@ -44,6 +45,7 @@ describe('firebase', function() {
   before(async () => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     await resetStorageForTesting(testUrl);
+    await resetStorageForTesting(backingStoreUrl);
   });
 
   let storageInstances = [];
@@ -256,6 +258,23 @@ describe('firebase', function() {
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
     }); 
+    it('supports removeMultiple', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key = newStoreKey('collection');
+      let collection = await storage.construct('test1', BarType.collectionOf(), key);
+      await collection.store({id: 'id1', value: 'value'}, ['key1']);
+      await collection.store({id: 'id2', value: 'value'}, ['key2']);
+      await collection.removeMultiple([
+        {id: 'id1', keys: ['key1']}, {id: 'id2', keys: ['key2']}
+      ]);
+      assert.isEmpty(await collection.toList());
+    });
   });
 
   // For these tests, the following index rule should be manually set up in the console at
@@ -269,6 +288,9 @@ describe('firebase', function() {
   //       }
   //     }
   //   }
+  //
+  // Ideally these would be broken into smaller independent test cases, but since we're using a
+  // live remote database instance the setup is too expensive to keep repeating.
   describe('big collection', () => {
     it('supports get, store and remove (including concurrently)', async () => {
       let manifest = await Manifest.parse(`
@@ -304,9 +326,48 @@ describe('firebase', function() {
       await collection1.remove('non-existent');
     });
 
-    // Ideally this would be several independent test cases, but since we're using a live remote
-    // database instance the setup is too expensive to keep repeating.
-    it('supports version-stable streamed reads', async () => {
+    // Stores a new item for each id in both col and items, with data and key derived
+    // from the numerical part of the id in a lexicographically "random" manner.
+    function store(col, items, ...ids) {
+      let promises = [];
+      for (let id of ids) {
+        let n = Number(id.slice(1));
+        let data = 'v' + (n * 37 % 100);
+        let key = 'k' + (n * 73 % 100);
+        promises.push(col.store({id, data}, [key]));
+        items.set(id, {data, key});
+      }
+      return Promise.all(promises);
+    }
+
+    // Verifies that cursor.next() returns items matching the given list of ids (in order).
+    async function checkNext(col, items, cid, ids) {
+      let {value, done} = await col.cursorNext(cid);
+      assert.isFalse(done);
+      assert.equal(value.length, ids.length);
+      for (let i = 0; i < value.length; i++) {
+        assert.equal(value[i].id, ids[i]);
+        assert.equal(value[i].data, items.get(ids[i]).data);
+      }
+    }
+
+    // Verifies that the cursor does not contain any more items.
+    async function checkDone(col, cid) {
+      let {value, done} = await col.cursorNext(cid);
+      assert.isTrue(done);
+      assert.isUndefined(value);
+    }
+
+    // Verifies a full streamed read with the given page size.
+    async function checkStream(col, items, pageSize, forward, ...idRows) {
+      let cid = await col.stream(pageSize, forward);
+      for (let ids of idRows) {
+        await checkNext(col, items, cid, ids);
+      }
+      await checkDone(col, cid);
+    }
+
+    it('supports version-stable streamed reads forwards', async () => {
       let manifest = await Manifest.parse(`
         schema Bar
           Text data
@@ -314,113 +375,150 @@ describe('firebase', function() {
       let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      let col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
       let items = new Map();
 
-      // Stores a new item for each id in both collection and items, with data and key derived
-      // from the numerical part of the id in a lexicographically "random" manner.
-      let store = (...ids) => {
-        let promises = [];
-        for (let id of ids) {
-          let n = Number(id.slice(1));
-          let data = 'v' + (n * 37 % 100);
-          let key = 'k' + (n * 73 % 100);
-          promises.push(collection.store({id, data}, [key]));
-          items.set(id, {data, key});
-        }
-        return Promise.all(promises);
-      };
-
       // Add an initial set of items with lexicographically "random" ids.
-      await store('r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
- 
-      // Verifies that cursor.next() returns items matching the given list of ids (in order).
-      let checkNext = async (cursorId, ids) => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isFalse(done);
-        assert.equal(value.length, ids.length);
-        for (let i = 0; i < value.length; i++) {
-          assert.equal(value[i].id, ids[i]);
-          assert.equal(value[i].data, items.get(ids[i]).data);
-        }
-      };
-
-      // Verifies that cursor does not contain any more items.
-      let checkDone = async cursorId => {
-        let {value, done} = await collection.cursorNext(cursorId);
-        assert.isTrue(done);
-        assert.isUndefined(value);
-      };
-
-      // Verifies a full streamed read with the given page size.
-      let checkStream = async (pageSize, ...idRows) => {
-        let cursorId = await collection.stream(pageSize);
-        for (let ids of idRows) {
-          await checkNext(cursorId, ids);
-        }
-        await checkDone(cursorId);
-      };
+      await store(col, items, 'r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
 
       // Test streamed reads with various page sizes.
-      await checkStream(3, ['r01', 'i02', 'z03'], ['q04', 'h05', 'y06'], ['p07', 'g08']);
-      await checkStream(4, ['r01', 'i02', 'z03', 'q04'], ['h05', 'y06', 'p07', 'g08']);
-      await checkStream(7, ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07'], ['g08']);
-      await checkStream(8, ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08']);
+      await checkStream(col, items, 3, true, ['r01', 'i02', 'z03'], ['q04', 'h05', 'y06'], ['p07', 'g08']);
+      await checkStream(col, items, 4, true, ['r01', 'i02', 'z03', 'q04'], ['h05', 'y06', 'p07', 'g08']);
+      await checkStream(col, items, 7, true, ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07'], ['g08']);
+      await checkStream(col, items, 8, true, ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08']);
 
-      await store('x09', 'o10', 'f11', 'w12', 'e13', 'j14');
+      await store(col, items, 'x09', 'o10', 'f11', 'w12', 'e13', 'j14');
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cursorId1 = await collection.stream(4);
+      let cid1 = await col.stream(4);
 
-      // Remove the item at the start of the first page and another from a later page.
-      await collection.remove('r01');
-      await collection.remove('p07');
-      await store('t15');
-      await checkNext(cursorId1, ['i02', 'z03', 'q04', 'h05']);
+      // Remove the item at the start of the first page and another from a later page:
+      await col.remove('r01');
+      await col.remove('p07');
+      await store(col, items, 't15');
+      await checkNext(col, items, cid1, ['i02', 'z03', 'q04', 'h05']);
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cursorId2 = await collection.stream(5);
-      assert.equal(collection.cursorVersion(cursorId2), collection.cursorVersion(cursorId1) + 3);
-      await store('s16');
+      let cid2 = await col.stream(5);
+      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      await store(col, items, 's16');
 
-      // For cursor1: remove one item from the page just returned and two at the edges of the next page.
-      await collection.remove('z03');
-      await collection.remove('y06');
-      await collection.remove('f11');
+      // For cursor1: remove one item from the page just returned and two at the edges of the next page:
+      await col.remove('z03');
+      await col.remove('y06');
+      await col.remove('f11');
 
-      await checkNext(cursorId2, ['i02', 'q04', 'h05', 'g08', 'x09']);
-      await checkNext(cursorId1, ['g08', 'x09', 'o10', 'w12']);
-      
+      await checkNext(col, items, cid2, ['i02', 'q04', 'h05', 'g08', 'x09']);
+      await checkNext(col, items, cid1, ['g08', 'x09', 'o10', 'w12']);
+
       // This uses up the remaining non-removed items for cursor2 ---> [*]
-      await checkNext(cursorId2, ['o10', 'w12', 'e13', 'j14', 't15']);
+      await checkNext(col, items, cid2, ['o10', 'w12', 'e13', 'j14', 't15']);
 
       // For cursor1: the next page should include the two remaining items and two of the previously
       // removed ones (which are returned in reverse order of removal).
-      await checkNext(cursorId1, ['e13', 'j14', 'f11', 'y06']);
+      await checkNext(col, items, cid1, ['e13', 'j14', 'f11', 'y06']);
 
       // Remove another previously-returned item; should have no effect on either cursor.
-      await collection.remove('x09');
-      await checkNext(cursorId1, ['p07', 'r01']);
-      await store('m17');
-      await checkDone(cursorId1);
+      await col.remove('x09');
+      await checkNext(col, items, cid1, ['p07', 'r01']);
+      await store(col, items, 'm17');
+      await checkDone(col, cid1);
 
       // Streaming again should be up-to-date (even with cursor2 still in flight).
-      await checkStream(12, ['i02', 'q04', 'h05', 'g08', 'o10', 'w12', 'e13', 'j14', 't15', 's16', 'm17']);
+      await checkStream(col, items, 50, true,
+          ['i02', 'q04', 'h05', 'g08', 'o10', 'w12', 'e13', 'j14', 't15', 's16', 'm17']);
 
       // [*] ---> so that this page is only removed items.
-      await checkNext(cursorId2, ['f11', 'y06', 'z03']);
-      await checkDone(cursorId2);
+      await checkNext(col, items, cid2, ['f11', 'y06', 'z03']);
+      await checkDone(col, cid2);
 
       // Repeated next() calls on a finished cursor should be safe.
-      await checkDone(cursorId2);
+      await checkDone(col, cid2);
 
       // close() should terminate a stream.
-      let cursorId3 = await collection.stream(3);
-      await checkNext(cursorId3, ['i02', 'q04', 'h05']);
-      collection.cursorClose(cursorId3);
-      await checkDone(cursorId3);
+      let cid3 = await col.stream(3);
+      await checkNext(col, items, cid3, ['i02', 'q04', 'h05']);
+      col.cursorClose(cid3);
+      await checkDone(col, cid3);
+    }).timeout(20000);
+
+    it('supports version-stable streamed reads backwards', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text data
+      `);
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      let items = new Map();
+
+      // Add an initial set of items with lexicographically "random" ids.
+      await store(col, items, 'r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
+
+      // Test streamed reads with various page sizes.
+      await checkStream(col, items, 3, false, ['g08', 'p07', 'y06'], ['h05', 'q04', 'z03'], ['i02', 'r01']);
+      await checkStream(col, items, 4, false, ['g08', 'p07', 'y06', 'h05'], ['q04', 'z03', 'i02', 'r01']);
+      await checkStream(col, items, 7, false, ['g08', 'p07', 'y06', 'h05', 'q04', 'z03', 'i02'], ['r01']);
+      await checkStream(col, items, 8, false, ['g08', 'p07', 'y06', 'h05', 'q04', 'z03', 'i02', 'r01']);
+
+      await store(col, items, 'x09', 'o10', 'f11', 'w12', 'e13', 'j14');
+
+      // Add operations that occur after cursor creation should not affect streamed reads.
+      // Items removed "ahead" of the read should be captured and returned later in the stream.
+      let cid1 = await col.stream(4, false);
+
+      // Remove the item at the start of the first page and another from a later page.
+      await col.remove('j14');
+      await col.remove('g08');
+      await store(col, items, 't15');
+      await checkNext(col, items, cid1, ['e13', 'w12', 'f11', 'o10']);
+
+      // Interleave another streamed read over a different version of the collection. cursor2
+      // should be 3 versions ahead due to the 3 add/remove operations above.
+      let cid2 = await col.stream(5, false);
+      assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
+      await store(col, items, 's16');
+
+      // For cursor1: remove one item from the page just returned and two at the edges of the next page.
+      await col.remove('w12');
+      await col.remove('x09');
+      await col.remove('q04');
+
+      await checkNext(col, items, cid2, ['t15', 'e13', 'f11', 'o10', 'p07']);
+      await checkNext(col, items, cid1, ['p07', 'y06', 'h05', 'z03']);
+
+      // This uses up the remaining non-removed items for cursor2 ---> [*]
+      await checkNext(col, items, cid2, ['y06', 'h05', 'z03', 'i02', 'r01']);
+
+      // For cursor1: the next page should include the two remaining items and two of the previously
+      // removed ones (which are returned in reverse order of removal).
+      await checkNext(col, items, cid1, ['i02', 'r01', 'q04', 'x09']);
+
+      // Remove another previously-returned item; should have no effect on either cursor.
+      await col.remove('y06');
+      await checkNext(col, items, cid1, ['g08', 'j14']);
+      await store(col, items, 'm17');
+      await checkDone(col, cid1);
+
+      // Streaming again should be up-to-date (even with cursor2 still in flight).
+      await checkStream(col, items, 50, false,
+          ['m17', 's16', 't15', 'e13', 'f11', 'o10', 'p07', 'h05', 'z03', 'i02', 'r01']);
+
+      // [*] ---> so that this page is only removed items.
+      await checkNext(col, items, cid2, ['q04', 'x09', 'w12']);
+      await checkDone(col, cid2);
+
+      // Repeated next() calls on a finished cursor should be safe.
+      await checkDone(col, cid2);
+
+      // close() should terminate a stream.
+      let cid3 = await col.stream(3, false);
+      await checkNext(col, items, cid3, ['m17', 's16', 't15']);
+      col.cursorClose(cid3);
+      await checkDone(col, cid3);
     }).timeout(20000);
 
     it('big collection API works from inside the PEC', async function() {
@@ -446,10 +544,10 @@ describe('firebase', function() {
                 let collection = handles.get('big');
 
                 // Verify that store and remove work from a particle.
-                await collection.store(new collection.entityClass({value: 'rick'}));
+                await collection.store(new collection.entityClass({value: 'morty'}));
                 let toRemove = new collection.entityClass({value: 'barry'});
                 await collection.store(toRemove);
-                await collection.store(new collection.entityClass({value: 'morty'}));
+                await collection.store(new collection.entityClass({value: 'rick'}));
                 await collection.remove(toRemove);
                 await collection.remove(new collection.entityClass({value: 'no one'}));
 
@@ -460,13 +558,13 @@ describe('firebase', function() {
 
               async read(collection) {
                 let items = [];
-                let cursor = await collection.stream(1);
+                let cursor = await collection.stream({pageSize: 1, forward: false});
                 for (let i = 0; i < 3; i++) {
-                  let data = await cursor.next();
-                  if (data.done) {
+                  let {value, done} = await cursor.next();
+                  if (done) {
                     return items.join('&');
                   }
-                  items.push(...data.value.map(item => item.rawData.value));
+                  items.push(...value.map(item => item.rawData.value));
                 }
                 return 'error - cursor did not terminate correctly';
               }
@@ -492,7 +590,7 @@ describe('firebase', function() {
 
       let cursorId = await bigStore.stream(5);
       let data = await bigStore.cursorNext(cursorId);
-      assert.deepEqual(data.value.map(item => item.rawData.value), ['rick', 'morty', 'rick&morty']);
+      assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
     it('serialization roundtrip re-attaches to the same firebase stores', async function() {

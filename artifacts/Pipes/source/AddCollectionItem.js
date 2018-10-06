@@ -12,13 +12,13 @@
 defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
-    update({item, collection}, state) {
+    update({item}, state) {
       if (item && item.id !== state.item_id) {
         state.item_id = item.id;
         // TODO(sjmiles): was supposed to be type agnostic ... oh well
-        if (!collection.find(show => show.showid === item.showid)) {
+        //if (!collection.find(show => show.showid === item.showid)) {
           this.updateSet('collection', item);
-        }
+        //}
       }
     }
   };

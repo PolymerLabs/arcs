@@ -8,4 +8,13 @@
 
 import {ShellPlanningInterface} from './interface.js';
 
-ShellPlanningInterface.start();
+/**
+ * Simple nodejs launcher for Shell Planning.
+ */
+
+let userId =  process.env['ARCS_USER_ID'];
+if (!userId) {
+  console.log('No ARCS_USER_ID environment variable, using test user "Cletus"');
+  userId = ShellPlanningInterface.USER_ID_CLETUS;
+}
+ShellPlanningInterface.start('../../../', userId);

@@ -5,6 +5,17 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
+
 'use strict';
 
-export const Symbols = {identifier: Symbol('id')};
+/* global defineParticle, importScripts */
+defineParticle(({DomParticle}) => {
+  return class extends DomParticle {
+    update({collection}) {
+      if (collection && collection.length > 0) {
+        const item = collection[0];
+        this.updateVariable('item', item.rawData);
+      }
+    }
+  };
+});

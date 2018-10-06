@@ -12,9 +12,9 @@ import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
-import {handleFor} from '../handle.js';
+import {handleFor} from '../ts-build/handle.js';
 import {Manifest} from '../manifest.js';
-import {Relevance} from '../relevance.js';
+import {Relevance} from '../ts-build/relevance.js';
 import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
@@ -850,7 +850,6 @@ recipe
       // Particle (static) spec pattern.
       recipeClone.particles[0].spec.pattern = 'hello world';
       await test.verifySuggestion(description, 'Hello world.');
-
       recipeClone.patterns = [`Here it is: \${B}`];
       await test.verifySuggestion(description, 'Here it is: hello world.');
 

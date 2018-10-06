@@ -13,9 +13,8 @@ import Firebase from '../../../lib/firebase.js';
 import Arcs from '../../../lib/arcs.js';
 import '../background-arcs/bg-arc.js';
 import {schemas} from '../sharing/schemas.js';
-import {Stores} from '../sharing/stores.js';
 
-// DeviceClient object supplied externally, otherwise a mock
+// DeviceClient object supplied externally, otherwise a fake
 const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
   },
@@ -55,7 +54,7 @@ const ShellApi = window.ShellApi = {
 };
 
 const template = Xen.Template.html`
-  <bg-arc userid="{{userid}}" key="{{key}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
+  <bg-arc userid="{{userid}}" key="{{key}}" context="{{context}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
@@ -67,72 +66,128 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
-  _update({context, userid, metaplans}, state) {
-    const {arc, entity} = state;
+  _update({context, userid, metaplans, suggestions}, state) {
     if (userid) {
       state.key = `${userid}-pipes`;
       state.manifest = `import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'`;
     }
-    if (arc && !state.registered) {
+    if (state.arc && !state.registered) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (entity) {
-      if (arc && !state.stores) {
+    if (context && state.lastEntity && metaplans && metaplans.plans) {
+      if (state.lastEntity.type !== 'search') {
+        this._updateMetaplans(metaplans, context, state.lastEntity);
+      }
+    }
+    if (context && state.lastEntity && suggestions) {
+      if (state.lastEntity.type === 'search') {
+        state.lastEntity.type = 'usedup';
+        const texts = suggestions.map(suggestion => suggestion.descriptionText);
+        log('piped suggestions', texts);
+        DeviceClient.foundSuggestions(JSON.stringify(texts));
+      }
+    }
+    if (state.entity && state.entity.type === 'search') {
+      this._updateSearch(state.entity);
+      state.lastEntity = state.entity;
+      state.entity = null;
+    }
+    if (state.entity) {
+      if (state.arc && !state.stores) {
         state.stores = true;
-        this._requireFindStore(arc);
+        this._requireFindShowStore(state.arc);
+        this._requireFindShowcaseArtistStore(state.arc);
+        this._requireShowcasePlayRecordStore(state.arc);
       }
-      if (state.findStore && entity.name && entity.name !== state.lastFind) {
-        state.lastFind = entity.name;
-        this._setPipedEntity(state.findStore, entity);
-      }
-      if (metaplans && context) {
-        this._updateMetaplans(metaplans, context);
+      if (state.stores) {
+        this._updateEntity(state.entity, state);
+        state.lastEntity = state.entity;
+        state.entity = null;
       }
     }
   }
   _render(props, state) {
     return [props, state];
   }
-  _setPipedEntity(store, rawData) {
-    const entity = {
-      id: store.generateID(),
-      rawData
+  _updateSearch(entity) {
+    this._fire('search', entity.query);
+  }
+  _updateEntity(entity, state) {
+    const stores = {
+      tv_show: state.findShowStore,
+      artist: state.findShowcaseArtistStore,
+      play_record: state.playRecordStore
     };
+    const store = stores[entity.type];
+    if (store) {
+      state.entity = entity;
+      this._setPipedEntity(store, entity);
+    }
+  }
+  _setPipedEntity(store, rawData) {
+    //const id = store.generateID();
+    const id = `${Date.now()}-${Math.floor(Math.random()*1e6)}`;
+    const entity = {id, rawData};
     log('storing piped entity', entity);
     store.set(entity);
     // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
     // force replanning here
     this._fire('replan');
   }
-  async _requireFindStore(context) {
+  async _requireFindShowStore(context) {
     const options = {
-      schema: schemas.TVMazeFind,
-      name: 'TVMazeFind',
-      id: 'TVMazeFind',
-      tags: ['piped']
+      schema: schemas.TVMazeFind
     };
+    const store = this._requireStore(context, options);
+    this._setState({findShowStore: store});
+  }
+  async _requireFindShowcaseArtistStore(context) {
+    const options = {
+      schema: schemas.ShowcaseArtistFind
+    };
+    const store = this._requireStore(context, options);
+    this._setState({findShowcaseArtistStore: store});
+  }
+  async _requireShowcasePlayRecordStore(context) {
+    const options = {
+      schema: schemas.ShowcasePlayRecord
+    };
+    const store = this._requireStore(context, options);
+    this._setState({playRecordStore: store});
+  }
+  _requireStore(context, options) {
     const schemaType = Arcs.Type.fromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const findStore = (context.findStoresByType(typeOf) || [])[0];
-    //const findStore = await Stores.createContextStore(context, options);
-    log(`${findStore ? 'found' : 'MISSING'} findStore`);
-    this._setState({findStore});
+    const store = (context.findStoresByType(typeOf) || [])[0];
+    //const store = await Stores.createContextStore(context, options);
+    log(`${store ? 'found' : 'MISSING'} ${options.schema.data.names[0]}`);
+    return store;
   }
-  _updateMetaplans(metaplans, context) {
-    if (metaplans.plans) {
-      // find metaplans that use #piped stores
-      const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
-        const tags = context.findStoreTags(context.findStoreById(handle._id));
-        // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
-        return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
-      }));
-      if (piped.length) {
-        // reduce plans to descriptionText
-        const suggestions = piped.map(metaplan => metaplan.descriptionText);
-        log('piped suggestions', suggestions);
-        DeviceClient.foundSuggestions(JSON.stringify(suggestions));
+  _updateMetaplans(metaplans, context, entity) {
+    // find metaplans that use #piped stores
+    const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
+      const tags = context.findStoreTags(context.findStoreById(handle._id));
+      // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
+      return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+    }));
+    if (piped.length) {
+      log('piped metaplans', piped);
+      const demoPlan = {
+        tv_show: 'TVMazeUberDemo',
+        artist: 'ShowcaseArtistDemo',
+        play_record: 'ShowcasePlayRecordDemo'
+      }[entity.type];
+      if (demoPlan) {
+        const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
+        log(`searching metaplans for [${demoPlan}] found`, metaplan);
+        if (metaplan) {
+          // reduce plans to descriptionText
+          const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
+          log('piped suggestions', suggestions);
+          DeviceClient.foundSuggestions(JSON.stringify(suggestions));
+        }
       }
     }
   }
@@ -161,3 +216,5 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   }
 }
 customElements.define('device-client-pipe', DeviceClientPipe);
+
+//ShellApi.receiveEntity('{"type": "artist", "name": "alice in chains"}')

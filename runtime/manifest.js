@@ -20,7 +20,7 @@ import {Shape} from './ts-build/shape.js';
 import {Type} from './ts-build/type.js';
 import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
-import {ManifestMeta} from './manifest-meta.js';
+import {ManifestMeta} from './ts-build/manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 
@@ -165,7 +165,7 @@ export class Manifest {
   // TODO: simplify() / isValid().
   async createStore(type, name, id, tags, storageKey) {
     assert(!type.hasVariableReference, `stores can't have variable references`);
-    let store = await this.storageProviderFactory.construct(id, type, storageKey || `in-memory://${this.id}`);
+    let store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store._version !== null);
     store.name = name;
     this._storeManifestUrls.set(store.id, this.fileName);

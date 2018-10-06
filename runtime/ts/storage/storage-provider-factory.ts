@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
-import {InMemoryStorage} from './in-memory-storage.js';
+import {VolatileStorage} from './volatile-storage.js';
 import {FirebaseStorage} from './firebase-storage.js';
 import {PouchDbStorage} from './pouchdb/pouch-db-storage.js';
 import {SyntheticStorage} from './synthetic-storage.js';
@@ -21,11 +21,11 @@ export class StorageProviderFactory {
   constructor(private readonly arcId: Id) {
     // TODO: Pass this factory into storage objects instead of linking them directly together.
     // This needs changes to the StorageBase API to facilitate the FirebaseStorage.open functionality.
-    const inMemory = new InMemoryStorage(arcId);
+    const volatile = new VolatileStorage(arcId);
     const firebase = new FirebaseStorage(arcId);
     const pouchdb = new PouchDbStorage(arcId);
     const synthetic = new SyntheticStorage(arcId, firebase);
-    this._storageInstances = {'in-memory': inMemory, firebase, synthetic, pouchdb};
+    this._storageInstances = {volatile, firebase, synthetic, pouchdb};
   }
 
   _storageForKey(key) {

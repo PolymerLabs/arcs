@@ -5,6 +5,5 @@
 // subject to an additional IP rights grant found at
 
 import 'Login.recipe'
-import 'Launcher.recipe'
 import 'Dashboard.recipe'
 

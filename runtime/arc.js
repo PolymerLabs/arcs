@@ -151,7 +151,7 @@ export class Arc {
       case 'pouchdb':
         context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
-      case 'in-memory': {
+      case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
         const nosync = handleTags.includes('nosync');
         let serializedData = [];
@@ -334,7 +334,7 @@ ${this.activeRecipe.toString()}`;
     let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
     let handleMap = new Map();
     for (let handle of this._stores) {
-      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');
+      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'volatile');
       await clone.cloneFrom(handle);
       handleMap.set(handle, clone);
       if (this._storeDescriptions.has(handle)) {
@@ -513,10 +513,10 @@ ${this.activeRecipe.toString()}`;
               .toString();
     }
 
-    // TODO(sjmiles): use `in-memory` for nosync stores
+    // TODO(sjmiles): use `volatile` for nosync stores
     const hasNosyncTag = tags => tags && ((Array.isArray(tags) && tags.includes('nosync')) || tags === 'nosync');
     if (storageKey == undefined || hasNosyncTag(tags)) {
-      storageKey = 'in-memory';
+      storageKey = 'volatile';
     }
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);

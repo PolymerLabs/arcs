@@ -9,7 +9,7 @@
 import {Arc} from '../../../runtime/arc.js';
 import {BrowserLoader} from './shell/browser-loader.js';
 import {MockSlotComposer} from './runtime/mock-slot-composer.js';
-import {MessageChannel} from '../../../runtime/message-channel.js';
+import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../../../runtime/particle-execution-context.js';
 import {fetch} from '../../../runtime/fetch-node.js';
 import {Runtime} from '../../../runtime/ts-build/runtime.js';
@@ -23,14 +23,17 @@ LoaderKind.fetch = fetch;
 const ComposerKind = MockSlotComposer;
 
 const ArcFactory = class {
-  constructor(overridePath) {
-    // Allow caller to specify where to find assets
-    const path = overridePath ? overridePath : '../../../';
 
+  /**
+   * @param pathPrefix specifies the path prefix (often relative) to
+   * load assets
+   */
+  constructor(pathPrefix) {
+    // Allow caller to specify where to find assets
     this.loader = new LoaderKind({
-      'https://$cdn/': path,
-      'https://$shell/': path,
-      'https://$artifacts/': path + 'artifacts/',
+      'https://$cdn/': pathPrefix,
+      'https://$shell/': pathPrefix,
+      'https://$artifacts/': pathPrefix + 'artifacts/',
       // 'https://sjmiles.github.io/': path + '../'
     });
     //console.log(loader);

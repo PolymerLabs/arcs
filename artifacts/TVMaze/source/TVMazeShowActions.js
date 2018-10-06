@@ -30,12 +30,10 @@ defineParticle(({DomParticle, html}) => {
         }
         [${host}] icon {
           padding-left: 4px;
-          /*text-shadow: 0px 0px 6px black;*/
         }
       </style>
       <div bar>
-        <icon>{{favorite}}</icon>
-        <icon on-click="onDelete">delete</icon>
+        <icon key="{{showid}}" on-click="onFavorite">{{favorite}}</icon>
       </div>
     </div>
   `;
@@ -44,25 +42,24 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    render({show, shows}) {
+    render({show}, state) {
       if (show) {
-        if (shows && Math.random() < 0.5) {
-          const original = shows.find(s => s.showid === show.showid);
-          if (original) {
-            original.favorite = !original.favorite;
-            this.updateSet('shows', original);
-          }
+        if (!('favorite' in state)) {
+          state.favorite = show.favorite;
         }
         return {
-          favorite: show.favorite ? `favorite` : `favorite_border`
+          showid: show.id,
+          favorite: state.favorite ? `favorite` : `favorite_border`
         };
       }
     }
-    onDelete() {
-      const {show, shows} = this._props;
-      if (show && shows) {
-        console.log('DELETE', show.rawData);
+    onFavorite() {
+      const {show} = this._props;
+      if (show) {
+        this._setState({favorite: true});
+        this.updateSet('shows', show);
       }
     }
   };
+
 });
