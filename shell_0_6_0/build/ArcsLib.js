@@ -340,7 +340,7 @@ function createFirebaseNamespace() {
         app: app,
         apps: null,
         Promise: Promise,
-        SDK_VERSION: '5.0.4',
+        SDK_VERSION: '5.5.0',
         INTERNAL: {
             registerService: registerService,
             createFirebaseNamespace: createFirebaseNamespace,
@@ -22391,8 +22391,7 @@ var issuedAtTime = function (token) {
     return null;
 };
 /**
- * Decodes a Firebase auth. token and checks the validity of its format. Expects a valid issued-at time and non-empty
- * signature.
+ * Decodes a Firebase auth. token and checks the validity of its format. Expects a valid issued-at time.
  *
  * Notes:
  * - May return a false negative if there's no native base64 decoding support.
@@ -22403,10 +22402,7 @@ var issuedAtTime = function (token) {
  */
 var isValidFormat = function (token) {
     var decoded = decode(token), claims = decoded.claims;
-    return (!!decoded.signature &&
-        !!claims &&
-        typeof claims === 'object' &&
-        claims.hasOwnProperty('iat'));
+    return !!claims && typeof claims === 'object' && claims.hasOwnProperty('iat');
 };
 /**
  * Attempts to peer into an auth token and determine if it's an admin auth token by looking at the claims portion.
@@ -65456,7 +65452,7 @@ class DomParticleBase extends _particle_js__WEBPACK_IMPORTED_MODULE_1__["Particl
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
-   * from `rawData` (`new <EntityClass>(rawData)`).
+   * from `rawData` (`new [EntityClass](rawData)`).
    */
   updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
@@ -82257,7 +82253,7 @@ class VolatileKey extends _key_base_js__WEBPACK_IMPORTED_MODULE_3__["KeyBase"] {
         if (this.arcId !== undefined) {
             return `${this.protocol}://${this.arcId}`;
         }
-        return `${this.protocol}`;
+        return `${this.protocol}://`;
     }
 }
 // tslint:disable-next-line: variable-name
@@ -82598,7 +82594,7 @@ class VolatileVariable extends VolatileStorageProvider {
             // TODO(shans): mutating the storageKey here to provide unique keys is
             // a hack that can be removed once entity mutation is distinct from collection
             // updates. Once entity mutation exists, it shouldn't ever be possible to write
-            // different values with the same id. 
+            // different values with the same id.
             await this.backingStore.store(value, [this.storageKey + this.localKeyId++]);
         }
         else {

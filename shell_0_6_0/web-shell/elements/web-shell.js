@@ -27,7 +27,7 @@ const template = Xen.Template.html`
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <arc-host env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></arc-host>
-    <arc-host env="{{env}}" storage="volatile://context/" config="{{contextConfig}}" on-arc="onContextArc"></arc-host>
+    <arc-host env="{{env}}" storage="volatile://" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></arc-host>
     <arc-host env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></arc-host>
     <!-- -->
     <slot></slot>
@@ -96,7 +96,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // spin up context arc
     this.spawnContext();
     // simple context
-    this.state = {context: await state.env.parse(`import 'https://$artifacts/canonical.manifest'`)};
+    //this.state = {context: await state.env.parse(`import 'https://$artifacts/canonical.manifest'`)};
     // spin up launcher arc
     this.spawnLauncher();
   }
@@ -123,10 +123,16 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   spawnContext() {
+    const contextContext = this.state.env.parse(`
+  import 'https://$artifacts/canonical.manifest'
+  import 'https://$artifacts/Profile/Sharing.recipe'
+    `);
     this.state = {
+      contextContext,
       contextConfig: {
         id: `${this.state.userid}-context`,
-        manifest: `import 'https://$artifacts/Arcs/Sharing.recipe'`,
+        //manifest: `import 'https://$artifacts/Arcs/Sharing.recipe'`,
+        //serialization: sharingArc,
         composer: this.state.contextComposer
       }
     };
@@ -188,8 +194,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.state.launcherNodes.hidden = !show;
     this.state.arcNodes.hidden = show;
   }
-  onLauncherArc(e, arc) {
-    this.state = {launcherArc: arc};
+  onLauncherArc(e, launcherArc) {
+    this.state = {launcherArc};
+  }
+  async onContextArc(e, contextArc) {
+    this.state = {context: contextArc.context};
   }
   onSpawnClick(e) {
     const recipe = e.target.getAttribute('recipe');

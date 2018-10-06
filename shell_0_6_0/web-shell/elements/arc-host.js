@@ -37,7 +37,7 @@ export class ArcHost extends Xen.Debug(Xen.Async, log) {
         this.state = {composer: this.createComposer(config)};
       }
       if (config.id && storage && state.serialization == null) {
-        this.state = {id: config.id};
+        //this.state = {id: config.id};
         this.updateSerialization(props, state);
       }
       if (!state.arc && state.context && state.composer && config.id && state.serialization != null) {
@@ -62,20 +62,23 @@ export class ArcHost extends Xen.Debug(Xen.Async, log) {
       affordance: composer.affordance || 'dom'
     });
   }
-  updateSerialization({config}, state) {
+  updateSerialization({config, storage}, state) {
     if (config.serialization != null) {
       state.serialization = config.serialization;
     }
     if (state.serialization == null) {
-      const {id} = config;
-      this.awaitState('serialization', async () =>
-        // TODO(sjmiles): stopgap: assumes firebase storage
-        (await Firebase.db.child(`${id}/serialization`).once('value')).val() || '');
+      if (storage.includes('volatile')) {
+        state.serialization = '';
+      }
+      else {
+        this.awaitState('serialization', async () =>
+          // TODO(sjmiles): stopgap: assumes firebase storage
+          (await Firebase.db.child(`${config.id}/serialization`).once('value')).val() || '');
+      }
     }
   }
   async spawnArc({env, config, storage}, {context, composer, serialization}) {
-    const {id} = config;
-    const arc = await env.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
+    const arc = await env.spawn({id: config.id, context, composer, serialization, storage: `${storage}/${config.id}`});
     this._fire('arc', arc);
     return arc;
   }
@@ -99,7 +102,7 @@ export class ArcHost extends Xen.Debug(Xen.Async, log) {
     // flush arc
     arc.dispose();
     // clean up arc relative state
-    this.state = {id: null, arc: null, serialization: null, manifest: null, composer: null};
+    this.state = {/*id: null,*/ arc: null, serialization: null, manifest: null, composer: null};
     // notify owner
     this._fire('arc', null);
   }
