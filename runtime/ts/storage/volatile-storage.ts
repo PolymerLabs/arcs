@@ -45,7 +45,7 @@ class VolatileKey extends KeyBase {
     if (this.arcId !== undefined) {
       return `${this.protocol}://${this.arcId}`;
     }
-    return `${this.protocol}`;
+    return `${this.protocol}://`;
   }
 }
 

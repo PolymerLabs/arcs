@@ -1,4 +1,0 @@
-schema User
-  Text id
-  Text name
-  Object location

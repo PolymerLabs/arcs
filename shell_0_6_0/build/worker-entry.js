@@ -1490,7 +1490,7 @@ class DomParticleBase extends _particle_js__WEBPACK_IMPORTED_MODULE_1__["Particl
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
-   * from `rawData` (`new <EntityClass>(rawData)`).
+   * from `rawData` (`new [EntityClass](rawData)`).
    */
   updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
