@@ -12,7 +12,6 @@ import {Xen} from '../../lib/xen.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {Arcs} from '../../lib/web/runtime.js';
 import {Firebase} from '../../configuration/firebase-config.js';
-import {RecipeResolver} from '../../../runtime/recipe/recipe-resolver.js';
 
 Firebase.configure(Arcs.firebase);
 

@@ -20,6 +20,12 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   _update({userid, arckey}, state, oldProps) {
     if (!state.config) {
       state.config = this._configure();
+      if (state.storage) {
+        localStorage.setItem(Const.LOCALSTORAGE.storage, state.storage);
+      } else {
+        state.storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
+      }
+
       // TODO(sjmiles): default to Gomer for now, but should have a proper 'no user' state
       if (!state.config.userid) {
         state.config.userid = Const.defaultUserId;
@@ -48,6 +54,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       //manifestPath: params.get('manifest'),
       //solo: params.get('solo'),
       //defaultManifest: window.defaultManifest,
+      storage: params.get('storage') || localStorage.getItem(Const.LOCALSTORAGE.storage),
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       arckey: params.get('arc') || null,
       search: params.get('search') || '',

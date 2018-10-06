@@ -27,7 +27,8 @@ const template = Xen.Template.html`
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <arc-host env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></arc-host>
-    <arc-host env="{{env}}" context="{{context}}" storage="{{storage}}" config="{{arcConfig}}" on-arc="onState"></arc-host>
+    <arc-host env="{{env}}" storage="volatile://context/" config="{{contextConfig}}" on-arc="onContextArc"></arc-host>
+    <arc-host env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></arc-host>
     <!-- -->
     <slot></slot>
     <!-- -->
@@ -89,19 +90,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     state.arcNodes = document.body.querySelector('[arcNodes]');
     // configure composers
     // TODO(sjmiles): composers own DOM, should be custom elements, but need to be able to re-use them
-    state.launcherComposer = {
-      affordance: 'dom',
-      kind: SlotComposer,
-      container: state.launcherNodes
-    };
-    state.arcComposer = {
-      affordance: 'dom',
-      kind: SlotComposer,
-      container: state.arcNodes
-    };
+    state.launcherComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
+    state.arcComposer = {affordance: 'dom', kind: SlotComposer, container: state.arcNodes};
+    state.contextComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
+    // spin up context arc
+    this.spawnContext();
     // simple context
     this.state = {context: await state.env.parse(`import 'https://$artifacts/canonical.manifest'`)};
-    // start with launcher
+    // spin up launcher arc
     this.spawnLauncher();
   }
   routeLink(anchor) {
@@ -126,10 +122,18 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
+  spawnContext() {
+    this.state = {
+      contextConfig: {
+        id: `${this.state.userid}-context`,
+        manifest: `import 'https://$artifacts/Arcs/Sharing.recipe'`,
+        composer: this.state.contextComposer
+      }
+    };
+  }
   spawnLauncher() {
     this.showHideLauncher(true);
     this.state = {
-      arc: null,
       launcherConfig: {
         id: `${this.state.userid}-launcher`,
         manifest: `import 'https://$artifacts/Arcs/Launcher.recipe'`,
@@ -179,13 +183,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         composer: this.state.arcComposer
       }
     };
-    // const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-    // this.recordArcMeta({
-    //   key: id,
-    //   description: `${recipe.split('.').shift()} ${luid}`,
-    //   color,
-    //   touched: Date.now()
-    // });
   }
   showHideLauncher(show) {
     this.state.launcherNodes.hidden = !show;
