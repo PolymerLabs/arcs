@@ -11,12 +11,11 @@ import './Playlist.schema'
 
 // has to be baked into context in order to be available
 // as hostedParticle below
-particle PlaylistItem in 'source/PlaylistRenderer.js'
+particle PlaylistItem in 'source/PlaylistItem.js'
   in Playlist playlist
   consume item
 
-recipe ViewPlaylist
-  //map 'playlists' as items
+recipe PlaylistView
   map #items as items
   create #selected as selected
   ItemMultiplexer

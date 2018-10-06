@@ -4,8 +4,7 @@ export const Const = {
   version,
   defaultUserId: 'gomer',
   LOCALSTORAGE: {
-    user: `${version}-user`,
-    storage: `${version}-storage`
+    user: `${version}-user`
   },
   // SHELLKEYS: {
   //   '*': '*',
