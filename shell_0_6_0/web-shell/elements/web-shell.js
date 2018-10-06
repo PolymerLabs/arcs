@@ -8,6 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+import {linkJack} from '../../components/link-jack.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ArcsEnvWeb} from '../../lib/web/arcs-env-web.js';
 import {Xen} from '../../lib/xen.js';
@@ -49,6 +50,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     return template;
   }
   async update({root}, state) {
+    // for debugging only
+    window.shell = this;
+    window.arc = state.arc;
     if (state.config !== state._config) {
       state._config = state.config;
       if (state.config) {
@@ -62,23 +66,24 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
     }
-    if (state.env && state.arckey) {
-      this.openArc(state.arckey);
+    if (state.env && state.arckey && state.context) {
+      if (state.arcConfig && state.arcConfig.id === state.arckey) {
+        this.showHideLauncher(false);
+      } else {
+        this.openArc(state.arckey);
+      }
     }
   }
   render(props, state) {
     return [props, state];
   }
   async updateEnv({root}, state) {
-    document.onclick = e => {
-      log(e.target.localName);
-    };
+    // capture anchor-clicks for SPA behavior
+    linkJack(document, anchor => this.routeLink(anchor));
     // create arcs web-environment
     state.env = new ArcsEnvWeb(root);
     // map in 0_6_0 artifacts
     state.env.pathMap['https://$artifacts/'] = `${state.env.rootPath}/artifacts_0_6_0/`;
-    // hardcode userid
-    //state.userid = 'cletus';
     // marshal nodes from light-dom
     state.launcherNodes = document.body.querySelector('[launcherNodes]');
     state.arcNodes = document.body.querySelector('[arcNodes]');
@@ -94,10 +99,20 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       kind: SlotComposer,
       container: state.arcNodes
     };
+    // simple context
+    this.state = {context: await state.env.parse(`import 'https://$artifacts/canonical.manifest'`)};
     // start with launcher
     this.spawnLauncher();
-    // simple context
-    state.context = await state.env.parse(`import 'https://$artifacts/canonical.manifest'`);
+  }
+  routeLink(anchor) {
+    const url = new URL(anchor.href, document.location);
+    const params = url.searchParams;
+    log(/*url,*/ anchor.href, Array.from(params.keys()));
+    const key = params.get('arc');
+    // loopback not supported
+    if (key !== this.state.arckey) {
+      this.state = {arckey: key};
+    }
   }
   waitForStore(pollInterval) {
     const {launcherArc, store} = this.state;
@@ -115,7 +130,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.showHideLauncher(true);
     this.state = {
       arc: null,
-      store: null,
       launcherConfig: {
         id: `${this.state.userid}-launcher`,
         manifest: `import 'https://$artifacts/Arcs/Launcher.recipe'`,
@@ -128,9 +142,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     const luid = Math.floor((Math.random()+1)*1e5);
     const id = `${this.state.userid}-${luid}`;
     this.state = {
-      arckey: id,
       arc: null,
-      store: null,
+      arckey: id,
       arcConfig: {
         id,
         manifest: `import 'https://$artifacts/${recipe}'`,
@@ -140,9 +153,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.recordArcMeta({
       key: id,
+      href: `?arc=${id}`,
       description: `${recipe.split('.').shift()} ${luid}`,
       color,
-      touched: Date.now()
+      touched: Date.now(),
     });
   }
   async recordArcMeta(meta) {
@@ -160,7 +174,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.state = {
       arckey: id,
       arc: null,
-      store: null,
       arcConfig: {
         id,
         composer: this.state.arcComposer
@@ -186,6 +199,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.spawnArc(recipe);
   }
   onLauncherClick() {
+    this.state = {arckey: ''};
     this.showHideLauncher(true);
   }
 }

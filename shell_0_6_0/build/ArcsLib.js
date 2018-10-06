@@ -79052,7 +79052,7 @@ class SlotDomConsumer extends _slot_consumer_js__WEBPACK_IMPORTED_MODULE_1__["Sl
     }
     static dispose() {
         // empty template cache
-        templateByName.clear();
+        //templateByName.clear();
     }
     static findRootContainers(topContainer) {
         const containerBySlotId = {};
@@ -84374,6 +84374,7 @@ class BrowserLoader extends _runtime_loader_js__WEBPACK_IMPORTED_MODULE_0__["Loa
   }
   requireParticle(fileName) {
     const path = this._resolve(fileName);
+    //console.log(`requireParticle [${path}]`);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);

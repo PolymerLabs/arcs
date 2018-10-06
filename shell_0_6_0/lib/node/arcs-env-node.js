@@ -1,5 +1,7 @@
-import {BrowserLoader} from '../../source/browser-loader.js';
+import {NodeLoader} from './node-loader.js';
 import {ArcsEnv} from '../arcs-env.js';
+import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
+import {ParticleExecutionContext} from '../../../runtime/particle-execution-context.js';
 
 // TODO(sjmiles): some runtime is ONLY accessible via build because of firebase, leading
 // to this tortured construction which affords access to that runtime via ArcsEnv namespace.
@@ -8,36 +10,17 @@ Object.assign(ArcsEnv, Arcs);
 
 const log = console.log.bind(console);
 
-class ArcsEnvWeb extends ArcsEnv {
+class ArcsEnvNode extends ArcsEnv {
   constructor(rootPath) {
-    super(rootPath, BrowserLoader);
+    super(rootPath, NodeLoader);
   }
   get pecFactory() {
-    const path = '../build/worker-entry.js';
-    // worker paths are relative to worker location, remap urls from there to here
-    const remap = this._expandUrls(this.pathMap);
     return id => {
-      const worker = new Worker(path);
-      const channel = new MessageChannel();
-      worker.postMessage({id: `${id}:inner`, base: remap}, [channel.port1]);
+      let channel = new MessageChannel();
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, this.loader);
       return channel.port2;
     };
   }
-  _expandUrls(urlMap) {
-    const remap = {};
-    const {origin, pathname} = location;
-    Object.keys(urlMap).forEach(k => {
-      let path = urlMap[k];
-      if (path[0] === '/') {
-        path = `${origin}${path}`;
-      }
-      else if (path.indexOf('//') < 0) {
-        path = `${origin}${pathname.split('/').slice(0, -1).join('/')}/${path}`;
-      }
-      remap[k] = path;
-    });
-    return remap;
-  }
 }
 
-export {ArcsEnvWeb};
+export {ArcsEnvNode};

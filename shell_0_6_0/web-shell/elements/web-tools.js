@@ -67,8 +67,7 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
     return [props, state, renderModel];
   }
   _onToolsClick(e) {
-    const toolsOpen = !this.state.toolsOpen;
-    this.fire('tools', toolsOpen);
+    this.fire('tools', !this.state.toolsOpen);
   }
 }
 

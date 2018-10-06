@@ -2,6 +2,7 @@ const version = '0_6_0';
 
 export const Const = {
   version,
+  defaultUserId: 'gomer',
   LOCALSTORAGE: {
     user: `${version}-user`
   },

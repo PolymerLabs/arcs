@@ -43,7 +43,7 @@ recipe ItemMultiplexer
 //  ItemMultiplexer
 //    list = items
 
-particle SelectableItems in 'source/ItemList.js'
+particle SelectableItems in 'source/Items.js'
   in [~any] list
   inout ~any selected
   consume root #items

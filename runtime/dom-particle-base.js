@@ -149,7 +149,7 @@ export class DomParticleBase extends Particle {
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
-   * from `rawData` (`new <EntityClass>(rawData)`).
+   * from `rawData` (`new [EntityClass](rawData)`).
    */
   updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);

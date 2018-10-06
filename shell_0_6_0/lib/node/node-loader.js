@@ -8,37 +8,26 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../../runtime/loader.js';
-import {Particle} from '../../runtime/particle.js';
-import {DomParticle} from '../../runtime/dom-particle.js';
-import {MultiplexerDomParticle} from '../../runtime/multiplexer-dom-particle.js';
-import {TransformationDomParticle} from '../../runtime/transformation-dom-particle.js';
+import {Loader} from '../../../runtime/loader.js';
+import {Particle} from '../../../runtime/particle.js';
+import {DomParticle} from '../../../runtime/dom-particle.js';
+import {MultiplexerDomParticle} from '../../../runtime/multiplexer-dom-particle.js';
+import {TransformationDomParticle} from '../../../runtime/transformation-dom-particle.js';
 
-const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble} [Particle]`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 4px;`);
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 const dumbCache = {};
 
-export class BrowserLoader extends Loader {
+export class NodeLoader extends Loader {
   constructor(urlMap) {
     super();
     this._urlMap = urlMap;
   }
-  _loadURL(url) {
-    const resolved = this._resolve(url);
-    // use URL to normalize the path for deduping
-    const cacheKey = new URL(resolved, document.URL).href;
-    // console.log(`browser-loader::_loadURL`);
-    // console.log(`    ${url}`);
-    // console.log(`    ${resolved}`);
-    // console.log(`    ${cacheKey}`);
-    const resource = dumbCache[cacheKey];
-    return resource || (dumbCache[cacheKey] = super._loadURL(resolved));
-  }
   loadResource(name) {
-    // subclass impl differentiates paths and URLs,
-    // for browser env we can feed both kinds into _loadURL
-    return this._loadURL(name);
+    const path = this._resolve(name);
+    const cacheKey = path; //new URL(url, document.URL).href;
+    const resource = dumbCache[cacheKey];
+    return resource || (dumbCache[cacheKey] = super.loadResource(path));
   }
   _resolve(path) {
     //return new URL(path, this._base).href;
@@ -56,18 +45,10 @@ export class BrowserLoader extends Loader {
   }
   requireParticle(fileName) {
     const path = this._resolve(fileName);
-    console.log(`requireParticle [${path}]`);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);
-    const result = [];
-    self.defineParticle = function(particleWrapper) {
-      result.push(particleWrapper);
-    };
-    importScripts(path);
-    delete self.defineParticle;
-    const logger = logFactory(fileName.split('/').pop(), '#1faa00');
-    return this.unwrapParticle(result[0], logger);
+    return super.requireParticle(path);
   }
   mapParticleUrl(path) {
     let parts = path.split('/');
@@ -80,9 +61,9 @@ export class BrowserLoader extends Loader {
     // TODO(sjmiles): regarding `resolver`:
     //  _resolve method allows particles to request remapping of assets paths
     //  for use in DOM
-    let resolver = this._resolve.bind(this);
+    const resolver = this._resolve.bind(this);
     // TODO(sjmiles): hack to plumb `fetch` into Particle space under node
-    const _fetch = BrowserLoader.fetch || fetch;
+    //const _fetch = NodeLoader.fetch || fetch;
     return particleWrapper({
       Particle,
       DomParticle,
@@ -90,9 +71,9 @@ export class BrowserLoader extends Loader {
       SimpleParticle: DomParticle,
       TransformationDomParticle,
       resolver,
-      log,
+      log: log || (() => {}),
       html,
-      _fetch
+      //_fetch
     });
   }
 }

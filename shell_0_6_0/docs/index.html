@@ -1,0 +1,160 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+<html>
+<head>
+  <link rel="shortcut icon" href="../apps/common/logo_64.png">
+  <title>ArcsLib API Docs</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,500" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans:400,700" rel="stylesheet">
+  <style>
+    html, body {
+      font-family: 'Google Sans';
+      margin: 0;
+      display: flex;
+      width: 100%;
+      height: 100%;
+      font-size: 16px;
+      line-height: 24px;
+      color: #444;
+      -webkit-font-smoothing: antialiased;
+    }
+    [toc] {
+      background: #222;
+      width: 208px;
+      padding: 16px 20px;
+      color: white;
+    }
+    [toc] [list] {
+      color: white;
+      line-height: 38px;
+    }
+    [toc] a {
+      color: #fff;
+      text-decoration: none;
+      opacity: .5
+    }
+    [toc] a.selected {
+      opacity: 1;
+    }
+    a {
+      color: #1A73E8;
+    }
+
+    [docs] {
+      overflow-y: scroll;
+      flex: 1;
+    }
+    [docs] [dclass] > [name] {
+      padding: 180px 0 40px 32px;
+      background: #1A73E8;
+      color: #fff;
+      font-size: 56px;
+      margin-bottom: 24px;
+      text-indent: -2px;
+    }
+
+    [dclass] > [desc] {
+      margin: 0 32px;
+    }
+    [method] {
+      margin-left: 32px;
+      margin-top: 24px;
+      max-width: 800px;
+    }
+    [method] > [name] {
+      font-weight: 700;
+      color: #1A73E8;
+    }
+    [method] > [desc] {
+      margin: 4px 0 24px 0;
+    }
+    [chapter] {
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+    [chapter] > [name] {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .25px;
+      text-transform: uppercase;
+      line-height: 24px;
+      margin: 4px 0 4px 0;
+    }
+    [end] {
+      margin-bottom: 2em;
+    }
+    [pre] {
+      white-space: pre-wrap;
+    }
+    pre {
+      padding: 16px 32px;
+      background-color: rgba(0,0,0,.04);
+      margin-left: -32px;
+      margin-right: -32px;
+    }
+    code {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+    }
+    h1, h2, h3, h4, h5 {
+      font-weight: 700;
+    }
+    strong, b {
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      /* color: #1A73E8; */
+    }
+    h2 {
+      /* color: #1A73E8; */
+      padding-top: 20px;
+      /* border-top: 1px solid rgba(0,0,0,.5); */
+      margin: 12px 0 12px 0;
+    }
+    h2 img {
+      margin-top: -4px;
+      margin-left: 4px;
+      vertical-align: middle;
+      height: 20px;
+    }
+    p {
+      max-width: 800px;
+      margin: 12px 0 20px 0;
+    }
+    p > img {
+      max-width: 100%;
+    }
+    ul {
+      list-style-type: square;
+      padding-left: 32px;
+      margin-right: 32px;
+      max-width: 800px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.js"></script>
+
+</head>
+<body>
+
+  <div toc></div>
+  <div docs></div>
+
+  <script type="module" src="index.js"></script>
+
+</body>
+</html>

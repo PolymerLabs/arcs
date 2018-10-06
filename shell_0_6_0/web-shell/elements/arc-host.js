@@ -20,7 +20,7 @@ const log = Xen.logFactory('ArcHost', '#DDB815');
 
 export class ArcHost extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'config', 'storage'];
+    return ['env', 'context', 'storage', 'config'];
   }
   async update(props, state) {
     const {env, context, config, storage} = props;
@@ -82,19 +82,12 @@ export class ArcHost extends Xen.Debug(Xen.Async, log) {
   }
   async instantiateDefaultRecipe(env, arc, manifestText) {
     const manifest = await env.parse(manifestText);
-    //const recipe = env.extractRecipe(manifest);
     const recipe = manifest.recipes[0];
-    if (!recipe) {
-      log(`couldn't find recipe`);
-    } else {
-      recipe.normalize();
-      const resolver = new RecipeResolver(arc);
-      const plan = await resolver.resolve(recipe);
-      if (plan) {
-        await arc.instantiate(plan);
-        this.updateOutputSerialization(arc);
-        this._fire('recipe', plan);
-      }
+    const plan = await env.resolve(recipe);
+    if (plan) {
+      await arc.instantiate(plan);
+      this._fire('recipe', plan);
+      this.updateOutputSerialization(arc);
     }
   }
   async updateOutputSerialization(arc) {

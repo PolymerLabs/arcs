@@ -25,7 +25,7 @@ export class SlotDomConsumer extends SlotConsumer {
     this._observer = this._initMutationObserver();
   }
 
-  constructRenderRequest(hostedSlotConsumer): string[] { 
+  constructRenderRequest(hostedSlotConsumer): string[] {
     const request = ['model'];
     const prefixes = [this.templatePrefix];
     if (hostedSlotConsumer) {
@@ -134,7 +134,7 @@ export class SlotDomConsumer extends SlotConsumer {
 
   static dispose() {
     // empty template cache
-    templateByName.clear();
+    //templateByName.clear();
   }
 
   static findRootContainers(topContainer) {
@@ -233,7 +233,7 @@ export class SlotDomConsumer extends SlotConsumer {
   getNodeValue(node, name) {
     // TODO(sjmiles): remember that attribute names from HTML are lower-case
     return node[name] || node.getAttribute(name);
-  }  
+  }
 
   _validateSubId(providedSlotSpec, subId) {
     assert(!this.subId || !subId || this.subId === subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);

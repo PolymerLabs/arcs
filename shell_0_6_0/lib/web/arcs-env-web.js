@@ -13,11 +13,11 @@ class ArcsEnvWeb extends ArcsEnv {
     super(rootPath, BrowserLoader);
   }
   get pecFactory() {
-    const path = '../build/worker-entry.js';
     // worker paths are relative to worker location, remap urls from there to here
     const remap = this._expandUrls(this.pathMap);
+    const workerPath = this.loader._resolve(`https://$shell/build/worker-entry.js`);
     return id => {
-      const worker = new Worker(path);
+      const worker = new Worker(workerPath);
       const channel = new MessageChannel();
       worker.postMessage({id: `${id}:inner`, base: remap}, [channel.port1]);
       return channel.port2;

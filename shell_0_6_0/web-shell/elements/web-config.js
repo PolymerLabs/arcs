@@ -9,9 +9,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {Xen} from '../../lib/xen.js';
-import {Const} from '../../lib/constants.js';
+import {Const} from '../../configuration/constants.js';
 
-class WebConfig extends Xen.Base {
+const log = Xen.logFactory('WebConfig', '#60ac66');
+
+export class WebConfig extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['userid', 'arckey'];
   }
@@ -20,16 +22,16 @@ class WebConfig extends Xen.Base {
       state.config = this._configure();
       // TODO(sjmiles): default to Gomer for now, but should have a proper 'no user' state
       if (!state.config.userid) {
-        state.config.userid = `Gomer`;
+        state.config.userid = Const.defaultUserId;
       }
       this._fire('config', state.config);
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     this.setUrlParam('user', null);
-    if (userid) {
+    if (userid && userid !== Const.defaultUserId) {
       localStorage.setItem(Const.LOCALSTORAGE.user, userid);
     }
-    if (arckey && arckey !== oldProps.key) {
+    if (arckey != null) {
       this.setUrlParam('arc', arckey);
     }
     // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
