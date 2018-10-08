@@ -64400,12 +64400,10 @@ __webpack_require__.r(__webpack_exports__);
  */
 
 
-const allowTracing = false;
-
 let streamingToDevtools = false;
 
 function enableTracingAdapter(devtoolsChannel) {
-  if (allowTracing && !streamingToDevtools) {
+  if (!_tracelib_trace_js__WEBPACK_IMPORTED_MODULE_0__["Tracing"].disallow && !streamingToDevtools) {
     if (!_tracelib_trace_js__WEBPACK_IMPORTED_MODULE_0__["Tracing"].enabled) _tracelib_trace_js__WEBPACK_IMPORTED_MODULE_0__["Tracing"].enable();
 
     devtoolsChannel.send({
@@ -65469,11 +65467,12 @@ class DomParticleBase extends _particle_js__WEBPACK_IMPORTED_MODULE_1__["Particl
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    const entities = await handle.toList();
-    const target = entities.find(r => r.id === entity.id);
-    if (target) {
-      handle.remove(target);
-    }
+    // const entities = await handle.toList();
+    // const target = entities.find(r => r.id === entity.id);
+    // if (target) {
+    //   handle.remove(target);
+    // }
+    handle.remove(entity);
     handle.store(entity);
   }
   /** @method boxQuery(box, userid)
@@ -79047,6 +79046,8 @@ class SlotDomConsumer extends _slot_consumer_js__WEBPACK_IMPORTED_MODULE_1__["Sl
         container.textContent = '';
     }
     static dispose() {
+        // TODO(sjmiles): dumping the template cache causes errors when running parallel arcs
+        // in shell. Disable for now, the corpus of templates is static at this time.
         // empty template cache
         //templateByName.clear();
     }
@@ -82244,7 +82245,7 @@ class VolatileKey extends _key_base_js__WEBPACK_IMPORTED_MODULE_3__["KeyBase"] {
         Object(_platform_assert_web_js__WEBPACK_IMPORTED_MODULE_0__["assert"])(this.toString() === key);
     }
     childKeyForHandle(id) {
-        return new VolatileKey('volatile://');
+        return new VolatileKey('volatile');
     }
     toString() {
         if (this.location !== undefined && this.arcId !== undefined) {
@@ -82253,7 +82254,7 @@ class VolatileKey extends _key_base_js__WEBPACK_IMPORTED_MODULE_3__["KeyBase"] {
         if (this.arcId !== undefined) {
             return `${this.protocol}://${this.arcId}`;
         }
-        return `${this.protocol}://`;
+        return `${this.protocol}`;
     }
 }
 // tslint:disable-next-line: variable-name
@@ -84269,10 +84270,11 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+_tracelib_trace_js__WEBPACK_IMPORTED_MODULE_7__["Tracing"].disallow = true;
 //Tracing.enable();
 
 const Arcs = {
-  version: '0.4',
+  version: '0.5',
   Tracing: _tracelib_trace_js__WEBPACK_IMPORTED_MODULE_7__["Tracing"],
   Arc: _runtime_arc_js__WEBPACK_IMPORTED_MODULE_1__["Arc"],
   Manifest: _runtime_manifest_js__WEBPACK_IMPORTED_MODULE_5__["Manifest"],

@@ -35,7 +35,7 @@ class VolatileKey extends KeyBase {
   }
 
   childKeyForHandle(id): VolatileKey {
-    return new VolatileKey('volatile://');
+    return new VolatileKey('volatile');
   }
 
   toString() {
@@ -45,7 +45,7 @@ class VolatileKey extends KeyBase {
     if (this.arcId !== undefined) {
       return `${this.protocol}://${this.arcId}`;
     }
-    return `${this.protocol}://`;
+    return `${this.protocol}`;
   }
 }
 

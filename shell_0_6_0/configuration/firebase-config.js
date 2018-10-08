@@ -20,12 +20,16 @@ const config = {
 };
 
 const configure = firebase => {
+  // api
+  Firebase.firebase = firebase;
   // firebase app
   Firebase.app = firebase.initializeApp(config);
   // firebase database
   Firebase.database = Firebase.app.database();
   // version node
   Firebase.db = Firebase.database.ref(Const.version);
+  // firebase storage (for file upload, e.g.)
+  Firebase.storage = Firebase.app.storage();
 };
 
 export const Firebase = {

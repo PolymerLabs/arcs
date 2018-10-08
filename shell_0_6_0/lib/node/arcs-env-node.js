@@ -8,8 +8,6 @@ import {ParticleExecutionContext} from '../../../runtime/particle-execution-cont
 import {Arcs} from './runtime.js';
 Object.assign(ArcsEnv, Arcs);
 
-const log = console.log.bind(console);
-
 class ArcsEnvNode extends ArcsEnv {
   constructor(rootPath) {
     super(rootPath, NodeLoader);

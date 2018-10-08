@@ -15,6 +15,7 @@ import {Xen} from '../../lib/xen.js';
 import './web-config.js';
 import './arc-host.js';
 import './web-shell-ui.js';
+import './user-context.js';
 
 // templates
 const template = Xen.Template.html`
@@ -24,19 +25,24 @@ const template = Xen.Template.html`
       padding-bottom: 128px;
     }
   </style>
+
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
+
+  <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{context}}" arcstore="{{store}}"><user-context>
+
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <arc-host env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></arc-host>
-    <arc-host env="{{env}}" storage="volatile://" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></arc-host>
+    <arc-host env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></arc-host>
     <arc-host env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></arc-host>
-    <!-- -->
+
     <slot></slot>
-    <!-- -->
+
     <div style="position: fixed; right: 0; bottom: 0; left: 0; height: 64px; border-top: 1px solid silver; padding: 16px; background: white;">
       <button on-click="onLauncherClick">Back To Launcher</button>
       &nbsp;&nbsp;&nbsp;
       <button on-click="onSpawnClick" recipe="Arcs/Login.recipe">Spawn Login</button>
-      <button on-click="onSpawnClick" recipe="Music/Playlist.recipes">Spawn Playlist</button>
+      <button on-click="onSpawnClick" recipe="Music/Playlist.recipe">Spawn Playlist</button>
+      <button on-click="onSpawnClick" recipe="Profile/BasicProfile.recipe">Spawn Profile</button>
     </div>
   </web-shell-ui>
 `;

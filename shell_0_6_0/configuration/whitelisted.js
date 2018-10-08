@@ -8,7 +8,7 @@ import '../components/model-input.js';
 import '../components/good-map.js';
 
 // requires app-level firebase configuration
-//import './components/firebase-upload.js';
+import '../lib/firebase-upload.js';
 
 // deprecated
 import '../components/x-list.js';

@@ -166,11 +166,12 @@ export class DomParticleBase extends Particle {
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    const entities = await handle.toList();
-    const target = entities.find(r => r.id === entity.id);
-    if (target) {
-      handle.remove(target);
-    }
+    // const entities = await handle.toList();
+    // const target = entities.find(r => r.id === entity.id);
+    // if (target) {
+    //   handle.remove(target);
+    // }
+    handle.remove(entity);
     handle.store(entity);
   }
   /** @method boxQuery(box, userid)

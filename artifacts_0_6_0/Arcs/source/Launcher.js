@@ -9,81 +9,67 @@
 'use strict';
 
 defineParticle(({DomParticle, log, html}) => {
-
-  const host = 'arcs-list';
-
-  const style = html`
-
-<style>
-  [${host}] {
-  }
-  [${host}] cx-tabs {
-    border-bottom: 1px solid #ccc;
-    justify-content: center;
-  }
-  [${host}] cx-tab {
-    font-weight: 500;
-    font-size: 14px;
-    letter-spacing: .25px;
-    color: #999;
-  }
-  [${host}] cx-tab[selected] {
-    color: #111;
-  }
-  [${host}] [columns] {
-    display: flex;
-    padding: 16px;
-    /* temporary: pending responsiveness */
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  [${host}] [chip] {
-    font-family: 'Google Sans';
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 16px 16px 16px 16px;
-    margin: 0 4px 8px 4px;
-    font-size: 18px;
-    color: whitesmoke;
-    border-radius: 8px;
-  }
-  [${host}] a {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-  }
-  [${host}] [hovering] {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    visibility: hidden;
-    height: 24px;
-  }
-  [${host}] [chip]:hover [hovering] {
-    visibility: visible;
-  }
-  [${host}] [delete][hide] {
-    display: none;
-  }
-  [${host}] [share] {
-    display: flex;
-    align-items: center;
-    margin-top: 32px;
-  }
-  [${host}] [share] icon:not([show]) {
-    display: none;
-  }
-</style>
-
-`;
-
-  let template = html`
-
-${style}
+  const host = 'arcs-launcher';
+  const template = html`
 
 <div ${host}>
-  <cx-tabs on-select="_onTabSelect">
+  <style>
+    [${host}] cx-tabs {
+      border-bottom: 1px solid #ccc;
+      justify-content: center;
+    }
+    [${host}] cx-tab {
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: .25px;
+      color: #999;
+    }
+    [${host}] cx-tab[selected] {
+      color: #111;
+    }
+    [${host}] [columns] {
+      display: flex;
+      padding: 16px;
+      /* temporary: pending responsiveness */
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    [${host}] [chip] {
+      font-family: 'Google Sans';
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 16px 16px 16px;
+      margin: 0 4px 8px 4px;
+      font-size: 18px;
+      color: whitesmoke;
+      border-radius: 8px;
+    }
+    [${host}] a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    [${host}] [hovering] {
+      visibility: hidden;
+    }
+    [${host}] [chip]:hover [hovering] {
+      visibility: visible;
+    }
+    [${host}] [share] {
+      display: flex;
+      align-items: center;
+      margin-top: 32px;
+    }
+    [${host}] icon {
+      margin-right: 16px;
+    }
+    [${host}] icon:last-of-type {
+      margin-right: 0;
+    }
+  </style>
+
+  <cx-tabs on-select="onTabSelect">
     <cx-tab>All</cx-tab>
     <cx-tab selected>Recent</cx-tab>
     <cx-tab>Starred</cx-tab>
@@ -96,22 +82,20 @@ ${style}
 </div>
 
 <template column>
-  <div chip style="{{chipStyle}}">
-    <div hovering>
-      <span style="flex: 1;"></span>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete" style="margin-right:8px;">delete_forever</icon>
-      <icon star show key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
-    </div>
+  <div chip xen:style="{{chipStyle}}">
     <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
       <div style="flex: 1;"></div>
     </a>
     <div share>
-      <icon show$="{{self}}">account_circle</icon>
-      <icon show$="{{friends}}">people</icon>
+      <icon key="{{arcId}}" on-click="onStar">{{starred}}</icon>
+      <icon key="{{arcId}}" on-click="onShare">{{sharing}}</icon>
+      <span style="flex: 1;"></span>
+      <icon hovering key="{{arcId}}" on-click="onDelete">delete_forever</icon>
     </div>
   </div>
 </template>
+
 `;
 
   return class extends DomParticle {
@@ -124,8 +108,8 @@ ${style}
       };
     }
     willReceiveProps({arcs}) {
-      const collation = this._collateItems(arcs);
-      this._setState(collation);
+      const collation = this.collateItems(arcs);
+      this.setState(collation);
     }
     shouldRender(props, state) {
       return Boolean(state.items);
@@ -134,16 +118,19 @@ ${style}
       const columns = [[], []];
       const chosen = [items, recent, starred, shared][selected || 0];
       chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
-      log(chosen);
-      // method 1: left-to-right, top-to-bottom
-      // chosen.forEach((item, i) => {
-      //   columns[i % 2].push(item);
-      // });
-      // method 2: top-to-bottom, left-to-right
-      const pivot = chosen.length / 2;
-      chosen.forEach((item, i) => {
-        columns[i >= pivot ? 1 : 0].push(item);
-      });
+      const method = ['ltr', 'ttb'][0];
+      if (method === 'ltr') {
+        // method 1: left-to-right, top-to-bottom
+        chosen.forEach((item, i) => {
+          columns[i % 2].push(item);
+        });
+      } else {
+        // method 2: top-to-bottom, left-to-right
+        const pivot = chosen.length / 2;
+        chosen.forEach((item, i) => {
+          columns[i >= pivot ? 1 : 0].push(item);
+        });
+      }
       return {
         columnA: {
           $template: 'column',
@@ -155,7 +142,7 @@ ${style}
         }
       };
     }
-    _collateItems(arcs) {
+    collateItems(arcs) {
       const result = {
         items: [],
         shared: [],
@@ -165,7 +152,7 @@ ${style}
       const byTime = arcs.slice().sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
       byTime.forEach((a, i) => {
         if (a.description && !a.deleted) {
-          let model = this._renderArc(a);
+          let model = this.renderArc(a);
           result.items.push(model);
           if (a.starred) {
             result.starred.push(model);
@@ -180,7 +167,7 @@ ${style}
       });
       return result;
     }
-    _renderArc(arc) {
+    renderArc(arc) {
       // massage the description
       //const blurb = arc.description.length > 70 ? arc.description.slice(0, 70) + '...' : arc.description;
       const blurb = arc.description;
@@ -192,52 +179,68 @@ ${style}
       return {
         arcId: arc.id,
         key: arc.key,
-        // Don't allow deleting the 'New Arc' arc.
-        noDelete: arc.key === '*',
         href: arc.href,
         blurb,
         description: arc.description,
         icon: arc.icon,
         starred: arc.starred ? 'star' : 'star_border',
         chipStyle,
-        self: Boolean(arc.share >= 2),
-        friends: Boolean(arc.share >= 3),
+        sharing: ['share', 'account_circle', 'people'][arc.share] || 'share',
         touched: arc.touched
       };
     }
-    _onTabSelect(e) {
+    findArc(id) {
+      const arc = this._props.arcs.find(a => a.id === id);
+      if (!arc) {
+        log(`Couldn't find arc[${id}].`);
+      }
+      return arc;
+    }
+    onTabSelect(e) {
       const selected = e.data.value;
-      this._setState({selected});
+      this.setState({selected});
     }
-    _onDelete(e) {
-      const arcId = e.data.key;
-      const arc = this._props.arcs.find(a => a.id === arcId);
-      if (!arc) {
-        log(`Couldn't find arc to delete [arcId=${arcId}].`);
-      } else {
-        const arcs = this.handles.get('arcs');
-        arcs.remove(arc);
-        arc.deleted = true;
-        arcs.store(arc);
-        log(`Marking arc [${arc.key}] for deletion.`);
+    onDelete(e) {
+      const arc = this.findArc(e.data.key);
+      if (arc) {
+        this.mutateEntity('arcs', arc, arc => arc.deleted = true);
+        //arc.deleted = true;
+        //this.updateSet('arcs', arc);
+        // const arcs = this.handles.get('arcs');
+        // arcs.remove(arc);
+        // arc.deleted = true;
+        // arcs.store(arc);
+        // log(`Marked arc [${arc.key}] as deleted.`);
       }
     }
-    _onStar(e) {
-      const arcId = e.data.key;
-      const arc = this._props.arcs.find(a => a.id === arcId);
-      if (!arc) {
-        log(`Couldn't find arc to star [arcId=${arcId}].`);
-      } else {
-        const arcs = this.handles.get('arcs');
-        arc.starred = !arc.starred;
-        arcs.remove(arc);
-        arcs.store(arc);
-        log(`Toggled "starred" for arc [${arc.key}].`, arc);
+    onStar(e) {
+      const arc = this.findArc(e.data.key);
+      if (arc) {
+        this.mutateEntity('arcs', arc, arc => arc.starred= !arc.starred);
+        //arc.starred = !arc.starred;
+        //this.updateSet('arcs', arc);
+        // const arcs = this.handles.get('arcs');
+        // arcs.remove(arc);
+        // arc.starred = !arc.starred;
+        // arcs.store(arc);
+        // log(`Toggled "starred" for arc [${arc.key}].`);
       }
     }
-    setHandle(name, data) {
-      const handle = this.handles.get(name);
-      handle.set(new (handle.entityClass)(data));
+    onShare(e) {
+      const arc = this.findArc(e.data.key);
+      if (arc) {
+        this.mutateEntity('arcs', arc, arc => arc.share = (arc.share % 3) + 1);
+        // arc.share = (arc.share % 3) + 1;
+        // this.updateSet('arcs', arc);
+        // log(`Modulated "share" for arc [${arc.key}].`);
+      }
+    }
+    mutateEntity(handleName, entity, mutator) {
+      const handle = this.handles.get(handleName);
+      handle.remove(entity);
+      mutator(entity);
+      handle.store(entity);
+      log(`mutated entity [${entity.id}]`);
     }
   };
 });
