@@ -12,8 +12,7 @@ import {Tracing} from '../../tracelib/trace.js';
 let streamingToDevtools = false;
 
 export function enableTracingAdapter(devtoolsChannel) {
-  // TODO(sjmiles): plumb `disallow` as affordance for shell to disable Tracing to protect the heap.
-  if (!Tracing.disallow && !streamingToDevtools) {
+  if (!streamingToDevtools) {
     if (!Tracing.enabled) Tracing.enable();
 
     devtoolsChannel.send({

@@ -30,9 +30,6 @@ import 'firebase/storage';
 
 import {KeyManager} from '../../runtime/ts-build/keymgmt/manager.js';
 
-Tracing.disallow = true;
-//Tracing.enable();
-
 const Arcs = {
   version: '0.5',
   Tracing,
