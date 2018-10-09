@@ -18,6 +18,7 @@ import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
 let loader = new Loader();
 
 async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
@@ -943,5 +944,116 @@ describe('Automatic resolution', function() {
     assert.lengthOf(recipes, 1);
     assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+  });
+
+
+ it.only('plan requiring recipe-resolver to be resolved', async () => {
+  let manifestStr = `
+particle ExtractLocation in './../../../artifacts/Restaurants/../Places/source/ExtractLocation.js'
+  in Person Thing {Text id, Text friends, Text foods, Text avatar, Text active, Text occasion, Text date, Object location, Object arcs, Object profiles, Object shares, Text name, Text description, URL image, URL url, Text identifier} person
+  out GeoCoordinates Thing {Number latitude, Number longitude, Text name, Text description, URL image, URL url, Text identifier} location
+  affordance dom
+particle FindRestaurants in './../../../artifacts/Restaurants/source/FindRestaurants.js'
+  in GeoCoordinates Thing {Number latitude, Number longitude, Text name, Text description, URL image, URL url, Text identifier} location
+  inout [Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier}] restaurants
+  affordance dom
+  consume root
+    must provide masterdetail
+      handle restaurants
+particle RestaurantDetail in './../../../artifacts/Restaurants/source/RestaurantDetail.js'
+  in Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier} selected
+  affordance dom
+  consume detail
+    provide action
+particle RestaurantList in './../../../artifacts/Restaurants/source/RestaurantList.js'
+  in [Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier}] list
+  inout Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier} selected
+  affordance dom
+  consume master
+    provide modifier
+    provide set of annotation
+      handle list
+particle RestaurantMasterDetail in './../../../artifacts/Restaurants/../Common/source/MasterDetail.js'
+  in [Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier}] list
+  inout Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier} selected
+  affordance dom
+  consume masterdetail
+    provide master
+      handle list
+    provide detail
+      handle selected
+recipe
+  create as handle0 // GeoCoordinates Thing {...}
+  use 'User' as handle1 // Person Thing {...}
+  create #nosync #restaurants as handle2 // [Restaurant Thing {...}]
+  create as handle3 // Restaurant Thing {...}
+  slot 'rootslotid-root' #root as slot6
+  ExtractLocation as particle0
+    location -> handle0
+    person <- handle1
+  FindRestaurants as particle1
+    location <- handle0
+    restaurants = handle2
+    consume root as slot6
+      provide masterdetail as slot5
+  RestaurantDetail as particle2
+    selected <- handle3
+    consume detail as slot0
+      provide action as slot1
+  RestaurantList as particle3
+    list <- handle2
+    selected = handle3
+    consume master as slot2
+      provide annotation as slot3
+      provide modifier as slot4
+  RestaurantMasterDetail as particle4
+    list <- handle2
+    selected = handle3
+    consume masterdetail as slot5
+      provide detail as slot0
+      provide master as slot2
+    `
+    let manifest = await Manifest.parse(manifestStr);
+    assert.lengthOf(manifest.recipes, 1);
+    let recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    console.log(recipe.toString({showUnresolved: true}));
+    assert.isFalse(recipe.isResolved());
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', (await Manifest.parse(`
+  resource Store0Resource
+    start
+    []
+  store Store0 of Person Thing {Text id, Text friends, Text foods, Text avatar, Text active, Text occasion, Text date, Object location, Object arcs, Object profiles, Object shares, Text name, Text description, URL image, URL url, Text identifier} 'User' @3 #user #nosync in Store0Resource
+    `)), 'dom');
+    let recipeResolver = new RecipeResolver(arc);
+    let resolvedRecipe = await recipeResolver.resolve(recipe);
+    assert.isTrue(resolvedRecipe.isResolved());
+    ////////////////////////
+    let manifestPrefix = `
+meta
+  name: '!186197856939754:app-shell-87j9bueuo194vg39f'
+  storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7'
+
+
+resource Store0Resource
+  start
+  []
+resource Store2Resource
+  start
+  []
+store Store0 of Person Thing {Text id, Text friends, Text foods, Text avatar, Text active, Text occasion, Text date, Object location, Object arcs, Object profiles, Object shares, Text name, Text description, URL image, URL url, Text identifier} 'User' @1 #user #nosync in Store0Resource
+store Store1 of GeoCoordinates Thing {Number latitude, Number longitude, Text name, Text description, URL image, URL url, Text identifier} '!186197856939754:app-shell-87j9bueuo194vg39f:63' @1  at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7/handles/!186197856939754:app-shell-87j9bueuo194vg39f:63'
+store Store2 of [Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier}] '!186197856939754:app-shell-87j9bueuo194vg39f:64' @0 #nosync #restaurants in Store2Resource
+store Store3 of Restaurant Thing {Text id, Text reference, Text icon, Text photos, Text photo, Number rating, Text address, Text name, Text description, URL image, URL url, Text identifier} '!186197856939754:app-shell-87j9bueuo194vg39f:65' @0  at 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_4_1-alpha/arcs/-LMiV4kpyVZXDLqecgH7/handles/!186197856939754:app-shell-87j9bueuo194vg39f:65'
+  `
+    let otherManifest = await Manifest.parse(`
+${manifestPrefix}
+${manifestStr}
+    `);
+    assert.lengthOf(otherManifest.recipes, 1);
+    let otherRecipe = otherManifest.recipes[0];
+    assert.isTrue(otherRecipe.normalize());
+    assert.isTrue(otherRecipe.isResolved());
   });
 });
