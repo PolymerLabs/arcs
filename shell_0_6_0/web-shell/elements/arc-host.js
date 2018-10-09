@@ -102,7 +102,7 @@ export class ArcHost extends Xen.Debug(Xen.Async, log) {
     // flush arc
     arc.dispose();
     // clean up arc relative state
-    this.state = {/*id: null,*/ arc: null, serialization: null, manifest: null, composer: null};
+    this.state = {/*id: null, */arc: null, serialization: null, manifest: null, composer: null};
     // notify owner
     this._fire('arc', null);
   }

@@ -10,12 +10,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {linkJack} from '../../components/link-jack.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
+import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
 import {ArcsEnvWeb} from '../../lib/web/arcs-env-web.js';
 import {Xen} from '../../lib/xen.js';
 import './web-config.js';
 import './arc-host.js';
 import './web-shell-ui.js';
 import './user-context.js';
+
+// disable flushing template cache on dispose
+SlotDomConsumer.multitenant = true;
 
 // templates
 const template = Xen.Template.html`
