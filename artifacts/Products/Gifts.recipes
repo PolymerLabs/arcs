@@ -19,6 +19,8 @@ particle GiftList in 'source/GiftList.js'
 particle Arrivinator in 'source/Arrivinator.js'
   in Product product
   consume annotation
+    provide tooLate
+      handle product
   description `estimate arrival date`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
@@ -27,7 +29,23 @@ particle Arrivinator in 'source/Arrivinator.js'
 particle AlternateShipping in 'source/AlternateShipping.js'
   in Product product
   consume annotation
-  description `find alternate shipping for products which won't make it on time`
+  consume tooLate
+  description `find alternate shipping for ${product}`
+
+recipe &alternative
+  AlternateShipping
+
+shape ArrivinatorShape
+  in ~a *
+  consume
+  provide
+
+// TODO: This particle should use generic slot name.
+particle ArrivinatorMultiplexer in '../Common/source/Multiplexer.js'
+  host ArrivinatorShape hostedParticle
+  in [~a] list
+  consume set of annotation
+    provide set of tooLate
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe MakeIntoGiftList
@@ -35,14 +53,12 @@ recipe MakeIntoGiftList
   copy as person
   GiftList
     person = person
-  Multiplexer
+  ArrivinatorMultiplexer
     list = shoplist
     hostedParticle = Arrivinator
-    consume annotation as annotationSlot
-  Multiplexer
-    list = shoplist
-    hostedParticle = AlternateShipping
-    consume annotation as annotationSlot
+  //  consume annotation as annotationSlot
+  // Multiplexer
+  //   list = shoplist
+  //   hostedParticle = AlternateShipping
+  //   consume annotation as annotationSlot
   description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
-
-

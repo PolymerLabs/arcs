@@ -278,12 +278,15 @@ export class Planificator {
           return suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search);
         });
       } else {
+        let allHandlesIds = new Set(this._arc._activeRecipe.handles.map(h => h.id));
+        this._arc._recipes.forEach(recipe => [...recipe.innerArcs.values()].forEach(
+          innerArc => innerArc.activeRecipe.handles.forEach(innerHandle => allHandlesIds.add(innerHandle.id))));
         suggestions = suggestions.filter(suggestion => {
           let plan = suggestion.plan;
           let usesHandlesFromActiveRecipe = plan.handles.find(handle => {
             // TODO(mmandlis): find a generic way to exlude system handles (eg Theme), either by tagging or
             // by exploring connection directions etc.
-            return !!handle.id && this._arc._activeRecipe.handles.find(activeHandle => activeHandle.id == handle.id);
+            return !!handle.id && allHandlesIds.has(handle.id);
           });
           let usesRemoteNonRootSlots = plan.slots.find(slot => {
             return !slot.name.includes('root') && !slot.tags.includes('root') && slot.id && !slot.id.includes('root');
