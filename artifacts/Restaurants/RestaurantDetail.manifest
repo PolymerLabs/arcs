@@ -13,5 +13,6 @@ particle RestaurantDetail in 'source/RestaurantDetail.js'
   affordance dom
   consume detail
     provide action
+      handle selected
 // removing description for now to clean up suggestions
 //  description `show restaurant details`

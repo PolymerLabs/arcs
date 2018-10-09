@@ -46,6 +46,11 @@ import '../Events/PartySize.manifest'
 import 'ReservationForm.manifest'
 import 'ReservationAnnotation.manifest'
 
+recipe &reserve
+  create #event as event
+  ReservationForm
+    event = event
+
 recipe &makeReservation
   create #event as event
   use #restaurants as list
