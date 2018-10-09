@@ -60,7 +60,6 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
           <div class="buttons-panel">
             <iron-icon on-click="_fit" title="Fit to events" icon="maps:zoom-out-map"></iron-icon>
             <iron-icon on-click="_redraw" title="Redraw timeline if looks weird" icon="image:brush"></iron-icon>
-            <iron-icon id="download" on-click="_download" title="Download for inspection in chrome://tracing" icon="file-download"></iron-icon>
           </div>
           zoom-key: ctrl
         </div>
@@ -317,10 +316,6 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
       this._groups.update({id: g.id, visible: active});
     });
     this._groups.flush();
-  }
-
-  _download() {
-    chrome.devtools.inspectedWindow.eval('Arcs.Tracing.download()');
   }
 
   _redraw() {
