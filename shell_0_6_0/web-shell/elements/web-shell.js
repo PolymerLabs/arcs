@@ -105,8 +105,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     state.contextComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
     // spin up context arc
     this.spawnContext();
-    // simple context
-    //this.state = {context: await state.env.parse(`import 'https://$artifacts/canonical.manifest'`)};
     // spin up launcher arc
     this.spawnLauncher();
   }
@@ -174,7 +172,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.recordArcMeta({
       key: id,
       href: `?arc=${id}`,
-      description: `${recipe.split('.').shift()} ${luid}`,
+      description: `${recipe.split('/').pop().split('.').shift()} [${luid}]`,
       color,
       touched: Date.now(),
     });

@@ -89,7 +89,7 @@ defineParticle(({DomParticle, log, html}) => {
     </a>
     <div share>
       <icon key="{{arcId}}" on-click="onStar">{{starred}}</icon>
-      <icon key="{{arcId}}" on-click="onShare">{{sharing}}</icon>
+      <icon key="{{arcId}}" title="{{tip}}" on-click="onShare">{{sharing}}</icon>
       <span style="flex: 1;"></span>
       <icon hovering key="{{arcId}}" on-click="onDelete">delete_forever</icon>
     </div>
@@ -175,6 +175,10 @@ defineParticle(({DomParticle, log, html}) => {
         backgroundColor: arc.bg || arc.color || 'gray',
         color: arc.bg ? arc.color : 'white',
       };
+      const share = Math.max((arc.share || 0) - 1, 0);
+      //const shares = ['share', 'account_circle', 'people'];
+      const shares = ['stop_screen_share', 'screen_share', 'people'];
+      const tips = ['Arc is private', 'Arc is part of my Profile', 'Arc is shared with my Friends'];
       // populate a render model
       return {
         arcId: arc.id,
@@ -185,7 +189,8 @@ defineParticle(({DomParticle, log, html}) => {
         icon: arc.icon,
         starred: arc.starred ? 'star' : 'star_border',
         chipStyle,
-        sharing: ['share', 'account_circle', 'people'][arc.share] || 'share',
+        sharing: shares[share],
+        tip: tips[share],
         touched: arc.touched
       };
     }
@@ -204,35 +209,18 @@ defineParticle(({DomParticle, log, html}) => {
       const arc = this.findArc(e.data.key);
       if (arc) {
         this.mutateEntity('arcs', arc, arc => arc.deleted = true);
-        //arc.deleted = true;
-        //this.updateSet('arcs', arc);
-        // const arcs = this.handles.get('arcs');
-        // arcs.remove(arc);
-        // arc.deleted = true;
-        // arcs.store(arc);
-        // log(`Marked arc [${arc.key}] as deleted.`);
       }
     }
     onStar(e) {
       const arc = this.findArc(e.data.key);
       if (arc) {
         this.mutateEntity('arcs', arc, arc => arc.starred= !arc.starred);
-        //arc.starred = !arc.starred;
-        //this.updateSet('arcs', arc);
-        // const arcs = this.handles.get('arcs');
-        // arcs.remove(arc);
-        // arc.starred = !arc.starred;
-        // arcs.store(arc);
-        // log(`Toggled "starred" for arc [${arc.key}].`);
       }
     }
     onShare(e) {
       const arc = this.findArc(e.data.key);
       if (arc) {
-        this.mutateEntity('arcs', arc, arc => arc.share = (arc.share % 3) + 1);
-        // arc.share = (arc.share % 3) + 1;
-        // this.updateSet('arcs', arc);
-        // log(`Modulated "share" for arc [${arc.key}].`);
+        this.mutateEntity('arcs', arc, arc => arc.share = ((Math.max(arc.share || 0, 1)) % 3) + 1);
       }
     }
     mutateEntity(handleName, entity, mutator) {
