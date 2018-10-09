@@ -306,6 +306,8 @@ describe('Tracing', function() {
     Tracing.start({cat: 'Stuff', name: 'Moar::things'}).end();
     await Promise.resolve();
     assert.deepEqual(events.map(e => e.name), ['Thingy::thing', 'Other::thing', 'Moar::things']);
+
+    assert.deepEqual(Tracing.save().traceEvents, []);
   });
 
   it('allows filtering while streaming', async () => {
