@@ -17,7 +17,7 @@ import {DomParticle} from '../../../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
 import {newClientReference} from '../../../../runtime/ts-build/reference.js';
 import {TransformationDomParticle} from '../../../../runtime/transformation-dom-particle.js';
-import {JsonldToManifest} from '../../../../runtime/converters/jsonldToManifest.js';
+import {JsonldToManifest} from '../../../../runtime/ts-build/converters/jsonldToManifest.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
