@@ -1,5 +1,5 @@
-import Xen from '../../../components/xen/xen.js';
-import Firebase from '../../../lib/firebase.js';
+import Xen from '../../components/xen/xen.js';
+import Firebase from '../../lib/firebase.js';
 
 const {firebase, storage} = Firebase;
 
