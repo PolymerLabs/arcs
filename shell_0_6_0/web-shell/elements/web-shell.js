@@ -14,8 +14,8 @@ import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
 import {ArcsEnvWeb} from '../../lib/web/arcs-env-web.js';
 import {Xen} from '../../lib/xen.js';
 import './web-config.js';
-import './arc-host.js';
 import './web-shell-ui.js';
+import './web-arc.js';
 import './user-context.js';
 
 // disable flushing template cache on dispose
@@ -35,9 +35,9 @@ const template = Xen.Template.html`
   <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{context}}" arcstore="{{store}}"><user-context>
 
   <web-shell-ui arc="{{arc}}" context="{{context}}">
-    <arc-host env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></arc-host>
-    <arc-host env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></arc-host>
-    <arc-host env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></arc-host>
+    <web-arc env="{{env}}" storage="{{storage}}" composer="{{launcherComposer}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></web-arc>
+    <web-arc env="{{env}}" storage="volatile://context" composer="{{launcherComposer}}" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></web-arc>
+    <web-arc env="{{env}}" storage="{{storage}}" composer="{{arcComposer}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></web-arc>
 
     <slot></slot>
 
@@ -84,6 +84,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         this.openArc(state.arckey);
       }
     }
+    if (!state.launcherConfig && state.env && state.context) {
+      // spin up launcher arc
+      this.spawnLauncher();
+    }
   }
   render(props, state) {
     return [props, state];
@@ -100,13 +104,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     state.arcNodes = document.body.querySelector('[arcNodes]');
     // configure composers
     // TODO(sjmiles): composers own DOM, should be custom elements, but need to be able to re-use them
-    state.launcherComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
-    state.arcComposer = {affordance: 'dom', kind: SlotComposer, container: state.arcNodes};
-    state.contextComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
+    //state.launcherComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
+    //state.arcComposer = {affordance: 'dom', kind: SlotComposer, container: state.arcNodes};
+    //state.contextComposer = {affordance: 'dom', kind: SlotComposer, container: state.launcherNodes};
+    state.launcherComposer = new SlotComposer({affordance: 'dom', rootContainer: state.launcherNodes});
+    state.arcComposer = new SlotComposer({affordance: 'dom', rootContainer: state.arcNodes});
+    //state.contextComposer = new SlotComposer({affordance: 'dom', rootContainer: state.launcherNodes});
     // spin up context arc
-    this.spawnContext();
-    // spin up launcher arc
-    this.spawnLauncher();
+    await this.spawnContext();
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
@@ -130,8 +135,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
-  spawnContext() {
-    const contextContext = this.state.env.parse(`
+  async spawnContext() {
+    const contextContext = await this.state.env.parse(`
   import 'https://$artifacts/canonical.manifest'
   import 'https://$artifacts/Profile/Sharing.recipe'
     `);
@@ -141,7 +146,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         id: `${this.state.userid}-context`,
         //manifest: `import 'https://$artifacts/Arcs/Sharing.recipe'`,
         //serialization: sharingArc,
-        composer: this.state.contextComposer
+        //composer: this.state.contextComposer
       }
     };
   }
@@ -151,7 +156,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       launcherConfig: {
         id: `${this.state.userid}-launcher`,
         manifest: `import 'https://$artifacts/Arcs/Launcher.recipe'`,
-        composer: this.state.launcherComposer
+        //composer: this.state.launcherComposer
       }
     };
   }
@@ -165,7 +170,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       arcConfig: {
         id,
         manifest: `import 'https://$artifacts/${recipe}'`,
-        composer: this.state.arcComposer
+        //composer: this.state.arcComposer
       }
     };
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];

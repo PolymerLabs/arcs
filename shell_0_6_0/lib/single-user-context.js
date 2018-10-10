@@ -194,6 +194,7 @@ export const SingleUserContext = class {
     const storeDecoratedEntity = ({id, rawData}, uid) => {
       const decoratedId = `${id}:uid:${uid}`;
       ids.push({id: decoratedId, rawData});
+      //console.log('pushing data to store');
       if (store.type.isCollection) {
         // FIXME: store.generateID may not be safe (session scoped)?
         store.store({id: decoratedId, rawData}, [store.generateID()]);

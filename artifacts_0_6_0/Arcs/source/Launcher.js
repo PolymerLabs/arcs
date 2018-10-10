@@ -49,6 +49,7 @@ defineParticle(({DomParticle, log, html}) => {
       display: block;
       color: inherit;
       text-decoration: none;
+      padding-bottom: 32px;
     }
     [${host}] [hovering] {
       visibility: hidden;
@@ -59,7 +60,6 @@ defineParticle(({DomParticle, log, html}) => {
     [${host}] [share] {
       display: flex;
       align-items: center;
-      margin-top: 32px;
     }
     [${host}] icon {
       margin-right: 16px;

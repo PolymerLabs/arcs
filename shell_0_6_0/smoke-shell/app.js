@@ -9,8 +9,9 @@ export const App = async (env, composer) => {
   const arc = await env.spawn({id: 'smoke-arc', composer});
   console.log(`arc [${arc.id}]`);
 
-  const plan = await env.resolve(recipe);
+  const plan = await env.resolve(arc, recipe);
   await arc.instantiate(plan);
+  
   console.log(`store [${arc._stores[0].id}]`);
   console.log(`\n`);
   console.log(`arc serialization`);

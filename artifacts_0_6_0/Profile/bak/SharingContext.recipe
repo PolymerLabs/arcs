@@ -27,11 +27,6 @@ resource PROFILE_friendsResource
   []
 store PROFILE_friends of [User] 'PROFILE_friends' @0 #friends #profile in PROFILE_friendsResource
 
-resource BOXED_friendsResource
-  start
-  []
-store BOXED_friends of [User] 'BOXED_friends' @0 #friends #boxed in BOXED_friendsResource
-
 import 'UserName.schema'
 resource PROFILE_userNameResource
   start
@@ -54,33 +49,6 @@ resource BOXED_avatarResource
   []
 store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed in BOXED_avatarResource
 
-// all of the below is required to make the arc aware of these stores
-
 particle Sharing in './source/sharing.js'
-  in [User] systemUsers
-  in User systemUser
-  in [User] profileFriends
-  in [User] boxedFriends
-  in [UserName] profileUserName
-  in [UserName] boxedUserName
-  in [Avatar] profileAvatar
-  in [Avatar] boxedAvatar
-
 recipe Sharing
-  use 'SYSTEM_users' as systemUsers
-  use 'SYSTEM_user' as systemUser
-  use 'PROFILE_friends' as profileFriends
-  use 'BOXED_friends' as boxedFriends
-  use 'PROFILE_userName' as profileUserName
-  use 'BOXED_userName' as boxedUserName
-  use 'PROFILE_avatar' as profileAvatar
-  use 'BOXED_avatar' as boxedAvatar
   Sharing
-    systemUsers = systemUsers
-    systemUser = systemUser
-    profileFriends = profileFriends
-    boxedFriends = boxedFriends
-    profileUserName = profileUserName
-    boxedUserName = boxedUserName
-    profileAvatar = profileAvatar
-    boxedAvatar = boxedAvatar

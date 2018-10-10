@@ -40,7 +40,7 @@ class ArcsEnv {
     }
     return ArcsEnv.Manifest.parse(content, localOptions);
   }
-  async resolve(recipe) {
+  async resolve(arc, recipe) {
     if (!recipe.normalize()) {
       log(`Couldn't normalize recipe ${recipe.toString()}`);
     }
