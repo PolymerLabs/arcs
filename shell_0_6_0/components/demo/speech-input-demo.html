@@ -1,0 +1,25 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons">
+
+<script type="module" src="../speech-input.js"></script>
+
+<div id="results">
+  <span id="final_span" class="final"></span>
+  <span id="interim_span" class="interim"></span>
+  <p></p>
+</div>
+
+<speech-input id="si">Mic Ready</speech-input>
+<span id="final"></span>
+<span id="interim"></span>
+
+<script>
+  si.addEventListener('result', e => {
+    const {interimTranscript, finalTranscript} = e.detail;
+    interim.textContent = interimTranscript;
+    final.textContent = finalTranscript;
+  });
+  si.addEventListener('end', e => {
+    const finalTranscript = e.detail;
+    final.textContent = finalTranscript;
+  });
+</script>

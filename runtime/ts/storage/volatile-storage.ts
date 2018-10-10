@@ -35,7 +35,7 @@ class VolatileKey extends KeyBase {
   }
 
   childKeyForHandle(id): VolatileKey {
-    return new VolatileKey('volatile://');
+    return new VolatileKey('volatile');
   }
 
   toString() {
@@ -314,7 +314,7 @@ class VolatileCollection extends VolatileStorageProvider {
         item.effective = this._model.remove(item.id, item.keys);
       }
     });
-    this.version++;      
+    this.version++;
 
     this._fire('change', {remove: items, version: this.version, originatorId});
   }
@@ -390,7 +390,7 @@ class VolatileVariable extends VolatileStorageProvider {
         model: [{id: value.id, value: result}]
       };
     }
-    
+
     return super.modelForSynchronization();
   }
 
@@ -443,11 +443,11 @@ class VolatileVariable extends VolatileStorageProvider {
       this._stored = {id: value.id, storageKey} as {id: string};
 
       await this.ensureBackingStore();
-      
+
       // TODO(shans): mutating the storageKey here to provide unique keys is
       // a hack that can be removed once entity mutation is distinct from collection
       // updates. Once entity mutation exists, it shouldn't ever be possible to write
-      // different values with the same id. 
+      // different values with the same id.
       await this.backingStore.store(value, [this.storageKey + this.localKeyId++]);
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting

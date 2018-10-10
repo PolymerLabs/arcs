@@ -1,0 +1,55 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'User.schema'
+resource SYSTEM_usersResource
+  start
+  [
+    {"id": "Alphonse"},
+    {"id": "Barney"},
+    {"id": "Cletus"},
+    {"id": "Gomer"}
+  ]
+store SYSTEM_users of [User] 'SYSTEM_users' @0 #system #users in SYSTEM_usersResource
+
+resource SYSTEM_userResource
+  start
+  []
+store SYSTEM_user of User 'SYSTEM_user' @0 #system #user in SYSTEM_userResource
+
+resource PROFILE_friendsResource
+  start
+  []
+store PROFILE_friends of [User] 'PROFILE_friends' @0 #friends #profile in PROFILE_friendsResource
+
+import 'UserName.schema'
+resource PROFILE_userNameResource
+  start
+  []
+store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #userName #profile in PROFILE_userNameResource
+
+resource BOXED_userNameResource
+  start
+  []
+store BOXED_userName of [UserName] 'BOXED_userName' @0 #userName #boxed in BOXED_userNameResource
+
+import 'Avatar.schema'
+resource PROFILE_avatarResource
+  start
+  []
+store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #avatar #profile in PROFILE_avatarResource
+
+resource BOXED_avatarResource
+  start
+  []
+store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed in BOXED_avatarResource
+
+
+      //this._requireProfilePipedTvShow(context),
+      //this._requireProfileAllPipedAllTvShows(context),
+      //this._requireBoxedShowsTiles(context)

@@ -49,16 +49,6 @@ export class BrowserLoader extends Loader {
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);
     return super.requireParticle(path);
-    /*
-    const result = [];
-    self.defineParticle = function(particleWrapper) {
-      result.push(particleWrapper);
-    };
-    importScripts(path);
-    delete self.defineParticle;
-    const logger = logFactory(fileName.split('/').pop(), '#1faa00');
-    return this.unwrapParticle(result[0], logger);
-    */
   }
   mapParticleUrl(path) {
     let parts = path.split('/');
