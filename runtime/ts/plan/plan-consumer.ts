@@ -40,7 +40,7 @@ export class PlanConsumer {
     this.storeCallback = () => this.loadPlans();
     this.store.on('change', this.storeCallback, this);
 
-    this.suggestionComposer = this._initSuggestionComposer();
+    this._initSuggestionComposer();
   }
 
   registerPlansChangedCallback(callback) { this.plansChangeCallbacks.push(callback); }
@@ -108,7 +108,9 @@ export class PlanConsumer {
     this.store.off('change', this.storeCallback);
     this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
-    this.suggestionComposer.clear();
+    if (this.suggestionComposer) {
+      this.suggestionComposer.clear();
+    }
   }
 
   _onPlansChanged() {
