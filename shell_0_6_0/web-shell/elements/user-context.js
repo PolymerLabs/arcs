@@ -40,10 +40,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
      }
     //const {context, userid, coords, users} = props;
     //const {user, userStore, usersStore} = state;
-    // if (context && !state.initStores) {
-    //   state.initStores = true;
-    //   this._requireStores(context);
-    // }
     // if (users && usersStore && state.users !== users) {
     //   state.users = users;
     //   // TODO(sjmiles): clear usersStore first, or modify _updateSystemStores to avoid
@@ -76,31 +72,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       this.state = {userContext: new SingleUserContext(storage, context, userid, arcstore, isProfile)};
     }
   }
-  // async _requireStores(context) {
-  //   await Promise.all([
-  //     this._requireProfileFriends(context),
-  //     this._requireProfileUserName(context),
-  //     this._requireProfileAvatar(context),
-  //     this._requireBoxedUserName(context),
-  //     this._requireBoxedAvatar(context),
-  //     this._requireSystemUsers(context),
-  //     this._requireSystemUser(context),
-  //     this._requireProfilePipedTvShow(context),
-  //     this._requireProfileAllPipedAllTvShows(context),
-  //     this._requireBoxedShowsTiles(context)
-  //   ]);
-  //   this._fire('stores');
-  // }
-  // async _requireStore(context, eventName, options, onchange) {
-  //   const store = await Stores.createContextStore(context, options);
-  //   if (onchange) {
-  //     store.on('change', onchange, this);
-  //   }
-  //   if (eventName) {
-  //     this._fire(eventName, store);
-  //   }
-  //   return store;
-  // }
   // _updateSystemUsers(users, usersStore) {
   //   log('updateSystemUsers');
   //   Object.values(users).forEach(user => usersStore.store({

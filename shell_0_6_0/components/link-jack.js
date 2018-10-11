@@ -7,5 +7,5 @@ export const linkJack = (target, cb) => {
         cb(anchor);
       }
     }
-  });
+  }, true);
 };

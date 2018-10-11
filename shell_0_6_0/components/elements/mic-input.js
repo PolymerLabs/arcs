@@ -8,10 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import Xen from './xen/xen.js';
-import Icons from './icons.css.js';
+import Xen from '../xen/xen.js';
 
-const log = Xen.logFactory('MicInput', 'blue');
+//const log = Xen.logFactory('MicInput', 'blue');
 
 class MicInput extends Xen.Base {
   _didMount() {

@@ -3,9 +3,6 @@ import {SingleUserContext} from '../lib/single-user-context.js';
 import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {ArcHost} from '../lib/arc-host.js';
 
-//import {Xen} from '../lib/xen.js';
-//Xen.Debug.level = 2;
-
 const userid = `gomer`;
 const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
 const launcherKey = `${userid}-launcher`;
@@ -20,7 +17,6 @@ export const App = async (env, composer) => {
   if (arcsHandle) {
     const arc = await createContextArc(env, storage, composer, userid);
     const userContext = await gatherContext(arc, arcsHandle, storage);
-    //reportShares(arc);
     createContextMapper(env, storage, composer, userid);
   }
 };
@@ -51,12 +47,10 @@ const gatherContext = async (context, arcsHandle, storage) => {
 
 const reportShares = context => {
   const stores = context.stores || context._stores;
-  //setInterval(() => {
-    console.log(`\n`);
-    console.log(`=============================================================================`);
-    console.log(stores.map(({id, model}) => ({id, size: model ? model.items.size : 1})));
-    console.log(`=============================================================================`);
-  //}, 3000);
+  console.log(`\n`);
+  console.log(`=============================================================================`);
+  console.log(stores.map(({id, model}) => ({id, size: model ? model.items.size : 1})));
+  console.log(`=============================================================================`);
 };
 
 const createContextMapper = async (env, storage, composer, userid) => {
@@ -70,11 +64,11 @@ const createContextMapper = async (env, storage, composer, userid) => {
     //
     const context = await env.parse(contextContext);
     const host = new ArcHost(env, context, 'volatile://', composer);
-    const arc = await host.spawn({id: `${userid}-mapper`, manifest}); //, serialization: ''});
+    const arc = await host.spawn({id: `${userid}-mapper`, manifest});
+    //
     reportShares(arc);
     arc.onDataChange(() => reportShares(arc), host);
     //
-    debugger;
     return arc;
   } catch (x) {
     console.error(x);

@@ -8,8 +8,8 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import '../data-explorer.js';
-import Xen from '../xen/xen.js';
+import '../../elements/data-explorer.js';
+import Xen from '../xen.js';
 import TreeStyles from './tree.2.css.js';
 
 const template = Xen.html`
