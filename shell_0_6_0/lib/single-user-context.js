@@ -95,14 +95,18 @@ export const SingleUserContext = class {
     }
   }
    onArcStoreChanged(arcid, info) {
-    log('onArcStoreChanged', info);
+    log('Synthetic-store change event (onArcStoreChanged):', info);
     // TODO(sjmiles): synthesize add/remove records from data record
     //   this._patchArcDataInfo(arcid, info);
     // process add/remove stream
     if (info.add) {
       info.add.forEach(async add => {
-        const handle = add.value;
-        if (handle) {
+        let handle = add.value;
+        if (!handle) {
+          log('`add` record has no `value`, applying workaround', add);
+          handle = add;
+        }
+        if (handle) { //} && handle.tags.length) {
           log('observing handle', handle.tags);
           const store = await SyntheticStores.getHandleStore(handle);
           await this.observeStore(store, handle.storageKey, info => this.updateHandle(arcid, handle, info));
