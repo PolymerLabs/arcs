@@ -12,6 +12,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
 import Template from '../../shell/components/xen/xen-template.js';
+import IconStyles from '../../shell/components/icons.css.js';
 
 const templateByName = new Map();
 
@@ -56,6 +57,8 @@ export class SlotDomConsumer extends SlotConsumer {
 
     // TODO(sjmiles): introduce tree scope
     newContainer.attachShadow({mode: `open`});
+    // provision basic stylesheet
+    Template.stamp(`<style>${IconStyles}</style>`).appendTo(newContainer.shadowRoot);
     // TODO(sjmiles): maybe inject boilerplate styles
     return newContainer.shadowRoot;
   }
