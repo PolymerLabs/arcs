@@ -11,6 +11,7 @@ import {Xen} from '../../../lib/xen.js';
 import IconStyle from '../../../components/icons.css.js';
 import './system-ui.js';
 import './web-tools.js';
+import './suggestion-element.js';
 
 // templates
 const template = Xen.Template.html`
@@ -90,9 +91,6 @@ export class WebShellUi extends Xen.Debug(Xen.Async, log) {
   }
   onSystemUiOpen(e, system) {
     this.state = {system};
-  }
-  onPanelClick(e) {
-    this.state = {system: false};
   }
 }
 

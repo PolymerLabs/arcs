@@ -42,12 +42,12 @@ const template = Xen.Template.html`
 
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <slot></slot>
-    <div slot="suggestions" style="display: flex; flex-direction: column; padding: 16px; background: white;">
+    <!-- <div slot="suggestions" style="display: flex; flex-direction: column; padding: 16px; background: white;">
       <button on-click="onSpawnClick" recipe="Arcs/Login.recipe">Spawn Login</button>
       <button on-click="onSpawnClick" recipe="Music/Playlist.recipe">Spawn Playlist</button>
       <button on-click="onSpawnClick" recipe="Profile/BasicProfile.recipe">Spawn Profile</button>
       <button on-click="onSpawnClick" recipe="Profile/Geolocate.recipe">Spawn Geolocation</button>
-    </div>
+    </div> -->
     <slot slot="suggestions" name="suggestions"></slot>
   </web-shell-ui>
 `;
@@ -74,6 +74,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     if (!state.env && root) {
       this.updateEnv({root}, state);
+      this.spawnSuggestions();
     }
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
@@ -202,6 +203,28 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (launcherNodes && arcNodes) {
       launcherNodes.hidden = !show;
       arcNodes.hidden = show;
+    }
+  }
+  spawnSuggestions() {
+    const suggestions = [
+      `Arcs/Login.recipe`,
+      `Music/Playlist.recipe`,
+      `Profile/BasicProfile.recipe`,
+      `Profile/Geolocate.recipe`
+    ];
+    const slot = document.querySelector(`[slotid="suggestions"]`);
+    if (slot) {
+      suggestions.forEach(suggestion => {
+        const elt = slot.appendChild(
+          Object.assign(document.createElement(`suggestion-element`), {
+            recipe: suggestion,
+            innerText: suggestion.split('.').shift()
+          }
+        ));
+        elt.addEventListener('plan-choose', () => {
+          this.spawnArc(suggestion);
+        });
+      });
     }
   }
   onLauncherArc(e, launcherArc) {

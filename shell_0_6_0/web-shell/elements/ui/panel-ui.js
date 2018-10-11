@@ -119,7 +119,7 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
     const searchOpen = toolState === 'search';
     const settingsOpen = toolState === 'settings';
     const userOpen = toolState === 'user';
-    const micVsClear = !props.search;
+    const micVsClear = !state.search; //!props.search;
     return [state, {
       mainToolbarOpen: mainOpen,
       searchToolbarOpen: searchOpen,
@@ -138,6 +138,29 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   onContentsClick(e) {
     e.stopPropagation();
     this.fire('open', false);
+  }
+  _onSearchChange(e) {
+    const search = e.target.value;
+    // internal search property
+    this.state = {search};
+    // don't re-plan until typing has stopped for this length of time
+    this._debounce(`searchDebounce`, () => this._commitSearch(search), 300);
+  }
+  _onClearSearch(e) {
+    this._commitSearch('');
+  }
+  _onResetSearch(e) {
+    // Doubleclick on empty search box searches for '*'
+    if (e.target.value === '') {
+      this._commitSearch('*');
+    }
+  }
+  _onVoiceSearch(e, search) {
+    this._commitSearch(search);
+  }
+  _commitSearch(search) {
+    this.state = {search};
+    //this._fire('search', search || '');
   }
 }
 
