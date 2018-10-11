@@ -13,6 +13,7 @@ import {Particle} from '../../runtime/particle.js';
 import {DomParticle} from '../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../runtime/multiplexer-dom-particle.js';
 import {TransformationDomParticle} from '../../runtime/transformation-dom-particle.js';
+import IconsStyle from '../components/icons.css.js';
 
 const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble} [Particle]`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 4px;`);
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
@@ -92,6 +93,7 @@ export class BrowserLoader extends Loader {
       resolver,
       log,
       html,
+      styles: IconsStyle,
       _fetch
     });
   }

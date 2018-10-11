@@ -52,7 +52,12 @@ export class SlotDomConsumer extends SlotConsumer {
       newContainer.setAttribute('particle-host', this.consumeConn.getQualifiedName());
     }
     contextContainer.appendChild(newContainer);
-    return newContainer;
+    //return newContainer;
+
+    // TODO(sjmiles): introduce tree scope
+    newContainer.attachShadow({mode: `open`});
+    // TODO(sjmiles): maybe inject boilerplate styles
+    return newContainer.shadowRoot;
   }
 
   deleteContainer(container) {
@@ -249,16 +254,18 @@ export class SlotDomConsumer extends SlotConsumer {
     if (innerContainer === container) {
       return true;
     }
-    let parentNode = innerContainer.parentNode;
+    const parentOf = elt => elt.parentNode;
+    let parentNode = parentOf(innerContainer);
     while (parentNode) {
       if (parentNode === container) {
         return true;
       }
-      if (parentNode.getAttribute('slotid')) {
+      // only some HTMLNodes have `getAttribute` (i.e. HTMLElement)
+      if (parentNode.getAttribute && parentNode.getAttribute('slotid')) {
         // this is an inner slot of an inner slot.
         return false;
       }
-      parentNode = parentNode.parentNode;
+      parentNode = parentOf(parentNode);
     }
     // innerContainer won't be a child node of container if the method is triggered
     // by mutation observer record and innerContainer was removed.

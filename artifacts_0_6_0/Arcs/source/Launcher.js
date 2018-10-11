@@ -8,12 +8,13 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html}) => {
+defineParticle(({DomParticle, log, html, styles}) => {
   const host = 'arcs-launcher';
   const template = html`
 
 <div ${host}>
   <style>
+    ${styles}
     [${host}] cx-tabs {
       border-bottom: 1px solid #ccc;
       justify-content: center;
