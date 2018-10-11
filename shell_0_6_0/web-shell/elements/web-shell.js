@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {linkJack} from '../../components/link-jack.js';
+import {generateId} from '../../components/generate-id.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
 import {ArcsEnvWeb} from '../../lib/web/arcs-env-web.js';
@@ -157,8 +158,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
   }
   spawnArc(recipe) {
+    const luid = generateId();
     //this.showHideLauncher(false);
-    const luid = Math.floor((Math.random()+1)*1e5);
+    //const luid = Math.floor((Math.random()+1)*1e5);
     const id = `${this.state.userid}-${luid}`;
     this.state = {
       arc: null,
