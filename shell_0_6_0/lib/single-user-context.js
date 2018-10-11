@@ -11,8 +11,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import {SyntheticStores} from './synthetic-stores.js';
 
 //import {Xen} from '../../../lib/xen.js';
-//const log = Xen.logFactory('SingleUserContext', '#6f2453');
-const log = console.log.bind(console, 'SingleUserContext');
+const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+const log = logFactory('SingleUserContext', '#f2ce14');
 
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
@@ -51,14 +51,6 @@ export const SingleUserContext = class {
     // chuck all data
     await this.removeUserEntities(this.context, this.userid, this.isProfile);
   }
-  unobserve(key) {
-    const observer = this.observers[key];
-    if (observer) {
-      this.observers[key] = null;
-      log(`UNobserving [${key}]`);
-      observer.store.off('change', observer.cb);
-    }
-  }
   removeArc(arcid) {
     this.unobserve(arcid);
     const handles = this.handles[arcid];
@@ -72,6 +64,14 @@ export const SingleUserContext = class {
     if (!deleted) {
       const store = await SyntheticStores.getStore(storage, key);
       await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
+    }
+  }
+  unobserve(key) {
+    const observer = this.observers[key];
+    if (observer) {
+      this.observers[key] = null;
+      log(`UNobserving [${key}]`);
+      observer.store.off('change', observer.cb);
     }
   }
   async observeStore(store, key, cb) {
