@@ -79,9 +79,9 @@ export class ArcHost {
   async persistSerialization() {
     const {arc, config: {id}, storage} = this;
     if (!storage.includes('volatile')) {
-      console.log('persisting serialization to ', `${id}/serialization`);
+      console.log(`persisting serialization to [${id}/serialization]`);
       const serialization = await arc.serialize();
-      console.log(serialization);
+      //console.log(serialization);
       Firebase.db.child(`${id}/serialization`).set(serialization);
     }
   }

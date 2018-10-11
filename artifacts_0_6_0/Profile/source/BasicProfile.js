@@ -56,7 +56,6 @@ defineParticle(({DomParticle, html, resolver}) => {
       <firebase-upload on-upload="onUpload">
         <img src="{{avatar}}">
       </firebase-upload>
-      <!-- <span style="display: inline-block; margin: -32px 0 0 -32px;">UPDATE</span> -->
     </div>
     <div name center>
       <div slotid="userName"></div>
