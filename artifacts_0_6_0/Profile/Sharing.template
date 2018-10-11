@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'User.schema'
+import 'https://$artifacts/Profile/User.schema'
 resource SYSTEM_usersResource
   start
   [
@@ -16,47 +16,21 @@ resource SYSTEM_usersResource
     {"id": "Gomer"}
   ]
 store SYSTEM_users of [User] 'SYSTEM_users' @0 #system #users in SYSTEM_usersResource
+store SYSTEM_user of User 'SYSTEM_user' #system #user at 'STORAGE_KEY/SYSTEM_user'
+store PROFILE_friends of [User] 'PROFILE_friends' @0 #friends #profile at 'STORAGE_KEY/SYSTEM_user'
+store BOXED_friends of [User] 'BOXED_friends' @0 #friends #boxed at 'STORAGE_KEY/BOXED_friends'
 
-resource SYSTEM_userResource
-  start
-  []
-store SYSTEM_user of User 'SYSTEM_user' @0 #system #user in SYSTEM_userResource
+import 'https://$artifacts/Profile/UserName.schema'
+store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #userName #profile at 'STORAGE_KEY/PROFILE_userName'
+store BOXED_userName of [UserName] 'BOXED_userName' @0 #userName #boxed at 'STORAGE_KEY/BOXED_userName'
 
-resource PROFILE_friendsResource
-  start
-  []
-store PROFILE_friends of [User] 'PROFILE_friends' @0 #friends #profile in PROFILE_friendsResource
-
-resource BOXED_friendsResource
-  start
-  []
-store BOXED_friends of [User] 'BOXED_friends' @0 #friends #boxed in BOXED_friendsResource
-
-import 'UserName.schema'
-resource PROFILE_userNameResource
-  start
-  []
-store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #userName #profile in PROFILE_userNameResource
-
-resource BOXED_userNameResource
-  start
-  []
-store BOXED_userName of [UserName] 'BOXED_userName' @0 #userName #boxed in BOXED_userNameResource
-
-import 'Avatar.schema'
-resource PROFILE_avatarResource
-  start
-  []
-store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #avatar #profile in PROFILE_avatarResource
-
-resource BOXED_avatarResource
-  start
-  []
-store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed in BOXED_avatarResource
+import 'https://$artifacts/Profile/Avatar.schema'
+store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #avatar #profile at 'STORAGE_KEY/PROFILE_avatar'
+store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed at 'STORAGE_KEY/BOXED_avatar'
 
 // all of the below is required to make the arc aware of these stores
 
-particle Sharing in './source/sharing.js'
+particle Sharing in 'https://$artifacts/Profile/source/sharing.js'
   in [User] systemUsers
   in User systemUser
   in [User] profileFriends

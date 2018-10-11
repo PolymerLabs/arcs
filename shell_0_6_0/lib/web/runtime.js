@@ -1,3 +1,3 @@
-import '../../build/ArcsLib.js';
+import '../../../shell/build/ArcsLib.js';
 const Arcs = window.Arcs;
 export {Arcs};

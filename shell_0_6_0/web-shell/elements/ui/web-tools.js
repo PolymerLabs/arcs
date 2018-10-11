@@ -7,11 +7,11 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import {Xen} from '../../lib/xen.js';
-import IconStyle from '../../components/icons.css.js';
-import '../../components/simple-tabs.js';
-import '../../components/arc-tools/store-explorer.js';
-import '../../components/xen-tools/xen-explorer.js';
+import {Xen} from '../../../lib/xen.js';
+import IconStyle from '../../../components/icons.css.js';
+import '../../../components/elements/simple-tabs.js';
+import '../../../components/arc-tools/store-explorer.js';
+import '../../../components/xen/tools/xen-explorer.js';
 
 // templates
 const template = Xen.Template.html`
@@ -38,8 +38,8 @@ const template = Xen.Template.html`
     }
     ${IconStyle}
   </style>
-  <icon style="position: fixed; right: 0px; bottom: 0px; z-index: 10000;" on-click="_onToolsClick">assessment</icon>
-  <div tools open$="{{open}}">
+  <icon style="position: fixed; right: 0px; bottom: 0px; z-index: 10000;" on-click="onToolsClick">assessment</icon>
+  <div tools open$="{{open}}" on-click="onToolsPanelClick">
     <simple-tabs>
       <div tab="Store Explorer">
         <store-explorer arc="{{arc}}" context="{{context}}"></store-explorer>
@@ -60,14 +60,17 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
   get template() {
     return template;
   }
-  _render(props, state) {
+  render(props, state) {
     const renderModel = {
       scrimOpen: Boolean(props.open)
     };
     return [props, state, renderModel];
   }
-  _onToolsClick(e) {
+  onToolsClick(e) {
     this.fire('tools', !this.state.toolsOpen);
+  }
+  onToolsPanelClick(e) {
+    e.stopPropagation();
   }
 }
 

@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import './cx-tab.js';
 import './cx-tab-slider.js';
-import Xen from '../xen/xen.js';
+import Xen from '../../xen/xen.js';
 
 const html = Xen.Template.html;
 const template = html`

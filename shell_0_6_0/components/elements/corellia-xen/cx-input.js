@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import Xen from '../xen/xen.js';
+import Xen from '../../xen/xen.js';
 
 const html = Xen.Template.html;
 const template = html`

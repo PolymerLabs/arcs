@@ -11,8 +11,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import {SyntheticStores} from './synthetic-stores.js';
 
 //import {Xen} from '../../../lib/xen.js';
-//const log = Xen.logFactory('SingleUserContext', '#6f2453');
-const log = console.log.bind(console, 'SingleUserContext');
+const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+const log = logFactory('SingleUserContext', '#f2ce14');
 
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
@@ -51,14 +51,6 @@ export const SingleUserContext = class {
     // chuck all data
     await this.removeUserEntities(this.context, this.userid, this.isProfile);
   }
-  unobserve(key) {
-    const observer = this.observers[key];
-    if (observer) {
-      this.observers[key] = null;
-      log(`UNobserving [${key}]`);
-      observer.store.off('change', observer.cb);
-    }
-  }
   removeArc(arcid) {
     this.unobserve(arcid);
     const handles = this.handles[arcid];
@@ -72,6 +64,14 @@ export const SingleUserContext = class {
     if (!deleted) {
       const store = await SyntheticStores.getStore(storage, key);
       await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
+    }
+  }
+  unobserve(key) {
+    const observer = this.observers[key];
+    if (observer) {
+      this.observers[key] = null;
+      log(`UNobserving [${key}]`);
+      observer.store.off('change', observer.cb);
     }
   }
   async observeStore(store, key, cb) {
@@ -95,14 +95,18 @@ export const SingleUserContext = class {
     }
   }
    onArcStoreChanged(arcid, info) {
-    log('onArcStoreChanged', info);
+    log('Synthetic-store change event (onArcStoreChanged):', info);
     // TODO(sjmiles): synthesize add/remove records from data record
     //   this._patchArcDataInfo(arcid, info);
     // process add/remove stream
     if (info.add) {
       info.add.forEach(async add => {
-        const handle = add.value;
-        if (handle) {
+        let handle = add.value;
+        if (!handle) {
+          log('`add` record has no `value`, applying workaround', add);
+          handle = add;
+        }
+        if (handle) { //} && handle.tags.length) {
           log('observing handle', handle.tags);
           const store = await SyntheticStores.getHandleStore(handle);
           await this.observeStore(store, handle.storageKey, info => this.updateHandle(arcid, handle, info));
@@ -194,6 +198,7 @@ export const SingleUserContext = class {
     const storeDecoratedEntity = ({id, rawData}, uid) => {
       const decoratedId = `${id}:uid:${uid}`;
       ids.push({id: decoratedId, rawData});
+      //console.log('pushing data to store');
       if (store.type.isCollection) {
         // FIXME: store.generateID may not be safe (session scoped)?
         store.store({id: decoratedId, rawData}, [store.generateID()]);

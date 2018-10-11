@@ -56,7 +56,7 @@ export class BrowserLoader extends Loader {
   }
   requireParticle(fileName) {
     const path = this._resolve(fileName);
-    console.log(`requireParticle [${path}]`);
+    //console.log(`requireParticle [${path}]`);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);

@@ -30,6 +30,8 @@ const configure = firebase => {
   Firebase.db = Firebase.database.ref(Const.version);
   // firebase storage (for file upload, e.g.)
   Firebase.storage = Firebase.app.storage();
+  // no more configuring
+  Firebase.configure = () => null;
 };
 
 export const Firebase = {

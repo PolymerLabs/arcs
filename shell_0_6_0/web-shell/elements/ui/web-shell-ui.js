@@ -7,9 +7,11 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import {Xen} from '../../lib/xen.js';
-import IconStyle from '../../components/icons.css.js';
+import {Xen} from '../../../lib/xen.js';
+import IconStyle from '../../../components/icons.css.js';
+import './system-ui.js';
 import './web-tools.js';
+import './suggestion-element.js';
 
 // templates
 const template = Xen.Template.html`
@@ -17,6 +19,18 @@ const template = Xen.Template.html`
     :host {
       display: block;
     }
+    :host {
+      --bar-max-width: 400px;
+      --bar-max-height: 50vh;
+      --bar-hint-height: 160px;
+      --bar-over-height: 56px;
+      --bar-peek-height: 16px;
+      --bar-touch-height: 32px;
+      --bar-space-height: 48px;
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
+    }
+    ${IconStyle}
     [scrim] {
       position: fixed;
       top: 0;
@@ -34,12 +48,25 @@ const template = Xen.Template.html`
       pointer-events: auto;
       opacity: 0.8;
     }
-    ${IconStyle}
+    system-ui {
+      position: fixed;
+      z-index: 10000;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      margin: 0 auto;
+      width: 90vw;
+      max-width: var(--bar-max-width);
+    }
   </style>
   <!-- -->
-  <div scrim open$="{{scrimOpen}}" on-click="onScrimClick"></div>
+  <div scrim open$="{{scrim}}" on-click="onScrimClick"></div>
   <!-- -->
   <slot></slot>
+  <!-- -->
+  <system-ui open="{{system}}" on-open="onSystemUiOpen">
+    <slot name="suggestions"></slot>
+  </system-ui>
   <!-- -->
   <web-tools context="{{context}}" arc="{{arc}}" open="{{tools}}" on-tools="onState"></web-tools>
 `;
@@ -55,14 +82,15 @@ export class WebShellUi extends Xen.Debug(Xen.Async, log) {
   }
   render(props, state) {
     const renderModel = {
-      scrimOpen: Boolean(state.tools)
+      scrim: Boolean(state.tools || state.system)
     };
     return [props, state, renderModel];
   }
   onScrimClick() {
-    if (this._state.tools) {
-      this.state = {tools: false};
-    }
+    this.state = {tools: false, system: false};
+  }
+  onSystemUiOpen(e, system) {
+    this.state = {system};
   }
 }
 

@@ -11,6 +11,9 @@ Xen.Async = class extends Xen.Base {
   get state() {
     return this._state;
   }
+  get props() {
+    return this._props;
+  }
   // store result `await operation()` into state[name],
   // making sure to only invoke `operation` once even if
   // `awaitState` is called multiple times
