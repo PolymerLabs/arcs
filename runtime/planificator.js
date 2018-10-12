@@ -150,7 +150,7 @@ export class Planificator {
       // Later, it will evaluate and batch events and trigger replanning intelligently.
       // Currently, just trigger replanning for each event.
       this._arc.onDataChange(() => this._onDataChange(), this);
-      this._onDataChange();
+      this._requestPlanning();
     }
 
     const composer = this._arc.pec.slotComposer;

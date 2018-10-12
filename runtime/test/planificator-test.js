@@ -17,6 +17,8 @@ import {Recipe} from '../recipe/recipe.js';
 class TestPlanificator extends Planificator {
   constructor(arc, options) {
     super(arc, options);
+  }
+  _init() {
     this.plannerNextResults = [];
     this.plannerPromise = null;
     this.schedulePromises = [];
@@ -24,6 +26,8 @@ class TestPlanificator extends Planificator {
     // Counts for number of times planning was requested and performed.
     this.scheduleCount = 0;
     this.planCount = 0;
+
+    super._init();
   }
 
   async _schedulePlanning(timeout) {
@@ -91,10 +95,16 @@ class TestPlanificator extends Planificator {
   }
 }
 
-function createPlanificator(options) {
+async function createPlanificator(options) {
   let arc = new Arc({id: 'demo-test'});
   let planificator = new TestPlanificator(arc, options);
   assert.isTrue(planificator.isFull);
+
+  assert.isTrue(planificator.isPlanning);
+  planificator.plannerReturnFakeResults([]);
+  await planificator.allPlanningDone();
+  assert.isFalse(planificator.isPlanning);
+
   return planificator;
 }
 
@@ -115,8 +125,8 @@ function newPlan(name, options) {
 }
 
 describe('Planificator', function() {
-  it('creates a planificator', () => {
-    let planificator = createPlanificator();
+  it('creates a planificator', async () => {
+    let planificator = await createPlanificator();
     assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 1);
 
     assert.isFalse(planificator.isPlanning);
@@ -133,7 +143,7 @@ describe('Planificator', function() {
   });
 
   it('makes replanning requests', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     for (let i = 0; i < 10; ++i) {
       planificator._requestPlanning();
       assert.isTrue(planificator.isPlanning);
@@ -147,15 +157,16 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
     let {plans} = planificator.getCurrentPlans();
     assert.lengthOf(plans, 4);
-    assert.equal(10, planificator.scheduleCount);
-    assert.equal(2, planificator.planCount);
+    assert.equal(11, planificator.scheduleCount);
+    assert.equal(3, planificator.planCount);
   });
 
   it('replans triggered by data change', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     assert.isFalse(planificator.isPlanning);
 
     // Trigger replanning
+    planificator._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 1);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     // setTimeout is needed on data changes replanning is delayed.
@@ -181,7 +192,7 @@ describe('Planificator', function() {
   });
 
   it('groups data change triggered replanning', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
 
     // Add 3 data change events with intervals.
     planificator._arc._onDataChange();
@@ -189,8 +200,8 @@ describe('Planificator', function() {
     planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
     planificator._arc._onDataChange();
-    // First _onDataChange is triggered in ctor, then called directly 3 times.
-    assert.lengthOf(planificator._dataChangesQueue._changes, 4);
+    // _onDataChange called directly 3 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -200,7 +211,7 @@ describe('Planificator', function() {
   });
 
   it('caps replanning delay with max-no-replan value', async () => {
-    let planificator = createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
+    let planificator = await createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
 
     // Add 3 data change events with intervals.
     planificator._arc._onDataChange();
@@ -208,8 +219,8 @@ describe('Planificator', function() {
     planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 40));
     planificator._arc._onDataChange();
-    // First _onDataChange is triggered in ctor, then called directly 3 times.
-    assert.lengthOf(planificator._dataChangesQueue._changes, 4);
+    // _onDataChange called directly 3 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -219,7 +230,7 @@ describe('Planificator', function() {
   });
 
   it('cancels data change triggered replanning if other replanning occured', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     let plan = new Recipe();
     plan.normalize();
     planificator._setCurrent({plans: [{plan}]});
@@ -227,8 +238,8 @@ describe('Planificator', function() {
     // Add 2 data change events.
     planificator._arc._onDataChange();
     planificator._arc._onDataChange();
-    // First _onDataChange is triggered in ctor, then called directly 2 times.
-    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    // _onDataChange is called directly 2 times.
+    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
@@ -240,7 +251,7 @@ describe('Planificator', function() {
   });
 
   it('delays data triggered replanning if planning is in progress', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
 
     // Planning in progress.
     planificator._requestPlanning();
@@ -264,7 +275,7 @@ describe('Planificator', function() {
   });
 
   it('replans triggered by plan instantiation', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     planificator._requestPlanning();
     let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
@@ -281,7 +292,7 @@ describe('Planificator', function() {
   });
 
   it('triggers plan and state changed callbacks', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     let stateChanged = 0;
     let planChanged = 0;
     let suggestChanged = 0;
@@ -338,7 +349,7 @@ describe('Planificator', function() {
     assert.equal(3, suggestChanged);
   });
   it('retrieves and filters suggestions', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     planificator._requestPlanning();
 
     let plans = [];
@@ -384,7 +395,7 @@ describe('Planificator', function() {
     let plan1 = newPlan('1', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
     plan1.plan.newSlot('otherSlot').id = 'other-id0';
 
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
     planificator._requestPlanning();
     planificator.plannerReturnResults([plan0, plan1]);
     await planificator.allPlanningDone();
@@ -399,8 +410,8 @@ describe('Planificator', function() {
     // default suggestion, because it renders into a non-root slot.
     assert.deepEqual(['1'], planificator.getCurrentSuggestions().map(p => p.hash));
   });
-  it('sets or appends current', function() {
-    let planificator = createPlanificator();
+  it('sets or appends current', async () => {
+    let planificator = await createPlanificator();
     let planChanged = 0;
     planificator.registerPlansChangedCallback(() => { ++planChanged; });
 
@@ -438,8 +449,8 @@ describe('Planificator', function() {
     assert.isEmpty(planificator._current.plans);
     assert.equal(4, planChanged);
   });
-  it('cancels planning', function() {
-    let planificator = createPlanificator();
+  it('cancels planning', async () => {
+    let planificator = await createPlanificator();
 
     // Verify _cancelPlanning stops the planning.
     planificator._requestPlanning();
@@ -466,7 +477,7 @@ describe('Planificator', function() {
     assert.equal(1, cancelCalled);
   });
   it('controls contextual planning', async () => {
-    let planificator = createPlanificator();
+    let planificator = await createPlanificator();
 
     // Initial planning for an empty arc is not contextual.
     planificator._requestPlanning();
