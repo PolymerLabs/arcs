@@ -18,30 +18,29 @@ export class TypeVariable {
   _resolution: Type|null;
 
   constructor(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
-    assert(typeof name === 'string');
-    assert(canWriteSuperset == null || canWriteSuperset instanceof Type);
-    assert(canReadSubset == null || canReadSubset instanceof Type);
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
   }
 
-  // Merge both the read subset (upper bound) and write superset (lower bound) constraints
-  // of two variables together. Use this when two separate type variables need to resolve
-  // to the same value.
-  maybeMergeConstraints(variable) {
-    assert(variable instanceof TypeVariable);
-
+  /**
+   * Merge both the read subset (upper bound) and write superset (lower bound) constraints
+   * of two variables together. Use this when two separate type variables need to resolve
+   * to the same value.
+   */
+  maybeMergeConstraints(variable: TypeVariable) {
     if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
   }
 
-  // merge a type variable's read subset (upper bound) constraints into this variable.
-  // This is used to accumulate read constraints when resolving a handle's type.
-  maybeMergeCanReadSubset(constraint) {
+  /**
+   * Merge a type variable's read subset (upper bound) constraints into this variable.
+   * This is used to accumulate read constraints when resolving a handle's type.
+   */
+  maybeMergeCanReadSubset(constraint): boolean {
     if (constraint == null) {
       return true;
     }
@@ -65,9 +64,11 @@ export class TypeVariable {
     return true;
   }
 
-  // merge a type variable's write superset (lower bound) constraints into this variable.
-  // This is used to accumulate write constraints when resolving a handle's type.
-  maybeMergeCanWriteSuperset(constraint) {
+  /**
+   * merge a type variable's write superset (lower bound) constraints into this variable.
+   * This is used to accumulate write constraints when resolving a handle's type.
+   */
+  maybeMergeCanWriteSuperset(constraint): boolean {
     if (constraint == null) {
       return true;
     }
@@ -109,8 +110,7 @@ export class TypeVariable {
     return null;
   }
 
-  set resolution(value) {
-    assert(value instanceof Type);
+  set resolution(value: Type) {
     assert(!this._resolution);
     const elementType = value.resolvedType().getContainedType();
     if (elementType !== null && elementType.isVariable) {
