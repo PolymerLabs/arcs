@@ -7,36 +7,40 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {Type} from './ts-build/type.js';
-import {assert} from '../platform/assert-web.js';
-import {Schema} from './ts-build/schema.js';
+import {Type} from './type.js';
+import {assert} from '../../platform/assert-web.js';
+import {Schema} from './schema.js';
 
 export class TypeVariable {
-  constructor(name, canWriteSuperset, canReadSubset) {
-    assert(typeof name == 'string');
-    assert(canWriteSuperset == null || canWriteSuperset instanceof Type);
-    assert(canReadSubset == null || canReadSubset instanceof Type);
+  name: string;
+  _canWriteSuperset: Type|null;
+  _canReadSubset: Type|null;
+  _resolution: Type|null;
+
+  constructor(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
   }
 
-  // Merge both the read subset (upper bound) and write superset (lower bound) constraints
-  // of two variables together. Use this when two separate type variables need to resolve
-  // to the same value.
-  maybeMergeConstraints(variable) {
-    assert(variable instanceof TypeVariable);
-
+  /**
+   * Merge both the read subset (upper bound) and write superset (lower bound) constraints
+   * of two variables together. Use this when two separate type variables need to resolve
+   * to the same value.
+   */
+  maybeMergeConstraints(variable: TypeVariable) {
     if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
   }
 
-  // merge a type variable's read subset (upper bound) constraints into this variable.
-  // This is used to accumulate read constraints when resolving a handle's type.
-  maybeMergeCanReadSubset(constraint) {
+  /**
+   * Merge a type variable's read subset (upper bound) constraints into this variable.
+   * This is used to accumulate read constraints when resolving a handle's type.
+   */
+  maybeMergeCanReadSubset(constraint): boolean {
     if (constraint == null) {
       return true;
     }
@@ -51,7 +55,7 @@ export class TypeVariable {
       return true;
     }
 
-    let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
+    const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
     if (!mergedSchema) {
       return false;
     }
@@ -60,9 +64,11 @@ export class TypeVariable {
     return true;
   }
 
-  // merge a type variable's write superset (lower bound) constraints into this variable.
-  // This is used to accumulate write constraints when resolving a handle's type.
-  maybeMergeCanWriteSuperset(constraint) {
+  /**
+   * merge a type variable's write superset (lower bound) constraints into this variable.
+   * This is used to accumulate write constraints when resolving a handle's type.
+   */
+  maybeMergeCanWriteSuperset(constraint): boolean {
     if (constraint == null) {
       return true;
     }
@@ -77,7 +83,7 @@ export class TypeVariable {
       return true;
     }
 
-    let mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
     if (!mergedSchema) {
       return false;
     }
@@ -87,7 +93,7 @@ export class TypeVariable {
   }
 
   isSatisfiedBy(type) {
-    let constraint = this._canWriteSuperset;
+    const constraint = this._canWriteSuperset;
     if (!constraint) {
       return true;
     }
@@ -104,12 +110,11 @@ export class TypeVariable {
     return null;
   }
 
-  set resolution(value) {
-    assert(value instanceof Type);
+  set resolution(value: Type) {
     assert(!this._resolution);
-    let elementType = value.resolvedType().getContainedType();
+    const elementType = value.resolvedType().getContainedType();
     if (elementType !== null && elementType.isVariable) {
-      assert(elementType.variable != this, 'variable cannot resolve to collection of itself');
+      assert(elementType.variable !== this, 'variable cannot resolve to collection of itself');
     }
 
     let probe = value;
@@ -117,7 +122,7 @@ export class TypeVariable {
       if (!probe.isVariable) {
         break;
       }
-      if (probe.variable == this) {
+      if (probe.variable === this) {
         return;
       }
       probe = probe.variable.resolution;

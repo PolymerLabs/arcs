@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Type} from '../ts-build/type.js';
-import {TypeVariable} from '../type-variable.js';
+import {TypeVariable} from '../ts-build/type-variable.js';
 
 export class TypeChecker {
 

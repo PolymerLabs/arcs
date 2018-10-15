@@ -64,7 +64,9 @@ export class Type {
     }
     if (tag === 'Variable') {
       if (!(data instanceof TypeVariable)) {
-        data = new TypeVariable(data.name, data.constraint);
+        // type constraints ("~a with EntityName") should be considered minimum requirements
+        // for the type, so are fed in as 'canWriteSuperset' (i.e. low-watermark) constraints.
+        data = new TypeVariable(data.name, data.constraint, null);
       }
     }
     this.tag = tag;
@@ -573,7 +575,7 @@ addType('Synthesized');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
-import {TypeVariable} from '../type-variable.js';
+import {TypeVariable} from './type-variable.js';
 import {TupleFields} from './tuple-fields.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {SlotInfo} from './slot-info.js';
