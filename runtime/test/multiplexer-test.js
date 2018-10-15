@@ -10,7 +10,7 @@
 
 import {assert} from '../test/chai-web.js';
 
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {SlotConsumer} from '../ts-build/slot-consumer.js';

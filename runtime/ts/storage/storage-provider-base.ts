@@ -44,8 +44,8 @@ export abstract class StorageProviderBase {
 
   protected readonly _storageKey: string;
   protected referenceMode = false;
-  protected version: number|null;
-
+  
+  version: number|null;
   id: string;
   name: string;
   source: {}|null;
@@ -178,6 +178,8 @@ export abstract class StorageProviderBase {
    * @returns an object notation of this storage provider.
    */
   abstract toLiteral();
+
+  abstract cloneFrom(store: StorageProviderBase);
 
   /** TODO */
   modelForSynchronization() {

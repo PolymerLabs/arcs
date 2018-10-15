@@ -88,9 +88,9 @@ export class ParticleExecutionHost {
 
     this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
       if (!storageKey) {
-        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'volatile');
+        storageKey = this._arc.storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'volatile');
       }
-      let store = await this._arc._storageProviderFactory.baseStorageFor(type, storageKey);
+      let store = await this._arc.storageProviderFactory.baseStorageFor(type, storageKey);
       // TODO(shans): THIS IS NOT SAFE!
       //
       // Without an auditor on the runtime side that inspects what is being fetched from

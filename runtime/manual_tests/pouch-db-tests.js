@@ -9,7 +9,7 @@
  */
 
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../ts-build/type.js';
 import 'chai/register-assert';

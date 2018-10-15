@@ -9,7 +9,7 @@
  */
 
 import {Speculator} from '../ts-build/speculator.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';

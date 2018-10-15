@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Planificator} from '../planificator.js';
 import {InitPopulation} from '../strategies/init-population.js';
 import {Recipe} from '../recipe/recipe.js';
@@ -127,7 +127,7 @@ function newPlan(name, options) {
 describe('Planificator', function() {
   it('creates a planificator', async () => {
     let planificator = await createPlanificator();
-    assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 1);
+    assert.lengthOf(planificator._arc.instantiatePlanCallbacks, 1);
 
     assert.isFalse(planificator.isPlanning);
     assert.equal(0, Object.keys(planificator.getLastActivatedPlan()));
@@ -136,7 +136,7 @@ describe('Planificator', function() {
 
     planificator._arc.dispose();
     planificator.dispose();
-    assert.isEmpty(planificator._arc._instantiatePlanCallbacks);
+    assert.isEmpty(planificator._arc.instantiatePlanCallbacks);
     assert.isEmpty(planificator._stateChangedCallbacks);
     assert.isEmpty(planificator._plansChangedCallbacks);
     assert.isEmpty(planificator._suggestChangedCallbacks);

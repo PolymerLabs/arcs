@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Arc} from '../../arc.js';
+import {Arc} from '../../ts-build/arc.js';
 import {assert} from '../chai-web.js';
 
 export class StrategyTestHelper {

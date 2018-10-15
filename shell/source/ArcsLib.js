@@ -11,7 +11,7 @@
 import {Runtime} from '../../runtime/ts-build/runtime.js';
 
 // The following will be pulled into Runtime.
-import {Arc} from '../../runtime/arc.js';
+import {Arc} from '../../runtime/ts-build/arc.js';
 import {Planificator} from '../../runtime/planificator.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';

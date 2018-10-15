@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from './manifest.js';
-import {Arc} from './arc.js';
+import {Arc} from './ts-build/arc.js';
 import {SlotComposer} from './slot-composer.js';
 import {Strategizer, Strategy} from '../strategizer/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
