@@ -9,7 +9,7 @@
 'use strict';
 
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {MessageChannel} from './message-channel.js';
+import {MessageChannel} from './ts-build/message-channel.js';
 import {Loader} from './loader.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a

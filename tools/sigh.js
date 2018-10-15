@@ -366,7 +366,7 @@ function test(args) {
     inspect: ['inspect'],
     explore: ['explore'],
     exceptions: ['exceptions'],
-    boolean: ['manual'],
+    boolean: ['manual', 'all'],
     alias: {g: 'grep'},
   });
 
@@ -382,7 +382,7 @@ function test(args) {
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
-    const isSelectedTest = options.manual == fullPath.includes('manual_test');
+    const isSelectedTest = options.all || (options.manual == fullPath.includes('manual_test'));
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 

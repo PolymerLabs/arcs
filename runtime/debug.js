@@ -67,8 +67,8 @@ export class DLog {
         }
       case 'CollectionProxy':
       case 'VariableProxy':
-      case 'InMemoryCollection':
-      case 'InMemoryVariable':
+      case 'VolatileCollection':
+      case 'VolatileVariable':
         details = object.id;
         break;
     }

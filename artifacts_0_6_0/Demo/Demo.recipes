@@ -1,0 +1,5 @@
+import '../Music/Playlist.schema'
+
+store DemoPlaylists of [Playlist] 'demo-playlists' #items in './playlists.json'
+
+

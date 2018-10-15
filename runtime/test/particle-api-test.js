@@ -721,14 +721,14 @@ describe('particle-api', function() {
           return class P extends Particle {
             async setHandles(handles) {
               this.resHandle = handles.get('res');
-              let cursor = await handles.get('big').stream(3);
+              let cursor = await handles.get('big').stream({pageSize: 3});
               for (let i = 0; i < 3; i++) {
-                let data = await cursor.next();
-                if (data.done) {
+                let {value, done} = await cursor.next();
+                if (done) {
                   this.addResult('done');
                   return;
                 }
-                this.addResult(data.value.map(item => item.rawData.value).join(','));
+                this.addResult(value.map(item => item.rawData.value).join(','));
               }
               this.addResult('error - cursor did not terminate correctly');
             }

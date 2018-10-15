@@ -1,0 +1,79 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+shape HostedItemShape
+  in ~any *
+  // TODO(sjmiles): using slot-type for form-factor
+  // all Shapes are the same in List/* except for the slot
+  consume item
+
+particle ItemMultiplexer in 'source/Multiplexer.js'
+  // TODO(sjmiles): redundancies:
+  // 1. slot is declared in HostedItemShape and as `consume set of` here
+  // 2. ~any is declared in HostedItemShape and as `[~any]` here
+  in [~any] list
+  host HostedItemShape hostedParticle
+  consume set of item
+
+// TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify
+// handle fates before colascing ... is there a way to combine the declarations when the recipe has only one Particle?
+recipe ItemMultiplexer
+  // TODO(sjmiles): restricting fate
+  // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
+  use #items as list
+  ItemMultiplexer
+    list = list
+
+//particle List in 'source/List.js'
+//  in [~any] list
+//  consume root #items
+//    must provide set of item
+//      handle items
+//  description `show ${list}`
+
+//recipe List
+//  use #items as items
+//  List
+//    items = items
+//  ItemMultiplexer
+//    list = items
+
+particle SelectableItems in 'source/Items.js'
+  in [~any] list
+  inout ~any selected
+  consume root #items
+    provide preamble
+    must provide set of item
+      handle list
+    provide set of annotation
+      handle list
+    provide action
+      handle list
+    provide postamble
+//  description `show ${list}`
+
+// TODO(sjmiles): nearly duplicate recipes here because we want to support `use` and `copy` but not `create`,
+// maybe there should be a fate for this, or require `create` to be explicit
+
+//recipe SelectableCopyItemsRecipe
+//  copy #items as items
+//  create #selected as selected
+//  SelectableItems
+//    items = items
+//    selected = selected
+//  ItemMultiplexer
+//    list = items
+
+//recipe SelectableUseItemsRecipe
+//  use #items as items
+//  create #selected as selected
+//  SelectableItems
+//    items = items
+//    selected = selected
+//  ItemMultiplexer
+//    list = items

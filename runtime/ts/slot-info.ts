@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Handle} from '../handle.js';
+import {Handle} from './handle.js';
 
 export class SlotInfo {
   formFactor: string;
