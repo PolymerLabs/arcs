@@ -10,7 +10,7 @@
  'use strict';
 
 import {Arc} from '../ts-build/arc.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';

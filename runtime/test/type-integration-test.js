@@ -11,7 +11,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {Manifest} from '../manifest.js';
 
 async function setup() {

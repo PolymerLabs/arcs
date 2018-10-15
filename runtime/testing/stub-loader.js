@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 
 /** @class StubLoader
  * A Loader initialized with a per-path canned responses.
