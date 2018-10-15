@@ -17,6 +17,11 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'context', 'storage', 'composer', 'config'];
   }
+  dispose() {
+    if (this.state.host) {
+      this.state.host.dispose();
+    }
+  }
   _update({env, context, storage, composer, config}, state) {
     if (!state.host && env && storage && config) {
       this.state = {host: new ArcHost(env, context, storage, composer)};

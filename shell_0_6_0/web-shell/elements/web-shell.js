@@ -36,19 +36,14 @@ const template = Xen.Template.html`
   </style>
 
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
-  <web-arc env="{{env}}" storage="{{storage}}" composer="{{launcherComposer}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></web-arc>
-  <web-arc env="{{env}}" storage="volatile://context" composer="{{launcherComposer}}" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></web-arc>
-  <web-arc env="{{env}}" storage="{{storage}}" composer="{{arcComposer}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></web-arc>
   <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{context}}" arcstore="{{store}}"></user-context>
+
+  <web-arc env="{{env}}" storage="{{storage}}" composer="{{launcherComposer}}" config="{{launcherConfig}}" on-arc="onLauncherArc" on-recipe="onState"></web-arc>
+  <web-arc env="{{env}}" storage="{{storage}}" composer="{{arcComposer}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState"></web-arc>
+  <web-arc env="{{env}}" storage="volatile://context" composer="{{launcherComposer}}" config="{{contextConfig}}" context="{{contextContext}}" on-arc="onContextArc"></web-arc>
 
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <slot></slot>
-    <!-- <div slot="suggestions" style="display: flex; flex-direction: column; padding: 16px; background: white;">
-      <button on-click="onSpawnClick" recipe="Arcs/Login.recipe">Spawn Login</button>
-      <button on-click="onSpawnClick" recipe="Music/Playlist.recipe">Spawn Playlist</button>
-      <button on-click="onSpawnClick" recipe="Profile/BasicProfile.recipe">Spawn Profile</button>
-      <button on-click="onSpawnClick" recipe="Profile/Geolocate.recipe">Spawn Geolocation</button>
-    </div> -->
     <slot slot="suggestions" name="suggestions"></slot>
   </web-shell-ui>
 `;
@@ -129,7 +124,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (launcherArc && !store) {
       if (launcherArc._stores.length) {
         const store = launcherArc._stores.pop();
-        //store.on('change', info => log('changes', info), this);
+        store.on('change', info => this.launcherStoreChange(info), this);
         this.state = {store};
       } else {
         setTimeout(() => this.waitForStore(), pollInterval);
@@ -149,7 +144,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
   }
   spawnLauncher() {
-    //this.showHideLauncher(true);
     this.state = {
       launcherConfig: {
         id: `${this.state.userid}-launcher`,
@@ -159,8 +153,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnArc(recipe) {
     const luid = generateId();
-    //this.showHideLauncher(false);
-    //const luid = Math.floor((Math.random()+1)*1e5);
     const id = `${this.state.userid}-${luid}`;
     this.state = {
       arc: null,
@@ -190,14 +182,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   openArc(id) {
-    //this.showHideLauncher(false);
     this.state = {
       arckey: id,
       arc: null,
-      arcConfig: {
-        id,
-        composer: this.state.arcComposer
-      }
+      arcConfig: {id}
     };
   }
   showHideLauncher(show) {
@@ -241,7 +229,55 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   onLauncherClick() {
     this.state = {arckey: ''};
-    //this.showHideLauncher(true);
+  }
+  launcherStoreChange(info) {
+    log(info);
+    info.add && info.add.forEach(({value: {rawData}}) => {
+      if (!rawData.deleted) {
+        this.createArcBox(rawData);
+      }
+    });
+  }
+  createArcBox({key, href, description}) {
+    this.boxes = this.boxes || {};
+    const oldarc = this.boxes[key];
+    if (oldarc) {
+      oldarc.dispose();
+      oldarc.remove();
+      oldarc.node.remove();
+      this.boxes[key] = null;
+    }
+    //
+    const html = Xen.html`
+<div slotid="toproot"></div>
+<div slotid="root"></div>
+<div slotid="modal"></div>
+    `;
+    const preview = document.querySelector('[preview]');
+    preview.style.cssText = 'text-align: center';
+    const wrapper = document.createElement('a');
+    wrapper.href = href;
+    wrapper.style.cssText = `display: inline-block; border: 1px solid silver; width: 192px; height: 200px; overflow: hidden; margin: 8px; text-align: left;`;
+    const label = document.createElement('div');
+    label.style.cssText = `background-color: whitesmoke; height: 32px; white-space: nowrap; font-size: 12px; padding: 4px;`;
+    label.innerHTML = description;
+    wrapper.appendChild(label);
+    const box = document.createElement('div');
+    box.style.cssText = `transform-origin: top left; transform: scale(0.3); width: 640px; height: 560px; pointer-events: none;`;
+    box.innerHTML = html;
+    wrapper.appendChild(box);
+    preview.appendChild(wrapper);
+    const composer = new SlotComposer({affordance: 'dom', rootContainer: box});
+    const webarc = Object.assign(document.createElement('web-arc'), {
+      env: this.state.env,
+      storage: this.props.storage,
+      composer: composer,
+      config: {id: key}
+    });
+    webarc.style.cssText = 'display: none;';
+    this.appendChild(webarc);
+    this.boxes[key] = webarc;
+    webarc.node = wrapper;
   }
 }
 
