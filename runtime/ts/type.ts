@@ -64,7 +64,8 @@ export class Type {
     }
     if (tag === 'Variable') {
       if (!(data instanceof TypeVariable)) {
-        // TODO determine if 3rd param should be null?
+        // type constraints ("~a with EntityName") should be considered minimum requirements
+        // for the type, so are fed in as 'canWriteSuperset' (i.e. low-watermark) constraints.
         data = new TypeVariable(data.name, data.constraint, null);
       }
     }
