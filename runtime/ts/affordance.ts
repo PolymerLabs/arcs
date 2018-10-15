@@ -7,19 +7,19 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './ts-build/slot-dom-consumer.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
-import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {assert} from '../../platform/assert-web.js';
+import {SlotDomConsumer} from './slot-dom-consumer.js';
+import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
+import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 
 export class Affordance {
   constructor(options) {
     Object.keys(options).forEach(key => {
       this[`_${key}`] = options[key];
-      Object.defineProperty(this, [key], {
-        get: function() {
+      Object.defineProperty(this, key, {
+        get() {
           return this[`_${key}`];
         }});
     });
@@ -30,7 +30,7 @@ export class Affordance {
   }
 }
 
-let _affordances = {};
+const _affordances = {};
 [
   {name: 'dom', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
   {name: 'dom-touch', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},

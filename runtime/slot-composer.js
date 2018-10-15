@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Affordance} from './affordance.js';
+import {Affordance} from './ts-build/affordance.js';
 import {SlotContext} from './ts-build/slot-context.js';
 import {HostedSlotConsumer} from './ts-build/hosted-slot-consumer.js';
 
