@@ -15,7 +15,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   protected storageEngine: PouchDbStorage;
 
   // Manages backing store
-  protected backingStore: PouchDbCollection | null = null;
+  backingStore: PouchDbCollection | null = null;
   private pendingBackingStore: Promise<PouchDbCollection> | null = null;
 
   /** The PouchDbKey for this Collection */

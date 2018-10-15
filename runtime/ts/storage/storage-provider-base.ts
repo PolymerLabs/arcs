@@ -43,7 +43,7 @@ export abstract class StorageProviderBase {
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
-  protected referenceMode = false;
+  referenceMode = false;
   
   version: number|null;
   id: string;
@@ -180,6 +180,12 @@ export abstract class StorageProviderBase {
   abstract toLiteral();
 
   abstract cloneFrom(store: StorageProviderBase);
+
+  // TODO(shans): remove this when it's possible to.
+  abstract ensureBackingStore();
+
+  // tslint:disable-next-line: no-any
+  abstract backingStore: any;
 
   /** TODO */
   modelForSynchronization() {

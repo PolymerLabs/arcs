@@ -31,7 +31,7 @@ import {Particle} from '../recipe/particle.js';
 import {HandleConnection} from '../recipe/handle-connection.js';
 import {SlotComposer} from '../slot-composer.js';
 
-interface ArcOptions {
+type ArcOptions = {
   id: string;
   context: Manifest;
   pecFactory?: (id: string) => PECInnerPort;
@@ -41,7 +41,11 @@ interface ArcOptions {
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   recipeIndex?: RecipeIndex;
-}
+};
+
+type PlanCallback = (recipe: Recipe) => void;
+
+type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
 export class Arc {
   private _context: Manifest;
@@ -63,7 +67,7 @@ export class Arc {
   // Map from each store to its description (originating in the manifest).
   private storeDescriptions = new Map<StorageProviderBase, Description>();
   private _description: Description;
-  private instantiatePlanCallbacks: ((recipe: Recipe) => void)[];
+  private instantiatePlanCallbacks: PlanCallback[] = [];
   private _recipeIndex: RecipeIndex;
   private waitForIdlePromise: Promise<void> | null;
 
@@ -96,7 +100,6 @@ export class Arc {
 
     this._description = new Description(this);
 
-    this.instantiatePlanCallbacks = [];
     this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
@@ -114,11 +117,11 @@ export class Arc {
     return this._recipeIndex;
   }
 
-  registerInstantiatePlanCallback(callback) {
+  registerInstantiatePlanCallback(callback: PlanCallback) {
     this.instantiatePlanCallbacks.push(callback);
   }
 
-  unregisterInstantiatePlanCallback(callback) {
+  unregisterInstantiatePlanCallback(callback: PlanCallback) {
     const index = this.instantiatePlanCallbacks.indexOf(callback);
     if (index >= 0) {
       this.instantiatePlanCallbacks.splice(index, 1);
@@ -163,7 +166,7 @@ export class Arc {
     return this.speculative;
   }
 
-  async _serializeHandle(handle, context, id) {
+  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string) {
     const type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
@@ -435,7 +438,7 @@ ${this.activeRecipe.toString()}`;
     return arc;
   }
 
-  async instantiate(recipe, innerArc = undefined) {
+  async instantiate(recipe: Recipe, innerArc = undefined) {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};

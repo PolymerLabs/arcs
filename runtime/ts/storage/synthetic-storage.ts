@@ -157,4 +157,10 @@ class SyntheticCollection extends StorageProviderBase {
   cloneFrom() {
     throw new Error("cloneFrom should never be called on SyntheticCollection!");
   }
+
+  ensureBackingStore() {
+    throw new Error("ensureBackingStore should never be called on SyntheticCollection!");
+  }
+
+  backingStore = undefined;
 }

@@ -238,7 +238,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>|null;
   protected reference: firebase.database.Reference;
-  protected backingStore: FirebaseCollection|null;
+  backingStore: FirebaseCollection|null;
   protected storageEngine: FirebaseStorage;
   private pendingBackingStore: Promise<FirebaseCollection>|null;
 
