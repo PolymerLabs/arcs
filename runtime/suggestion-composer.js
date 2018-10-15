@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Affordance} from './affordance.js';
+import {Affordance} from './ts-build/affordance.js';
 
 export class SuggestionComposer {
   constructor(slotComposer) {
