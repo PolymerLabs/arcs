@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Type} from './type.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {Entity} from '../entity.js';
+import {Entity} from './entity.js';
 import { Reference } from './reference.js';
 
 export class Schema {
@@ -304,8 +304,6 @@ export class Schema {
     };
 
     const clazz = class extends Entity {
-      // tslint:disable-next-line: no-any
-      rawData: any;
       constructor(data, userIDComponent) {
         super(userIDComponent);
         this.rawData = new Proxy({}, {
@@ -392,10 +390,10 @@ export class Schema {
         return clone;
       }
 
-      static get key() {
+      get key() {
         return {
           tag: 'entity',
-          schema: schema.toLiteral(),
+          schema,
         };
       }
     };

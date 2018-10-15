@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Entity} from '../entity.js';
+import {Entity} from './entity.js';
 import {Type} from './type.js';
 import {Symbols} from './symbols.js';
 
@@ -15,12 +15,18 @@ export class Relation extends Entity {
   entities: Entity[];
 
   constructor(...entities) {
-    super();
+    super(undefined);
     this.entities = entities;
   }
 
+  // should be rawData???
   get data() {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
+  }
+
+  // TODO should this return something else?
+  get key() {
+    return undefined;
   }
 
   static typeFor(relation) {
