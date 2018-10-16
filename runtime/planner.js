@@ -29,7 +29,7 @@ import {CombinedStrategy} from './strategies/combined-strategy.js';
 import {FindHostedParticle} from './strategies/find-hosted-particle.js';
 import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {Speculator} from './speculator.js';
+import {Speculator} from './ts-build/speculator.js';
 import {Tracing} from '../tracelib/trace.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
@@ -148,6 +148,7 @@ export class Planner {
         // TODO(wkorman): Look at restoring trace.wait() here, and whether we
         // should do similar for the async getRecipeSuggestion() below as well?
         let relevance = await speculator.speculate(this._arc, plan, hash);
+        this._relevances.push(relevance);
         if (!relevance.isRelevant(plan)) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});

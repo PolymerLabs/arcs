@@ -6,15 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// This is a list of recipes that are used in our canonical demos. As this file
-// grows the current alphabetized list will stop scaling, and we should
-// consider moving these into separate files or grouping by demo/test.
+// This is a list of recipes that are used in our canonical demos.
 
 import 'Common/Common.recipes'
 import 'Events/Events.recipes'
 import 'hex/hex.manifest'
 import 'Layout/Layout.recipes'
 import 'Messages/Messages.recipes'
+import 'Music/Music.recipes'
 import 'People/People.recipes'
 import 'Products/Products.recipes'
 import 'Profile/Profile.recipes'
@@ -23,3 +22,4 @@ import 'Social/Social.recipes'
 import 'VideoPlayer/VideoPlayer.recipes'
 import 'Words/Words.recipes'
 import 'TVMaze/TVMaze.recipes'
+import 'Showcase/Showcase.recipes'

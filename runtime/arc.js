@@ -66,7 +66,7 @@ export class Arc {
     this._description = new Description(this);
 
     this._instantiatePlanCallbacks = [];
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, slotComposer && slotComposer.affordance);
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
         devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));
@@ -131,10 +131,7 @@ export class Arc {
   }
 
   async _serializeHandle(handle, context, id) {
-    let type = handle.type;
-    if (type.isCollection) {
-      type = type.primitiveType();
-    }
+    let type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
     }
@@ -142,29 +139,42 @@ export class Arc {
     let tags = this._storeTags.get(handle) || [];
     let handleTags = [...tags].map(a => `#${a}`).join(' ');
 
+    const actualHandle = this.activeRecipe.findHandle(handle.id);
+    const originalId = actualHandle ? actualHandle.originalId : null;
+    let combinedId = `'${handle.id}'`;
+    if (originalId) {
+      combinedId += `!!'${originalId}'`;
+    }
+
     switch (key.protocol) {
       case 'firebase':
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} at '${handle.storageKey}'\n`;
+      case 'pouchdb':
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
-      case 'in-memory': {
+      case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
         const nosync = handleTags.includes('nosync');
         let serializedData = [];
         if (!nosync) {
-          serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+          // TODO: include keys in serialized [big]collections?
+          serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
             if (value == null) {
               return null;
             }
+
+            let result;
             if (value.rawData) {
-              let result = {};
+              result = {$id: id};
               for (let field in value.rawData) {
                 result[field] = value.rawData[field];
               }
-              result.$id = id;
-              return result;
             } else {
-              return value;
+              result = value;
             }
+            if (index !== undefined) {
+              result.$index = index;
+            }
+            return result;
           });
         }
         if (handle.referenceMode && serializedData.length > 0) {
@@ -172,7 +182,7 @@ export class Arc {
           if (!context.dataResources.has(storageKey)) {
             const storeId = `${id}_Data`;
             context.dataResources.set(storageKey, storeId);
-            // TODO: can't just reach into the store for the backing Store like this, should be an 
+            // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
             await handle.ensureBackingStore();
             await this._serializeHandle(handle.backingStore, context, storeId);
@@ -180,7 +190,7 @@ export class Arc {
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
         }
-  
+
         context.resources += `resource ${id}Resource\n`;
         let indent = '  ';
         context.resources += indent + 'start\n';
@@ -188,7 +198,7 @@ export class Arc {
         let data = JSON.stringify(serializedData);
         context.resources += data.split('\n').map(line => indent + line).join('\n');
         context.resources += '\n';
-        context.handles += `store ${id} of ${handle.type.toString()} '${handle.id}' @${handle.version} ${handleTags} in ${id}Resource\n`;
+        context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
     }
@@ -200,6 +210,7 @@ export class Arc {
     let id = 0;
     let importSet = new Set();
     let handleSet = new Set();
+    const contextSet = new Set(this.context._stores.map(store => store.id));
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
@@ -212,7 +223,7 @@ export class Arc {
     }
 
     for (let handle of this._stores) {
-      if (!handleSet.has(handle.id)) {
+      if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
 
@@ -323,7 +334,7 @@ ${this.activeRecipe.toString()}`;
     let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
     let handleMap = new Map();
     for (let handle of this._stores) {
-      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');
+      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'volatile');
       await clone.cloneFrom(handle);
       handleMap.set(handle, clone);
       if (this._storeDescriptions.has(handle)) {
@@ -401,6 +412,9 @@ ${this.activeRecipe.toString()}`;
     }
     let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
     currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), patterns: recipe.patterns});
+
+    // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
+    // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeHandle of handles) {
@@ -425,7 +439,8 @@ ${this.activeRecipe.toString()}`;
           await newStore.set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
-          assert(copiedStore.version !== null);
+          assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
+          assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.findStoreTags(copiedStore));
           let copiedStoreDesc = this.getStoreDescription(copiedStore);
@@ -442,11 +457,11 @@ ${this.activeRecipe.toString()}`;
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
-      // asks for one of these there's a conflict. Ideally these will end up as a 
+      // asks for one of these there's a conflict. Ideally these will end up as a
       // part of the context and will be populated on-demand like everything else.
       if (this._storesById.has(recipeHandle.id)) {
         continue;
-      } 
+      }
 
       let storageKey = recipeHandle.storageKey;
       if (!storageKey) {
@@ -498,14 +513,14 @@ ${this.activeRecipe.toString()}`;
               .toString();
     }
 
-    // TODO(sjmiles): use `in-memory` for nosync stores
+    // TODO(sjmiles): use `volatile` for nosync stores
     const hasNosyncTag = tags => tags && ((Array.isArray(tags) && tags.includes('nosync')) || tags === 'nosync');
     if (storageKey == undefined || hasNosyncTag(tags)) {
-      storageKey = 'in-memory';
+      storageKey = 'volatile';
     }
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(store, 'store with id ${id} already exists');
+    assert(store, `failed to create store with id [${id}]`);
     store.name = name;
 
     this._registerStore(store, tags);
@@ -622,19 +637,13 @@ ${this.activeRecipe.toString()}`;
     return this._storeDescriptions.get(store) || store.description;
   }
 
-  getStoresState() {
+  getStoresState(options) {
     let versionById = new Map();
     this._storesById.forEach((handle, id) => versionById.set(id, handle.version));
-    return versionById;
-  }
-
-  isSameState(storesState) {
-    for (let [id, version] of storesState ) {
-      if (!this._storesById.has(id) || this._storesById.get(id).version != version) {
-        return false;
-      }
+    if ((options || {}).includeContext) {
+      this._context.allStores.forEach(handle => versionById.set(handle.id, handle.version));
     }
-    return true;
+    return versionById;
   }
 
   keyForId(id) {

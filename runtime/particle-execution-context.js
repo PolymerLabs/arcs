@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {handleFor} from './handle.js';
+import {handleFor} from './ts-build/handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
@@ -157,7 +157,6 @@ export class ParticleExecutionContext {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
             let handle = handleFor(proxy, name, particleId);
-            handle.entityClass = (proxy.type.getContainedType() || proxy.type).entitySchema.entityClass();
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -203,8 +202,8 @@ export class ParticleExecutionContext {
           resolve(proxy);
         }});
       });
-      return this._keyedProxies[storageKey];
     }
+    return this._keyedProxies[storageKey];
   }
 
   defaultCapabilitySet() {
@@ -219,7 +218,7 @@ export class ParticleExecutionContext {
   async _instantiateParticle(id, spec, proxies) {
     let name = spec.name;
     let resolve = null;
-    let p = new Promise((res, rej) => resolve = res);
+    let p = new Promise(res => resolve = res);
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
@@ -233,10 +232,6 @@ export class ParticleExecutionContext {
     proxies.forEach((proxy, name) => {
       let connSpec = spec.connectionMap.get(name);
       let handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
-      let type = proxy.type.getContainedType() || proxy.type;
-      if (type.isEntity) {
-        handle.entityClass = type.entitySchema.entityClass();
-      }
       handleMap.set(name, handle);
 
       // Defer registration of handles with proxies until after particles have a chance to
@@ -245,11 +240,11 @@ export class ParticleExecutionContext {
     });
 
     return [particle, async () => {
-      resolve();
-      let idx = this._pendingLoads.indexOf(p);
-      this._pendingLoads.splice(idx, 1);
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
+      let idx = this._pendingLoads.indexOf(p);
+      this._pendingLoads.splice(idx, 1);
+      resolve();
     }];
   }
 
@@ -269,6 +264,9 @@ export class ParticleExecutionContext {
     if (this._pendingLoads.length > 0 || this._scheduler.busy) {
       return true;
     }
+    if (this._particles.filter(particle => particle.busy).length > 0) {
+      return true;
+    }
     return false;
   }
 
@@ -276,6 +274,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    return Promise.all([this._scheduler.idle, ...this._pendingLoads]).then(() => this.idle);
+    let busyParticlePromises = this._particles.filter(particle => particle.busy).map(particle => particle.idle);
+    return Promise.all([this._scheduler.idle, ...this._pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

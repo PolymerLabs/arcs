@@ -232,26 +232,33 @@ describe('CoalesceRecipes', function() {
     let recipe = await doCoalesceRecipes(`
       schema Thing1
       schema Thing2
+      schema Thing3
       particle P1
         in Thing1 thing1
-        in Thing2 thing2
+        in [Thing2] thing2
+        in BigCollection<Thing3> thing3
       particle P2
         out Thing1 thing1
-        out Thing2 thing2
+        out [Thing2] thing2
+        out BigCollection<Thing3> thing3
       recipe
         use as handle1
         use as handle2
+        use as handle3
         P1
           thing1 <- handle1
           thing2 <- handle2
+          thing3 <- handle3
       recipe
         create as handle1
         create as handle2
+        create as handle3
         P2
           thing1 -> handle1
           thing2 -> handle2
+          thing3 -> handle3
       `);
-    assert.lengthOf(recipe.handles, 2);
+    assert.lengthOf(recipe.handles, 3);
     recipe.handles.forEach(handle => assert.lengthOf(handle.connections, 2));
   });
 

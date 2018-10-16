@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Affordance} from './affordance.js';
+import {Affordance} from './ts-build/affordance.js';
 
 export class SuggestionComposer {
   constructor(slotComposer) {
@@ -51,7 +51,9 @@ export class SuggestionComposer {
 
     let sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
     for (let suggestion of sortedSuggestions) {
-      let suggestionContent =
+      // TODO(mmandlis): This hack is needed for deserialized suggestions to work. Should
+      // instead serialize the description object and generation suggestion content here.
+      let suggestionContent = suggestion.suggestionContent ? suggestion.suggestionContent :
         await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
       assert(suggestionContent, 'No suggestion content available');
 

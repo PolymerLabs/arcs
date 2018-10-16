@@ -71,7 +71,7 @@
   function connectViaWebSocket() {
     let ws;
 
-    let retriesLeft = 5;
+    let retriesLeft = 10;
     (function createWebSocket() {
       ws = new WebSocket('ws://localhost:8787');
       ws.onopen = e => {
@@ -81,7 +81,7 @@
       };
       ws.onerror = e => {
         console.log(`No WebSocket connection found, ${retriesLeft} retries left.`);
-        if (retriesLeft--) setTimeout(createWebSocket, 300);
+        if (retriesLeft--) setTimeout(createWebSocket, 500);
       };
     })();
     return msg => ws.send(JSON.stringify(msg));

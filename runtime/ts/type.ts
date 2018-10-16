@@ -64,7 +64,9 @@ export class Type {
     }
     if (tag === 'Variable') {
       if (!(data instanceof TypeVariable)) {
-        data = new TypeVariable(data.name, data.constraint);
+        // type constraints ("~a with EntityName") should be considered minimum requirements
+        // for the type, so are fed in as 'canWriteSuperset' (i.e. low-watermark) constraints.
+        data = new TypeVariable(data.name, data.constraint, null);
       }
     }
     this.tag = tag;
@@ -212,7 +214,6 @@ export class Type {
     return null;
   }
 
-  // TODO: naming is hard
   isTypeContainer() {
     return this.isCollection || this.isBigCollection || this.isReference;
   }
@@ -351,9 +352,7 @@ export class Type {
         return false;
       }
       if (type1.canReadSubset.isEntity) {
-        return Schema.intersect(
-                   type1.canReadSubset.entitySchema,
-                   type2.canReadSubset.entitySchema) !== null;
+        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       }
       throw new Error(`_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
@@ -374,15 +373,17 @@ export class Type {
     return true;
   }
 
-  // Tests whether two types' constraints are compatible with each other
+  /** Tests whether two types' constraints are compatible with each other. */
   static canMergeConstraints(type1, type2) {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
-  // Clone a type object.
-  // When cloning multiple types, variables that were associated with the same name
-  // before cloning should still be associated after cloning. To maintain this 
-  // property, create a Map() and pass it into all clone calls in the group.
+  /**
+   * Clone a type object.
+   * When cloning multiple types, variables that were associated with the same name
+   * before cloning should still be associated after cloning. To maintain this 
+   * property, create a Map() and pass it into all clone calls in the group.
+   */
   clone(variableMap) {
     const type = this.resolvedType();
     if (type.isVariable) {
@@ -400,10 +401,12 @@ export class Type {
     return Type.fromLiteral(type.toLiteral());
   }
 
-  // Clone a type object, maintaining resolution information.
-  // This function SHOULD NOT BE USED at the type level. In order for type variable
-  // information to be maintained correctly, an entire context root needs to be
-  // cloned.
+  /**
+   * Clone a type object, maintaining resolution information.
+   * This function SHOULD NOT BE USED at the type level. In order for type variable
+   * information to be maintained correctly, an entire context root needs to be
+   * cloned.
+   */
   _cloneWithResolutions(variableMap) {
     if (this.isVariable) {
       if (variableMap.has(this.variable)) {
@@ -411,16 +414,13 @@ export class Type {
       } else {
         const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
         if (this.variable.resolution) {
-          newTypeVariable.resolution =
-              this.variable.resolution._cloneWithResolutions(variableMap);
+          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
         }
         if (this.variable._canReadSubset) {
-          newTypeVariable.canReadSubset =
-              this.variable.canReadSubset._cloneWithResolutions(variableMap);
+          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
         }
         if (this.variable._canWriteSuperset) {
-          newTypeVariable.canWriteSuperset =
-              this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
+          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
         }
         variableMap.set(this.variable, newTypeVariable);
         return new Type('Variable', newTypeVariable);
@@ -491,7 +491,7 @@ export class Type {
       return `[${this.collectionType.toString(options)}]`;
     }
     if (this.isBigCollection) {
-      return `[${this.bigCollectionType.toString(options)}]`;
+      return `BigCollection<${this.bigCollectionType.toString(options)}>`;
     }
     if (this.isEntity) {
       return this.entitySchema.toInlineSchemaString(options);
@@ -547,7 +547,7 @@ export class Type {
       return `${this.collectionType.toPrettyString()} List`;
     }
     if (this.isBigCollection) {
-      return `${this.bigCollectionType.toPrettyString()} BigCollection`;
+      return `Collection of ${this.bigCollectionType.toPrettyString()}`;
     }
     if (this.isVariable) {
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
@@ -579,7 +579,7 @@ addType('Synthesized');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
-import {TypeVariable} from '../type-variable.js';
-import {TupleFields} from '../tuple-fields.js';
+import {TypeVariable} from './type-variable.js';
+import {TupleFields} from './tuple-fields.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {SlotInfo} from '../slot-info.js';
+import {SlotInfo} from './slot-info.js';

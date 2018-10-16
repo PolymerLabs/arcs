@@ -123,6 +123,7 @@ export class Handle {
   }
   mapToStorage(storage) {
     this._id = storage.id;
+    this._originalId = storage.originalId;
     this._type = undefined;
     assert(storage.type == undefined || !(storage.type.hasVariableReference), `variable references shouldn't be part of handle types`);
     this._mappedType = storage.type;

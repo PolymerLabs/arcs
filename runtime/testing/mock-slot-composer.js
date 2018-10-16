@@ -276,7 +276,7 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   _addDebugMessages(message) {
-    assert(this.debugMessages.length > 0);
+    assert(this.debugMessages.length > 0, 'debugMessages length is 0');
     this.debugMessages[this.debugMessages.length - 1].messages.push(message);
     if (this.logging) {
       console.log(message);

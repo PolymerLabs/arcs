@@ -12,7 +12,7 @@ import {Manifest} from '../../manifest.js';
 import {assert} from '../chai-web.js';
 import * as util from '../../testing/test-util.js';
 import {Arc} from '../../arc.js';
-import {MessageChannel} from '../../message-channel.js';
+import {MessageChannel} from '../../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../../particle-execution-context.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {DevtoolsForTests} from '../../debug/devtools-connection.js';
@@ -65,7 +65,7 @@ describe('OuterPortAttachment', function() {
         foo: {
           direction: 'inout',
           id: 'fooStore',
-          storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
+          storageKey: 'volatile://!158405822139616:demo^^volatile-0',
           type: 'Foo'
         },
       },
@@ -90,7 +90,7 @@ describe('OuterPortAttachment', function() {
       },
       handle: {
         id: 'fooStore',
-        storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
+        storageKey: 'volatile://!158405822139616:demo^^volatile-0',
         type: 'Foo'
       },
       data: '{"id":"!158405822139616:demo:0:inner:0:0","rawData":{"value":"FooBar"}}',

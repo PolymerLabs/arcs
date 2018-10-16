@@ -1,5 +1,7 @@
-import Arcs from '../../lib/arcs.js';
+import Arcs from '../../../lib/arcs.js';
 import Xen from '../../../components/xen/xen.js';
+import Firebase from '../../../lib/firebase.js';
+import '../arc-host.js';
 
 const template = Xen.Template.html`
 
@@ -11,9 +13,9 @@ const template = Xen.Template.html`
     border: 1px dotted silver;
     padding: 4px;
   }
-  arc-host {
+  /*arc-host {
     display: block;
-  }
+  }*/
 </style>
 
 <arc-host config="{{config}}" manifest="{{manifest}}" key="{{key}}" serialization="{{serialization}}" on-arc="_onArc">
@@ -26,62 +28,69 @@ const log = Xen.logFactory('BgArc', '#00a300');
 
 class BgArc extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return [];
+    return ['userid', 'key', 'context', 'manifest'];
   }
   get template() {
     return template;
   }
-  _render(props, state) {
-    return state;
-  }
-  _didMount() {
-    this._initArc();
-  }
-  _initArc() {
-    this._setState({
-      config: {
+  _update({userid, key}, state) {
+    if (!state.config) {
+      state.config = {
         affordance: 'dom',
         root: window.arcsPath,
         rootContainer: this.shadowRoot,
-        //manifestPath: params.get('manifest'),
-        //solo: params.get('solo'),
-        //defaultManifest: window.defaultManifest,
-        //userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
-        //key: params.get('arc') || null,
-        //search: params.get('search') || '',
-        //urls: window.shellUrls || {},
-        //useStorage: params.has('store'),
-        //useSerialization: params.has('serial')
-      },
-      manifest: '',
-      serialization: '',
-      key: 'launcher'
-    });
+        useStorage: true
+      };
+    }
+    // arc-host will supply `arc` (_onArc) when `key`, `manifest`, and `serialization` have values
+    const {arc} = state;
+    if (!arc && userid && key && key !== state.key) {
+      state.key = key;
+      this._updateKey(userid, key);
+    }
+    if (arc && !state.hasSerialization) {
+      state.hasSerialization = true;
+      this._updateSerialization(key, arc);
+    }
   }
-  async _onArc(e) {
-    const arc = e.detail;
-    const manifestContent = `
-      import '${window.arcsPath}/artifacts/Pipes/Pipes.recipes'
-    `;
-    const options = {
-      fileName: './in-memory.manifest',
-      loader: arc._loader
-    };
-    const manifest = window.manifest = await Arcs.Runtime.parseManifest(manifestContent, options);
-    //console.log(manifest);
-    const recipe = manifest.recipes[0];
-    // console.log(recipe);
-    const errors = new Map();
-    if (!recipe.normalize({errors})) {
-      console.log(`Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
+  _render(props, state) {
+    return [props, state];
+  }
+  async _updateKey(userid, key) {
+    Firebase.db.child(`users/${userid}/arcs/${key}/touched`).set(Firebase.firebase.database.ServerValue.TIMESTAMP);
+    const snap = await Firebase.db.child(`arcs/${key}/serialization`).once('value');
+    const serialization = snap.val() || '';
+    log('READ serialization', serialization);
+    this._setState({serialization, hasSerialization: Boolean(serialization)});
+  }
+  async _updateSerialization(key, arc) {
+    await this._instantiateDefaultRecipe(arc);
+    const serialization = await arc.serialize();
+    const node = Firebase.db.child(`arcs/${key}/serialization`);
+    node.set(serialization);
+    console.log('WROTE serialization', serialization);
+    return serialization;
+  }
+  async _instantiateDefaultRecipe(arc) {
+    const recipe = arc.context.recipes[0];
+    if (!recipe) {
+      log(`couldn't find default recipe`);
     } else {
-      //console.log(recipe.isResolved());
-      if (!recipe.isResolved()) {
-        console.log(`Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
+      const errors = new Map();
+      if (!recipe.normalize({errors})) {
+        log(`Couldn't normalize recipe ${recipe.toString()}`); //:\n${[...options.errors.values()].join('\n')}`);
       } else {
-        arc.instantiate(recipe);
+        if (!recipe.isResolved()) {
+          log(`Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
+        } else {
+          await arc.instantiate(recipe);
+        }
       }
     }
+  }
+  async _onArc(e, arc) {
+    this._setState({arc});
+    this._fire('arc', arc);
   }
 }
 

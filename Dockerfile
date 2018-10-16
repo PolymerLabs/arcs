@@ -11,12 +11,15 @@ COPY . .
 #
 RUN npm install
 
-RUN ./tools/sigh
+RUN ./tools/sigh && npm run build:rollup
 
 WORKDIR /usr/src/app/server
-RUN npm install
+
+# This odd npm syntax solves a problem installing with an empty
+# node_modules directory: See https://npm.community/t/518
+RUN npm install --no-package-lock && npm install --package-lock-only
+
 RUN npm test
 
 EXPOSE 8080
 CMD [ "npm", "start" ]
-

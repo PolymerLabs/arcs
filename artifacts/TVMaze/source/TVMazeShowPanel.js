@@ -10,53 +10,80 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
 
-  let host = `show-panel`;
+  const host = `tv-maze-show-panel`;
 
   const template = html`
-<style>
-  [${host}] {
-    padding: 16px;
-  }
-  [${host}] [description] p {
-    margin: 0;
-  }
-</style>
-<div ${host}>
-  <div slotid="action" style="margin-right: 40px;"></div>
-  <div style="display: flex; align-items: start; padding-bottom: 8px;">
-    <img src="{{image}}" style="vertical-align: middle; padding-right: 8px;">
+
+<div ${host} hidden="{{hidden}}">
+  <style>
+    [${host}] {
+      padding: 16px;
+    }
+    [${host}] > [slotid=action] {
+      margin-right: 40px;
+    }
+    [${host}] > [columns] {
+      /* display: flex; */
+      align-items: start;
+      padding-bottom: 8px;
+    }
+    [${host}] [img] {
+      vertical-align: middle;
+      padding-right: 8px;
+    }
+    [${host}] > [description] p {
+      margin: 0;
+    }
+  </style>
+  <div slotid="action"></div>
+  <div columns>
+    <img src="{{image}}">
     <div>
       <b>{{network}}</b>
       <br>
       <span>{{day}}</span> <span>{{time}}</span>
+      <br>
     </div>
   </div>
-  <div description style="margin: 16px 0;" unsafe-html="{{description}}"></div>
+  <!-- <div>
+    <icon>{{glyph}}</icon>
+  </div> -->
+  <div style="padding-top: 16px;" unsafe-html="{{alsoWatch}}"></div>
+  <div description style="padding: 16px 0;" unsafe-html="{{description}}"></div>
   <!-- <div style="color: #333; font-size: 1.5em; margin: 16px 0;">Episodes</div> -->
   <div slotid="items"></div>
 </div>
 
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    shouldRender({show}) {
-      return Boolean(show);
+    update({show}, state) {
+      if (show) {
+        if ('length' in show) {
+          show = show[0];
+        }
+        state.show = show;
+      }
     }
-    render({show}) {
-      show = show || {
-        image: ''
-      };
+    render({alsoWatch}, {show}) {
+      const hidden = Boolean(!show);
+      if (hidden) {
+        show = Object;
+      }
       return {
-        image: show.image,
-        description: show.description,
-        network: show.network,
-        day: show.day ? `${show.day}s` : '(n/a)',
-        time: show.time,
+        glyph: show.favorite ? 'favorite' : 'favorite_border',
+        alsoWatch: alsoWatch ? alsoWatch.text : '',
+        hidden,
+        image: show.image || '',
+        description: show.description || '',
+        network: show.network || '',
+        day: show.day ? `${show.day}s` : '',
+        time: show.time || '',
         id: show.id
       };
     }

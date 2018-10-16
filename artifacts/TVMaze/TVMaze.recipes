@@ -6,66 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema TVMazeShow
-  Text showid
-  Text name
-  Text description
-  Text image
-  Text network
-  Text day
-  Text time
-  Boolean favorite
-  Boolean delete
-
-particle TVMazeShowTile in './source/TVMazeShowTile.js'
-  in TVMazeShow show
-  consume tile
-    provide set of action
-
-particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
-  in TVMazeShow show
-  consume root
-    provide action
-    provide items
-  description `${show} details`
-
-recipe TVMazeShowPanel
-  TVMazeShowPanel
-
-//
-
-schema TVMazeQuery
-  Text query
-  Text type
-
-particle TVMazeSearchShows in './source/TVMazeSearchShows.js'
-  in TVMazeQuery query
-  out [TVMazeShow] shows
-  consume root
-  description `find out about ${query.query} (from TVMaze)`
-
-recipe TVMazeSearchShows
-  create #tiles #shows as shows
-  TVMazeSearchShows
-
-//
-
-schema Description
-  Text key
-  Text value
-
-schema TVMazeFind
-  Text name
-  Text type
-
-particle TVMazeFindShow in './source/TVMazeFindShow.js'
-  in TVMazeFind find
-  out TVMazeShow show
-  out [Description] descriptions
-  consume root
-  description `find out about ${find.name} (from TVMaze)`
-
-recipe TVMazeFindShow
-  create as show
-  TVMazeFindShow
-
+import 'TVMazeShow.recipes'
+import 'TVMazeQuery.recipes'
+import 'TVMazeDemo.recipes'

@@ -44,6 +44,7 @@ const steps = {
   tslint: [tslint],
   check: [check],
   clean: [clean],
+  importSpotify: [tsc, importSpotify],
   default: [check, peg, railroad, tsc, test, webpack, lint, tslint],
 };
 
@@ -81,6 +82,13 @@ function* findProjectFiles(dir, predicate) {
 
 function readProjectFile(relativePath) {
   return fs.readFileSync(path.resolve(projectRoot, relativePath), 'utf-8');
+}
+
+function fixPathForWindows(path) {
+  if (path[0] == '/') {
+    return path;
+  }
+  return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 }
 
 function targetIsUpToDate(relativeTarget, relativeDeps) {
@@ -216,7 +224,7 @@ async function tsc() {
 
 async function tslint(args) {
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath)) {
+    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
@@ -243,7 +251,7 @@ async function lint(args) {
   });
 
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath)) {
+    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.js$/.test(fullPath);
@@ -358,7 +366,7 @@ function test(args) {
     inspect: ['inspect'],
     explore: ['explore'],
     exceptions: ['exceptions'],
-    boolean: ['manual'],
+    boolean: ['manual', 'all'],
     alias: {g: 'grep'},
   });
 
@@ -374,16 +382,9 @@ function test(args) {
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
-    const isSelectedTest = options.manual == fullPath.includes('manual_test');
+    const isSelectedTest = options.all || (options.manual == fullPath.includes('manual_test'));
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
-
-  function fixPathForWindows(path) {
-    if (path[0] == '/') {
-      return path;
-    }
-    return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
-  }
 
   function buildTestRunner() {
     let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
@@ -462,6 +463,15 @@ function test(args) {
       {stdio: 'inherit'});
 }
 
+async function importSpotify(args) {
+  return saneSpawn('node', [
+    '--experimental-modules',
+    '--trace-warnings',
+    '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+    './tools/spotify-importer.js',
+    ...args
+  ], {stdio: 'inherit'});
+}
 
 // Watches `watchPaths` for changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
@@ -471,18 +481,19 @@ async function watch([arg, ...moreArgs]) {
     ignored: /(node_modules|\/build\/|ts-build|\.git)/,
     persistent: true
   });
-  let version = 0;
-  let task = Promise.resolve(true);
+  let timerId = 0;
   let changes = new Set();
-  watcher.on('change', async (path, stats) => {
-    let current = ++version;
-    changes.add(path);
-    await task;
-    if (current <= version) {
-      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
-      changes.clear();
-      task = run(funsAndArgs);
+  watcher.on('change', path => {
+    if (timerId) {
+      clearTimeout(timerId);
     }
+    changes.add(path);
+    timerId = setTimeout(async () => {
+      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
+      changes.clear();
+      await run(funsAndArgs);
+      timerId = 0;
+    }, 500);
   });
 
   // TODO: Is there a better way to keep the process alive?

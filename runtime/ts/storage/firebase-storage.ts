@@ -20,6 +20,7 @@ import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
+import {setDiff} from '../util.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -29,12 +30,7 @@ export async function resetStorageForTesting(key) {
     databaseURL: key.databaseUrl
   });
 
-  let reference = firebase.database(app).ref(key.location);
-  await new Promise(resolve => {
-    reference.remove(resolve);
-  });
-
-  reference = firebase.database(app).ref('backingStores');
+  const reference = firebase.database(app).ref(key.location);
   await new Promise(resolve => {
     reference.remove(resolve);
   });
@@ -43,7 +39,6 @@ export async function resetStorageForTesting(key) {
 }
 
 class FirebaseKey extends KeyBase {
-  private protocol: string;
   databaseUrl?: string;
   projectId?: string;
   apiKey?: string;
@@ -60,7 +55,7 @@ class FirebaseKey extends KeyBase {
       if (this.databaseUrl && this.databaseUrl.endsWith('.firebaseio.com')) {
         this.projectId = this.databaseUrl.split('.')[0];
       } else {
-        throw new Error("FirebaseKey must end with .firebaseio.com");
+        throw new Error('FirebaseKey must end with .firebaseio.com');
       }
       this.apiKey = parts[1];
       this.location = parts.slice(2).join('/');
@@ -87,6 +82,14 @@ class FirebaseKey extends KeyBase {
     }
     return `${this.protocol}://`;
   }
+}
+
+// Firebase's 'once' API does not return a Promise; wrap it so we can await the invocation of the
+// callback that returns the snapshot.
+function getSnapshot(reference) : Promise<firebase.database.DataSnapshot> {
+  return new Promise(resolve => {
+    reference.once('value', snapshot => resolve(snapshot));
+  });
 }
 
 let _nextAppNameSuffix = 0;
@@ -127,7 +130,7 @@ export class FirebaseStorage extends StorageBase {
       }
     }
   }
-  
+
   baseStorageKey(type: Type, keyString: string): string {
     const fbKey = new FirebaseKey(keyString);
     fbKey.location = `backingStores/${type.toString()}`;
@@ -145,7 +148,7 @@ export class FirebaseStorage extends StorageBase {
     this.baseStorePromises.set(type, storagePromise);
     const storage = await storagePromise;
     assert(storage, 'baseStorageFor should not fail');
-    this.baseStores.set(type, storage); 
+    this.baseStores.set(type, storage);
     return storage;
   }
 
@@ -186,22 +189,18 @@ export class FirebaseStorage extends StorageBase {
   }
 
   // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
-  // but this _join creates the storage location. 
+  // but this _join creates the storage location.
   async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
     assert(!type.isVariable);
-    assert(!type.isCollection || !type.primitiveType().isVariable);
+    assert(!type.isTypeContainer() || !type.getContainedType().isVariable);
 
     const {fbKey, reference} = this.attach(keyString);
-    let enableReferenceMode = false;
-    let currentSnapshot: firebase.database.DataSnapshot;
-    await reference.once('value', snapshot => currentSnapshot = snapshot);
+    const currentSnapshot = await getSnapshot(reference);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
     }
 
-    if (currentSnapshot.exists() && currentSnapshot.val().referenceMode) {
-      enableReferenceMode = true;
-    }
+    let enableReferenceMode = currentSnapshot.exists() && currentSnapshot.val().referenceMode;
 
     if (shouldExist === false || (shouldExist === 'unknown' && currentSnapshot.exists() === false)) {
       const result = await reference.transaction(data => {
@@ -307,54 +306,57 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   abstract get _hasLocalChanges(): boolean;
 
-  abstract async _persistChangesImpl(arg): Promise<void>;
+  abstract async _persistChangesImpl(): Promise<void>;
 
-  async _persistChanges(arg='') {
-    if (!this._hasLocalChanges) {
-      return;
+  // Only one invokation of _persistChangesImpl should ever
+  // be in-flight at a time. This loop preserves that property.
+  async _persistChanges() {
+    while (this._hasLocalChanges) {
+      if (!this.persisting) {
+        this.persisting = this._persistChangesImpl();
+        await this.persisting;
+        this.persisting = null;
+      } else {
+        await this.persisting;
+      }
     }
-    if (this.persisting) {
-      await this.persisting;
-      return;
-    }
-    // Ensure we only have one persist process running at a time.
-    this.persisting = this._persistChangesImpl(arg);
-    await this.persisting;
-    assert(!this._hasLocalChanges);
-    this.persisting = null;
   }
 }
 
-// Models a Variable that is persisted to firebase in a
-// last-writer-wins scheme.
-//
-// Initialization: After construct/connect the variable is
-// not fully initialized, calls to `get` and `toLiteral`
-// will not complete until either:
-//  * The initial value is supplied via the firebase `.on`
-//    subscription.
-//  * A value is written to the store by a call to `set`.
-//
-// Updates from firebase: Each time an update is received
-// from firebase we update the local version and value,
-// unless there is a pending local modification (see below).
-//
-// Local modifications: When a local modification is applied
-// by a call to `set` we increment the version number,
-// mark this variable as locally modified, and start a
-// process to atomically persist the change to firebase.
-// Until this process has completed we suppress incoming
-// changes from firebase. The version that we have chosen
-// (by incrementing) may not match the final state that is
-// written to firebase (if there are concurrent changes in
-// firebase, or if we have queued up multiple local
-// modifications), but the result will always be
-// monotonically increasing.
+/**
+ * Models a Variable that is persisted to firebase in a
+ * last-writer-wins scheme.
+ *
+ * Initialization: After construct/connect the variable is
+ * not fully initialized, calls to `get` and `toLiteral`
+ * will not complete until either:
+ *  * The initial value is supplied via the firebase `.on`
+ *    subscription.
+ *  * A value is written to the store by a call to `set`.
+ *
+ * Updates from firebase: Each time an update is received
+ * from firebase we update the local version and value,
+ * unless there is a pending local modification (see below).
+ *
+ * Local modifications: When a local modification is applied
+ * by a call to `set` we increment the version number,
+ * mark this variable as locally modified, and start a
+ * process to atomically persist the change to firebase.
+ * Until this process has completed we suppress incoming
+ * changes from firebase. The version that we have chosen
+ * (by incrementing) may not match the final state that is
+ * written to firebase (if there are concurrent changes in
+ * firebase, or if we have queued up multiple local
+ * modifications), but the result will always be
+ * monotonically increasing.
+ */
 class FirebaseVariable extends FirebaseStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
-  private localKeyId = 0;
+  // TODO(sjmiles): localId collisions occur when using device-client-pipe,
+  // so I'll randomize localId a bit
+  private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
@@ -384,9 +386,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // Resolved when data is first available. The earlier of
     // * the initial value is supplied via firebase `reference.on`
     // * a value is written to the variable by a call to `set`.
-    this.initialized = new Promise(resolve => {
-      this.resolveInitialized = resolve;
-    });
+    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
   }
@@ -404,10 +404,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
     // NOTE that remoteStateChanged will be invoked immediately by the
     // this.reference.on(...) call in the constructor; this means that it's possible for this
-    // function to receive data with storageKeys before referenceMode has been switched on (as 
+    // function to receive data with storageKeys before referenceMode has been switched on (as
     // that happens after the constructor has completed). This doesn't matter as data can't
     // be accessed until the constructor's returned (nothing has a handle on the object before
-    // that). 
+    // that).
 
     this.value = data.value || null;
     this.version = data.version;
@@ -430,7 +430,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.localModified;
   }
 
-  async _persistChangesImpl(arg): Promise<void> {
+  async _persistChangesImpl(): Promise<void> {
     assert(this.localModified);
     // Guard the specific version that we're writing. If we receive another
     // local mutation, these versions will be different when the transaction
@@ -441,12 +441,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // the await required for fetching baseStorage can cause initialization/localModified
     // flag reordering if done before persisting a change.
     const value = this.value;
-    
+
     // We have to write the underlying storage before the local value, or it won't be present
     // when another connected storage object gets the update of the local value.
     if (this.referenceMode && this.pendingWrites.length > 0) {
       await this.ensureBackingStore();
-  
+
       // TODO(shans): mutating the storageKey here to provide unique keys is a hack
       // that can be removed once entity mutation is distinct from collection updates.
       // Once entity mutation exists, it shouldn't ever be possible to write
@@ -468,17 +468,17 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const data = result.snapshot.val();
     assert(data !== 0);
     assert(data.version >= version);
- 
+
     if (this.version !== version) {
       // A new local modification happened while we were writing the previous one.
-      return this._persistChangesImpl(arg);
+      return this._persistChangesImpl();
     }
 
     this.localModified = false;
     this.version = data.version;
     // Firebase will return 'undefined' when data is set to null, but should
     this.value = data.value || null;
- 
+
   }
 
   get versionForTesting() {
@@ -490,7 +490,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this.referenceMode && this.value) {
       const referredType = this.type;
       await this.ensureBackingStore();
-      return await this.backingStore.get(this.value.id);  
+      return await this.backingStore.get(this.value.id);
     }
     return this.value;
   }
@@ -523,7 +523,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     }
     this.localModified = true;
 
-    await this._persistChanges(barrier);
+    await this._persistChanges();
 
     this._fire('change', {data: value, version, originatorId, barrier});
   }
@@ -537,7 +537,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     const literal = await handle.toLiteral();
     const data = literal.model[0].value;
     if (this.referenceMode && literal.model.length > 0) {
-      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);  
+      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
       literal.model = literal.model.map(({id, value}) => ({id, value: {id, storageKey: this.backingStore.storageKey}}));
       const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
@@ -555,6 +555,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
+    await this.initialized;
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
@@ -592,57 +593,39 @@ class FirebaseVariable extends FirebaseStorageProvider {
 }
 
 
-function setDiff(from: string[], to: string[]) {
-  const add: string[] = [];
-  const remove: string[] = [];
-  const items = new Set([...from, ...to]);
-  const fromSet = new Set(from);
-  const toSet = new Set(to);
-  for (const item of items) {
-    if (fromSet.has(item)) {
-      if (toSet.has(item)) {
-        continue;
-      }
-      remove.push(item);
-      continue;
-    }
-    assert(toSet.has(item));
-    add.push(item);
-  }
-  return {remove, add};
-}
-
-// Models a Collection that is persisted to firebase in scheme similar
-// to the CRDT OR-set. We don't model sets of both observed
-// and removed keys but instead we maintain a list of current keys and
-// add/remove as the corresponding operations are received. We're
-// able to do this as we only ever synchronize between the same two points
-// (the client & firebase).
-//
-// Initialization: The collection is not initialized and calls to read
-// and mutate the collection will not complete until the initial state
-// is received via the firebase `.on` subscription.
-// Note, this is different to FirebaseVariable as mutations do not cause
-// the collection to become initialized (since we do not have enough state
-// to generate events).
-//
-// Updates from firebase: Each time an update is received from firebase
-// we compare the new remote state with the previous remote state. We are
-// able to detect which entries (and the corresponding keys) that have been
-// added and removed remotely. These are filtered by a set of suppressions
-// for adds that we have previously issued and then applied to our local
-// model. Each time we receive an update from firebase, we update our local
-// version number. We align it with the remote version when possible.
-//
-// Local modifications: Additions and removal of entries (and membership
-// keys) are tracked in a local structure, `localChanges`, and a process
-// is started to persist remotely. These changes are applied to the remote
-// state and committed atomically. Any added keys are added to sets in
-// `addSuppressions` to prevent applying our own writes when they
-// are received back in a subsequent update from firebase. Each time we
-// receive a local modification we increment our local version number.
-// When we persist our changes to firebase we align it with the remote
-// version.
+/**
+ * Models a Collection that is persisted to firebase in scheme similar
+ * to the CRDT OR-set. We don't model sets of both observed
+ * and removed keys but instead we maintain a list of current keys and
+ * add/remove as the corresponding operations are received. We're
+ * able to do this as we only ever synchronize between the same two points
+ * (the client & firebase).
+ *
+ * Initialization: The collection is not initialized and calls to read
+ * and mutate the collection will not complete until the initial state
+ * is received via the firebase `.on` subscription.
+ * Note, this is different to FirebaseVariable as mutations do not cause
+ * the collection to become initialized (since we do not have enough state
+ * to generate events).
+ *
+ * Updates from firebase: Each time an update is received from firebase
+ * we compare the new remote state with the previous remote state. We are
+ * able to detect which entries (and the corresponding keys) that have been
+ * added and removed remotely. These are filtered by a set of suppressions
+ * for adds that we have previously issued and then applied to our local
+ * model. Each time we receive an update from firebase, we update our local
+ * version number. We align it with the remote version when possible.
+ *
+ * Local modifications: Additions and removal of entries (and membership
+ * keys) are tracked in a local structure, `localChanges`, and a process
+ * is started to persist remotely. These changes are applied to the remote
+ * state and committed atomically. Any added keys are added to sets in
+ * `addSuppressions` to prevent applying our own writes when they
+ * are received back in a subsequent update from firebase. Each time we
+ * receive a local modification we increment our local version number.
+ * When we persist our changes to firebase we align it with the remote
+ * version.
+ */
 class FirebaseCollection extends FirebaseStorageProvider {
   private localChanges: Map<string, {add: string[], remove: string[]}>;
   private addSuppressions: Map<string, {keys: Set<string>, barrierVersion: number}>;
@@ -694,7 +677,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   backingType() {
     return this.type.primitiveType();
   }
-  
+
   remoteStateChanged(dataSnapshot) {
     const newRemoteState = dataSnapshot.val();
     if (!newRemoteState.items) {
@@ -827,6 +810,46 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.model.getValue(id);
   }
 
+  async removeMultiple(items, originatorId=null) {
+    await this.initialized;
+    if (items.length === 0) {
+      items = this.model.toList().map(item => ({id: item.id, keys: []}));
+    }
+    items.forEach(item => {
+      // 1. Apply the change to the local model.
+      item.value = this.model.getValue(item.id);
+      if (item.value === null) {
+        return;
+      }
+      if (item.keys.length === 0) {
+        item.keys = this.model.getKeys(item.id);
+      }
+
+      // TODO: These keys might already have been removed (concurrently).
+      // We should exit early in that case.
+      item.effective = this.model.remove(item.id, item.keys);
+    });
+    this.version++;
+
+    // 2. Notify listeners.
+    items = items.filter(item => item.value);
+    this._fire('change', {remove: items, version: this.version, originatorId});
+
+    // 3. Add this modification to the set of local changes that need to be persisted.
+    items.forEach(item => {
+      if (!this.localChanges.has(item.id)) {
+        this.localChanges.set(item.id, {add: [], remove: []});
+      }
+      const localChange = this.localChanges.get(item.id);
+      for (const key of item.keys) {
+        localChange.remove.push(key);
+      }
+    });
+
+    // 4. Wait for the changes to persist.
+    await this._persistChanges();
+  }
+
   async remove(id, keys:string[] = [], originatorId=null) {
     await this.initialized;
 
@@ -895,12 +918,12 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   get _hasLocalChanges() {
-    return this.localChanges.size > 0;
+    return this.localChanges.size > 0 || this.pendingWrites.length > 0;
   }
 
   async _persistChangesImpl(): Promise<void> {
     if (this.pendingWrites.length > 0) {
-      await this.ensureBackingStore();      
+      await this.ensureBackingStore();
       assert(this.backingStore);
       const pendingWrites = this.pendingWrites.slice();
       this.pendingWrites = [];
@@ -910,9 +933,17 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
       await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
+      //await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + Date.now()])));
+
+      // TODO(shans): Returning here prevents us from writing localChanges while there
+      // are pendingWrites. This in turn prevents change events for being generated for
+      // localChanges that have outstanding pendingWrites.
+      // A better approach would be to tie pendingWrites more closely to localChanges.
+      return;
     }
 
-    while (this.localChanges.size > 0) {
+    if (this.localChanges.size > 0) {
+
       // Record the changes that are persisted by the transaction.
       let changesPersisted;
       const result = await this._transaction(data => {
@@ -1024,10 +1055,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async modelForSynchronization() {
-    return {
-      version: this.version,
-      model: await this._toList()
-    };
+    const model = await this._toList();
+    return {version: this.version, model};
   }
 
   async toList() {
@@ -1035,15 +1064,18 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async getMultiple(ids) {
-    assert(!this.referenceMode, "getMultiple not implemented for referenceMode stores");
+    assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
     await this.initialized;
     return ids.map(id => this.model.getValue(id));
   }
 
   async storeMultiple(values, keys, originatorId=null) {
-    assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
+    assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
     values.map(value => {
       this.model.add(value.id, value, keys);
+      if (!this.localChanges.has(value.id)) {
+        this.localChanges.set(value.id, {add: [], remove: []});
+      }
       const localChanges = this.localChanges.get(value.id);
       for (const key of keys) {
         localChanges.add.push(key);
@@ -1095,31 +1127,35 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
 enum CursorState {new, init, stream, removed, done}
 
-// FirebaseCursor provides paginated reads over the contents of a BigCollection, locked to the
-// version of the collection at which the cursor was created.
-//
-// This class technically conforms to the iterator protocol but is not marked as iterable because
-// next() is async, which is currently not supported by implicit iteration in Javascript.
-//
-// NOTE: entity mutation removes elements from a streamed read; the entity will be updated with an
-// index past the cursor's end but Firebase doesn't issue a child_removed event for it.
+/**
+ * FirebaseCursor provides paginated reads over the contents of a BigCollection, locked to the
+ * version of the collection at which the cursor was created.
+ *
+ * This class technically conforms to the iterator protocol but is not marked as iterable because
+ * next() is async, which is currently not supported by implicit iteration in Javascript.
+ *
+ * NOTE: entity mutation removes elements from a streamed read; the entity will be updated with an
+ * index past the cursor's end but Firebase doesn't issue a child_removed event for it.
+ */
 class FirebaseCursor {
   private orderByIndex: firebase.database.Query;
   private readonly pageSize: number;
+  private readonly forward: boolean;
   private state: CursorState;
   private removed: {}[];
   private baseQuery: firebase.database.Query|null;
-  private nextStart: string|null;
-  private end: string|null;
+  private nextBoundary: string|null;
+  private end: number|null;
   private removedFn: ((removed: firebase.database.DataSnapshot) => void) | null;
 
-  constructor(reference, pageSize) {
+  constructor(reference, pageSize, forward) {
     this.orderByIndex = reference.child('items').orderByChild('index');
     this.pageSize = pageSize;
+    this.forward = forward;
     this.state = CursorState.new;
     this.removed = [];
     this.baseQuery = null;
-    this.nextStart = null;
+    this.nextBoundary = null;
     this.end = null;
     this.removedFn = null;
   }
@@ -1129,29 +1165,29 @@ class FirebaseCursor {
     assert(this.state === CursorState.new);
 
     // Retrieve the current last item to establish our streaming version.
-    await this.orderByIndex.limitToLast(1).once('value', snapshot => snapshot.forEach(entry => {
-      this.end = entry.val().index;
-      // don't cancel
-      return false;
-    }));
+    const lastEntry = await getSnapshot(this.orderByIndex.limitToLast(1));
+    lastEntry.forEach(entry => this.end = entry.val().index);
 
-    // Read one past the page size each time to establish the starting index for the next page.
-    this.baseQuery = this.orderByIndex.endAt(this.end).limitToFirst(this.pageSize + 1);
+    // Read one past the page size each time to establish the boundary index for the next page.
+    this.baseQuery = this.forward
+        ? this.orderByIndex.limitToFirst(this.pageSize + 1)
+        : this.orderByIndex.limitToLast(this.pageSize + 1);
 
     // Attach a listener for removed items and capture any that occur ahead of our streaming
     // frame. These will be returned after the cursor reaches the item at this.end.
-    this.removedFn = snapshot => {
-      if (snapshot.val().index <= this.end &&
-          (this.nextStart === null || snapshot.val().index >= this.nextStart)) {
+    this.removedFn = this.orderByIndex.on('child_removed', snapshot => {
+      const index = snapshot.val().index;
+      if (index > this.end) return;
+      if (this.nextBoundary === null || (this.forward && index >= this.nextBoundary)
+                                     || (!this.forward && index <= this.nextBoundary)) {
         this.removed.push(snapshot.val().value);
       }
-    };
-    await this.orderByIndex.on('child_removed', this.removedFn);
+    }); 
     this.state = CursorState.init;
   }
 
   // Returns the BigCollection version at which this cursor is reading.
-  get version(): string {
+  get version(): number {
     return this.end;
   }
 
@@ -1166,25 +1202,45 @@ class FirebaseCursor {
 
     let query: firebase.database.Query;
     if (this.state === CursorState.init) {
-      query = this.baseQuery;
+      query = this.baseQuery.endAt(this.end);
       this.state = CursorState.stream;
     } else if (this.state === CursorState.stream) {
-      assert(this.nextStart !== null);
-      query = this.baseQuery.startAt(this.nextStart);
+      assert(this.nextBoundary !== null);
+      query = this.forward
+          ? this.baseQuery.startAt(this.nextBoundary).endAt(this.end)
+          : this.baseQuery.endAt(this.nextBoundary);
     }
 
     const value = [];
     if (this.state === CursorState.stream) {
-      this.nextStart = null;
-      await query.once('value', snapshot => snapshot.forEach(entry => {
-        if (value.length < this.pageSize) {
+      this.nextBoundary = null;
+      const queryResults = await getSnapshot(query);
+      if (this.forward) {
+        // For non-final pages, the last entry is the start of the next page.
+        queryResults.forEach(entry => {
+          if (value.length < this.pageSize) {
+            value.push(entry.val().value);
+          } else {
+            this.nextBoundary = entry.val().index;
+          }
+        });
+      } else {
+        // For non-final pages, the first entry is the end of the next page.
+        let startIndex = null;
+        queryResults.forEach(entry => {
           value.push(entry.val().value);
-        } else {
-          this.nextStart = entry.val().index;
+          if (startIndex === null) {
+            startIndex = entry.val().index;
+          }
+        });
+        if (value.length > this.pageSize) {
+          value.shift();
+          this.nextBoundary = startIndex;
         }
-      }));
-      if (this.nextStart === null) {
-        await this._detach();
+        value.reverse();
+      }
+      if (this.nextBoundary === null) {
+        this._detach();
         this.state = CursorState.removed;
       }
     }
@@ -1203,38 +1259,43 @@ class FirebaseCursor {
 
   // Terminates the streamed read. This must be called if a cursor is no longer needed but has not
   // yet completed streaming (i.e. next() hasn't returned {done: true}).
-  async close() {
-    await this._detach();
+  close() {
+    this._detach();
     this.state = CursorState.done;
   }
 
-  async _detach() {
+  _detach() {
     if (this.removedFn) {
-      await this.orderByIndex.off('child_removed', this.removedFn);
+      this.orderByIndex.off('child_removed', this.removedFn);
       this.removedFn = null;
     }
   }
 }
 
-// Provides access to large collections without pulling the entire contents locally.
-//
-// get(), store() and remove() all call immediately through to the backing Firebase collection.
-// There is currently no option for bulk instantiations of these methods.
-//
-// The full collection can be read via a paginated FirebaseCursor returned by stream(). This views
-// a snapshot of the collection, locked to the version at which the cursor is created.
-//
-// To get pagination working, we need to add an index field to items as they are stored, and that
-// field must be marked for indexing in the Firebase rules:
-//    "rules": {
-//      "<storage-root>": {
-//        "$collection": {
-//          "items": {
-//            ".indexOn": ["index"]
-//          }
-//        }
-//      }
-//    }
+/**
+ * Provides access to large collections without pulling the entire contents locally.
+ *
+ * get(), store() and remove() all call immediately through to the backing Firebase collection.
+ * There is currently no option for bulk instantiations of these methods.
+ *
+ * The full collection can be read via a paginated FirebaseCursor returned by stream(). This views
+ * a snapshot of the collection, locked to the version at which the cursor is created.
+ *
+ * To get pagination working, we need to add an index field to items as they are stored, and that
+ * field must be marked for indexing in the Firebase rules:
+ *
+ * ```
+ *    "rules": {
+ *      "<storage-root>": {
+ *        "$collection": {
+ *          "items": {
+ *            ".indexOn": ["index"]
+ *          }
+ *        }
+ *      }
+ *    }
+ * ```
+ */
 class FirebaseBigCollection extends FirebaseStorageProvider {
   private cursors: Map<number, FirebaseCursor>;
   private cursorIndex: number;
@@ -1249,14 +1310,15 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     return this.type.primitiveType();
   }
 
+  enableReferenceMode() {
+    assert(false, 'referenceMode is not supported for BigCollection');
+  }
+
   // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id
   async get(id) {
-    let value;
     const encId = FirebaseStorage.encodeKey(id);
-    await this.reference.child('items/' + encId).once('value', snapshot => {
-      value = (snapshot.val() !== null) ? snapshot.val().value : null;
-    });
-    return value;
+    const snapshot = await getSnapshot(this.reference.child('items/' + encId));
+    return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 
   // originatorId is included to maintain parity with Collection.store but is not used.
@@ -1281,7 +1343,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     }, undefined, false);
 
     const encId = FirebaseStorage.encodeKey(value.id);
-    return this.reference.child('items/' + encId).transaction(data => {
+    await this.reference.child('items/' + encId).transaction(data => {
       if (data === null) {
         data = {value, keys: {}};
       } else {
@@ -1292,7 +1354,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
         const encKey = FirebaseStorage.encodeKey(key);
         data.keys[encKey] = version;
       }
-      
+
       // If we ever have bulk additions for BigCollection, the index will need to be changed to an
       // encoded string with version as the 'major' component and an index within the bulk add as
       // the 'minor' component:
@@ -1310,23 +1372,31 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     }, undefined, false);
 
     const encId = FirebaseStorage.encodeKey(id);
-    return this.reference.child('items/' + encId).remove();
+    await this.reference.child('items/' + encId).remove();
   }
 
-  // Returns a FirebaseCursor id for paginated reads of the current version of this BigCollection.
-  // The id should be passed to cursorNext() to retrive the contained entities. The cursor itself
-  // is held internally by this collection so we can discard it once the stream read has completed.
-  async stream(pageSize) {
+  /**
+   * Returns a FirebaseCursor id for paginated reads of the current version of this BigCollection.
+   * The id should be passed to cursorNext() to retrive the contained entities. The cursor itself
+   * is held internally by this collection so we can discard it once the stream read has completed.
+   *
+   * By default items are returned in order of original insertion into the collection (with the
+   * caveat that items removed during a streamed read may be returned at the end). Set forward to
+   * false to return items in reverse insertion order.
+   */
+  async stream(pageSize, forward = true) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
-    const cursor = new FirebaseCursor(this.reference, pageSize);
+    const cursor = new FirebaseCursor(this.reference, pageSize, forward);
     await cursor._init();
     this.cursors.set(this.cursorIndex, cursor);
     return this.cursorIndex;
   }
 
-  // Calls next() on the cursor identified by cursorId. The cursor will be discarded once the end
-  // of the stream has been reached.
+  /**
+   * Calls next() on the cursor identified by cursorId. The cursor will be discarded once the end
+   * of the stream has been reached.
+   */
   async cursorNext(cursorId) {
     const cursor = this.cursors.get(cursorId);
     if (!cursor) {
@@ -1339,16 +1409,18 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     return data;
   }
 
-  // Calls close() on and discards the cursor identified by cursorId.
-  async cursorClose(cursorId) {
+  /** Calls close() on and discards the cursor identified by cursorId. */
+  cursorClose(cursorId) {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);
-      await cursor.close();
+      cursor.close();
     }
   }
 
-  // Returns the version at which the cursor identified by cursorId is reading.
+  /**
+   * Returns the version at which the cursor identified by cursorId is reading.
+   */
   cursorVersion(cursorId) {
     const cursor = this.cursors.get(cursorId);
     return cursor ? cursor.version : null;
@@ -1362,11 +1434,19 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     return false;
   }
 
-  // TODO: cloneFrom, toLiteral, fromLiteral ?
+  // TODO: cloneFrom, toLiteral, fromLiteral
   // A cloned instance will probably need to reference the same Firebase URL but collect all
   // modifications locally for speculative execution.
 
+  async cloneFrom(handle) {
+    throw new Error('FirebaseBigCollection does not yet implement cloneFrom');
+  }
+
   toLiteral() {
-    assert(false, "no toLiteral implementation on bigCollection");
+    throw new Error('FirebaseBigCollection does not yet implement toLiteral');
+  }
+
+  fromLiteral({version, model}) {
+    throw new Error('FirebaseBigCollection does not yet implement fromLiteral');
   }
 }

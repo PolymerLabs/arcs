@@ -9,8 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import Arcs from '../lib/arcs.js';
-import ArcsUtils from '../lib/arcs-utils.js';
+import Arcs from '../../lib/arcs.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
 
 const log = Xen.logFactory('ArcStore', '#c6a700');
 
@@ -87,7 +87,7 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
     }
     typeOf = setOf ? typeOf.collectionOf() : typeOf;
     // work out storageKey
-    storageKey = storageKey || 'in-memory';
+    storageKey = storageKey || 'volatile';
     // work out tags
     if (!asContext) {
       tags = tags.concat(['nosync']);

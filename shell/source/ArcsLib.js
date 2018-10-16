@@ -15,28 +15,35 @@ import {Arc} from '../../runtime/arc.js';
 import {Planificator} from '../../runtime/planificator.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
-
+import {Manifest} from '../../runtime/manifest.js';
 
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
+
+import {ParticleExecutionContext} from '../../runtime/particle-execution-context.js';
+import {StorageProviderFactory} from '../../runtime/ts-build/storage/storage-provider-factory.js';
 
 // Keep in sync with runtime/ts/storage/firebase-storage.ts
 import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/storage';
 
-
-//Tracing.enable();
+import {KeyManager} from '../../runtime/ts-build/keymgmt/manager.js';
 
 const Arcs = {
-  version: '0.3',
+  version: '0.5',
+  Tracing,
   Arc,
+  Manifest,
   Runtime,
   Planificator,
   SlotComposer,
   Type,
   BrowserLoader,
-  Tracing,
+  StorageProviderFactory,
+  ParticleExecutionContext,
+  KeyManager,
+  firebase
 };
 
 // TODO(sjmiles): can't export because WebPack won't make a built version with a module export
@@ -44,5 +51,4 @@ const Arcs = {
 // export default Arcs;
 
 window.Arcs = window.Arcs ? Object.assign(window.Arcs, Arcs) : Arcs;
-window.firebase = firebase;
 

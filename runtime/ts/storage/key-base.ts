@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 export abstract class KeyBase {
+  protocol: string;
   abstract childKeyForHandle(id): KeyBase;
   abstract toString(): string;
 }

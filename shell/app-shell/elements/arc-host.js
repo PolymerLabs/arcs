@@ -9,9 +9,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-import Arcs from '../lib/arcs.js';
-import ArcsUtils from '../lib/arcs-utils.js';
-import Firebase from './cloud-data/firebase.js';
+import Arcs from '../../lib/arcs.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
+import Firebase from '../../lib/firebase.js';
 
 const log = Xen.logFactory('ArcHost', '#007ac1');
 const groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
@@ -25,7 +25,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, oldProps) {
     const {config, manifest, key, serialization} = props;
-    if (config && manifest != null && !state.context) {
+    if (config && manifest != null && !state.context && !state.contextPreparing) {
+      state.contextPreparing = true;
       this._prepareContext(config, manifest);
     }
     // dispose arc if key has changed, but we don't have a new key yet
@@ -50,7 +51,20 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // empty serialization which is ''
     if (id && context && pendingSerialization != null) {
       state.pendingSerialization = null;
+      // TODO(sjmiles): if we `_setState` we trigger invalidation if the return
+      // value is non-empty, which is correct as non-empty return is a signal to retry.
+      // However, in brief testing, the retries came too fast and blew out the heap.
+      // We need a proper 'context-is-ready' signal, in the meantime we'll do a dumb timeout
+      // retry.
       state.pendingSerialization = await this._consumeSerialization(pendingSerialization);
+      if (!state.pendingSerialization) {
+        state.retried = false;
+      } else if (!state.retried) {
+        state.retried = true;
+        log('retrying deserialization in 2s');
+        setTimeout(() => this._invalidate(), 2000);
+      }
+      //this._setState({pendingSerialization: await this._consumeSerialization(pendingSerialization)});
     }
   }
   async _prepareContext(config, manifest) {
@@ -109,9 +123,11 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     log('arc preparation');
     log('---------------');
     // make an id
-    const id = 'app-shell-' + ArcsUtils.randomId();
+    //const id = 'app-shell-' + ArcsUtils.randomId();
+    const id = key;
     // construct storageKey
-    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
+    const storageKeyBase = config.storageKeyBase || Firebase.storageKey;
+    const storageKey = config.useStorage ? `${storageKeyBase}/arcs/${key}` : null;
     // capture composer (so we can push suggestions there), loader, etc.
     this._setState({id, storageKey});
   }
@@ -136,6 +152,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     }
     // TODO(sjmiles): temporarily elide search info, it seems to choke the deserializer
     serialization = serialization.replace(/search `[^`]*`/, '').replace(/tokens \/\/ `[^`]*`/, '');
+    // Tearing down the existing arc, so that the DOM gets cleared before initializing
+    // slot composer.
+    // TODO: investigate why it didn't already happen.
+    this._teardownArc(state.arc);
     //
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
@@ -148,6 +168,12 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       storageKey: state.storageKey
     };
     log('about to construct an arc; # context stores:', state.context.stores.length);
+    // notify console
+    if (serialization) {
+      groupCollapsed('serialization:');
+      log('serialization:', serialization);
+      groupEnd();
+    }
     // attempt to construct arc
     let arc;
     try {
@@ -156,12 +182,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       warn('failed to deserialize arc, will retry');
       warn(x);
       return serialization;
-    }
-    // notify console
-    if (serialization) {
-      groupCollapsed('deserialized arc:');
-      log('serialization:', serialization);
-      groupEnd();
     }
     // cache new objects
     this._setState({slotComposer, arc});

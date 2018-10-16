@@ -1,0 +1,31 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+shape HostedParticleShape
+  in ~a *
+  consume
+
+// TODO: This particle should use generic slot name.
+particle Multiplexer in 'source/Multiplexer.js'
+  host HostedParticleShape hostedParticle
+  in [~a] list
+  consume set of annotation
+  description `${hostedParticle} for ${list}`
+
+// Same as Multiplexer above, but with an additional connection.
+shape HostedParticleShape2
+  in ~a *
+  in [~a] *
+  consume
+
+particle Multiplexer2 in 'source/Multiplexer.js'
+  host HostedParticleShape2 hostedParticle
+  in [~a] list
+  in [~a] others
+  consume set of annotation
+  description `${hostedParticle} for ${list}`

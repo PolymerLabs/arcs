@@ -1,9 +1,19 @@
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
 // libs
 import Xen from '../components/xen/xen.js';
-import Arcs from './lib/arcs.js';
-import LinkJack from './lib/link-jack.js';
-import Const from './constants.js';
-import Firebase from './elements/cloud-data/firebase.js';
+import Arcs from '../lib/arcs.js';
+import LinkJack from '../lib/link-jack.js';
+import Const from '../lib/constants.js';
+import Firebase from '../lib/firebase.js';
 
 // elements
 import './elements/arc-config.js';
@@ -15,8 +25,8 @@ import './elements/shell-stores.js';
 import './elements/cloud-data.js';
 import './elements/background-arcs/bg-arc.js';
 
-// external data pipes (MiToast, ArcExtension)
-import './elements/pipes/mi-toast-pipe.js';
+// external data pipes (DeviceClient, ArcExtension)
+import './elements/pipes/device-client-pipe.js';
 
 // templates
 const html = Xen.Template.html;
@@ -66,13 +76,14 @@ const template = html`
     arc="{{arc}}"
     search="{{search}}"
     suggestion="{{suggestion}}"
+    userid="{{userid}}"
     on-metaplans="_onStateData"
     on-metaplan="_onStateData"
     on-suggestions="_onStateData"
     on-search="_onStateData"
   ></arc-planner>
 
-  <shell-stores
+  <!-- <shell-stores
     config="{{config}}"
     users="{{users}}"
     user="{{user}}"
@@ -80,7 +91,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     on-theme="_onStateData"
-  ></shell-stores>
+  ></shell-stores> -->
 
   <cloud-data
     config="{{config}}"
@@ -102,22 +113,27 @@ const template = html`
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-share="_onStateData"
-    on-serialization="_onStateData"
+    on-serialization="_onSerialization"
     on-suggestion="_onSuggestion"
+    on-avatars="_onStateData"
   ></cloud-data>
 
-  <mi-toast-pipe
+  <device-client-pipe
     context="{{context}}"
+    userid="{{userid}}"
     arc="{{arc}}"
     suggestions="{{suggestions}}"
     metaplans="{{metaplans}}"
     on-suggestion="_onStateData"
-  ></mi-toast-pipe>
+    on-key="_onStateData"
+    on-search="_onStateData"
+    on-replan="_onReplan"
+  ></device-client-pipe>
 
   <!-- pretend this is a processing arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
   <!-- pretend this is the login arc -->
-  <bg-arc></bg-arc>
+  <!-- <bg-arc></bg-arc> -->
 
   <shell-ui
     key="{{key}}"
@@ -131,6 +147,7 @@ const template = html`
     share="{{share}}"
     search="{{search}}"
     glows="{{glows}}"
+    avatars="{{avatars}}"
     on-search="_onStateData"
     on-suggestion="_onSuggestion"
     on-select-user="_onSelectUser"
@@ -157,6 +174,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     this._updateDebugGlobals(state);
     this._updateConfig(state, oldState);
     this._updateKey(state, oldState);
+    this._updateSerialization(state);
     this._updateDescription(state);
     this._updateSuggestions(state, oldState);
     this._updateLauncher(state, oldState);
@@ -182,7 +200,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _updateKey(state, oldState) {
-    let {config, user, key, arc} = state;
+    let {config, user, key} = state;
     if (config && user) {
       if (!key && !oldState.key) {
         key = config.key;
@@ -212,19 +230,31 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       this._describeArc(arc, description);
     }
   }
-  _updateLauncher(state, oldState) {
-    const {key, metaplan, metaplans, suggestion, pendingSuggestion} = state;
+  async _updateLauncher(state, oldState) {
+    const {key, arc, metaplans, suggestion, pendingSuggestion, launcherPlan} = state;
+    if (arc && !launcherPlan) {
+      log('loading launcher recipe');
+      const loader = arc._loader;
+      const fileName = './in-memory.manifest';
+      const manny = await Arcs.Runtime.parseManifest(`import 'https://$artifacts/Arcs/Launcher.recipe'`, {loader, fileName});
+      const launcherPlan = manny.recipes[0];
+      launcherPlan.normalize();
+      this._setState({launcherPlan});
+      return;
+    }
     if (key === Const.SHELLKEYS.launcher) {
-      if (!suggestion && (!metaplan || !metaplan.plan) && metaplans && metaplans.plans && metaplans.plans.length) {
-        // TODO(sjmiles): need a better way to find the launcher suggestion
-        state.suggestion = metaplans.plans.find(s => s.descriptionText === 'Arcs launcher.');
-      }
-      else if (suggestion && suggestion !== oldState.suggestion) {
+      if (!state.launched && launcherPlan && arc && arc.findStoreById('SYSTEM_arcs')) {
+        log('instantiating launcher');
+        state.launched = true;
+        arc.instantiate(launcherPlan);
+      } else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
         state.suggestion = null;
         state.pendingSuggestion = suggestion;
         this._setKey('*');
       }
+    } else {
+      state.launched = false;
     }
     if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.plans.length) {
       log('matching pending launcher suggestion');
@@ -243,6 +273,16 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
     if (state.suggestions !== oldState.suggestions) {
       state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
+    }
+  }
+  _updateSerialization(state) {
+    // TODO(sjmiles): wait 4s for context :(
+    if (!state.contextReady) {
+      setTimeout(() => this._setState({contextReady: true}), 4000);
+    }
+    const serialization = state.pendingSerialization;
+    if (state.contextReady && serialization != null) {
+      this._setState({pendingSerialization: null, serialization});
     }
   }
   _render({}, state) {
@@ -279,6 +319,13 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSuggestion(e, suggestion) {
     this._setState({suggestion, search: ''});
+  }
+  _onSerialization(e, serialization) {
+    this._setState({pendingSerialization: serialization});
+  }
+  _onReplan() {
+    // hackity hack
+    this.shadowRoot.querySelector('arc-planner')._state.planificator._onDataChange();
   }
 }
 

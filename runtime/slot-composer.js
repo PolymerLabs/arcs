@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Affordance} from './affordance.js';
+import {Affordance} from './ts-build/affordance.js';
 import {SlotContext} from './ts-build/slot-context.js';
 import {HostedSlotConsumer} from './ts-build/hosted-slot-consumer.js';
 
@@ -132,8 +132,24 @@ export class SlotComposer {
     let slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
-    await slotConsumer.setContent(content, eventlet => {
+    await slotConsumer.setContent(content, async (eventlet) => {
       this.arc.pec.sendEvent(particle, slotName, eventlet);
+      if (eventlet.data && eventlet.data.key) {
+        let hostedConsumers = this.consumers.filter(c => c.transformationSlotConsumer == slotConsumer);
+        for (let hostedConsumer of hostedConsumers) {
+          if (hostedConsumer.storeId) {
+            let store = this.arc.findStoreById(hostedConsumer.storeId);
+            assert(store);
+            let value = await store.get();
+            if (value && (value.id == eventlet.data.key)) {
+              this.arc.pec.sendEvent(
+                  hostedConsumer.consumeConn.particle,
+                  hostedConsumer.consumeConn.name,
+                  eventlet);
+            }
+          }
+        }
+      }
     }, this.arc);
   }
 
@@ -148,5 +164,7 @@ export class SlotComposer {
       context.clearSlotConsumers();
       context.container && this._affordance.slotConsumerClass.clear(context.container);
     });
+    this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);
+    this._consumers = [];
   }
 }

@@ -26,7 +26,8 @@ const template = html`
   [name=input]::slotted(input) {
     font-size: 1em;
     font-weight: 300;
-    color: var(--app-primary-color, #212121);
+    color: inherit;
+    background-color: inherit;
     border: none;
     padding: 8px 0;
     width: 100%;
@@ -66,6 +67,7 @@ const template = html`
     pointer-events: none;
     opacity: 0.5;
     white-space: nowrap;
+    text-align: left;
     text-overflow: ellipsis;
     overflow: hidden;
     transform-origin: 0 0;

@@ -58,6 +58,14 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     console.warn('DomParticle: `setIfDirty` is deprecated, please use `setState` instead');
     return this._setState(state);
   }
+  /** @method configureHandles(handles)
+   * This is called once during particle setup. Override to control sync and update
+   * configuration on specific handles (via their configure() method).
+   * `handles` is a map from names to handle instances.
+   */
+  configureHandles(handles) {
+    // Example: handles.get('foo').configure({keepSynced: false});
+  }
   /** @method get config()
    * Override if necessary, to modify superclass config.
    */
@@ -94,10 +102,18 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   // end deprecated
   //
   async setHandles(handles) {
+    this.configureHandles(handles);
     this.handles = handles;
-    this._handlesToSync = new Set(this.config.handleNames);
+    this._handlesToSync = new Set();
+    for (let name of this.config.handleNames) {
+      let handle = handles.get(name);
+      if (handle && handle.options.keepSynced && handle.options.notifySync) {
+        this._handlesToSync.add(name);
+      }
+    }
     // make sure we invalidate once, even if there are no incoming handles
-    this._invalidate();
+    setTimeout(() => !this._hasProps && this._invalidate(), 200);
+    //this._invalidate();
   }
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);
@@ -106,21 +122,31 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
   async onHandleUpdate(handle, update) {
-    await this._handlesToProps();
+    // TODO(sjmiles): debounce handles updates
+    const work = () => {
+      //console.warn(handle, update);
+      this._handlesToProps();
+    };
+    this._debounce('handleUpdateDebounce', work, 100);
   }
   async _handlesToProps() {
     let config = this.config;
-    // acquire (async) list data from handles
+    // acquire (async) list data from handles; BigCollections map to the handle itself
     let data = await Promise.all(
       config.handleNames
       .map(name => this.handles.get(name))
-      .map(handle => handle.toList ? handle.toList() : handle.get())
+      .map(handle => {
+        if (handle.toList) return handle.toList();
+        if (handle.get) return handle.get();
+        return handle;
+      })
     );
     // convert handle data (array) into props (dictionary)
     let props = Object.create(null);
     config.handleNames.forEach((name, i) => {
       props[name] = data[i];
     });
+    this._hasProps = true;
     this._setProps(props);
   }
   fireEvent(slotName, {handler, data}) {
@@ -128,5 +154,17 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
+  }
+  _debounce(key, func, delay) {
+    const subkey = `_debounce_${key}`;
+    if (!this._state[subkey]) {
+      this.startBusy();
+    }
+    const idleThenFunc = () => {
+      this.doneBusy();
+      func();
+      this._state[subkey] = null;
+    };
+    super._debounce(key, idleThenFunc, delay);
   }
 }

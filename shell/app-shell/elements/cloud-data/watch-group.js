@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../../components/xen/xen.js';
-import Firebase from './firebase.js';
+import Firebase from '../../../lib/firebase.js';
 
 const log = Xen.logFactory('WatchGroup', '#aa00c7');
 

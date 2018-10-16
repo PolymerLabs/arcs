@@ -77,7 +77,9 @@ class StorageProxyBase {
     return this._type;
   }
 
-  // Called by ParticleExecutionContext to associate (potentially multiple) particle/handle pairs with this proxy.
+  /**
+   *  Called by ParticleExecutionContext to associate (potentially multiple) particle/handle pairs with this proxy.
+   */
   register(particle, handle) {
     if (!handle.canRead) {
       return;
@@ -225,21 +227,22 @@ class StorageProxyBase {
   }
 }
 
-
-// Collections are synchronized in a CRDT Observed/Removed scheme.
-// Each value is identified by an ID and a set of membership keys.
-// Concurrent adds of the same value will specify the same ID but different
-// keys. A value is removed by removing all of the observed keys. A value
-// is considered to be removed if all of it's keys have been removed.
-//
-// In synchronized mode mutation takes place synchronously inside the proxy.
-// The proxy uses the originatorId to skip over redundant events sent back
-// by the storage object.
-//
-// In unsynchronized mode removal is not based on the keys observed at the
-// proxy, since the proxy does not remember the state, but instead the set
-// of keys that exist at the storage object at the time it receives the
-// request.
+/**
+ * Collections are synchronized in a CRDT Observed/Removed scheme.
+ * Each value is identified by an ID and a set of membership keys.
+ * Concurrent adds of the same value will specify the same ID but different
+ * keys. A value is removed by removing all of the observed keys. A value
+ * is considered to be removed if all of it's keys have been removed.
+ *
+ * In synchronized mode mutation takes place synchronously inside the proxy.
+ * The proxy uses the originatorId to skip over redundant events sent back
+ * by the storage object.
+ *
+ * In unsynchronized mode removal is not based on the keys observed at the
+ * proxy, since the proxy does not remember the state, but instead the set
+ * of keys that exist at the storage object at the time it receives the
+ * request.
+ */
 class CollectionProxy extends StorageProxyBase {
   constructor(...args) {
     super(...args);
@@ -319,7 +322,7 @@ class CollectionProxy extends StorageProxyBase {
   store(value, keys, particleId) {
     let id = value.id;
     let data = {value, keys};
-    this._port.HandleStore({data, handle: this, particleId});
+    this._port.HandleStore({handle: this, callback: () => {}, data, particleId});
 
     if (this._synchronized != SyncState.full) {
       return;
@@ -331,10 +334,25 @@ class CollectionProxy extends StorageProxyBase {
     this._notify('update', update, options => options.notifyUpdate);
   }
 
+  clear(particleId) {
+    if (this._synchronized != SyncState.full) {
+      this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: [], particleId});
+    }
+
+    let items = this._model.toList().map(item => ({id: item.id, keys: this._model.getKeys(item.id)}));
+    this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: items, particleId});
+
+    items = items.map(({id, keys}) => ({rawData: this._model.getValue(id).rawData, id, keys}));
+    items = items.filter(item => this._model.remove(item.id, item.keys));
+    if (items.length > 0) {
+      this._notify('update', {originatorId: particleId, remove: items}, options => options.notifyUpdate);
+    }
+  }
+
   remove(id, keys, particleId) {
     if (this._synchronized != SyncState.full) {
       let data = {id, keys: []};
-      this._port.HandleRemove({data, handle: this, particleId});
+      this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
       return;
     }
 
@@ -346,7 +364,7 @@ class CollectionProxy extends StorageProxyBase {
       keys = this._model.getKeys(id);
     }
     let data = {id, keys};
-    this._port.HandleRemove({data, handle: this, particleId});
+    this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
 
     if (!this._model.remove(id, keys)) {
       return;
@@ -356,11 +374,13 @@ class CollectionProxy extends StorageProxyBase {
   }
 }
 
-// Variables are synchronized in a 'last-writer-wins' scheme. When the
-// VariableProxy mutates the model, it sets a barrier and expects to
-// receive the barrier value echoed back in a subsequent update event.
-// Between those two points in time updates are not applied or
-// notified about as these reflect concurrent writes that did not 'win'.
+/**
+ * Variables are synchronized in a 'last-writer-wins' scheme. When the
+ * VariableProxy mutates the model, it sets a barrier and expects to
+ * receive the barrier value echoed back in a subsequent update event.
+ * Between those two points in time updates are not applied or
+ * notified about as these reflect concurrent writes that did not 'win'.
+ */
 class VariableProxy extends StorageProxyBase {
   constructor(...args) {
     super(...args);
@@ -464,6 +484,42 @@ class VariableProxy extends StorageProxyBase {
   }
 }
 
+// BigCollections are never synchronized. No local state is held and all operations are passed
+// directly through to the backing store.
+class BigCollectionProxy extends StorageProxyBase {
+  register(particle, handle) {
+    if (handle.canRead) {
+      this._scheduler.enqueue(particle, handle, ['sync', particle, {}]);
+    }
+  }
+
+  // TODO: surface get()
+
+  async store(value, keys, particleId) {
+    return new Promise(resolve =>
+      this._port.HandleStore({handle: this, callback: resolve, data: {value, keys}, particleId}));
+  }
+
+  async remove(id, particleId) {
+    return new Promise(resolve =>
+      this._port.HandleRemove({handle: this, callback: resolve, data: {id, keys: []}, particleId}));
+  }
+
+  async stream(pageSize, forward) {
+    return new Promise(resolve =>
+      this._port.HandleStream({handle: this, callback: resolve, pageSize, forward}));
+  }
+
+  async cursorNext(cursorId) {
+    return new Promise(resolve =>
+      this._port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
+  }
+
+  cursorClose(cursorId) {
+    this._port.StreamCursorClose({handle: this, cursorId});
+  }
+}
+
 export class StorageProxyScheduler {
   constructor() {
     this._scheduled = false;
@@ -537,37 +593,5 @@ export class StorageProxyScheduler {
     }
 
     this._updateIdle();
-  }
-}
-
-// BigCollections are never synchronized. No local state is held and all operations are passed
-// directly through to the backing store.
-class BigCollectionProxy extends StorageProxyBase {
-  // BigCollections don't hold a local model so the sync/update mechanism isn't meaningful.
-  register(particle, handle) {
-  }
-
-  // TODO: surface get()
-
-  async store(value, keys, particleId) {
-    this._port.HandleStore({handle: this, data: {value, keys}, particleId});
-  }
-
-  async remove(id, particleId) {
-    this._port.HandleRemove({handle: this, data: {id, keys: []}, particleId});
-  }
-
-  async stream(pageSize) {
-    return new Promise(resolve =>
-      this._port.HandleStream({handle: this, callback: resolve, pageSize}));
-  }
-
-  async cursorNext(cursorId) {
-    return new Promise(resolve =>
-      this._port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
-  }
-
-  async cursorClose(cursorId) {
-    this._port.StreamCursorClose({handle: this, cursorId});
   }
 }

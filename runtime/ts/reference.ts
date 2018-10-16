@@ -10,7 +10,7 @@
 import {assert} from '../../platform/assert-web.js'; 
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Type} from './type.js';
-import {handleFor} from '../handle.js';
+import {handleFor} from './handle.js';
 
 export class Reference {
   public entity = null;
@@ -25,6 +25,7 @@ export class Reference {
     this.id = data.id;
     this.storageKey = data.storageKey;
     this.context = context;
+    assert(type.isReference);
     this.type = type;
   }
 
@@ -32,7 +33,6 @@ export class Reference {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referenceReferredType);
       this.handle = handleFor(this.storageProxy);
-      this.handle.entityClass = this.type.referenceReferredType.entitySchema.entityClass();
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
       } else {
@@ -42,6 +42,8 @@ export class Reference {
   }
 
   async dereference() {
+    assert(this.context, "Must have context to dereference");
+
     if (this.entity) {
       return this.entity;
     }
@@ -64,6 +66,7 @@ export function newClientReference(context) {
     private mode = ReferenceMode.Unstored;
     public stored: Promise<undefined>;
     constructor(entity) {
+      // TODO(shans): start carrying storageKey information around on Entity objects
       super({id: entity.id, storageKey: null}, Type.newReference(entity.constructor.type), context);
     
       this.entity = entity;

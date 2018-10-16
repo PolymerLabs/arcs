@@ -1,0 +1,44 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+shape HostedTileShape
+  in ~any *
+  consume tile
+
+particle TileMultiplexer in 'source/Multiplexer.js'
+  in [~any] list
+  host HostedTileShape hostedParticle
+  consume set of tile
+
+recipe TileMultiplexer
+  use #items as list
+  TileMultiplexer
+    list = list
+
+particle SelectableTiles in 'source/TileList.js'
+  in [~any] list
+  inout ~any selected
+  consume root #tiles
+    must provide set of tile
+    provide set of action
+
+//recipe SelectableCopyTilesRecipe
+//  copy #items as items
+//  create #selected as selected
+//  SelectableTiles
+//    items = items
+//    selected = selected
+//  description `show ${SelectableTiles.items}`
+
+//recipe SelectableUseTilesRecipe
+//  use #items as items
+//  create #selected as selected
+//  SelectableTiles
+//    items = items
+//    selected = selected
+//  description `show ${SelectableTiles.items}`

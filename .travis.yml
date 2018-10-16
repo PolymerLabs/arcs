@@ -19,6 +19,8 @@ before_install:
   - npm --version
 
 before_deploy:
+  # build apidocs
+  - cd ${TRAVIS_BUILD_DIR} && npm run build:typedoc 
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
   # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^shell\/build$//g' .gitignore

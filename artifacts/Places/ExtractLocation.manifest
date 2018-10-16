@@ -6,11 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../People/Person.schema'
 import '../Things/GeoCoordinates.schema'
+import '../People/Person.schema'
 
 particle ExtractLocation in 'source/ExtractLocation.js'
   in Person person
   out GeoCoordinates location
-  description `extract ${person}'s location`
-    location `${person}'s location`
+  description `extract ${person.name}'s location`
+    location `${person.name}'s location`
+

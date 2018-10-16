@@ -15,12 +15,12 @@ const html = Xen.Template.html;
 const template = html`
 
 <left title="{{name}}" on-click="_onExpandClick"><span>{{name}}</span>:</left>
-  <right>
-    <div hidden="{{hideexpand}}" on-click="_onExpandClick">+</div>
-    <div hidden="{{notbool}}" title="{{name}}"><input type="checkbox" checked="{{value}}" on-click="_onCheckInput"></div>
-    <div hidden="{{notstring}}" title="{{title}}" style="white-space: pre;">{{value}}</div>
-    <data-explorer hidden="{{notobject}}" object="{{object}}"></data-explorer>
-  </right>
+<right>
+  <div hidden="{{hideexpand}}" on-click="_onExpandClick">+</div>
+  <div hidden="{{notbool}}" title="{{name}}"><input type="checkbox" checked="{{value}}" on-click="_onCheckInput"></div>
+  <div hidden="{{notstring}}" title="{{title}}" style="white-space: pre;">{{value}}</div>
+  <data-explorer hidden="{{notobject}}" object="{{object}}"></data-explorer>
+</right>
 
 `;
 
@@ -47,7 +47,7 @@ class DataItem extends Xen.Base {
     let isobject = (type === 'object' && !isnull);
     let isstring = (type === 'string' || type === 'number' || isnull);
     let isbool = (type==='boolean');
-    
+
     if (!isNaN(Number(props.name))) {
       state.expanded = true;
     }

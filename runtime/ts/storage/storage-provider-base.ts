@@ -15,7 +15,7 @@ import {KeyBase} from './key-base.js';
 import * as util from '../../recipe/util.js';
 
 enum EventKind {
-  Change = 'change'
+  change = 'Change'
 }
 type Callback = ({}) => void;
 
@@ -23,7 +23,7 @@ export abstract class StorageBase {
   constructor(protected readonly arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
   }
-  
+
   abstract construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase>;
   abstract connect(id: string, type: Type, key: string) : Promise<StorageProviderBase>;
   abstract baseStorageKey(type: Type, key: string) : string;
@@ -34,6 +34,9 @@ export abstract class StorageBase {
   shutdown() {}
 }
 
+/**
+ * Docs TBD
+ */
 export abstract class StorageProviderBase {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
@@ -42,7 +45,7 @@ export abstract class StorageProviderBase {
   protected readonly _storageKey: string;
   protected referenceMode = false;
   protected version: number|null;
-  
+
   id: string;
   name: string;
   source: {}|null;
@@ -86,16 +89,30 @@ export abstract class StorageProviderBase {
   on(kindStr: string, callback: Callback, target): void {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
     const kind: EventKind = EventKind[kindStr];
-    
+
     const listeners = this.listeners.get(kind) || new Map();
     listeners.set(callback, {target});
     this.listeners.set(kind, listeners);
   }
 
-  // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
-  async _fire(kindStr: string, details) {
+  off(kindStr: string, callback: Callback): void {
     const kind: EventKind = EventKind[kindStr];
-    
+    const listeners = this.listeners.get(kind);
+    if (listeners) {
+      listeners.delete(callback);
+    }
+  }
+
+  // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
+  /**
+   * Propagate updates to change listeners.
+   *
+   * @param kindStr the type of event, only 'change' is supported.
+   * @param details details about the change
+   */
+  protected async _fire(kindStr: 'change', details: {}) {
+    const kind: EventKind = EventKind[kindStr];
+
     const listenerMap = this.listeners.get(kind);
     if (!listenerMap || listenerMap.size === 0) {
       return;
@@ -157,8 +174,12 @@ export abstract class StorageProviderBase {
     return this.id;
   }
 
+  /**
+   * @returns an object notation of this storage provider.
+   */
   abstract toLiteral();
 
+  /** TODO */
   modelForSynchronization() {
     return this.toLiteral();
   }
