@@ -31,6 +31,7 @@ export interface KeyGenerator {
     generateAndStoreRecoveryKey(): PromiseLike<RecoveryKey>;
 
     importKey(pem: string): PromiseLike<PublicKey>;
+    importWrappedKey(wrappedKey: string, wrappedBy: PublicKey): PromiseLike<WrappedKey>;
 }
 
 /**
@@ -44,7 +45,12 @@ export interface KeyStorage {
      * @param key a public key, wrapped key, or device key pair.
      */
     write(keyFingerPrint: string, key: DeviceKey|WrappedKey|PublicKey): PromiseLike<string>;
-    find(keyFingerPrint: string): PromiseLike<Key>;
+
+  /**
+   * Find a key in storage with the given fingerprint or return null if it doesn't exist.
+   * @param keyFingerPrint a fingerprint from Fingerprintable.fingerprint
+   */
+  find(keyFingerPrint: string): PromiseLike<Key|null>;
 }
 
 
