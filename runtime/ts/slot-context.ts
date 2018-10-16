@@ -13,9 +13,11 @@ import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotSpec} from '../particle-spec.js';
 import {Handle} from '../recipe/handle.js';
 
-// Holds container (eg div element) and its additional info.
-// Must be initialized either with a container (for root slots provided by the shell) or
-// tuple of sourceSlotConsumer and spec (ProvidedSlotSpec) of the slot.
+/**
+ * Holds container (eg div element) and its additional info.
+ * Must be initialized either with a container (for root slots provided by the shell) or
+ * tuple of sourceSlotConsumer and spec (ProvidedSlotSpec) of the slot.
+ */
 export class SlotContext {
   readonly id: string;
   readonly name: string;

@@ -373,15 +373,17 @@ export class Type {
     return true;
   }
 
-  // Tests whether two types' constraints are compatible with each other
+  /** Tests whether two types' constraints are compatible with each other. */
   static canMergeConstraints(type1, type2) {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
-  // Clone a type object.
-  // When cloning multiple types, variables that were associated with the same name
-  // before cloning should still be associated after cloning. To maintain this 
-  // property, create a Map() and pass it into all clone calls in the group.
+  /**
+   * Clone a type object.
+   * When cloning multiple types, variables that were associated with the same name
+   * before cloning should still be associated after cloning. To maintain this 
+   * property, create a Map() and pass it into all clone calls in the group.
+   */
   clone(variableMap) {
     const type = this.resolvedType();
     if (type.isVariable) {
@@ -399,10 +401,12 @@ export class Type {
     return Type.fromLiteral(type.toLiteral());
   }
 
-  // Clone a type object, maintaining resolution information.
-  // This function SHOULD NOT BE USED at the type level. In order for type variable
-  // information to be maintained correctly, an entire context root needs to be
-  // cloned.
+  /**
+   * Clone a type object, maintaining resolution information.
+   * This function SHOULD NOT BE USED at the type level. In order for type variable
+   * information to be maintained correctly, an entire context root needs to be
+   * cloned.
+   */
   _cloneWithResolutions(variableMap) {
     if (this.isVariable) {
       if (variableMap.has(this.variable)) {
