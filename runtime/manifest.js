@@ -48,7 +48,9 @@ class StorageStub {
   }
 }
 
-// Calls `this.visit()` for each node in a manfest AST, parents before children.
+/**
+ * Calls `this.visit()` for each node in a manfest AST, parents before children.
+ */
 class ManifestVisitor {
   traverse(ast) {
     if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {

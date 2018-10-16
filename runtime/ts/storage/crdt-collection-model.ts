@@ -38,9 +38,11 @@ export class CrdtCollectionModel {
       }
     }
   }
-  // Adds membership, `keys`, of `value` indexed by `id` to this collection.
-  // Returns whether the change is effective (`id` is new to the collection,
-  // or `value` is different to the value previously stored).
+  /**
+   * Adds membership, `keys`, of `value` indexed by `id` to this collection.
+   * Returns whether the change is effective (`id` is new to the collection,
+   * or `value` is different to the value previously stored).
+   */
   add(id: string, value, keys: string[]): boolean {
     // Ensure that keys is actually an array, not a single string.
     // TODO(shans): remove this when all callers are implemented in typeScript.
@@ -89,9 +91,11 @@ export class CrdtCollectionModel {
     return JSON.stringify(value1) === JSON.stringify(value2);
   }
 
-  // Removes the membership, `keys`, of the value indexed by `id` from this collection.
-  // Returns whether the change is effective (the value is no longer present
-  // in the collection because all of the keys have been removed).
+  /**
+   * Removes the membership, `keys`, of the value indexed by `id` from this collection.
+   * Returns whether the change is effective (the value is no longer present
+   * in the collection because all of the keys have been removed).
+   */
   remove(id: string, keys: string[]): boolean {
     const item = this.items.get(id);
     if (!item) {
