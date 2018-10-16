@@ -158,8 +158,8 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
   }
 
   fingerprint(): PromiseLike<string> {
-    // TODO: fix this with a proper hash based fingerprint/thumbprint, right now is just serializes to JWK.
     return crypto.subtle.exportKey("jwk", this.cryptoKey())
+      // Use the modulus 'n' as the fingerprint since 'e' is fixed
       .then(key => WebCryptoPublicKey.digest(key['n']));
   }
 
