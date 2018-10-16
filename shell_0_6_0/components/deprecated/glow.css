@@ -1,0 +1,65 @@
+[glowable] {
+  /*
+  position: absolute;
+  content: '';
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
+  */
+  filter: blur(12px);
+  background: rgba(0,0,0,.15);
+  animation: stopGlow 1.5s ease 1;
+}
+
+[glowing] [glowable] {
+  filter: blur(20px);
+  background: rgba(94,213,227,1);
+  /* rgba(32,231,255,1); */
+  animation: animateGlow 1.5s ease infinite;
+}
+
+[glowing] [glowable] {
+  background: rgba(94,213,227,.5);
+}
+
+@keyframes animateGlow {
+  0%  {
+    filter: blur(20px);
+    opacity: 1;
+    -webkit-animation-timing-function: ease-in;
+  }
+  50% {
+    filter: blur(12px);
+    opacity: .5;
+    -webkit-animation-timing-function: linear;
+  }
+  100% {
+    opacity: 1;
+    filter: blur(20px);
+    -webkit-animation-timing-function: ease-out;
+  }
+}
+
+@keyframes stopGlow {
+  0%  {
+    filter: blur(20px);
+    opacity: 1;
+    background: rgba(94,213,227,.5);
+    -webkit-animation-timing-function: ease-in;
+  }
+  50% {
+    filter: blur(12px);
+    opacity: .5;
+    -webkit-animation-timing-function: linear;
+  }
+  100% {
+    filter: blur(12px);
+    background: rgba(0,0,0,.15);
+    opacity: 1;
+    -webkit-animation-timing-function: ease-out;
+  }
+}

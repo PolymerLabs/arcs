@@ -149,7 +149,7 @@ export class DomParticleBase extends Particle {
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
-   * from `rawData` (`new <EntityClass>(rawData)`).
+   * from `rawData` (`new [EntityClass](rawData)`).
    */
   updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
@@ -166,11 +166,12 @@ export class DomParticleBase extends Particle {
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    const entities = await handle.toList();
-    const target = entities.find(r => r.id === entity.id);
-    if (target) {
-      handle.remove(target);
-    }
+    // const entities = await handle.toList();
+    // const target = entities.find(r => r.id === entity.id);
+    // if (target) {
+    //   handle.remove(target);
+    // }
+    handle.remove(entity);
     handle.store(entity);
   }
   /** @method boxQuery(box, userid)
