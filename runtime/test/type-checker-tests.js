@@ -14,9 +14,9 @@ import {assert} from './chai-web.js';
 
 import {Schema} from '../ts-build/schema.js';
 import {Type} from '../ts-build/type.js';
-import {SlotInfo} from '../slot-info.js';
+import {SlotInfo} from '../ts-build/slot-info.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {TypeVariable} from '../type-variable.js';
+import {TypeVariable} from '../ts-build/type-variable.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 

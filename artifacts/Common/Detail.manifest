@@ -13,7 +13,8 @@ particle DetailSlider in 'source/DetailSlider.js'
       handle selected
   description `show details about ${selected}`
 
-recipe DetailSlider
-  use #selected as selected
-  DetailSlider
-    selected = selected
+// TODO(sjmiles): temporarily hide from coalescer
+//recipe DetailSlider
+//  use #selected as selected
+//  DetailSlider
+//    selected = selected

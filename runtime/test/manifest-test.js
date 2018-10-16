@@ -796,6 +796,25 @@ ${particleStr1}
     assert.lengthOf(slotB.consumeConnections, 1);
     assert.equal(slotB.sourceConnection, slotConnA);
   });
+  it('parses local slots with IDs', async () => {
+    let recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        consume slotA
+          provide slotB
+      particle P2 in 'some-particle.js'
+        consume slotB
+      recipe
+        slot 'rootslot-0' as slot0
+        slot 'local-slot-0' as slot1
+        P1
+          consume slotA as slot0
+            provide slotB as slot1
+        P2
+          consume slotB as slot1
+    `)).recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.slots, 2);
+  });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
     let loader = {
@@ -834,7 +853,7 @@ ${particleStr1}
       return count;
     };
 
-    let shellParticlesPath = './artifacts/';
+    let shellParticlesPath = 'runtime/test/artifacts/';
     let shellParticleNames = [];
     fs.readdirSync(shellParticlesPath).forEach(name => {
       let manifestFolderName = path.join(shellParticlesPath, name);
@@ -1284,6 +1303,99 @@ resource SomeName
     assert(recipe.normalize());
     assert(recipe.isResolved());
   });
+  it('can resolve a particle with a schema reference', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        Text far
+      particle P
+        in Bar {Reference<Foo> foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {Reference<Foo {Text far}> foo} bar
+  affordance dom`);
+  });
+  it('can resolve a particle with an inline schema reference', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+      particle P
+        in Bar {Reference<Foo {Text far}> foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {Reference<Foo {Text far}> foo} bar
+  affordance dom`);
+  });
+  it('can resolve a particle with a collection of schema references', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        Text far
+      particle P
+        in Bar {[Reference<Foo>] foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {[Reference<Foo {Text far}>] foo} bar
+  affordance dom`);
+  });
+  it('can resolve a particle with a collection of inline schema references', async () => {
+    let manifest = await Manifest.parse(`
+      particle P
+        in Bar {[Reference<Foo {Text far}>] foo} bar
+      recipe
+        create as handle
+        P
+          bar = handle
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    const schema = recipe.particles[0].connections.bar.type.entitySchema;
+    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+
+    assert.equal(manifest.particles[0].toString(),
+`particle P in 'null'
+  in Bar {[Reference<Foo {Text far}>] foo} bar
+  affordance dom`);
+  });
   it('can resolve inline schemas against out of line schemas', async () => {
     let manifest = await Manifest.parse(`
       schema T
@@ -1339,7 +1451,13 @@ resource SomeName
     let [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
+    // Although suspicious, this is valid because entities in the
+    // created handle just need to be able to be read as {Text value, Text value2}
+    // and {Text value, Text value3}. Hence, the recipe is valid and the type
+    // of the handle is * {Text value, Text value2, Text value3};
     assert(suspiciouslyValidRecipe.normalize());
+    let suspiciouslyValidFields = suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.entitySchema.fields;
+    assert.deepEqual(suspiciouslyValidFields, {value: 'Text', value2: 'Text', value3: 'Text'});
     assert(!invalidRecipe.normalize());
   });
 

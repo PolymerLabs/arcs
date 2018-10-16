@@ -53,8 +53,8 @@ defineParticle(({DomParticle, html, log}) => {
 
 <template tiled-items>
   <div card selected$="{{selected}}">
-    <div slotid="action" subid$="{{id}}"></div>
     <div slotid="tile" subid$="{{id}}" key="{{id}}" on-click="_onSelect"></div>
+    <div slotid="action" subid$="{{id}}"></div>
   </div>
 </template>
 
@@ -82,12 +82,12 @@ defineParticle(({DomParticle, html, log}) => {
     render({items, selected}) {
       const sorted = items.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
       const selectedId = selected && selected.id;
-      log(`selected: ${selectedId}`);
+      //log(`selected: ${selectedId}`);
       return {
         items: {
           $template: 'tiled-items',
           models: sorted.map(item => {
-            log(`rendering: ${item.id}`);
+            //log(`rendering: ${item.id}`);
             return {
               id: item.id,
               selected: selectedId === item.id

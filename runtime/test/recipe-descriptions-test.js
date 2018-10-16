@@ -254,8 +254,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
     assert.equal('Do "hello foo"', await helper.plans[0].description.getRecipeSuggestion());
     let domDescription = await helper.plans[0].description.getRecipeSuggestion(DescriptionDomFormatter);
-    assert.equal('Do "hello foo"', domDescription.template);
-    assert.isEmpty(domDescription.model);
+    assert.equal(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
+    assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
   });
 
   it('generates recipe description with duplicate particles', async () => {

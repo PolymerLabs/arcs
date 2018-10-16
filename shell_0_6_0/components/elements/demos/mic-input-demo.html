@@ -1,0 +1,47 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons">
+<style>
+  icon {
+    font-family: "Material Icons";
+    font-size: 24px;
+    font-style: normal;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    /* partial FOUC prevention */
+    width: 24px;
+    height: 24px;
+    overflow: hidden;;
+  }
+</style>
+
+<script type="module" src="../mic-input.js"></script>
+
+<div id="results">
+  <span id="final_span" class="final"></span>
+  <span id="interim_span" class="interim"></span>
+  <p></p>
+</div>
+
+<mic-input id="mi">Mic Ready</mic-input>
+<br><br>
+
+<span id="final"></span>
+<span id="interim"></span>
+
+<script>
+  mi.addEventListener('start', e => {
+    mi.style.color = 'red';
+  });
+  mi.addEventListener('result', e => {
+    const {interimTranscript, finalTranscript} = e.detail;
+    interim.textContent = interimTranscript;
+    final.textContent = finalTranscript;
+  });
+  mi.addEventListener('end', e => {
+    mi.style.color = 'black';
+    const finalTranscript = e.detail;
+    final.textContent = finalTranscript;
+  });
+</script>

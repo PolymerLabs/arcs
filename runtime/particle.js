@@ -104,6 +104,20 @@ export class Particle {
     this.relevances.push(r);
   }
 
+  startBusy() {
+    if (this._busy == 0) {
+      this._idle = new Promise(resolve => this._idleResolver = resolve);
+    }
+    this._busy++;
+  }
+  
+  doneBusy() {
+    this._busy--;
+    if (this._busy == 0) {
+      this._idleResolver();
+    }
+  }
+
   inputs() {
     return this.spec.inputs;
   }
@@ -141,7 +155,7 @@ export class Particle {
   }
 
   setParticleDescription(pattern) {
-    return this.setDescriptionPattern('_pattern_', pattern);
+    return this.setDescriptionPattern('pattern', pattern);
   }
   setDescriptionPattern(connectionName, pattern) {
     let descriptions = this.handles.get('descriptions');
@@ -149,6 +163,6 @@ export class Particle {
       descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       return true;
     }
-    return false;
+    throw new Error('A particle needs a description handle to set a decription pattern');
   }
 }

@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../../artifacts/Common/List.manifest'
-import '../../../../artifacts/Social/Particles.manifest'
-import '../../../../artifacts/Social/Post.schema'
+import '../../artifacts/Common/List.manifest'
+import '../../artifacts/Social/Particles.manifest'
+import '../../artifacts/Social/Post.schema'
 
 particle ShowOne in 'source/ShowPostOne.js'
   in Post post

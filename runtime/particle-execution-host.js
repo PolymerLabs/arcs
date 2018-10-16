@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
-import {reportSystemException} from './arc-exceptions.js';
+import {reportSystemException} from './ts-build/arc-exceptions.js';
 
 export class ParticleExecutionHost {
   constructor(port, slotComposer, arc) {
@@ -53,11 +53,24 @@ export class ParticleExecutionHost {
 
     this._apiPort.onHandleSet = ({handle, data, particleId, barrier}) => handle.set(data, particleId, barrier);
     this._apiPort.onHandleClear = ({handle, particleId, barrier}) => handle.clear(particleId, barrier);
-    this._apiPort.onHandleStore = ({handle, data: {value, keys}, particleId}) => handle.store(value, keys, particleId);
-    this._apiPort.onHandleRemove = ({handle, data: {id, keys}, particleId}) => handle.remove(id, keys, particleId);
 
-    this._apiPort.onHandleStream = async ({handle, callback, pageSize}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize)});
+    this._apiPort.onHandleStore = async ({handle, callback, data: {value, keys}, particleId}) => {
+      await handle.store(value, keys, particleId);
+      this._apiPort.SimpleCallback({callback});
+    };
+
+    this._apiPort.onHandleRemove = async ({handle, callback, data: {id, keys}, particleId}) => {
+      await handle.remove(id, keys, particleId);
+      this._apiPort.SimpleCallback({callback});
+    };
+
+    this._apiPort.onHandleRemoveMultiple = async ({handle, callback, data, particleId}) => {
+      await handle.removeMultiple(data, particleId);
+      this._apiPort.SimpleCallback({callback});
+    };
+
+    this._apiPort.onHandleStream = async ({handle, callback, pageSize, forward}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize, forward)});
     };
 
     this._apiPort.onStreamCursorNext = async ({handle, callback, cursorId}) => {
@@ -75,7 +88,7 @@ export class ParticleExecutionHost {
 
     this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
       if (!storageKey) {
-        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'in-memory');
+        storageKey = this._arc._storageProviderFactory.baseStorageKey(type, this._arc._storageKey || 'volatile');
       }
       let store = await this._arc._storageProviderFactory.baseStorageFor(type, storageKey);
       // TODO(shans): THIS IS NOT SAFE!
@@ -93,9 +106,9 @@ export class ParticleExecutionHost {
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
       // At the moment, inner arcs are not persisted like their containers, but are instead
       // recreated when an arc is deserialized. As a consequence of this, dynamically 
-      // created handles for inner arcs must always be in-memory to prevent storage 
+      // created handles for inner arcs must always be volatile to prevent storage 
       // in firebase.
-      let store = await this._arc.createStore(type, name, null, [], 'in-memory');
+      let store = await this._arc.createStore(type, name, null, [], 'volatile');
       this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 

@@ -60,7 +60,6 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
           <div class="buttons-panel">
             <iron-icon on-click="_fit" title="Fit to events" icon="maps:zoom-out-map"></iron-icon>
             <iron-icon on-click="_redraw" title="Redraw timeline if looks weird" icon="image:brush"></iron-icon>
-            <iron-icon id="download" on-click="_download" title="Download for inspection in chrome://tracing" icon="file-download"></iron-icon>
           </div>
           zoom-key: ctrl
         </div>
@@ -229,6 +228,7 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
           this._items.clear();
           this._startupTime = null;
           if (this._timeline) this._timeline.removeCustomTime('startup');
+          this._autoWindowResize = true;
           return;
       }
     }
@@ -255,15 +255,14 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
       this._timeline.on('itemover', props => {
         this._selectedItem = this._items.get(props.item);
       });
+      this._timeline.on('rangechange', ({byUser}) => {
+        if (byUser) this._autoWindowResize = false;
+      });
       if (this._startupTime) {
         this._timeline.addCustomTime(this._startupTime, 'startup');
       }
-    } else if (this._timeline && startEmpty) {
-      // Refocus on new events after a page refresh.
-      this._timeline.setWindow({
-        start: this._items.min('start').start,
-        end: this._aBitInTheFuture()
-      });
+    } else if (this._timeline && this._autoWindowResize) {
+      this._fit();
     }
   }
 
@@ -319,22 +318,17 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
     this._groups.flush();
   }
 
-  _download() {
-    chrome.devtools.inspectedWindow.eval('Arcs.Tracing.download()');
-  }
-
   _redraw() {
     if (this._timeline) this._timeline.redraw();
   }
 
   _fit() {
+    this._autoWindowResize = true;
     if (this._timeline && this._items.length > 0) {
       // There's timeline.fit(), but it doesn't leave margins and looks weird.
       let start = this._items.min('start').start;
       let end = this._items.max('end').end;
-      const fraction = (end - start) * .05;
-      start = start - fraction;
-      end = end + fraction;
+      end = end + (end - start) * .1;
       this._timeline.setWindow({start, end});
     }
   }

@@ -109,7 +109,6 @@ ${style}
     <div share>
       <icon show$="{{self}}">account_circle</icon>
       <icon show$="{{friends}}">people</icon>
-
     </div>
   </div>
 </template>
@@ -165,7 +164,7 @@ ${style}
       };
       const byTime = arcs.slice().sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
       byTime.forEach((a, i) => {
-        if (!a.deleted) {
+        if (a.description && !a.deleted) {
           let model = this._renderArc(a);
           result.items.push(model);
           if (a.starred) {

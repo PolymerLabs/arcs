@@ -8,18 +8,14 @@
 
 import mocha from 'mocha';
 import chai from 'chai';
+import { expect } from 'chai';
 import chaiHttp from 'chai-http';
-
-// TODO figure out why this doesn't work yet..
-//import 'chai/register-expect';
-
-import { app } from '../src/App';
+import { app } from '../src/pouch-db-app';
 
 chai.use(chaiHttp);
-const expect = chai.expect;
 
 describe('baseRoute', () => {
-  it('/ should be static html', () => {
+  it.skip('/ should be static html', () => {
     return chai
       .request(app)
       .get('/')
@@ -28,12 +24,31 @@ describe('baseRoute', () => {
       });
   });
 
-  it('/ should have a welcome message', () => {
+  it.skip('/ should have a welcome message', () => {
     return chai
       .request(app)
       .get('/')
       .then(res => {
         expect(res.text).to.include('Welcome to Arcs');
+      });
+  });
+
+  it('/shell/apps/web/index.html should be static html', () => {
+    return chai
+      .request(app)
+      .get('/shell/apps/web/index.html')
+      .then(res => {
+        expect(res.type).to.eql('text/html');
+      });
+  });
+
+  it('/arcs/manifest should return id and text', () => {
+    return chai
+      .request(app)
+      .get('/arcs/manifest')
+      .then(res => {
+        expect(res.body.id).to.equal('manifest:undefined:');
+        expect(res.body.text).to.include('schema Text');
       });
   });
 });

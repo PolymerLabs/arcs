@@ -9,10 +9,11 @@
 'use strict';
 
 /* global defineParticle, importScripts */
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({DomParticle, _fetch, resolver, log}) => {
 
-  importScripts(resolver('TVMazeFindShow/TvMaze.js'));
   /* global service */
+  //importScripts(resolver('TVMazeFindShow/TvMaze.js'));
+  const service = `https://api.tvmaze.com`;
 
   return class extends DomParticle {
     get template() {
@@ -22,29 +23,30 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (!state.receiving) {
-        if (find && find !== state.find) {
-          state.find = find;
-          this.fetchShow(find);
+        if (find) {
+          if (find.length) {
+            find = find[0];
+          }
+          if (find && find !== state.find) {
+            state.find = find;
+            this.fetchShow(find);
+          }
         }
       }
     }
     async fetchShow(find) {
       this.setState({receiving: true});
-      const response = await fetch(`${service}/search/shows?q=${find.name}`);
+      const response = await _fetch(`${service}/search/shows?q=${find.name}`);
       const shows = await response.json();
       if (shows && shows.length) {
         this.receiveShow(shows[0]);
       }
       this.setState({receiving: false});
     }
-    async receiveShow(show) {
+    async receiveShow({show}) {
       //log(show);
-      // set show data
-      const showHandle = this.handles.get('show');
-      const Show = showHandle.entityClass;
-      show = show.show;
       if (show.image && show.image.medium) {
-        const entity = new Show({
+        this.updateVariable('show', {
           showid: String(show.id),
           name: show.name,
           description: show.summary,
@@ -53,9 +55,6 @@ defineParticle(({DomParticle, html, resolver, log}) => {
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
         });
-        //log('TVShows', JSON.stringify(entity.dataClone(), null, '  '));
-        showHandle.set(entity);
-        this.setParticleDescription(show.summary);
       }
     }
   };

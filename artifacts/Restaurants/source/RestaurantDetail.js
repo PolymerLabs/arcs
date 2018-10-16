@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, _fetch}) => {
 
   let host = `restaurant-detail`;
 
@@ -151,7 +151,7 @@ ${styles}
       <div style="margin-top: 16px; width: 82px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
         <div rating>{{rating}}</div>
         <div stars-container>
-          <div stars style="{{starStyle}}"></div>
+          <div stars xen:style="{{starStyle}}"></div>
         </div>
       </div>
     </div>
@@ -180,7 +180,7 @@ ${styles}
       }
     }
     _fetchDetail(reference) {
-      fetch(`${detailsService}?reference=${reference}`)
+      _fetch(`${detailsService}?reference=${reference}`)
         .then(response => response.json())
         .then(json => this._receiveDetail(json.result))
         ;

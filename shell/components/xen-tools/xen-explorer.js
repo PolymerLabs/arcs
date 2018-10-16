@@ -24,14 +24,10 @@ const template = Xen.html`
     ${TreeStyles}
     span {
       color: gray;
-      /*padding: 4px;*/
     }
     [selected] {
       color: black;
       background-color: whitesmoke;
-      /*
-      border-radius: 8px;
-      */
     }
   </style>
   <div><button on-click="_onUpdate">Update</button></div>
@@ -87,25 +83,8 @@ class XenExplorer extends Xen.Base {
           state: record.state
         }
       });
+      window.$x = record.node;
     }
   }
-  /*
-  _renderDataTree(component) {
-    const builder = (name, record, map) => {
-      let html = '';
-      if (record) {
-        const names = Object.keys(record);
-        html = names.map(name => {
-          //html += Xen.html`${builder(name, record.children[name], map)}`;
-          //html += Xen.html`${builder(name, record.children[name], map)}`;
-        }).join('');
-      }
-      return `<ul><li><span key="${key}">${name}</span>${html}</li></ul>`;
-    };
-    const map = [];
-    const html = builder('root', {children: data}, map);
-    return {html, map};
-  }
-  */
 }
 customElements.define('xen-explorer', XenExplorer);

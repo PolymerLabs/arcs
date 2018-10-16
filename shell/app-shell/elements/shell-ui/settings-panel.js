@@ -1,7 +1,8 @@
+import Const from '../../../lib/constants.js';
 import Xen from '../../../components/xen/xen.js';
-import Const from '../../constants.js';
 import IconStyle from '../../../components/icons.css.js';
 import {arcToRecipe} from './generalizer.js';
+import Firebase from '../../../lib/firebase.js';
 
 const html = Xen.Template.html;
 const template = html`
@@ -75,7 +76,7 @@ const template = html`
 </style>
 
 <section user open$="{{user_picker_open}}">
-  <user-picker users="{{users}}" friends="{{friends}}" on-selected="_onSelectUser"></user-picker>
+  <user-picker users="{{users}}" friends="{{friends}}" avatars="{{avatars}}" on-selected="_onSelectUser"></user-picker>
 </section>
 <section bar disabled>
   <span>Star this arc</span>
@@ -93,6 +94,10 @@ const template = html`
   <span>Use for friends' suggestions</span>
   <icon>{{shareIcon}}</icon>
 </section>
+<section bar on-click="_onPlungePipes">
+  <span>Plunge the pipes</span>
+  <icon>build</icon>
+</section>
 <section bar on-click="_onExperimentClick">
   <span>Convert Arc to Recipe</span>
   <icon>transform</icon>
@@ -105,7 +110,7 @@ const template = html`
 
 const userTemplate = html`
   <user-item on-click="_onSelect" key="{{key}}">
-    <a href="{{href}}" target="_blank"><avatar style="{{style}}"></avatar> <name>{{name}}</name></a>
+    <a href="{{href}}" target="_blank"><avatar xen:style="{{style}}"></avatar> <name>{{name}}</name></a>
   </user-item>
 `;
 
@@ -113,7 +118,7 @@ const log = Xen.logFactory('SettingsPanel', '#bb4d00');
 
 class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'arc', 'users', 'user', 'avatars', 'friends', 'share', 'user_picker_open'];
+    return ['key', 'arc', 'users', 'user', 'friends', 'avatars', 'share', 'user_picker_open'];
   }
   get template() {
     return template;
@@ -194,6 +199,14 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
     const {arc} = this._props;
     if (arc) {
       arcToRecipe(await arc.serialize());
+    }
+  }
+  _onPlungePipes() {
+    const {user} = this._props;
+    if (user && user.id) {
+      log(`arcs/${user.id}-pipes`);
+      Firebase.db.child(`arcs/${user.id}-pipes`).set(null);
+      window.location.reload();
     }
   }
 }

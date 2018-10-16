@@ -71,7 +71,7 @@ class ThingMapper {
   }
 
   identifierForThing(thing) {
-    assert(this._reverseIdMap.has(thing), `Missing thing ${thing}`);
+    assert(this._reverseIdMap.has(thing), `Missing thing [${thing}]`);
     return this._reverseIdMap.get(thing);
   }
 
@@ -87,7 +87,7 @@ export class APIPort {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._messageMap = new Map();
-    this._port.onmessage = async e => this._handle(e);
+    this._port.onmessage = async e => this._processMessage(e);
     this._debugAttachment = null;
     this.messageCount = 0;
 
@@ -137,7 +137,7 @@ export class APIPort {
         unconvert: a => clazz.fromLiteral(a)
       };
     };
-  
+
     this._testingHook();
   }
 
@@ -149,7 +149,7 @@ export class APIPort {
     this._port.close();
   }
 
-  async _handle(e) {
+  async _processMessage(e) {
     assert(this._messageMap.has(e.data.messageType));
 
     this.messageCount++;
@@ -166,7 +166,7 @@ export class APIPort {
     // wait for them to complete before processing the message.
     for (let arg of Object.values(args)) {
       if (arg instanceof Promise) {
-        arg.then(() => this._handle(e));
+        arg.then(() => this._processMessage(e));
         return;
       }
     }
@@ -262,9 +262,10 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct, barrier: this.Direct});
     this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
-    this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
-    this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
-    this.registerHandler('HandleStream', {handle: this.Mapped, callback: this.Direct, pageSize: this.Direct});
+    this.registerHandler('HandleStore', {handle: this.Mapped, callback: this.Direct, data: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleRemove', {handle: this.Mapped, callback: this.Direct, data: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleRemoveMultiple', {handle: this.Mapped, callback: this.Direct, data: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleStream', {handle: this.Mapped, callback: this.Direct, pageSize: this.Direct, forward: this.Direct});
     this.registerHandler('StreamCursorNext', {handle: this.Mapped, callback: this.Direct, cursorId: this.Direct});
     this.registerHandler('StreamCursorClose', {handle: this.Mapped, cursorId: this.Direct});
 
@@ -316,9 +317,10 @@ export class PECInnerPort extends APIPort {
     this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
     this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct, barrier: this.Direct});
     this.registerCall('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
-    this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
-    this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
-    this.registerCall('HandleStream', {handle: this.Mapped, callback: this.LocalMapped, pageSize: this.Direct});
+    this.registerCall('HandleStore', {handle: this.Mapped, callback: this.LocalMapped, data: this.Direct, particleId: this.Direct});
+    this.registerCall('HandleRemove', {handle: this.Mapped, callback: this.LocalMapped, data: this.Direct, particleId: this.Direct});
+    this.registerCall('HandleRemoveMultiple', {handle: this.Mapped, callback: this.LocalMapped, data: this.Direct, particleId: this.Direct});
+    this.registerCall('HandleStream', {handle: this.Mapped, callback: this.LocalMapped, pageSize: this.Direct, forward: this.Direct});
     this.registerCall('StreamCursorNext', {handle: this.Mapped, callback: this.LocalMapped, cursorId: this.Direct});
     this.registerCall('StreamCursorClose', {handle: this.Mapped, cursorId: this.Direct});
 

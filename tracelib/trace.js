@@ -55,7 +55,8 @@ function pushEvent(event) {
     if (!event.cat) {
       event.cat = '';
     }
-    events.push(event);
+    // Only keep events in memory if we're not streaming them.
+    if (streamingCallbacks.length === 0) events.push(event);
     Promise.resolve().then(() => {
       for (let {callback, predicate} of streamingCallbacks) {
           if (!predicate || predicate(event)) callback(event);
@@ -265,6 +266,8 @@ function init() {
   };
   module.exports.now = now;
   module.exports.stream = function(callback, predicate) {
+    // Once we start streaming we no longer keep events in memory.
+    events.length = 0;
     streamingCallbacks.push({callback, predicate});
   };
   module.exports.__clearForTests = function() {

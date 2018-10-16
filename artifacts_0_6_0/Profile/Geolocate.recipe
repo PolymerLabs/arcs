@@ -1,0 +1,12 @@
+schema Geolocation
+  Number latitude
+  Number longitude
+
+particle Geolocate in './source/geolocate.js'
+  consume root
+  out Geolocation geolocation
+
+recipe Geolocate
+  create as geolocation
+  Geolocate
+    geolocation = geolocation

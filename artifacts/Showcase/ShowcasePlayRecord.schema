@@ -1,0 +1,6 @@
+schema ShowcasePlayRecord
+  Text type
+  Text artist
+  Text song
+  Text dateTime
+  description `${song} from ${artist}`

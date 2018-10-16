@@ -20,7 +20,7 @@ import {Shape} from './ts-build/shape.js';
 import {Type} from './ts-build/type.js';
 import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
-import {ManifestMeta} from './manifest-meta.js';
+import {ManifestMeta} from './ts-build/manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 
@@ -32,16 +32,19 @@ class ManifestError extends Error {
 }
 
 class StorageStub {
-  constructor(type, id, name, storageKey, storageProviderFactory) {
+  constructor(type, id, name, storageKey, storageProviderFactory, originalId) {
     this.type = type;
     this.id = id;
+    this.originalId = originalId;
     this.name = name;
     this.storageKey = storageKey;
     this.storageProviderFactory = storageProviderFactory;
   }
 
-  inflate() {
-    return this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  async inflate() {
+    let store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+    store.originalId = this.originalId;
+    return store;
   }
 }
 
@@ -138,6 +141,9 @@ export class Manifest {
   get stores() {
     return this._stores;
   }
+  get allStores() {
+    return [...this._findAll(manifest => manifest._stores)];
+  }
   get shapes() {
     return this._shapes;
   }
@@ -159,7 +165,7 @@ export class Manifest {
   // TODO: simplify() / isValid().
   async createStore(type, name, id, tags, storageKey) {
     assert(!type.hasVariableReference, `stores can't have variable references`);
-    let store = await this.storageProviderFactory.construct(id, type, storageKey || `in-memory://${this.id}`);
+    let store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store._version !== null);
     store.name = name;
     this._storeManifestUrls.set(store.id, this.fileName);
@@ -172,8 +178,8 @@ export class Manifest {
     return store;
   }
 
-  newStorageStub(type, name, id, storageKey, tags) {
-    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory), tags);
+  newStorageStub(type, name, id, storageKey, tags, originalId) {
+    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId), tags);
   }
 
   _find(manifestFinder) {
@@ -410,6 +416,7 @@ ${e.message}
         // TODO(dstockwell): set up a scope and merge type variables here, so that
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
+
         switch (node.kind) {
         case 'schema-inline': {
           let schemas = [];
@@ -436,16 +443,12 @@ ${e.message}
                 // Validate that the specified or inferred type matches the schema.
                 let externalType = schema.fields[name];
                 if (externalType && !Schema.typesEqual(externalType, type)) {
-                  throw new ManifestError(
-                      node.location,
-                      `Type of '${name}' does not match schema (${type} vs ${externalType})`);
+                  throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                 }
               }
             }
             if (!type) {
-              throw new ManifestError(
-                  node.location,
-                  `Could not infer type of '${name}' field`);
+              throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
             }
             fields[name] = type;
           }
@@ -456,9 +459,7 @@ ${e.message}
           for (let alias of aliases) {
             schema = Schema.union(alias, schema);
             if (!schema) {
-              throw new ManifestError(
-                  node.location,
-                  `Could not merge schema aliases`);
+              throw new ManifestError(node.location, `Could not merge schema aliases`);
             }
           }
           node.model = Type.newEntity(schema);
@@ -775,7 +776,23 @@ ${e.message}
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
             if (ps.name) {
-              items.byName.set(ps.name, providedSlot);
+              if (items.byName.has(ps.name)) {
+                // The slot was added to the recipe twice - once as part of the
+                // slots in the manifest, then as part of particle spec.
+                // Unifying both slots, updating name and source slot connection.
+                let theSlot = items.byName.get(ps.name);
+                assert(theSlot !== providedSlot);
+                assert(!theSlot.name && providedSlot);
+                assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
+                assert(theSlot.handleConnections.length == 0);
+                theSlot.name = providedSlot.name;
+                theSlot.sourceConnection = providedSlot.sourceConnection;
+                theSlot.sourceConnection.providedSlots[theSlot.name] = theSlot;
+                theSlot._handleConnections = providedSlot.handleConnections.slice();
+                theSlot.recipe.removeSlot(providedSlot);
+              } else {
+                items.byName.set(ps.name, providedSlot);
+              }
             }
             items.bySlot.set(providedSlot, ps);
           } else {
@@ -977,6 +994,7 @@ ${e.message}
   static async _processStore(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
+    const originalId = item.originalId;
     let type = item.type.model;
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
@@ -990,7 +1008,7 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin == 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags);
+      manifest.newStorageStub(type, name, id, item.source, tags, originalId);
       return;
     }
 
@@ -1004,8 +1022,7 @@ ${e.message}
       source = item.source;
       json = manifest.resources[source];
       if (json == undefined) {
-        throw new Error(`Resource '${source}' referenced by store '${
-            id}' is not defined in this manifest`);
+        throw new Error(`Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
       }
     }
     let entities;
@@ -1015,17 +1032,19 @@ ${e.message}
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
 
-    // Note that BigCollection isn't relevant here (ManifestStorage cannot be of BigCollectionType).
+    // TODO: clean this up
     let unitType;
-    if (!type.isCollection) {
+    if (type.isCollection) {
+      unitType = type.collectionType;
+    } else if (type.isBigCollection) {
+      unitType = type.bigCollectionType;
+    } else {
       if (entities.length == 0) {
-        await Manifest._createStore(manifest, type, name, id, tags, item);
+        await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
         return;
       }
       entities = entities.slice(entities.length - 1);
       unitType = type;
-    } else {
-      unitType = type.collectionType;
     }
 
     if (unitType.isEntity) {
@@ -1051,7 +1070,7 @@ ${e.message}
     }
 
     let version = item.version || 0;
-    let store = await Manifest._createStore(manifest, type, name, id, tags, item);
+    let store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId);
 
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
@@ -1068,15 +1087,25 @@ ${e.message}
 
     // For this store to be able to be treated as a CRDT, each item needs a key.
     // Using id as key seems safe, nothing else should do this.
-    store.fromLiteral({
-      version,
-      model: entities.map(value => ({id: value.id, value, keys: new Set([value.id])})),
-    });
+    let model;
+    if (type.isCollection) {
+      model = entities.map(value => ({id: value.id, value, keys: new Set([value.id])}));
+    } else if (type.isBigCollection) {
+      model = entities.map(value => {
+        let index = value.rawData.$index;
+        delete value.rawData.$index;
+        return {id: value.id, index, value, keys: new Set([value.id])};
+      });
+    } else {
+      model = entities.map(value => ({id: value.id, value}));
+    }
+    store.fromLiteral({version, model});
   }
-  static async _createStore(manifest, type, name, id, tags, item) {
+  static async _createStore(manifest, type, name, id, tags, item, originalId) {
     let store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
+    store.originalId = originalId;
     return store;
   }
   _newRecipe(name) {
