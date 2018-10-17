@@ -7,11 +7,9 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-
-//import {Arcs} from '../lib/node/runtime.js';
 import {Firebase} from '../configuration/firebase-config.js';
 
-//Firebase.configure(Arcs.firebase);
+// TODO(sjmiles): note that firebase agents must be instantiated elsewhere
 
 export class ArcHost {
   constructor(env, context, storage, composer) {
@@ -21,16 +19,18 @@ export class ArcHost {
     this.storage = storage;
     this.composer = composer;
   }
-  // config = {id, manifest, serialization, composer}
   async spawn(config) {
     this.config = config;
     const context = this.context || await this.env.parse(``);
     const serialization = await this.computeSerialization(config, this.storage);
     this.arc = await this._spawn(this.env, context, this.composer, this.storage, config.id, serialization);
     if (config.manifest && !serialization) {
-      await this.instantiateDefaultRecipe(this.env, this.arc, config);
+      await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
     }
     return this.arc;
+  }
+  set manifest(manifest) {
+    this.instantiateDefaultRecipe(this.env, this.arc, manifest);
   }
   dispose() {
     this.arc  && this.arc.dispose();
@@ -56,7 +56,7 @@ export class ArcHost {
     storage = `${storage}/${id}`;
     return await env.spawn({id, context, composer, serialization, storage});
   }
-  async instantiateDefaultRecipe(env, arc, {manifest}) {
+  async instantiateDefaultRecipe(env, arc, manifest) {
     console.log('instantiateDefaultRecipe');
     try {
       manifest = await env.parse(manifest);
@@ -71,6 +71,7 @@ export class ArcHost {
         await arc.instantiate(plan);
       } catch (x) {
         console.error(x);
+        //console.error(plan.toString());
       }
       this.persistSerialization(); //arc);
       this.plan = plan;
