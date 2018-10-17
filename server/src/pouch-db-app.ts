@@ -64,6 +64,7 @@ class PouchDbApp extends AppBase {
    * https://github.com/pouchdb/pouchdb-server
    */
   private addPouchRoutes(): void {
+    // If VM lives at non-root prefix, works but fauxton not fully working yet
     const urlPrefix = process.env[VM_URL_PREFIX] || '/';
     const config = {
       mode: 'fullCouchDB', inMemoryConfig: true,
@@ -80,7 +81,7 @@ class PouchDbApp extends AppBase {
 
 
     if (process.env[ON_DISK_DB]) {
-      const dboptions = {'prefix': DISK_MOUNT_PATH + '/'} as  PouchDB.Configuration.RemoteDatabaseConfiguration;
+      const dboptions = {prefix: '/personalcloud/'} as PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
       const pouchDbRouter = PouchDbServer(onDiskPouchDb, config);
       this.express.use(urlPrefix, pouchDbRouter);
@@ -104,8 +105,8 @@ class PouchDbApp extends AppBase {
         this.express.use(fauxtonIntercept);
       }
     } else {
-      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({ adapter: 'memory' });
-      this.express.use(urlPrefix, PouchDbServer(inMemPouchDb, config));
+      const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
+      this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
     }
   }
 }
