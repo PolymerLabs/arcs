@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Arc} from '../arc.js';
+import {Arc} from './arc.js';
 import {Particle} from '../particle.js';
 
 export class Relevance {

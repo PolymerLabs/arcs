@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {HostedSlotContext} from './hosted-slot-context.js';
-import {Arc} from '../arc.js';
+import {Arc} from './arc.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
   readonly transformationSlotConsumer: SlotConsumer;
@@ -68,7 +68,9 @@ export class HostedSlotConsumer extends SlotConsumer {
   getInnerContainer(name) {
     const innerContainer = this.transformationSlotConsumer.getInnerContainer(name);
     if (innerContainer && this.storeId) {
-      const subId = this.arc.findStoreById(this.storeId)._stored.id;
+      // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc.
+      // tslint:disable-next-line: no-any
+      const subId = (this.arc.findStoreById(this.storeId) as any)._stored.id;
       return innerContainer[subId];
     }
     return innerContainer;

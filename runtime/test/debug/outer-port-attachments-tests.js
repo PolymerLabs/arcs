@@ -8,12 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../../manifest.js';
 import {assert} from '../chai-web.js';
 import * as util from '../../testing/test-util.js';
-import {Arc} from '../../arc.js';
-import {MessageChannel} from '../../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../../particle-execution-context.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {DevtoolsForTests} from '../../debug/devtools-connection.js';
 import {Random} from '../../ts-build/random.js';

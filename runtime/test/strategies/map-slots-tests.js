@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Arc} from '../../arc.js';
+import {Arc} from '../../ts-build/arc.js';
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {MapSlots} from '../../strategies/map-slots.js';

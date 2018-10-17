@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';

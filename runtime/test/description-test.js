@@ -9,7 +9,7 @@
 */
 
 import {assert} from './chai-web.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Description} from '../description.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../ts-build/handle.js';

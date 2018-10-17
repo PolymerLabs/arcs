@@ -10,7 +10,7 @@
 
 import {Tracing} from '../../tracelib/trace.js';
 import {Relevance} from './relevance.js';
-import {Arc} from '../arc.js';
+import {Arc} from './arc.js';
 import {Recipe} from '../recipe/recipe.js';
 
 export class Speculator {
@@ -20,7 +20,7 @@ export class Speculator {
     this._relevanceByHash = new Map();
   }
 
-  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<Arc> {
+  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<Relevance> {
     if (this._relevanceByHash.has(hash)) {
       const arcStoreVersionById = arc.getStoresState({includeContext: true});
       const relevance = this._relevanceByHash.get(hash);

@@ -43,9 +43,9 @@ export abstract class StorageProviderBase {
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
-  protected referenceMode = false;
-  protected version: number|null;
-
+  referenceMode = false;
+  
+  version: number|null;
   id: string;
   name: string;
   source: {}|null;
@@ -178,6 +178,14 @@ export abstract class StorageProviderBase {
    * @returns an object notation of this storage provider.
    */
   abstract toLiteral();
+
+  abstract cloneFrom(store: StorageProviderBase);
+
+  // TODO(shans): remove this when it's possible to.
+  abstract ensureBackingStore();
+
+  // tslint:disable-next-line: no-any
+  abstract backingStore: any;
 
   /** TODO */
   modelForSynchronization() {

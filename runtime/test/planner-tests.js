@@ -9,7 +9,7 @@
  */
  'use strict';
 
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
@@ -562,7 +562,7 @@ describe('Description', async () => {
     );
     assert.lengthOf(plans, 1);
     assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
-    assert.equal(0, arc._storesById.size);
+    assert.equal(0, arc.storesById.size);
   });
 });
 
