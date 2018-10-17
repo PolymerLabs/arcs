@@ -1,9 +1,8 @@
-export const App = async (env, composer, manifestFile) => {
+export const App = async (env, composer, manifestPath) => {
   const context = await env.parse(`import 'https://$artifacts/canonical.manifest'`);
   console.log(`context [${context.id}]`);
 
-  const content = `import 'https://$artifacts/${manifestFile || 'Arcs/Login.recipe'}'`;
-  const manifest = await env.parse(content);
+  const manifest = await env.parse(`import 'https://$artifacts/${manifestPath || 'Arcs/Login.recipe'}'`);
   console.log(`manifest [${manifest.id}]`);
 
   const recipe = manifest.recipes[0];
@@ -16,12 +15,7 @@ export const App = async (env, composer, manifestFile) => {
   await arc.instantiate(plan);
 
   console.log(`store [${arc._stores[0].id}]`);
-  console.log(`\n`);
-
-  console.log(`=============================================================================`);
-  console.log(`arc serialization:`);
-  console.log(await arc.serialize());
-  console.log(`=============================================================================`);
+  console.log('serialization:', await arc.serialize());
 
   return arc;
 };
