@@ -9,22 +9,25 @@
  */
 
 {
-  var indent = '';
-  var startIndent = '';
-  var indents = [];
+  let indent = '';
+  let startIndent = '';
+  const indents = [];
+
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
+
   function optional(result, extract, defaultValue) {
     if (result != null) {
-      let value = extract(result);
+      const value = extract(result);
       if (value != null) {
         return value;
       }
     }
     return defaultValue == null ? null : defaultValue;
   }
-  function checkNormal(result) {
+
+  function checkNormal(result): void {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
@@ -32,7 +35,7 @@
       throw new Error(`result was undefined`);
     }
     if (Array.isArray(result)) {
-      for (let item of result) {
+      for (const item of result) {
         checkNormal(item);
       }
       return;
@@ -46,7 +49,7 @@
     if (!result.kind) {
       throw new Error(`no 'kind' in ${JSON.stringify(result)}`);
     }
-    for (let key of Object.keys(result)) {
+    for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
         continue;
       }
@@ -58,8 +61,8 @@
 Manifest
   = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
   {
-    let result = items.map(item => {
-      let manifestItem = item[2];
+    const result = items.map(item => {
+      const manifestItem = item[2];
       manifestItem.annotation = optional(item[0], a => a[1], null);
       return manifestItem;
     });
@@ -153,22 +156,22 @@ Import
 Shape
   = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? VariableTypeList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
   {
-    var iface = optional(items, extractIndented, []).find(item => item.kind == 'shape-interface');
+    const iface = optional(items, extractIndented, []).find(item => item.kind === 'shape-interface');
     if (iface) {
       return {
         kind: 'shape',
         location: location(),
         name,
         interface: iface,
-        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+        slots: optional(items, extractIndented, []).filter(item => item.kind === 'shape-slot'),
       };
     } else {
       return {
         kind: 'shape',
         location: location(),
         name,
-        args: optional(items, extractIndented, []).filter(item => item.kind == 'shape-argument'),
-        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+        args: optional(items, extractIndented, []).filter(item => item.kind === 'shape-argument'),
+        slots: optional(items, extractIndented, []).filter(item => item.kind === 'shape-slot'),
       };
 
     }
@@ -206,13 +209,13 @@ ShapeArgumentList
 ShapeArgument
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent)?
   {
-    if(direction) {
-      direction = direction[0]
+    if (direction) {
+      direction = direction[0];
     }
-    if(type) {
-      type = type[0]
+    if (type) {
+      type = type[0];
     }
-    if (direction == 'host') {
+    if (direction === 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
 
@@ -229,12 +232,12 @@ ShapeArgumentWithName
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
   {
     if(direction) {
-      direction = direction[0]
+      direction = direction[0];
     }
     if(type) {
-      type = type[0]
+      type = type[0];
     }
-    if (direction == 'host') {
+    if (direction === 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
 
@@ -254,54 +257,54 @@ ShapeSlot
       kind: 'shape-slot',
       location: location(),
       name: optional(name, isRequired => name[1], null),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       direction,
       isSet: !!isSet,
-    }
+    };
   }
 
 Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
 {
   items = items ? extractIndented(items): [];
-  return {kind: 'meta', items: items, location: location()};
+  return {kind: 'meta', items, location: location()};
 }
 
 MetaItem = MetaStorageKey / MetaName
 
 MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 {
-  return { key: 'name', value: name, location: location(), kind: 'name' }
+  return { key: 'name', value: name, location: location(), kind: 'name' };
 }
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
+  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' };
 };
 
 ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = [];
-    let affordance = [];
-    let slots = [];
+    const affordance = [];
+    const slots = [];
     let description = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
-      if (item.kind == 'interface') {
-        if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
+      if (item.kind === 'interface') {
+        if (/[A-Z]/.test(item.verb[0]) && item.verb !== name) {
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
         args = item.args;
         hasParticleArgument = true;
-      } else if (item.kind == 'particle-argument') {
+      } else if (item.kind === 'particle-argument') {
         args.push(item);
-      } else if (item.kind == 'particle-slot') {
+      } else if (item.kind === 'particle-slot') {
         slots.push(item);
-      } else if (item.kind == 'description') {
+      } else if (item.kind === 'description') {
         // TODO: Super hacks.
         description = {
           kind: 'description?',
@@ -309,12 +312,12 @@ ParticleDefinition
         };
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
       } else if (item.affordance) {
-        affordance.push(item.affordance)
+        affordance.push(item.affordance);
       } else {
         error(`Particle ${name} contains an unknown element: ${item.name}`);
       }
     });
-    if (affordance.length == 0) {
+    if (affordance.length === 0) {
       // Add default affordance
       affordance.push('dom');
     }
@@ -373,7 +376,7 @@ ParticleArgument
       kind: 'particle-argument',
       location: location(),
       direction,
-      type: type,
+      type,
       isOptional: !!isOptional,
       dependentConnections: [],
       name: nametag.name,
@@ -441,7 +444,7 @@ SlotType
   = 'Slot' fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
-    let data = fields[2];
+    const data = fields[2];
     return [data[0], data[1].map(tail => tail[2])];
   }, []);
 
@@ -460,7 +463,7 @@ SlotField
     location: location(),
     name,
     value
-  }
+  };
 }
 
 TypeName
@@ -494,14 +497,15 @@ ParticleSlot
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
     let formFactor = null;
-    let providedSlots = [];
+    const providedSlots = [];
     items = optional(items, extractIndented, []);
     items.forEach(item => {
-      if (item.kind == 'provided-slot') {
+      if (item.kind === 'provided-slot') {
         providedSlots.push(item);
-      } else if (item.kind == 'form-factor') {
-        if (formFactor)
+      } else if (item.kind === 'form-factor') {
+        if (formFactor) {
           error('duplicate form factor for a slot');
+        }
         formFactor = item.formFactor;
       } else {
         error('Unsupported particle slot item ', item);
@@ -512,7 +516,7 @@ ParticleSlot
       location: location(),
       name,
       tags: optional(tags, tags => tags[1], []),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       isSet: !!isSet,
       formFactor,
       providedSlots
@@ -537,12 +541,13 @@ ParticleProvidedSlot
   = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
-    let handles = [];
+    const handles = [];
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
-      if (item.kind == 'form-factor') {
-        if (formFactor)
+      if (item.kind === 'form-factor') {
+        if (formFactor) {
           error('duplicate form factor for a slot');
+        }
         formFactor = item.formFactor;
       } else {
         handles.push(item.handle);
@@ -553,7 +558,7 @@ ParticleProvidedSlot
       location: location(),
       name,
       tags: optional(tags, tags => tags[1], []),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       isSet: !!isSet,
       formFactor,
       handles
@@ -578,11 +583,11 @@ Description
   = 'description' whiteSpace pattern:backquotedString eolWhiteSpace handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
     handleDescriptions = optional(handleDescriptions, extractIndented, []);
-    let patterns = [];
+    const patterns = [];
     if (pattern) {
       patterns.push(pattern);
-      handleDescriptions.filter(desc => desc.name == 'pattern').forEach(pattern => patterns.push(pattern));
-      handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
+      handleDescriptions.filter(desc => desc.name === 'pattern').forEach(pattern => patterns.push(pattern));
+      handleDescriptions = handleDescriptions.filter(desc => desc.name !== 'pattern');
     }
     return {
       kind: 'description',
@@ -593,7 +598,7 @@ Description
           kind: 'default-description?',
           location: location(),
           name: 'pattern',
-          patterns: patterns,
+          patterns,
         },
         ...handleDescriptions,
       ],
@@ -647,15 +652,16 @@ TopLevelAlias
 RecipeParticle
   = ref:ParticleRef name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
-    let handleConnections = [];
-    let slotConnections = [];
+    const handleConnections = [];
+    const slotConnections = [];
     if (connections) {
       connections = extractIndented(connections);
-      for (let conn of connections) {
-        if (conn.kind == 'handle-connection')
+      for (const conn of connections) {
+        if (conn.kind === 'handle-connection') {
           handleConnections.push(conn);
-        else
-          slotConnections.push(conn)
+        } else {
+          slotConnections.push(conn);
+        }
       }
     }
     return {
@@ -664,7 +670,7 @@ RecipeParticle
       name: optional(name, name => name[1], null),
       ref,
       connections: handleConnections,
-      slotConnections: slotConnections,
+      slotConnections,
     };
   }
 
@@ -689,10 +695,11 @@ ParticleConnectionTargetComponents
     let name = null;
     let particle = null;
     if (param) {
-      if (param[0].toUpperCase() == param[0])
+      if (param[0].toUpperCase() === param[0]) {
         particle = param;
-      else
+      } else {
         name = param;
+      }
     }
 
     return {
@@ -701,7 +708,7 @@ ParticleConnectionTargetComponents
       name,
       particle,
       tags: optional(tags, tags => tags, []),
-    }
+    };
   }
 
 RecipeParticleSlotConnection
@@ -772,7 +779,7 @@ ConnectionTarget
 VerbConnectionTarget
   = verbs:VerbList components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});
+    const {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
       location: location(),
@@ -780,7 +787,7 @@ VerbConnectionTarget
       verbs,
       param,
       tags
-    }
+    };
   }
 
 TagConnectionTarget
@@ -790,13 +797,13 @@ TagConnectionTarget
       location: location(),
       targetType: 'tag',
       tags
-    }
+    };
   }
 
 NameConnectionTarget
   = name:lowerIdent components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});
+    const {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
       targetType: 'localName',
@@ -804,13 +811,13 @@ NameConnectionTarget
       name,
       param,
       tags
-    }
+    };
   }
 
 ParticleConnectionTarget
   = particle:upperIdent components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});
+    const {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
       targetType: 'particle',
@@ -818,7 +825,7 @@ ParticleConnectionTarget
       particle,
       param,
       tags
-    }
+    };
   }
 
 ConnectionTargetHandleComponents
@@ -827,7 +834,7 @@ ConnectionTargetHandleComponents
     return {
       param: optional(param, param => param, null),
       tags: optional(tags, tags => tags[1], []),
-    }
+    };
   }
 
 RecipeHandle
@@ -839,7 +846,7 @@ RecipeHandle
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null),
       fate: type
-    }
+    };
   }
 
 Tag
@@ -868,14 +875,14 @@ NameAndTagList
    = whiteSpace name:lowerIdent whiteSpace tags:TagList
    {
      return {
-       name: name,
-       tags: tags
-     }
+       name,
+       tags
+     };
    }
    / whiteSpace name:lowerIdent
    {
      return {
-       name: name,
+       name,
        tags: []
      };
    }
@@ -883,8 +890,8 @@ NameAndTagList
    {
       return {
         name: tags[0],
-        tags: tags
-      }
+        tags
+      };
    }
 
 ParticleRef
@@ -942,7 +949,7 @@ RecipeSlot
       location: location(),
       ref: optional(ref, ref => ref[1], null),
       name: optional(name, name => name[1], '')
-    }
+    };
   }
 
 SchemaInline
@@ -951,9 +958,9 @@ SchemaInline
     return {
       kind: 'schema-inline',
       location: location(),
-      names: optional(names, names => names.map(name => name[0]).filter(name => name != '*'), []),
+      names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), []),
       fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
-    }
+    };
   }
 
 SchemaInlineField
@@ -971,7 +978,7 @@ SchemaSpec
   = 'schema' names:(whiteSpace ('*' / TopLevelIdent))+ parents:SchemaExtends?
   {
     return {
-      names: names.map(name => name[1]).filter(name => name != '*'),
+      names: names.map(name => name[1]).filter(name => name !== '*'),
       parents: optional(parents, parents => parents, []),
     };
   }
@@ -1000,8 +1007,8 @@ SchemaDefinition
 SchemaExtends
   = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
 {
-  var list = [first];
-  for (let item of rest) {
+  const list = [first];
+  for (const item of rest) {
     list.push(item[3]);
   }
   return list;
@@ -1043,7 +1050,7 @@ SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
       kind: 'schema-collection',
       location: location(),
       schema
-    }
+    };
   }
 
 SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
@@ -1061,8 +1068,8 @@ SchemaPrimitiveType
 SchemaUnionType
   = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)+ whiteSpace? ')'
   {
-    let types = [first];
-    for (let type of rest) {
+    const types = [first];
+    for (const type of rest) {
       types.push(type[3]);
     }
     return {kind: 'schema-union', location: location(), types};
@@ -1071,8 +1078,8 @@ SchemaUnionType
 SchemaTupleType
   = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace? ',' whiteSpace? SchemaPrimitiveType)* whiteSpace? ')'
   {
-    let types = [first];
-    for (let type of rest) {
+    const types = [first];
+    for (const type of rest) {
       types.push(type[3]);
     }
     return {kind: 'schema-tuple', location: location(), types};
@@ -1091,16 +1098,18 @@ Indent = &(i:" "+ &{
     indent = i;
     return true;
   }
+  return undefined;
 })
 
 SameIndent = &(i:" "* &{
   i = i.join('');
-  if (i.length == indent.length) {
+  if (i.length === indent.length) {
     return true;
   } else if (i.length < indent.length) {
     indent = indents.pop();
     return false;
   }
+  return undefined;
 }) " "*
 
 SameOrMoreIndent = &(i:" "* &{
@@ -1111,6 +1120,7 @@ SameOrMoreIndent = &(i:" "* &{
     indent = indents.pop();
     return false;
   }
+  return undefined;
 }) " "* { return text(); }
 
 TopLevelIdent
@@ -1121,9 +1131,9 @@ ReservedWord
   = Direction
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
-id = "'" id:[^']+ "'" {return id.join('')}
-upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text()}
+id = "'" id:[^']+ "'" { return id.join(''); }
+upperIdent = ident:([A-Z][a-z0-9_]i*) { return text(); }
+lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text();}
 whiteSpace
   = " "+
 eolWhiteSpace

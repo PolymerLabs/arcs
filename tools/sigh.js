@@ -21,7 +21,7 @@ process.chdir(projectRoot);
 const sources = {
   peg: {
     grammar: 'runtime/manifest-parser.peg',
-    output: 'runtime/build/manifest-parser.js',
+    output: 'runtime/ts/manifest-parser.ts',
     railroad: 'manifest-railroad.html',
   },
   pack: {
@@ -154,23 +154,52 @@ function clean() {
 }
 
 function peg() {
-  const peg = require('pegjs');
 
   if (targetIsUpToDate(sources.peg.output, [sources.peg.grammar])) {
     return true;
   }
 
+  const peg = require('pegjs');
+  const tsPegjsPlugin = require('ts-pegjs');
+
   const source = peg.generate(readProjectFile(sources.peg.grammar), {
     format: 'bare',
+    plugins: [tsPegjsPlugin],
     output: 'source',
-    trace: false
+    trace: false,
+    tspegjs: {
+      noTsLint: false,
+      tslintIgnores: 'no-any,only-arrow-functions,max-line-length,align,trailing-comma,interface-name,switch-default,object-literal-shorthand'
+    },
+    returnTypes: {
+      'Annotatiopn': 'string',
+      'Direction': 'string',
+      'LocalName': 'string',
+      'ParticleArgumentDirection': 'string',
+      'ResourceStart': 'string',
+      'ResourceBody': 'string',
+      'ResourceLine': 'string',
+      'SchemaPrimitiveType': 'string',
+      'Tag': 'string',
+      'TagList': 'string[]',
+      'Verb': 'string',
+      'VerbList': 'string[]',
+      'Version': 'number',
+      'backquotedString': 'string',
+      'id': 'string',
+      'upperIndent': 'string',
+      'lowerIndent': 'string',
+      'whiteSpace': 'string',
+      'eolWhiteSpace': 'string',
+      'eol': 'string'
+    },
   });
   const outputFile = path.resolve(projectRoot, sources.peg.output);
   const dir = path.dirname(outputFile);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
-  fs.writeFileSync(outputFile, 'export const parser = ' + source);
+  fs.writeFileSync(outputFile, source);
   return true;
 }
 

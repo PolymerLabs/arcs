@@ -11,6 +11,7 @@
 .rpt2_cache
 **/trace.json
 runtime/browser-test/browser-test-ified.js
+runtime/ts/manifest-parser.ts
 manifest-railroad.html
 **/*.code-workspace
 shell/build

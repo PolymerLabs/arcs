@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../ts-build/manifest.js';
-import {parser} from '../build/manifest-parser.js';
+import {parse} from '../ts-build/manifest-parser.js';
 import {assert} from './chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
@@ -901,7 +901,7 @@ ${particleStr1}
         if (fs.existsSync(particleManifestFile)) {
           try {
             const data = fs.readFileSync(particleManifestFile, 'utf-8');
-            const model = parser.parse(data);
+            const model = parse(data);
             assert.isDefined(model);
           } catch (e) {
             console.log(`Failed parsing ${particleManifestFile}`);

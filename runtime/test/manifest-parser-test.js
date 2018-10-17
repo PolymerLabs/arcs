@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parser} from '../build/manifest-parser.js';
-const parse = parser.parse;
+import {parse} from '../ts-build/manifest-parser.js';
 import {assert} from './chai-web.js';
 
 describe('manifest parser', function() {
