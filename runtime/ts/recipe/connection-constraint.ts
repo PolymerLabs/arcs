@@ -70,7 +70,7 @@ export class InstanceEndPoint {
 }
 
 export class HandleEndPoint {
-  handle: Handle;
+  readonly handle: Handle;
   constructor(handle) {
     this.handle = handle;
   }
@@ -91,7 +91,7 @@ export class HandleEndPoint {
 }
 
 export class TagEndPoint {
-  tags: string[];
+  readonly tags: string[];
   constructor(tags) {
     this.tags = tags;
   }
