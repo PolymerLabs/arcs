@@ -23,8 +23,9 @@ before_deploy:
   - cd ${TRAVIS_BUILD_DIR} && npm run build:typedoc 
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
   # remove them from .gitignore.
-  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^shell\/build$//g' .gitignore
-  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^runtime\/ts-build$//g' .gitignore
+  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^shell\/build$/d' .gitignore
+  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^runtime\/ts-build$/d' .gitignore
+  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^\*\*\/dist$/d' .gitignore
   - cd ${TRAVIS_BUILD_DIR} && git log -n 1 > VERSION
   # remove an inaccurate README from arcs-live
   - cd ${TRAVIS_BUILD_DIR} && rm README.md
