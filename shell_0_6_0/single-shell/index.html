@@ -1,0 +1,31 @@
+<!doctype html>
+
+<div slotid="root"></div>
+
+<script type="module">
+  import {SlotComposer} from '../../runtime/slot-composer.js';
+  import {ArcsEnvWeb} from '../lib/web/arcs-env-web.js';
+  import {App} from './index.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  }
+
+  const env = new ArcsEnvWeb('../../');
+  env.pathMap[`https://$artifacts/`] = `../../artifacts_0_6_0/`;
+
+  const composer = new SlotComposer({
+    affordance: 'dom',
+    rootContainer: document.body
+  });
+
+  const manifest = getUrlParam('manifest');
+
+  (async () => {
+    try {
+      window.arc = await App(env, composer, manifest);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>
