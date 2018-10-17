@@ -7,17 +7,18 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {fs} from '../platform/fs-web.js';
-import {vm} from '../platform/vm-web.js';
-import {fetch} from './fetch-web.js';
+import {fs} from '../../platform/fs-web.js';
+import {vm} from '../../platform/vm-web.js';
+import {fetch} from '../fetch-web.js';
 
-import {assert} from '../platform/assert-web.js';
-import {Particle} from './particle.js';
-import {DomParticle} from './dom-particle.js';
-import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
-import {newClientReference} from './ts-build/reference.js';
-import {TransformationDomParticle} from './transformation-dom-particle.js';
-import {JsonldToManifest} from './ts-build/converters/jsonldToManifest.js';
+import {assert} from '../../platform/assert-web.js';
+import {Particle} from '../particle.js';
+import {DomParticle} from '../dom-particle.js';
+import {MultiplexerDomParticle} from '../multiplexer-dom-particle.js';
+import {newClientReference} from './reference.js';
+import {TransformationDomParticle} from '../transformation-dom-particle.js';
+import {JsonldToManifest} from './converters/jsonldToManifest.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
@@ -26,8 +27,9 @@ function schemaLocationFor(name) {
 }
 
 export class Loader {
+  private pec: ParticleExecutionContext;
   path(fileName) {
-    let path = fileName.replace(/[/][^/]+$/, '/');
+    const path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 
@@ -36,7 +38,7 @@ export class Loader {
       return path;
     }
     // TODO: replace this with something that isn't hacky
-    if (path[0] == '/' || path[1] == ':') {
+    if (path[0] === '/' || path[1] === ':') {
       return path;
     }
     prefix = this.path(prefix);
@@ -73,18 +75,18 @@ export class Loader {
   }
 
   async loadParticleClass(spec) {
-    let clazz = await this.requireParticle(spec.implFile);
+    const clazz = await this.requireParticle(spec.implFile);
     clazz.spec = spec;
     return clazz;
   }
 
   async requireParticle(fileName) {
     if (fileName === null) fileName = '';
-    let src = await this.loadResource(fileName);
+    const src = await this.loadResource(fileName);
     // Note. This is not real isolation.
-    let script = new vm.Script(src, {filename: fileName, displayErrors: true});
-    let result = [];
-    let self = {
+    const script = new vm.Script(src, {filename: fileName, displayErrors: true});
+    const result = [];
+    const self = {
       defineParticle(particleWrapper) {
         result.push(particleWrapper);
       },
@@ -94,17 +96,17 @@ export class Loader {
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self, {filename: fileName, displayErrors: true});
-    assert(result.length > 0 && typeof result[0] == 'function', `Error while instantiating particle implementation from ${fileName}`);
+    assert(result.length > 0 && typeof result[0] === 'function', `Error while instantiating particle implementation from ${fileName}`);
     return this.unwrapParticle(result[0]);
   }
 
-  setParticleExecutionContext(pec) {
-    this._pec = pec;
+  setParticleExecutionContext(pec : ParticleExecutionContext) {
+    this.pec = pec;
   }
 
   unwrapParticle(particleWrapper) {
-    assert(this._pec);
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: newClientReference(this._pec), html});
+    assert(this.pec);
+    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: newClientReference(this.pec), html});
   }
 
 }

@@ -11,27 +11,30 @@
 
 import {Loader} from './loader.js';
 
+declare function importScripts(fileName: string): void;
+
 export class BrowserLoader extends Loader {
+  private base: string;
+
   constructor(base) {
     super();
     // TODO: Update all callers to pass a valid base URL to avoid the use of
     //       location here. `new URL(base)` should be valid.
-    this._base = new URL(base || '', self.location).href;
+    this.base = new URL(base || '', self.location.href).href;
   }
   _resolve(path) {
-    return new URL(path, this._base).href;
+    return new URL(path, this.base).href;
   }
   loadResource(name) {
     return this._loadURL(this._resolve(name));
   }
   async requireParticle(fileName) {
     fileName = this._resolve(fileName);
-    let result = [];
-    self.defineParticle = function(particleWrapper) {
-      result.push(particleWrapper);
-    };
+    const result = [];
+    self['defineParticle'] = particleWrapper => result.push(particleWrapper);
+    
     importScripts(fileName);
-    delete self.defineParticle;
+    delete self['defineParticle'];
     return this.unwrapParticle(result[0]);
   }
 }

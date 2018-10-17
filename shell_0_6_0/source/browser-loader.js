@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../runtime/ts-build/loader.js';
 import {Particle} from '../../runtime/particle.js';
 import {DomParticle} from '../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../runtime/multiplexer-dom-particle.js';

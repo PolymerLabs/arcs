@@ -10,9 +10,14 @@
 
 const supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
+interface Class {
+  superclass?: Class[];
+  '@id': string;
+}
+
 export class JsonldToManifest {
 
-  static convert(jsonld: string, theClass) {
+  static convert(jsonld: string, theClass: Class | void = undefined) {
     const obj = JSON.parse(jsonld);
     const classes = {};
     const properties = {};
@@ -53,7 +58,7 @@ export class JsonldToManifest {
 
     for (const clazz of Object.values(classes)) {
       if (clazz['subclasses'].length === 0 && theClass == undefined) {
-        theClass = clazz;
+        theClass = clazz as Class;
       }
     }
 
@@ -86,7 +91,7 @@ export class JsonldToManifest {
     }
 
     const className = theClass['@id'].split(':')[1];
-    const superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
+    const superNames = theClass && theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
 
     let s = '';
     for (const superName of superNames) {

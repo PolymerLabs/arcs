@@ -23,7 +23,7 @@ import {DevtoolsConnection} from '../debug/devtools-connection.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from '../debug/arc-debug-handler.js';
 import {RecipeIndex} from '../recipe-index.js';
-import {Loader} from '../loader.js';
+import {Loader} from './loader.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {PECInnerPort} from '../api-channel.js';

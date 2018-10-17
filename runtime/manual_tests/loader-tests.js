@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {assert} from '../test/chai-web.js';
 import {Manifest} from '../manifest.js';
 
