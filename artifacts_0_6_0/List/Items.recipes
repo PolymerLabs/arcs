@@ -22,12 +22,12 @@ particle ItemMultiplexer in 'source/Multiplexer.js'
 
 // TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify
 // handle fates before colascing ... is there a way to combine the declarations when the recipe has only one Particle?
-recipe ItemMultiplexer
+//recipe ItemMultiplexer
   // TODO(sjmiles): restricting fate
   // TODO(sjmiles): without `#items` this recipe doesn't coalese, why?
-  use #items as list
-  ItemMultiplexer
-    list = list
+//  use #items as list
+//  ItemMultiplexer
+//    list = list
 
 //particle List in 'source/List.js'
 //  in [~any] list

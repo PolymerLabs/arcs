@@ -1,0 +1,25 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+shape HostedAnnotationShape
+  in ~any *
+  inout ~anyOther *
+  consume annotation
+
+particle AnnotationMultiplexer in 'source/Multiplexer.js'
+  in [~any] list
+  inout ~anyOther annotation
+  host HostedAnnotationShape hostedParticle
+  consume set of annotation
+
+//recipe AnnotationMultiplexer
+//  use #items as list
+//  use #annotation as annotation
+//  AnnotationMultiplexer
+//    list = list
+//    annotation = annotation

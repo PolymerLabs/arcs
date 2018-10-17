@@ -42,7 +42,20 @@ export class Loader {
       return path;
     }
     prefix = this.path(prefix);
-    return prefix + path;
+    path = this.normalizeDots(`${prefix}${path}`);
+    return path;
+  }
+
+  // convert `././foo/bar/../baz` to `./foo/baz`
+  normalizeDots(path) {
+    // only unix slashes
+    path = path.replace(/\\/g, '/');
+    // remove './'
+    path = path.replace(/\/\.\//g, '/');
+    // remove 'foo/..'
+    const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
+    for (let n = norm(path); n !== path; path = n, n = norm(path));
+    return path;
   }
 
   loadResource(file) {

@@ -1,3 +1,6 @@
 import 'List/List.recipes'
 import 'Music/Music.recipes'
+import 'Restaurants/Restaurants.recipes'
+import 'Reservations/Reservations.recipes'
 import 'Demo/Demo.recipes'
+import 'Restaurants/RestaurantsDemo.recipes'

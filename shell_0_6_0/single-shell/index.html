@@ -1,0 +1,40 @@
+<!doctype html>
+
+<title>Recipe Taster</title>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="shortcut icon" href="../configuration/logo_64.png">
+<script type="module" src="../configuration/whitelisted.js"></script>
+
+<div slotid="toproot"></div>
+<div slotid="root"></div>
+<div slotid="modal"></div>
+
+<script type="module">
+  import {SlotComposer} from '../../runtime/slot-composer.js';
+  import {ArcsEnvWeb} from '../lib/web/arcs-env-web.js';
+  import {App} from './index.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  }
+
+  const env = new ArcsEnvWeb('../../');
+  env.pathMap[`https://$artifacts/`] = `../../artifacts_0_6_0/`;
+
+  const composer = new SlotComposer({
+    affordance: 'dom',
+    rootContainer: document.body
+  });
+
+  const manifest = getUrlParam('manifest');
+
+  (async () => {
+    try {
+      window.arc = await App(env, composer, manifest);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

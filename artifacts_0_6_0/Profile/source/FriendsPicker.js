@@ -52,16 +52,13 @@ defineParticle(({DomParticle, html, resolver}) => {
     get template() {
       return template;
     }
-    render(props, state) {
+    render(props) {
       const user = props.user || {};
       const friends = props.friends || [];
       const people = (props.users || []).filter(p => p.id !== user.id);
       const avatars = props.avatars || [];
-      //console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
       let avatarModels = people.map((p, i) => {
         const avatar = this.boxQuery(avatars, p.id)[0];
-        //let avatar = avatars.find(a => a.owner === p.id);
-        //console.log(p.id, avatar, avatars);
         const url = (avatar && avatar.url) || `https://$shell/assets/avatars/user (0).png`;
         return {
           key: i,

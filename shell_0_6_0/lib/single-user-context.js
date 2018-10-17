@@ -70,13 +70,13 @@ export const SingleUserContext = class {
     const observer = this.observers[key];
     if (observer) {
       this.observers[key] = null;
-      log(`UNobserving [${key}]`);
+      //log(`UNobserving [${key}]`);
       observer.store.off('change', observer.cb);
     }
   }
   async observeStore(store, key, cb) {
     if (!this.observers[key]) {
-      log(`observing [${key}]`);
+      //log(`observing [${key}]`);
       // TODO(sjmiles): create synthetic store `change` records from the initial state
       // SyntheticCollection has `toList` but is `!type.isCollection`,
       if (store.toList) {
@@ -107,7 +107,7 @@ export const SingleUserContext = class {
           handle = add;
         }
         if (handle) { //} && handle.tags.length) {
-          log('observing handle', handle.tags);
+          //handle.tags.length && log('observing handle', handle.tags);
           const store = await SyntheticStores.getHandleStore(handle);
           await this.observeStore(store, handle.storageKey, info => this.updateHandle(arcid, handle, info));
         }
@@ -117,7 +117,7 @@ export const SingleUserContext = class {
       info.remove.forEach(async remove => {
         const handle = remove.value;
         if (handle) {
-          log('UNobserving handle', handle);
+          //log('UNobserving handle', handle);
           this._unobserve(handle.storageKey);
         }
       });
