@@ -1,5 +1,5 @@
 
-import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
+import {RecipeResolver} from '../../runtime/ts-build/recipe/recipe-resolver.js';
 
 const log = console.log.bind(console);
 

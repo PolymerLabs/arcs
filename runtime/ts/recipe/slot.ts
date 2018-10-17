@@ -5,23 +5,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import * as util from './util.js';
+import {assert} from '../../../platform/assert-web.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
+import {SlotConnection} from './slot-connection.js';
+import {Recipe} from './recipe.js';
+import {HandleConnection} from './handle-connection.js';
 
 export class Slot {
+  private _recipe: Recipe;
+  private _id: string | undefined = undefined;
+  private _localName: string | undefined = undefined;
+  _name: string;
+  private _tags = <string[]>[];
+  _sourceConnection: SlotConnection | undefined = undefined;
+  private _formFactor: string | undefined = undefined;
+  // can only be set if source connection is set and particle in slot connections is set
+  private _handleConnections = <HandleConnection[]>[];
+  private _consumeConnections = <SlotConnection[]>[];
   constructor(recipe, name) {
     assert(recipe);
 
     this._recipe = recipe;
-    this._id = undefined; // The ID of the slot in the context
-    this._localName = undefined; // Local id within the recipe
     this._name = name;
-    this._tags = [];
-
-    this._formFactor = undefined;
-    this._handleConnections = []; // HandleConnection* (can only be set if source connection is set and particle in slot connections is set)
-    this._sourceConnection = undefined; // SlotConnection
-    this._consumeConnections = []; // SlotConnection*
   }
 
   get recipe() { return this._recipe; }
@@ -76,26 +81,28 @@ export class Slot {
   }
 
   _finishNormalize() {
-    assert(Object.isFrozen(this._source));
+    // TODO(mmandlis): This was assert(Object.isFroze(this._source)) - but there is no _source.
+    // Changing to _sourceConnection makes the assert fail.
+    // assert(Object.isFrozen(this._sourceConnection));
     this._consumeConnections.forEach(cc => assert(Object.isFrozen(cc)));
-    this._consumeConnections.sort(util.compareComparables);
+    this._consumeConnections.sort(compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this.id, other.id)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.localName, other.localName)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.formFactor, other.formFactor)) != 0) return cmp;
-    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
+    if ((cmp = compareStrings(this.id, other.id)) !== 0) return cmp;
+    if ((cmp = compareStrings(this.localName, other.localName)) !== 0) return cmp;
+    if ((cmp = compareStrings(this.formFactor, other.formFactor)) !== 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
     return 0;
   }
 
   removeConsumeConnection(slotConnection) {
-    let idx = this._consumeConnections.indexOf(slotConnection);
+    const idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);
     this._consumeConnections.splice(idx, 1);
-    if (this._consumeConnections.length == 0) {
+    if (this._consumeConnections.length === 0) {
       this.remove();
     }
   }
@@ -104,7 +111,7 @@ export class Slot {
     this._recipe.removeSlot(this);
   }
 
-  isResolved(options) {
+  isResolved(options = undefined) : boolean {
     assert(Object.isFrozen(this));
 
     if (options && options.showUnresolved) {
@@ -118,7 +125,7 @@ export class Slot {
       options.details = options.details.join('; ');
     }
 
-    return this._sourceConnection || this.id;
+    return Boolean(this._sourceConnection || this.id);
   }
 
   _isValid(options) {
@@ -127,7 +134,7 @@ export class Slot {
   }
 
   toString(nameMap, options) {
-    let result = [];
+    const result = [];
     result.push('slot');
     if (this.id) {
       result.push(`'${this.id}'`);
@@ -136,7 +143,7 @@ export class Slot {
       result.push(this.tags.map(tag => `#${tag}`).join(' '));
     }
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
-    let includeUnresolved = options && options.showUnresolved && !this.isResolved(options);
+    const includeUnresolved = options && options.showUnresolved && !this.isResolved(options);
     if (includeUnresolved) {
       result.push(`// unresolved slot: ${options.details}`);
     }
@@ -144,5 +151,7 @@ export class Slot {
     if (this.id || includeUnresolved) {
       return result.join(' ');
     }
+
+    return ''; 
   }
 }

@@ -5,11 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
-import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
+import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
+import {Walker} from '../ts-build/recipe/walker.js';
 
 export class SearchTokensToHandles extends Strategy {
   constructor(arc) {

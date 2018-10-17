@@ -14,7 +14,7 @@ import {assert} from './chai-web.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 
 describe('recipe descriptions test', function() {
   let loader = new StubLoader({

@@ -22,8 +22,8 @@ import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {Handle} from './recipe/handle.js';
+import {RecipeUtil} from './ts-build/recipe/recipe-util.js';
+import {Handle} from './ts-build/recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
 
 class RelevantContextRecipes extends Strategy {

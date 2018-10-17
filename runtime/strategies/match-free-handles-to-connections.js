@@ -6,8 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../recipe/walker.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../ts-build/recipe/walker.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 
 /*
  * Match free handles (i.e. handles that aren't connected to any connections)

@@ -9,7 +9,7 @@ import {now} from '../platform/date-web.js';
 import {Strategizer} from '../strategizer/strategizer.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
+import {RecipeUtil} from './ts-build/recipe/recipe-util.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {AssignHandles} from './strategies/assign-handles.js';
 import {InitPopulation} from './strategies/init-population.js';
@@ -25,7 +25,6 @@ import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.j
 import {GroupHandleConnections} from './strategies/group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
-import {CombinedStrategy} from './strategies/combined-strategy.js';
 import {FindHostedParticle} from './strategies/find-hosted-particle.js';
 import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';

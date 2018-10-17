@@ -5,29 +5,36 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../../../platform/assert-web.js';
 import {SlotConnection} from './slot-connection.js';
 import {HandleConnection} from './handle-connection.js';
-import * as util from './util.js';
+import {compareComparables, compareStrings, compareArrays} from './util.js';
+import {Recipe} from './recipe.js';
+import {ParticleSpec} from '../../particle-spec.js';
 
 export class Particle {
-  constructor(recipe, name) {
+  private _recipe: Recipe;
+  private _id: string | undefined = undefined;
+  private _name: string;
+  private _localName: string | undefined = undefined;
+  private _spec: ParticleSpec | undefined = undefined;
+  private _verbs: string[] = [];
+  private _connections: {[index: string]: HandleConnection} = {};
+  
+  // TODO: replace with constraint connections on the recipe
+  _unnamedConnections: HandleConnection[] = [];
+
+  // map of consumed Slot connections by slot name.
+  _consumedSlotConnections: {[index: string]: SlotConnection} = {};
+
+  constructor(recipe: Recipe, name: string) {
     assert(recipe);
     this._recipe = recipe;
-    this._id = undefined;
     this._name = name;
-    this._localName = undefined;
-    this._spec = undefined;
-    this._verbs = [];
-
-    this._connections = {};
-    // TODO: replace with constraint connections on the recipe
-    this._unnamedConnections = [];
-    this._consumedSlotConnections = {}; // map of consumed Slot connections by slot name.
   }
 
-  _copyInto(recipe, cloneMap) {
-    let particle = recipe.newParticle(this._name);
+  _copyInto(recipe: Recipe, cloneMap) {
+    const particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._verbs = [...this._verbs];
     particle._spec = this._spec;
@@ -46,15 +53,15 @@ export class Particle {
 
   _cloneConnectionRawTypes() {
     // TODO(shans): evaluate whether this is the appropriate context root for cloneWithResolution
-    let map = new Map();
-    for (let connection of Object.values(this._connections)) {
-      if (connection._rawType) {
-        connection._rawType = connection._rawType._cloneWithResolutions(map);
+    const map = new Map();
+    for (const connection of Object.values(this._connections)) {
+      if (connection.rawType) {
+        connection._rawType = connection.rawType._cloneWithResolutions(map);
       }
     }
-    for (let connection of this._unnamedConnections) {
-      if (connection._rawType) {
-        connection._rawType = connection._rawType._cloneWithResolutions(map);
+    for (const connection of this._unnamedConnections) {
+      if (connection.rawType) {
+        connection._rawType = connection.rawType._cloneWithResolutions(map);
       }
     }
   }
@@ -62,31 +69,31 @@ export class Particle {
   _startNormalize() {
     this._localName = null;
     this._verbs.sort();
-    let normalizedConnections = {};
-    for (let key of (Object.keys(this._connections).sort())) {
+    const normalizedConnections = {};
+    for (const key of (Object.keys(this._connections).sort())) {
       normalizedConnections[key] = this._connections[key];
     }
     this._connections = normalizedConnections;
 
-    let normalizedSlotConnections = {};
-    for (let key of (Object.keys(this._consumedSlotConnections).sort())) {
+    const normalizedSlotConnections = {};
+    for (const key of (Object.keys(this._consumedSlotConnections).sort())) {
       normalizedSlotConnections[key] = this._consumedSlotConnections[key];
     }
     this._consumedSlotConnections = normalizedSlotConnections;
   }
 
   _finishNormalize() {
-    this._unnamedConnections.sort(util.compareComparables);
+    this._unnamedConnections.sort(compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
+    if ((cmp = compareStrings(this._id, other._id)) !== 0) return cmp;
+    if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
+    if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
     // TODO: spec?
-    if ((cmp = util.compareArrays(this._verbs, other._verbs, util.compareStrings)) != 0) return cmp;
+    if ((cmp = compareArrays(this._verbs, other._verbs, compareStrings)) !== 0) return cmp;
     // TODO: slots
     return 0;
   }
@@ -106,12 +113,12 @@ export class Particle {
     return true;
   }
 
-  isResolved(options) {
+  isResolved(options = undefined) {
     assert(Object.isFrozen(this));
-    let consumedSlotConnections = Object.values(this.consumedSlotConnections);
+    const consumedSlotConnections = Object.values(this.consumedSlotConnections);
     if (consumedSlotConnections.length > 0) {
-      let fulfilledSlotConnections = consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
-      if (fulfilledSlotConnections.length == 0) {
+      const fulfilledSlotConnections = consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
+      if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
           options.details = 'unfullfilled slot connections';
         }
@@ -124,13 +131,13 @@ export class Particle {
       }
       return false;
     }
-    if (this.spec.connectionMap.size != Object.keys(this._connections).length) {
+    if (this.spec.connectionMap.size !== Object.keys(this._connections).length) {
       if (options && options.showUnresolved) {
         options.details = 'unresolved connections';
       }
       return false;
     }
-    if (this.unnamedConnections.length != 0) {
+    if (this.unnamedConnections.length !== 0) {
       if (options && options.showUnresolved) {
         options.details = `${this.unnamedConnections.length} unnamed connections`;
       }
@@ -154,8 +161,8 @@ export class Particle {
 
   set spec(spec) {
     this._spec = spec;
-    for (let connectionName of spec.connectionMap.keys()) {
-      let speccedConnection = spec.connectionMap.get(connectionName);
+    for (const connectionName of spec.connectionMap.keys()) {
+      const speccedConnection = spec.connectionMap.get(connectionName);
       let connection = this.connections[connectionName];
       if (connection == undefined) {
         connection = this.addConnectionName(connectionName);
@@ -174,7 +181,7 @@ export class Particle {
   }
 
   addUnnamedConnection() {
-    let connection = new HandleConnection(undefined, this);
+    const connection = new HandleConnection(undefined, this);
     this._unnamedConnections.push(connection);
     return connection;
   }
@@ -200,13 +207,13 @@ export class Particle {
   nameConnection(connection, name) {
     assert(!this._connections[name].handle, `Connection "${name}" already has a handle`);
 
-    let idx = this._unnamedConnections.indexOf(connection);
+    const idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
     connection._name = name;
 
     connection.type = this._connections[name].type;
-    if (connection.direction != this._connections[name].direction) {
-      assert(connection.direction == 'inout',
+    if (connection.direction !== this._connections[name].direction) {
+      assert(connection.direction === 'inout',
              `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${this._connections[name].direction}`);
       connection.direction = this._connections[name].direction;
     }
@@ -216,7 +223,7 @@ export class Particle {
   }
 
   addSlotConnection(name) {
-    let slotConn = new SlotConnection(name, this);
+    const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
     return slotConn;
   }
@@ -237,7 +244,7 @@ export class Particle {
       result.push(this.name);
 
       result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
-      if (this.primaryVerb && this.primaryVerb != this.name) {
+      if (this.primaryVerb && this.primaryVerb !== this.name) {
         result.push(`// verb=${this.primaryVerb}`);
       }
     } else { // verb must exist, if there is no name.
@@ -251,13 +258,13 @@ export class Particle {
 
     result = [result.join(' ')];
 
-    for (let connection of this.unnamedConnections) {
+    for (const connection of this.unnamedConnections) {
       result.push(connection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
-    for (let connection of Object.values(this.connections)) {
+    for (const connection of Object.values(this.connections)) {
       result.push(connection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
-    for (let slotConnection of Object.values(this._consumedSlotConnections)) {
+    for (const slotConnection of Object.values(this._consumedSlotConnections)) {
       result.push(slotConnection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n');

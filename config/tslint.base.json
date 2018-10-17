@@ -23,10 +23,8 @@
     // mark everything as public. Talk to shans@ if you disagree.
     // "member-access": [true],
     "new-parens": true,
-    "no-angle-bracket-type-assertion": true,
     "no-any": true,
     "no-arg": true,
-    "no-conditional-assignment": true,
     "no-construct": true,
     "no-debugger": true,
     "no-default-export": true,

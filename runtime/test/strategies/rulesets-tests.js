@@ -12,10 +12,10 @@
 import {Strategy, Ruleset} from '../../../strategizer/strategizer.js';
 import {Manifest} from '../../manifest.js';
 import {Planner} from '../../planner.js';
-import {Recipe} from '../../recipe/recipe.js';
+import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';
-import {Walker} from '../../recipe/walker.js';
+import {Walker} from '../../ts-build/recipe/walker.js';
 
 class InitPopulation extends Strategy {
   constructor(arc) {

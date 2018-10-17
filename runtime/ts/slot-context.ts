@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotSpec} from '../particle-spec.js';
-import {Handle} from '../recipe/handle.js';
+import {Handle} from './recipe/handle.js';
 
 /**
  * Holds container (eg div element) and its additional info.

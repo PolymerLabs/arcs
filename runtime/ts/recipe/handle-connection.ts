@@ -5,29 +5,38 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import * as util from './util.js';
-import {Type} from '../ts-build/type.js';
+import {assert} from '../../../platform/assert-web.js';
+import {compareComparables, compareStrings, compareArrays} from './util.js';
+import {Type} from '../type.js';
+import {Recipe} from './recipe.js';
+import {Particle} from './particle.js';
+import {Handle} from './handle.js';
+
+export type Direction = 'in' | 'out' | 'inout';
 
 export class HandleConnection {
+  _recipe: Recipe;
+  _name: string;
+  _tags: string[] = [];
+  _type: Type | undefined = undefined;
+  _rawType: Type | undefined = undefined;
+  _direction: Direction | undefined = undefined;
+  _particle: Particle;
+  _handle: Handle | undefined = undefined;
+
   constructor(name, particle) {
     assert(particle);
     assert(particle.recipe);
     this._recipe = particle.recipe;
     this._name = name;
-    this._tags = [];
-    this._type = undefined;
-    this._rawType = undefined;
-    this._direction = undefined;
     this._particle = particle;
-    this._handle = undefined;
   }
 
   _clone(particle, cloneMap) {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
-    let handleConnection = new HandleConnection(this._name, particle);
+    const handleConnection = new HandleConnection(this._name, particle);
     handleConnection._tags = [...this._tags];
     // Note that _rawType will be cloned later by the particle that references this connection.
     // Doing it there allows the particle to maintain variable associations across the particle
@@ -51,13 +60,13 @@ export class HandleConnection {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
-    if ((cmp = util.compareComparables(this._handle, other._handle)) != 0) return cmp;
+    if ((cmp = compareComparables(this._particle, other._particle)) !== 0) return cmp;
+    if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
+    if ((cmp = compareComparables(this._handle, other._handle)) !== 0) return cmp;
     // TODO: add type comparison
-    // if ((cmp = util.compareStrings(this._type, other._type)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._direction, other._direction)) != 0) return cmp;
+    // if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
+    if ((cmp = compareStrings(this._direction, other._direction)) !== 0) return cmp;
     return 0;
   }
 
@@ -76,10 +85,10 @@ export class HandleConnection {
   }
   get direction() { return this._direction; } // in/out
   get isInput() {
-    return this.direction == 'in' || this.direction == 'inout';
+    return this.direction === 'in' || this.direction === 'inout';
   }
   get isOutput() {
-    return this.direction == 'out' || this.direction == 'inout';
+    return this.direction === 'out' || this.direction === 'inout';
   }
   get handle() { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
@@ -118,14 +127,14 @@ export class HandleConnection {
       return false;
     }
     if (this.type && this.spec) {
-      let connectionSpec = this.spec;
+      const connectionSpec = this.spec;
       if (!connectionSpec.isCompatibleType(this.rawType)) {
         if (options && options.errors) {
           options.errors.set(this, `Type '${this.rawType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
         }
         return false;
       }
-      if (this.direction != connectionSpec.direction) {
+      if (this.direction !== connectionSpec.direction) {
         if (options && options.errors) {
           options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.getQualifiedName()}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
         }
@@ -186,21 +195,21 @@ export class HandleConnection {
   }
 
   connectToHandle(handle) {
-    assert(handle.recipe == this.recipe);
+    assert(handle.recipe === this.recipe);
     this._handle = handle;
     this._resetHandleType();
     this._handle.connections.push(this);
   }
 
   disconnectHandle() {
-    let idx = this._handle.connections.indexOf(this);
+    const idx = this._handle.connections.indexOf(this);
     assert(idx >= 0);
     this._handle.connections.splice(idx, 1);
     this._handle = undefined;
   }
 
   toString(nameMap, options) {
-    let result = [];
+    const result = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
     result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '=', '`consume': '<-', '`provide': '->'}[this.direction] || this.direction || '=');

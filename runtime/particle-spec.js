@@ -9,7 +9,7 @@
  */
 
 import {Type} from './ts-build/type.js';
-import {TypeChecker} from './recipe/type-checker.js';
+import {TypeChecker} from './ts-build/recipe/type-checker.js';
 import {Shape} from './ts-build/shape.js';
 import {assert} from '../platform/assert-web.js';
 
@@ -47,7 +47,7 @@ class ConnectionSpec {
   }
 }
 
-class SlotSpec {
+export class SlotSpec {
   constructor(slotModel) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
