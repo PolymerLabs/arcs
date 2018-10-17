@@ -35,8 +35,8 @@ particle BasicProfile in 'source/BasicProfile.js'
     provide friends
 
 recipe BasicProfile
+  map 'SYSTEM_users' as users
   map 'SYSTEM_user' as user
-  use 'SYSTEM_users' as users
   map 'BOXED_avatar' as avatars
   create #avatar as avatar
   create #userName as userName
