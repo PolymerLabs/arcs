@@ -164,7 +164,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       `Music/Playlist.recipe`,
       `Profile/BasicProfile.recipe`,
       `Restaurants/Restaurants.recipes`,
-      `Reservations/Reservations.recipes`
+      `Reservations/Reservations.recipes`,
+      `Restaurants/RestaurantsDemo.recipes`
     ];
     const slot = this.host.querySelector(`[slotid="suggestions"]`);
     if (slot) {

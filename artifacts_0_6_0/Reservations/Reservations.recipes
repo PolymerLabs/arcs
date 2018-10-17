@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../List/List.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Events/Event.schema'
 import '../Arcs/Description.schema'
@@ -20,33 +21,16 @@ particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   inout Event event
   consume annotation
 
-import '../List/List.recipes'
-import '../Profile/Geolocate.recipe'
-import '../Restaurants/RestaurantFind.recipes'
-import '../Restaurants/RestaurantDisplay.recipes'
-
-recipe Restaurants
-  create as location
-  create as restaurants
-  create #selected as selected
-  Geolocate
-    location = location
-  FindRestaurants
-    location = location
-    restaurants = restaurants
-  SelectableTiles
-    consume root
-      provide tile as tile
-      provide annotation as annotation
-    list = restaurants
-    selected = selected
-  TileMultiplexer
-    consume tile as tile
-    list = restaurants
-    hostedParticle = RestaurantTile
+recipe Reservations
+  use as restaurants
+  use #selected as restaurant
   create #event as event
-  ReservationAnnotation
-    consume annotation as annotation
+  ReservationForm
+    restaurant = restaurant
     event = event
-    restaurant = selected
-  description `find restaurants and make reservations near ${FindRestaurants.location}`
+  AnnotationMultiplexer
+    list = restaurants
+    annotation = event
+    hostedParticle = ReservationAnnotation
+  description `make reservations`
+

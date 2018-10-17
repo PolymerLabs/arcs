@@ -5,25 +5,32 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'RestaurantFind.recipes'
-import 'RestaurantDisplay.recipes'
-
+import '../Reservations/Reservations.recipes'
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
+import '../Restaurants/RestaurantFind.recipes'
+import '../Restaurants/RestaurantDisplay.recipes'
 
 recipe Restaurants
   create as location
   create as restaurants
-  create #selected as selected
+  create #restaurant as selected
+  create #event as event
   Geolocate
     location = location
   FindRestaurants
     location = location
     restaurants = restaurants
   SelectableTiles
+    consume root
+      provide annotation as annotation
     list = restaurants
     selected = selected
   TileMultiplexer
     list = restaurants
     hostedParticle = RestaurantTile
-  description `find restaurants near ${FindRestaurants.location}`
+  AnnotationMultiplexer
+    list = restaurants
+    annotation = event
+    hostedParticle = ReservationAnnotation
+  description `find restaurants and make reservations near ${FindRestaurants.location}`

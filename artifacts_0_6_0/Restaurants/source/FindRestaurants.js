@@ -39,9 +39,9 @@ defineParticle(({DomParticle}) => {
       this.setState({count: results.length});
     }
     placeToEntity(p) {
-      const photo = p.photos && p.photos.length
-      ? `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
-      : p.icon;
+      const photo = p.photos && p.photos.length ?
+        `${photoService}?maxwidth=400&photoreference=${p.photos[0].photo_reference}`
+        : p.icon;
       return {
         id: p.id,
         reference: p.reference,
