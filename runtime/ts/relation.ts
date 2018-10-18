@@ -15,7 +15,7 @@ export class Relation extends Entity {
   entities: Entity[];
 
   constructor(...entities) {
-    super(undefined);
+    super();
     this.entities = entities;
   }
 

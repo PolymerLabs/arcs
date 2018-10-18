@@ -12,12 +12,12 @@ import {Type} from './type.js';
 import {Schema} from './schema.js';
 
 export abstract class Entity {
-  private _userIDComponent: string|null;
+  private _userIDComponent?: string;
   // TODO determine the right type to use for the proxy in schema.ts
   // tslint:disable-next-line: no-any
   protected rawData: any;
 
-  constructor(userIDComponent: string|null) {
+  constructor(userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
     this[Symbols.identifier] = undefined;
     this._userIDComponent = userIDComponent;
