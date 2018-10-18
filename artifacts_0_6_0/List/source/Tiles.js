@@ -17,40 +17,37 @@ defineParticle(({DomParticle, html, log}) => {
     flex-wrap: wrap;
     justify-content: center;
     padding: 8px 0;
-    /* need to be able to theme these colors */
-    /* background-color: #333333;
-    color: whitesmoke; */
   }
-  [${host}] > [card] {
+  [card] {
     margin: 8px;
     width: calc(100% - 24px);
     border: 3px solid transparent;
   }
-  [${host}] > [card][selected] {
+  [card][selected] {
     border: 3px solid #0068a7;
   }
   @media (min-width: 540px) {
-    [${host}] > [card] {
+    [card] {
       width: calc(50% - 24px);
     }
   }
   @media (min-width: 800px) {
-    [${host}] > [card] {
+    [card] {
       width: calc(33% - 24px);
     }
   }
   @media (min-width: 1400px) {
-    [${host}] > [card] {
+    [card] {
       width: calc(25% - 24px);
     }
   }
   @media (min-width: 1800px) {
-    [${host}] > [card] {
+    [card] {
       width: calc(20% - 24px);
     }
   }
   @media (min-width: 2200px) {
-    [${host}] > [card] {
+    [card] {
       width: calc(10% - 24px);
     }
   }
