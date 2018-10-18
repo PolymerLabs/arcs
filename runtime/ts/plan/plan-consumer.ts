@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2018 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -10,8 +10,10 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc';
-import {PlanningResult} from './planning-result.js';
+import {Recipe} from '../recipe/recipe';
+import {PlanningResult} from './planning-result';
 import {StorageProviderBase} from '../storage/storage-provider-base';
+import {SuggestionComposer} from '../../suggestion-composer.js';
 
 type Callback = ({}) => void;
 
@@ -23,6 +25,7 @@ export class PlanConsumer {
   plansChangeCallbacks: Callback[] = [];
   suggestionsChangeCallbacks: Callback[] = [];
   storeCallback: Callback;
+  suggestionComposer: SuggestionComposer|null = null;
 
   constructor(arc, store) {
     assert(arc, 'arc cannot be null');
@@ -36,7 +39,20 @@ export class PlanConsumer {
 
     this.storeCallback = () => this.onStoreChanged();
     this.store.on('change', this.storeCallback, this);
+
+    // create suggestion composer and register for a callback.
+    const composer = arc.pec.slotComposer;
+    if (composer) {
+      if (composer.findContextById('rootslotid-suggestions')) {
+        this.suggestionComposer = new SuggestionComposer(composer);
+        this.registerSuggestChangedCallback(
+            (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
+      }
+    }
   }
+
+  registerPlansChangedCallback(callback) { this.plansChangeCallbacks.push(callback); }
+  registerSuggestChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
 
   setSuggestFilter(showAll, search) {
     assert(!showAll || !search);
@@ -51,17 +67,19 @@ export class PlanConsumer {
     }
   }
 
+  async loadPlans() {
+    return this.onStoreChanged();
+  }
+
   async onStoreChanged() {
-    // Update current plans
     assert(this.store['get'], 'Unsupported getter in suggestion storage');
     const value = await this.store['get']() || {};
     if (!value.plans) {
       return;
     }
+
     const previousSuggestions = this.getCurrentSuggestions();
-    // if (this.result.set(value.current)) {
     if (await this.result.deserialize(value)) {
-      // Notify callbacks
       this.plansChangeCallbacks.forEach(callback => callback({plans: this.result.plans}));
       const suggestions = this.getCurrentSuggestions();
       if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
@@ -71,7 +89,8 @@ export class PlanConsumer {
   }
 
   getCurrentSuggestions() {
-    const suggestions = this.result.plans.filter(suggestion => suggestion['plan'].slots.length > 0);
+    const suggestions = this.result.plans.filter(
+        suggestion => suggestion['plan'].slots.length > 0);
 
     // `showAll`: returns all plans that render into slots.
     if (this.suggestFilter['showAll']) {
@@ -82,19 +101,23 @@ export class PlanConsumer {
     if (this.suggestFilter['search']) {
       return suggestions.filter(suggestion =>
         suggestion['descriptionText'].toLowerCase().includes(this.suggestFilter['search']) ||
-        (suggestion['plan'].search && suggestion['plan'].search.phrase.includes(this.suggestFilter['search'])));
+        (suggestion['plan'].search &&
+         suggestion['plan'].search.phrase.includes(this.suggestFilter['search'])));
     }
 
     return suggestions.filter(suggestion => {
       const usesHandlesFromActiveRecipe = suggestion['plan'].handles.find(handle => {
-        // TODO(mmandlis): find a generic way to exlude system handles (eg Theme), either by tagging or
-        // by exploring connection directions etc.
-        return !!handle.id && this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
+        // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
+        // either by tagging or by exploring connection directions etc.
+        return !!handle.id &&
+               this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
       });
       const usesRemoteNonRootSlots = suggestion['plan'].slots.find(slot => {
-        return !slot.name.includes('root') && !slot.tags.includes('root') && slot.id && !slot.id.includes('root');
+        return !slot.name.includes('root') && !slot.tags.includes('root') &&
+               slot.id && !slot.id.includes('root');
       });
-      const onlyUsesNonRootSlots = !suggestion['plan'].slots.find(s => s.name.includes('root') || s.tags.includes('root'));
+      const onlyUsesNonRootSlots =
+          !suggestion['plan'].slots.find(s => s.name.includes('root') || s.tags.includes('root'));
       return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
     });
   }
@@ -103,5 +126,6 @@ export class PlanConsumer {
     this.store.off('change', this.storeCallback);
     this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
+    this.suggestionComposer.clear();
   }
 }

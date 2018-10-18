@@ -1,9 +1,12 @@
-// Copyright (c) 2018 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2018 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc';
@@ -33,7 +36,7 @@ export class PlanProducer {
     this.speculator = new Speculator();
   }
 
-  async runPlanner(options = {}) {
+  async producePlans(options = {}) {
     if (options['cancelOngoingPlanning'] && this.isPlanning) {
       this._cancelPlanning();
     }
@@ -44,32 +47,41 @@ export class PlanProducer {
     }
     this.isPlanning = true;
 
-
     let time = now();
 
     let plans = [];
-    const generations = [];
+    let generations = [];
     while (this.needReplan) {
       this.needReplan = false;
-
-      assert(!this.planner, 'Planner must be null');
-      this.planner = new Planner();
-      this.planner.init(this.arc, {
-        strategies: options['strategies']
-        // TODO: add `search` and `contextual` params.
-      });
-
-      plans = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
-      this.planner = null;
+      generations = [];
+      plans = await this.runPlanner(options, generations);
     }
     time = ((now() - time) / 1000).toFixed(2);
 
-    console.log(`Produced ${plans.length}${options['append'] ? ' additional' : ''} plans [elapsed=${time}s].`);
-
-    if (this.isPlanning) {
+    // Plans are null, if planning was cancelled.
+    if (plans) {
+      console.log(`Produced ${plans.length}${options['append'] ? ' additional' : ''} plans [elapsed=${time}s].`);
       this.isPlanning = false;
       await this._updateResult({plans, generations}, options);
     }
+  }
+
+  async runPlanner(options, generations) {
+    let plans = [];
+    assert(!this.planner, 'Planner must be null');
+    this.planner = new Planner();
+    this.planner.init(this.arc, {
+      strategies: options['strategies']
+      // TODO: add `search` and `contextual` params.
+    });
+
+    plans = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
+    if (this.planner) {
+      this.planner = null;
+      return plans;
+    }
+    // Planning was cancelled.
+    return null;
   }
 
   _cancelPlanning() {
@@ -79,7 +91,7 @@ export class PlanProducer {
     }
     this.needReplan = false;
     this.isPlanning = false; // using the setter method to trigger callbacks.
-    log(`Cancel planning`);
+    console.log(`Cancel planning`);
   }
 
   async _updateResult({plans, generations}, options) {

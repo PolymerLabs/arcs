@@ -7,6 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+// Deprecated.
+// TODO: Delete, once shell fully migrated to ts/planificator.ts
+
 import {assert} from '../platform/assert-web.js';
 import {Manifest} from './ts-build/manifest.js';
 import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';

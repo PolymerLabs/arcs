@@ -5,6 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// Deprecated.
+// TODO: Replace by ts/planificator.ts
+
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {InitSearch} from './strategies/init-search.js';

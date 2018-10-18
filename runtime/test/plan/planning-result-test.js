@@ -7,9 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
-'use strict';
-
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanningResult} from '../../ts-build/plan/planning-result.js';
