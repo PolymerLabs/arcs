@@ -733,33 +733,34 @@ ${particleStr1}
         \`consume Slot slotA #aaa
           \`provide Slot slotB #bbb
         recipe
-          slot 'slot-id0' #aa #aaa as s0
+          \`slot 'slot-id0' #aa #aaa as s0
           SomeParticle
-            consume slotA #aa #hello as s0
-              provide slotB
+            slotA consume s0 #aa #hello
+            slotB provide
     `);
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);
     let spec = manifest.particles[0];
-    assert.equal(spec.slots.size, 1);
-    let slotSpec = [...spec.slots.values()][0];
+    assert.lengthOf(spec.connections, 2);
+    let slotSpec = spec.connections[0];
     assert.deepEqual(slotSpec.tags, ['aaa']);
-    assert.lengthOf(slotSpec.providedSlots, 1);
-    let providedSlotSpec = slotSpec.providedSlots[0];
+    assert.lengthOf(slotSpec.dependentConnections, 1);
+    let providedSlotSpec = slotSpec.dependentConnections[0];
     assert.deepEqual(providedSlotSpec.tags, ['bbb']);
 
     // verify recipe slots
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
-    assert.lengthOf(recipe.slots, 2);
-    let recipeSlot = recipe.slots.find(s => s.id == 'slot-id0');
+    assert.lengthOf(recipe.handles, 1);
+    let recipeSlot = recipe.handles.find(s => s.id == 'slot-id0');
     assert(recipeSlot);
     assert.deepEqual(recipeSlot.tags, ['aa', 'aaa']);
 
-    let slotConn = recipe.particles[0].consumedSlotConnections['slotA'];
+    let slotConn = recipe.particles[0].connections['slotA'];
     assert(slotConn);
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
-    assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
+    //TODO(jopra): Give recipes the dependentConnections syntax+handling
+    // assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
   });
   it('recipe slots with different names', async () => {
     let manifest = await Manifest.parse(`
