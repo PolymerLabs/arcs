@@ -11,6 +11,7 @@ class ObjectExplorer extends PolymerElement {
         overflow: hidden;
         display: flex;
         align-items: flex-start;
+        line-height: 22px;
       }
       :host([folded]) {
         white-space: nowrap;
@@ -65,6 +66,9 @@ class ObjectExplorer extends PolymerElement {
         word-break: break-all;
         width: initial;
       }
+      :host(:not([folded])) [string] {
+        white-space: pre-wrap;
+      }
       [numberOrBool] {
         color: var(--devtools-blue);
       }
@@ -76,6 +80,7 @@ class ObjectExplorer extends PolymerElement {
       }
     </style>
     <span class="header" expandable$=[[_expandable(folded)]] on-click="_handleExpand" inner$=[[inner]] hidden$=[[skipHeader]]>
+      <slot></slot>
       <span class="triangle devtools-small-icon" expanded$="[[expanded]]" hidden$=[[folded]]></span>
       <template is="dom-if" if="[[!skipKey]]"><span key>[[key]]</span><span keySeparator>[[_separator(key)]]</span></template is="dom-if">
       <span meta>[[_describe(folded)]]</span>
