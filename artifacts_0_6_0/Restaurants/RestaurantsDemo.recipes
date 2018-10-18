@@ -11,7 +11,7 @@ import '../Profile/Geolocate.recipe'
 import '../Restaurants/RestaurantFind.recipes'
 import '../Restaurants/RestaurantDisplay.recipes'
 
-recipe Restaurants
+recipe RestaurantsDemo
   create as location
   create as restaurants
   create #restaurant as selected
