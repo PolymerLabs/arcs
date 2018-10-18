@@ -54,6 +54,27 @@ resource BOXED_avatarResource
   []
 store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed in BOXED_avatarResource
 
+import '../TVMaze/TVMazeShow.schema'
+resource PROFILE_piped_tv_showResource
+  start
+  []
+store PROFILE_piped_tv_show of [TVMazeShow] 'PROFILE_piped-tv_show' @0 #profile in PROFILE_piped_tv_showResource
+
+resource PROFILE_all_piped_all_tv_showsResource
+  start
+  []
+store PROFILE_all_piped_all_tv_shows of [TVMazeShow] 'PROFILE_all_piped-all_tv_shows' @0 #profile in PROFILE_all_piped_all_tv_showsResource
+
+resource BOXED_all_piped_all_tv_showsResource
+  start
+  []
+store BOXED_all_piped_all_tv_shows of [TVMazeShow] 'BOXED_all_piped-all_tv_shows' @0 #boxed in BOXED_all_piped_all_tv_showsResource
+
+resource BOXED_shows_tilesResource
+  start
+  []
+store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_shows_tilesResource
+
 // all of the below is required to make the arc aware of these stores
 
 particle Sharing in './source/sharing.js'
@@ -65,6 +86,10 @@ particle Sharing in './source/sharing.js'
   in [UserName] boxedUserName
   in [Avatar] profileAvatar
   in [Avatar] boxedAvatar
+  in [TVMazeShow] profilePipedShow
+  in [TVMazeShow] profilePipedShows
+  in [TVMazeShow] boxedPipedShows
+  in [TVMazeShow] boxedShowsTiles
 
 recipe Sharing
   use 'SYSTEM_users' as systemUsers
@@ -75,6 +100,10 @@ recipe Sharing
   use 'BOXED_userName' as boxedUserName
   use 'PROFILE_avatar' as profileAvatar
   use 'BOXED_avatar' as boxedAvatar
+  use 'PROFILE_piped-tv_show' as profilePipedShow
+  use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
+  use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
+  use 'BOXED_shows-tiles' as boxedShowsTiles
   Sharing
     systemUsers = systemUsers
     systemUser = systemUser
@@ -84,3 +113,7 @@ recipe Sharing
     boxedUserName = boxedUserName
     profileAvatar = profileAvatar
     boxedAvatar = boxedAvatar
+    profilePipedShow = profilePipedShow
+    profilePipedShows = profilePipedShows
+    boxedPipedShows = boxedPipedShows
+    boxedShowsTiles = boxedShowsTiles
