@@ -107,17 +107,8 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
     this._timeBase = 0;
   }
 
-  ready() {
-    super.ready();
-    if (!chrome.devtools || !chrome.devtools.inspectedWindow || !chrome.devtools.inspectedWindow.tabId) {
-      // Download only works right now when running Arcs in the browser.
-      this.$.download.style.display = 'none';
-    }
-  }
-
   onMessageBundle(messages) {
     let needsRedraw = false;
-    let startEmpty = this._items.length === 0;
     let flowEventsCache = new Map();
 
     for (let msg of messages) {
