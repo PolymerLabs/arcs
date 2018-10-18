@@ -33,23 +33,20 @@ const template = Xen.Template.html`
       padding: 4px;
       margin-bottom: 8px;
     }
-    web-launcher[hidden] {
-      display: none;
-    }
-    web-arc[hidden] {
+    [hidden] {
       display: none;
     }
   </style>
   <!-- manage configuration (read and persist) -->
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
   <!-- context bootstrap -->
-  <web-arc env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{context}}"></web-arc>
+  <web-arc env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
-  <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{context}}" arcstore="{{store}}"></user-context>
+  <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <!-- launcher -->
-    <web-arc hidden="{{hideLauncher}}" Xstyle="display: none;" env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc" Xon-recipe="onState"></web-arc>
+    <web-arc hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" info="{{info}}"></web-launcher> -->
     <!-- other arcs -->
     <web-arc hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" context="{{context}}" on-arc="onState" manifest="{{manifest}}"></web-arc>
@@ -96,7 +93,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         };
       }
     }
-    if (!state.launcherConfig && state.env && state.context) {
+    if (!state.launcherConfig && state.env) {
       // spin up launcher arc
       this.spawnLauncher();
     }
@@ -139,12 +136,12 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   async spawnContext() {
-    const context = await this.state.env.parse(`
+    const precontext = await this.state.env.parse(`
   import 'https://$artifacts/canonical.manifest'
   import 'https://$artifacts/Profile/Sharing.recipe'
     `);
     this.state = {
-      context,
+      precontext,
       contextConfig: {
         id: `${this.state.userid}-context`
       }
@@ -160,12 +157,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnSuggestions() {
     const suggestions = [
-      `Arcs/Login.recipe`,
+      //`Arcs/Login.recipe`,
       `Music/Playlist.recipe`,
       `Profile/BasicProfile.recipe`,
       `Restaurants/Restaurants.recipes`,
       `Reservations/Reservations.recipes`,
-      `Restaurants/RestaurantsDemo.recipes`
+      `Restaurants/RestaurantsDemo.recipes`,
+      `TVMaze/TVMazeDemo.recipes`,
+      `Profile/EchoUser.recipe`
     ];
     const slot = this.host.querySelector(`[slotid="suggestions"]`);
     if (slot) {
@@ -179,7 +178,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   applySuggestion(suggestion) {
-    if (this.state.arc) {
+    if (this.state.arckey) {
       this.state = {manifest: `import 'https://$artifacts/${suggestion}'`};
     } else {
       this.spawnArc(suggestion);
