@@ -16,7 +16,7 @@ class UserPlanner {
     // Create the launcher arc and planificator.
     const launcherArc = this.factory.spawn(this.context);
     let launcherKey = `launcher`;
-    launcherArc._storageKey = `${Firebase.storageKey}/arcs/${launcherKey}`;
+    launcherArc.storageKey = `${Firebase.storageKey}/arcs/${launcherKey}`;
     const launcherPlanificator = this.createPlanificator(userid, launcherKey, launcherArc);
     this.runners[launcherKey] = {arc: launcherArc, planificator: launcherPlanificator};
   }
