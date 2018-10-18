@@ -56,15 +56,15 @@ defineParticle(({DomParticle, html, log}) => {
   }
 </style>
 
+<div slotid="action"></div>
+<div ${host}>{{items}}</div>
+
 <template tiled-items>
   <div card selected$="{{selected}}">
     <div slotid="tile" subid$="{{id}}" key="{{id}}" on-click="_onSelect"></div>
     <div slotid="annotation" subid$="{{id}}"></div>
   </div>
 </template>
-
-<div slotid="action"></div>
-<div ${host}>{{items}}</div>
     `;
 
   return class extends DomParticle {

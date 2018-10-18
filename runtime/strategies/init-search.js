@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 import {assert} from '../../platform/assert-web.js';
 
 export class InitSearch extends Strategy {

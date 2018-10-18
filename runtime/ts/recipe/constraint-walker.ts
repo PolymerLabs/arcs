@@ -10,12 +10,12 @@ import {WalkerBase} from './walker-base.js';
 export class ConstraintWalker extends WalkerBase {
   onResult(result) {
     super.onResult(result);
-    let recipe = result.result;
-    let updateList = [];
+    const recipe = result.result;
+    const updateList = [];
 
     recipe._connectionConstraints.forEach(constraint => {
       if (this.onConstraint) {
-        let result = this.onConstraint(recipe, constraint);
+        const result = this.onConstraint(recipe, constraint);
         if (result) {
           updateList.push({continuation: result, context: constraint});
         }

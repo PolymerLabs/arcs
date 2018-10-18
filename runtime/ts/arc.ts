@@ -9,63 +9,97 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {Type} from './ts-build/type.js';
-import {ParticleExecutionHost} from './particle-execution-host.js';
+import {assert} from '../../platform/assert-web.js';
+import {Type} from './type.js';
+import {ParticleExecutionHost} from '../particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
-import {Manifest} from './manifest.js';
-import {Description} from './description.js';
-import * as util from './recipe/util.js';
-import {FakePecFactory} from './fake-pec-factory.js';
-import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
-import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {Id} from './ts-build/id.js';
-import {ArcDebugHandler} from './debug/arc-debug-handler.js';
-import {RecipeIndex} from './recipe-index.js';
+import {Manifest} from '../manifest.js';
+import {Description} from '../description.js';
+import {compareComparables} from './recipe/util.js';
+import {FakePecFactory} from '../fake-pec-factory.js';
+import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {DevtoolsConnection} from '../debug/devtools-connection.js';
+import {Id} from './id.js';
+import {ArcDebugHandler} from '../debug/arc-debug-handler.js';
+import {RecipeIndex} from '../recipe-index.js';
+import {Loader} from './loader.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {ParticleSpec} from '../particle-spec.js';
+import {PECInnerPort} from '../api-channel.js';
+import {Particle} from './recipe/particle.js';
+import {HandleConnection} from './recipe/handle-connection.js';
+import {SlotComposer} from '../slot-composer.js';
+
+type ArcOptions = {
+  id: string;
+  context: Manifest;
+  pecFactory?: (id: string) => PECInnerPort;
+  slotComposer?: SlotComposer;
+  loader: Loader;
+  storageKey?: string;
+  storageProviderFactory?: StorageProviderFactory;
+  speculative?: boolean;
+  recipeIndex?: RecipeIndex;
+};
+
+type PlanCallback = (recipe: Recipe) => void;
+
+type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
 export class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, scheduler, recipeIndex}) {
+  private _context: Manifest;
+  private pecFactory: (id: string) => PECInnerPort;
+  private speculative: boolean;
+  private nextLocalID = 0;
+  private _activeRecipe = new Recipe();
+  private _recipes = [];
+  private _loader: Loader;
+  private dataChangeCallbacks = new Map<object, () => void>();
+  // All the stores, mapped by store ID
+  private storesById = new Map<string, StorageProviderBase>();
+  // storage keys for referenced handles
+  private storageKeys: {[index: string]: string} = {};
+  private storageKey: string;
+  private storageProviderFactory: StorageProviderFactory;
+  // Map from each store to a set of tags.
+  private storeTags = new Map<StorageProviderBase, Set<string>>();
+  // Map from each store to its description (originating in the manifest).
+  private storeDescriptions = new Map<StorageProviderBase, Description>();
+  private _description: Description;
+  private instantiatePlanCallbacks: PlanCallback[] = [];
+  private _recipeIndex: RecipeIndex;
+  private waitForIdlePromise: Promise<void> | null;
+
+  sessionId = Id.newSessionId();
+  id: Id;
+  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
+  pec: ParticleExecutionHost;
+
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, recipeIndex} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
-    this._pecFactory = pecFactory || FakePecFactory.bind(null);
+    this.pecFactory = pecFactory || FakePecFactory.bind(null);
 
     // for now, every Arc gets its own session
-    this.sessionId = Id.newSessionId();
     this.id = this.sessionId.fromString(id);
-    this._speculative = !!speculative; // undefined => false
-    this._nextLocalID = 0;
-    this._activeRecipe = new Recipe();
+    this.speculative = !!speculative; // undefined => false
     // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
-    this._recipes = [];
     this._loader = loader;
-    this._dataChangeCallbacks = new Map();
 
-    // All the stores, mapped by store ID
-    this._storesById = new Map();
+    this.storageKey = storageKey;
 
-    // storage keys for referenced handles
-    this._storageKeys = {};
-    this._storageKey = storageKey;
-
-    this.particleHandleMaps = new Map();
-    let pecId = this.generateID();
-    let innerPecPort = this._pecFactory(pecId);
+    const pecId = this.generateID();
+    const innerPecPort = this.pecFactory(pecId);
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this, `${pecId}:outer`);
     if (slotComposer) {
       slotComposer.arc = this;
     }
-    this._storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
-
-    // Map from each store to a set of tags.
-    this._storeTags = new Map();
-    // Map from each store to its description (originating in the manifest).
-    this._storeDescriptions = new Map();
+    this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
 
     this._description = new Description(this);
 
-    this._instantiatePlanCallbacks = [];
     this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
@@ -83,24 +117,26 @@ export class Arc {
     return this._recipeIndex;
   }
 
-  registerInstantiatePlanCallback(callback) {
-    this._instantiatePlanCallbacks.push(callback);
+  registerInstantiatePlanCallback(callback: PlanCallback) {
+    this.instantiatePlanCallbacks.push(callback);
   }
 
-  unregisterInstantiatePlanCallback(callback) {
-    let index = this._instantiatePlanCallbacks.indexOf(callback);
+  unregisterInstantiatePlanCallback(callback: PlanCallback) {
+    const index = this.instantiatePlanCallbacks.indexOf(callback);
     if (index >= 0) {
-      this._instantiatePlanCallbacks.splice(index, 1);
+      this.instantiatePlanCallbacks.splice(index, 1);
       return true;
     }
     return false;
   }
 
   dispose() {
-    this._instantiatePlanCallbacks = [];
+    this.instantiatePlanCallbacks = [];
     // TODO: disconnect all assocated store event handlers
     this.pec.close();
-    this.pec.slotComposer && this.pec.slotComposer.dispose();
+    if (this.pec.slotComposer) {
+      this.pec.slotComposer.dispose();
+    }
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
@@ -115,29 +151,29 @@ export class Arc {
   }
 
   get idle() {
-    if (!this._waitForIdlePromise) {
+    if (!this.waitForIdlePromise) {
       // Store one active completion promise for use by any subsequent callers.
       // We explicitly want to avoid, for example, multiple simultaneous
       // attempts to identify idle state each sending their own `AwaitIdle`
       // message and expecting settlement that will never arrive.
-      this._waitForIdlePromise =
-          this._waitForIdle().then(() => this._waitForIdlePromise = null);
+      this.waitForIdlePromise =
+          this._waitForIdle().then(() => this.waitForIdlePromise = null);
     }
-    return this._waitForIdlePromise;
+    return this.waitForIdlePromise;
   }
 
   get isSpeculative() {
-    return this._speculative;
+    return this.speculative;
   }
 
-  async _serializeHandle(handle, context, id) {
-    let type = handle.type.getContainedType() || handle.type;
+  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string) {
+    const type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
     }
-    let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
-    let tags = this._storeTags.get(handle) || [];
-    let handleTags = [...tags].map(a => `#${a}`).join(' ');
+    const key = this.storageProviderFactory.parseStringAsKey(handle.storageKey);
+    const tags = this.storeTags.get(handle) || [];
+    const handleTags = [...tags].map(a => `#${a}`).join(' ');
 
     const actualHandle = this.activeRecipe.findHandle(handle.id);
     const originalId = actualHandle ? actualHandle.originalId : null;
@@ -165,7 +201,7 @@ export class Arc {
             let result;
             if (value.rawData) {
               result = {$id: id};
-              for (let field in value.rawData) {
+              for (const field of Object.keys(value.rawData)) {
                 result[field] = value.rawData[field];
               }
             } else {
@@ -192,37 +228,39 @@ export class Arc {
         }
 
         context.resources += `resource ${id}Resource\n`;
-        let indent = '  ';
+        const indent = '  ';
         context.resources += indent + 'start\n';
 
-        let data = JSON.stringify(serializedData);
+        const data = JSON.stringify(serializedData);
         context.resources += data.split('\n').map(line => indent + line).join('\n');
         context.resources += '\n';
         context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version || 0} ${handleTags} in ${id}Resource\n`;
         break;
       }
+      default:
+        throw new Error(`unknown storageKey protocol ${key.protocol}`);
     }
   }
 
   async _serializeHandles() {
-    let context = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
+    const context = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
 
     let id = 0;
-    let importSet = new Set();
-    let handleSet = new Set();
+    const importSet = new Set();
+    const handleSet = new Set();
     const contextSet = new Set(this.context._stores.map(store => store.id));
-    for (let handle of this._activeRecipe.handles) {
-      if (handle.fate == 'map') {
+    for (const handle of this._activeRecipe.handles) {
+      if (handle.fate === 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
       } else {
         handleSet.add(handle.id);
       }
     }
-    for (let url of importSet.values()) {
+    for (const url of importSet.values()) {
       context.resources += `import '${url}'\n`;
     }
 
-    for (let handle of this._stores) {
+    for (const handle of this._stores) {
       if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
@@ -238,8 +276,8 @@ export class Arc {
   }
 
   _serializeStorageKey() {
-    if (this._storageKey) {
-      return `storageKey: '${this._storageKey}'\n`;
+    if (this.storageKey) {
+      return `storageKey: '${this.storageKey}'\n`;
     }
     return '';
   }
@@ -260,8 +298,8 @@ ${this.activeRecipe.toString()}`;
   }
 
   static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}) {
-    let manifest = await Manifest.parse(serialization, {loader, fileName, context});
-    let arc = new Arc({
+    const manifest = await Manifest.parse(serialization, {loader, fileName, context});
+    const arc = new Arc({
       id: manifest.meta.name,
       storageKey: manifest.meta.storageKey,
       slotComposer,
@@ -272,13 +310,13 @@ ${this.activeRecipe.toString()}`;
     });
     await Promise.all(manifest.stores.map(async store => {
       const tags = manifest._storeTags.get(store);
-      if (store.constructor.name == 'StorageStub') {
+      if (store.constructor.name === 'StorageStub') {
         store = await store.inflate();
       }
       arc._registerStore(store, tags);
     }));
-    let recipe = manifest.activeRecipe.clone();
-    let options = {errors: new Map()};
+    const recipe = manifest.activeRecipe.clone();
+    const options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
     return arc;
@@ -295,17 +333,17 @@ ${this.activeRecipe.toString()}`;
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle) {
-    let id = this.generateID('particle');
-    let handleMap = {spec: recipeParticle.spec, handles: new Map()};
+  _instantiateParticle(recipeParticle : Particle) {
+    const id = this.generateID('particle');
+    const handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(id, handleMap);
 
-    for (let [name, connection] of Object.entries(recipeParticle.connections)) {
+    for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       if (!connection.handle) {
         assert(connection.isOptional);
         continue;
       }
-      let handle = this.findStoreById(connection.handle.id);
+      const handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
@@ -317,28 +355,28 @@ ${this.activeRecipe.toString()}`;
     return id;
   }
 
-  generateID(component) {
+  generateID(component: string = '') {
     return this.id.createId(component).toString();
   }
 
   generateIDComponents() {
-    return {base: this.id, component: () => this._nextLocalID++};
+    return {base: this.id, component: () => this.nextLocalID++};
   }
 
   get _stores() {
-    return [...this._storesById.values()];
+    return [...this.storesById.values()];
   }
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
-    let handleMap = new Map();
-    for (let handle of this._stores) {
-      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'volatile');
-      await clone.cloneFrom(handle);
-      handleMap.set(handle, clone);
-      if (this._storeDescriptions.has(handle)) {
-        arc._storeDescriptions.set(clone, this._storeDescriptions.get(handle));
+    const arc = new Arc({id: this.generateID().toString(), pecFactory: this.pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
+    const storeMap = new Map();
+    for (const store of this._stores) {
+      const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
+      await clone.cloneFrom(store);
+      storeMap.set(store, clone);
+      if (this.storeDescriptions.has(store)) {
+        arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
       }
     }
     this.particleHandleMaps.forEach((value, key) => {
@@ -346,25 +384,25 @@ ${this.activeRecipe.toString()}`;
         spec: value.spec,
         handles: new Map()
       });
-      value.handles.forEach(handle => arc.particleHandleMaps.get(key).handles.set(handle.name, handleMap.get(handle)));
+      value.handles.forEach(handle => arc.particleHandleMaps.get(key).handles.set(handle.name, storeMap.get(handle)));
     });
 
-   let {particles, handles, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
+   const {particles, handles, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
    let particleIndex = 0;
    let handleIndex = 0;
    let slotIndex = 0;
 
    this._recipes.forEach(recipe => {
-     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), patterns: recipe.patterns};
+     const arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), patterns: recipe.patterns};
      recipe.particles.forEach(p => {
        arcRecipe.particles.push(particles[particleIndex++]);
        if (recipe.innerArcs.has(p)) {
-         let thisInnerArc = recipe.innerArcs.get(p);
-         let transformationParticle = arcRecipe.particles[arcRecipe.particles.length - 1];
-         let innerArc = {activeRecipe: new Recipe(), recipes: []};
-         let innerTuples = thisInnerArc.activeRecipe.mergeInto(innerArc.activeRecipe);
+         const thisInnerArc = recipe.innerArcs.get(p);
+         const transformationParticle = arcRecipe.particles[arcRecipe.particles.length - 1];
+         const innerArc = {activeRecipe: new Recipe(), recipes: []};
+         const innerTuples = thisInnerArc.activeRecipe.mergeInto(innerArc.activeRecipe);
          thisInnerArc.recipes.forEach(thisInnerArcRecipe => {
-           let innerArcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map()};
+           const innerArcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map()};
            let innerIndex = 0;
            thisInnerArcRecipe.particles.forEach(thisInnerArcRecipeParticle => {
              innerArcRecipe.particles.push(innerTuples.particles[innerIndex++]);
@@ -392,60 +430,62 @@ ${this.activeRecipe.toString()}`;
      arc._recipes.push(arcRecipe);
    });
 
-    for (let v of handleMap.values()) {
+    for (const v of storeMap.values()) {
       // FIXME: Tags
       arc._registerStore(v, []);
     }
     return arc;
   }
 
-  async instantiate(recipe, innerArc) {
+  async instantiate(recipe: Recipe, innerArc = undefined) {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
     if (innerArc) {
-      let innerArcs = this._recipes.find(r => !!r.particles.find(p => p == innerArc.particle)).innerArcs;
+      const innerArcs = this._recipes.find(r => !!r.particles.find(p => p === innerArc.particle)).innerArcs;
       if (!innerArcs.has(innerArc.particle)) {
          innerArcs.set(innerArc.particle, {activeRecipe: new Recipe(), recipes: []});
       }
       currentArc = innerArcs.get(innerArc.particle);
     }
-    let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
+    const {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
     currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), patterns: recipe.patterns});
 
     // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
     // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
-    for (let recipeHandle of handles) {
+    for (const recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
-        if (recipeHandle.fate == 'create') {
+        if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
         }
 
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        let newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
+        const newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
         if (recipeHandle.id && recipeHandle.type.isInterface
             && recipeHandle.id.includes(':particle-literal:')) {
           // 'particle-literal' handles are created by the FindHostedParticle strategy.
-          let particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
-          let particle = this.context.findParticleByName(particleName);
+          const particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
+          const particle = this.context.findParticleByName(particleName);
           assert(recipeHandle.type.interfaceShape.particleMatches(particle));
           const particleClone = particle.clone().toLiteral();
           particleClone.id = recipeHandle.id;
-          await newStore.set(particleClone);
+          // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc.
+          // tslint:disable-next-line: no-any
+          await (newStore as any).set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
-          let copiedStore = this.findStoreById(recipeHandle.id);
+          const copiedStore = this.findStoreById(recipeHandle.id);
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
           this._tagStore(newStore, this.findStoreTags(copiedStore));
-          let copiedStoreDesc = this.getStoreDescription(copiedStore);
+          const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
-            this._storeDescriptions.set(newStore, copiedStoreDesc);
+            this.storeDescriptions.set(newStore, copiedStoreDesc);
           }
         }
         recipeHandle.id = newStore.id;
@@ -459,7 +499,7 @@ ${this.activeRecipe.toString()}`;
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
       // asks for one of these there's a conflict. Ideally these will end up as a
       // part of the context and will be populated on-demand like everything else.
-      if (this._storesById.has(recipeHandle.id)) {
+      if (this.storesById.has(recipeHandle.id)) {
         continue;
       }
 
@@ -468,9 +508,9 @@ ${this.activeRecipe.toString()}`;
         storageKey = this.keyForId(recipeHandle.id);
       }
       assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
-      let type = recipeHandle.type.resolvedType();
+      const type = recipeHandle.type.resolvedType();
       assert(type.isResolved());
-      let store = await this._storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+      const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
       this._registerStore(store, recipeHandle.tags);
     }
@@ -484,18 +524,18 @@ ${this.activeRecipe.toString()}`;
 
     if (!this.isSpeculative && !innerArc) {
       // Note: callbacks not triggered for inner-arc recipe instantiation or speculative arcs.
-      this._instantiatePlanCallbacks.forEach(callback => callback(recipe));
+      this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
   }
 
   _connectParticleToHandle(particleId, particle, name, targetHandle) {
     assert(targetHandle, 'no target handle provided');
-    let handleMap = this.particleHandleMaps.get(particleId);
+    const handleMap = this.particleHandleMaps.get(particleId);
     assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
     handleMap.handles.set(name, targetHandle);
   }
 
-  async createStore(type, name, id, tags, storageKey) {
+  async createStore(type, name, id, tags, storageKey = undefined) {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type.isRelation) {
@@ -506,9 +546,9 @@ ${this.activeRecipe.toString()}`;
       id = this.generateID();
     }
 
-    if (storageKey == undefined && this._storageKey) {
+    if (storageKey == undefined && this.storageKey) {
       storageKey =
-          this._storageProviderFactory.parseStringAsKey(this._storageKey)
+          this.storageProviderFactory.parseStringAsKey(this.storageKey)
               .childKeyForHandle(id)
               .toString();
     }
@@ -519,7 +559,7 @@ ${this.activeRecipe.toString()}`;
       storageKey = 'volatile';
     }
 
-    let store = await this._storageProviderFactory.construct(id, type, storageKey);
+    const store = await this.storageProviderFactory.construct(id, type, storageKey);
     assert(store, `failed to create store with id [${id}]`);
     store.name = name;
 
@@ -528,37 +568,37 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
-    assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
+    assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
 
-    this._storesById.set(store.id, store);
+    this.storesById.set(store.id, store);
 
-    this._storeTags.set(store, new Set(tags));
+    this.storeTags.set(store, new Set(tags));
 
-    this._storageKeys[store.id] = store.storageKey;
+    this.storageKeys[store.id] = store.storageKey;
     store.on('change', () => this._onDataChange(), this);
   }
 
   _tagStore(store, tags) {
-    assert(this._storesById.has(store.id) && this._storeTags.has(store), `Store not registered '${store.id}'`);
-    let storeTags = this._storeTags.get(store);
+    assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
+    const storeTags = this.storeTags.get(store);
     (tags || []).forEach(tag => storeTags.add(tag));
   }
 
   _onDataChange() {
-    for (let callback of this._dataChangeCallbacks.values()) {
+    for (const callback of this.dataChangeCallbacks.values()) {
       callback();
     }
   }
 
   onDataChange(callback, registration) {
-    this._dataChangeCallbacks.set(registration, callback);
+    this.dataChangeCallbacks.set(registration, callback);
   }
 
   clearDataChange(registration) {
-    this._dataChangeCallbacks.delete(registration);
+    this.dataChangeCallbacks.delete(registration);
   }
 
   // Convert a type to a normalized key that we can use for
@@ -568,9 +608,9 @@ ${this.activeRecipe.toString()}`;
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type) {
-    let elementType = type.getContainedType();
+    const elementType = type.getContainedType();
     if (elementType) {
-      let key = this._typeToKey(elementType);
+      const key = this._typeToKey(elementType);
       if (key) {
         return `list:${key}`;
       }
@@ -586,10 +626,10 @@ ${this.activeRecipe.toString()}`;
   }
 
   findStoresByType(type, options) {
-    let typeKey = Arc._typeToKey(type);
-    let stores = [...this._storesById.values()].filter(handle => {
+    const typeKey = Arc._typeToKey(type);
+    let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
-        let handleKey = Arc._typeToKey(handle.type);
+        const handleKey = Arc._typeToKey(handle.type);
         if (typeKey === handleKey) {
           return true;
         }
@@ -599,7 +639,7 @@ ${this.activeRecipe.toString()}`;
         }
         // elementType will only be non-null if type is either Collection or BigCollection; the tag
         // comparison ensures that handle.type is the same sort of collection.
-        let elementType = type.getContainedType();
+        const elementType = type.getContainedType();
         if (elementType && elementType.isVariable && !elementType.isResolved() && type.tag === handle.type.tag) {
           return true;
         }
@@ -608,7 +648,7 @@ ${this.activeRecipe.toString()}`;
     });
 
     if (options && options.tags && options.tags.length > 0) {
-      stores = stores.filter(store => options.tags.filter(tag => !this._storeTags.get(store).has(tag)).length == 0);
+      stores = stores.filter(store => options.tags.filter(tag => !this.storeTags.get(store).has(tag)).length === 0);
     }
 
     // Quick check that a new handle can fulfill the type contract.
@@ -618,7 +658,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   findStoreById(id) {
-    let store = this._storesById.get(id);
+    let store = this.storesById.get(id);
     if (store == null) {
       store = this._context.findStoreById(id);
     }
@@ -626,20 +666,20 @@ ${this.activeRecipe.toString()}`;
   }
 
   findStoreTags(store) {
-    if (this._storeTags.has(store)) {
-      return this._storeTags.get(store);
+    if (this.storeTags.has(store)) {
+      return this.storeTags.get(store);
     }
     return this._context.findStoreTags(store);
   }
 
   getStoreDescription(store) {
     assert(store, 'Cannot fetch description for nonexistent store');
-    return this._storeDescriptions.get(store) || store.description;
+    return this.storeDescriptions.get(store) || store.description;
   }
 
   getStoresState(options) {
-    let versionById = new Map();
-    this._storesById.forEach((handle, id) => versionById.set(id, handle.version));
+    const versionById = new Map();
+    this.storesById.forEach((handle, id) => versionById.set(id, handle.version));
     if ((options || {}).includeContext) {
       this._context.allStores.forEach(handle => versionById.set(handle.id, handle.version));
     }
@@ -647,7 +687,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   keyForId(id) {
-    return this._storageKeys[id];
+    return this.storageKeys[id];
   }
 
   stop() {
@@ -655,10 +695,10 @@ ${this.activeRecipe.toString()}`;
   }
 
   toContextString(options) {
-    let results = [];
-    let stores = [...this._storesById.values()].sort(util.compareComparables);
+    const results = [];
+    const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString(this._storeTags.get(store)));
+      results.push(store.toString(this.storeTags.get(store)));
     });
 
     // TODO: include stores entities

@@ -18,7 +18,7 @@ export class WebCryptoMemoryKeyStorage implements KeyStorage {
         this.storageMap = new Map();
     }
 
-    find(keyFingerPrint: string): PromiseLike<Key> {
+    find(keyFingerPrint: string): PromiseLike<Key|null> {
         return Promise.resolve(this.storageMap.get(keyFingerPrint));
     }
 

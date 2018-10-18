@@ -11,6 +11,7 @@ import './Playlist.schema'
 
 // has to be baked into context in order to be available
 // as hostedParticle below
+
 particle PlaylistItem in 'source/PlaylistItem.js'
   in Playlist playlist
   consume item

@@ -6,8 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
+import {Walker} from '../ts-build/recipe/walker.js';
 
 export class AddMissingHandles extends Strategy {
   // TODO: move generation to use an async generator.

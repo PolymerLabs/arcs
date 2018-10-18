@@ -10,11 +10,10 @@
 'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {Manifest} from '../manifest.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {Planner} from '../planner.js';
-import {Random} from '../ts-build/random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';

@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
-import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '../recipe/connection-constraint.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
+import {Walker} from '../ts-build/recipe/walker.js';
+import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
+import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '../ts-build/recipe/connection-constraint.js';
 
 export class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {

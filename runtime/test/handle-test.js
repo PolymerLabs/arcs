@@ -9,14 +9,14 @@
  */
 'use strict';
 
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Shape} from '../ts-build/shape.js';
 import {Type} from '../ts-build/type.js';
 import {Manifest} from '../manifest.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {Schema} from '../ts-build/schema.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 
@@ -164,7 +164,7 @@ describe('Handle', function() {
     await arc.createStore(Bar.type, 'name', 'id2', ['#valid']);
     await arc.createStore(Bar.type, 'name', 'id3', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
-      assert([...arc._storeTags.values()].find(tags => tags.has(tag)),
+      assert([...arc.storeTags.values()].find(tags => tags.has(tag)),
         `tags ${arc._tags} should have included ${tag}`));
   });
   it('uses default storage keys', async () => {
@@ -175,7 +175,7 @@ describe('Handle', function() {
     let arc = new Arc({id: 'test', storageKey: 'firebase://xxx.firebaseio.com/yyy/'});
     let resolver;
     let promise = new Promise((resolve, reject) => {resolver = resolve;});
-    arc._storageProviderFactory = new class extends StorageProviderFactory {
+    arc.storageProviderFactory = new class extends StorageProviderFactory {
       construct(id, type, keyFragment) {
         resolver(keyFragment);
         return {

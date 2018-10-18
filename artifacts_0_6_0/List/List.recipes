@@ -8,3 +8,4 @@
 
 import 'Tiles.recipes'
 import 'Items.recipes'
+import 'Annotations.recipes'

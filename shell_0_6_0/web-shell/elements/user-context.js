@@ -37,7 +37,10 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     if (props.storage && props.context && props.arcstore && props.userid !== state.userid) {
        state.userid = props.userid;
        this.updateUser(props, state);
-     }
+    }
+    if (props.context) {
+      this.updateSystemUser(props);
+    }
     //const {context, userid, coords, users} = props;
     //const {user, userStore, usersStore} = state;
     // if (users && usersStore && state.users !== users) {
@@ -67,10 +70,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       }
     }
     // do not operate on stale userid
-    if (userid === this.state.userid) {
+    if (!this.state.userContext && userid === this.state.userid) {
       const isProfile = true;
-      this.state = {userContext: new SingleUserContext(storage, context, userid, arcstore, isProfile)};
+      this.state = {
+        userContext: new SingleUserContext(storage, context, userid, arcstore, isProfile)
+      };
     }
+  }
+  async updateSystemUser({userid, context}) {
+    const store = await context.findStoreById('SYSTEM_user');
+    //log('SYSTEM_user', store);
+    store.set({id: userid});
   }
   // _updateSystemUsers(users, usersStore) {
   //   log('updateSystemUsers');

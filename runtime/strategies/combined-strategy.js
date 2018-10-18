@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 
 export class CombinedStrategy extends Strategy {
   constructor(strategies) {

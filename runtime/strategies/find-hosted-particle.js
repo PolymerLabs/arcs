@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
-import {TypeChecker} from '../recipe/type-checker.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
+import {Walker} from '../ts-build/recipe/walker.js';
+import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {assert} from '../../platform/assert-web.js';
 
 export class FindHostedParticle extends Strategy {

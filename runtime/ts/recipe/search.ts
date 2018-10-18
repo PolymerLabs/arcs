@@ -5,27 +5,30 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../../../platform/assert-web.js';
 
 export class Search {
-  constructor(phrase, unresolvedTokens) {
+  _phrase: string;
+  _unresolvedTokens: string[];
+  _resolvedTokens: string[];
+  constructor(phrase, unresolvedTokens = undefined) {
     assert(phrase);
     this._phrase = phrase;
 
-    let tokens = this.phrase.toLowerCase().split(/[^a-z0-9]/g);
+    const tokens = this.phrase.toLowerCase().split(/[^a-z0-9]/g);
     // If unresolvedTokens not passed, consider all tokens unresolved.
     this._unresolvedTokens = [];
     (unresolvedTokens || tokens).forEach(token => this._unresolvedTokens.push(token));
 
     // compute the resolved tokens
     this._resolvedTokens = tokens.slice();
-    for (let token of this.unresolvedTokens) {
-      let index = this._resolvedTokens.indexOf(token);
+    for (const token of this.unresolvedTokens) {
+      const index = this._resolvedTokens.indexOf(token);
       if (index >= 0) {
         this._resolvedTokens.splice(index, 1);
       }
     }
-    assert(tokens.length == this.unresolvedTokens.length + this.resolvedTokens.length);
+    assert(tokens.length === this.unresolvedTokens.length + this.resolvedTokens.length);
   }
 
   _append(phrase, unresolvedTokens, resolvedTokens) {
@@ -42,7 +45,7 @@ export class Search {
   get unresolvedTokens() { return this._unresolvedTokens; }
   get resolvedTokens() { return this._resolvedTokens; }
   resolveToken(token) {
-    let index = this.unresolvedTokens.indexOf(token.toLowerCase());
+    const index = this.unresolvedTokens.indexOf(token.toLowerCase());
     assert(index >= 0, `Cannot resolved nonexistent token ${token}`);
     this._unresolvedTokens.splice(index, 1);
     this._resolvedTokens.push(token.toLowerCase());
@@ -70,8 +73,8 @@ export class Search {
     if (recipe.search) {
       recipe.search._append(this.phrase, this.unresolvedTokens, this.resolvedTokens);
     } else {
-      recipe.search = new Search(this.phrase, this.unresolvedTokens, this.resolvedTokens);
-      assert(recipe.search.resolvedTokens.length == this.resolvedTokens.length,
+      recipe.search = new Search(this.phrase, this.unresolvedTokens);
+      assert(recipe.search.resolvedTokens.length === this.resolvedTokens.length,
              `${recipe.search.resolvedTokens} is not same as ${this.resolvedTokens}`);
     }
     assert(this.resolvedTokens.every(rt => recipe.search.resolvedTokens.indexOf(rt) >= 0) &&
@@ -80,10 +83,10 @@ export class Search {
   }
 
   toString(options) {
-    let result = [];
+    const result = [];
     result.push(`search \`${this.phrase}\``);
 
-    let tokenStr = [];
+    const tokenStr = [];
     tokenStr.push('  tokens');
     if (this.unresolvedTokens.length > 0) {
       tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(' '));

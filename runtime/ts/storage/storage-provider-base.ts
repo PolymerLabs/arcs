@@ -12,7 +12,7 @@ import {Type} from '../type';
 import {Id} from '../id.js';
 import {KeyBase} from './key-base.js';
 
-import * as util from '../../recipe/util.js';
+import {compareStrings, compareNumbers} from '../recipe/util.js';
 
 enum EventKind {
   change = 'Change'
@@ -43,12 +43,12 @@ export abstract class StorageProviderBase {
   private readonly _type: Type;
 
   protected readonly _storageKey: string;
-  protected referenceMode = false;
-  protected version: number|null;
-
+  referenceMode = false;
+  
+  version: number|null;
   id: string;
   name: string;
-  source: {}|null;
+  source: string|null;
   description: string;
 
   constructor(type, name, id, key) {
@@ -135,13 +135,13 @@ export abstract class StorageProviderBase {
 
   _compareTo(other) : number {
     let cmp;
-    cmp = util.compareStrings(this.name, other.name);
+    cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
-    cmp = util.compareNumbers(this.version, other.version);
+    cmp = compareNumbers(this.version, other.version);
     if (cmp !== 0) return cmp;
-    cmp = util.compareStrings(this.source, other.source);
+    cmp = compareStrings(this.source, other.source);
     if (cmp !== 0) return cmp;
-    cmp = util.compareStrings(this.id, other.id);
+    cmp = compareStrings(this.id, other.id);
     if (cmp !== 0) return cmp;
     return 0;
   }
@@ -178,6 +178,14 @@ export abstract class StorageProviderBase {
    * @returns an object notation of this storage provider.
    */
   abstract toLiteral();
+
+  abstract cloneFrom(store: StorageProviderBase);
+
+  // TODO(shans): remove this when it's possible to.
+  abstract ensureBackingStore();
+
+  // tslint:disable-next-line: no-any
+  abstract backingStore: any;
 
   /** TODO */
   modelForSynchronization() {

@@ -137,15 +137,18 @@ export class DomParticleBase extends Particle {
    */
   async appendEntitiesToHandle(handleName, entities) {
     const handle = this.handles.get(handleName);
-    Promise.all(entities.map(entity => handle.store(entity)));
+    if (handle) {
+      Promise.all(entities.map(entity => handle.store(entity)));
+    }
   }
   /** @method appendRawDataToHandle(handleName, rawDataArray)
    * Create an entity from each rawData, and append to named handle.
    */
   async appendRawDataToHandle(handleName, rawDataArray) {
     const handle = this.handles.get(handleName);
-    const entityClass = handle.entityClass;
-    Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+    if (handle) {
+      Promise.all(rawDataArray.map(raw => handle.store(new (handle.entityClass)(raw))));
+    }
   }
   /** @method updateVariable(handleName, rawData)
    * Modify value of named handle. A new entity is created
@@ -153,9 +156,11 @@ export class DomParticleBase extends Particle {
    */
   updateVariable(handleName, rawData) {
     const handle = this.handles.get(handleName);
-    const entity = new (handle.entityClass)(rawData);
-    handle.set(entity);
-    return entity;
+    if (handle) {
+      const entity = new (handle.entityClass)(rawData);
+      handle.set(entity);
+      return entity;
+    }
   }
   /** @method updateSet(handleName, entity)
    * Modify or insert `entity` into named handle.
@@ -166,13 +171,15 @@ export class DomParticleBase extends Particle {
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    // const entities = await handle.toList();
-    // const target = entities.find(r => r.id === entity.id);
-    // if (target) {
-    //   handle.remove(target);
-    // }
-    handle.remove(entity);
-    handle.store(entity);
+    if (handle) {
+      // const entities = await handle.toList();
+      // const target = entities.find(r => r.id === entity.id);
+      // if (target) {
+      //   handle.remove(target);
+      // }
+      handle.remove(entity);
+      handle.store(entity);
+    }
   }
   /** @method boxQuery(box, userid)
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`

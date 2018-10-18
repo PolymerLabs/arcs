@@ -11,8 +11,8 @@
 
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {Loader} from '../../loader.js';
-import {Arc} from '../../arc.js';
+import {Loader} from '../../ts-build/loader.js';
+import {Arc} from '../../ts-build/arc.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {assert} from '../chai-web.js';
 

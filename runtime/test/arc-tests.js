@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Manifest} from '../manifest.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
@@ -81,7 +81,7 @@ describe('Arc', function() {
     let arc = new Arc({slotComposer, loader, id: 'test'});
     let serialization = await arc.serialize();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
-    assert.equal(newArc._storesById.size, 0);
+    assert.equal(newArc.storesById.size, 0);
     assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.equal(newArc.id.toStringWithoutSessionForTesting(), 'test');
   });
@@ -156,7 +156,7 @@ describe('Arc', function() {
 
     let newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
     await newArc.idle;
-    store = newArc._storesById.get(store.id);
+    store = newArc.storesById.get(store.id);
     await store.store({id: 'a', rawData: {value: 'one'}}, ['somekey']);
 
     await newArc.idle;
@@ -190,14 +190,14 @@ describe('Arc', function() {
       expectedNumPlans: 1
     });
 
-    assert.isEmpty(helper.arc._storesById);
-    assert.isEmpty(helper.arc._storeTags);
+    assert.isEmpty(helper.arc.storesById);
+    assert.isEmpty(helper.arc.storeTags);
 
     await helper.acceptSuggestion({particles: ['P']});
 
-    assert.equal(1, helper.arc._storesById.size);
-    assert.equal(1, helper.arc._storeTags.size);
-    assert.deepEqual(['best'], [...helper.arc._storeTags.get([...helper.arc._storesById.values()][0])]);
+    assert.equal(1, helper.arc.storesById.size);
+    assert.equal(1, helper.arc.storeTags.size);
+    assert.deepEqual(['best'], [...helper.arc.storeTags.get([...helper.arc.storesById.values()][0])]);
   });
 
   it('serialization roundtrip preserves data for volatile stores', async function() {

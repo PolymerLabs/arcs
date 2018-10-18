@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {SlotContext} from './slot-context.js';
-import {SlotConnection} from '../recipe/slot-connection.js';
+import {SlotConnection} from './recipe/slot-connection.js';
 
 export class SlotConsumer {
   _consumeConn: SlotConnection;

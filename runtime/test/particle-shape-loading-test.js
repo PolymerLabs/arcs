@@ -11,12 +11,12 @@
 import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
-import {Arc} from '../arc.js';
+import {Arc} from '../ts-build/arc.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
-import {Loader} from '../loader.js';
+import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 import {Type} from '../ts-build/type.js';
 import {Shape} from '../ts-build/shape.js';
 import {ParticleSpec} from '../particle-spec.js';

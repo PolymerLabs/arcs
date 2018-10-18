@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import {Loader} from '../../runtime/loader.js';
+import {Loader} from '../../runtime/ts-build/loader.js';
 import {Manifest} from '../manifest.js';
 
 describe('recipe', function() {

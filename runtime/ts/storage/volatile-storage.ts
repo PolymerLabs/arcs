@@ -141,7 +141,7 @@ export class VolatileStorage extends StorageBase {
 }
 
 abstract class VolatileStorageProvider extends StorageProviderBase {
-  protected backingStore: VolatileCollection|null = null;
+  backingStore: VolatileCollection|null = null;
   protected storageEngine: VolatileStorage;
   private pendingBackingStore: Promise<VolatileCollection>|null = null;
   static newProvider(type, storageEngine, name, id, key) {

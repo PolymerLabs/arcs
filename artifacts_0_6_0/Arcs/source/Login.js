@@ -40,7 +40,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      pointer-events: all;
+      /* pointer-events: all; */
     }
     [${host}] > * {
       width: 450px;

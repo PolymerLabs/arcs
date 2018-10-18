@@ -28,7 +28,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     onCoords(e) {
-      this.updateVariable('geolocation', e.data.value);
+      this.updateVariable('location', e.data.value);
     }
   };
 

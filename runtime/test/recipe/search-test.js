@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Search} from '../../recipe/search.js';
-import {Recipe} from '../../recipe/recipe.js';
+import {Search} from '../../ts-build/recipe/search.js';
+import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('Recipe Search', function() {
