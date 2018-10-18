@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Type} from './type.js';
-import {TypeChecker} from '../recipe/type-checker.js';
+import {TypeChecker} from './recipe/type-checker.js';
 import {Entity} from '../entity.js';
 import { Reference } from './reference.js';
 

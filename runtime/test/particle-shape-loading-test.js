@@ -16,7 +16,7 @@ import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 import {Type} from '../ts-build/type.js';
 import {Shape} from '../ts-build/shape.js';
 import {ParticleSpec} from '../particle-spec.js';

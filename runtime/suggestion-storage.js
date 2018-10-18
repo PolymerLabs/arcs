@@ -9,7 +9,7 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {Manifest} from './manifest.js';
-import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
 import {Schema} from './ts-build/schema.js';
 import {Type} from './ts-build/type.js';
 

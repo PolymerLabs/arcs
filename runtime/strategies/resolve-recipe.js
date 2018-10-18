@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../recipe/walker.js';
-import {Recipe} from '../recipe/recipe.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
+import {Walker} from '../ts-build/recipe/walker.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
+import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
 import {MapSlots} from './map-slots.js';
 
 export class ResolveRecipe extends Strategy {

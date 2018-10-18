@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer} from '../../strategizer/strategizer.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategizer} from '../../../strategizer/strategizer.js';
+import {assert} from '../../../platform/assert-web.js';
 
 /**
  * Walkers traverse an object, calling methods based on the
@@ -33,7 +33,14 @@ import {assert} from '../../platform/assert-web.js';
  * if 3 methods return [a,b], [c,d,e], and [f] respectively,
  * then "Independent" will cause 6 outputs to be generated: [a,b,c,d,e,f]
  */
-export class WalkerBase extends Strategizer.Walker {
+
+export enum WalkerTactic {Permuted='permuted', Independent='independent'}
+
+type Walker = Strategizer.Walker & { onResult(arg: {}): void };
+
+export class WalkerBase extends (Strategizer.Walker as Walker) {
+  tactic: WalkerTactic;
+  
   constructor(tactic) {
     super();
     assert(tactic);
@@ -41,19 +48,19 @@ export class WalkerBase extends Strategizer.Walker {
   }
 
   _runUpdateList(recipe, updateList) {
-    let newRecipes = [];
+    const newRecipes = [];
     if (updateList.length) {
       switch (this.tactic) {
-        case WalkerBase.Permuted: {
+        case WalkerTactic.Permuted: {
           let permutations = [[]];
           updateList.forEach(({continuation, context}) => {
-            let newResults = [];
-            if (typeof continuation == 'function') {
+            const newResults = [];
+            if (typeof continuation === 'function') {
               continuation = [continuation];
             }
             continuation.forEach(f => {
               permutations.forEach(p => {
-                let newP = p.slice();
+                const newP = p.slice();
                 newP.push({f, context});
                 newResults.push(newP);
               });
@@ -62,11 +69,11 @@ export class WalkerBase extends Strategizer.Walker {
           });
 
           for (let permutation of permutations) {
-            let cloneMap = new Map();
-            let newRecipe = recipe.clone(cloneMap);
+            const cloneMap = new Map();
+            const newRecipe = recipe.clone(cloneMap);
             let score = 0;
             permutation = permutation.filter(p => p.f !== null);
-            if (permutation.length == 0) {
+            if (permutation.length === 0) {
               continue;
             }
             permutation.forEach(({f, context}) => {
@@ -77,38 +84,38 @@ export class WalkerBase extends Strategizer.Walker {
           }
           break;
         }
-        case WalkerBase.Independent:
+        case WalkerTactic.Independent:
           updateList.forEach(({continuation, context}) => {
-            if (typeof continuation == 'function') {
+            if (typeof continuation === 'function') {
               continuation = [continuation];
             }
             continuation.forEach(f => {
               if (f == null) {
                 f = () => 0;
               }
-              let cloneMap = new Map();
-              let newRecipe = recipe.clone(cloneMap);
-              let score = f(newRecipe, cloneMap.get(context));
+              const cloneMap = new Map();
+              const newRecipe = recipe.clone(cloneMap);
+              const score = f(newRecipe, cloneMap.get(context));
               newRecipes.push({recipe: newRecipe, score});
             });
           });
           break;
         default:
-          throw `${this.tactic} not supported`;
+          throw new Error(`${this.tactic} not supported`);
       }
     }
 
     // commit phase - output results.
 
-    for (let newRecipe of newRecipes) {
-      let result = this.createDescendant(newRecipe.recipe, newRecipe.score);
+    for (const newRecipe of newRecipes) {
+      const result = this.createDescendant(newRecipe.recipe, newRecipe.score);
     }
   }
 
   createDescendant(recipe, score) {
-    let valid = recipe.normalize();
+    const valid = recipe.normalize();
     //if (!valid) debugger;
-    let hash = valid ? recipe.digest() : null;
+    const hash = valid ? recipe.digest() : null;
     super.createDescendant(recipe, score, hash, valid);
   }
 
@@ -117,15 +124,12 @@ export class WalkerBase extends Strategizer.Walker {
       return true;
     }
 
-    if (result.constructor == Array && result.length <= 0) {
+    if (result.constructor === Array && result.length <= 0) {
       return true;
     }
 
-      assert(typeof result == 'function' || result.length);
+      assert(typeof result === 'function' || result.length);
 
     return false;
   }
 }
-
-WalkerBase.Permuted = 'permuted';
-WalkerBase.Independent = 'independent';

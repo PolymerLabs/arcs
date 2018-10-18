@@ -11,18 +11,18 @@
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {parser} from './build/manifest-parser.js';
-import {Recipe} from './recipe/recipe.js';
-import {Handle} from './recipe/handle.js';
+import {Recipe} from './ts-build/recipe/recipe.js';
+import {Handle} from './ts-build/recipe/handle.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './ts-build/schema.js';
-import {Search} from './recipe/search.js';
+import {Search} from './ts-build/recipe/search.js';
 import {Shape} from './ts-build/shape.js';
 import {Type} from './ts-build/type.js';
-import * as util from './recipe/util.js';
+import * as util from './ts-build/recipe/util.js';
 import {StorageProviderFactory} from './ts-build/storage/storage-provider-factory.js';
 import {ManifestMeta} from './ts-build/manifest-meta.js';
-import {TypeChecker} from './recipe/type-checker.js';
-import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
+import {TypeChecker} from './ts-build/recipe/type-checker.js';
+import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './ts-build/recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {

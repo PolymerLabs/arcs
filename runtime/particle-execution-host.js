@@ -12,7 +12,7 @@
 import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {Manifest} from './manifest.js';
-import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
 import {reportSystemException} from './ts-build/arc-exceptions.js';
 
 export class ParticleExecutionHost {

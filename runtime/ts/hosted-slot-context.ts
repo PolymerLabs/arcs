@@ -11,6 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {SlotContext} from './slot-context.js';
 import {HostedSlotConsumer} from './hosted-slot-consumer.js';
+import { Handle } from './recipe/handle.js';
 
 export class HostedSlotContext extends SlotContext {
   // This is a context of a hosted slot, can only contain a hosted slot.
@@ -19,7 +20,8 @@ export class HostedSlotContext extends SlotContext {
     assert(this.sourceSlotConsumer instanceof HostedSlotConsumer);
     const hostedSourceSlotConsumer = this.sourceSlotConsumer as HostedSlotConsumer;
     if (hostedSourceSlotConsumer.storeId) {
-      this.handles = [{id: hostedSourceSlotConsumer.storeId}];
+      // TODO(mmandlis): This up-cast is dangerous. Why do we need to fake a Handle here?
+      this.handles = [{id: hostedSourceSlotConsumer.storeId} as Handle];
     }
   }
   get container() {

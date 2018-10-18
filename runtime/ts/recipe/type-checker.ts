@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type} from '../ts-build/type.js';
-import {TypeVariable} from '../ts-build/type-variable.js';
+import {Type} from '../type.js';
+import {TypeVariable} from '../type-variable.js';
 
 export class TypeChecker {
 
@@ -21,13 +21,14 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    let newBaseType = Type.newVariable(new TypeVariable(''));
+    const newBaseTypeVariable = new TypeVariable('', null, null);
     if (baseType) {
-      newBaseType.data.resolution = baseType;
+      newBaseTypeVariable.resolution = baseType;
     }
+    const newBaseType = Type.newVariable(newBaseTypeVariable);
     baseType = newBaseType;
 
-    let concreteTypes = [];
+    const concreteTypes = [];
 
     // baseType might be a variable (and is definitely a variable if no baseType was available).
     // Some of the list might contain variables too.
@@ -36,7 +37,7 @@ export class TypeChecker {
     //
     // If the baseType is a variable then this results in a single place to manipulate the constraints
     // of all the other connected variables at the same time.
-    for (let item of list) {
+    for (const item of list) {
       if (item.type.resolvedType().hasVariable) {
         baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type);
         if (baseType == null) {
@@ -47,14 +48,14 @@ export class TypeChecker {
       }
     }
 
-    for (let item of concreteTypes) {
+    for (const item of concreteTypes) {
       if (!TypeChecker._tryMergeConstraints(baseType, item)) {
         return null;
       }
     }
 
-    let getResolution = candidate => {
-      if (candidate.isVariable == false) {
+    const getResolution = candidate => {
+      if (candidate.isVariable === false) {
         return candidate;
       }
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
@@ -69,14 +70,14 @@ export class TypeChecker {
       return null;
     };
 
-    let candidate = baseType.resolvedType();
+    const candidate = baseType.resolvedType();
 
     if (candidate.isCollection) {
-      let resolution = getResolution(candidate.collectionType);
+      const resolution = getResolution(candidate.collectionType);
       return (resolution !== null) ? resolution.collectionOf() : null;
     }
     if (candidate.isBigCollection) {
-      let resolution = getResolution(candidate.bigCollectionType);
+      const resolution = getResolution(candidate.bigCollectionType);
       return (resolution !== null) ? resolution.bigCollectionOf() : null;
     }
 
@@ -84,13 +85,13 @@ export class TypeChecker {
   }
 
   static _tryMergeTypeVariable(base, onto) {
-    let [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
+    const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
     if (primitiveBase.isVariable) {
       if (primitiveOnto.isVariable) {
         // base, onto both variables.
-        let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
-        if (result == false) {
+        const result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
+        if (result === false) {
           return null;
         }
         // Here onto grows, one level at a time,
@@ -106,7 +107,7 @@ export class TypeChecker {
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
     } else if (primitiveBase.isInterface && primitiveOnto.isInterface) {
-      let result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
+      const result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
       if (result == null) {
         return null;
       }
@@ -132,14 +133,14 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        let newVar = Type.newVariable(new TypeVariable('a'));
+        const newVar = Type.newVariable(new TypeVariable('a', null, null));
         primitiveHandleType.variable.resolution = 
             primitiveConnectionType.isCollection ? Type.newCollection(newVar) : (primitiveConnectionType.isBigCollection ? Type.newBigCollection(newVar) : Type.newReference(newVar));
-        let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
+        const unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         [primitiveHandleType, primitiveConnectionType] = unwrap;
       }
 
-      if (direction == 'out' || direction == 'inout' || direction == '`provide') {
+      if (direction === 'out' || direction === 'inout' || direction === '`provide') {
         // the canReadSubset of the handle represents the maximal type that can be read from the
         // handle, so we need to intersect out any type that is more specific than the maximal type
         // that could be written.
@@ -147,7 +148,7 @@ export class TypeChecker {
           return false;
         }
       }
-      if (direction == 'in' || direction == 'inout' || direction == '`consume') {
+      if (direction === 'in' || direction === 'inout' || direction === '`consume') {
         // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
         // so we need to union it with the type that wants to be read here.
         if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
@@ -159,12 +160,12 @@ export class TypeChecker {
         return false;
       }
 
-      if (direction == 'out' || direction == 'inout') {
+      if (direction === 'out' || direction === 'inout') {
         if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
       }
-      if (direction == 'in' || direction == 'inout') {
+      if (direction === 'in' || direction === 'inout') {
         if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
           return false;
         }
@@ -178,7 +179,7 @@ export class TypeChecker {
     // this connection wants to write to this handle. If the written type is
     // more specific than the canReadSubset then it isn't violating the maximal type
     // that can be read.
-    let writtenType = connectionType.canWriteSuperset;
+    const writtenType = connectionType.canWriteSuperset;
     if (writtenType == null || handleType.canReadSubset == null) {
       return true;
     }
@@ -192,7 +193,7 @@ export class TypeChecker {
     // this connection wants to read from this handle. If the read type
     // is less specific than the canWriteSuperset, then it isn't violating
     // the maximum lower-bound read type.
-    let readType = connectionType.canReadSubset;
+    const readType = connectionType.canReadSubset;
     if (readType == null || handleType.canWriteSuperset == null) {
       return true;
     }
@@ -210,9 +211,9 @@ export class TypeChecker {
   //
   // left, right: {type, direction, connection}
   static compareTypes(left, right) {
-    let resolvedLeft = left.type.resolvedType();
-    let resolvedRight = right.type.resolvedType();
-    let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
+    const resolvedLeft = left.type.resolvedType();
+    const resolvedRight = right.type.resolvedType();
+    const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
     if (leftType.isVariable && rightType.isTypeContainer()) {
@@ -228,14 +229,14 @@ export class TypeChecker {
       return Type.canMergeConstraints(leftType, rightType);
     }
 
-    if ((leftType == undefined) !== (rightType == undefined)) {
+    if ((leftType === undefined) !== (rightType === undefined)) {
       return false;
     }
-    if (leftType == rightType) {
+    if (leftType === rightType) {
       return true;
     }
 
-    if (leftType.tag != rightType.tag) {
+    if (leftType.tag !== rightType.tag) {
       return false;
     }
 
@@ -255,8 +256,8 @@ export class TypeChecker {
       return false;
     }
 
-    let leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
-    let leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
+    const leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
+    const leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
 
     if (leftIsSuper && leftIsSub) {
        return true;
@@ -264,18 +265,18 @@ export class TypeChecker {
     if (!leftIsSuper && !leftIsSub) {
       return false;
     }
-    let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
+    const [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
     // treat handle types as if they were 'inout' connections. Note that this
     // guarantees that the handle's type will be preserved, and that the fact
     // that the type comes from a handle rather than a connection will also
     // be preserved.
-    let superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
-    let subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
-    if (superDirection == 'in') {
+    const superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
+    const subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
+    if (superDirection === 'in') {
       return true;
     }
-    if (subDirection == 'out') {
+    if (subDirection === 'out') {
       return true;
     }
     return false;

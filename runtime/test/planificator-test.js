@@ -12,7 +12,7 @@ import {assert} from './chai-web.js';
 import {Arc} from '../ts-build/arc.js';
 import {Planificator} from '../planificator.js';
 import {InitPopulation} from '../strategies/init-population.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from '../ts-build/recipe/recipe.js';
 
 class TestPlanificator extends Planificator {
   constructor(arc, options) {

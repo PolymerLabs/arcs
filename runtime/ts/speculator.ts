@@ -8,10 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Tracing} from '../../tracelib/trace.js';
 import {Relevance} from './relevance.js';
 import {Arc} from './arc.js';
-import {Recipe} from '../recipe/recipe.js';
+import {Recipe} from './recipe/recipe.js';
 
 export class Speculator {
   _relevanceByHash: Map<string, Relevance>;

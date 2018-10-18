@@ -5,28 +5,33 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import * as util from './util.js';
+import {assert} from '../../../platform/assert-web.js';
+import {compareStrings, compareArrays, compareComparables} from './util.js';
 import {TypeChecker} from './type-checker.js';
-import {Type} from '../ts-build/type.js';
+import {Type} from '../type.js';
+import {Recipe} from './recipe.js';
+import {HandleConnection} from './handle-connection.js';
+
+type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
 export class Handle {
+  private _recipe: Recipe;
+  private _id: string | null = null;
+  private _localName: string | undefined = undefined;
+  private _tags: string[] = [];
+  _type: Type | undefined = undefined;
+  private _fate: Fate | null = null;
+  // TODO: replace originalFate and originalId with more generic mechanism for tracking
+  // how and from what the recipe was generated.
+  private _originalFate: Fate | null = null;
+  private _originalId: string | null = null;
+  private _connections: HandleConnection[] = [];
+  private _mappedType: Type | undefined = undefined;
+  private _storageKey: string | undefined = undefined;
+  private _pattern: string | undefined = undefined;
   constructor(recipe) {
     assert(recipe);
     this._recipe = recipe;
-    this._id = null;
-    this._localName = undefined;
-    this._tags = [];
-    this._type = undefined;
-    this._fate = null;
-    // TODO: replace originalFate and originalId with more generic mechanism for tracking
-    // how and from what the recipe was generated.
-    this._originalFate = null;
-    this._originalId = null;
-    this._connections = [];
-    this._mappedType = undefined;
-    this._storageKey = undefined;
-    this._pattern = undefined;
   }
 
   _copyInto(recipe) {
@@ -56,9 +61,9 @@ export class Handle {
 
   // Merges `this` recipe handle into `handle`
   mergeInto(handle) {
-    assert(this.recipe == handle.recipe, 'Cannot merge handles from different recipes.');
+    assert(this.recipe === handle.recipe, 'Cannot merge handles from different recipes.');
     while (this.connections.length > 0) {
-      let [connection] = this.connections;
+      const [connection] = this.connections;
       connection.disconnectHandle();
       connection.connectToHandle(handle);
     }
@@ -73,7 +78,7 @@ export class Handle {
     assert(!fates.includes('map') && !fates.includes('copy'), `Merging map/copy not supported yet`);
 
     // If all fates were `use` keep their fate, otherwise set to `create`.
-    return fates.every(fate => fate == 'use') ? 'use' : 'create';
+    return fates.every(fate => fate === 'use') ? 'use' : 'create';
   }
 
   _startNormalize() {
@@ -83,20 +88,20 @@ export class Handle {
   }
 
   _finishNormalize() {
-    for (let connection of this._connections) {
+    for (const connection of this._connections) {
       assert(Object.isFrozen(connection), `Handle connection '${connection.name}' is not frozen.`);
     }
-    this._connections.sort(util.compareComparables);
+    this._connections.sort(compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
-    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
+    if ((cmp = compareStrings(this._id, other._id)) !== 0) return cmp;
+    if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
     // TODO: type?
-    if ((cmp = util.compareStrings(this.fate, other.fate)) != 0) return cmp;
+    if ((cmp = compareStrings(this.fate, other.fate)) !== 0) return cmp;
     return 0;
   }
 
@@ -139,23 +144,23 @@ export class Handle {
   get mappedType() { return this._mappedType; }
 
   static effectiveType(handleType, connections) {
-    let variableMap = new Map();
+    const variableMap = new Map();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType 
     // contain the full set of type variable information that needs to be maintained across the clone.
-    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
+    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
   static resolveEffectiveType(handleType, connections) {
-    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
+    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);   
   }
 
   _isValid(options) {
-    let tags = new Set();
-    for (let connection of this._connections) {
+    const tags = new Set();
+    for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
-      if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
+      if (this.fate === 'map' && ['out', 'inout'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }
@@ -163,7 +168,7 @@ export class Handle {
       }
       connection.tags.forEach(tag => tags.add(tag));
     }
-    let type = Handle.resolveEffectiveType(this._mappedType, this._connections);
+    const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
     if (type) {
       this._type = type;
       this._tags.forEach(tag => tags.add(tag));
@@ -177,12 +182,12 @@ export class Handle {
     return false;
   }
 
-  isResolved(options) {
+  isResolved(options = undefined) {
     assert(Object.isFrozen(this));
     let resolved = true;
     if (this.type) {
       let mustBeResolved = true;
-      if (this.fate == 'create' || this.fate == '`slot') {
+      if (this.fate === 'create' || this.fate === '`slot') {
         mustBeResolved = false;
       }
       if ((mustBeResolved && !this.type.isResolved()) || !this.type.canEnsureResolved()) {
@@ -231,7 +236,7 @@ export class Handle {
   toString(nameMap, options) {
     options = options || {};
     // TODO: type? maybe output in a comment
-    let result = [];
+    const result = [];
     result.push(this.fate);
     if (this.id) {
       result.push(`'${this.id}'`);
@@ -246,7 +251,7 @@ export class Handle {
         // TODO: include the unresolved constraints in toString (ie in the hash).
         result.push(this.type.toString());
         if (options.showUnresolved && this.type.canEnsureResolved()) {
-          let type = Type.fromLiteral(this.type.toLiteral());
+          const type = Type.fromLiteral(this.type.toLiteral());
           type.maybeEnsureResolved();
           result.push('//');
           result.push(type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}));
@@ -254,7 +259,7 @@ export class Handle {
       }
     }
     if (options.showUnresolved) {
-      let unresolvedOptions = {details: []};
+      const unresolvedOptions = {details: []};
       if (!this.isResolved(unresolvedOptions)) {
         result.push(` // unresolved handle: ${unresolvedOptions.details.join(', ')}`);
       }
