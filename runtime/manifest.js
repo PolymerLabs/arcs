@@ -865,6 +865,8 @@ ${e.message}
             entry = {item: handle.item, handle};
             items.byName.set(handle.localName, entry);
             items.byHandle.set(handle, handle.item);
+          } else if (!entry.item) {
+            throw new Error(`did not expect ${entry} expected handle or particle`);
           }
 
           if (entry.item.kind == 'handle') {
