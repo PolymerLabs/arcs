@@ -73,7 +73,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
         }
       };
       store.set(user);
-      log('********** installed SYSTEM_user');
+      log('installed SYSTEM_user');
     }
   }
   async updateUserContext({storage, userid, context, arcstore}, {userContext}) {
