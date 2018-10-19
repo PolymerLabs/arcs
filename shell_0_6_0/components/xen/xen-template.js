@@ -49,7 +49,7 @@ class Annotator {
     let childLocators;
     for (let i = 0, child = node.firstChild, previous = null, neo; child; i++) {
       // returns a locator only if a node in the subtree requires one
-      let childLocator = this._annotateNode(child);
+      const childLocator = this._annotateNode(child);
       // only when necessary, maintain a sparse array of locators
       if (childLocator) {
         (childLocators = childLocators || {})[i] = childLocator;
@@ -69,12 +69,12 @@ class Annotator {
   }
   _annotateNode(node) {
     // visit node
-    let key = this.key++;
-    let shouldLocate = this.cb(node, key, this.notes, this.opts);
+    const key = this.key++;
+    const shouldLocate = this.cb(node, key, this.notes, this.opts);
     // recurse
-    let locators = this._annotateSubtree(node);
+    const locators = this._annotateSubtree(node);
     if (shouldLocate || locators) {
-      let cl = Object.create(null);
+      const cl = Object.create(null);
       cl.key = key;
       if (locators) {
         cl.sub = locators;
@@ -86,7 +86,7 @@ class Annotator {
 
 const locateNodes = function(root, locator, map) {
   map = map || [];
-  for (let n in locator) {
+  for (const n in locator) {
     const loc = locator[n];
     if (loc) {
       const node = root.childNodes[n];
@@ -148,7 +148,7 @@ const annotateMustache = function(node, key, notes, property, mustache) {
       property = 'className';
     }
     let value = mustache.slice(2, -2);
-    let override = value.split(':');
+    const override = value.split(':');
     if (override.length === 2) {
       property = override[0];
       value = override[1];
@@ -175,7 +175,7 @@ const annotateEvent = function(node, key, notes, name, value) {
 };
 
 const takeNote = function(notes, key, group, name, note) {
-  let n$ = notes[key] || (notes[key] = Object.create(null));
+  const n$ = notes[key] || (notes[key] = Object.create(null));
   (n$[group] || (n$[group] = {}))[name] = note;
 };
 
@@ -190,11 +190,11 @@ const annotate = function(root, key, opts) {
 /* Annotation Consumer */
 const mapEvents = function(notes, map, mapper) {
   // add event listeners
-  for (let key in notes) {
-    let node = map[key];
-    let events = notes[key] && notes[key].events;
+  for (const key in notes) {
+    const node = map[key];
+    const events = notes[key] && notes[key].events;
     if (node && events) {
-      for (let name in events) {
+      for (const name in events) {
         mapper(node, name, events[name]);
       }
     }
@@ -211,15 +211,15 @@ const listen = function(controller, node, eventName, handlerName) {
 
 const set = function(notes, map, scope, controller) {
   if (scope) {
-    for (let key in notes) {
-      let node = map[key];
+    for (const key in notes) {
+      const node = map[key];
       if (node) {
         // everybody gets a scope
         node.scope = scope;
         // now get your regularly scheduled bindings
-        let mustaches = notes[key].mustaches;
-        for (let name in mustaches) {
-          let property = mustaches[name];
+        const mustaches = notes[key].mustaches;
+        for (const name in mustaches) {
+          const property = mustaches[name];
           if (property in scope) {
             _set(node, name, scope[property], controller);
           }
@@ -231,7 +231,7 @@ const set = function(notes, map, scope, controller) {
 
 const _set = function(node, property, value, controller) {
   // TODO(sjmiles): the property conditionals here could be precompiled
-  let modifier = property.slice(-1);
+  const modifier = property.slice(-1);
   if (property === 'style%' || property === 'style' || property === 'xen:style') {
     if (typeof value === 'string') {
       node.style.cssText = value;
@@ -239,7 +239,7 @@ const _set = function(node, property, value, controller) {
       Object.assign(node.style, value);
     }
   } else if (modifier == '$') {
-    let n = property.slice(0, -1);
+    const n = property.slice(0, -1);
     if (typeof value === 'boolean') {
       setBoolAttribute(node, n, value);
     } else {
@@ -276,7 +276,7 @@ const _setSubTemplate = function(node, value, controller) {
   // TODO(sjmiles): Aim to re-implement as a plugin.
   let {template, models} = value;
   if (!template) {
-    let container = node.getRootNode();
+    const container = node.getRootNode();
     template = container.querySelector(`template[${value.$template}]`);
   } else {
     template = maybeStringToTemplate(template);
@@ -326,17 +326,17 @@ const stamp = function(template, opts) {
   //window.stampCount++;
   template = maybeStringToTemplate(template);
   // construct (or use memoized) notes
-  let notes = annotate(template, opts);
+  const notes = annotate(template, opts);
   // CRITICAL TIMING ISSUE #1:
   // importNode can have side-effects, like CustomElement callbacks (before we
   // can do any work on the imported subtree, before we can mapEvents, e.g.).
   // we could clone into an inert document (say a new template) and process the nodes
   // before importing if necessary.
-  let root = document.importNode(template.content, true);
+  const root = document.importNode(template.content, true);
   // map DOM to keys
-  let map = locateNodes(root, notes.locator);
+  const map = locateNodes(root, notes.locator);
   // return dom manager
-  let dom = {
+  const dom = {
     root,
     notes,
     map,

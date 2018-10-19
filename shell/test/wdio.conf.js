@@ -279,7 +279,7 @@ exports.config = {
 
     const uploadEndpoint = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-screenshot/';
 
-    let screenshots = fs.readdirSync(exports.config.screenshotPath);
+    const screenshots = fs.readdirSync(exports.config.screenshotPath);
     if (screenshots.length) console.log('Uploading screenshots...');
     await Promise.all(screenshots.map(filename => new Promise((resolve, reject) => {
       fs.createReadStream(exports.config.screenshotPath + filename)

@@ -149,7 +149,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   async _remoteSetChildAdded(snap, arc, path, handle) {
     const entity = snap.val();
     log('trigger: remote add', handle.id, entity);
-    let keys = [arc.generateID('key')];
+    const keys = [arc.generateID('key')];
     // doesn't trigger an `add` event if `entity` is already in `handle`
     handle.store(entity, originatorId, keys);
     log('remote add result', await handle.toList());
@@ -158,7 +158,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     const entity = snap.val();
     log('trigger: remote remove', handle.id, entity);
     // Use any existing keys.
-    let keys = [];
+    const keys = [];
     // doesn't trigger a `remove` event if `entity` is not part of `handle`
     handle.remove(entity.id, originatorId, keys);
     log('remote remove result', await handle.toList());

@@ -79,14 +79,14 @@ class ManifestData extends HTMLElement {
     }
   }
   _render() {
-    let manifests = this._manifests || [];
-    let exclusions = this._exclusions || [];
+    const manifests = this._manifests || [];
+    const exclusions = this._exclusions || [];
     this._dom.set({
       items: {
         template: manifestItem,
         models: manifests.map((m, i) => {
-          let url = m; //new URL(m, location.href);
-          let include = exclusions.indexOf(m) < 0;
+          const url = m; //new URL(m, location.href);
+          const include = exclusions.indexOf(m) < 0;
           return {
             include,
             url: m,
@@ -100,8 +100,8 @@ class ManifestData extends HTMLElement {
     });
   }
   _onCheckInput(e) {
-    let {key, checked} = e.currentTarget;
-    let m = this._manifests[key];
+    const {key, checked} = e.currentTarget;
+    const m = this._manifests[key];
     this._exclusions = checked ? this._exclusions.filter(e => e != m) : this._exclusions.concat([m]);
     this.dirty = true;
   }

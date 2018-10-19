@@ -98,7 +98,7 @@ class StoreExplorer extends Xen.Base {
   async _digestStores(stores, hideNamed) {
     const result = [];
     if (stores) {
-      for (let [store, tags] of stores) {
+      for (const [store, tags] of stores) {
         //if (store.name === null) {
         if (hideNamed && store.name) {
           continue;
@@ -134,7 +134,7 @@ class StoreExplorer extends Xen.Base {
         if (store.description) {
           data.description = store.description;
         }
-        let moniker = store.id.split(':').pop();
+        const moniker = store.id.split(':').pop();
         if (!store.type || store.type.tag !== 'Interface') {
           const label = data.name || `${store.type.toPrettyString()}`; // (type)`;
           result.push({tags: data.tags, data: {[label]: data}, name: store.name || data.tags || moniker});

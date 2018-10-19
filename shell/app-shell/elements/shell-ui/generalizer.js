@@ -17,7 +17,7 @@ const randid = () => Math.floor((Math.random()+1)*1e3);
 
 const accumulate = (serialization, tabWidth) => {
   const lines = serialization.split('\n');
-  let blocks = [];
+  const blocks = [];
   let line = 0;
   let block = '';
   while (line < lines.length) {
@@ -38,8 +38,8 @@ const accumulate = (serialization, tabWidth) => {
 };
 
 const recipeFixer = block => {
-  let recipe = [];
-  let lines = accumulate(block, 2)
+  const recipe = [];
+  const lines = accumulate(block, 2)
     // remote `slot` and `description` pragmas
     .filter(line => !hasPrefix(line, ['  slot', '  description']))
     .map(line => handleFixer(line))

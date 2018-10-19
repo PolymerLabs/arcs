@@ -42,11 +42,11 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
   }
 
   getInnerContainer(innerSlotName) {
-    let model = this.renderings.map(([subId, {model}]) => model)[0];
+    const model = this.renderings.map(([subId, {model}]) => model)[0];
     if (this.consumeConn.slotSpec.getProvidedSlotSpec(innerSlotName).isSet &&
         model && model.items && model.items.models) {
-      let innerContainers = {};
-      for (let itemModel of model.items.models) {
+      const innerContainers = {};
+      for (const itemModel of model.items.models) {
         assert(itemModel.id);
         innerContainers[itemModel.id] = itemModel.id;
       }

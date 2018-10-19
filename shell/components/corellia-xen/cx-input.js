@@ -137,7 +137,7 @@ class CorelliaXenInput extends Xen.Base {
     return template;
   }
   _render({error, value}, state) {
-    let input = this.querySelector('input');
+    const input = this.querySelector('input');
     if (state.input !== input) {
       state.input = input;
       input.onblur = () => {
@@ -161,7 +161,7 @@ class CorelliaXenInput extends Xen.Base {
       invalid = input.matches(':invalid');
       placeholderShown = input.matches(':placeholder-shown');
     }
-    let invalidClass = (state.wasBlurred || !focused && !placeholderShown) && invalid ? 'invalid' : '';
+    const invalidClass = (state.wasBlurred || !focused && !placeholderShown) && invalid ? 'invalid' : '';
     return {
       error,
       underlineClass: focused ? 'underline underline-focus' : 'underline',

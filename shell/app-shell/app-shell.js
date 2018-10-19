@@ -222,7 +222,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _updateDescription(state) {
-    let {arc, description, metaplan, describedPlan} = state;
+    const {arc, description, metaplan, describedPlan} = state;
     if (arc && metaplan && metaplan.plan && metaplan !== describedPlan) {
       // remember we already described for this metaplan
       state.describedPlan = metaplan;

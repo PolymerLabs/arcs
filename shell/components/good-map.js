@@ -63,7 +63,7 @@ const GoodMap = (() => {
       });
     }
     _constructMapOptions() {
-      let mapOptions = Object.assign({}, this.extraOptions);
+      const mapOptions = Object.assign({}, this.extraOptions);
       if (this.zoom) {
         mapOptions.zoom = this.zoom || 0;
       }

@@ -81,10 +81,10 @@ export const FbGraph = Firedb => {
     // TODO(sjmiles): These methods preserve Object identity while modulating
     // properties. (1) Do we need this preservation still? (2) Use Map instead of Object.
     _replaceProperties(object, neo) {
-      for (let field in neo) {
+      for (const field in neo) {
         this._replaceSubProperties(object, field, neo[field]);
       }
-      for (let field in object) {
+      for (const field in object) {
         if (!(field in neo)) {
           delete object[field];
         }
@@ -94,7 +94,7 @@ export const FbGraph = Firedb => {
       if (typeof neo !== 'object') {
         object[key] = neo;
       } else {
-        let data = object[key];
+        const data = object[key];
         if (data) {
           this._replaceProperties(data, neo);
         } else {
