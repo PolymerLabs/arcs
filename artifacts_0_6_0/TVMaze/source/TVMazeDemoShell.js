@@ -21,30 +21,63 @@ defineParticle(({DomParticle, html, log}) => {
     <div ${host}>
       <style>
         :host {
+          min-height: 100vh;
           background-color: #333333;
           color: whitesmoke;
         }
+        cx-tabs {
+          --cx-tab-slider-color: #ccc;
+          border-bottom: 1px solid black;
+          margin-bottom: 8px;
+        }
         [banner] {
+          display: flex;
+          align-items: center;
           padding: 8px 16px;
         }
-        [slotid="search"] [card] {
-          width: 128px !important;
+        [banner] icon {
+          margin: -2px 0 0 -2px;
         }
-        [slotid="shows"] [card] {
-          width: 224px !important;
+        [slotid="search"] {
+          --tile-width: 128px;
         }
-        [slotid="recommended"] [card] {
-          width: 128px !important;
+        [slotid="recommended"] {
+          --tile-width: 128px;
+        }
+        /* [search] {
+          max-height: 0;
+          overflow: hidden;
+        }
+        [open] {
+          max-height: 4000px;
+        } */
+        [search] {
+          padding-top: 11px;
+        }
+        [search], [main] {
+          display: none;
+        }
+        [open] {
+          display: block;
         }
       </style>
-      <!-- <div banner>Find Shows</div> -->
-      <div slotid="searchbar"></div>
-      <div banner hidden="{{emptySearchResults}}">Search Results</div>
-      <div slotid="search"></div>
-      <div banner>My Shows</div>
-      <div slotid="shows"></div>
-      <div banner>Recommendations</div>
-      <div slotid="recommended"></div>
+      <cx-tabs on-select="onTabSelect">
+        <cx-tab selected>My Shows</cx-tab>
+        <cx-tab>Search</cx-tab>
+      </cx-tabs>
+      <!-- <div banner>Find Shows</div>
+      <div banner><icon on-click="toggleSearch">add</icon> Search</div> -->
+      <div search open$="{{searchOpen}}">
+        <div slotid="searchbar"></div>
+        <div banner hidden="{{emptySearchResults}}">Search Results</div>
+        <div slotid="search"></div>
+      </div>
+      <div main open$="{{mainOpen}}">
+        <!-- <div banner>My Shows</div> -->
+        <div slotid="shows"></div>
+        <div banner>Recommendations</div>
+        <div slotid="recommended"></div>
+      </div>
     </div>
   `;
 
@@ -52,7 +85,7 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({user, boxedShows, display, recentShows, boxedUserNames, friends}, state) {
+    update({user, boxedShows, recentShows, boxedUserNames, friends}, state) {
       if (recentShows) {
         const show = recentShows[0];
         if (show && (!state.lastShow || show.showid !== state.lastShow.showid)) {
@@ -65,37 +98,16 @@ defineParticle(({DomParticle, html, log}) => {
       if (user === null) {
         user = {id: 'gomer'};
       }
-      if (user && boxedShows) {
-        this.findMyBoxedShows(user, boxedShows, display, this.handles.get('display'));
-      }
     }
-    render({foundShows}) {
+    render({foundShows}, {tab}) {
       return {
+        mainOpen: !tab,
+        searchOpen: tab === 1,
         emptySearchResults: !foundShows || !foundShows.length
       };
     }
-    findMyBoxedShows(user, boxed, display, output) {
-      // (1) filter out shows not shared by me from the boxed shows
-      const myShows = this.boxQuery(boxed, user.id);
-      // (2) update display to match myShows with minimal change events
-      const toDelete = [];
-      const toAdd = {};
-      // build a map of wanted shows by id
-      myShows.forEach(show => toAdd[show.id] = show);
-      // for existing shows,
-      display.forEach(show => {
-        if (toAdd[show.id]) {
-          // if the show is already in display, do nothing
-          toAdd[show.id] = null;
-        } else {
-          // if this show is not part of myShows, remove it
-          toDelete.push(show);
-        }
-      });
-      // remove old shows
-      toDelete.forEach(show => output.remove(show));
-      // add new shows
-      Object.values(toAdd).forEach(show => show && output.store(show));
+    onTabSelect(e) {
+      this.setState({tab: e.data.value});
     }
     updateDescription(show, boxedShows, boxedUserNames, friends) {
       log(show, boxedShows, boxedUserNames, friends);
@@ -148,6 +160,9 @@ defineParticle(({DomParticle, html, log}) => {
           break;
       }
       return alsoWatch;
+    }
+    toggleSearch() {
+      this._setState({searchOpen: !this.state.searchOpen});
     }
   };
 });

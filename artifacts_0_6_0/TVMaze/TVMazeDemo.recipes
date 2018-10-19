@@ -41,7 +41,6 @@ particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
   inout TVMazeShow selected
   in User user
   in [TVMazeShow] boxedShows
-  inout [TVMazeShow] display
   in [TVMazeShow] foundShows
   in [User] friends
   in [UserName] boxedUserNames
@@ -82,12 +81,12 @@ recipe TVMazeDemo
   map 'BOXED_shows-tiles' as boxedShows
   // filter out 'my' shows from boxedShows using user.id
   map 'SYSTEM_user' as user
+  // why not just use profile instead of above?
+  map 'PROFILE_shows-tiles' as profileShows
   // all shows I've looked at on my device
   map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
   // most recent show(s)
   map 'PROFILE_piped-tv_show' as pipedShows
-  // shows to display (all my collected shows)
-  create #display as display
   // selected show (for detail)
   create #selected as selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
@@ -99,16 +98,15 @@ recipe TVMazeDemo
   // all the userNames
   map 'BOXED_userName' as boxedUserNames
   // friends also watching selected show
-  create as watchers
+  create #nosync as watchers
   // text about friends watching selected show
-  create as alsoWatch
+  create #nosync as alsoWatch
   // internal description storage
   create as descriptions
   //
   TVMazeDemoShell
     user = user
     boxedShows = boxedShows
-    display = display
     selected = selected
     recentShows = pipedShows
     foundShows = foundshows
@@ -124,21 +122,25 @@ recipe TVMazeDemo
       provide search as search
   //
   // slot `shows` holds my primary show list
-  // which is filtered out of `boxedShows`
+  create #nosync as uniqueProfileShows
+  TVMazeDeduplicate
+    shows = profileShows
+    uniqueShows = uniqueProfileShows
+  // which is filtered out of `profileShows`
   SelectableTiles
     consume root as shows
       provide tile as tile1
       provide annotation as action1
-    list = display
+    list = uniqueProfileShows
     selected = selected
   TileMultiplexer
-    list = display
+    list = uniqueProfileShows
     hostedParticle = TVMazeShowTile
     consume tile as tile1
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
-  create #uniquePipedShows as uniquePipedShows
+  create #nosync as uniquePipedShows
   TVMazeDeduplicate
     shows = allPipedShows
     uniqueShows = uniquePipedShows

@@ -239,9 +239,9 @@ const _set = function(node, property, value, controller) {
       Object.assign(node.style, value);
     }
   } else if (modifier == '$') {
-    const n = property.slice(0, -1);
-    if (typeof value === 'boolean') {
-      setBoolAttribute(node, n, value);
+    let n = property.slice(0, -1);
+    if (typeof value === 'boolean' || value === undefined) {
+      setBoolAttribute(node, n, Boolean(value));
     } else {
       node.setAttribute(n, value);
     }

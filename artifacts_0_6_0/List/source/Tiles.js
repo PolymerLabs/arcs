@@ -8,11 +8,9 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  const host = `tile-list`;
-
   const template = html`
 <style>
-  [${host}] {
+  [tile-list] {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -20,41 +18,45 @@ defineParticle(({DomParticle, html, log}) => {
   }
   [card] {
     margin: 8px;
-    width: calc(100% - 24px);
     border: 3px solid transparent;
+    width: var(--tile-width, calc(100% - 24px));
   }
   [card][selected] {
     border: 3px solid #0068a7;
   }
-  @media (min-width: 540px) {
+  [pacify] {
+    font-style: italic;
+  }
+  @media (min-width: 440px) {
     [card] {
-      width: calc(50% - 24px);
+      width: var(--tile-width, calc(50% - 24px));
+    }
+  }
+  @media (min-width: 560px) {
+    [card] {
+      width: var(--tile-width, calc(33% - 24px));
     }
   }
   @media (min-width: 800px) {
     [card] {
-      width: calc(33% - 24px);
+      width: var(--tile-width, calc(25% - 24px));
+    }
+  }
+  @media (min-width: 1100px) {
+    [card] {
+      width: var(--tile-width, calc(20% - 24px));
     }
   }
   @media (min-width: 1400px) {
     [card] {
-      width: calc(25% - 24px);
-    }
-  }
-  @media (min-width: 1800px) {
-    [card] {
-      width: calc(20% - 24px);
-    }
-  }
-  @media (min-width: 2200px) {
-    [card] {
-      width: calc(10% - 24px);
+      width: var(--tile-width, calc(15% - 24px));
     }
   }
 </style>
 
 <div slotid="action"></div>
-<div ${host}>{{items}}</div>
+<div pacify hidden="{{haveItems}}">(nothing to show)</div>
+<div tile-list>{{items}}</div>
 
 <template tiled-items>
   <div card selected$="{{selected}}">
@@ -71,32 +73,25 @@ defineParticle(({DomParticle, html, log}) => {
     shouldRender({list}) {
       return Boolean(list);
     }
-    update({list, selected}) {
-      // if (selected && selected.delete) {
-      //   this.handles.get('selected').clear();
-      //   log('request to delete', selected);
-      //   const item = list.find(item => item.id === selected.id);
-      //   if (item) {
-      //     this.handles.get('list').remove(item);
-      //     //log('new list', await this.handles.get('list').toList());
-      //   }
-      // }
-    }
     render({list, selected}) {
-      const selectedId = selected && selected.id;
-      //log(`selected: ${selectedId}`);
-      const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
-      return {
-        items: {
+      if (list.length) {
+        const selectedId = selected && selected.id;
+        const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+        const items = {
           $template: 'tiled-items',
-          models: sorted.map(item => {
-            log(`rendering: ${item.id}`);
-            return {
-              id: item.id,
-              selected: selectedId === item.id
-            };
-          })
-        }
+          models: sorted.map(item => this.renderItem(item, selectedId === item.id))
+        };
+        log(items.models);
+        return {
+          haveItems: true,
+          items
+        };
+      }
+    }
+    renderItem({id}, selected) {
+      return {
+        id,
+        selected
       };
     }
     _onSelect(e) {

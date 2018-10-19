@@ -22,7 +22,7 @@ export class ArcHost {
   async spawn(config) {
     this.config = config;
     const context = this.context || await this.env.parse(``);
-    const serialization = await this.computeSerialization(config, this.storage);
+    const serialization = this.serialization = await this.computeSerialization(config, this.storage);
     this.arc = await this._spawn(this.env, context, this.composer, this.storage, config.id, serialization);
     if (config.manifest && !serialization) {
       await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
@@ -81,7 +81,14 @@ export class ArcHost {
     const {arc, config: {id}, storage} = this;
     if (!storage.includes('volatile')) {
       console.log(`persisting serialization to [${id}/serialization]`);
-      const serialization = await arc.serialize();
+      let serialization = await arc.serialize();
+      // TODO(sjmiles): elide attempt to import ephemeral manifest
+      const pattern = /import .*$/gm;
+      const modified = serialization.replace(pattern, '');
+      if (modified !== pattern) {
+        console.warn(`removed import statements from serialization before persisting`);
+      }
+      serialization = modified;
       //console.log(serialization);
       Firebase.db.child(`${id}/serialization`).set(serialization);
     }

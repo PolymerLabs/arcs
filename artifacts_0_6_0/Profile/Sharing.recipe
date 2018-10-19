@@ -70,12 +70,17 @@ resource BOXED_all_piped_all_tv_showsResource
   []
 store BOXED_all_piped_all_tv_shows of [TVMazeShow] 'BOXED_all_piped-all_tv_shows' @0 #boxed in BOXED_all_piped_all_tv_showsResource
 
+resource PROFILE_shows_tilesResource
+  start
+  []
+store PROFILE_shows_tiles of [TVMazeShow] 'PROFILE_shows-tiles' @0 #profile in PROFILE_shows_tilesResource
+
 resource BOXED_shows_tilesResource
   start
   []
 store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_shows_tilesResource
 
-// all of the below is required to make the arc aware of these stores
+// the below is required to make the arc aware of these stores
 
 particle Sharing in './source/sharing.js'
   in [User] systemUsers
@@ -89,6 +94,7 @@ particle Sharing in './source/sharing.js'
   in [TVMazeShow] profilePipedShow
   in [TVMazeShow] profilePipedShows
   in [TVMazeShow] boxedPipedShows
+  in [TVMazeShow] profileShowsTiles
   in [TVMazeShow] boxedShowsTiles
 
 recipe Sharing
@@ -103,6 +109,7 @@ recipe Sharing
   use 'PROFILE_piped-tv_show' as profilePipedShow
   use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
   use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
+  use 'PROFILE_shows-tiles' as profileShowsTiles
   use 'BOXED_shows-tiles' as boxedShowsTiles
   Sharing
     systemUsers = systemUsers
@@ -116,4 +123,5 @@ recipe Sharing
     profilePipedShow = profilePipedShow
     profilePipedShows = profilePipedShows
     boxedPipedShows = boxedPipedShows
+    profileShowsTiles = profileShowsTiles
     boxedShowsTiles = boxedShowsTiles

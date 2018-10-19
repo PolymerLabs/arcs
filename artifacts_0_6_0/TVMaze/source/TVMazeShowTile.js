@@ -10,7 +10,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
 
   const host = `show-tile`;
 
@@ -35,6 +35,8 @@ defineParticle(({DomParticle, html}) => {
           image: {backgroundImage: `url("${show.image}")`},
           trigger: show.name
         };
+      } else {
+        //log('show data missing');
       }
     }
   };

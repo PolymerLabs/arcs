@@ -36,13 +36,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       state.env = props.env;
       SyntheticStores.init(props.env);
     }
-    if (props.context) {
-      this.updateSystemUser(props);
-    }
+    // if (props.context && state.systemUserId !== props.userid) {
+    //   state.systemUserId = props.userid;
+    //   if (props.userid) {
+    //     this.updateSystemUser(props);
+    //   }
+    // }
     if (props.storage && props.context && props.arcstore && props.userid !== state.userid) {
-       state.userid = props.userid;
-       this.updateUserContext(props, state);
-       setTimeout(() => this.fire('context', props.context), state.contextWait);
+      state.userid = props.userid;
+      this.updateSystemUser(props);
+      this.updateUserContext(props, state);
+      setTimeout(() => this.fire('context', props.context), state.contextWait);
     }
     //const {context, userid, coords, users} = props;
     //const {user, userStore, usersStore} = state;
