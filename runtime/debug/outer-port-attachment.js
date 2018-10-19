@@ -18,6 +18,15 @@ export class OuterPortAttachment {
     this._particleRegistry = {};
   }
 
+  handlePecMessage(name, pecMsgBody) {
+    // Skip speculative and pipes arcs for now.
+    if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
+    this._devtoolsChannel.send({
+      messageType: 'PecLog',
+      messageBody: {name, pecMsgBody, timestamp: Date.now()},
+    });
+  }
+
   InstantiateParticle(particle, {id, spec, handles}) {
     this._particleRegistry[id] = spec;
     this._devtoolsChannel.send({
