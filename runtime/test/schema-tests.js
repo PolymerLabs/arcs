@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Reference} from '../ts-build/reference.js';
 import {Schema} from '../ts-build/schema.js';
 import {Type} from '../ts-build/type.js';
@@ -312,6 +312,7 @@ describe('schema', function() {
     let manifest = await Manifest.load('Product.schema', loader);
     let Thing = manifest.findSchemaByName('Thing');
     let Product = manifest.findSchemaByName('Product');
+    delete Thing._model.description;
 
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
     assert.deepEqual(Schema.intersect(Thing, Product), Thing);

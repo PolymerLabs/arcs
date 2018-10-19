@@ -23,6 +23,8 @@ export class Recipe {
   private _localName: string | undefined = undefined;
   private _cloneMap: Map<{}, {}>;
   
+  annotation: string | undefined = undefined;
+  
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
   // can handle. ConnectionConstraints should be a different record
@@ -365,7 +367,7 @@ export class Recipe {
     return true;
   }
 
-  clone(cloneMap) {
+  clone(cloneMap=undefined) {
     // for now, just copy everything
 
     const recipe = new Recipe(this.name);

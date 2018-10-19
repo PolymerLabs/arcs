@@ -11,7 +11,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
-import {Manifest} from './manifest.js';
+import {Manifest} from './ts-build/manifest.js';
 import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
 import {reportSystemException} from './ts-build/arc-exceptions.js';
 

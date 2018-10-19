@@ -47,6 +47,7 @@ export abstract class StorageProviderBase {
   
   version: number|null;
   id: string;
+  originalId: string|null;
   name: string;
   source: string|null;
   description: string;

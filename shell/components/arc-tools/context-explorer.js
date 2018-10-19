@@ -63,7 +63,7 @@ customElements.define('context-explorer', class extends Xen.Base {
   }
   async _queryContextStores(context) {
     const find = manifest => {
-      let tags = [...manifest._storeTags];
+      let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
       }

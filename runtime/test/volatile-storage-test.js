@@ -10,7 +10,7 @@
 
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 import {Arc} from '../ts-build/arc.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Type} from '../ts-build/type.js';
 import {assert} from '../test/chai-web.js';
 import {resetVolatileStorageForTesting} from '../ts-build/storage/volatile-storage.js';

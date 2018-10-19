@@ -11,7 +11,7 @@
 
 import {assert} from '../test/chai-web.js';
 import {Arc} from '../ts-build/arc.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {Planner} from '../planner.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';

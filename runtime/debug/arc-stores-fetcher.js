@@ -20,7 +20,7 @@ export class ArcStoresFetcher {
 
   async _listStores() {
     const find = manifest => {
-      let tags = [...manifest._storeTags];
+      let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
       }

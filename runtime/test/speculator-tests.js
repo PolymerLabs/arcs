@@ -12,7 +12,7 @@ import {Speculator} from '../ts-build/speculator.js';
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {Loader} from '../ts-build/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
