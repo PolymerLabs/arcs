@@ -18,22 +18,22 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
 // described on https://developer.spotify.com/console/get-playlist
 
 (async () => {
-  let usage = 'Usage: importSpotify [--clear] <json-files>\n' +
+  const usage = 'Usage: importSpotify [--clear] <json-files>\n' +
               '       importSpotify --list';
-  let schemaFile = 'artifacts/Music/Playlist.schema';
-  let baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
+  const schemaFile = 'artifacts/Music/Playlist.schema';
+  const baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
 
   async function showPlaylists(collection) {
     let count = 0;
-    let cursorId = await collection.stream(50);
+    const cursorId = await collection.stream(50);
     for (;;) {
-      let {value, done} = await collection.cursorNext(cursorId);
+      const {value, done} = await collection.cursorNext(cursorId);
       if (done) {
         console.log(`-- ${count} playlists`);
         return;
       }
-      for (let item of value) {
-        let m = item.artists && item.artists.match(/\|/g);
+      for (const item of value) {
+        const m = item.artists && item.artists.match(/\|/g);
         console.log(`${item.name}: ${m ? (m.length + 1) : 0} artists`);
         count++;
       }
@@ -41,9 +41,9 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
   }
 
   async function importFiles(collection, paths) {
-    let idBase = `!importer:${Date.now()}`;
+    const idBase = `!importer:${Date.now()}`;
     let index = 0;
-    for (let path of paths) {
+    for (const path of paths) {
       let playlist;
       try {
         playlist = JSON.parse(fs.readFileSync(path, 'utf-8'));
@@ -61,11 +61,11 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
         thumbnail = playlist.images[0].url;
       }
 
-      let artists = new Set();
+      const artists = new Set();
       if (playlist.tracks && playlist.tracks.items) {
-        for (let item of playlist.tracks.items) {
+        for (const item of playlist.tracks.items) {
           if (item.track) {
-            for (let artist of item.track.artists) {
+            for (const artist of item.track.artists) {
               if (artist.name) {
                 artists.add(artist.name);
               }
@@ -88,7 +88,7 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
   }
 
   async function main() {
-    let key = `${baseUrl}/playlists`;
+    const key = `${baseUrl}/playlists`;
     let manifest;
     try {
       manifest = await Manifest.parse(fs.readFileSync(schemaFile, 'utf-8'));
@@ -98,13 +98,13 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
       return;
     }
 
-    let PlaylistType = Type.newEntity(manifest.schemas.Playlist);
-    let storage = new StorageProviderFactory('import');
-    let construct = () => storage.construct('import', PlaylistType.bigCollectionOf(), key);
-    let connect = () => storage.connect('import', PlaylistType.bigCollectionOf(), key);
+    const PlaylistType = Type.newEntity(manifest.schemas.Playlist);
+    const storage = new StorageProviderFactory('import');
+    const construct = () => storage.construct('import', PlaylistType.bigCollectionOf(), key);
+    const connect = () => storage.connect('import', PlaylistType.bigCollectionOf(), key);
 
     // First two entries in argv are the node binary and this file.
-    let args = process.argv.slice(2);
+    const args = process.argv.slice(2);
 
     if (args[0] == '--list') {
       if (args.length == 1) {
@@ -114,7 +114,7 @@ import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-stora
       }
     } else if (args[0] == '--clear') {
       await resetStorageForTesting(key);
-      let collection = await construct();
+      const collection = await construct();
       if (args.length > 1) {
         await importFiles(collection, args.slice(1));
       }

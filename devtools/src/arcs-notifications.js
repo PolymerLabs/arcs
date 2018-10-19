@@ -72,7 +72,7 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
   }
 
   onMessageBundle(messages) {
-    for (let msg of messages) {
+    for (const msg of messages) {
       switch (msg.messageType) {
         case 'Warning':
           switch (msg.messageBody) {
@@ -91,7 +91,7 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
   }
 
   _addWarning(message) {
-    let el = document.createElement('div');
+    const el = document.createElement('div');
     el.innerHTML = message;
     this.$.warningsDetails.appendChild(el);
     this.warningsCount++;

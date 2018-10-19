@@ -5,13 +5,13 @@
 // TODO: Clean this up a little bit, it's spaghetti-ish.
 
 (() => {
-  let msgQueue = [];
+  const msgQueue = [];
   let windowForEvents = undefined;
 
   // Use the extension API if we're in devtools and having a window to inspect.
   // Otherwise use WebSocket. In later case we might be in devtools but running
   // against NodeJS, but in such case there's no window to inspect.
-  let sendMessage = (chrome.devtools && chrome.devtools.inspectedWindow.tabId)
+  const sendMessage = (chrome.devtools && chrome.devtools.inspectedWindow.tabId)
       ? connectViaExtensionApi()
       : connectViaWebSocket();
 
@@ -32,7 +32,7 @@
 
     const setWindowForEventsAndEmptyMsgQueue = () => {
       windowForEvents = w;
-      for (let msg of msgQueue) fire(msg);
+      for (const msg of msgQueue) fire(msg);
       msgQueue.length = 0;
     };
     
@@ -52,7 +52,7 @@
   }
 
   function connectViaExtensionApi() {
-    let backgroundPageConnection = chrome.runtime.connect({name: 'arcs'});
+    const backgroundPageConnection = chrome.runtime.connect({name: 'arcs'});
     backgroundPageConnection.postMessage({
         name: 'init',
         tabId: chrome.devtools.inspectedWindow.tabId

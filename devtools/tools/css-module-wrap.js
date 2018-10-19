@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 
-for (let inputPath of process.argv.slice(2)) {
+for (const inputPath of process.argv.slice(2)) {
   if (!inputPath.includes('/node_modules/' || !inputPath.endsWith('.css'))) {
     console.warn('Input path for css-module-wrap should be a css file in node_modules');
     process.exit(1);
@@ -39,7 +39,7 @@ document.head.appendChild($_documentContainer.content);`);
 }
 
 function ensureDirectoryExists(filePath) {
-  let dirName = path.dirname(filePath);
+  const dirName = path.dirname(filePath);
   if (!fs.existsSync(dirName)) {
     ensureDirectoryExists(dirName);
     fs.mkdirSync(dirName);

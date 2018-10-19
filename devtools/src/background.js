@@ -1,12 +1,12 @@
 // Tab ID to port of a DevTools page, background script is a singleton.
-let connections = {};
+const connections = {};
 // Tab ID to `true` if given tab already pinged us.
-let tabsReady = {};
+const tabsReady = {};
 
 // DevTools page connecting.
 chrome.runtime.onConnect.addListener(function(port) {
   // Message from the DevTools page.
-  let extensionListener = function(message, sender, sendResponse) {
+  const extensionListener = function(message, sender, sendResponse) {
     console.log(`Received "${message.name}" message from DevTools page for tab.${message.tabId}.`);
     switch (message.name) {
       case 'init':
@@ -27,7 +27,7 @@ chrome.runtime.onConnect.addListener(function(port) {
   port.onMessage.addListener(extensionListener);
   port.onDisconnect.addListener(function(port) {
     port.onMessage.removeListener(extensionListener);
-    for (let tabId of Object.keys(connections)) {
+    for (const tabId of Object.keys(connections)) {
       if (connections[tabId] === port) {
         console.log(`DevTools port for tab.${tabId} got disconnected. Removing the connection.`);
         delete connections[tabId];
@@ -38,7 +38,7 @@ chrome.runtime.onConnect.addListener(function(port) {
 
 // Message from the content script.
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-  let tabId = sender.tab.id;
+  const tabId = sender.tab.id;
   if (message === 'content-script-ready') {
     tabsReady[tabId] = true;
     if (tabId in connections) { // If devtools ready, reply to start debugging.
@@ -63,7 +63,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   if (details.frameId !== 0) {
     return; // Ignore if it's not the top-frame.
   }
-  let tabId = details.tabId;
+  const tabId = details.tabId;
   if (tabId in connections) {
     console.log(`Registered page refresh for tab.${tabId}.`);
     connections[tabId].postMessage([{messageType: 'page-refresh'}]);

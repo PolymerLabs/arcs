@@ -8,7 +8,7 @@
 import crypto from 'crypto';
 
 export async function digest(str) {
-  let sha = crypto.createHash('sha1');
+  const sha = crypto.createHash('sha1');
   sha.update(str);
   return Promise.resolve().then(() => sha.digest('hex'));
 }

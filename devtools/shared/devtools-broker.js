@@ -14,7 +14,7 @@
 
 // Data needs to be referenced via a global object, otherwise extension and
 // Arcs have different instances.
-let root = typeof window === 'object' ? window : global;
+const root = typeof window === 'object' ? window : global;
 
 if (!root._arcDebugPromise) {
   root._arcDebugPromise = new Promise(resolve => {

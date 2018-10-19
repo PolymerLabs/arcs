@@ -6,6 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 export function now() {
-  let time = process.hrtime();
+  const time = process.hrtime();
   return time[0] * 1000 + time[1] / 1000000;
 }

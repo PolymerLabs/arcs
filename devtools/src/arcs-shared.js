@@ -97,7 +97,7 @@ document.head.appendChild($_documentContainer.content);
 const writeOps = ['set', 'store', 'clear', 'remove'];
 
 export function formatTime(timestamp, digits = 0) {
-  let d = new Date(timestamp);
+  const d = new Date(timestamp);
   let time = [d.getHours(), d.getMinutes(), d.getSeconds()].map(x => String(x).padStart(2, '0')).join(':');
   if (digits > 0) time += (timestamp / 1000 % 1).toFixed(digits).substr(1);
   return time;
@@ -118,7 +118,7 @@ const MessengerMixin = subclass => class extends subclass {
         if (this.onMessageBundle) {
           this.onMessageBundle(detail);
         } else {
-          for (let msg of detail) {
+          for (const msg of detail) {
             this.onMessage(msg);
           }
         }
