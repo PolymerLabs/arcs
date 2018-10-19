@@ -830,6 +830,36 @@ ${particleStr1}
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
   });
+  it('SLANDLES recipe provided slot with no local name', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume Slot slotA1
+          \`provide Slot slotA2
+      recipe
+        ParticleA
+          slotA1 consume
+          slotA2 provide
+    `);
+    // Check that the manifest was parsed in the way we expect.
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.recipes, 1);
+
+    const recipe = manifest.recipes[0];
+    // Check that the parser found the handleConnections
+    assert.lengthOf(recipe.handleConnections, 2);
+    assert.equal('slotA1', recipe.handleConnections[0]._name);
+    assert.equal('slotA2', recipe.handleConnections[1]._name);
+
+    // Check that the handle connection
+    // wasn't resolved to a handle (even though it was parsed).
+    assert.isUndefined(recipe.handleConnections[0]._handle);
+    assert.isUndefined(recipe.handleConnections[1]._handle);
+
+    // The recipe shouldn't resolve (as there is nothing providing slotA1 or
+    // consuming slotA2).
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+  });
   it('incomplete aliasing', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
