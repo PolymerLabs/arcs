@@ -805,9 +805,9 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handles, 2);
-    //TODO(jopra): Give recipes the dependentConnections syntax+handling
-    // assert.equal(recipe.particles.find(p => p.name == 'ParticleB').consumedSlotConnections['slotB1'].providedSlots['slotB2'],
-      //            recipe.particles.find(p => p.name == 'ParticleA').consumedSlotConnections['slotA'].targetSlot);
+    assert.equal(
+      recipe.particles.find(p => p.name == 'ParticleA')._connections['slotA']._handle._localName,
+      recipe.particles.find(p => p.name == 'ParticleB')._connections['slotB2']._handle._localName);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
