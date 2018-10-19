@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  let host = `google-map`;
+  const host = `google-map`;
 
-  let styles = html`
+  const styles = html`
 <style>
   [${host}] {
     display: block;
@@ -23,7 +23,7 @@ defineParticle(({DomParticle, resolver, html}) => {
 </style>
   `;
 
-  let template = html`
+  const template = html`
 
 ${styles}
 

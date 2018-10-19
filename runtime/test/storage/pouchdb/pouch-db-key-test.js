@@ -24,8 +24,8 @@ describe('pouch-db-key', () => {
   });
 
   it('parses a memory url', () => {
-    let key = 'pouchdb://memory/user/';
-    let pkey = new PouchDbKey(key);
+    const key = 'pouchdb://memory/user/';
+    const pkey = new PouchDbKey(key);
     assert.equal(pkey.toString(), key);
     assert.equal(pkey.dbLocation, 'memory');
     assert.equal(pkey.dbName, 'user');
@@ -34,8 +34,8 @@ describe('pouch-db-key', () => {
   });
 
   it('parses a local url', () => {
-    let key = 'pouchdb://local/user/';
-    let pkey = new PouchDbKey(key);
+    const key = 'pouchdb://local/user/';
+    const pkey = new PouchDbKey(key);
     assert.equal(pkey.toString(), key);
     assert.equal(pkey.dbLocation, 'local');
     assert.equal(pkey.dbName, 'user');
@@ -44,8 +44,8 @@ describe('pouch-db-key', () => {
   });
 
   it('parses a remote url', () => {
-    let key = 'pouchdb://localhost:8080/user/';
-    let pkey = new PouchDbKey(key);
+    const key = 'pouchdb://localhost:8080/user/';
+    const pkey = new PouchDbKey(key);
     assert.equal(pkey.toString(), key);
     assert.equal(pkey.dbLocation, 'localhost:8080');
     assert.equal(pkey.dbName, 'user');
@@ -54,8 +54,8 @@ describe('pouch-db-key', () => {
   });
 
   it('parses a remote url with location', () => {
-    let key = 'pouchdb://localhost:8080/user/prefix/path';
-    let pkey = new PouchDbKey(key);
+    const key = 'pouchdb://localhost:8080/user/prefix/path';
+    const pkey = new PouchDbKey(key);
     assert.equal(pkey.toString(), key);
     assert.equal(pkey.location, 'prefix/path');
     assert.equal(pkey.dbName, 'user');
@@ -73,7 +73,7 @@ describe('pouch-db-key', () => {
     });
 
     it('creates a new PouchDbKey with id suffix', () => {
-      let childKey = remoteKey.childKeyForHandle('99');
+      const childKey = remoteKey.childKeyForHandle('99');
       assert.equal(childKey.toString(),
         'pouchdb://localhost:8080/user/prefix/path/handles/99');
     });

@@ -19,11 +19,11 @@ import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
-  let arc = new Arc({slotComposer, id: 'test'});
+  const arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
 
-let tests = [
+const tests = [
   {
     name: 'text',
     verifySuggestion: async (description, expectedSuggestion) => {
@@ -33,7 +33,7 @@ let tests = [
   {
     name: 'dom',
     verifySuggestion: async (description, expectedSuggestion) => {
-      let suggestion = await description.getArcDescription(DescriptionDomFormatter);
+      const suggestion = await description.getArcDescription(DescriptionDomFormatter);
       let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
       Object.keys(suggestion.model).forEach(m => {
         assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
@@ -46,7 +46,7 @@ let tests = [
 ];
 
 describe('Description', function() {
-  let schemaManifest = `
+  const schemaManifest = `
 schema Foo
   Text name
   Text fooValue
@@ -56,15 +56,15 @@ schema Bar
 schema Far
   Text name
   Text farValue`;
-  let aParticleManifest = `
+  const aParticleManifest = `
 particle A
   in Foo ifoo
   out [Foo] ofoos
   consume root`;
-  let bParticleManifest = `
+  const bParticleManifest = `
 particle B
   out Foo ofoo`;
-  let recipeManifest = `
+  const recipeManifest = `
 recipe
   create as fooHandle   // Foo
   create as foosHandle  // [Foo]
@@ -74,10 +74,10 @@ recipe
     ofoos -> foosHandle
     consume root as slot0`;
   async function prepareRecipeAndArc(manifestStr) {
-    let manifest = (await Manifest.parse(manifestStr));
+    const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
-    let recipe = manifest.recipes[0];
-    let Foo = manifest.findSchemaByName('Foo').entityClass();
+    const recipe = manifest.recipes[0];
+    const Foo = manifest.findSchemaByName('Foo').entityClass();
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
     if (recipe.handles.length > 1) {
       recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
@@ -85,30 +85,30 @@ recipe
     if (recipe.handles.length > 2) {
       recipe.handles[2].mapToStorage({id: 'test:3', type: Foo.type});
     }
-    let arc = createTestArc();
-    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    let foosStore = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
+    const arc = createTestArc();
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    const foosStore = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
     recipe.normalize();
 
     assert.isTrue(recipe.isResolved());
-    let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
-    let ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
-    let ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
-    let ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
+    const ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
+    const ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
+    const ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
+    const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
     arc._activeRecipe = recipe;
     return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
 
   tests.forEach((test) => {
     it('one particle description ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
 ${recipeManifest}
       `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Read from foo and populate foo list.');
       assert.equal(await description.getHandleDescription(ifooHandle), 'foo');
@@ -135,7 +135,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle and connections descriptions ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -144,7 +144,7 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Read from my-in-foo and populate my-out-foos.');
       assert.equal(await description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -171,7 +171,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle with BigCollection descriptions ' + test.name, async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Foo
           Text name
           Text fooValue
@@ -191,11 +191,11 @@ ${recipeManifest}
             ofoo -> fooHandle
             consume root as slot0`);
 
-      let recipe = manifest.recipes[0];
-      let Foo = manifest.findSchemaByName('Foo').entityClass();
-      let arc = createTestArc();
-      let foosStore = await arc.createStore(Foo.type.bigCollectionOf(), undefined, 'test:1');
-      let fooStore = await arc.createStore(Foo.type, undefined, 'test:2');
+      const recipe = manifest.recipes[0];
+      const Foo = manifest.findSchemaByName('Foo').entityClass();
+      const arc = createTestArc();
+      const foosStore = await arc.createStore(Foo.type.bigCollectionOf(), undefined, 'test:1');
+      const fooStore = await arc.createStore(Foo.type, undefined, 'test:2');
 
       // BigCollections don't trigger sync/update events when new values are added to the backing
       // store. Pre-populate the store to check the suggestion reads in the first one.
@@ -208,9 +208,9 @@ ${recipeManifest}
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
 
-      let ifoosHandle = recipe.handles[0];
-      let ofooHandle = recipe.handles[1];
-      let description = new Description(arc);
+      const ifoosHandle = recipe.handles[0];
+      const ofooHandle = recipe.handles[1];
+      const description = new Description(arc);
       await test.verifySuggestion(description,
           'Read from my-in-foos (collection of items like foo-1) and write my-out-foo.');
     });
@@ -218,7 +218,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle and connections descriptions references ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -227,7 +227,7 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Read from my-in-foo and populate The Foos from my-in-foo.');
       assert.equal(await description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -245,7 +245,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle and connections descriptions references no pattern ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -253,7 +253,7 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Read from foo and populate The Foos from foo.');
       assert.equal(await description.getHandleDescription(ifooHandle), 'foo');
@@ -271,7 +271,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle and connections descriptions with extras ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}._name_\`
@@ -280,7 +280,7 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
@@ -297,7 +297,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('connection description from another particle ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -310,11 +310,11 @@ ${recipeManifest}
     ofoo -> fooHandle
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Read from best-new-foo and populate my-foos.');
       assert.equal(await description.getHandleDescription(ifooHandle), 'best-new-foo');
-      let oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
+      const oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
       assert.equal(await description.getHandleDescription(oBFooHandle), 'best-new-foo');
       assert.equal(await description.getHandleDescription(ofoosHandle), 'my-foos');
 
@@ -330,7 +330,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('multiple particles ' + test.name, async () => {
-      let {arc, recipe, ifooHandleConn} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandleConn} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   out Foo ofoo
@@ -363,15 +363,15 @@ recipe
     consume root as slot0
       provide action as slot1
     `));
-      let aFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
+      const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Display X1-foo, create X1::X1-foo, and create X2::X2-foo.');
       assert.equal(await description.getHandleDescription(aFooHandle), 'X1-foo');
 
       // Rank X2 higher than X2
-      let relevance = new Relevance();
+      const relevance = new Relevance();
       relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
       relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X1'), [5]);
       relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X2'), [10]);
@@ -384,7 +384,7 @@ recipe
 
   tests.forEach((test) => {
     it('same particle multiple times ' + test.name, async () => {
-      let manifestStr = `
+      const manifestStr = `
 ${schemaManifest}
 particle X
   out [Foo] ofoo
@@ -403,20 +403,20 @@ recipe
     ofoo -> fooHandle2
     consume root as slot0
     `;
-      let manifest = (await Manifest.parse(manifestStr));
+      const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
-      let recipe = manifest.recipes[0];
-      let Foo = manifest.findSchemaByName('Foo').entityClass();
+      const recipe = manifest.recipes[0];
+      const Foo = manifest.findSchemaByName('Foo').entityClass();
       recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.collectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
-      let arc = createTestArc();
-      let fooStore1 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:1');
-      let fooStore2 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
+      const arc = createTestArc();
+      const fooStore1 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:1');
+      const fooStore2 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Write to X-foo and write to X-foo.');
       assert.equal(await description.getHandleDescription(recipe.handles[0]), 'X-foo');
@@ -440,7 +440,7 @@ recipe
 
   tests.forEach((test) => {
     it('duplicate particles ' + test.name, async () => {
-      let {arc, recipe, ifooHandle, fooStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, ifooHandle, fooStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
     provide action
@@ -469,18 +469,18 @@ recipe
     consume action as slot1
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       // Add values to both Foo handles
       fooStore.set({id: 1, rawData: {name: 'the-FOO'}});
-      let fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3');
+      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3');
       fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
       await test.verifySuggestion(description,
           'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
       assert.equal(await description.getHandleDescription(ifooHandle), 'b-foo');
 
       // Rank B bound to fooStore2 higher than B that is bound to fooHandle1.
-      let relevance = new Relevance();
+      const relevance = new Relevance();
       relevance.newArc = arc;
       relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
       relevance.relevanceMap.set(recipe.particles.filter(p => p.name == 'B')[0], [1]);
@@ -494,7 +494,7 @@ recipe
 
   tests.forEach((test) => {
     it('sanisize description ' + test.name, async () => {
-      let {arc, recipe} = (await prepareRecipeAndArc(`
+      const {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
   out Foo ofoo
@@ -510,17 +510,17 @@ recipe
     consume root as slot0
     `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Create &lt;new> &lt;&lt;my-foo>>.');
-      let handle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
+      const handle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
       assert.equal(await description.getHandleDescription(handle, arc), '&lt;my-foo>');
     });
   });
 
   tests.forEach((test) => {
     it('multiword type and no name property in description ' + test.name, async () => {
-      let manifestStr = `
+      const manifestStr = `
         schema MyBESTType
           Text property
         particle P
@@ -536,24 +536,24 @@ recipe
            t = tHandle
            ts = tsHandle
            consume root as slot0`;
-        let manifest = (await Manifest.parse(manifestStr));
+        const manifest = (await Manifest.parse(manifestStr));
         assert.lengthOf(manifest.recipes, 1);
-        let recipe = manifest.recipes[0];
-        let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
+        const recipe = manifest.recipes[0];
+        const MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
         recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
         recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.collectionOf()});
-        let arc = createTestArc();
-        let tStore = await arc.createStore(MyBESTType.type, undefined, 'test:1');
-        let tsStore = await arc.createStore(MyBESTType.type.collectionOf(), undefined, 'test:2');
+        const arc = createTestArc();
+        const tStore = await arc.createStore(MyBESTType.type, undefined, 'test:1');
+        const tsStore = await arc.createStore(MyBESTType.type.collectionOf(), undefined, 'test:2');
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
         arc._activeRecipe = recipe;
-        let description = new Description(arc);
+        const description = new Description(arc);
 
         await test.verifySuggestion(description, 'Make my best type list from my best type.');
-        let tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
-        let tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
+        const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
+        const tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
         assert.equal(await description.getHandleDescription(tRecipeHandle), 'my best type');
         assert.equal(await description.getHandleDescription(tsRecipeHandle), 'my best type list');
 
@@ -570,7 +570,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle slots description ' + test.name, async () => {
-      let manifestStr = `
+      const manifestStr = `
 schema Foo
   Text name
 particle A
@@ -609,16 +609,16 @@ recipe
     foo <- handle0
     consume otherslot as slot2
 `;
-      let manifest = (await Manifest.parse(manifestStr));
+      const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
-      let recipe = manifest.recipes[0];
+      const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
 
-      let arc = createTestArc();
+      const arc = createTestArc();
       arc._activeRecipe = recipe;
 
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       await test.verifySuggestion(description, 'Hello first b and second b, see you at only c.');
     });
@@ -626,7 +626,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle without UI description ' + test.name, async () => {
-      let {arc, recipe, fooStore} = (await prepareRecipeAndArc(`
+      const {arc, recipe, fooStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${bParticleManifest}
   description \`Populate \${ofoo}\`
@@ -636,7 +636,7 @@ recipe
     ofoo -> fooHandle
       `));
 
-      let description = new Description(arc);
+      const description = new Description(arc);
       await test.verifySuggestion(description, 'Populate foo.');
 
       // Add value to a singleton handle.
@@ -647,7 +647,7 @@ recipe
 
   tests.forEach((test) => {
     it('capitalizes when some particles do not have descriptions ' + test.name, async () => {
-      let manifest = (await Manifest.parse(`
+      const manifest = (await Manifest.parse(`
 shape DummyShape
 particle NoDescription
 particle NoDescMuxer
@@ -668,28 +668,28 @@ recipe
   HasDescription
     consume myslot as slot1
       `));
-      let recipe = manifest.recipes[0];
-      let arc = createTestArc();
+      const recipe = manifest.recipes[0];
+      const arc = createTestArc();
       arc._activeRecipe = recipe;
-      let hostedParticle = manifest.findParticleByName('NoDescription');
-      let hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
-      let newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
+      const hostedParticle = manifest.findParticleByName('NoDescription');
+      const hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
+      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
       await newStore.set(hostedParticle.clone().toLiteral());
 
-      let description = new Description(arc);
+      const description = new Description(arc);
       await test.verifySuggestion(description, 'Start with capital letter.');
     });
   });
 
   it('has no particles description', async () => {
-    let verify = async (manifestStr, expectedDescription) => {
-      let recipe = (await Manifest.parse(manifestStr)).recipes[0];
-      let arc = createTestArc();
+    const verify = async (manifestStr, expectedDescription) => {
+      const recipe = (await Manifest.parse(manifestStr)).recipes[0];
+      const arc = createTestArc();
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
       arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), patterns: recipe.patterns});
-      let description = new Description(arc);
+      const description = new Description(arc);
 
       assert.equal(await description.getRecipeSuggestion(), expectedDescription);
       assert.deepEqual(await description.getRecipeSuggestion(DescriptionDomFormatter),
@@ -701,7 +701,7 @@ recipe
   });
 
   it('generates type description', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
 schema TVShow
 schema MyTVShow
 schema MyTV
@@ -713,15 +713,15 @@ schema GitHubDash`));
   });
 
   it('fails gracefully (no asserts)', async () => {
-    let verifyNoAssert = async (manifestStr, expectedSuggestion) => {
-      let manifest = (await Manifest.parse(manifestStr));
+    const verifyNoAssert = async (manifestStr, expectedSuggestion) => {
+      const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
-      let recipe = manifest.recipes[0];
-      let arc = createTestArc();
+      const recipe = manifest.recipes[0];
+      const arc = createTestArc();
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
-      let description = new Description(arc);
+      const description = new Description(arc);
       assert.equal(await description.getArcDescription(), expectedSuggestion);
     };
 
@@ -764,7 +764,7 @@ schema GitHubDash`));
 
 describe('Dynamic description', function() {
   async function prepareRecipeAndArc() {
-    let manifestStr = `
+    const manifestStr = `
 schema Foo
   Text name
   Text fooValue
@@ -784,16 +784,16 @@ recipe
     descriptions -> handle1
     consume root as slot0
 `;
-    let manifest = (await Manifest.parse(manifestStr));
+    const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
-    let recipe = manifest.recipes[0];
-    let Foo = manifest.findSchemaByName('Foo').entityClass();
-    let DescriptionType = manifest.findSchemaByName('Description').entityClass();
+    const recipe = manifest.recipes[0];
+    const Foo = manifest.findSchemaByName('Foo').entityClass();
+    const DescriptionType = manifest.findSchemaByName('Description').entityClass();
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
     recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.collectionOf()});
-    let arc = createTestArc();
-    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    let descriptionStore = await arc.createStore(DescriptionType.type.collectionOf(), undefined, 'test:2');
+    const arc = createTestArc();
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    const descriptionStore = await arc.createStore(DescriptionType.type.collectionOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 
@@ -809,7 +809,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle dynamic description ' + test.name, async () => {
-      let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
+      const {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
 
       assert.isUndefined(await description.getArcDescription());
 
@@ -824,7 +824,7 @@ recipe
       // Particle description handle with handle connections.
       await descriptionHandle.store(new Description({key: 'pattern', value: 'Return my temporary foo'}));
       await descriptionHandle.store(new Description({key: 'pattern', value: 'Return my ${ofoo}'}));
-      let ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
+      const ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
       await descriptionHandle.store(ofooDesc);
       await test.verifySuggestion(description, 'Return my best-foo.');
 
@@ -841,11 +841,11 @@ recipe
 
   tests.forEach((test) => {
     it('particle recipe description ' + test.name, async () => {
-      let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
+      const {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
 
       assert.isUndefined(await description.getArcDescription());
 
-      let recipeClone = recipe.clone();
+      const recipeClone = recipe.clone();
       description._arc._activeRecipe = recipeClone;
       // Particle (static) spec pattern.
       recipeClone.particles[0].spec.pattern = 'hello world';
@@ -861,7 +861,7 @@ recipe
 
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
-      let {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
+      const {recipe, description, fooStore, Description, descriptionHandle} = await prepareRecipeAndArc();
       await descriptionHandle.store(new Description({key: 'pattern', value: 'return my ${ofoo} (text)'}));
       await descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
       await descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));

@@ -16,11 +16,11 @@ import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 
-let {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
+const {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 
 describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
-    let manifest = await Manifest.parse(`  
+    const manifest = await Manifest.parse(`  
       particle P in 'A.js'
         consume foo
 
@@ -37,7 +37,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[1];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
@@ -46,7 +46,7 @@ describe('A Strategy Sequence', function() {
   });
 
   it('resolves a verb substitution, constraint resolution, and slot mapping', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
 
       particle P in 'A.js'
@@ -69,7 +69,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[1];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
@@ -79,7 +79,7 @@ describe('A Strategy Sequence', function() {
   });
 
   it('resolves a verb substitution, constraint resolution, and slot mapping', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
 
       particle P in 'A.js'
@@ -107,7 +107,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[1];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
@@ -117,7 +117,7 @@ describe('A Strategy Sequence', function() {
   });
 
   it('resolves a complex verb use case', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Thing
       schema Product extends Thing
       schema Description
@@ -206,18 +206,16 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[1];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
-
-    let recipes;
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
-    recipes = await theResults(arc, ConvertConstraintsToConnections, recipe);
+    const recipes = await theResults(arc, ConvertConstraintsToConnections, recipe);
     assert.lengthOf(recipes, 2);
     recipe = await onlyResult(arc, ResolveRecipe, recipes[1]);
   });
 
   it('connects particles together when there\'s only one possible connection', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
       particle B
@@ -227,7 +225,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[0];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
@@ -236,7 +234,7 @@ describe('A Strategy Sequence', function() {
   });
 
     it(`connects particles together when there's extra things that can't connect`, async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
         in S {} i
@@ -248,7 +246,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[0];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     await noResult(arc, ResolveRecipe, recipe);
@@ -259,7 +257,7 @@ describe('A Strategy Sequence', function() {
   });
 
   it('connects particles together with multiple connections', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
         in T {} i
@@ -271,7 +269,7 @@ describe('A Strategy Sequence', function() {
     `);
 
     let recipe = manifest.recipes[0];
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);

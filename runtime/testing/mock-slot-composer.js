@@ -13,8 +13,8 @@ import {assert} from '../test/chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 
-let logging = false;
-let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
+const logging = false;
+const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
 /** @class MockSlotComposer
  * Helper class to test with slot composer.
@@ -50,7 +50,7 @@ export class MockSlotComposer extends SlotComposer {
    // TODO: get rid of it once the problem is fixed.
   _addSlotConsumer(slot) {
     super._addSlotConsumer(slot);
-    let startCallback = slot.startRenderCallback;
+    const startCallback = slot.startRenderCallback;
     slot.startRenderCallback = ({particle, slotName, contentTypes}) => {
       this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
       startCallback({particle, slotName, contentTypes});
@@ -99,7 +99,7 @@ export class MockSlotComposer extends SlotComposer {
    * verify: an additional optional handler that determines whether the incoming render request satisfies the expectation
    */
   expectRenderSlot(particleName, slotName, options) {
-    let times = options.times || 1;
+    const times = options.times || 1;
     for (let i = 0; i < times; ++i) {
       this._addRenderExpectation({
         particleName,
@@ -135,7 +135,7 @@ export class MockSlotComposer extends SlotComposer {
    * Sends an event to the given particle and slot.
    */
   sendEvent(particleName, slotName, event, data) {
-    let particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
+    const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
     assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
@@ -181,7 +181,7 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   _verifyRenderContent(particle, slotName, content) {
-    let index = this.expectQueue.findIndex(e => {
+    const index = this.expectQueue.findIndex(e => {
       return e.type == 'render'
           && e.particleName == particle.name
           && e.slotName == slotName
@@ -192,7 +192,7 @@ export class MockSlotComposer extends SlotComposer {
       console.log('\tno match');
       return false;
     }
-    let expectation = this.expectQueue[index];
+    const expectation = this.expectQueue[index];
 
     let found = false;
     let complete = false;
@@ -201,7 +201,7 @@ export class MockSlotComposer extends SlotComposer {
       complete = expectation.verifyComplete(content);
     } else if (expectation.contentTypes) {
       Object.keys(content).forEach(contentType => {
-        let contentIndex = expectation.contentTypes.indexOf(contentType);
+        const contentIndex = expectation.contentTypes.indexOf(contentType);
         found |= contentIndex >= 0;
         if (contentIndex >= 0) {
           expectation.contentTypes.splice(contentIndex, 1);
@@ -228,9 +228,9 @@ export class MockSlotComposer extends SlotComposer {
     // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
     await super.renderSlot(particle, slotName, content);
 
-    let found = this._verifyRenderContent(particle, slotName, content);
+    const found = this._verifyRenderContent(particle, slotName, content);
     if (!found) {
-      let canIgnore = this._canIgnore(particle.name, slotName, content);
+      const canIgnore = this._canIgnore(particle.name, slotName, content);
       if (canIgnore) {
         console.log(`Skipping unexpected render slot request: ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')})`);
       }
@@ -239,7 +239,7 @@ export class MockSlotComposer extends SlotComposer {
 
     this._expectationsMet();
 
-    let slotConsumer = this.getSlotConsumer(particle, slotName);
+    const slotConsumer = this.getSlotConsumer(particle, slotName);
     if (slotConsumer) {
       slotConsumer.updateProvidedContexts();
     } else {
@@ -256,13 +256,13 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   detailedLogDebug() {
-    let expectationsByParticle = {};
+    const expectationsByParticle = {};
     this.expectQueue.forEach(e => {
       if (!expectationsByParticle[e.particleName]) {
         expectationsByParticle[e.particleName] = {};
       }
       e.contentTypes && e.contentTypes.forEach(contentType => {
-        let key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
+        const key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
         if (!expectationsByParticle[e.particleName][key]) {
           expectationsByParticle[e.particleName][key] = 0;
         }
@@ -283,7 +283,7 @@ export class MockSlotComposer extends SlotComposer {
     }
   }
   debugMessagesToString() {
-    let result = [];
+    const result = [];
     result.push('--------------------------------------------');
     this.debugMessages.forEach(debug => {
       result.push(`${debug.name} : `);

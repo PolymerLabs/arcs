@@ -264,7 +264,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     // TODO(wkorman): Share the board to model conversion logic with GamePane.
     // This is a direct copy for now.
     boardToModels(tileBoard, coordinates) {
-      let models = [];
+      const models = [];
       for (let i = 0; i < tileBoard.size; i++) {
         const tile = tileBoard.tileAtIndex(i);
         const letterClasses = ['tile'];
@@ -305,7 +305,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       }
 
       const tileBoard = new TileBoard(board);
-      let boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
+      const boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
       const {arcKey, author, createdTimestamp} = post;
       const avatar = this.boxQuery(avatars, author)[0];
       const owner = people.find(p => p.id == author);

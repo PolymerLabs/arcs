@@ -38,7 +38,7 @@ export class TestHelper {
    *   - manifestString: a string with content of the manifest to load as the context.
    */
   static async create(options = {}) {
-    let loader = options.loader || new Loader();
+    const loader = options.loader || new Loader();
     if (options.manifestFilename) {
       assert(!options.context, 'context should not be provided if manifestFilename is given');
       options.context = await Manifest.load(options.manifestFilename, loader);
@@ -49,10 +49,10 @@ export class TestHelper {
     }
 
     // Explicitly not using a constructor to force using this factory method.
-    let helper = new TestHelper();
+    const helper = new TestHelper();
     helper.slotComposer = options.slotComposer || new MockSlotComposer({strict: options.slotComposerStrict, logging: options.logging});
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
@@ -74,7 +74,7 @@ export class TestHelper {
    * Creates a Test Helper instances and triggers planning .
    */
   static async createAndPlan(options) {
-    let helper = await TestHelper.create(options);
+    const helper = await TestHelper.create(options);
     await helper.makePlans(options);
     return helper;
   }
@@ -95,7 +95,7 @@ export class TestHelper {
    *   - verify: a handler method to be called to verify the resulting suggestions.
    */
   async makePlans(options) {
-    let planner = new Planner();
+    const planner = new Planner();
     planner.init(this.arc);
     this.plans = await planner.suggest();
     if (options) {
@@ -103,10 +103,10 @@ export class TestHelper {
         assert.lengthOf(this.plans, options.expectedNumPlans);
       }
       if (options.expectedSuggestions) {
-        let suggestions = await Promise.all(this.plans.map(async p => await p.description.getRecipeSuggestion()));
-        let missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
-        let unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
-        let errors = [];
+        const suggestions = await Promise.all(this.plans.map(async p => await p.description.getRecipeSuggestion()));
+        const missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
+        const unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
+        const errors = [];
         if (missingSuggestions.length > 0) {
           errors.push(`Missing suggestions:\n\t ${missingSuggestions.join('\n\t')}`);
         }
@@ -132,13 +132,13 @@ export class TestHelper {
     if (options) {
       if (options.particles) {
         let plans = this.plans.filter(p => {
-          let planParticles = p.plan.particles.map(particle => particle.name);
+          const planParticles = p.plan.particles.map(particle => particle.name);
           return planParticles.length == options.particles.length && planParticles.every(p => options.particles.includes(p));
         });
         if (options.hostedParticles) {
           plans = plans.filter(p => {
             return options.hostedParticles.every(hosted => {
-              let interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
+              const interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
               return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name == hosted);
             });
           });
@@ -195,12 +195,12 @@ export class TestHelper {
    * Verifies data in handle |connectionName| of |particleName| with the given handler.
    */
   async verifyData(particleName, connectionName, expectationHandler) {
-    let particle = this.arc.activeRecipe.particles.find(p => p.name == particleName);
+    const particle = this.arc.activeRecipe.particles.find(p => p.name == particleName);
     assert(particle, `Particle ${particle} doesn't exist in active recipe`);
     assert(particle.connections[connectionName], `Connection ${connectionName} doesn't existing in particle ${particleName}`);
-    let handleId = particle.connections[connectionName].handle.id;
+    const handleId = particle.connections[connectionName].handle.id;
     assert(handleId, `No handle ID for ${particleName}::${connectionName}`);
-    let handle = this.arc.findStoreById(handleId);
+    const handle = this.arc.findStoreById(handleId);
     assert(handle, `Handle '${handleId}' (${particleName}::${connectionName}) not found in active recipe`);
 
     return new Promise((resolve, reject) => {

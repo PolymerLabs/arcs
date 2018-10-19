@@ -18,7 +18,7 @@ import {assert} from '../chai-web.js';
 
 describe('CombinedStrategy', function() {
   it('combined strategy with search tokens and group handle connections', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema Energy
       schema Height
       particle Energizer &prepare in 'A.js'
@@ -31,16 +31,16 @@ describe('CombinedStrategy', function() {
         search \`prepare and jump\`
     `));
     manifest.recipes[0].normalize();
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let strategy = new CombinedStrategy([
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const strategy = new CombinedStrategy([
       new SearchTokensToParticles(arc),
       new GroupHandleConnections(arc),
     ]);
 
-    let results = await strategy.generate(inputParams);
+    const results = await strategy.generate(inputParams);
     assert.lengthOf(results, 1);
-    let recipe = results[0].result;
+    const recipe = results[0].result;
     assert.lengthOf(recipe.particles, 2);
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 2);

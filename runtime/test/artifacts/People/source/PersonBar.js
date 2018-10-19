@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, resolver, html, log}) => {
 
-  let host = 'person-bar';
+  const host = 'person-bar';
 
-  let template = html`
+  const template = html`
 <div ${host}>
   <style>
     [${host}] {

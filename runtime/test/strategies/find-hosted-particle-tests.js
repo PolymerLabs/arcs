@@ -17,18 +17,18 @@ import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {
-  let manifest = await Manifest.parse(manifestStr);
-  let recipes = manifest.recipes;
+  const manifest = await Manifest.parse(manifestStr);
+  const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
-  let arc = StrategyTestHelper.createTestArc('test-arc', manifest, 'dom');
-  let inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-  let strategy = new FindHostedParticle(arc);
+  const arc = StrategyTestHelper.createTestArc('test-arc', manifest, 'dom');
+  const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
+  const strategy = new FindHostedParticle(arc);
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 
 describe('FindHostedParticle', function() {
   it(`can host a matching particle from the context`, async () => {
-    let results = await runStrategy(`
+    const results = await runStrategy(`
       schema Thing
       schema OtherThing
 
@@ -52,10 +52,10 @@ describe('FindHostedParticle', function() {
     `);
 
     assert.lengthOf(results, 1);
-    let recipe = results[0];
+    const recipe = results[0];
     assert.isTrue(recipe.isResolved());
     assert.lengthOf(recipe.handles, 1);
-    let handle = recipe.handles[0];
+    const handle = recipe.handles[0];
     assert.equal(handle.fate, 'copy');
     assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
     assert.isTrue(handle.type.isInterface);
@@ -63,7 +63,7 @@ describe('FindHostedParticle', function() {
     assert.equal(handle.type.interfaceShape.name, 'HostedShape');
   });
   it(`reuses the handle holding particle spec`, async () => {
-    let results = await runStrategy(`
+    const results = await runStrategy(`
       schema Thing
       schema OtherThing
 
@@ -82,11 +82,11 @@ describe('FindHostedParticle', function() {
     `);
 
     assert.lengthOf(results, 1);
-    let recipe = results[0];
+    const recipe = results[0];
     assert.isTrue(recipe.isResolved());
 
     assert.lengthOf(recipe.handles, 1);
-    let handle = recipe.handles[0];
+    const handle = recipe.handles[0];
     assert.equal(handle.fate, 'copy');
     assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
     assert.isTrue(handle.type.isInterface);
@@ -97,7 +97,7 @@ describe('FindHostedParticle', function() {
     assert.isTrue(connections.every(hc => hc.handle === handle));
   });
   it(`respects type system constraints`, async () => {
-    let results = await runStrategy(`
+    const results = await runStrategy(`
       schema Thing
       schema Instrument extends Thing
       schema Guitar extends Instrument
@@ -148,8 +148,8 @@ describe('FindHostedParticle', function() {
     // Remaining 3 candidates are compatible with Lower and Upper particles.
 
     assert.lengthOf(results, 3);
-    let particleMatches = results.map(recipe => {
-      let particleSpecHandle = recipe.handles.find(h => h.fate === 'copy');
+    const particleMatches = results.map(recipe => {
+      const particleSpecHandle = recipe.handles.find(h => h.fate === 'copy');
       return particleSpecHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
     });
     particleMatches.sort();
@@ -177,8 +177,8 @@ describe('FindHostedParticle', function() {
     `));
   });
   it(`produces recipes that can be instantiated with particle spec`, async () => {
-    let loader = new Loader();
-    let manifest = await Manifest.parse(`
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe
@@ -189,23 +189,23 @@ describe('FindHostedParticle', function() {
           output = h0
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    let arc = new Arc({id: 'test', context: manifest, loader});
-    let strategy = new FindHostedParticle(arc);
+    const arc = new Arc({id: 'test', context: manifest, loader});
+    const strategy = new FindHostedParticle(arc);
 
-    let inRecipe = manifest.recipes[0];
+    const inRecipe = manifest.recipes[0];
     inRecipe.normalize();
 
-    let results = await strategy.generate({generated: [{result: inRecipe}]});
+    const results = await strategy.generate({generated: [{result: inRecipe}]});
     assert.lengthOf(results, 1);
-    let outRecipe = results[0].result;
+    const outRecipe = results[0].result;
 
-    let particleSpecHandle = outRecipe.handles.find(h => h.fate === 'copy');
+    const particleSpecHandle = outRecipe.handles.find(h => h.fate === 'copy');
     assert(particleSpecHandle.id.endsWith(':test:particle-literal:TestParticle'));
     assert(outRecipe.isResolved());
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    let particleSpecStore = arc._stores.find(store => store.type.isInterface);
+    const particleSpecStore = arc._stores.find(store => store.type.isInterface);
     const particleSpec = await particleSpecStore.get();
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;

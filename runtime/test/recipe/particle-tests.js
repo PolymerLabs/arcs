@@ -13,7 +13,7 @@ import {assert} from '../chai-web.js';
 
 describe('Recipe Particle', function() {
   it('cloning maints type variable mapping', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       shape HostedShape
         in ~a *
 

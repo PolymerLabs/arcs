@@ -17,9 +17,9 @@ import {assert} from './chai-web.js';
 
 describe('RecipeResolver', function() {
   const buildRecipe = async (content) => {
-    let registry = {};
-    let loader = new StubLoader(content);
-    let manifest = await Manifest.load('manifest', loader, {registry});
+    const registry = {};
+    const loader = new StubLoader(content);
+    const manifest = await Manifest.load('manifest', loader, {registry});
     return manifest.recipes[0];
   };
 

@@ -17,7 +17,7 @@ import {assert} from '../chai-web.js';
 
 describe('MatchRecipeByVerb', function() {
   it('removes a particle and adds a recipe', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       recipe
         &jump
 
@@ -37,16 +37,16 @@ describe('MatchRecipeByVerb', function() {
         JumpingBoots.e <- NuclearReactor.e
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const mrv = new MatchRecipeByVerb(arc);
+    const results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
     assert.deepEqual(results[0].result.toString(), 'recipe &jump\n  JumpingBoots.e <- NuclearReactor.e\n  JumpingBoots.f <- FootFactory.f');
   });
   it('plays nicely with constraints', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
         out S p
@@ -61,12 +61,12 @@ describe('MatchRecipeByVerb', function() {
         P
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
-    let cctc = new ConvertConstraintsToConnections(arc);
+    const cctc = new ConvertConstraintsToConnections(arc);
     results = await cctc.generate({generated: results});
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(),
@@ -78,7 +78,7 @@ describe('MatchRecipeByVerb', function() {
     q <- handle0`);
   });
   it('listens to handle constraints', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle P in 'A.js'
       out S {} a
     
@@ -124,9 +124,9 @@ describe('MatchRecipeByVerb', function() {
         * -> handle0
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
     assert.lengthOf(results, 4);
 
@@ -156,7 +156,7 @@ describe('MatchRecipeByVerb', function() {
     assert.lengthOf(results, 3);
   });
   it('listens to slot constraints', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle P in 'A.js'
         consume foo
           provide bar
@@ -188,9 +188,9 @@ describe('MatchRecipeByVerb', function() {
             provide bar
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[3], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
     assert.lengthOf(results, 3);
 
@@ -209,7 +209,7 @@ describe('MatchRecipeByVerb', function() {
     assert.lengthOf(results[1].result.particles, 2);
   });
   it('carries handle assignments across verb substitution', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     
       particle P in 'A.js'
         in S {} a
@@ -228,18 +228,18 @@ describe('MatchRecipeByVerb', function() {
           b -> handle0
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const mrv = new MatchRecipeByVerb(arc);
+    const results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
-    let recipe = results[0].result;
+    const recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
   });
   it('carries handle assignments across verb substitution with generic binding', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     
       particle P in 'A.js'
         in S {} a
@@ -258,18 +258,18 @@ describe('MatchRecipeByVerb', function() {
           b -> handle0
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const mrv = new MatchRecipeByVerb(arc);
+    const results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
-    let recipe = results[0].result;
+    const recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
     assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
   });
   it('selects the appropriate generic binding when handle assignments carry type information', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     
       particle O in 'Z.js'
         in R {} x
@@ -295,18 +295,18 @@ describe('MatchRecipeByVerb', function() {
           b -> handle0
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    const mrv = new MatchRecipeByVerb(arc);
+    const results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
-    let recipe = results[0].result;
+    const recipe = results[0].result;
     assert.equal(recipe.particles[1].connections.a.handle, recipe.particles[2].connections.b.handle);
     assert.equal(recipe.particles[1].connections.a.handle.connections[0].particle, recipe.particles[1]);
     assert.equal(recipe.particles[2].connections.b.handle.connections[1].particle, recipe.particles[2]);
   });
   it('carries slot assignments across verb substitution', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle P in 'A.js'
         consume foo
           provide bar  
@@ -333,9 +333,9 @@ describe('MatchRecipeByVerb', function() {
             provide foo as s0
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
-    let mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
     let recipe = results[0].result;
@@ -347,13 +347,13 @@ describe('MatchRecipeByVerb', function() {
     results = await mrv.generate(inputParams);
     recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-    let slotFoo = recipe.slots.find(s => s.name == 'foo');
+    const slotFoo = recipe.slots.find(s => s.name == 'foo');
     assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
     assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
 
   it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle P in 'A.js'
       consume foo
         provide bar  
@@ -388,9 +388,9 @@ describe('MatchRecipeByVerb', function() {
         consume foo as s0
   `);
 
-  let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+  const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
   let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
-  let mrv = new MatchRecipeByVerb(arc);
+  const mrv = new MatchRecipeByVerb(arc);
   let results = await mrv.generate(inputParams);
   assert.lengthOf(results, 1);
   let recipe = results[0].result;
@@ -404,7 +404,7 @@ describe('MatchRecipeByVerb', function() {
   results = await mrv.generate(inputParams);
   recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-  let slotFoo = recipe.slots.find(s => s.name == 'foo');
+  const slotFoo = recipe.slots.find(s => s.name == 'foo');
   assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
   assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);

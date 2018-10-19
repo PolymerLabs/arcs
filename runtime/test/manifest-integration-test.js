@@ -18,12 +18,12 @@ import {handleFor} from '../ts-build/handle.js';
 import {Speculator} from '../ts-build/speculator.js';
 
 async function setup() {
-  let registry = {};
-  let loader = new Loader();
-  let manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader, registry);
+  const registry = {};
+  const loader = new Loader();
+  const manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader, registry);
   assert(manifest);
-  let arc = new Arc({id: 'test'});
-  let recipe = manifest.recipes[0];
+  const arc = new Arc({id: 'test'});
+  const recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());
   return {arc, recipe};
@@ -31,21 +31,21 @@ async function setup() {
 
 describe('manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
-    let {arc, recipe} = await setup();
+    const {arc, recipe} = await setup();
     await arc.instantiate(recipe);
     await arc.idle;
-    let type = recipe.handles[0].type;
-    let [store] = arc.findStoresByType(type);
+    const type = recipe.handles[0].type;
+    const [store] = arc.findStoresByType(type);
     assert(store);
-    let handle = handleFor(store);
+    const handle = handleFor(store);
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
-    let result = await handle.get();
+    const result = await handle.get();
     assert.equal(result.value, 'Hello, world!');
   });
   it('can produce a recipe that can be speculated', async () => {
-    let {arc, recipe} = await setup();
-    let relevance = await new Speculator().speculate(arc, recipe);
+    const {arc, recipe} = await setup();
+    const relevance = await new Speculator().speculate(arc, recipe);
     assert.equal(relevance.calcRelevanceScore(), 1);
   });
 });

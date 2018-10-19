@@ -34,7 +34,7 @@ class TestSuggestionComposer extends SuggestionComposer {
 
 describe('suggestion composer', function() {
   it('sets suggestions', async () => {
-    let suggestionComposer = new TestSuggestionComposer();
+    const suggestionComposer = new TestSuggestionComposer();
     assert.isEmpty(suggestionComposer.suggestions);
 
     // Sets suggestions
@@ -63,12 +63,12 @@ describe('suggestion composer', function() {
   });
 
   it('singleton suggestion slots', async () => {
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
-    let helper = await TestHelper.createAndPlan({
+    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
     });
-    let suggestionComposer = new SuggestionComposer(slotComposer);
+    const suggestionComposer = new SuggestionComposer(slotComposer);
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(helper.plans, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
@@ -79,11 +79,11 @@ describe('suggestion composer', function() {
     assert.lengthOf(helper.plans, 1);
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
-    let suggestConsumer = suggestionComposer._suggestConsumers[0];
+    const suggestConsumer = suggestionComposer._suggestConsumers[0];
     assert.isEmpty(suggestConsumer._content);
 
     // set the container of the suggestion context, resulting in the suggestion being rendered.
-    let suggestContext = slotComposer._contexts.find(context => context.slotConsumers.find(consumer => consumer == suggestConsumer));
+    const suggestContext = slotComposer._contexts.find(context => context.slotConsumers.find(consumer => consumer == suggestConsumer));
     assert.isNull(suggestContext.container);
     suggestContext.container = 'dummy-container';
     await suggestConsumer._setContentPromise;
@@ -97,12 +97,12 @@ describe('suggestion composer', function() {
   });
 
   it('suggestion set-slots', async () => {
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
-    let helper = await TestHelper.createAndPlan({
+    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
       slotComposer
     });
-    let suggestionComposer = new SuggestionComposer(slotComposer);
+    const suggestionComposer = new SuggestionComposer(slotComposer);
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(helper.plans, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
@@ -110,11 +110,11 @@ describe('suggestion composer', function() {
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
     await helper.makePlans();
     assert.lengthOf(helper.plans, 1);
-    let suggestContext = suggestionComposer._slotComposer._contexts.find(h => h.id == helper.plans[0].plan.slots[0].id);
+    const suggestContext = suggestionComposer._slotComposer._contexts.find(h => h.id == helper.plans[0].plan.slots[0].id);
     suggestContext.sourceSlotConsumer.getInnerContainer = (name) => 'dummy-container';
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
-    let suggestConsumer = suggestionComposer._suggestConsumers[0];
+    const suggestConsumer = suggestionComposer._suggestConsumers[0];
     await suggestConsumer._setContentPromise;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 

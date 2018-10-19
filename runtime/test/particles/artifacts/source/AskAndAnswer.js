@@ -10,8 +10,8 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let host = `ask-and-answer`;
-  let colors = {question: 'red', answer: 'green'};
+  const host = `ask-and-answer`;
+  const colors = {question: 'red', answer: 'green'};
 
   return class extends DomParticle {
     getTemplate(slotName) {
@@ -25,7 +25,7 @@ defineParticle(({DomParticle, html}) => {
 <div ${host}><div ${slotName} title="{{${slotName}}}">{{${slotName}}}</div></div>
 `;
       } else if (slotName == 'hints') {
-        let templates = {};
+        const templates = {};
         ['A', 'B', 'C', 'D', 'E'].forEach(subid => templates[`default${subid}`] = `<span>Hint ${subid}</span>`);
         return templates;
       }
@@ -34,7 +34,7 @@ defineParticle(({DomParticle, html}) => {
     }
     getTemplateName(slotName) {
       if (slotName == 'hints') {
-        let templateNames = {};
+        const templateNames = {};
         ['A', 'B', 'C', 'D', 'E'].forEach(subid => templateNames[subid] = `default${subid}`);
         return templateNames;
       }

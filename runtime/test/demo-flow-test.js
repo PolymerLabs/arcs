@@ -22,11 +22,11 @@ describe('demo flow', function() {
   });
 
   it.skip('flows like a demo', async function() {
-    let helper = await TestHelper.createAndPlan({
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
       verify: async plans => {
-        let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
+        const descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
         assert.include(descriptions, `Show products from your browsing context (Minecraft Book plus 2 other items).`);
                     //  'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
                     //  'and choose from products recommended based on products from your browsing context ' +
@@ -109,12 +109,12 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // Move an element from recommended list to shortlist.
-    let verifyContents = (num, content) => {
+    const verifyContents = (num, content) => {
       assert(content.model, `Content doesn't have model`);
       assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
       return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
     };
-    let verifyElementMove = async (key, num, muxerHostedParticles) => {
+    const verifyElementMove = async (key, num, muxerHostedParticles) => {
         helper.slotComposer
           .newExpectations('Move and element from recommended list to shortlist')
             .expectRenderSlot('List', 'root', {contentTypes: ['model']})
@@ -123,7 +123,7 @@ describe('demo flow', function() {
             .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, (6-num))})
             .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
             .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
-        for (let hostedParticle of muxerHostedParticles) {
+        for (const hostedParticle of muxerHostedParticles) {
           helper.slotComposer
             .expectRenderSlot(hostedParticle, 'annotation', {contentTypes: ['model']})
             .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});

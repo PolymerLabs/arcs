@@ -18,14 +18,14 @@ import {Schema} from '../ts-build/schema.js';
 
 describe('shape', function() {
   it('finds type variable references in handles', function() {
-    let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'type');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
-    let shape = new Shape('Test', [], [{name: Type.newVariable({name: 'a'})}]);
+    const shape = new Shape('Test', [], [{name: Type.newVariable({name: 'a'})}]);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'name');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
@@ -43,7 +43,7 @@ describe('shape', function() {
       ]);
     assert.lengthOf(shape.typeVars, 4);
     let type = Type.newInterface(shape);
-    let map = new Map();
+    const map = new Map();
     type = type.mergeTypeVariablesByName(map);
     assert(map.has('a'));
     assert(map.has('b'));
@@ -53,7 +53,7 @@ describe('shape', function() {
   });
 
   it('matches particleSpecs', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema Test
         schema NotTest
 
@@ -75,8 +75,8 @@ describe('shape', function() {
           out Test far
           out NotTest foo
       `);
-      let type = Type.newEntity(manifest.schemas.Test);
-      let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+      const type = Type.newEntity(manifest.schemas.Test);
+      const shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
       assert(!shape.particleMatches(manifest.particles[0]));
       assert(shape.particleMatches(manifest.particles[1]));
       assert(shape.particleMatches(manifest.particles[2]));
@@ -84,7 +84,7 @@ describe('shape', function() {
   });
 
   it('matches particleSpecs with slots', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema Test
 
         particle P
@@ -105,8 +105,8 @@ describe('shape', function() {
             provide one
             provide set of randomSlot
       `);
-      let type = Type.newEntity(manifest.schemas.Test);
-      let shape = new Shape('Test', [{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
+      const type = Type.newEntity(manifest.schemas.Test);
+      const shape = new Shape('Test', [{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
 
       assert(!shape.particleMatches(manifest.particles[0]));
       assert(!shape.particleMatches(manifest.particles[1]));
@@ -115,36 +115,36 @@ describe('shape', function() {
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
-    let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
     assert.isFalse(shape.canEnsureResolved());
   });
 
   it('Can ensure resolved a schema type', () => {
-    let type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    const type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    const shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
     assert.isTrue(shape.canEnsureResolved());
     assert.isTrue(shape.maybeEnsureResolved());
   });
 
   it('Maybe ensure resolved does not mutate on failure', () => {
-    let constrainedType1 = TypeChecker.processTypeList(
+    const constrainedType1 = TypeChecker.processTypeList(
       Type.newVariable({name: 'a'}),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'in'
       }]
     );
-    let constrainedType2 = TypeChecker.processTypeList(
+    const constrainedType2 = TypeChecker.processTypeList(
       Type.newVariable({name: 'b'}),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'out'
       }]
     );
-    let unconstrainedType = Type.newVariable({name: 'c'});
-    let allTypes = [constrainedType1, constrainedType2, unconstrainedType];
+    const unconstrainedType = Type.newVariable({name: 'c'});
+    const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
-    let allTypesShape = new Shape('Test', [
+    const allTypesShape = new Shape('Test', [
       {type: constrainedType1},
       {type: unconstrainedType},
       {type: constrainedType2},
@@ -156,7 +156,7 @@ describe('shape', function() {
     assert.isTrue(allTypes.every(t => !t.isResolved()),
         'Types should not have been modified by a failed maybeEnsureResolved()');
 
-    let constrainedOnlyShape = new Shape('Test', [
+    const constrainedOnlyShape = new Shape('Test', [
       {type: constrainedType1},
       {type: constrainedType2},
     ], []);
@@ -169,7 +169,7 @@ describe('shape', function() {
   });
 
   it('restricted type constraints type variables in the recipe', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle Transformer
         in [~a] input
         out [~a] output
@@ -195,40 +195,40 @@ describe('shape', function() {
           in Burrito burrito
     `);
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
 
     recipe.normalize();
 
-    let burritoDisplayer = manifest.findParticleByName('BurritoDisplayer');
-    let multiplexer = recipe.particles.find(p => p.name === 'Multiplexer');
+    const burritoDisplayer = manifest.findParticleByName('BurritoDisplayer');
+    const multiplexer = recipe.particles.find(p => p.name === 'Multiplexer');
 
     // Initially handle type are unresolvable type variables.
     assert.lengthOf(recipe.handles, 2);
-    for (let handle of recipe.handles) {
+    for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(resolved.isVariable);
       assert.isFalse(resolved.canEnsureResolved());
     }
 
-    let hostedParticleType = multiplexer.connections['hostedParticle'].type;
+    const hostedParticleType = multiplexer.connections['hostedParticle'].type;
     assert.isTrue(!!hostedParticleType.interfaceShape.restrictType(burritoDisplayer));
 
     // After restricting the shape, handle types are constrainted to a Burrito.
     assert.lengthOf(recipe.handles, 2);
-    for (let handle of recipe.handles) {
+    for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(collectionType.isVariable);
       assert.isTrue(resolved.canEnsureResolved());
-      let canWriteSuperset = resolved.canWriteSuperset;
+      const canWriteSuperset = resolved.canWriteSuperset;
       assert.isTrue(canWriteSuperset.isEntity);
       assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
     }
   });
 
   it('allows checking whether particle matches a shape', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Thing
       schema Instrument extends Thing
       schema Guitar extends Instrument
@@ -268,13 +268,13 @@ describe('shape', function() {
         inout LesPaul lp
     `);
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     recipe.normalize();
 
-    let hostParticle = recipe.particles.find(p => p.name === 'Host');
-    let hostedShape = hostParticle.connections['hosted'].type.interfaceShape;
+    const hostParticle = recipe.particles.find(p => p.name === 'Host');
+    const hostedShape = hostParticle.connections['hosted'].type.interfaceShape;
 
-    let check = name => hostedShape.particleMatches(manifest.findParticleByName(name));
+    const check = name => hostedShape.particleMatches(manifest.findParticleByName(name));
 
     // inout Thing is not be compatible with in Instrument input
     // inout LesPaul is not be compatible with out Gibson output

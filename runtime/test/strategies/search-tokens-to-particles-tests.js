@@ -16,7 +16,7 @@ import {assert} from '../chai-web.js';
 
 describe('SearchTokensToParticles', function() {
   it('matches particles by verb strategy', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle SimpleJumper &jump in 'A.js'
       particle StarJumper &jump in 'AA.js'
       particle GalaxyFlyer &fly in 'AA.js'
@@ -25,13 +25,13 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`jump or fly or run and rester\`
     `));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let recipe = manifest.recipes[0];
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
-    let inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    let stp = new SearchTokensToParticles(arc);
-    let results = await stp.generate(inputParams);
+    const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
+    const stp = new SearchTokensToParticles(arc);
+    const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     assert.deepEqual([['GalaxyFlyer', 'Rester', 'SimpleJumper'],
                       ['GalaxyFlyer', 'Rester', 'StarJumper']], results.map(r => r.result.particles.map(p => p.name).sort()));
@@ -40,7 +40,7 @@ describe('SearchTokensToParticles', function() {
   });
 
   it('matches particles by split verb', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle GalaxyRunner &run in 'AA.js'
       particle GalaxyFlyer &fly in 'AA.js'
 
@@ -50,17 +50,17 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`galaxy flyer\`
     `));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let recipes = manifest.recipes;
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const recipes = manifest.recipes;
     recipes.forEach(recipe => {
       assert(recipe.normalize());
       assert(!recipe.isResolved());
     });
-    let inputParams = {generated: [], terminal: recipes.map(recipe => { return {result: recipe, score: 1};})};
-    let stp = new SearchTokensToParticles(arc);
-    let results = await stp.generate(inputParams);
+    const inputParams = {generated: [], terminal: recipes.map(recipe => { return {result: recipe, score: 1};})};
+    const stp = new SearchTokensToParticles(arc);
+    const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
-    let result = results[0].result;
+    const result = results[0].result;
     assert.lengthOf(result.particles, 1);
     assert.equal('GalaxyFlyer', result.particles[0].name);
     assert.deepEqual(['flyer', 'galaxy'], result.search.resolvedTokens);
@@ -68,7 +68,7 @@ describe('SearchTokensToParticles', function() {
   });
 
   it('matches recipes by split verb', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle GalaxyRunner &run in 'AA.js'
 
       recipe &galaxyRunning
@@ -77,15 +77,15 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`galaxy running and more\`
     `));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let recipe = manifest.recipes[1];
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const recipe = manifest.recipes[1];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
-    let inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    let stp = new SearchTokensToParticles(arc);
-    let results = await stp.generate(inputParams);
+    const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
+    const stp = new SearchTokensToParticles(arc);
+    const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
-    let result = results[0].result;
+    const result = results[0].result;
     assert.lengthOf(result.particles, 1);
     assert.equal('GalaxyRunner', result.particles[0].name);
     assert.deepEqual(['galaxy', 'running'], result.search.resolvedTokens);
@@ -93,7 +93,7 @@ describe('SearchTokensToParticles', function() {
   });
 
   it('matches recipes by verb strategy', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle SimpleJumper &jump in 'A.js'
       particle FlightPreparation in 'AA.js'
       particle GalaxyFlyer in 'AA.js'
@@ -106,15 +106,15 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`jump and flight\`
     `));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let recipes = manifest.recipes.slice(1);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const recipes = manifest.recipes.slice(1);
     recipes.forEach((recipe, index) => {
       assert(recipe.normalize());
       assert.isFalse(recipe.isResolved());
     });
-    let inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    let stp = new SearchTokensToParticles(arc);
-    let results = await stp.generate(inputParams);
+    const inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
+    const stp = new SearchTokensToParticles(arc);
+    const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     let result = results[0].result;
     assert.deepEqual(['FlightPreparation', 'GalaxyFlyer', 'SimpleJumper'], result.particles.map(p => p.name).sort());

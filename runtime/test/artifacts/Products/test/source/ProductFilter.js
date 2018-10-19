@@ -30,16 +30,16 @@ defineParticle(({Particle}) => {
         return;
       }
 
-      for (let [index, product] of this._products.entries()) {
+      for (const [index, product] of this._products.entries()) {
         if (this._handleIds.has(product.id)) {
           continue;
         }
 
-        let productHandle = await this._arc.createHandle(this._productType, 'product' + index);
-        let resultHandle = await this._arc.createHandle(this._productType, 'result' + index, this);
+        const productHandle = await this._arc.createHandle(this._productType, 'product' + index);
+        const resultHandle = await this._arc.createHandle(this._productType, 'result' + index, this);
         this._handleIds.add(product.id);
 
-        let recipe = Particle.buildManifest`
+        const recipe = Particle.buildManifest`
           ${this._hostedParticle}
           recipe
             use '${productHandle._id}' as handle1

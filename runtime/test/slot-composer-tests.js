@@ -23,10 +23,10 @@ import * as util from '../testing/test-util.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
-  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+  const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
 
-  let manifest = (await Manifest.parse(recipeStr));
-  let loader = new StubLoader({
+  const manifest = (await Manifest.parse(recipeStr));
+  const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
   const pecFactory = function(id) {
@@ -34,25 +34,25 @@ async function initSlotComposer(recipeStr) {
     new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
     return channel.port2;
   };
-  let arc = new Arc({
+  const arc = new Arc({
     id: 'test-plan-arc',
     context: manifest,
     pecFactory,
     slotComposer,
   });
-  let startRenderParticles = [];
+  const startRenderParticles = [];
   arc.pec.startRender = ({particle, slotName, contentTypes}) => { startRenderParticles.push(particle.name); };
-  let planner = new Planner();
+  const planner = new Planner();
   planner.init(arc);
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
-  let plan = planner.strategizer.population[0].result;
+  const plan = planner.strategizer.population[0].result;
   return {arc, slotComposer, plan, startRenderParticles};
 }
 
 describe('slot composer', function() {
   it('initialize recipe and render slots', async () => {
-    let manifestStr = `
+    const manifestStr = `
 particle A in 'a.js'
   consume root
     provide mySlot
@@ -79,8 +79,8 @@ recipe
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
     assert.lengthOf(slotComposer.getAvailableContexts(), 1);
 
-    let verifyContext = (name, expected) => {
-      let context = slotComposer._contexts.find(c => c.name == name);
+    const verifyContext = (name, expected) => {
+      const context = slotComposer._contexts.find(c => c.name == name);
       assert.isNotNull(context);
       assert.equal(expected.sourceSlotName, context.sourceSlotConsumer ? context.sourceSlotConsumer.consumeConn.name : undefined);
       assert.equal(expected.hasContainer, Boolean(context.container));
@@ -102,9 +102,9 @@ recipe
     verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
 
     // render root slot
-    let particle = arc.activeRecipe.particles[0];
+    const particle = arc.activeRecipe.particles[0];
     await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
-    let rootSlot = slotComposer.getSlotConsumer(particle, 'root');
+    const rootSlot = slotComposer.getSlotConsumer(particle, 'root');
     assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
 
     // update inner slots
@@ -120,19 +120,19 @@ recipe
   });
 
   it('initialize recipe and render hosted slots', async () => {
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
-    let helper = await TestHelper.createAndPlan({
+    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/particles/artifacts/products-test.recipes',
       slotComposer
     });
 
-    let verifySlot = (fullName) => {
-      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
+    const verifySlot = (fullName) => {
+      const slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
       assert.equal(MockSlotDomConsumer, slot.constructor);
       assert.isTrue(Boolean(slotComposer._contexts.find(context => context == slot.slotContext)));
     };
-    let verifyHostedSlot = (fullName) => {
-      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
+    const verifyHostedSlot = (fullName) => {
+      const slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
       assert.equal(HostedSlotConsumer, slot.constructor);
       assert.equal(MockSlotDomConsumer, slotComposer.consumers.find(s => s == slot.transformationSlotConsumer).constructor);
     };

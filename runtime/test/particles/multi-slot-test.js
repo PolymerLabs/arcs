@@ -22,18 +22,18 @@ describe('multi-slot test', function() {
     });
   }
 
-  let verifyHandler = (expectedSlotNames, particleName, slotName, content) => {
+  const verifyHandler = (expectedSlotNames, particleName, slotName, content) => {
     assert.isTrue(expectedSlotNames.includes(slotName), `Unexpected slot ${slotName}`);
 
     assert.isTrue(content.template.includes(`{{${slotName}}}`));
-    let exclude = slotName == 'question' ? 'answer' : 'question';
+    const exclude = slotName == 'question' ? 'answer' : 'question';
     assert.isFalse(content.template.includes(`{{${exclude}}}`));
     assert(content.model[slotName]);
     assert(!content.model[exclude]);
   };
 
   it('can render question slot', async () => {
-    let helper = await init();
+    const helper = await init();
     helper.slotComposer
         .newExpectations()
         .expectRenderSlot('AskAndAnswer', 'question', {contentTypes: ['template', 'model']});
@@ -43,7 +43,7 @@ describe('multi-slot test', function() {
   });
 
   it('can render question and answer slots', async () => {
-    let helper = await init();
+    const helper = await init();
     helper.slotComposer
         .newExpectations()
         .expectRenderSlot('AskAndAnswer', 'question', {contentTypes: ['template', 'model']})
@@ -54,7 +54,7 @@ describe('multi-slot test', function() {
   });
 
   it('can render multi set slot', async () => {
-    let helper = await init();
+    const helper = await init();
 
     helper.slotComposer
       .newExpectations()

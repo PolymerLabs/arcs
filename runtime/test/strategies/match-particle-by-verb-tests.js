@@ -16,7 +16,7 @@ import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 import {assert} from '../chai-web.js';
 
 describe('MatchParticleByVerb', function() {
-  let manifestStr = `
+  const manifestStr = `
     schema Energy
     schema Height
     particle SimpleJumper &jump in 'A.js'
@@ -49,29 +49,29 @@ describe('MatchParticleByVerb', function() {
   `;
 
   it('particles by verb strategy', async () => {
-    let manifest = (await Manifest.parse(manifestStr));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const manifest = (await Manifest.parse(manifestStr));
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     // Apply MatchParticleByVerb strategy.
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let mpv = new MatchParticleByVerb(arc);
-    let results = await mpv.generate(inputParams);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const mpv = new MatchParticleByVerb(arc);
+    const results = await mpv.generate(inputParams);
     assert.lengthOf(results, 3);
     // Note: handle connections are not resolved yet.
     assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper'], results.map(r => r.result.particles[0].name).sort());
   });
 
   it('particles by verb recipe fully resolved', async () => {
-    let manifest = (await Manifest.parse(manifestStr));
-    let recipe = manifest.recipes[0];
+    const manifest = (await Manifest.parse(manifestStr));
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
     recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
-    let planner = new Planner();
+    const planner = new Planner();
     planner.init(arc);
-    let plans = await planner.plan(1000);
+    const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, 2);
     assert.deepEqual([['SimpleJumper'], ['StarJumper']],

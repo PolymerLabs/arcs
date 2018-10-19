@@ -49,7 +49,7 @@ describe('OuterPortAttachment', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    let instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
+    const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
         m.messageType === 'InstantiateParticle').messageBody;
     // IDs are stable thanks to Random.seedForTests().
     assert.deepEqual(instantiateParticleCall, {
@@ -69,7 +69,7 @@ describe('OuterPortAttachment', function() {
     });
 
     await util.assertSingletonWillChangeTo(arc, fooStore, 'value', 'FooBar');
-    let dateflowSetCall = DevtoolsForTests.channel.messages.find(m =>
+    const dateflowSetCall = DevtoolsForTests.channel.messages.find(m =>
         m.messageType === 'dataflow' &&
         m.messageBody.operation === 'set').messageBody;
 

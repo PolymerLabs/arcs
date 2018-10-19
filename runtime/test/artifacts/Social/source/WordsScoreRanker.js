@@ -26,7 +26,7 @@ defineParticle(({Particle}) => {
       // TODO(wkorman): Consider particle refactor to push game specific score
       // ranking into a separate data particle. For now we hack via recipe's
       // immediate value for demonstrative purposes.
-      let [, gameIdA] = post.renderRecipe.match(/{"gameId": "([^"]+)"}/);
+      const [, gameIdA] = post.renderRecipe.match(/{"gameId": "([^"]+)"}/);
       const targetStats =
           stats.slice().reverse().find(s => s.gameId == gameIdA);
       return targetStats.score;
@@ -41,7 +41,7 @@ defineParticle(({Particle}) => {
       if (!this.inputValues || !this.statsValues) return;
 
       // Filter out only the Words game posts.
-      let wordsPosts = this.inputValues.filter(post => {
+      const wordsPosts = this.inputValues.filter(post => {
         if (post.renderParticleSpec) {
           const renderParticle = JSON.parse(post.renderParticleSpec);
           return renderParticle.name == 'ShowSingleStats';

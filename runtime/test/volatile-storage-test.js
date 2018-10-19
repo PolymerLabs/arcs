@@ -37,48 +37,48 @@ describe('volatile', function() {
 
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value = 'Hi there' + Math.random();
-      let variable = await storage.construct('test0', BarType, storeKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value = 'Hi there' + Math.random();
+      const variable = await storage.construct('test0', BarType, storeKey);
       await variable.set({id: 'test0:test', value});
-      let result = await variable.get();
+      const result = await variable.get();
       assert.equal(value, result.value);
     });
 
     it('resolves concurrent set', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let var1 = await storage.construct('test0', BarType, storeKey);
-      let var2 = await storage.connect('test0', BarType, var1.storageKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const var1 = await storage.construct('test0', BarType, storeKey);
+      const var2 = await storage.connect('test0', BarType, var1.storageKey);
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
     });
 
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
 
-      let var1 = await storage.construct('test0', BarType, storeKey);
+      const var1 = await storage.construct('test0', BarType, storeKey);
       await var1.set({id: 'id1', value: 'underlying'});
       
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal('underlying', result.value);
 
       assert.isTrue(var1.referenceMode);
@@ -88,19 +88,19 @@ describe('volatile', function() {
     });
 
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
 
-      let var1 = await storage.construct('test0', Type.newReference(BarType), storeKey);
+      const var1 = await storage.construct('test0', Type.newReference(BarType), storeKey);
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
@@ -111,16 +111,16 @@ describe('volatile', function() {
   
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value1 = 'Hi there' + Math.random();
-      let value2 = 'Goodbye' + Math.random();
-      let collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value1 = 'Hi there' + Math.random();
+      const value2 = 'Goodbye' + Math.random();
+      const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -129,30 +129,30 @@ describe('volatile', function() {
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
     it('resolves concurrent add/remove of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       collection2.store({id: 'id1', value: 'value'}, ['key2']);
       collection1.remove('id1', ['key1']);
@@ -162,15 +162,15 @@ describe('volatile', function() {
       assert.isEmpty(await collection2.toList());
     });
     it('resolves concurrent add of different id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -178,16 +178,16 @@ describe('volatile', function() {
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
   
-      let collection1 = await storage.construct('test0', BarType.collectionOf(), storeKey);
+      const collection1 = await storage.construct('test0', BarType.collectionOf(), storeKey);
   
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -203,14 +203,14 @@ describe('volatile', function() {
       assert.deepEqual(await collection1.backingStore.toList(), await collection1.toList());
     });
     it('supports removeMultiple', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -219,16 +219,16 @@ describe('volatile', function() {
       assert.isEmpty(await collection.toList());
     });
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
   
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
   
-      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), storeKey);
+      const collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), storeKey);
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -245,15 +245,15 @@ describe('volatile', function() {
 
   describe('big collection', () => {
     it('supports get, store and remove (including concurrently)', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
-      let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -278,7 +278,7 @@ describe('volatile', function() {
     });
 
     async function checkNext(col, cid, ids) {
-      let {value, done} = await col.cursorNext(cid);
+      const {value, done} = await col.cursorNext(cid);
       assert.isFalse(done);
       assert.equal(value.length, ids.length);
       for (let i = 0; i < value.length; i++) {
@@ -288,22 +288,22 @@ describe('volatile', function() {
     }
 
     async function checkDone(col, cid) {
-      let {value, done} = await col.cursorNext(cid);
+      const {value, done} = await col.cursorNext(cid);
       assert.isTrue(done);
       assert.isUndefined(value);
     }
 
     it('supports version-stable streamed reads forwards', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
-      let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
+      const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {
         await col.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
       }
@@ -313,7 +313,7 @@ describe('volatile', function() {
       await col.store({id: 'p07', data: 'vp07'}, ['kXX']);
       await col.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let cid1 = await col.stream(6);
+      const cid1 = await col.stream(6);
       await checkNext(col, cid1, ['r01', 'i02', 'z03', 'h05', 'y06', 'g08']);
 
       await col.store({id: 'f11', data: 'vf11'}, ['kf11']);
@@ -321,7 +321,7 @@ describe('volatile', function() {
       await col.remove('z03');
 
       // Interleave another cursor at a different version.
-      let cid2 = await col.stream(20);
+      const cid2 = await col.stream(20);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['r01', 'i02', 'h05', 'y06', 'x09', 'o10', 'p07', 'q04', 'f11']);
       
@@ -330,23 +330,23 @@ describe('volatile', function() {
       await checkDone(col, cid2);
 
       // Verify close().
-      let cid3 = await col.stream(3);
+      const cid3 = await col.stream(3);
       await checkNext(col, cid3, ['r01', 'i02', 'h05']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
     });
 
     it('supports version-stable streamed reads backwards', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = new StorageProviderFactory(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      const arc = new Arc({id: 'test'});
+      const storage = new StorageProviderFactory(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
-      let ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
+      const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {
         await col.store({id: ids[i], data: 'v' + ids[i]}, ['k' + ids[i]]);
       }
@@ -356,7 +356,7 @@ describe('volatile', function() {
       await col.store({id: 'p07', data: 'vp07'}, ['kXX']);
       await col.store({id: 'q04', data: 'vq04'}, ['kYY']);
 
-      let cid1 = await col.stream(6, false);
+      const cid1 = await col.stream(6, false);
       await checkNext(col, cid1, ['q04', 'p07', 'o10', 'x09', 'g08', 'y06']);
 
       await col.store({id: 'f11', data: 'vf11'}, ['kf11']);
@@ -364,7 +364,7 @@ describe('volatile', function() {
       await col.remove('o10');
 
       // Interleave another cursor at a different version.
-      let cid2 = await col.stream(20, false);
+      const cid2 = await col.stream(20, false);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await checkNext(col, cid2, ['f11', 'q04', 'p07', 'x09', 'g08', 'h05', 'z03', 'i02', 'r01']);
       
@@ -373,7 +373,7 @@ describe('volatile', function() {
       await checkDone(col, cid2);
 
       // Verify close().
-      let cid3 = await col.stream(3, false);
+      const cid3 = await col.stream(3, false);
       await checkNext(col, cid3, ['f11', 'q04', 'p07']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);

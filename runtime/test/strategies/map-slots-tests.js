@@ -17,21 +17,21 @@ import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('MapSlots', function() {
-  let particlesSpec = `
+  const particlesSpec = `
     particle A in 'A.js'
       consume root
 
     particle B in 'B.js'
       consume root`;
 
-  let testManifest = async (recipeManifest, expectedSlots) => {
-    let manifest = (await Manifest.parse(`
+  const testManifest = async (recipeManifest, expectedSlots) => {
+    const manifest = (await Manifest.parse(`
       ${particlesSpec}
 
       ${recipeManifest}
     `));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
       assert.isTrue(recipe.isResolved());
@@ -41,7 +41,7 @@ describe('MapSlots', function() {
     }
   };
 
-  let runMapSlotsAndResolveRecipe = async (arc, recipe, expectedSlots) => {
+  const runMapSlotsAndResolveRecipe = async (arc, recipe, expectedSlots) => {
     let results = await StrategyTestHelper.theResults(arc, MapSlots, recipe);
     if (results.length == 1) {
       recipe = results[0];
@@ -95,7 +95,7 @@ describe('MapSlots', function() {
   });
 
   it('map slots by tags', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle A in 'A.js'
         consume master #fancy
 
@@ -104,12 +104,12 @@ describe('MapSlots', function() {
         A
     `));
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
   });
 
   it('allows to bind by name to any available slot', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle A in 'A.js'
         consume root
           provide detail
@@ -126,10 +126,10 @@ describe('MapSlots', function() {
         B
         C
     `));
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
-    let strategy = new MapSlots(arc);
+    const strategy = new MapSlots(arc);
     let results = await strategy.generate(inputParams);
     assert.lengthOf(results, 2);
 
@@ -141,8 +141,8 @@ describe('MapSlots', function() {
     });
 
     assert.lengthOf(results, 2);
-    for (let result of results) {
-      let plan = result.result;
+    for (const result of results) {
+      const plan = result.result;
       plan.normalize();
       assert.isTrue(plan.isResolved());
     }
@@ -150,7 +150,7 @@ describe('MapSlots', function() {
 
   it('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
-    let arc = new Arc({id: 'test-plan-arc', slotComposer: {
+    const arc = new Arc({id: 'test-plan-arc', slotComposer: {
       affordance: 'dom',
       getAvailableContexts: (() => [
         {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
@@ -158,7 +158,7 @@ describe('MapSlots', function() {
       ])
     }});
 
-    let particles = `
+    const particles = `
       particle A in 'A.js'
         consume root
           provide action
@@ -167,14 +167,14 @@ describe('MapSlots', function() {
         consume action`;
 
     async function assertActionSlotTags(recipe, tags) {
-      let manifest = await Manifest.parse(
+      const manifest = await Manifest.parse(
       `${particles}
        ${recipe}`);
 
-      let result = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
+      const result = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
       assert.isTrue(result.isResolved());
       
-      let actionSlots = result.slots.filter(s => s.name === 'action');
+      const actionSlots = result.slots.filter(s => s.name === 'action');
       assert.lengthOf(actionSlots, 1);
       assert.deepEqual(actionSlots[0].tags, tags);
     }

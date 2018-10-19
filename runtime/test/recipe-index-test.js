@@ -16,11 +16,11 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 
 describe('RecipeIndex', function() {
   async function createIndex(manifestContent) {
-    let manifest = (await Manifest.parse(manifestContent));
-    for (let recipe of manifest.recipes) {
+    const manifest = (await Manifest.parse(manifestContent));
+    for (const recipe of manifest.recipes) {
       assert(recipe.normalize());
     }
-    let arc = new Arc({
+    const arc = new Arc({
       id: 'test-plan-arc',
       context: manifest,
       slotComposer: new MockSlotComposer()
@@ -156,7 +156,7 @@ describe('RecipeIndex', function() {
   });
 
   it('finds matching handles by fate', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
 
       particle A
@@ -181,15 +181,15 @@ describe('RecipeIndex', function() {
           thing = thing
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'C');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'C');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(['A'], index.findHandleMatch(handle, ['map']).map(h => h.recipe.name));
     assert.deepEqual(['B'], index.findHandleMatch(handle, ['create']).map(h => h.recipe.name));
   });
 
   it('finds matching handle by type', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
       schema OtherThing
 
@@ -213,8 +213,8 @@ describe('RecipeIndex', function() {
         ProducerOtherThing
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'Selector');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(
         ['ProducerThing'],
@@ -222,7 +222,7 @@ describe('RecipeIndex', function() {
   });
 
   it('finds matching handles by tags', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
 
       particle Consumer
@@ -251,8 +251,8 @@ describe('RecipeIndex', function() {
         Consumer
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'Selector');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(
         ['TakeMe1', 'TakeMe2', 'TakeMe3'],
@@ -260,7 +260,7 @@ describe('RecipeIndex', function() {
   });
 
   it('finds tagged handles if selecting handle is not tagged', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
 
       particle Consumer
@@ -281,8 +281,8 @@ describe('RecipeIndex', function() {
         Consumer
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'Selector');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(
         ['TakeMe1', 'TakeMe2'],
@@ -290,7 +290,7 @@ describe('RecipeIndex', function() {
   });
 
   it('matching use/create handle pairs require communication', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
 
       particle Consumer1
@@ -319,8 +319,8 @@ describe('RecipeIndex', function() {
         ProducerConsumer
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'Selector');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(
         ['Producer', 'ProducerConsumer'],
@@ -328,7 +328,7 @@ describe('RecipeIndex', function() {
   });
 
   it('matching use/copy handle pairs do not require communication', async () => {
-    let index = await createIndex(`
+    const index = await createIndex(`
       schema Thing
 
       particle Consumer1
@@ -357,8 +357,8 @@ describe('RecipeIndex', function() {
         ProducerConsumer
     `);
 
-    let recipe = index.recipes.find(r => r.name === 'Selector');
-    let handle = recipe.handles[0];
+    const recipe = index.recipes.find(r => r.name === 'Selector');
+    const handle = recipe.handles[0];
 
     assert.deepEqual(
         ['Consumer2', 'Producer', 'ProducerConsumer'],

@@ -19,7 +19,7 @@ import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
 describe('references', function() {
   it('can parse & validate a recipe containing references', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema Result
           Text value  
 
@@ -42,7 +42,7 @@ describe('references', function() {
             in <- handle1
             out -> handle2
     `);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     assert.equal(recipe.handles[0].id, 'reference:1');
@@ -52,7 +52,7 @@ describe('references', function() {
   });
 
   it('exposes a dereference API to particles', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -89,15 +89,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
@@ -115,7 +115,7 @@ describe('references', function() {
   });
 
   it('exposes a reference API to particles', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -154,15 +154,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
@@ -177,7 +177,7 @@ describe('references', function() {
   });
 
   it('can deal with references in schemas', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -218,15 +218,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
@@ -251,7 +251,7 @@ describe('references', function() {
     // * reads a collction of Results from 'inResult'.
     // * puts a Result into each of the Foos retrieved from 'out' and 'inFoo'
     // * writes the Foos back to 'out'.
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -320,15 +320,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
@@ -361,7 +361,7 @@ describe('references', function() {
   });
 
   it('can deal with collections of references in schemas', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -403,15 +403,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
@@ -436,7 +436,7 @@ describe('references', function() {
   });
 
   it('can construct collections of references in schemas', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       manifest: `
         schema Result
           Text value
@@ -492,15 +492,15 @@ describe('references', function() {
       `
     });
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', pecFactory, loader});
 
-    let manifest = await Manifest.load('manifest', loader);
-    let recipe = manifest.recipes[0];    
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);

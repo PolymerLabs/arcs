@@ -16,7 +16,7 @@ import {assert} from '../chai-web.js';
 
 describe('CreateHandleGroup', function() {
   it('connects variables and inline schemas', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Human
         Text name
       schema Child extends Human
@@ -41,14 +41,14 @@ describe('CreateHandleGroup', function() {
         Employ
     `);
 
-    let result = await StrategyTestHelper.onlyResult(null, CreateHandleGroup, manifest.recipes[0]);
+    const result = await StrategyTestHelper.onlyResult(null, CreateHandleGroup, manifest.recipes[0]);
     assert.lengthOf(result.handles, 1);
     assert.equal(result.handles[0].fate, 'create');
     assert.isTrue(result.isResolved());
   });
 
   it('requires read-write connection between particles', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Human
         Text name
       schema Child extends Human
@@ -68,7 +68,7 @@ describe('CreateHandleGroup', function() {
   });
 
   it('does not connect a single particle', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Human
         Text name
 
@@ -88,7 +88,7 @@ describe('CreateHandleGroup', function() {
     // CreateHandleGroup looks for a maximal group of connections. It's not
     // always the right thing to do, but an experimental step for now. This test
     // should be updated if we do something smarter.
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle ReaderA
         in * {Text a} a
       particle ReaderB
@@ -118,16 +118,16 @@ describe('CreateHandleGroup', function() {
         ReaderE
     `);
 
-    let result = await StrategyTestHelper.onlyResult(null, CreateHandleGroup, manifest.recipes[0]);
+    const result = await StrategyTestHelper.onlyResult(null, CreateHandleGroup, manifest.recipes[0]);
 
     assert.lengthOf(result.handles, 1);
-    let handle = result.handles[0];
+    const handle = result.handles[0];
     assert.equal(handle.fate, 'create');
 
-    for (let particle of result.particles) {
-      let connections = Object.values(particle.connections);
+    for (const particle of result.particles) {
+      const connections = Object.values(particle.connections);
       assert.lengthOf(connections, 1);
-      let connection = connections[0];
+      const connection = connections[0];
 
       if (['ReaderB', 'ReaderC', 'ReaderD', 'WriterBCD'].includes(particle.name)) {
         assert.equal(connection.handle, handle);

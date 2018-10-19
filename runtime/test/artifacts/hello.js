@@ -11,8 +11,8 @@
 defineParticle(({Particle}) => {
   return class Hello extends Particle {
     setHandles(handles) {
-      let text = handles.get('text');
-      let entity = new (text.entityClass)({});
+      const text = handles.get('text');
+      const entity = new (text.entityClass)({});
       entity.value = 'Hello, world!';
       text.set(entity);
     }
