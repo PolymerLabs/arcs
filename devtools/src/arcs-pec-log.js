@@ -66,8 +66,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   }
 
   onMessageBundle(messages) {
-    let newEntries = [];
-    for (let msg of messages) {
+    const newEntries = [];
+    for (const msg of messages) {
       switch (msg.messageType) {
         case 'PecLog': newEntries.push(this.newEntry(msg.messageBody)); break;
         case 'page-refresh': this.reset(); return;
@@ -116,7 +116,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   }
 
   _highlightGroup(event) {
-    let callbackId = event.currentTarget.getAttribute('callbackId');
+    const callbackId = event.currentTarget.getAttribute('callbackId');
     if (!callbackId || this.highlightedGroupCallbackId === callbackId) {
       this.highlightedGroupCallbackId = null;
     } else {
@@ -124,8 +124,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
 
     for (let i = 0; i < this.entries.length; i++) {
-      let entry = this.entries[i];
-      let inHighlightedGroup = entry.pecMsgBody.callback === this.highlightedGroupCallbackId;
+      const entry = this.entries[i];
+      const inHighlightedGroup = entry.pecMsgBody.callback === this.highlightedGroupCallbackId;
       if (entry.highlight !== inHighlightedGroup) {
         this.set(`entries.${i}.highlight`, inHighlightedGroup);
       }

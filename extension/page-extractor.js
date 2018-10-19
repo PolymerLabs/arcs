@@ -8,15 +8,15 @@
 // Returns an array of Schema.org entities extracted from the given document
 // or an empty array if none were found.
 async function extractEntities(doc, windowLocation) {
-  let microdata = extractMicrodata(doc.documentElement);
+  const microdata = extractMicrodata(doc.documentElement);
   let results = [];
   if (microdata.length) {
     results.push(...microdata);
   }
 
-  let linkImage =
+  const linkImage =
       doc.querySelector('link[rel~="image_src"], link[rel~="icon"]');
-  let pageEntity = {
+  const pageEntity = {
     '@type': 'http://schema.org/WebPage',
     name: doc.title,
     url: windowLocation.toString()
@@ -63,7 +63,7 @@ function extractMicrodata(root) {
         if (node == root) {
           return NodeFilter.FILTER_SKIP;
         }
-        let parent = node.parentElement;
+        const parent = node.parentElement;
         if (parent && parent != root &&
             (parent.hasAttribute('itemscope') ||
              parent.hasAttribute('itemtype'))) {
@@ -79,7 +79,7 @@ function extractMicrodata(root) {
   }
 
   function extractProperty(node) {
-    let prop = node.getAttribute('itemprop');
+    const prop = node.getAttribute('itemprop');
     let value;
     if (node.hasAttribute('content')) {
       // TODO: Is it valid to prefer 'content' over all?
@@ -109,18 +109,18 @@ function extractMicrodata(root) {
   }
 
   function* extractProperties(node) {
-    let walker = propWalker(node);
+    const walker = propWalker(node);
     while (walker.nextNode()) {
       yield extractProperty(walker.currentNode);
     }
   }
 
   function extractEntity(node) {
-    let result = {};
+    const result = {};
     if (node.hasAttribute('itemtype')) {
       result['@type'] = node.getAttribute('itemtype');
     }
-    for (let {prop, value} of extractProperties(node)) {
+    for (const {prop, value} of extractProperties(node)) {
       if (typeof result[prop] != 'undefined') {
         if (!Array.isArray(result[prop])) {
           result[prop] = [result[prop]];
@@ -134,7 +134,7 @@ function extractMicrodata(root) {
   }
 
   function* extractEntities(root) {
-    let walker = entityWalker(root);
+    const walker = entityWalker(root);
     while (walker.nextNode()) {
       yield extractEntity(walker.currentNode);
     }

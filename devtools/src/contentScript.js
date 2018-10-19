@@ -1,6 +1,6 @@
 const startupTime = Date.now();
 
-let log = console.log.bind(console,
+const log = console.log.bind(console,
   '%cArcsExplorer',
   'background: #000; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;');
 
@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       }]);
       break;
     case 'illuminate': {
-      let shell = document.getElementsByTagName('app-shell')[0];
+      const shell = document.getElementsByTagName('app-shell')[0];
       switch (message.messageBody) {
         case 'on':
           shell.setAttribute('illuminate', '');

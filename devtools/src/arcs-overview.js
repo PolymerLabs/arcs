@@ -90,7 +90,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
   ready() {
     super.ready();
     new ResizeObserver(rects => {
-      let {height, width} = rects[0].contentRect;
+      const {height, width} = rects[0].contentRect;
       this.$.graph.style.width = `${width}px`;
       this.$.graph.style.height = `${height}px`;
     }).observe(this.$.graphContainer);
@@ -101,8 +101,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
 
   onMessageBundle(messages) {
     let needsRedraw = false;
-    for (let msg of messages) {
-      let m = msg.messageBody;
+    for (const msg of messages) {
+      const m = msg.messageBody;
       switch (msg.messageType) {
         case 'InstantiateParticle': {
           if (m.speculative || m.arcId.endsWith('-pipes')) continue;
@@ -120,8 +120,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
             });
           }
 
-          for (let name of Object.getOwnPropertyNames(m.connections)) {
-            let con = m.connections[name];
+          for (const name of Object.getOwnPropertyNames(m.connections)) {
+            const con = m.connections[name];
             this._handles.set(con.id, {
               id: con.id,
               label: `${con.name ? ('"' + con.name + '"') : ''} ${con.type}`,
@@ -160,7 +160,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 break;
             }
 
-            let edgeId = `${m.id}¯\\_(ツ)_/¯${con.id}`;
+            const edgeId = `${m.id}¯\\_(ツ)_/¯${con.id}`;
             this._operations.set(edgeId, {
               id: edgeId,
               from: m.id,
@@ -187,8 +187,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
   }
 
   _redraw() {
-    let nodes = [...this._particles.values(), ...this._handles.values()];
-    let edges = [...this._operations.values()];
+    const nodes = [...this._particles.values(), ...this._handles.values()];
+    const edges = [...this._operations.values()];
     if (this.graph) {
       this.graph.setData({nodes, edges});
     } else {
@@ -214,7 +214,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         } else if (params.edges.length) {
           this.$.popupText.innerText = JSON.stringify(
             this._operations.get(params.edges[0]).details, null, 2);
-          let edgeNodes = params.edges[0].split('¯\\_(ツ)_/¯');
+          const edgeNodes = params.edges[0].split('¯\\_(ツ)_/¯');
           this.$.dataflowLink.href = `?particleFilter=${encodeURIComponent(edgeNodes[0])}&handleFilter=${encodeURIComponent(edgeNodes[1])}#dataflow`;
         } else {
           return;

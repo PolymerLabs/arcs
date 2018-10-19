@@ -12,7 +12,7 @@ afterEach(function() {
 describe('EventPage', function() {
   describe('#_prepareResults()', function() {
     it('should prepare keys', function() {
-      let result = _prepareResults([
+      const result = _prepareResults([
         {
           tab: {id: 12, url: 'urla'},
           result: [{name: 'entitya1'}, {name: 'entityb2'}]
@@ -30,7 +30,7 @@ describe('EventPage', function() {
           [{name: 'entitya1'}, {name: 'entityb2'}], result['urla']);
     });
     it('should trim out keys without values', function() {
-      let result = _prepareResults([
+      const result = _prepareResults([
         {
           tab: {id: 12, url: 'urla'},
           result: [{name: 'entitya1'}, {name: 'entityb2'}]
