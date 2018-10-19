@@ -786,6 +786,31 @@ ${particleStr1}
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
+  it('SLANDLES recipe slots with different names', async () => {
+    let manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume Slot slotA
+      particle ParticleB in 'some-particle.js'
+        \`consume Slot slotB1
+          \`provide Slot slotB2
+      recipe
+        \`slot 'slot-id0' as s0
+        ParticleA
+          slotA consume mySlot
+        ParticleB
+          slotB1 consume s0
+          slotB2 provide mySlot
+    `);
+    assert.lengthOf(manifest.particles, 2);
+    assert.lengthOf(manifest.recipes, 1);
+    let recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handles, 2);
+    assert.equal(
+      recipe.particles.find(p => p.name == 'ParticleA')._connections['slotA'].handle,
+      recipe.particles.find(p => p.name == 'ParticleB')._connections['slotB2'].handle);
+    recipe.normalize();
+    assert.isTrue(recipe.isResolved());
+  });
   it('recipe provided slot with no local name', async () => {
     let manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
