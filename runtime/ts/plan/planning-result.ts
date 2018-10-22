@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc';
 import {now} from '../../../platform/date-web.js';
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../manifest';
 import {RecipeResolver} from '../recipe/recipe-resolver';
 
 export class PlanningResult {
@@ -92,9 +92,9 @@ export class PlanningResult {
   async _planFromString(planString) {
     const manifest = await Manifest.parse(
         planString, {loader: this.arc.loader, context: this.arc.context, fileName: ''});
-    assert(manifest._recipes.length === 1);
-    let plan = manifest._recipes[0];
-    assert(plan.normalize(), `can't normalize deserialized suggestion: ${plan.toString()}`);
+    assert(manifest.recipes.length === 1);
+    let plan = manifest.recipes[0];
+    assert(plan.normalize({}), `can't normalize deserialized suggestion: ${plan.toString()}`);
     if (!plan.isResolved()) {
       const resolvedPlan = await this.recipeResolver.resolve(plan);
       assert(resolvedPlan, `can't resolve plan: ${plan.toString({showUnresolved: true})}`);
@@ -106,7 +106,7 @@ export class PlanningResult {
       // If recipe has hosted particles, manifest will have stores with hosted
       // particle specs. Moving these stores into the current arc's context.
       // TODO: This is a hack, find a proper way of doing this.
-      this.arc.context._addStore(store);
+      this.arc.context._addStore(store, []);
     }
     return plan;
   }

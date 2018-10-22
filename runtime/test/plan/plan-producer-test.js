@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../chai-web.js';
-import {Recipe} from '../../recipe/recipe.js';
+import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanProducer} from '../../ts-build/plan/plan-producer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
