@@ -10,8 +10,8 @@
 
 
 export class ManifestMeta {
-  storageKey: string;
-  name: string;
+  storageKey: string|null;
+  name: string|null;
 
   constructor() {
     this.storageKey = null;

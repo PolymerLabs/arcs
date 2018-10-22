@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Manifest} from './manifest.js';
+import {Manifest} from './ts-build/manifest.js';
 import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
 import {Schema} from './ts-build/schema.js';
 import {Type} from './ts-build/type.js';
@@ -16,11 +16,11 @@ import {Type} from './ts-build/type.js';
 export class SuggestionStorage {
   constructor(arc, userid) {
     assert(arc, `Arc must not be null`);
-    assert(arc._storageKey, `Arc must has a storage key`);
+    assert(arc.storageKey, `Arc must has a storage key`);
     assert(userid, `User id must not be null`);
 
     this._arc = arc;
-    let storageKeyTokens = this._arc._storageKey.split('/');
+    let storageKeyTokens = this._arc.storageKey.split('/');
     this._arcKey = storageKeyTokens.slice(-1)[0];
     this._storageKey = 
       `${storageKeyTokens.slice(0, -2).join('/')}/users/${userid}/suggestions/${this._arcKey}`;

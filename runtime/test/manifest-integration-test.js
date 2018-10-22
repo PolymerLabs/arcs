@@ -13,7 +13,7 @@
 import {assert} from './chai-web.js';
 import {Arc} from '../ts-build/arc.js';
 import {Loader} from '../ts-build/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Speculator} from '../ts-build/speculator.js';
 

@@ -10,7 +10,7 @@
 
 'use strict';
 
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {assert} from './chai-web.js';
 import * as testUtil from '../testing/test-util.js';

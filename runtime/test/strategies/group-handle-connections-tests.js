@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../../ts-build/manifest.js';
 import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
 import {assert} from '../chai-web.js';
 

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 import {assert} from '../chai-web.js';

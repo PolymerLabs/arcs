@@ -17,7 +17,7 @@ import {Type} from '../ts-build/type.js';
 import {SlotInfo} from '../ts-build/slot-info.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {TypeVariable} from '../ts-build/type-variable.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Handle} from '../ts-build/recipe/handle.js';
 
 

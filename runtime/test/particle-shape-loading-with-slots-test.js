@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../ts-build/arc.js';

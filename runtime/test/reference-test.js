@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';

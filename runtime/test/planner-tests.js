@@ -14,7 +14,7 @@ import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';

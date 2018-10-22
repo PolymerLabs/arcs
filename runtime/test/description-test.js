@@ -13,7 +13,7 @@ import {Arc} from '../ts-build/arc.js';
 import {Description} from '../description.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../ts-build/handle.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Relevance} from '../ts-build/relevance.js';
 import {SlotComposer} from '../slot-composer.js';
 

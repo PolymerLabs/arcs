@@ -12,7 +12,7 @@
 
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../../ts-build/manifest.js';
 
 describe('common particles test', function() {
   it('resolves after cloning', async () => {

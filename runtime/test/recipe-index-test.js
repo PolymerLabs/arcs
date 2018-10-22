@@ -9,7 +9,7 @@
  */
 
 import {RecipeIndex} from '../recipe-index.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
