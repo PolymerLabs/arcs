@@ -38,7 +38,7 @@ describe('pouchdb', function() {
   let storageInstances = [];
 
   function createStorage(id) {
-    let storage = new StorageProviderFactory(id);
+    const storage = new StorageProviderFactory(id);
     storageInstances.push(storage);
     return storage;
   }
@@ -50,32 +50,32 @@ describe('pouchdb', function() {
 
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value = 'Hi there' + Math.random();
-      let variable = await storage.construct('test0', BarType, newStoreKey('variable'));
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value = 'Hi there' + Math.random();
+      const variable = await storage.construct('test0', BarType, newStoreKey('variable'));
       await variable.set({id: 'test0:test', value});
-      let result = await variable.get();
+      const result = await variable.get();
       assert.equal(result.value, value);
     });
 
     it('resolves concurrent set', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('variable');
-      let var1 = await storage.construct('test0', BarType, key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('variable');
+      const var1 = await storage.construct('test0', BarType, key);
       assert.isNotNull(var1);
-      let var2 = await storage.connect(
+      const var2 = await storage.connect(
         'test0',
         BarType,
         key
@@ -89,20 +89,20 @@ describe('pouchdb', function() {
       assert.deepEqual(v1, v2);
     });
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('varPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('varPtr');
 
-      let var1 = await storage.construct('test0', BarType, key1);
+      const var1 = await storage.construct('test0', BarType, key1);
       await var1.set({id: 'id1', value: 'underlying'});
 
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
@@ -111,20 +111,20 @@ describe('pouchdb', function() {
       assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
     });
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('varPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('varPtr');
 
-      let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
+      const var1 = await storage.construct('test0', Type.newReference(BarType), key1);
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
@@ -134,16 +134,16 @@ describe('pouchdb', function() {
 
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value1 = 'Hi there' + Math.random();
-      let value2 = 'Goodbye' + Math.random();
-      let collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value1 = 'Hi there' + Math.random();
+      const value2 = 'Goodbye' + Math.random();
+      const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -152,16 +152,16 @@ describe('pouchdb', function() {
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect(
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect(
         'test1',
         BarType.collectionOf(),
         key
@@ -173,16 +173,16 @@ describe('pouchdb', function() {
     });
 
     it('resolves concurrent add/remove of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect(
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect(
         'test1',
         BarType.collectionOf(),
         key
@@ -193,16 +193,16 @@ describe('pouchdb', function() {
       assert.isEmpty(await collection2.toList());
     });
     it('resolves concurrent add of different id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect(
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect(
         'test1',
         BarType.collectionOf(),
         key
@@ -213,17 +213,17 @@ describe('pouchdb', function() {
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('colPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('colPtr');
 
-      let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+      const collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
 
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -240,17 +240,17 @@ describe('pouchdb', function() {
       assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
     });
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('colPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('colPtr');
 
-      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
+      const collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
 
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -264,15 +264,15 @@ describe('pouchdb', function() {
       assert.isNull(collection1.backingStore);
     });
     it('supports removeMultiple', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection = await storage.construct('test1', BarType.collectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection = await storage.construct('test1', BarType.collectionOf(), key);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([

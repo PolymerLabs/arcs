@@ -14,9 +14,9 @@ export class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
 
-    let thingByToken = {};
-    let thingByPhrase = {};
-    for (let [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
+    const thingByToken = {};
+    const thingByPhrase = {};
+    for (const [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
                                    ...arc.context.recipes.map(r => [r, {innerRecipe: r}])]) {
       this._addThing(thing.name, packaged, thingByToken, thingByPhrase);
       thing.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
@@ -33,9 +33,9 @@ export class SearchTokensToParticles extends Strategy {
           return;
         }
 
-        let byToken = {};
-        let resolvedTokens = new Set();
-        let _addThingsByToken = (token, things) => {
+        const byToken = {};
+        const resolvedTokens = new Set();
+        const _addThingsByToken = (token, things) => {
           things.forEach(thing => {
             byToken[token] = byToken[token] || [];
             byToken[token].push(thing);
@@ -43,19 +43,19 @@ export class SearchTokensToParticles extends Strategy {
           });
         };
 
-        for (let [phrase, things] of Object.entries(thingByPhrase)) {
-          let tokens = phrase.split(' ');
+        for (const [phrase, things] of Object.entries(thingByPhrase)) {
+          const tokens = phrase.split(' ');
           if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
               recipe.search.phrase.includes(phrase)) {
             _addThingsByToken(phrase, things);
           }
         }
 
-        for (let token of recipe.search.unresolvedTokens) {
+        for (const token of recipe.search.unresolvedTokens) {
           if (resolvedTokens.has(token)) {
             continue;
           }
-          let things = thingByToken[token];
+          const things = thingByToken[token];
           things && _addThingsByToken(token, things);
         }
 
@@ -68,19 +68,19 @@ export class SearchTokensToParticles extends Strategy {
           sets.reduce((acc, set) =>
             flatten(acc.map(x => set.map(y => [...x, y]))),
             [[]]);
-        let possibleCombinations = product(...Object.values(byToken).map(v => flatten(v)));
+        const possibleCombinations = product(...Object.values(byToken).map(v => flatten(v)));
 
         return possibleCombinations.map(combination => {
           return recipe => {
             resolvedTokens.forEach(token => recipe.search.resolveToken(token));
             combination.forEach(({spec, innerRecipe}) => {
               if (spec) {
-                let particle = recipe.newParticle(spec.name);
+                const particle = recipe.newParticle(spec.name);
                 particle.spec = spec;
               } else {
-                let otherToHandle = this.index.findCoalescableHandles(recipe, innerRecipe);
+                const otherToHandle = this.index.findCoalescableHandles(recipe, innerRecipe);
                 assert(innerRecipe);
-                let {cloneMap} = innerRecipe.mergeInto(recipe);
+                const {cloneMap} = innerRecipe.mergeInto(recipe);
                 otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
               }
             });
@@ -98,8 +98,8 @@ export class SearchTokensToParticles extends Strategy {
 
   getResults(inputParams) {
     assert(inputParams);
-    let generated = super.getResults(inputParams).filter(result => !result.result.isResolved());
-    let terminal = inputParams.terminal;
+    const generated = super.getResults(inputParams).filter(result => !result.result.isResolved());
+    const terminal = inputParams.terminal;
     return [...generated, ...terminal];
   }
 
@@ -110,7 +110,7 @@ export class SearchTokensToParticles extends Strategy {
     this._addThingByToken(token.toLowerCase(), thing, thingByToken);
 
     // split DoSomething into "do something" and add the phrase
-    let phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
+    const phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
     if (phrase != token) {
       this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
     }

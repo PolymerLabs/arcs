@@ -41,14 +41,14 @@ export class ParticleExecutionContext {
     };
 
     this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback, storageKey}) => {
-      let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
+      const proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
       proxy.storageKey = storageKey;
       return [proxy, () => callback(proxy, storageKey)];
     };
 
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
+      const proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
       return [proxy, () => callback(proxy)];
     };
 
@@ -125,7 +125,7 @@ export class ParticleExecutionContext {
           this._handlers.set(name, []);
         }
         fireEvent(event) {
-          for (let handler of this._handlers.get(event.handler) || []) {
+          for (const handler of this._handlers.get(event.handler) || []) {
             handler(event);
           }
         }
@@ -151,12 +151,12 @@ export class ParticleExecutionContext {
   }
 
   innerArcHandle(arcId, particleId) {
-    let pec = this;
+    const pec = this;
     return {
       createHandle: function(type, name, hostParticle) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let handle = handleFor(proxy, name, particleId);
+            const handle = handleFor(proxy, name, particleId);
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -216,22 +216,22 @@ export class ParticleExecutionContext {
   }
 
   async _instantiateParticle(id, spec, proxies) {
-    let name = spec.name;
+    const name = spec.name;
     let resolve = null;
-    let p = new Promise(res => resolve = res);
+    const p = new Promise(res => resolve = res);
     this._pendingLoads.push(p);
-    let clazz = await this._loader.loadParticleClass(spec);
-    let capabilities = this.defaultCapabilitySet();
-    let particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
+    const clazz = await this._loader.loadParticleClass(spec);
+    const capabilities = this.defaultCapabilitySet();
+    const particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
     particle.id = id;
     particle.capabilities = capabilities;
     this._particles.push(particle);
 
-    let handleMap = new Map();
-    let registerList = [];
+    const handleMap = new Map();
+    const registerList = [];
     proxies.forEach((proxy, name) => {
-      let connSpec = spec.connectionMap.get(name);
-      let handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
+      const connSpec = spec.connectionMap.get(name);
+      const handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
       handleMap.set(name, handle);
 
       // Defer registration of handles with proxies until after particles have a chance to
@@ -242,14 +242,14 @@ export class ParticleExecutionContext {
     return [particle, async () => {
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
-      let idx = this._pendingLoads.indexOf(p);
+      const idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
       resolve();
     }];
   }
 
   get relevance() {
-    let rMap = new Map();
+    const rMap = new Map();
     this._particles.forEach(p => {
       if (p.relevances.length == 0) {
         return;
@@ -274,7 +274,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    let busyParticlePromises = this._particles.filter(particle => particle.busy).map(particle => particle.idle);
+    const busyParticlePromises = this._particles.filter(particle => particle.busy).map(particle => particle.idle);
     return Promise.all([this._scheduler.idle, ...this._pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

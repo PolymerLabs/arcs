@@ -49,11 +49,11 @@ export class SuggestionComposer {
   async _updateSuggestions(suggestions) {
     this.clear();
 
-    let sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
-    for (let suggestion of sortedSuggestions) {
+    const sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
+    for (const suggestion of sortedSuggestions) {
       // TODO(mmandlis): This hack is needed for deserialized suggestions to work. Should
       // instead serialize the description object and generation suggestion content here.
-      let suggestionContent = suggestion.suggestionContent ? suggestion.suggestionContent :
+      const suggestionContent = suggestion.suggestionContent ? suggestion.suggestionContent :
         await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
       assert(suggestionContent, 'No suggestion content available');
 
@@ -66,13 +66,13 @@ export class SuggestionComposer {
   }
 
   _addInlineSuggestion(suggestion, suggestionContent) {
-    let remoteSlots = suggestion.plan.slots.filter(s => !!s.id);
+    const remoteSlots = suggestion.plan.slots.filter(s => !!s.id);
     if (remoteSlots.length != 1) {
       return;
     }
-    let remoteSlot = remoteSlots[0];
+    const remoteSlot = remoteSlots[0];
 
-    let context = this._slotComposer.findContextById(remoteSlot.id);
+    const context = this._slotComposer.findContextById(remoteSlot.id);
     assert(context);
 
     if (context.spec.isSet) {
@@ -89,18 +89,18 @@ export class SuggestionComposer {
       return;
     }
 
-    let handleIds = context.spec.handles.map(
+    const handleIds = context.spec.handles.map(
       handleName => context.sourceSlotConsumer.consumeConn.particle.connections[handleName].handle.id);
     if (!handleIds.find(handleId => suggestion.plan.handles.find(handle => handle.id == handleId))) {
       // the suggestion doesn't use any of the handles that the context is restricted to.
       return;
     }
 
-    let suggestConsumer = new this._affordance.suggestionConsumerClass(this._slotComposer._containerKind, suggestion, suggestionContent, (eventlet) => {
-      let suggestion = this._suggestions.find(s => s.hash == eventlet.data.key);
+    const suggestConsumer = new this._affordance.suggestionConsumerClass(this._slotComposer._containerKind, suggestion, suggestionContent, (eventlet) => {
+      const suggestion = this._suggestions.find(s => s.hash == eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {
-        let index = this._suggestConsumers.findIndex(consumer => consumer == suggestConsumer);
+        const index = this._suggestConsumers.findIndex(consumer => consumer == suggestConsumer);
         assert(index >= 0, 'cannot find suggest slot context');
         this._suggestConsumers.splice(index, 1);
 

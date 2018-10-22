@@ -39,7 +39,7 @@ export class SlotComposer {
       return;
     }
 
-    let containerByName = this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
+    const containerByName = this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
     if (Object.keys(containerByName).length == 0) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;
@@ -59,7 +59,7 @@ export class SlotComposer {
   }
 
   findContainerByName(name) {
-    let contexts = this._contexts.filter(context => context.name === name);
+    const contexts = this._contexts.filter(context => context.name === name);
     if (contexts.length == 0) {
       assert(`No containers for '${name}'`);
     } else if (contexts.length == 1) {
@@ -74,17 +74,17 @@ export class SlotComposer {
   }
 
   createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId) {
-    let hostedSlotId = this.arc.generateID();
+    const hostedSlotId = this.arc.generateID();
 
-    let transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
+    const transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
     assert(transformationSlotConsumer,
            `Unexpected transformation slot particle ${transformationParticle.name}:${transformationSlotName}, hosted particle ${hostedParticleName}, slot name ${hostedSlotName}`);
 
-    let hostedSlotConsumer = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, this.arc);
+    const hostedSlotConsumer = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, this.arc);
     hostedSlotConsumer.renderCallback = this.arc.pec.innerArcRender.bind(this.arc.pec);
     this._addSlotConsumer(hostedSlotConsumer);
 
-    let context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
+    const context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
     context.addSlotConsumer(hostedSlotConsumer);
 
     return hostedSlotId;
@@ -97,7 +97,7 @@ export class SlotComposer {
   }
 
   initializeRecipe(recipeParticles) {
-    let newConsumers = [];
+    const newConsumers = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
@@ -122,25 +122,25 @@ export class SlotComposer {
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
-      let context = this.findContextById(consumer.consumeConn.targetSlot.id);
+      const context = this.findContextById(consumer.consumeConn.targetSlot.id);
       assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
       context.addSlotConsumer(consumer);
     });
   }
 
   async renderSlot(particle, slotName, content) {
-    let slotConsumer = this.getSlotConsumer(particle, slotName);
+    const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
     await slotConsumer.setContent(content, async (eventlet) => {
       this.arc.pec.sendEvent(particle, slotName, eventlet);
       if (eventlet.data && eventlet.data.key) {
-        let hostedConsumers = this.consumers.filter(c => c.transformationSlotConsumer == slotConsumer);
-        for (let hostedConsumer of hostedConsumers) {
+        const hostedConsumers = this.consumers.filter(c => c.transformationSlotConsumer == slotConsumer);
+        for (const hostedConsumer of hostedConsumers) {
           if (hostedConsumer.storeId) {
-            let store = this.arc.findStoreById(hostedConsumer.storeId);
+            const store = this.arc.findStoreById(hostedConsumer.storeId);
             assert(store);
-            let value = await store.get();
+            const value = await store.get();
             if (value && (value.id == eventlet.data.key)) {
               this.arc.pec.sendEvent(
                   hostedConsumer.consumeConn.particle,

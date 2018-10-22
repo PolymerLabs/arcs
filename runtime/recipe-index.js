@@ -36,7 +36,7 @@ class RelevantContextRecipes extends Strategy {
       }
 
       recipe = recipe.clone();
-      let options = {errors: new Map()};
+      const options = {errors: new Map()};
       if (recipe.normalize(options)) {
         this._recipes.push(recipe);
       } else {
@@ -73,8 +73,8 @@ const IndexStrategies = [
 
 export class RecipeIndex {
   constructor(context, loader, affordance) {
-    let trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
-    let arcStub = new Arc({
+    const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
+    const arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
       loader,
@@ -83,7 +83,7 @@ export class RecipeIndex {
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
       speculative: true
     });
-    let strategizer = new Strategizer(
+    const strategizer = new Strategizer(
       [
         new RelevantContextRecipes(context, affordance),
         ...IndexStrategies.map(S => new S(arcStub))
@@ -92,10 +92,10 @@ export class RecipeIndex {
       Rulesets.Empty
     );
     this.ready = trace.endWith(new Promise(async resolve => {
-      let generations = [];
+      const generations = [];
 
       do {
-        let record = await strategizer.generate();
+        const record = await strategizer.generate();
         generations.push({record, generated: strategizer.generated});
       } while (strategizer.generated.length + strategizer.terminal.length > 0);
 
@@ -104,10 +104,10 @@ export class RecipeIndex {
             generations, DevtoolsConnection.get(), {label: 'Index', keep: true});
       }
 
-      let population = strategizer.population;
-      let candidates = new Set(population);
-      for (let result of population) {
-        for (let deriv of result.derivation) {
+      const population = strategizer.population;
+      const candidates = new Set(population);
+      for (const result of population) {
+        for (const deriv of result.derivation) {
           if (deriv.parent) candidates.delete(deriv.parent);
         }
       }
@@ -131,16 +131,16 @@ export class RecipeIndex {
   findHandleMatch(handle, requestedFates) {
     this.ensureReady();
 
-    let particleNames = handle.connections.map(conn => conn.particle.name);
+    const particleNames = handle.connections.map(conn => conn.particle.name);
 
-    let results = [];
-    for (let recipe of this._recipes) {
+    const results = [];
+    for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
         // to avoid trying to coalesce a recipe with itself.
         continue;
       }
-      for (let otherHandle of recipe.handles) {
+      for (const otherHandle of recipe.handles) {
         if (requestedFates && !(requestedFates.includes(otherHandle.fate))) {
           continue;
         }
@@ -176,10 +176,10 @@ export class RecipeIndex {
     // everyone can be a reader.
     // We inspect both fate and originalFate as copy ends up as use in an
     // active recipe, and ? could end up as anything.
-    let fates = [handle.originalFate, handle.fate, otherHandle.originalFate, otherHandle.fate];
+    const fates = [handle.originalFate, handle.fate, otherHandle.originalFate, otherHandle.fate];
     if (!fates.includes('copy') && !fates.includes('map')) {
-      let counts = RecipeUtil.directionCounts(handle);
-      let otherCounts = RecipeUtil.directionCounts(otherHandle);
+      const counts = RecipeUtil.directionCounts(handle);
+      const otherCounts = RecipeUtil.directionCounts(otherHandle);
       // Someone has to read and someone has to write.
       if (otherCounts.in + counts.in === 0 || otherCounts.out + counts.out === 0) {
         return false;
@@ -203,20 +203,20 @@ export class RecipeIndex {
   findConsumeSlotConnectionMatch(slot) {
     this.ensureReady();
 
-    let consumeConns = [];
-    for (let recipe of this._recipes) {
+    const consumeConns = [];
+    for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
         // to avoid trying to coalesce a recipe with itself.
         continue;
       }
-      for (let slotConn of recipe.slotConnections) {
+      for (const slotConn of recipe.slotConnections) {
         if (!slotConn.targetSlot && MapSlots.specMatch(slotConn, slot) && MapSlots.tagsOrNameMatch(slotConn, slot)) {
-          let matchingHandles = [];
+          const matchingHandles = [];
           if (!MapSlots.handlesMatch(slotConn, slot)) {
             // Find potential handle connections to coalesce
             slot.handleConnections.forEach(slotHandleConn => {
-              let matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
+              const matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
                 return particleConn.direction !== 'host'
                     && (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id)
                     && Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
@@ -242,15 +242,15 @@ export class RecipeIndex {
   findProvidedSlot(slotConn) {
     this.ensureReady();
 
-    let providedSlots = [];
-    for (let recipe of this._recipes) {
+    const providedSlots = [];
+    for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
         // to avoid trying to coalesce a recipe with itself.
         continue;
       }
-      for (let consumeConn of recipe.slotConnections) {
-        for (let providedSlot of Object.values(consumeConn.providedSlots)) {
+      for (const consumeConn of recipe.slotConnections) {
+        for (const providedSlot of Object.values(consumeConn.providedSlots)) {
           if (MapSlots.slotMatches(slotConn, providedSlot)) {
             providedSlots.push(providedSlot);
           }
@@ -266,9 +266,9 @@ export class RecipeIndex {
   // `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
   // as a potential match to a slot above.
   _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn) {
-    let matchingHandle = matchingHandleConn.handle;
-    let allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
-    let matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
+    const matchingHandle = matchingHandleConn.handle;
+    const allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
+    const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
     switch (slotHandleConn.handle.fate) {
       case 'create':
         // matching handle not defined or its fate is 'create' or '?'.
@@ -293,13 +293,13 @@ export class RecipeIndex {
 
   findCoalescableHandles(recipe, otherRecipe, usedHandles) {
     assert(recipe != otherRecipe, 'Cannot coalesce handles in the same recipe');
-    let otherToHandle = new Map();
+    const otherToHandle = new Map();
     usedHandles = usedHandles || new Set();
-    for (let handle of recipe.handles) {
+    for (const handle of recipe.handles) {
       if (usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
         continue;
       }
-      for (let otherHandle of otherRecipe.handles) {
+      for (const otherHandle of otherRecipe.handles) {
         if (usedHandles.has(otherHandle) || !this.coalescableFates.includes(otherHandle.fate)) {
           continue;
         }

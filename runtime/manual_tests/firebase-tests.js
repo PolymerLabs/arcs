@@ -51,7 +51,7 @@ describe('firebase', function() {
   let storageInstances = [];
 
   function createStorage(id) {
-    let storage = new StorageProviderFactory(id);
+    const storage = new StorageProviderFactory(id);
     storageInstances.push(storage);
     return storage;
   }
@@ -63,50 +63,50 @@ describe('firebase', function() {
 
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value = 'Hi there' + Math.random();
-      let variable = await storage.construct('test0', BarType, newStoreKey('variable'));
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value = 'Hi there' + Math.random();
+      const variable = await storage.construct('test0', BarType, newStoreKey('variable'));
       await variable.set({id: 'test0:test', value});
-      let result = await variable.get();
+      const result = await variable.get();
       assert.equal(value, result.value);
     });
     it('resolves concurrent set', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('variable');
-      let var1 = await storage.construct('test0', BarType, key);
-      let var2 = await storage.connect('test0', BarType, key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('variable');
+      const var1 = await storage.construct('test0', BarType, key);
+      const var2 = await storage.connect('test0', BarType, key);
       var1.set({id: 'id1', value: 'value1'});
       var2.set({id: 'id2', value: 'value2'});
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('varPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('varPtr');
   
-      let var1 = await storage.construct('test0', BarType, key1);
+      const var1 = await storage.construct('test0', BarType, key1);
       await var1.set({id: 'id1', value: 'underlying'});
       
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
@@ -115,20 +115,20 @@ describe('firebase', function() {
       assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
     });
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('varPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('varPtr');
 
-      let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
+      const var1 = await storage.construct('test0', Type.newReference(BarType), key1);
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
-      let result = await var1.get();
+      const result = await var1.get();
       assert.equal('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
@@ -138,16 +138,16 @@ describe('firebase', function() {
 
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let value1 = 'Hi there' + Math.random();
-      let value2 = 'Goodbye' + Math.random();
-      let collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const value1 = 'Hi there' + Math.random();
+      const value2 = 'Goodbye' + Math.random();
+      const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -156,32 +156,32 @@ describe('firebase', function() {
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
     it('resolves concurrent add/remove of same id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       collection2.store({id: 'id1', value: 'value'}, ['key2']);
       collection1.remove('id1', ['key1']);
@@ -191,16 +191,16 @@ describe('firebase', function() {
       assert.isEmpty(await collection2.toList());
     });
     it('resolves concurrent add of different id', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      let collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -208,17 +208,17 @@ describe('firebase', function() {
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
     it('enables referenceMode by default', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('colPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('colPtr');
   
-      let collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+      const collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
   
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -235,17 +235,17 @@ describe('firebase', function() {
       assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
     });
     it('supports references', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
   
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('colPtr');
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key1 = newStoreKey('colPtr');
   
-      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
+      const collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -259,15 +259,15 @@ describe('firebase', function() {
       assert.isNull(collection1.backingStore);
     }); 
     it('supports removeMultiple', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('collection');
-      let collection = await storage.construct('test1', BarType.collectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('collection');
+      const collection = await storage.construct('test1', BarType.collectionOf(), key);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -293,16 +293,16 @@ describe('firebase', function() {
   // live remote database instance the setup is too expensive to keep repeating.
   describe('big collection', () => {
     it('supports get, store and remove (including concurrently)', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key = newStoreKey('bigcollection');
-      let collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
-      let collection2 = await storage.connect('test0', BarType.bigCollectionOf(), key);
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const key = newStoreKey('bigcollection');
+      const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
+      const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), key);
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -329,11 +329,11 @@ describe('firebase', function() {
     // Stores a new item for each id in both col and items, with data and key derived
     // from the numerical part of the id in a lexicographically "random" manner.
     function store(col, items, ...ids) {
-      let promises = [];
-      for (let id of ids) {
-        let n = Number(id.slice(1));
-        let data = 'v' + (n * 37 % 100);
-        let key = 'k' + (n * 73 % 100);
+      const promises = [];
+      for (const id of ids) {
+        const n = Number(id.slice(1));
+        const data = 'v' + (n * 37 % 100);
+        const key = 'k' + (n * 73 % 100);
         promises.push(col.store({id, data}, [key]));
         items.set(id, {data, key});
       }
@@ -342,7 +342,7 @@ describe('firebase', function() {
 
     // Verifies that cursor.next() returns items matching the given list of ids (in order).
     async function checkNext(col, items, cid, ids) {
-      let {value, done} = await col.cursorNext(cid);
+      const {value, done} = await col.cursorNext(cid);
       assert.isFalse(done);
       assert.equal(value.length, ids.length);
       for (let i = 0; i < value.length; i++) {
@@ -353,30 +353,30 @@ describe('firebase', function() {
 
     // Verifies that the cursor does not contain any more items.
     async function checkDone(col, cid) {
-      let {value, done} = await col.cursorNext(cid);
+      const {value, done} = await col.cursorNext(cid);
       assert.isTrue(done);
       assert.isUndefined(value);
     }
 
     // Verifies a full streamed read with the given page size.
     async function checkStream(col, items, pageSize, forward, ...idRows) {
-      let cid = await col.stream(pageSize, forward);
-      for (let ids of idRows) {
+      const cid = await col.stream(pageSize, forward);
+      for (const ids of idRows) {
         await checkNext(col, items, cid, ids);
       }
       await checkDone(col, cid);
     }
 
     it('supports version-stable streamed reads forwards', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
-      let items = new Map();
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      const items = new Map();
 
       // Add an initial set of items with lexicographically "random" ids.
       await store(col, items, 'r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
@@ -391,7 +391,7 @@ describe('firebase', function() {
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cid1 = await col.stream(4);
+      const cid1 = await col.stream(4);
 
       // Remove the item at the start of the first page and another from a later page:
       await col.remove('r01');
@@ -401,7 +401,7 @@ describe('firebase', function() {
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cid2 = await col.stream(5);
+      const cid2 = await col.stream(5);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await store(col, items, 's16');
 
@@ -438,22 +438,22 @@ describe('firebase', function() {
       await checkDone(col, cid2);
 
       // close() should terminate a stream.
-      let cid3 = await col.stream(3);
+      const cid3 = await col.stream(3);
       await checkNext(col, items, cid3, ['i02', 'q04', 'h05']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
     }).timeout(20000);
 
     it('supports version-stable streamed reads backwards', async () => {
-      let manifest = await Manifest.parse(`
+      const manifest = await Manifest.parse(`
         schema Bar
           Text data
       `);
-      let arc = new Arc({id: 'test'});
-      let storage = createStorage(arc.id);
-      let BarType = Type.newEntity(manifest.schemas.Bar);
-      let col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
-      let items = new Map();
+      const arc = new Arc({id: 'test'});
+      const storage = createStorage(arc.id);
+      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      const items = new Map();
 
       // Add an initial set of items with lexicographically "random" ids.
       await store(col, items, 'r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08');
@@ -468,7 +468,7 @@ describe('firebase', function() {
 
       // Add operations that occur after cursor creation should not affect streamed reads.
       // Items removed "ahead" of the read should be captured and returned later in the stream.
-      let cid1 = await col.stream(4, false);
+      const cid1 = await col.stream(4, false);
 
       // Remove the item at the start of the first page and another from a later page.
       await col.remove('j14');
@@ -478,7 +478,7 @@ describe('firebase', function() {
 
       // Interleave another streamed read over a different version of the collection. cursor2
       // should be 3 versions ahead due to the 3 add/remove operations above.
-      let cid2 = await col.stream(5, false);
+      const cid2 = await col.stream(5, false);
       assert.equal(col.cursorVersion(cid2), col.cursorVersion(cid1) + 3);
       await store(col, items, 's16');
 
@@ -515,14 +515,14 @@ describe('firebase', function() {
       await checkDone(col, cid2);
 
       // close() should terminate a stream.
-      let cid3 = await col.stream(3, false);
+      const cid3 = await col.stream(3, false);
       await checkNext(col, items, cid3, ['m17', 's16', 't15']);
       col.cursorClose(cid3);
       await checkDone(col, cid3);
     }).timeout(20000);
 
     it('big collection API works from inside the PEC', async function() {
-      let fileMap = {
+      const fileMap = {
         manifest: `
           schema Data
             Text value
@@ -572,29 +572,29 @@ describe('firebase', function() {
           });
         `
       };
-      let testHelper = await TestHelper.create({
+      const testHelper = await TestHelper.create({
         manifestString: fileMap.manifest,
         loader: new StubLoader(fileMap)
       });
-      let arc = testHelper.arc;
-      let manifest = arc._context;
+      const arc = testHelper.arc;
+      const manifest = arc._context;
 
-      let storage = createStorage(arc.id);
-      let Data = Type.newEntity(manifest.schemas.Data);
-      let bigStore = await storage.construct('test0', Data.bigCollectionOf(), newStoreKey('bigcollection'));
-      let recipe = manifest.recipes[0];
+      const storage = createStorage(arc.id);
+      const Data = Type.newEntity(manifest.schemas.Data);
+      const bigStore = await storage.construct('test0', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+      const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(bigStore);
       recipe.normalize();
       await arc.instantiate(recipe);
       await arc.idle;
 
-      let cursorId = await bigStore.stream(5);
-      let data = await bigStore.cursorNext(cursorId);
+      const cursorId = await bigStore.stream(5);
+      const data = await bigStore.cursorNext(cursorId);
       assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
     it('serialization roundtrip re-attaches to the same firebase stores', async function() {
-      let loader = new StubLoader({
+      const loader = new StubLoader({
         manifest: `
           schema Data
             Text value
@@ -617,26 +617,26 @@ describe('firebase', function() {
           defineParticle(({Particle}) => class Noop extends Particle {});
         `
       });
-      let pecFactory = function(id) {
-        let channel = new MessageChannel();
+      const pecFactory = function(id) {
+        const channel = new MessageChannel();
         new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
         return channel.port2;
       };
-      let arc = new Arc({id: 'test', pecFactory, loader});
-      let manifest = await Manifest.load('manifest', loader);
-      let storage = createStorage(arc.id);
-      let Data = Type.newEntity(manifest.schemas.Data);
+      const arc = new Arc({id: 'test', pecFactory, loader});
+      const manifest = await Manifest.load('manifest', loader);
+      const storage = createStorage(arc.id);
+      const Data = Type.newEntity(manifest.schemas.Data);
 
-      let varStore = await storage.construct('test0', Data, newStoreKey('variable'));
-      let colStore = await storage.construct('test1', Data.collectionOf(), newStoreKey('collection'));
-      let bigStore = await storage.construct('test2', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+      const varStore = await storage.construct('test0', Data, newStoreKey('variable'));
+      const colStore = await storage.construct('test1', Data.collectionOf(), newStoreKey('collection'));
+      const bigStore = await storage.construct('test2', Data.bigCollectionOf(), newStoreKey('bigcollection'));
 
       // Populate the stores, run the arc and get its serialization.
       await varStore.set({id: 'i1', rawData: {value: 'v1'}});
       await colStore.store({id: 'i2', rawData: {value: 'v2'}}, ['k2']);
       await bigStore.store({id: 'i3', rawData: {value: 'v3'}}, ['k3']);
 
-      let recipe = manifest.recipes[0];
+      const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(varStore);
       recipe.handles[1].mapToStorage(colStore);
       recipe.handles[2].mapToStorage(bigStore);
@@ -644,7 +644,7 @@ describe('firebase', function() {
       await arc.instantiate(recipe);
       await arc.idle;
 
-      let serialization = await arc.serialize();
+      const serialization = await arc.serialize();
       arc.stop();
 
       // Update the stores between serializing and deserializing.
@@ -652,10 +652,10 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      let arc2 = await Arc.deserialize({serialization, pecFactory});
-      let varStore2 = arc2.findStoreById(varStore.id);
-      let colStore2 = arc2.findStoreById(colStore.id);
-      let bigStore2 = arc2.findStoreById(bigStore.id);
+      const arc2 = await Arc.deserialize({serialization, pecFactory});
+      const varStore2 = arc2.findStoreById(varStore.id);
+      const colStore2 = arc2.findStoreById(colStore.id);
+      const bigStore2 = arc2.findStoreById(bigStore.id);
 
       // New storage providers should have been created.
       assert.notStrictEqual(varStore2, varStore);
@@ -666,8 +666,8 @@ describe('firebase', function() {
       assert.equal((await varStore2.get()).rawData.value, 'v4');
       assert.deepEqual((await colStore2.toList()).map(e => e.rawData.value), ['v2', 'v5']);
 
-      let cursorId = await bigStore.stream(5);
-      let {value, done} = await bigStore.cursorNext(cursorId);
+      const cursorId = await bigStore.stream(5);
+      const {value, done} = await bigStore.cursorNext(cursorId);
       assert.isFalse(done);
       assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
       assert.isTrue((await bigStore.cursorNext(cursorId)).done);
@@ -677,48 +677,48 @@ describe('firebase', function() {
   // These tests use data manually added to our test firebase db.
   describe('synthetic', () => {
     function getKey(manifestName) {
-      let fbKey = testUrl.replace('firebase-storage-test', `synthetic-storage-data/${manifestName}`);
+      const fbKey = testUrl.replace('firebase-storage-test', `synthetic-storage-data/${manifestName}`);
       return `synthetic://arc/handles/${fbKey}`;
     }
 
     it('simple test', async () => {
-      let storage = createStorage('arc-id');
-      let synth = await storage.connect('id1', null, getKey('simple-manifest'));
-      let list = await synth.toList();
+      const storage = createStorage('arc-id');
+      const synth = await storage.connect('id1', null, getKey('simple-manifest'));
+      const list = await synth.toList();
       assert.equal(list.length, 1);
-      let handle = list[0];
+      const handle = list[0];
       assert.equal(handle.storageKey, 'firebase://xxx.firebaseio.com/yyy');
-      let type = handle.type.getContainedType();
+      const type = handle.type.getContainedType();
       assert(type && type.isEntity);
       assert.equal(type.entitySchema.name, 'Thing');
       assert.deepEqual(handle.tags, ['taggy']);
     });
 
     it('error test', async () => {
-      let storage = createStorage('arc-id');
-      let synth1 = await storage.connect('not-there', null, getKey('not-there'));
-      let list1 = await synth1.toList();
+      const storage = createStorage('arc-id');
+      const synth1 = await storage.connect('not-there', null, getKey('not-there'));
+      const list1 = await synth1.toList();
       assert.isEmpty(list1, 'synthetic handle list should empty for non-existent storageKey');
 
-      let synth2 = await storage.connect('bad-manifest', null, getKey('bad-manifest'));
-      let list2 = await synth2.toList();
+      const synth2 = await storage.connect('bad-manifest', null, getKey('bad-manifest'));
+      const list2 = await synth2.toList();
       assert.isEmpty(list2, 'synthetic handle list should empty for invalid manifests');
 
-      let synth3 = await storage.connect('no-recipe', null, getKey('no-recipe'));
-      let list3 = await synth3.toList();
+      const synth3 = await storage.connect('no-recipe', null, getKey('no-recipe'));
+      const list3 = await synth3.toList();
       assert.isEmpty(list3, 'synthetic handle list should empty for manifests with no active recipe');
 
-      let synth4 = await storage.connect('no-handles', null, getKey('no-handles'));
-      let list4 = await synth4.toList();
+      const synth4 = await storage.connect('no-handles', null, getKey('no-handles'));
+      const list4 = await synth4.toList();
       assert.isEmpty(list4, 'synthetic handle list should empty for manifests with no handles');
     });
 
     it('large test', async () => {
-      let storage = createStorage('arc-id');
-      let synth = await storage.connect('id1', null, getKey('large-manifest'));
-      let list = await synth.toList();
+      const storage = createStorage('arc-id');
+      const synth = await storage.connect('id1', null, getKey('large-manifest'));
+      const list = await synth.toList();
       assert(list.length > 0, 'synthetic handle list should not be empty');
-      for (let item of list) {
+      for (const item of list) {
         assert(item.storageKey.startsWith('firebase:'));
         assert(item.type.constructor.name == 'Type');
         if (item.tags.length > 0) {

@@ -20,14 +20,14 @@ export class CreateHandleGroup extends Strategy {
 
         const freeConnections = recipe.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
         let maximalGroup = null;
-        for (let writer of freeConnections.filter(hc => hc.isOutput)) {
-          let compatibleConnections = [writer];
+        for (const writer of freeConnections.filter(hc => hc.isOutput)) {
+          const compatibleConnections = [writer];
           let effectiveType = Handle.effectiveType(null, compatibleConnections);
           let typeCandidate = null;
-          let involvedParticles = new Set([writer.particle]);
+          const involvedParticles = new Set([writer.particle]);
 
           let foundSomeReader = false;
-          for (let reader of freeConnections.filter(hc => hc.isInput)) {
+          for (const reader of freeConnections.filter(hc => hc.isInput)) {
             if (!involvedParticles.has(reader.particle) &&
                 (typeCandidate = Handle.effectiveType(effectiveType, [reader])) !== null) {
               compatibleConnections.push(reader);
@@ -40,7 +40,7 @@ export class CreateHandleGroup extends Strategy {
           // Only make a 'create' group for a writer->reader case.
           if (!foundSomeReader) continue;
 
-          for (let otherWriter of freeConnections.filter(hc => hc.isOutput)) {
+          for (const otherWriter of freeConnections.filter(hc => hc.isOutput)) {
             if (!involvedParticles.has(otherWriter.particle) &&
                 (typeCandidate = Handle.effectiveType(effectiveType, [otherWriter])) !== null) {
               compatibleConnections.push(otherWriter);
@@ -56,10 +56,10 @@ export class CreateHandleGroup extends Strategy {
 
         if (maximalGroup) {
           return recipe => {
-            let newHandle = recipe.newHandle();
+            const newHandle = recipe.newHandle();
             newHandle.fate = 'create';
-            for (let conn of maximalGroup) {
-              let cloneConn = recipe.updateToClone({conn}).conn;
+            for (const conn of maximalGroup) {
+              const cloneConn = recipe.updateToClone({conn}).conn;
               cloneConn.connectToHandle(newHandle);
             }
           };
