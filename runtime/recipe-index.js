@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from './manifest.js';
+import {Manifest} from './ts-build/manifest.js';
 import {Arc} from './ts-build/arc.js';
 import {SlotComposer} from './slot-composer.js';
 import {Strategizer, Strategy} from '../strategizer/strategizer.js';

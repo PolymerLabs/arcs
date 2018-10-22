@@ -9,7 +9,7 @@
  */
 
 import {Planner} from '../planner.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 
 export class ArcPlannerInvoker {
   constructor(arc, devtoolsChannel) {

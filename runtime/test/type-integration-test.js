@@ -12,7 +12,7 @@
 
 import {assert} from './chai-web.js';
 import {Loader} from '../ts-build/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 
 async function setup() {
   let registry = {};

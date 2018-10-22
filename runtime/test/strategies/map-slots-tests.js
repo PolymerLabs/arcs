@@ -10,7 +10,7 @@
 'use strict';
 
 import {Arc} from '../../ts-build/arc.js';
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {MapSlots} from '../../strategies/map-slots.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';

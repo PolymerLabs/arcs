@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Loader} from '../../ts-build/loader.js';
 import {Arc} from '../../ts-build/arc.js';

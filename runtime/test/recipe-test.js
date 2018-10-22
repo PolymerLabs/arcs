@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {Loader} from '../../runtime/ts-build/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 
 describe('recipe', function() {
   it('normalize errors', async () => {

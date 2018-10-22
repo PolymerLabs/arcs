@@ -13,7 +13,7 @@ import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';
 import {handleFor} from '../ts-build/handle.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';

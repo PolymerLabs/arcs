@@ -10,7 +10,7 @@
 
 import {Loader} from '../ts-build/loader.js';
 import {assert} from '../test/chai-web.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 
 let loader = new Loader();
 

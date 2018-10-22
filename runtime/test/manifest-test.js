@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {parser} from '../build/manifest-parser.js';
 import {assert} from './chai-web.js';
 import {fs} from '../../platform/fs-web.js';
@@ -1237,7 +1237,7 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
     description \`Claire's wishlist\``, {loader});
     let verify = (manifest) => {
       assert.lengthOf(manifest.stores, 1);
-      assert.deepEqual(['wishlist'], manifest._storeTags.get(manifest.stores[0]));
+      assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));

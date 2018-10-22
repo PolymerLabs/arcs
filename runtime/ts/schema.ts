@@ -18,6 +18,7 @@ export class Schema {
   // tslint:disable-next-line: no-any
   private readonly _model: {names: string[], fields: {[index: string]: any}};
   description: {[index: string]: string};
+  isAlias: boolean;
 
   constructor(model) {
     const legacy:string[] = [];

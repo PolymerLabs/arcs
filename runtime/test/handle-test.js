@@ -15,7 +15,7 @@ import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Shape} from '../ts-build/shape.js';
 import {Type} from '../ts-build/type.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {Schema} from '../ts-build/schema.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';

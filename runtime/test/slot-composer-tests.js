@@ -14,7 +14,7 @@ import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
