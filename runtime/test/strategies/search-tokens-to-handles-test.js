@@ -15,11 +15,11 @@ import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.j
 import {assert} from '../chai-web.js';
 import {Loader} from '../../ts-build/loader.js';
 
-let loader = new Loader();
+const loader = new Loader();
 
 describe('SearchTokensToHandles', function() {
   it('finds local handle by tags', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema Thing
       particle ShowThing &show in 'A.js'
         in Thing inThing
@@ -35,25 +35,25 @@ describe('SearchTokensToHandles', function() {
         [{}]
     `));
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     arc._registerStore(arc._context.stores[0], ['mything']);
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     recipe.search.resolveToken('show');
 
-    let strategy = new SearchTokensToHandles(arc);
-    let results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
+    const strategy = new SearchTokensToHandles(arc);
+    const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);
-    let result = results[0].result;
+    const result = results[0].result;
     assert.isTrue(result.isResolved());
     assert.equal('use', result.handles[0].fate);
   });
 
   it('finds remote handle by tags', async () => {
-    let storeManifest = (await Manifest.parse(`
+    const storeManifest = (await Manifest.parse(`
 import 'runtime/test/artifacts/test-particles.manifest'
 store Things of Foo #mything in ThingsJson
 store Things of [Foo] #manythings in ThingsJson
@@ -61,7 +61,7 @@ store Things of [Foo] #manythings in ThingsJson
     start
     [{}]
     `, {loader, fileName: ''}));
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
 import 'runtime/test/artifacts/test-particles.manifest'
 particle ChooseFoo &choose in 'A.js'
   in [Foo] inFoos
@@ -75,17 +75,17 @@ recipe
     inFoos <- h0
     outFoo -> h1
     `, {loader, fileName: ''}));
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     arc._context.imports.push(storeManifest);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     recipe.search.resolveToken('choose');
-    let strategy = new SearchTokensToHandles(arc);
-    let results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
+    const strategy = new SearchTokensToHandles(arc);
+    const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);
-    let result = results[0].result;
+    const result = results[0].result;
     assert.isTrue(result.isResolved());
     assert.lengthOf(result.handles, 2);
     assert.equal('map', result.handles[0].fate);

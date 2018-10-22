@@ -26,7 +26,7 @@ async function loadFilesIntoNewArc(fileMap) {
 
 describe('particle-api', function() {
   it('StorageProxy integration test', async function() {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
           Text value
@@ -72,11 +72,11 @@ describe('particle-api', function() {
       `
     });
 
-    let Data = manifest.findSchemaByName('Data').entityClass();
-    let fooStore = await arc.createStore(Data.type, 'foo', 'test:0');
-    let resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
-    let inspector = new util.ResultInspector(arc, resStore, 'value');
-    let recipe = manifest.recipes[0];
+    const Data = manifest.findSchemaByName('Data').entityClass();
+    const fooStore = await arc.createStore(Data.type, 'foo', 'test:0');
+    const resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
+    const inspector = new util.ResultInspector(arc, resStore, 'value');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(resStore);
     recipe.normalize();
@@ -86,7 +86,7 @@ describe('particle-api', function() {
 
     // Drop event 2; desync is triggered by v3.
     await fooStore.set({id: 'id1', rawData: {value: 'v1'}});
-    let fireFn = fooStore._fire;
+    const fireFn = fooStore._fire;
     fooStore._fire = () => {};
     await fooStore.set({id: 'id2', rawData: {value: 'v2'}});
     fooStore._fire = fireFn;
@@ -100,7 +100,7 @@ describe('particle-api', function() {
   });
 
   it('can sync/update and store/remove with collections', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -133,18 +133,18 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type.collectionOf(), undefined, 'result-handle');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type.collectionOf(), undefined, 'result-handle');
+    const recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
-    let values = (await resultStore.toList()).map(item => item.rawData.value);
+    const values = (await resultStore.toList()).map(item => item.rawData.value);
     assert.deepEqual(values, ['two']);
   });
 
   it('contains a constructInnerArc call', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -174,21 +174,21 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    let newStore = arc.findStoresByType(Result.type)[1];
+    const newStore = arc.findStoresByType(Result.type)[1];
     assert.equal(newStore.name, 'hello');
     await util.assertSingletonIs(newStore, 'value', 'success');
   });
 
   it('can load a recipe', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -252,21 +252,21 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    let newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('can load a recipe referencing a manifest store', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -342,21 +342,21 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    let newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -434,15 +434,15 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    let newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -455,7 +455,7 @@ describe('particle-api', function() {
   // execution host's strategizer or adding such fallback to
   // `arc.findStoresByType`.
   it.skip('can load a recipe referencing a tagged handle in manifest', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -531,21 +531,21 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
-    let recipe = manifest.recipes[0];
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    let newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('multiplexing', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -625,13 +625,13 @@ describe('particle-api', function() {
       `
     });
 
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
+    const Result = manifest.findSchemaByName('Result').entityClass();
+    const inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
     inputsStore.store({id: '1', rawData: {value: 'hello'}}, ['key1']);
     inputsStore.store({id: '2', rawData: {value: 'world'}}, ['key2']);
-    let resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
-    let inspector = new util.ResultInspector(arc, resultsStore, 'value');
-    let recipe = manifest.recipes[0];
+    const resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
+    const inspector = new util.ResultInspector(arc, resultsStore, 'value');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
     recipe.handles[1].mapToStorage(resultsStore);
     recipe.normalize();
@@ -652,7 +652,7 @@ describe('particle-api', function() {
   });
 
   it('big collection store and remove', async function() {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
           Text value
@@ -684,21 +684,21 @@ describe('particle-api', function() {
       `
     });
 
-    let Data = manifest.findSchemaByName('Data').entityClass();
-    let bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
-    let recipe = manifest.recipes[0];
+    const Data = manifest.findSchemaByName('Data').entityClass();
+    const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(bigStore);
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
 
-    let cursorId = await bigStore.stream(5);
-    let data = await bigStore.cursorNext(cursorId);
+    const cursorId = await bigStore.stream(5);
+    const data = await bigStore.cursorNext(cursorId);
     assert.deepEqual(data.value.map(item => item.rawData.value), ['finn', 'jake']);
   });
 
   it('big collection streamed reads', async function() {
-    let {manifest, arc} = await loadFilesIntoNewArc({
+    const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
           Text value
@@ -741,17 +741,17 @@ describe('particle-api', function() {
       `
     });
 
-    let Data = manifest.findSchemaByName('Data').entityClass();
-    let bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
-    let promises = [];
+    const Data = manifest.findSchemaByName('Data').entityClass();
+    const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    const promises = [];
     for (let i = 1; i <= 5; i++) {
       promises.push(bigStore.store({id: 'i' + i, rawData: {value: 'v' + i}}, ['k' + i]));
     }
     await Promise.all(promises);
 
-    let resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
-    let inspector = new util.ResultInspector(arc, resStore, 'value');
-    let recipe = manifest.recipes[0];
+    const resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
+    const inspector = new util.ResultInspector(arc, resStore, 'value');
+    const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(bigStore);
     recipe.handles[1].mapToStorage(resStore);
     recipe.normalize();

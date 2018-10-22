@@ -52,8 +52,8 @@ describe('API channel', function() {
       this.registerRedundantInitializer = this.registerInitializer;
     };
 
-    let port = {};
-    let arc = {id: ''}; // OuterPortAttachment constructor needs the id.
+    const port = {};
+    const arc = {id: ''}; // OuterPortAttachment constructor needs the id.
     outer = (new PECOuterPort(port, arc))._reg_;
     inner = (new PECInnerPort(port))._reg_;
   });
@@ -76,12 +76,12 @@ describe('API channel', function() {
   // Note that this modifies handlerMap, which is ok because every map in the two Registrar objects
   // is only used once in the four tests below.
   function verify(callerMap, callerLabel, handlerMap, handlerLabel) {
-    for (let [name, callerArgs] of callerMap) {
-      let handlerArgs = handlerMap.get(name);
+    for (const [name, callerArgs] of callerMap) {
+      const handlerArgs = handlerMap.get(name);
       assert.isDefined(handlerArgs, `${callerLabel} '${name}': missing ${handlerLabel}`);
 
-      for (let [arg, callerType] of Object.entries(callerArgs)) {
-        let handlerType = handlerArgs[arg];
+      for (const [arg, callerType] of Object.entries(callerArgs)) {
+        const handlerType = handlerArgs[arg];
         assert.isDefined(handlerType, `${callerLabel} '${name}': missing arg '${arg}' in ${handlerLabel}`);
         delete handlerArgs[arg];
 

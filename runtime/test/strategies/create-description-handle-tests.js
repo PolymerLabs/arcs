@@ -15,7 +15,7 @@ import {assert} from '../chai-web.js';
 
 describe('CreateDescriptionHandle', function() {
   it('descriptions handle created', async () => {
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema Description
       particle DoSomething in 'AA.js'
         out [Description] descriptions
@@ -23,13 +23,13 @@ describe('CreateDescriptionHandle', function() {
       recipe
         DoSomething as particle0
     `));
-    let recipe = manifest.recipes[0];
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
-    let strategy = new CreateDescriptionHandle();
-    let results = (await strategy.generate(inputParams));
+    const recipe = manifest.recipes[0];
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    const strategy = new CreateDescriptionHandle();
+    const results = (await strategy.generate(inputParams));
 
     assert.lengthOf(results, 1);
-    let plan = results[0].result;
+    const plan = results[0].result;
     assert.lengthOf(plan.handles, 1);
     assert.equal('create', plan.handles[0].fate);
     assert.isTrue(plan.isResolved());

@@ -14,7 +14,7 @@ import {GroupHandleConnections} from '../../strategies/group-handle-connections.
 import {assert} from '../chai-web.js';
 
 describe('GroupHandleConnections', function() {
-  let schemaAndParticlesStr = `
+  const schemaAndParticlesStr = `
     schema Thing
     schema OtherThing
     particle A
@@ -36,7 +36,7 @@ describe('GroupHandleConnections', function() {
       `;
   it('group in and out handle connections', async () => {
     // TODO: add another Type handle connections to the recipe!
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       ${schemaAndParticlesStr}
       recipe
         A
@@ -44,12 +44,12 @@ describe('GroupHandleConnections', function() {
         C
         D
     `));
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let ghc = new GroupHandleConnections();
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const ghc = new GroupHandleConnections();
 
-    let results = await ghc.generate(inputParams);
+    const results = await ghc.generate(inputParams);
     assert.lengthOf(results, 1);
-    let recipe = results[0].result;
+    const recipe = results[0].result;
     assert.lengthOf(recipe.handles, 4);
     // Verify all connections are bound to handles.
     assert.isUndefined(recipe.handleConnections.find(hc => !hc.handle));
@@ -58,7 +58,7 @@ describe('GroupHandleConnections', function() {
   });
   it('does nothing if no grouping is possible', async () => {
     // TODO: add another Type handle connections to the recipe!
-    let manifest = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       ${schemaAndParticlesStr}
       recipe
         create as thing
@@ -68,10 +68,10 @@ describe('GroupHandleConnections', function() {
           ithingA1 <- thing
         B
     `));
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let ghc = new GroupHandleConnections();
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const ghc = new GroupHandleConnections();
 
-    let results = await ghc.generate(inputParams);
+    const results = await ghc.generate(inputParams);
     assert.isEmpty(results);
   });
 });

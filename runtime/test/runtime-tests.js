@@ -18,20 +18,20 @@ import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
-  let arc = new Arc({slotComposer, id: 'test'});
+  const arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
 
 describe('Runtime', function() {
   it('gets an arc description for an arc', async () => {
-    let arc = createTestArc();
-    let description = new Description(arc);
-    let expected = await description.getArcDescription();
-    let actual = await Runtime.getArcDescription(arc);
+    const arc = createTestArc();
+    const description = new Description(arc);
+    const expected = await description.getArcDescription();
+    const actual = await Runtime.getArcDescription(arc);
     assert.equal(expected, actual);
   });
   it('parses a Manifest', async () => {
-    let content = `
+    const content = `
     schema Text
       Text value
 
@@ -42,15 +42,15 @@ describe('Runtime', function() {
       create as handleA
       Hello
         text -> handleA`;
-    let expected = await Manifest.parse(content);
-    let actual = await Runtime.parseManifest(content);
+    const expected = await Manifest.parse(content);
+    const actual = await Runtime.parseManifest(content);
     assert.deepEqual(expected, actual);
   });
   it('loads a Manifest', async () => {
-    let registry = {};
-    let loader = new Loader();
-    let expected = await Manifest.load('./runtime/test/artifacts/test.manifest', loader, registry);
-    let actual = await Runtime.loadManifest('./runtime/test/artifacts/test.manifest', loader, registry);
+    const registry = {};
+    const loader = new Loader();
+    const expected = await Manifest.load('./runtime/test/artifacts/test.manifest', loader, registry);
+    const actual = await Runtime.loadManifest('./runtime/test/artifacts/test.manifest', loader, registry);
     assert.deepEqual(expected, actual);
   });
 });

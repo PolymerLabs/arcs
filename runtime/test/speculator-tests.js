@@ -16,13 +16,13 @@ import {Manifest} from '../ts-build/manifest.js';
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
-    let loader = new Loader();
-    let arc = new Arc({id: 'test'});
-    let manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader);
-    let recipe = manifest.recipes[0];
+    const loader = new Loader();
+    const arc = new Arc({id: 'test'});
+    const manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader);
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    let speculator = new Speculator();
-    let relevance = await speculator.speculate(arc, recipe);
+    const speculator = new Speculator();
+    const relevance = await speculator.speculate(arc, recipe);
     assert.equal(relevance.calcRelevanceScore(), 1);
   });
 });

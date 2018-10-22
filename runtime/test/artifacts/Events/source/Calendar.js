@@ -145,7 +145,7 @@ defineParticle(({DomParticle, html}) => {
 </style>
   `;
 
-  let template = html`
+  const template = html`
 ${styles}
 <div ${host} expanded$="{{expanded}}">
   <div class="date-picker">

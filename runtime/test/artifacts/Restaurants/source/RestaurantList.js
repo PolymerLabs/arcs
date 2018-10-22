@@ -140,7 +140,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     willReceiveProps(props) {
-      let items = props.list.map(({rawData}, i) => {
+      const items = props.list.map(({rawData}, i) => {
         return Object.assign({
           index: i,
           starStyle: `width: ${Math.round(rawData.rating / 5 * 100)}%`,

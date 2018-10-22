@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  let host = `show-post-list`;
+  const host = `show-post-list`;
 
   const template = html`
 

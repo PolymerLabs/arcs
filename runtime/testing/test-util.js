@@ -61,10 +61,10 @@ export class ResultInspector {
   // checks in the same test. The order of expectations is not significant.
   async verify(...expectations) {
     await this._arc.idle;
-    let received = await this._store.toList();
-    let misses = [];
-    for (let item of received.map(r => r.rawData[this._field])) {
-      let i = expectations.indexOf(item);
+    const received = await this._store.toList();
+    const misses = [];
+    for (const item of received.map(r => r.rawData[this._field])) {
+      const i = expectations.indexOf(item);
       if (i >= 0) {
         expectations.splice(i, 1);
       } else {
@@ -73,7 +73,7 @@ export class ResultInspector {
     }
     this._store.clearItemsForTesting();
 
-    let errors = [];
+    const errors = [];
     if (expectations.length) {
       errors.push(`Expected, not received: ${expectations.join(', ')}`);
     }
@@ -97,6 +97,6 @@ export async function assertSingletonWillChangeTo(arc, store, field, expectation
 }
 
 export async function assertSingletonIs(store, field, expectation) {
-  let actual = await store.get();
+  const actual = await store.get();
   assert.equal(actual !== null ? actual.rawData[field] : '(null)', expectation);
 }

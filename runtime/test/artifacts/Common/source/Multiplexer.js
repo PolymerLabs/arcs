@@ -12,7 +12,7 @@
 defineParticle(({Particle, MultiplexerDomParticle}) => {
   return class Multiplexer extends MultiplexerDomParticle {
     constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
-      let recipe = Particle.buildManifest`
+      const recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
   use '${itemHandle._id}' as handle1

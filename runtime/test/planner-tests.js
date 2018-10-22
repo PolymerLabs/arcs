@@ -18,19 +18,19 @@ import {Manifest} from '../ts-build/manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
-let loader = new Loader();
+const loader = new Loader();
 
 async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
   if (typeof manifest == 'string') {
-    let fileName = './test.manifest';
+    const fileName = './test.manifest';
     manifest = await Manifest.parse(manifest, {loader, fileName});
   }
 
   arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc('test', manifest, 'dom'));
   testSteps = testSteps || ((planner) => planner.plan(Infinity, []));
 
-  let arc = await arcFactory(manifest);
-  let planner = new Planner();
+  const arc = await arcFactory(manifest);
+  const planner = new Planner();
   planner.init(arc);
   return await testSteps(planner);
 }
@@ -47,12 +47,12 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
       super({manifest});
     }
     async requireParticle(fileName) {
-      let clazz = class {
+      const clazz = class {
         constructor() {
           this.relevances = [1];
         }
         async setHandles(handles) {
-          let thingHandle = handles.get('thing');
+          const thingHandle = handles.get('thing');
           thingHandle.set(new thingHandle.entityClass({name: 'MYTHING'}));
         }
       };
@@ -77,7 +77,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
 describe('Planner', function() {
   it('can map remote handles structurally', async () => {
-    let results = await planFromManifest(`
+    const results = await planFromManifest(`
       store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
@@ -90,7 +90,7 @@ describe('Planner', function() {
   });
 
   it('can copy remote handles structurally', async () => {
-    let results = await planFromManifest(`
+    const results = await planFromManifest(`
       store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
@@ -103,7 +103,7 @@ describe('Planner', function() {
   });
 
   it('can resolve multiple consumed slots', async () => {
-    let results = await planFromManifest(`
+    const results = await planFromManifest(`
       particle P1 in './some-particle.js'
         consume one
         consume two
@@ -155,7 +155,7 @@ describe('Planner', function() {
 });
 
 describe('AssignOrCopyRemoteHandles', function() {
-  let particlesSpec = `
+  const particlesSpec = `
   schema Foo
 
   particle A in 'A.js'
@@ -166,23 +166,23 @@ describe('AssignOrCopyRemoteHandles', function() {
     inout [Foo] list
     consume root
   `;
-  let testManifest = async (recipeManifest, expectedResults) => {
-    let manifest = (await Manifest.parse(`
+  const testManifest = async (recipeManifest, expectedResults) => {
+    const manifest = (await Manifest.parse(`
       ${particlesSpec}
 
       ${recipeManifest}
     `));
 
-    let schema = manifest.findSchemaByName('Foo');
+    const schema = manifest.findSchemaByName('Foo');
     manifest.createStore(schema.type.collectionOf(), 'Test1', 'test-1', ['tag1']);
     manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-2', ['tag2']);
     manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-3', []);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
-    let planner = new Planner();
+    const planner = new Planner();
     planner.init(arc);
-    let plans = await planner.plan(1000);
+    const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, expectedResults, recipeManifest);
     return plans;
@@ -246,7 +246,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     `, 3);
   });
   it('finds remote untagged handles with unknown fate', async () => {
-    let plansA = await testManifest(`
+    const plansA = await testManifest(`
       recipe
         ? as list
         A as particle0
@@ -254,7 +254,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     `, 3);
     assert.isTrue(plansA.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'map')));
 
-    let plansB = await testManifest(`
+    const plansB = await testManifest(`
       recipe
         ? as list
         B as particle0
@@ -263,7 +263,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     assert.isTrue(plansB.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'copy')));
   });
   it('finds remote tagged handles with unknown fate', async () => {
-    let plansA = await testManifest(`
+    const plansA = await testManifest(`
       recipe
         ? #tag1 as list
         A as particle0
@@ -272,7 +272,7 @@ describe('AssignOrCopyRemoteHandles', function() {
     assert.lengthOf(plansA[0].handles, 1);
     assert.equal('map', plansA[0].handles[0].fate);
 
-    let plansB = await testManifest(`
+    const plansB = await testManifest(`
       recipe
         ? #tag2 as list
         B as particle0
@@ -336,29 +336,29 @@ describe('AssignOrCopyRemoteHandles', function() {
 });
 
 describe('Type variable resolution', function() {
-  let loadAndPlan = async (manifestStr) => {
-    let loader = {
+  const loadAndPlan = async (manifestStr) => {
+    const loader = {
       join: (() => { return ''; }),
       loadResource: (() => { return '[]'; })
     };
-    let manifest = (await Manifest.parse(manifestStr, {loader}));
+    const manifest = (await Manifest.parse(manifestStr, {loader}));
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let planner = new Planner();
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const planner = new Planner();
     planner.init(arc);
     return planner.plan(Infinity);
   };
-  let verifyResolvedPlan = async (manifestStr) => {
-    let plans = await loadAndPlan(manifestStr);
+  const verifyResolvedPlan = async (manifestStr) => {
+    const plans = await loadAndPlan(manifestStr);
     assert.lengthOf(plans, 1);
 
-    let recipe = plans[0];
+    const recipe = plans[0];
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   };
 
-  let verifyUnresolvedPlan = async (manifestStr) => {
-    let plans = await loadAndPlan(manifestStr);
+  const verifyUnresolvedPlan = async (manifestStr) => {
+    const plans = await loadAndPlan(manifestStr);
     assert.isEmpty(plans);
   };
   it('unresolved type variables', async () => {
@@ -462,7 +462,7 @@ describe('Type variable resolution', function() {
   });
 
   it('transformation particles type variable resolution', async () => {
-    let particleSpecs = `
+    const particleSpecs = `
 shape HostedShape
   in ~a *
 particle P1
@@ -567,36 +567,36 @@ describe('Description', async () => {
 });
 
 describe('Automatic resolution', function() {
-  let loadAndPlan = async (manifestStr, arcCreatedCallback) => {
+  const loadAndPlan = async (manifestStr, arcCreatedCallback) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
-        let arc = StrategyTestHelper.createTestArc('test', manifest, 'dom');
+        const arc = StrategyTestHelper.createTestArc('test', manifest, 'dom');
         if (arcCreatedCallback) await arcCreatedCallback(arc, manifest);
         return arc;
       }
     });
   };
-  let verifyResolvedPlans = async (manifestStr, arcCreatedCallback) => {
-    let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
-    for (let plan of plans) {
+  const verifyResolvedPlans = async (manifestStr, arcCreatedCallback) => {
+    const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
+    for (const plan of plans) {
       plan.normalize();
       assert.isTrue(plan.isResolved());
     }
     return plans;
   };
-  let verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
-    let plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
+  const verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
+    const plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
     assert.lengthOf(plans, 1);
     return plans[0];
   };
-  let verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
-    let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
+  const verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
+    const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     assert.isEmpty(plans);
   };
 
   it('introduces create handles for particle communication', async () => {
     // A new handle can be introduced to facilitate A -> B communication.
-    let recipe = await verifyResolvedPlan(`
+    const recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
         out Thing thing
@@ -623,7 +623,7 @@ describe('Automatic resolution', function() {
   });
 
   it('coalesces recipes to resolve connections', async () => {
-    let result = await verifyResolvedPlan(`
+    const result = await verifyResolvedPlan(`
       schema Thing
         Text id
       schema Product extends Thing
@@ -679,7 +679,7 @@ describe('Automatic resolution', function() {
 
   it('uses existing handle from the arc', async () => {
     // An existing handle from the arc can be used as input to a recipe
-    let recipe = await verifyResolvedPlan(`
+    const recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
         in Thing thing
@@ -688,20 +688,20 @@ describe('Automatic resolution', function() {
         A
       `,
       async (arc, manifest) => {
-        let Thing = manifest.findSchemaByName('Thing').entityClass();
+        const Thing = manifest.findSchemaByName('Thing').entityClass();
         await arc.createStore(Thing.type, undefined, 'test:1');
       }
     );
 
     assert.lengthOf(recipe.handles, 1);
-    let [handle] = recipe.handles;
+    const [handle] = recipe.handles;
     assert.equal('use', handle.fate);
     assert.equal('test:1', handle.id);
   });
 
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
-    let recipes = await verifyResolvedPlans(`
+    const recipes = await verifyResolvedPlans(`
       import './runtime/test/artifacts/Common/List.recipes'
       schema Thing
 
@@ -743,7 +743,7 @@ describe('Automatic resolution', function() {
   });
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
-    let recipes = await verifyResolvedPlans(`
+    const recipes = await verifyResolvedPlans(`
         import './runtime/test/artifacts/Common/List.recipes'
         schema Thing
 
@@ -752,7 +752,7 @@ describe('Automatic resolution', function() {
           consume item`,
         async (arcRef, manifest) => {
           arc = arcRef;
-          let Thing = manifest.findSchemaByName('Thing').entityClass();
+          const Thing = manifest.findSchemaByName('Thing').entityClass();
           await arc.createStore(Thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 
@@ -777,7 +777,7 @@ describe('Automatic resolution', function() {
       provide preamble as slot5`);
   });
   it('coalesces resolved recipe with no UI', async () => {
-    let recipes = await verifyResolvedPlans(`
+    const recipes = await verifyResolvedPlans(`
       schema Thing
       particle A in 'a.js'
         out Thing thing
@@ -799,7 +799,7 @@ describe('Automatic resolution', function() {
     assert.lengthOf(recipes, 3);
     assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'A'));
     assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'B'));
-    let recipe = recipes.find(recipe => recipe.particles.length == 2);
+    const recipe = recipes.find(recipe => recipe.particles.length == 2);
     assert.deepEqual(['A', 'B'], recipe.particles.map(p => p.name).sort());
     // Verify the `thing` handle was coalesced.
     assert.lengthOf(recipe.handles, 1);
@@ -807,7 +807,7 @@ describe('Automatic resolution', function() {
   });
 
   it('reverifies other handle type while coalescing', async () => {
-    let recipes = await verifyResolvedPlans(`
+    const recipes = await verifyResolvedPlans(`
       schema Account
       schema Transaction
       particle TransactionFilter
@@ -847,12 +847,12 @@ describe('Automatic resolution', function() {
           list = items
     `);
     assert.lengthOf(recipes, 2);
-    let coalesced = recipes.find(r => r.particles.length == 3);
+    const coalesced = recipes.find(r => r.particles.length == 3);
     // Verify the #selected handles weren't coalesced - they are of different types.
     assert.lengthOf(coalesced.handles.filter(h => h.tags.length == 1 && h.tags[0] == 'selected'), 2);
   });
 
-  let verifyRestaurantsPlanSearch = async (searchStr) => {
+  const verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
       import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
       import './runtime/test/artifacts/People/Person.schema'
@@ -869,14 +869,14 @@ describe('Automatic resolution', function() {
   };
 
   it('searches and coalesces nearby restaurants by recipe name', async () => {
-    let recipe = await verifyRestaurantsPlanSearch('nearby restaurants');
+    const recipe = await verifyRestaurantsPlanSearch('nearby restaurants');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
     assert.lengthOf(recipe.handles, 4);
   });
 
   it('searches and coalesces make reservation by recipe name', async () => {
-    let recipe = await verifyRestaurantsPlanSearch('make reservation');
+    const recipe = await verifyRestaurantsPlanSearch('make reservation');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
 
@@ -894,7 +894,7 @@ describe('Automatic resolution', function() {
   });
 
   it('searches and coalesces "nearby restaurants make reservation"', async () => {
-    let recipe = await verifyRestaurantsPlanSearch('nearby restaurants make reservation');
+    const recipe = await verifyRestaurantsPlanSearch('nearby restaurants make reservation');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
     // Verify handles.
@@ -911,7 +911,7 @@ describe('Automatic resolution', function() {
   });
 
   it('searches and coalesces "nearby restaurants calendar"', async () => {
-    let recipe = await verifyRestaurantsPlanSearch('nearby restaurants calendar');
+    const recipe = await verifyRestaurantsPlanSearch('nearby restaurants calendar');
     assert.deepEqual(recipe.particles.map(p => p.name).sort(),
       ['Calendar', 'FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
     // Verify handles.
@@ -930,7 +930,7 @@ describe('Automatic resolution', function() {
 
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
-    let recipes = await verifyResolvedPlans(`
+    const recipes = await verifyResolvedPlans(`
       import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
       import './runtime/test/artifacts/People/Person.schema'
 

@@ -51,7 +51,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     render({selected}) {
-      let hasSelection = selected && (selected.name || selected.id);
+      const hasSelection = selected && (selected.name || selected.id);
       return {
         tab0: {display: hasSelection ? '' : 'none'},
         tab1: {display: hasSelection ? 'none' : ''}

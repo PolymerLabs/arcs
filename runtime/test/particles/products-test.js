@@ -14,16 +14,16 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('products test', function() {
-  let manifestFilename = './runtime/test/particles/artifacts/products-test.recipes';
+  const manifestFilename = './runtime/test/particles/artifacts/products-test.recipes';
 
-  let verifyFilteredBook = async (handle) => {
-    let list = await handle.toList();
+  const verifyFilteredBook = async (handle) => {
+    const list = await handle.toList();
     assert.lengthOf(list, 1);
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 
   it('filters', async function() {
-    let helper = await TestHelper.createAndPlan({manifestFilename});
+    const helper = await TestHelper.createAndPlan({manifestFilename});
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
 
@@ -31,13 +31,13 @@ describe('products test', function() {
   });
 
   it('filters and displays', async function() {
-    let helper = await TestHelper.createAndPlan({manifestFilename});
+    const helper = await TestHelper.createAndPlan({manifestFilename});
 
     helper.slotComposer
         .newExpectations()
           .expectRenderSlot('List', 'root', {contentTypes: ['template']})
           .expectRenderSlot('List', 'root', {contentTypes: ['model'], verify: (content) => {
-            let verified = content.model && content.model.hasItems
+            const verified = content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
                 && 1 == content.model.items.models.length;
             if (verified) {

@@ -10,9 +10,9 @@
 
 defineParticle(({DomParticle, resolver}) => {
 
-  let host = `[manage-products]`;
+  const host = `[manage-products]`;
 
-  let styles = `
+  const styles = `
 <style>
   ${host} {
     padding: 16px;
@@ -44,7 +44,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productStyles = `
+  const productStyles = `
 <style>
   ${host} > x-list [row] {
     display: flex;
@@ -95,7 +95,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productTemplate = `
+  const productTemplate = `
 <template>
   <div item>
     <div row>
@@ -117,7 +117,7 @@ defineParticle(({DomParticle, resolver}) => {
 </template>
   `;
 
-  let template = `
+  const template = `
 ${styles}
 ${productStyles}
 <div manage-products>
@@ -142,9 +142,9 @@ ${productStyles}
       return template;
     }
     willReceiveProps(props) {
-      let items = props.list.map(({id, rawData}, i) => {
+      const items = props.list.map(({id, rawData}, i) => {
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
-        let item = Object.assign({}, rawData);
+        const item = Object.assign({}, rawData);
         item.image = resolver ? resolver(item.image) : item.image;
         item.subId = id;
         item.index = i;

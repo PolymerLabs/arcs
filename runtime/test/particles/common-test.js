@@ -16,7 +16,7 @@ import {Manifest} from '../../ts-build/manifest.js';
 
 describe('common particles test', function() {
   it('resolves after cloning', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
   schema Thing
     Text name
     Text description
@@ -57,8 +57,8 @@ describe('common particles test', function() {
   store Store1 of [Thing] 'smallthings' in SmallThings
     `);
 
-    let recipe = manifest.recipes[0];
-    let newRecipe = recipe.clone();
+    const recipe = manifest.recipes[0];
+    const newRecipe = recipe.clone();
     recipe.normalize();
     assert(recipe.isResolved());
     newRecipe.normalize();
@@ -67,7 +67,7 @@ describe('common particles test', function() {
 
 
   it('copy handle test', async () => {
-    let helper = await TestHelper.createAndPlan({
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/particles/artifacts/copy-collection-test.recipes',
       expectedNumPlans: 1,
       expectedSuggestions: ['Copy all things!']

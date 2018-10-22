@@ -15,12 +15,12 @@ import {AddMissingHandles} from '../../strategies/add-missing-handles.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {
-  let manifest = await Manifest.parse(manifestStr);
-  let recipes = manifest.recipes;
+  const manifest = await Manifest.parse(manifestStr);
+  const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
-  let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-  let inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-  let strategy = new AddMissingHandles(arc);
+  const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+  const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
+  const strategy = new AddMissingHandles(arc);
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 
@@ -52,7 +52,7 @@ describe('AddMissingHandles', function() {
     `));
   });
   it(`adds handles to free connections`, async () => {
-    let results = await runStrategy(`
+    const results = await runStrategy(`
       schema Thing
       particle P1
         in Thing thing
@@ -65,12 +65,12 @@ describe('AddMissingHandles', function() {
         P2
     `);
     assert.lengthOf(results, 1);
-    let recipe = results[0];
+    const recipe = results[0];
     assert.lengthOf(recipe.handles, 3);
     assert.isTrue(recipe.handles.every(h => h.fate === '?'));
   });
   it(`doesn't add handles to host connections`, async () => {
-    let results = await runStrategy(`
+    const results = await runStrategy(`
       schema Thing
       shape HostedShape
         in ~a *
@@ -81,7 +81,7 @@ describe('AddMissingHandles', function() {
         P1
     `);
     assert.lengthOf(results, 1);
-    let recipe = results[0];
+    const recipe = results[0];
     assert.lengthOf(recipe.handles, 1);
     assert.isUndefined(recipe.particles[0].connections['hosted'].handle);
   });

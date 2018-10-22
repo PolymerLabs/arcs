@@ -22,14 +22,14 @@ import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function initializeManifestAndArc(contextContainer) {
-    let loader = new Loader();
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const loader = new Loader();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
-    let manifest = await Manifest.parse(`
+    const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
+    const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
@@ -40,9 +40,9 @@ describe('particle-shape-loading-with-slots', function() {
           foos <- handle0
           consume annotationsSet as slot0
       `, {loader, fileName: './test.manifest'});
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
 
-    let arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
+    const arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');
@@ -51,18 +51,18 @@ describe('particle-shape-loading-with-slots', function() {
   }
   async function instantiateRecipeAndStore(arc, recipe, manifest) {
     await arc.instantiate(recipe);
-    let inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
+    const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
     await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
     await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
     return inStore;
   }
 
-  let expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
+  const expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
 
   function verifyFooItems(slotConsumer, expectedValues) {
-    let renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
+    const renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
     assert.equal(renderings.length, Object.keys(expectedValues).length);
-    for (let [subId, {model, templateName}] of renderings) {
+    for (const [subId, {model, templateName}] of renderings) {
       assert.equal(expectedValues[subId], model.value);
       assert.equal(expectedTemplateName, templateName);
       assert.isTrue(!!SlotDomConsumer.hasTemplate(expectedTemplateName));
@@ -70,7 +70,7 @@ describe('particle-shape-loading-with-slots', function() {
   }
 
   it('multiplex recipe with slots - immediate', async () => {
-    let {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc({
+    const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc({
       'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
     });
 
@@ -80,7 +80,7 @@ describe('particle-shape-loading-with-slots', function() {
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
 
-    let inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
+    const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -89,7 +89,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert.isTrue(slotComposer.consumers[0] instanceof SlotDomConsumer);
     assert.isTrue(slotComposer.consumers[1] instanceof HostedSlotConsumer);
     assert.isTrue(slotComposer.consumers[2] instanceof HostedSlotConsumer);
-    let slot = slotComposer.consumers[0];
+    const slot = slotComposer.consumers[0];
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
@@ -109,13 +109,13 @@ describe('particle-shape-loading-with-slots', function() {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    let {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
+    const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
     slotComposer._contexts[0]._container = null;
-    let inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
+    const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
-      let myInterval = setInterval(function() {
+      const myInterval = setInterval(function() {
         if (slotComposer.consumers.length == 3) { // last 2 are hosted slots
           resolve();
           clearInterval(myInterval);
@@ -137,7 +137,7 @@ describe('particle-shape-loading-with-slots', function() {
 
     // Verify slot template and models.
     assert.lengthOf(slotComposer.consumers, 3);
-    let slot = slotComposer.consumers[0];
+    const slot = slotComposer.consumers[0];
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.

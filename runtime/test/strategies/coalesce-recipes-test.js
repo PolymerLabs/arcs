@@ -15,24 +15,24 @@ import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 import {assert} from '../chai-web.js';
 
 async function tryCoalesceRecipes(manifestStr) {
-  let manifest = await Manifest.parse(manifestStr);
-  let recipes = manifest.recipes;
+  const manifest = await Manifest.parse(manifestStr);
+  const recipes = manifest.recipes;
   assert.isTrue(recipes.every(recipe => recipe.normalize()));
   assert.isFalse(recipes.every(recipe => recipe.isResolved()));
-  let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-  let inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
-  let strategy = new CoalesceRecipes(arc);
+  const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+  const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
+  const strategy = new CoalesceRecipes(arc);
   return await strategy.generate(inputParams);
 }
 async function doNotCoalesceRecipes(manifestStr) {
-  let results = await tryCoalesceRecipes(manifestStr);
+  const results = await tryCoalesceRecipes(manifestStr);
   assert.isEmpty(results);
 }
 async function doCoalesceRecipes(manifestStr, options) {
   options = options || {};
-  let results = await tryCoalesceRecipes(manifestStr);
+  const results = await tryCoalesceRecipes(manifestStr);
   // dedup identical coalescing outputs
-  let resultsMap = new Map();
+  const resultsMap = new Map();
   results.forEach(r => {
     if (!options.skipUnresolved || r.result.isResolved()) {
       resultsMap.set(r.result.toString(), r.result);
@@ -44,7 +44,7 @@ async function doCoalesceRecipes(manifestStr, options) {
 
 describe('CoalesceRecipes', function() {
   it('coalesces required slots', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       particle P1
         consume root
           must provide foo
@@ -66,7 +66,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('coalesces required slots with handles', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       schema Thing
       schema OtherThing
       particle P1
@@ -111,7 +111,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('ignores host connections for handle requirements', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       schema Thing
       particle P1
         inout Thing thing
@@ -170,7 +170,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('evaluates fates of handles of required slot in coalesced recipes', async () => {
-    let parseManifest = async (options) => {
+    const parseManifest = async (options) => {
       return `
         schema Thing
 
@@ -229,7 +229,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('coalesces multiple handles', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       schema Thing1
       schema Thing2
       schema Thing3
@@ -263,7 +263,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('coalesces multiple handles while coalescing slots', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       schema Thing1
       schema Thing2
       particle P1
@@ -295,7 +295,7 @@ describe('CoalesceRecipes', function() {
   });
 
   it('coalesces recipe descriptions', async () => {
-    let recipe = await doCoalesceRecipes(`
+    const recipe = await doCoalesceRecipes(`
       schema Thing
       particle P1
         in Thing inThing

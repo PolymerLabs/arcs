@@ -16,7 +16,7 @@ import {Schema} from '../ts-build/schema.js';
 import {Type} from '../ts-build/type.js';
 
 describe('schema', function() {
-  let loader = new StubLoader({
+  const loader = new StubLoader({
     'Product.schema': `
         import './runtime/test/artifacts/Things/Thing.schema'
         schema Product extends Thing
@@ -41,8 +41,8 @@ describe('schema', function() {
   });
 
   it('schemas load recursively', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let schema = manifest.findSchemaByName('Product');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const schema = manifest.findSchemaByName('Product');
     assert.deepEqual(schema.fields, {description: 'Text', image: 'URL', category: 'Text',
                                      price: 'Text', seller: 'Text', shipDays: 'Number',
                                      url: 'URL', identifier: 'Text', isReal: 'Boolean',
@@ -52,10 +52,10 @@ describe('schema', function() {
   });
 
   it('constructs an appropriate entity subclass', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
     assert.equal(Product.name, 'Product');
-    let product = new Product({name: 'Pickled Chicken Sandwich',
+    const product = new Product({name: 'Pickled Chicken Sandwich',
                                description: 'A sandwich with pickles and chicken',
                                image: 'http://www.example.com/pcs.jpg',
                                category: 'Delicious Food', shipDays: 5});
@@ -72,10 +72,10 @@ describe('schema', function() {
   });
 
   it('stores a copy of the constructor arguments', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
-    let data = {name: 'Seafood Ice Cream', category: 'Terrible Food'};
-    let product = new Product(data);
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
+    const data = {name: 'Seafood Ice Cream', category: 'Terrible Food'};
+    const product = new Product(data);
     data.category = 'whyyyyyy';
     data.description = 'no seriously why';
     assert.equal(product.name, 'Seafood Ice Cream');
@@ -84,10 +84,10 @@ describe('schema', function() {
   });
 
   it('has accessors for all schema fields', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
 
-    let product = new Product({});
+    const product = new Product({});
     product.name = 'Deep Fried Pizza';
     product.description = 'Pizza, but fried, deeply';
     product.image = 'http://www.example.com/dfp.jpg';
@@ -120,23 +120,23 @@ describe('schema', function() {
   });
 
   it('has accessors for schema fields only', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
     assert.throws(() => { new Product({sku: 'sku'}); }, 'not in schema');
 
-    let product = new Product({});
+    const product = new Product({});
     assert.throws(() => { product.rawData.sku = 'sku'; }, 'not in schema');
-    assert.throws(() => { let x = product.rawData.sku; }, 'not in schema');
+    assert.throws(() => { const x = product.rawData.sku; }, 'not in schema');
   });
 
   it('performs type checking', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
     assert.throws(() => { new Product({name: 6}); }, TypeError, 'Type mismatch setting field name');
     assert.throws(() => { new Product({url: 7}); }, TypeError, 'Type mismatch setting field url');
     assert.throws(() => { new Product({shipDays: '2'}); }, TypeError, 'Type mismatch setting field shipDays');
 
-    let product = new Product({});
+    const product = new Product({});
     assert.throws(() => { product.name = 6; }, TypeError, 'Type mismatch setting field name');
     assert.throws(() => { product.url = ['url']; }, TypeError, 'Type mismatch setting field url');
     assert.throws(() => { product.shipDays = {two: 2}; }, TypeError, 'Type mismatch setting field shipDays');
@@ -153,14 +153,14 @@ describe('schema', function() {
   });
 
   it('makes a copy of the data when cloning', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product').entityClass();
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product').entityClass();
 
-    let product = new Product({name: 'Tomato Soup',
+    const product = new Product({name: 'Tomato Soup',
                                description: 'Soup that tastes like tomato',
                                image: 'http://www.example.com/soup.jpg',
                                category: 'Fluidic Food', shipDays: 4});
-    let data = product.dataClone();
+    const data = product.dataClone();
 
     // Mutate product to ensure data has been copied.
     product.name = 'Potato Soup';
@@ -171,12 +171,12 @@ describe('schema', function() {
   });
 
   it('enforces rules when storing union types', async function() {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Unions
         (Text or Number) u1
         (URL or Object or Boolean) u2`);
-    let Unions = manifest.findSchemaByName('Unions').entityClass();
-    let unions = new Unions({u1: 'foo', u2: true});
+    const Unions = manifest.findSchemaByName('Unions').entityClass();
+    const unions = new Unions({u1: 'foo', u2: true});
     assert.equal(unions.u1, 'foo');
     assert.equal(unions.u2, true);
     unions.u1 = 45;
@@ -199,7 +199,7 @@ describe('schema', function() {
   });
 
   it('enforces rules when storing reference types', async function() {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema ReferencedOne
         Text foo
       schema ReferencedTwo
@@ -208,9 +208,9 @@ describe('schema', function() {
         Reference<ReferencedOne> one
         Reference<ReferencedTwo> two`);
 
-    let References = manifest.findSchemaByName('References').entityClass();
+    const References = manifest.findSchemaByName('References').entityClass();
 
-    let ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
+    const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
     assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null), two: null}); });
     assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null)}); }, TypeError,
                   `Cannot set reference two with value '[object Object]' of mismatched type`);
@@ -219,14 +219,14 @@ describe('schema', function() {
   });
 
   it('enforces rules when storing collection types', async function() {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Collections
         [Reference<Foo {Text value}>] collection
     `);
 
-    let Collections = manifest.findSchemaByName('Collections').entityClass();
-    let FooType = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
-    let BarType = Type.newEntity(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
+    const Collections = manifest.findSchemaByName('Collections').entityClass();
+    const FooType = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
+    const BarType = Type.newEntity(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
     new Collections({collection: new Set()});
     new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(FooType), null)])});
     assert.throws(() => {new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(BarType), null)])}); }, TypeError,
@@ -234,12 +234,12 @@ describe('schema', function() {
   });
 
   it('enforces rules when storing tuple types', async function() {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Tuples
         (Text, Number) t1
         (URL, Object, Boolean) t2`);
-    let Tuples = manifest.findSchemaByName('Tuples').entityClass();
-    let tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
+    const Tuples = manifest.findSchemaByName('Tuples').entityClass();
+    const tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
     assert.deepEqual(tuples.t1, ['foo', 55]);
     assert.deepEqual(tuples.t2, [null, undefined, true]);
     tuples.t1 = ['bar', 66];
@@ -274,11 +274,11 @@ describe('schema', function() {
   });
 
   it('field with a single parenthesised value is a tuple not a union', async function() {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema SingleValueTuple
         (Number) t`);
-    let SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
-    let svt = new SingleValueTuple({t: [12]});
+    const SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
+    const svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);
     svt.t = [34];
     assert.deepEqual(svt.t, [34]);
@@ -289,9 +289,9 @@ describe('schema', function() {
   });
 
   it('handles schema unions', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Person = manifest.findSchemaByName('Person');
-    let Animal = manifest.findSchemaByName('Animal');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Person = manifest.findSchemaByName('Person');
+    const Animal = manifest.findSchemaByName('Animal');
 
     assert.deepEqual(Schema.union(Person, Animal), new Schema({
       names: ['Person', 'Animal', 'Thing'],
@@ -300,18 +300,18 @@ describe('schema', function() {
   });
 
   it('handles field type conflict in schema unions', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Person = manifest.findSchemaByName('Person');
-    let Product = manifest.findSchemaByName('Product');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Person = manifest.findSchemaByName('Person');
+    const Product = manifest.findSchemaByName('Product');
 
     assert.isNull(Schema.union(Person, Product),
       'price fields of different types forbid an union');
   });
 
   it('handles schema intersection of subtypes', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Thing = manifest.findSchemaByName('Thing');
-    let Product = manifest.findSchemaByName('Product');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Thing = manifest.findSchemaByName('Thing');
+    const Product = manifest.findSchemaByName('Product');
     delete Thing._model.description;
 
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
@@ -319,10 +319,10 @@ describe('schema', function() {
   });
 
   it('handles schema intersection for shared supertypes', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Thing = manifest.findSchemaByName('Thing');
-    let Product = manifest.findSchemaByName('Product');
-    let Animal = manifest.findSchemaByName('Animal');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Thing = manifest.findSchemaByName('Thing');
+    const Product = manifest.findSchemaByName('Product');
+    const Animal = manifest.findSchemaByName('Animal');
 
     assert.deepEqual(Schema.intersect(Animal, Product), new Schema({
       names: ['Thing'],
@@ -333,10 +333,10 @@ describe('schema', function() {
   });
 
   it('handles schema intersection if no shared supertype and a conflicting field', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Product = manifest.findSchemaByName('Product');
-    let Person = manifest.findSchemaByName('Person');
-    let intersection = Schema.intersect(Person, Product);
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Product = manifest.findSchemaByName('Product');
+    const Person = manifest.findSchemaByName('Person');
+    const intersection = Schema.intersect(Person, Product);
 
     assert.isDefined(Person.fields.price);
     assert.isDefined(Product.fields.price);
@@ -352,9 +352,9 @@ describe('schema', function() {
   });
 
   it('handles empty schema intersection as empty object', async function() {
-    let manifest = await Manifest.load('Product.schema', loader);
-    let Person = manifest.findSchemaByName('Person');
-    let AlienLife = manifest.findSchemaByName('AlienLife');
+    const manifest = await Manifest.load('Product.schema', loader);
+    const Person = manifest.findSchemaByName('Person');
+    const AlienLife = manifest.findSchemaByName('AlienLife');
     assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema({
       names: [],
       fields: {}

@@ -56,7 +56,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     </style>
       `;
 
-    let styles = html`
+    const styles = html`
 <style>
   ${host} {
     padding: 0 16px;
@@ -90,7 +90,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 </style>
   `;
 
-  let productTemplate = html`
+  const productTemplate = html`
 <template>
   <div item>
     <div row>
@@ -108,7 +108,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 </template>
   `;
 
-  let template = html`
+  const template = html`
 <div chooser>
 ${styles}
 ${productStyles}
@@ -128,7 +128,7 @@ ${productStyles}
       return Boolean(choices && resultList && person);
     }
     render({choices, resultList}, state) {
-      let result = [...difference(choices, resultList)];
+      const result = [...difference(choices, resultList)];
       if (result.length > 0) {
         this.relevance = 10;
       }
@@ -149,7 +149,7 @@ ${productStyles}
   };
 
   function difference(a, b) {
-    let result = new Map();
+    const result = new Map();
     a.forEach(value => result.set(JSON.stringify(value.name), value));
     b.map(a => JSON.stringify(a.name)).forEach(value => result.delete(value));
     return result.values();

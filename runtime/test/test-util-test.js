@@ -15,8 +15,8 @@ import {setDiff, setDiffCustom} from '../ts-build/util.js';
 
 describe('util', function() {
   it('setDiff works for basic value types', () => {
-    let check = (from, to, expected) => {
-      let result = setDiff(from, to);
+    const check = (from, to, expected) => {
+      const result = setDiff(from, to);
       assert.sameDeepMembers(result.add, expected.add);
       assert.sameDeepMembers(result.remove, expected.remove);
     };
@@ -31,19 +31,19 @@ describe('util', function() {
     // The reason for setDiffCustom... objects are compared by identity, so setDiff will always
     // consider separate value-identical instances of objects as different. Thus the following
     // looks like a complete replacement of the set:
-    let from = [{a: 1}, {b: 2}];
-    let to   = [{b: 2}, {c: 3}];
+    const from = [{a: 1}, {b: 2}];
+    const to   = [{b: 2}, {c: 3}];
     check(from, to, {add: to, remove: from});
   });
 
   it('setDiffCustom is the same as setDiff when given the identity key function', () => {
-    let check = (keyFn, from, to, expected) => {
-      let result = setDiffCustom(from, to, keyFn);
+    const check = (keyFn, from, to, expected) => {
+      const result = setDiffCustom(from, to, keyFn);
       assert.sameDeepMembers(result.add, expected.add);
       assert.sameDeepMembers(result.remove, expected.remove);
     };
 
-    let keyFn = x => x;
+    const keyFn = x => x;
 
     check(keyFn, [], [], {add: [], remove: []});
     check(keyFn, ['a', 5], [5, 'a'], {add: [], remove: []});
@@ -52,19 +52,19 @@ describe('util', function() {
     check(keyFn, ['a', 'b', 7, 8], ['b', 8, 'c', 9], {add: ['c', 9], remove: [7, 'a']});
     check(keyFn, ['x', 'y', 3, 'x', 3, 'y'], ['z', 'x', 'z'], {add: ['z'], remove: ['y', 3]});
 
-    let from = [{a: 1}, {b: 2}];
-    let to   = [{b: 2}, {c: 3}];
+    const from = [{a: 1}, {b: 2}];
+    const to   = [{b: 2}, {c: 3}];
     check(keyFn, from, to, {add: to, remove: from});
   });
 
   it('setDiffCustom works with JSON.stringify as the key function', () => {
-    let check = (keyFn, from, to, expected) => {
-      let result = setDiffCustom(from, to, keyFn);
+    const check = (keyFn, from, to, expected) => {
+      const result = setDiffCustom(from, to, keyFn);
       assert.sameDeepMembers(result.add, expected.add);
       assert.sameDeepMembers(result.remove, expected.remove);
     };
 
-    let keyFn = JSON.stringify;
+    const keyFn = JSON.stringify;
 
     check(keyFn, [], [], {add: [], remove: []});
     check(keyFn, ['a', {x: 5}], [{x: 5}, 'a'], {add: [], remove: []});
@@ -81,13 +81,13 @@ describe('util', function() {
   });
 
   it('setDiffCustom works with an object-specific key function', () => {
-    let check = (keyFn, from, to, expected) => {
-      let result = setDiffCustom(from, to, keyFn);
+    const check = (keyFn, from, to, expected) => {
+      const result = setDiffCustom(from, to, keyFn);
       assert.sameDeepMembers(result.add, expected.add);
       assert.sameDeepMembers(result.remove, expected.remove);
     };
 
-    let keyFn = x => `${x.a}:${x.b}`;
+    const keyFn = x => `${x.a}:${x.b}`;
 
     check(keyFn, [], [], {add: [], remove: []});
     check(keyFn, [{a: 1, b: 2}, {a: 7}], [{a: 7}, {b: 2, a: 1}], {add: [], remove: []});

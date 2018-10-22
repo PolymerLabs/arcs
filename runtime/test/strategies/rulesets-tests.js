@@ -26,7 +26,7 @@ class InitPopulation extends Strategy {
   async generate({generation}) {
     if (generation != 0) return [];
 
-    let recipe = this._context.recipes[0];
+    const recipe = this._context.recipes[0];
     recipe.normalize();
 
     return [{
@@ -46,7 +46,7 @@ class FateAssigner extends Strategy {
   }
 
   async generate(inputParams) {
-    let self = this;
+    const self = this;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate === '?') {
@@ -98,12 +98,12 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', options.context, 'mock');
-    let planner = new Planner();
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', options.context, 'mock');
+    const planner = new Planner();
     planner.init(arc, options);
-    let generations = [];
+    const generations = [];
     await planner.plan(Infinity, generations);
-    let recipes = [].concat(...generations.map(instance => instance.generated));
+    const recipes = [].concat(...generations.map(instance => instance.generated));
     return {
       total: recipes.length,
       fateAssigned: recipes.reduce((acc, r) => acc + (r.result.handles.every(h => h.fate !== '?')), 0),

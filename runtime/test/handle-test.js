@@ -20,7 +20,7 @@ import {Loader} from '../ts-build/loader.js';
 import {Schema} from '../ts-build/schema.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 
-let loader = new Loader();
+const loader = new Loader();
 
 const createSlotComposer = () => new SlotComposer({rootContainer: 'test', affordance: 'mock'});
 
@@ -32,9 +32,9 @@ describe('Handle', function() {
   });
 
   it('clear singleton store', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let barStore = await arc.createStore(Bar.type);
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const barStore = await arc.createStore(Bar.type);
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
     assert.isNull(await barStore.get());
@@ -44,13 +44,13 @@ describe('Handle', function() {
     // NOTE: Until entity mutation is distinct from collection modification,
     // referenceMode stores *can't* ignore duplicate stores of the same
     // entity value.
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let store = await arc.createStore(Bar.type);
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const store = await arc.createStore(Bar.type);
     let version = 0;
     store.on('change', () => version++, {});
     assert.equal(version, 0);
-    let bar1 = {id: 'an id', value: 'a Bar'};
+    const bar1 = {id: 'an id', value: 'a Bar'};
     await store.set(bar1);
     assert.equal(version, 1);
     await store.set(bar1);
@@ -61,13 +61,13 @@ describe('Handle', function() {
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let barStore = await arc.createStore(Bar.type.collectionOf());
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const barStore = await arc.createStore(Bar.type.collectionOf());
     let version = 0;
     barStore.on('change', ({add: [{effective}]}) => {if (effective) version++;}, {});
     assert.equal(barStore.version, 0);
-    let bar1 = {id: 'an id', value: 'a Bar'};
+    const bar1 = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar1, ['key1']);
     assert.equal(version, 1);
     await barStore.store(bar1, ['key2']);
@@ -79,12 +79,12 @@ describe('Handle', function() {
   });
 
   it('dedupes common user-provided ids', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
 
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
-    let Foo = manifest.schemas.Foo.entityClass();
-    let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const Foo = manifest.schemas.Foo.entityClass();
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
@@ -93,63 +93,63 @@ describe('Handle', function() {
   });
 
   it('allows updates with same user-provided ids but different value (collection)', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
 
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
-    let Foo = manifest.schemas.Foo.entityClass();
-    let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const Foo = manifest.schemas.Foo.entityClass();
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
-    let stored = (await fooHandle.toList())[0];
+    const stored = (await fooHandle.toList())[0];
     assert.equal(stored.value, '2');
   });
 
   it('allows updates with same user-provided ids but different value (variable)', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
 
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
-    let Foo = manifest.schemas.Foo.entityClass();
-    let fooHandle = handleFor(await arc.createStore(Foo.type));
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const Foo = manifest.schemas.Foo.entityClass();
+    const fooHandle = handleFor(await arc.createStore(Foo.type));
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));
-    let stored = await fooHandle.get();
+    const stored = await fooHandle.get();
     assert.equal(stored.value, '2');
   });
 
   it('remove entry from store', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let barStore = await arc.createStore(Bar.type.collectionOf());
-    let bar = new Bar({id: 0, value: 'a Bar'});
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const barStore = await arc.createStore(Bar.type.collectionOf());
+    const bar = new Bar({id: 0, value: 'a Bar'});
     barStore.store(bar, ['key1']);
     barStore.remove(bar.id);
     assert.isEmpty((await barStore.toList()));
   });
 
   it('can store a particle in a shape store', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    let shape = new Shape('Test', [{type: Type.newEntity(manifest.schemas.Foo)},
+    const shape = new Shape('Test', [{type: Type.newEntity(manifest.schemas.Foo)},
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape.particleMatches(manifest.particles[0]));
 
-    let shapeStore = await arc.createStore(Type.newInterface(shape));
+    const shapeStore = await arc.createStore(Type.newInterface(shape));
     await shapeStore.set(manifest.particles[0]);
     assert.equal(await shapeStore.get(), manifest.particles[0]);
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {
-    let slotComposer = createSlotComposer();
-    let arc = new Arc({slotComposer, id: 'test'});
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const slotComposer = createSlotComposer();
+    const arc = new Arc({slotComposer, id: 'test'});
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    let assert_throws_async = async (f, message) => {
+    const assert_throws_async = async (f, message) => {
       try {
         await f();
         assert.throws(() => undefined, message);
@@ -168,13 +168,13 @@ describe('Handle', function() {
         `tags ${arc._tags} should have included ${tag}`));
   });
   it('uses default storage keys', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     schema Bar
       Text value
     `);
-    let arc = new Arc({id: 'test', storageKey: 'firebase://xxx.firebaseio.com/yyy/'});
+    const arc = new Arc({id: 'test', storageKey: 'firebase://xxx.firebaseio.com/yyy/'});
     let resolver;
-    let promise = new Promise((resolve, reject) => {resolver = resolve;});
+    const promise = new Promise((resolve, reject) => {resolver = resolve;});
     arc.storageProviderFactory = new class extends StorageProviderFactory {
       construct(id, type, keyFragment) {
         resolver(keyFragment);
@@ -185,7 +185,7 @@ describe('Handle', function() {
       }
     }(arc.id);
     await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
-    let result = await promise;
+    const result = await promise;
     assert.equal(result, 'firebase://xxx.firebaseio.com/yyy/handles/test1');
   });
 });

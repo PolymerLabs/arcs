@@ -17,7 +17,7 @@ import {assert} from '../chai-web.js';
 
 describe('InitPopulation', async () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Product
 
       particle A in 'A.js'
@@ -27,12 +27,12 @@ describe('InitPopulation', async () => {
         create as handle1
         A
           product <- handle1`);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    let arc = new Arc({id: 'test-plan-arc', context: manifest});
+    const arc = new Arc({id: 'test-plan-arc', context: manifest});
 
     async function scoreOfInitPopulationOutput() {
-      let results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
+      const results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
       assert.lengthOf(results, 1);
       return results[0].score;
     }
@@ -43,15 +43,15 @@ describe('InitPopulation', async () => {
   });
 
   it('reads from RecipeIndex', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
       recipe
         A`);
 
-    let [recipe] = manifest.recipes;
+    const [recipe] = manifest.recipes;
     assert(recipe.normalize());
 
-    let arc = new Arc({
+    const arc = new Arc({
       id: 'test-plan-arc',
       context: new Manifest({id: 'test'}),
       recipeIndex: {
@@ -59,13 +59,13 @@ describe('InitPopulation', async () => {
       }
     });
 
-    let results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
+    const results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
     assert.lengthOf(results, 1);
     assert.equal(results[0].result.toString(), recipe.toString());
   });
 
   it('contextual population has recipes matching arc handles and slots', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Burrito
 
       // Binds to handle Burrito
@@ -115,7 +115,7 @@ describe('InitPopulation', async () => {
           burger -> burger
     `);
 
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     async function openRestaurantWith(foodType) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);

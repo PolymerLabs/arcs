@@ -14,7 +14,7 @@ import {SlotConsumer} from '../ts-build/slot-consumer.js';
 
 describe('slot consumer', function() {
   it('setting container', async () => {
-    let slot = new SlotConsumer({name: 'dummy-consumeConn', slotSpec: {}});
+    const slot = new SlotConsumer({name: 'dummy-consumeConn', slotSpec: {}});
     slot.slotContext = {};
     let startRenderCount = 0;
     let stopRenderCount = 0;

@@ -15,9 +15,9 @@ import {Loader} from '../ts-build/loader.js';
 import {Manifest} from '../ts-build/manifest.js';
 
 async function setup() {
-  let registry = {};
-  let loader = new Loader();
-  let manifest = await Manifest.load('./runtime/test/artifacts/type-match.manifest', loader, registry);
+  const registry = {};
+  const loader = new Loader();
+  const manifest = await Manifest.load('./runtime/test/artifacts/type-match.manifest', loader, registry);
   assert(manifest);
 
   return manifest;
@@ -25,9 +25,9 @@ async function setup() {
 
 describe('type integration', () => {
   it('a subtype matches to a supertype that wants to be read', async () => {
-    let manifest = await setup();
+    const manifest = await setup();
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert.equal(recipe.handles.length, 1);
@@ -36,9 +36,9 @@ describe('type integration', () => {
   });
 
   it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
-    let manifest = await setup();
+    const manifest = await setup();
 
-    let recipe = manifest.recipes[1];
+    const recipe = manifest.recipes[1];
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.collectionOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -47,9 +47,9 @@ describe('type integration', () => {
   });
 
   it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
-    let manifest = await setup();
+    const manifest = await setup();
 
-    let recipe = manifest.recipes[1];
+    const recipe = manifest.recipes[1];
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.collectionOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());

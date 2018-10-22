@@ -24,7 +24,7 @@ import {ParticleSpec} from '../particle-spec.js';
 describe('particle-shape-loading', function() {
 
   it('loads interfaces into particles', async () => {
-    let loader = new StubLoader({
+    const loader = new StubLoader({
       'outer-particle.js': `
           'use strict';
 
@@ -61,24 +61,24 @@ describe('particle-shape-loading', function() {
             };
           });`});
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
 
-    let arc = new Arc({id: 'test', pecFactory});
+    const arc = new Arc({id: 'test', pecFactory});
 
-    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    let fooType = Type.newEntity(manifest.schemas.Foo);
-    let barType = Type.newEntity(manifest.schemas.Bar);
+    const fooType = Type.newEntity(manifest.schemas.Foo);
+    const barType = Type.newEntity(manifest.schemas.Bar);
 
-    let shape = new Shape('Test', [{type: fooType}, {type: barType}], []);
+    const shape = new Shape('Test', [{type: fooType}, {type: barType}], []);
 
-    let shapeType = Type.newInterface(shape);
+    const shapeType = Type.newInterface(shape);
 
-    let outerParticleSpec = new ParticleSpec({
+    const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',
       implFile: 'outer-particle.js',
       args: [
@@ -88,27 +88,27 @@ describe('particle-shape-loading', function() {
       ],
     });
 
-    let shapeStore = await arc.createStore(shapeType);
+    const shapeStore = await arc.createStore(shapeType);
     await shapeStore.set(manifest.particles[0].toLiteral());
-    let outStore = await arc.createStore(barType);
-    let inStore = await arc.createStore(fooType);
+    const outStore = await arc.createStore(barType);
+    const inStore = await arc.createStore(fooType);
     await inStore.set({id: 'id', rawData: {value: 'a foo'}});
 
-    let recipe = new Recipe();
-    let particle = recipe.newParticle('outerParticle');
+    const recipe = new Recipe();
+    const particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 
-    let recipeShapeHandle = recipe.newHandle();
+    const recipeShapeHandle = recipe.newHandle();
     particle.connections['particle'].connectToHandle(recipeShapeHandle);
     recipeShapeHandle.fate = 'use';
     recipeShapeHandle.mapToStorage(shapeStore);
 
-    let recipeOutHandle = recipe.newHandle();
+    const recipeOutHandle = recipe.newHandle();
     particle.connections['output'].connectToHandle(recipeOutHandle);
     recipeOutHandle.fate = 'use';
     recipeOutHandle.mapToStorage(outStore);
 
-    let recipeInHandle = recipe.newHandle();
+    const recipeInHandle = recipe.newHandle();
     particle.connections['input'].connectToHandle(recipeInHandle);
     recipeInHandle.fate = 'use';
     recipeInHandle.mapToStorage(inStore);
@@ -122,15 +122,15 @@ describe('particle-shape-loading', function() {
   });
 
   it('loads shapes into particles declaratively', async () => {
-    let loader = new Loader();
+    const loader = new Loader();
 
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
+    const pecFactory = function(id) {
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
 
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/test-particles.manifest'
 
       recipe
@@ -142,12 +142,12 @@ describe('particle-shape-loading', function() {
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    let arc = new Arc({id: 'test', pecFactory, context: manifest});
+    const arc = new Arc({id: 'test', pecFactory, context: manifest});
 
-    let fooType = manifest.findTypeByName('Foo');
-    let barType = manifest.findTypeByName('Bar');
+    const fooType = manifest.findTypeByName('Foo');
+    const barType = manifest.findTypeByName('Bar');
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');

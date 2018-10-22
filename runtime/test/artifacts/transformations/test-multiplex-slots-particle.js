@@ -21,8 +21,8 @@ defineParticle(({TransformationDomParticle}) => {
     }
 
     async setHandles(handles) {
-      let arc = await this.constructInnerArc();
-      let hostedParticle = await handles.get('particle').get();
+      const arc = await this.constructInnerArc();
+      const hostedParticle = await handles.get('particle').get();
 
       this.setState({arc, hostedParticle, type: handles.get('foos').type});
 
@@ -30,20 +30,20 @@ defineParticle(({TransformationDomParticle}) => {
     }
 
     async willReceiveProps({foos}) {
-      let arc = this._state.arc;
-      let hostedParticle = this._state.hostedParticle;
-      let type = this._state.type;
-      for (let [index, foo] of foos.entries()) {
+      const arc = this._state.arc;
+      const hostedParticle = this._state.hostedParticle;
+      const type = this._state.type;
+      for (const [index, foo] of foos.entries()) {
         if (this._handleIds.has(foo.id)) {
           // The element already exists.
           continue;
         }
-        let fooHandle = await arc.createHandle(type.primitiveType(), 'foo' + index);
+        const fooHandle = await arc.createHandle(type.primitiveType(), 'foo' + index);
         this._handleIds.add(foo.id);
-        let hostedSlotName = [...hostedParticle.slots.keys()][0];
-        let slotName = [...this.spec.slots.values()][0].name;
-        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
-        let recipe = `
+        const hostedSlotName = [...hostedParticle.slots.keys()][0];
+        const slotName = [...this.spec.slots.values()][0].name;
+        const slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+        const recipe = `
           schema Foo
             Text value
 

@@ -13,13 +13,13 @@ import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('Recipe Search', function() {
-  let createAndVerifyResolved = (search) => {
+  const createAndVerifyResolved = (search) => {
     assert.isTrue(search.isValid());
     search._normalize();
     assert.isTrue(search.isResolved());
     return search;
   };
-  let createAndVerifyUnresolved = (search) => {
+  const createAndVerifyUnresolved = (search) => {
     assert.isTrue(search.isValid());
     search._normalize();
     assert.isFalse(search.isResolved());
@@ -44,7 +44,7 @@ describe('Recipe Search', function() {
   });
 
   it('copies search to recipe', () => {
-    let recipe = new Recipe();
+    const recipe = new Recipe();
     new Search('hello world bye world')._copyInto(recipe);
 
     assert.equal('hello world bye world', recipe.search.phrase);

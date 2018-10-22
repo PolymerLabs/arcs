@@ -6,8 +6,8 @@ beforeEach(() => registerSystemExceptionHandler((exception, name, particle) => e
 
 afterEach(function() {
   if (exceptions.length > 0) {
-    for (let {exception, name, particle} of exceptions) {
-      let error = new Error(`${exception.name} when invoking system function ${name} on behalf of ${particle}`); 
+    for (const {exception, name, particle} of exceptions) {
+      const error = new Error(`${exception.name} when invoking system function ${name} on behalf of ${particle}`); 
       error.stack = exception.stack;
       this.test.ctx.currentTest.err = error; // eslint-disable-line no-invalid-this
     }

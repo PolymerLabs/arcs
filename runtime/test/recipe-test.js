@@ -14,7 +14,7 @@ import {Manifest} from '../ts-build/manifest.js';
 
 describe('recipe', function() {
   it('normalize errors', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema S1
         schema S2
         particle P1
@@ -30,9 +30,9 @@ describe('recipe', function() {
             s1 = handle1
             s2 -> handle2
     `);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     recipe.handles[0]._mappedType = recipe.particles[0].connections['s2'].type;
-    let options = {errors: new Map()};
+    const options = {errors: new Map()};
 
     recipe.normalize(options);
 
@@ -41,17 +41,17 @@ describe('recipe', function() {
     options.errors.has(recipe.slots[1]);
   });
   it('clones recipe', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         particle Particle1
         recipe MyRecipe
           Particle1
     `);
-    let recipe = manifest.recipes[0];
-    let clonedRecipe = recipe.clone();
+    const recipe = manifest.recipes[0];
+    const clonedRecipe = recipe.clone();
     assert.equal(recipe.toString(), clonedRecipe.toString());
   });
   it('validate handle connection types', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema MyType
         schema MySubType extends MyType
         schema OtherType
@@ -69,12 +69,12 @@ describe('recipe', function() {
           in BigCollection<MyType> inMys
     `);
 
-    let MyType = manifest.findSchemaByName('MyType').entityClass().type;
-    let MySubType = manifest.findSchemaByName('MySubType').entityClass().type;
-    let OtherType = manifest.findSchemaByName('OtherType').entityClass().type;
+    const MyType = manifest.findSchemaByName('MyType').entityClass().type;
+    const MySubType = manifest.findSchemaByName('MySubType').entityClass().type;
+    const OtherType = manifest.findSchemaByName('OtherType').entityClass().type;
 
     // MyType and MySubType (sub class of MyType) are valid types for (in MyType)
-    let p1ConnSpec = manifest.particles.find(p => p.name == 'P1').connections[0];
+    const p1ConnSpec = manifest.particles.find(p => p.name == 'P1').connections[0];
     assert.isTrue(p1ConnSpec.isCompatibleType(MyType));
     assert.isTrue(p1ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p1ConnSpec.isCompatibleType(OtherType));
@@ -84,25 +84,25 @@ describe('recipe', function() {
     assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
 
     // Only MyType are valid types for (out MyType)
-    let p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
+    const p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
     assert.isTrue(p2ConnSpec.isCompatibleType(MyType));
     assert.isFalse(p2ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p2ConnSpec.isCompatibleType(OtherType));
 
     // Only MySubType is a valid types for (in MySubType)
-    let p3ConnSpec = manifest.particles.find(p => p.name == 'P3').connections[0];
+    const p3ConnSpec = manifest.particles.find(p => p.name == 'P3').connections[0];
     assert.isFalse(p3ConnSpec.isCompatibleType(MyType));
     assert.isTrue(p3ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p3ConnSpec.isCompatibleType(OtherType));
 
     // MyType and MySubType are valid types for (out MySubType)
-    let p4ConnSpec = manifest.particles.find(p => p.name == 'P4').connections[0];
+    const p4ConnSpec = manifest.particles.find(p => p.name == 'P4').connections[0];
     assert.isTrue(p4ConnSpec.isCompatibleType(MyType));
     assert.isTrue(p4ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p4ConnSpec.isCompatibleType(OtherType));
 
     // MyType and MySubType are valid types for (in [MyType])
-    let p5ConnSpec = manifest.particles.find(p => p.name == 'P5').connections[0];
+    const p5ConnSpec = manifest.particles.find(p => p.name == 'P5').connections[0];
     assert.isFalse(p5ConnSpec.isCompatibleType(MyType));
     assert.isFalse(p5ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p5ConnSpec.isCompatibleType(OtherType));
@@ -112,7 +112,7 @@ describe('recipe', function() {
     assert.isFalse(p5ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
 
     // MyType and MySubType are valid types for (in BigCollection<MyType>)
-    let p6ConnSpec = manifest.particles.find(p => p.name == 'P6').connections[0];
+    const p6ConnSpec = manifest.particles.find(p => p.name == 'P6').connections[0];
     assert.isFalse(p6ConnSpec.isCompatibleType(MyType));
     assert.isFalse(p6ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p6ConnSpec.isCompatibleType(OtherType));
@@ -122,7 +122,7 @@ describe('recipe', function() {
     assert.isTrue(p6ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
   });
   it('keeps orphaned slots, handles and particles', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'A.js'
 
       recipe
@@ -131,7 +131,7 @@ describe('recipe', function() {
         A
     `);
 
-    let [recipe] = manifest.recipes;
+    const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
     assert.lengthOf(recipe.slots, 1);
@@ -139,7 +139,7 @@ describe('recipe', function() {
     assert.lengthOf(recipe.handles, 1);
   });
   it(`is resolved if an optional handle with dependents is not connected`, async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'A.js'
         in [Foo {}]? optionalIn
           out [Foo {}] dependentOut
@@ -148,13 +148,13 @@ describe('recipe', function() {
         A
     `);
 
-    let [recipe] = manifest.recipes;
+    const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
   });
 
   it(`is not resolved if a handle is connected but its parent isn't`, async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'A.js'
         in [Foo {}]? optionalIn
           out [Foo {}] dependentOut
@@ -174,7 +174,7 @@ describe('recipe', function() {
           dependentOut -> h0
     `);
 
-    let [recipe1, recipe2] = manifest.recipes;
+    const [recipe1, recipe2] = manifest.recipes;
     assert.isTrue(recipe1.normalize());
     assert.isFalse(recipe1.isResolved());
 
@@ -183,7 +183,7 @@ describe('recipe', function() {
   });
 
   it(`is not resolved if a handle type is not resolved`, async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'B.js'
         in ~a foo1
         in ~a foo2
@@ -194,7 +194,7 @@ describe('recipe', function() {
           foo1 <- h0
           foo2 <- h1
     `);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
     assert.isFalse(recipe.handles[0].isResolved());
@@ -202,10 +202,10 @@ describe('recipe', function() {
   });
 
   const getFirstRecipeHash = async manifestContent => {
-    let loader = new Loader();
-    let manifest = await Manifest.parse(manifestContent,
+    const loader = new Loader();
+    const manifest = await Manifest.parse(manifestContent,
         {loader, fileName: './manifest.manifest'});
-    let [recipe] = manifest.recipes;
+    const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
     return recipe.digest();
   };
@@ -275,7 +275,7 @@ describe('recipe', function() {
     assert.equal(digestA, digestB);
   });
   it('verifies required consume and provide slot connections', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         must consume slotA
           must provide slotA1
@@ -336,7 +336,7 @@ describe('recipe', function() {
     assert.isTrue(manifest.recipes[4].isResolved());
   });
   it('verifies required consume connection is provided by a fullfilled slot', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         consume slot1
           must provide slot2
@@ -353,12 +353,12 @@ describe('recipe', function() {
           consume slot2 as slot2
     `);
     assert.lengthOf(manifest.recipes, 1);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert.isFalse(recipe.isResolved());
   });
   it('considers type resolution as recipe update', async () => {
-    let manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema Thing
       particle Generic
         in ~a any
@@ -376,7 +376,7 @@ describe('recipe', function() {
         [{}]
     `);
     assert.lengthOf(manifest.recipes, 1);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     recipe.handles[0].id = 'my-things';
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
@@ -392,17 +392,17 @@ describe('recipe', function() {
     any <- handle0
   Specific as particle1
     thing <- handle0`, recipe.toString({showUnresolved: true}));
-    let hash = await recipe.digest();
+    const hash = await recipe.digest();
 
-    let recipeClone = recipe.clone();
-    let hashClone = await recipeClone.digest();
+    const recipeClone = recipe.clone();
+    const hashClone = await recipeClone.digest();
     assert.equal(hash, hashClone);
 
-    let store = manifest.findStoreByName('MyThings');
+    const store = manifest.findStoreByName('MyThings');
     recipeClone.handles[0].mapToStorage(store);
     recipeClone.normalize();
     assert.isTrue(recipeClone.isResolved());
-    let hashResolvedClone = await recipeClone.digest();
+    const hashResolvedClone = await recipeClone.digest();
     assert.equal(`recipe
   map 'my-things' as handle0 // Thing {}
   Generic as particle0

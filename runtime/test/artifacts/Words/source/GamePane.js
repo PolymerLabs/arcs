@@ -311,7 +311,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
       return template;
     }
     boardToModels(tileBoard, coordinates) {
-      let models = [];
+      const models = [];
       for (let i = 0; i < tileBoard.size; i++) {
         const tile = tileBoard.tileAtIndex(i);
         const letterClasses = ['tile'];
@@ -336,7 +336,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
       return models;
     }
     moveToTiles(tileBoard, move) {
-      let tiles = [];
+      const tiles = [];
       if (!tileBoard || !move || !move.coordinates) {
         return tiles;
       }
@@ -429,7 +429,7 @@ recipe
         // TODO(wkorman): Rework the below for brevity and simplicity. We
         // should only really need to write this once, and ideally to a
         // single Post rather than a collection.
-        let postValues = {
+        const postValues = {
           arcKey: props.shellTheme.key,
           author: props.person.id,
           createdTimestamp: Date.now(),
@@ -476,7 +476,7 @@ recipe
         contentText = '➜'; // right arrow
         orientation = 'orientation-right';
         const tilesFromRight = BOARD_WIDTH - fromTile.x - 1;
-        let topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
+        const topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
 
         let downward = false;
         // calculate upward or downward
@@ -502,7 +502,7 @@ recipe
       } else if (toTile.x < fromTile.x) {
         contentText = '➜';
         orientation = 'orientation-left';
-        let topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
+        const topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
 
         let downward = false;
         // calculate upward or downward
@@ -546,12 +546,12 @@ recipe
       return [contentText, positionText, orientation];
     }
     selectedTilesToModels(selectedTiles) {
-      let models = [];
+      const models = [];
       if (selectedTiles.length < 2) {
         return models;
       }
       for (let i = 0; i < selectedTiles.length - 1; i++) {
-        let [contentText, positionText, orientation] = this.tileTransitionToTextAndPosition(
+        const [contentText, positionText, orientation] = this.tileTransitionToTextAndPosition(
             selectedTiles[i], selectedTiles[i + 1]);
         models.push({style: positionText, content: contentText, orientation: orientation});
       }
@@ -585,7 +585,7 @@ recipe
         this.setStats(Scoring.create(props.person, board.gameId));
       }
       board.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
-      let [moveData, moveTiles, moveScore] =
+      const [moveData, moveTiles, moveScore] =
           this.processSubmittedMove(props, state, tileBoard);
       this.setState({
         tileBoard,
@@ -596,9 +596,9 @@ recipe
         moveSubmitted: false
       });
 
-      let boardModels = this.boardToModels(
+      const boardModels = this.boardToModels(
           state.tileBoard, state.move ? state.move.coordinates : '');
-      let annotationModels = this.selectedTilesToModels(state.selectedTiles);
+      const annotationModels = this.selectedTilesToModels(state.selectedTiles);
       const word = this.tilesToWord(state.selectedTiles);
       const submitMoveEnabled =
           Scoring.isMinimumWordLength(state.selectedTiles.length) &&
@@ -640,7 +640,7 @@ recipe
     }
     selectTile(e, state) {
       const tile = state.tileBoard.tileAtIndex(e.data.value);
-      let lastSelectedTile = state.selectedTiles.length == 0 ?
+      const lastSelectedTile = state.selectedTiles.length == 0 ?
           undefined :
           state.selectedTiles[state.selectedTiles.length - 1];
       // info(
@@ -662,7 +662,7 @@ recipe
           if (i > 0) {
             newCoordinates += ',';
           }
-          let buildTile = state.selectedTiles[i];
+          const buildTile = state.selectedTiles[i];
           newCoordinates += `(${buildTile.x},${buildTile.y})`;
         }
       } else {
@@ -725,11 +725,11 @@ recipe
         if (!longestWord || words[i].text.length > longestWord.text.length) {
           longestWord = words[i];
         }
-        let wordTiles = [];
+        const wordTiles = [];
         for (let j = 0; j < words[i].text.length; j++) {
           wordTiles.push(new Tile(0, words[i].text.charAt(j)));
         }
-        let wordScore = Scoring.wordScore(wordTiles);
+        const wordScore = Scoring.wordScore(wordTiles);
         if (wordScore > highestScore) {
           highestScore = wordScore;
           highestScoringWord = words[i];
