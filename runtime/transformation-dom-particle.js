@@ -12,7 +12,7 @@
 import {DomParticle} from './dom-particle.js';
 
 // Regex to separate style and template.
-let re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
+const re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
 
 /** @class TransformationDomParticle
  * Particle that does transformation stuff with DOM.

@@ -23,7 +23,7 @@ export class NameUnnamedConnections extends Strategy {
           return;
         }
 
-        let possibleSpecConns = handleConnection.particle.spec.connections.filter(specConn => {
+        const possibleSpecConns = handleConnection.particle.spec.connections.filter(specConn => {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
                  handleConnection.handle.type.equals(specConn.type) &&

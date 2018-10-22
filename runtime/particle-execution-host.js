@@ -34,12 +34,12 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onInitializeProxy = async ({handle, callback}) => {
-      let target = {};
+      const target = {};
       handle.on('change', data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
     this._apiPort.onSynchronizeProxy = async ({handle, callback}) => {
-      let data = await handle.modelForSynchronization();
+      const data = await handle.modelForSynchronization();
       this._apiPort.SimpleCallback({callback, data});
     };
 
@@ -90,7 +90,7 @@ export class ParticleExecutionHost {
       if (!storageKey) {
         storageKey = this._arc.storageProviderFactory.baseStorageKey(type, this._arc.storageKey || 'volatile');
       }
-      let store = await this._arc.storageProviderFactory.baseStorageFor(type, storageKey);
+      const store = await this._arc.storageProviderFactory.baseStorageFor(type, storageKey);
       // TODO(shans): THIS IS NOT SAFE!
       //
       // Without an auditor on the runtime side that inspects what is being fetched from
@@ -99,7 +99,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
-      let arc = {particle};
+      const arc = {particle};
       this._apiPort.ConstructArcCallback({callback, arc});
     };
 
@@ -108,7 +108,7 @@ export class ParticleExecutionHost {
       // recreated when an arc is deserialized. As a consequence of this, dynamically 
       // created handles for inner arcs must always be volatile to prevent storage 
       // in firebase.
-      let store = await this._arc.createStore(type, name, null, [], 'volatile');
+      const store = await this._arc.createStore(type, name, null, [], 'volatile');
       this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 
@@ -127,14 +127,14 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
-      let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
+      const manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
       let error = undefined;
       // TODO(wkorman): Consider reporting an error or at least warning if
       // there's more than one recipe since currently we silently ignore them.
       let recipe0 = manifest.recipes[0];
       if (recipe0) {
         const missingHandles = [];
-        for (let handle of recipe0.handles) {
+        for (const handle of recipe0.handles) {
           const fromHandle = this._arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
           if (!fromHandle) {
             missingHandles.push(handle);
@@ -151,7 +151,7 @@ export class ParticleExecutionHost {
           }
         }
         if (!error) {
-          let options = {errors: new Map()};
+          const options = {errors: new Map()};
           // If we had missing handles but we made it here, then we ran recipe
           // resolution which will have already normalized the recipe.
           if ((missingHandles.length > 0) || recipe0.normalize(options)) {
@@ -174,7 +174,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onRaiseSystemException = async ({exception, methodName, particleId}) => {
-     let particle = this._arc.particleHandleMaps.get(particleId).spec.name;
+     const particle = this._arc.particleHandleMaps.get(particleId).spec.name;
       reportSystemException(exception, methodName, particle);
     };
   }

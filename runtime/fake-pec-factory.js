@@ -15,7 +15,7 @@ import {Loader} from './ts-build/loader.js';
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
 export function FakePecFactory(id) {
-  let channel = new MessageChannel();
+  const channel = new MessageChannel();
   new ParticleExecutionContext(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;
 }

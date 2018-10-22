@@ -25,8 +25,8 @@ class ConnectionSpec {
   }
 
   instantiateDependentConnections(particle, typeVarMap) {
-    for (let dependentArg of this.rawData.dependentConnections) {
-      let dependentConnection = particle.createConnection(dependentArg, typeVarMap);
+    for (const dependentArg of this.rawData.dependentConnections) {
+      const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
       this.dependentConnections.push(dependentConnection);
     }
@@ -84,7 +84,7 @@ export class ParticleSpec {
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
-    let typeVarMap = new Map();
+    const typeVarMap = new Map();
     this.connections = [];
     model.args.forEach(arg => this.createConnection(arg, typeVarMap));
     this.connectionMap = new Map();
@@ -115,18 +115,18 @@ export class ParticleSpec {
   }
 
   createConnection(arg, typeVarMap) {
-    let connection = new ConnectionSpec(arg, typeVarMap);
+    const connection = new ConnectionSpec(arg, typeVarMap);
     this.connections.push(connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
   }
 
   isInput(param) {
-    for (let input of this.inputs) if (input.name == param) return true;
+    for (const input of this.inputs) if (input.name == param) return true;
   }
 
   isOutput(param) {
-    for (let outputs of this.outputs) if (outputs.name == param) return true;
+    for (const outputs of this.outputs) if (outputs.name == param) return true;
   }
 
   getSlotSpec(slotName) {
@@ -143,14 +143,14 @@ export class ParticleSpec {
 
   toLiteral() {
     let {args, name, verbs, description, implFile, affordance, slots} = this._model;
-    let connectionToLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
+    const connectionToLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     args = args.map(a => connectionToLiteral(a));
     return {args, name, verbs, description, implFile, affordance, slots};
   }
 
   static fromLiteral(literal) {
     let {args, name, verbs, description, implFile, affordance, slots} = literal;
-    let connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
+    const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
     return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, affordance, slots});
@@ -183,21 +183,21 @@ export class ParticleSpec {
   }
 
   toString() {
-    let results = [];
+    const results = [];
     let verbs = '';
     if (this.verbs.length > 0) {
       verbs = ' ' + this.verbs.map(verb => `&${verb}`).join(' ');
     }
     results.push(`particle ${this.name}${verbs} in '${this.implFile}'`.trim());
-    let indent = '  ';
-    let writeConnection = (connection, indent) => {
+    const indent = '  ';
+    const writeConnection = (connection, indent) => {
       results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
-      for (let dependent of connection.dependentConnections) {
+      for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
     };
 
-    for (let connection of this.connections) {
+    for (const connection of this.connections) {
       if (connection.parentConnection) {
         continue;
       }
@@ -207,7 +207,7 @@ export class ParticleSpec {
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
     this.slots.forEach(s => {
       // Consume slot.
-      let consume = [];
+      const consume = [];
       if (s.isRequired) {
         consume.push('must');
       }
@@ -225,7 +225,7 @@ export class ParticleSpec {
       }
       // Provided slots.
       s.providedSlots.forEach(ps => {
-        let provide = [];
+        const provide = [];
         if (ps.isRequired) {
           provide.push('must');
         }

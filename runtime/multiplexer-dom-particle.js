@@ -26,11 +26,11 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       hostedParticle,
       handles,
       arc) {
-    let otherMappedHandles = [];
-    let otherConnections = [];
+    const otherMappedHandles = [];
+    const otherConnections = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
-    for (let [connectionName, otherHandle] of handles) {
+    for (const [connectionName, otherHandle] of handles) {
       if (skipConnectionNames.includes(connectionName)) {
         continue;
       }
@@ -39,7 +39,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // arc multiple times unnecessarily.
       otherMappedHandles.push(
           `use '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
-      let hostedOtherConnection = hostedParticle.connections.find(
+      const hostedOtherConnection = hostedParticle.connections.find(
           conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
         otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
@@ -54,10 +54,10 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
   async setHandles(handles) {
     this.handleIds = {};
-    let arc = await this.constructInnerArc();
+    const arc = await this.constructInnerArc();
     const listHandleName = 'list';
     const particleHandleName = 'hostedParticle';
-    let particleHandle = handles.get(particleHandleName);
+    const particleHandle = handles.get(particleHandleName);
     let hostedParticle = null;
     let otherMappedHandles = [];
     let otherConnections = [];
@@ -87,19 +87,19 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this.relevance = 0.1;
     }
 
-    for (let [index, item] of this.getListEntries(list)) {
+    for (const [index, item] of this.getListEntries(list)) {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
-        let itemHandle = await this.handleIds[item.id];
+        const itemHandle = await this.handleIds[item.id];
         itemHandle.set(item);
         continue;
       }
 
-      let itemHandlePromise =
+      const itemHandlePromise =
           arc.createHandle(type.primitiveType(), 'item' + index);
       this.handleIds[item.id] = itemHandlePromise;
 
-      let itemHandle = await itemHandlePromise;
+      const itemHandle = await itemHandlePromise;
 
       if (!resolvedHostedParticle) {
         // If we're muxing on behalf of an item with an embedded recipe, the
@@ -122,9 +122,9 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
                 this.handles,
                 arc);
       }
-      let hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
-      let slotName = [...this.spec.slots.values()][0].name;
-      let slotId = await arc.createSlot(
+      const hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
+      const slotName = [...this.spec.slots.values()][0].name;
+      const slotId = await arc.createSlot(
           this, slotName, resolvedHostedParticle.name, hostedSlotName, itemHandle._id);
 
       if (!slotId) {
@@ -150,13 +150,13 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   }
 
   combineHostedModel(slotName, hostedSlotId, content) {
-    let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
+    const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
     }
-    let items = this._state.renderModel ? this._state.renderModel.items : [];
-    let listIndex = items.findIndex(item => item.subId == subId);
-    let item = Object.assign({}, content.model, {subId});
+    const items = this._state.renderModel ? this._state.renderModel.items : [];
+    const listIndex = items.findIndex(item => item.subId == subId);
+    const item = Object.assign({}, content.model, {subId});
     if (listIndex >= 0 && listIndex < items.length) {
       items[listIndex] = item;
     } else {
@@ -166,7 +166,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   }
 
   combineHostedTemplate(slotName, hostedSlotId, content) {
-    let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
+    const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
     }

@@ -109,13 +109,13 @@ export class APIPort {
     this.Map = function(keyprimitive, valueprimitive) {
       return {
         convert: a => {
-          let r = {};
+          const r = {};
           a.forEach((value, key) => r[keyprimitive.convert(key)] = valueprimitive.convert(value));
           return r;
         },
         unconvert: a => {
-          let r = new Map();
-          for (let key in a) {
+          const r = new Map();
+          for (const key in a) {
             r.set(
                 keyprimitive.unconvert(key), valueprimitive.unconvert(a[key]));
           }
@@ -154,7 +154,7 @@ export class APIPort {
 
     this.messageCount++;
 
-    let handler = this._messageMap.get(e.data.messageType);
+    const handler = this._messageMap.get(e.data.messageType);
     let args;
     try {
       args = this._unprocessArguments(handler.args, e.data.messageBody);
@@ -164,19 +164,19 @@ export class APIPort {
     }
     // If any of the converted arguments are still pending promises
     // wait for them to complete before processing the message.
-    for (let arg of Object.values(args)) {
+    for (const arg of Object.values(args)) {
       if (arg instanceof Promise) {
         arg.then(() => this._processMessage(e));
         return;
       }
     }
-    let handlerName = 'on' + e.data.messageType;
+    const handlerName = 'on' + e.data.messageType;
     assert(this[handlerName], `no handler named ${handlerName}`);
     if (this._debugAttachment) {
       if (this._debugAttachment[handlerName]) this._debugAttachment[handlerName](args);
       this._debugAttachment.handlePecMessage(handlerName, e.data.messageBody);
     }
-    let result = this[handlerName](args);
+    const result = this[handlerName](args);
     if (handler.isInitializer) {
       assert(args.identifier);
       await this._mapper.establishThingMapping(args.identifier, result);
@@ -184,16 +184,16 @@ export class APIPort {
   }
 
   _processArguments(argumentTypes, args) {
-    let messageBody = {};
-    for (let argument in argumentTypes) {
+    const messageBody = {};
+    for (const argument in argumentTypes) {
       messageBody[argument] = argumentTypes[argument].convert(args[argument]);
     }
     return messageBody;
   }
 
   _unprocessArguments(argumentTypes, args) {
-    let messageBody = {};
-    for (let argument in argumentTypes) {
+    const messageBody = {};
+    for (const argument in argumentTypes) {
       messageBody[argument] = argumentTypes[argument].unconvert(args[argument]);
     }
     return messageBody;
@@ -201,7 +201,7 @@ export class APIPort {
 
   registerCall(name, argumentTypes) {
     this[name] = args => {
-      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment) {
@@ -230,8 +230,8 @@ export class APIPort {
   registerInitializer(name, argumentTypes, mappingIdArg = null, redundant = false) {
     this[name] = (thing, args) => {
       if (redundant && this._mapper.hasMappingForThing(thing)) return;
-      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
-      let requestedId = mappingIdArg && args[mappingIdArg];
+      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      const requestedId = mappingIdArg && args[mappingIdArg];
       call.messageBody.identifier = this._mapper.createMappingForThing(thing, requestedId);
       this.messageCount++;
       this._port.postMessage(call);

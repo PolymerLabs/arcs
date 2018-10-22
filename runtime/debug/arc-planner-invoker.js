@@ -29,7 +29,7 @@ export class ArcPlannerInvoker {
   }
 
   async invokePlanner(msg) {
-    let strategy = this.planner.strategizer._strategies.find(s => s.constructor.name === msg.strategy);
+    const strategy = this.planner.strategizer._strategies.find(s => s.constructor.name === msg.strategy);
     if (!strategy) return {error: 'could not find strategy'};
 
     let manifest;
@@ -39,24 +39,24 @@ export class ArcPlannerInvoker {
       return {error: error.message};
     }
 
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     recipe.normalize();
 
-    let results = await strategy.generate({
+    const results = await strategy.generate({
       generation: 0,
       generated: [{result: recipe, score: 1}],
       population: [{result: recipe, score: 1}],
       terminal: []
     });
 
-    for (let result of results) {
+    for (const result of results) {
       result.hash = await result.hash;
       result.derivation = undefined;
-      let recipe = result.result;
+      const recipe = result.result;
       result.result = recipe.toString({showUnresolved: true});
 
       if (!Object.isFrozen(recipe)) {
-        let errors = new Map();
+        const errors = new Map();
         recipe.normalize({errors});
         result.errors = [...errors.keys()].map(thing => ({id: thing.id, error: errors.get(thing)}));
         result.normalized = recipe.toString();

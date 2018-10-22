@@ -48,13 +48,13 @@ export class Planner {
 
   // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout, generations) {
-    let trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
+    const trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
-    let allResolved = [];
-    let start = now();
+    const allResolved = [];
+    const start = now();
     do {
-      let record = await trace.wait(this.strategizer.generate());
-      let generated = this.strategizer.generated;
+      const record = await trace.wait(this.strategizer.generate());
+      const generated = this.strategizer.generated;
       trace.addArgs({
         generated: generated.length,
         generation: this.strategizer.generation
@@ -63,7 +63,7 @@ export class Planner {
         generations.push({generated, record});
       }
 
-      let resolved = this.strategizer.generated
+      const resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
 
@@ -115,10 +115,10 @@ export class Planner {
     return groups;
   }
   async suggest(timeout, generations, speculator) {
-    let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
+    const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
-    let plans = await trace.wait(this.plan(timeout, generations));
-    let suggestions = [];
+    const plans = await trace.wait(this.plan(timeout, generations));
+    const suggestions = [];
     speculator = speculator || new Speculator();
     // We don't actually know how many threads the VM will decide to use to
     // handle the parallel speculation, but at least we know we won't kick off
@@ -128,16 +128,16 @@ export class Planner {
     const threadCount = this._speculativeThreadCount();
     const planGroups = this._splitToGroups(plans, threadCount);
     let results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
-      let results = [];
-      for (let plan of group) {
-        let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
+      const results = [];
+      for (const plan of group) {
+        const hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
 
         if (RecipeUtil.matchesRecipe(this._arc._activeRecipe, plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
           continue;
         }
 
-        let planTrace = Tracing.start({
+        const planTrace = Tracing.start({
           cat: 'speculating',
           sequence: `speculator_${groupIndex}`,
           overview: true,
@@ -146,17 +146,17 @@ export class Planner {
 
         // TODO(wkorman): Look at restoring trace.wait() here, and whether we
         // should do similar for the async getRecipeSuggestion() below as well?
-        let relevance = await speculator.speculate(this._arc, plan, hash);
+        const relevance = await speculator.speculate(this._arc, plan, hash);
         this._relevances.push(relevance);
         if (!relevance.isRelevant(plan)) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
           continue;
         }
-        let rank = relevance.calcRelevanceScore();
+        const rank = relevance.calcRelevanceScore();
 
         relevance.newArc.description.relevance = relevance;
-        let description = await relevance.newArc.description.getRecipeSuggestion();
+        const description = await relevance.newArc.description.getRecipeSuggestion();
 
         this._updateGeneration(generations, hash, (g) => g.description = description);
 

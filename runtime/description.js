@@ -23,15 +23,15 @@ export class Description {
   set relevance(relevance) { this._relevance = relevance; }
 
   async getArcDescription(formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe);
+    const desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe);
     if (desc) {
       return desc;
     }
   }
 
   async getRecipeSuggestion(formatterClass) {
-    let formatter = await new (formatterClass || DescriptionFormatter)(this);
-    let desc = await formatter.getDescription(this._arc.recipes[this._arc.recipes.length - 1]);
+    const formatter = await new (formatterClass || DescriptionFormatter)(this);
+    const desc = await formatter.getDescription(this._arc.recipes[this._arc.recipes.length - 1]);
     if (desc) {
       return desc;
     }
@@ -42,7 +42,7 @@ export class Description {
   async getHandleDescription(recipeHandle) {
     assert(recipeHandle.connections.length > 0, 'handle has no connections?');
 
-    let formatter = new DescriptionFormatter(this);
+    const formatter = new DescriptionFormatter(this);
     formatter.excludeValues = true;
     return await formatter.getHandleDescription(recipeHandle);
   }
@@ -66,7 +66,7 @@ export class DescriptionFormatter {
 
     if (recipe.patterns.length > 0) {
       let recipePatterns = [];
-      for (let pattern of recipe.patterns) {
+      for (const pattern of recipe.patterns) {
         recipePatterns.push(await this.patternToSuggestion(pattern, {_recipe: recipe}));
       }
       recipePatterns = recipePatterns.filter(pattern => Boolean(pattern));
@@ -77,7 +77,7 @@ export class DescriptionFormatter {
     }
 
     // Choose particles, sort them by rank and generate suggestions.
-    let particlesSet = new Set(recipe.particles);
+    const particlesSet = new Set(recipe.particles);
     let selectedDescriptions = this._particleDescriptions
       .filter(desc => (particlesSet.has(desc._particle) && this._isSelectedDescription(desc)));
     // Prefer particles that render UI, if any.
@@ -98,8 +98,8 @@ export class DescriptionFormatter {
   async getHandleDescription(recipeHandle) {
     await this._updateDescriptionHandles(this._description);
 
-    let handleConnection = this._selectHandleConnection(recipeHandle) || recipeHandle.connections[0];
-    let store = this._arc.findStoreById(recipeHandle.id);
+    const handleConnection = this._selectHandleConnection(recipeHandle) || recipeHandle.connections[0];
+    const store = this._arc.findStoreById(recipeHandle.id);
     return this._formatDescription(handleConnection, store);
   }
 
@@ -107,9 +107,9 @@ export class DescriptionFormatter {
     this._particleDescriptions = [];
 
     // Combine all particles from direct and inner arcs.
-    let innerParticlesByName = {};
+    const innerParticlesByName = {};
     description._arc.recipes.forEach(recipe => {
-      let innerArcs = [...recipe.innerArcs.values()];
+      const innerArcs = [...recipe.innerArcs.values()];
       innerArcs.forEach(innerArc => {
         innerArc.recipes.forEach(innerRecipe => {
           innerRecipe.particles.forEach(innerParticle => {
@@ -120,7 +120,7 @@ export class DescriptionFormatter {
         });
       });
     });
-    let allParticles = description.arc.activeRecipe.particles.concat(Object.values(innerParticlesByName));
+    const allParticles = description.arc.activeRecipe.particles.concat(Object.values(innerParticlesByName));
 
     await Promise.all(allParticles.map(async particle => {
       this._particleDescriptions.push(await this._createParticleDescription(particle, description.relevance));
@@ -136,13 +136,13 @@ export class DescriptionFormatter {
       pDesc._rank = relevance.calcParticleRelevance(particle);
     }
 
-    let descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
+    const descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
     pDesc = Object.assign(pDesc, this._populateParticleDescription(particle, descByName));
     Object.values(particle.connections).forEach(handleConn => {
-      let specConn = particle.spec.connectionMap.get(handleConn.name);
-      let pattern = descByName[handleConn.name] || specConn.pattern;
+      const specConn = particle.spec.connectionMap.get(handleConn.name);
+      const pattern = descByName[handleConn.name] || specConn.pattern;
       if (pattern) {
-        let handleDescription = {pattern: pattern, _handleConn: handleConn, _store: this._arc.findStoreById(handleConn.handle.id)};
+        const handleDescription = {pattern: pattern, _handleConn: handleConn, _store: this._arc.findStoreById(handleConn.handle.id)};
         pDesc._connections[handleConn.name] = handleDescription;
       }
     });
@@ -150,12 +150,12 @@ export class DescriptionFormatter {
   }
 
   async _getPatternByNameFromDescriptionHandle(particle) {
-    let descriptionConn = particle.connections['descriptions'];
+    const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      let descHandle = this._arc.findStoreById(descriptionConn.handle.id);
+      const descHandle = this._arc.findStoreById(descriptionConn.handle.id);
       if (descHandle) {
-        let descList = await descHandle.toList();
-        let descByName = {};
+        const descList = await descHandle.toList();
+        const descByName = {};
         descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
         return descByName;
       }
@@ -163,18 +163,18 @@ export class DescriptionFormatter {
   }
 
   _populateParticleDescription(particle, descriptionByName) {
-    let pattern = descriptionByName['pattern'] || particle.spec.pattern;
+    const pattern = descriptionByName['pattern'] || particle.spec.pattern;
     return pattern ? {pattern} : {};
   }
 
   async _combineSelectedDescriptions(selectedDescriptions, options) {
-    let suggestions = [];
+    const suggestions = [];
     await Promise.all(selectedDescriptions.map(async particle => {
       if (!this.seenParticles.has(particle._particle)) {
         suggestions.push(await this.patternToSuggestion(particle.pattern, particle));
       }
     }));
-    let jointDescription = this._joinDescriptions(suggestions);
+    const jointDescription = this._joinDescriptions(suggestions);
     if (jointDescription) {
       if ((options || {}).skipFormatting) {
         return jointDescription;
@@ -185,14 +185,14 @@ export class DescriptionFormatter {
   }
 
   _joinDescriptions(strings) {
-    let nonEmptyStrings = strings.filter(str => str);
-    let count = nonEmptyStrings.length;
+    const nonEmptyStrings = strings.filter(str => str);
+    const count = nonEmptyStrings.length;
     if (count > 0) {
       // Combine descriptions into a sentence:
       // "A."
       // "A and b."
       // "A, b, ..., and z." (Oxford comma ftw)
-      let delim = ['', '', ' and ', ', and '][Math.min(3, count)];
+      const delim = ['', '', ' and ', ', and '][Math.min(3, count)];
       const lastString = nonEmptyStrings.pop();
       return `${nonEmptyStrings.join(', ')}${delim}${lastString}`;
     }
@@ -205,14 +205,14 @@ export class DescriptionFormatter {
   _capitalizeAndPunctuate(sentence) {
     assert(sentence);
     // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
-    let last = sentence.length - 1;
+    const last = sentence.length - 1;
     return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9()'>\]]/i) ? '.' : ''}`;
   }
 
   async patternToSuggestion(pattern, particleDescription) {
-    let tokens = this._initTokens(pattern, particleDescription);
-    let tokenPromises = tokens.map(async token => await this.tokenToString(token));
-    let tokenResults = await Promise.all(tokenPromises);
+    const tokens = this._initTokens(pattern, particleDescription);
+    const tokenPromises = tokens.map(async token => await this.tokenToString(token));
+    const tokenResults = await Promise.all(tokenPromises);
     if (tokenResults.filter(res => res == undefined).length == 0) {
       return this._joinTokens(tokenResults);
     }
@@ -222,7 +222,7 @@ export class DescriptionFormatter {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {
-      let tokens = pattern.match(/\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g);
+      const tokens = pattern.match(/\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g);
       let firstToken;
       let tokenIndex;
       if (tokens) {
@@ -233,7 +233,7 @@ export class DescriptionFormatter {
         tokenIndex = pattern.length;
       }
       assert(tokenIndex >= 0);
-      let nextToken = pattern.substring(0, tokenIndex);
+      const nextToken = pattern.substring(0, tokenIndex);
       if (nextToken.length > 0) {
         results.push({text: nextToken});
       }
@@ -247,19 +247,19 @@ export class DescriptionFormatter {
 
   //async
   _initSubTokens(pattern, particleDescription) {
-    let valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
-    let handleNames = valueTokens[1].split('.');
-    let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
+    const valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
+    const handleNames = valueTokens[1].split('.');
+    const extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
     let valueToken;
 
     // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
     if (!particleDescription._particle) {
-      let particleName = handleNames.shift();
+      const particleName = handleNames.shift();
       if (particleName[0] !== particleName[0].toUpperCase()) {
         console.warn(`Invalid particle name '${particleName}' - must start with a capital letter.`);
         return [];
       }
-      let particleDescriptions = this._particleDescriptions.filter(desc => {
+      const particleDescriptions = this._particleDescriptions.filter(desc => {
         return desc._particle.name == particleName
             // The particle description is from the current recipe.
             && particleDescription._recipe.particles.find(p => p == desc._particle);
@@ -275,7 +275,7 @@ export class DescriptionFormatter {
       // there will be a duplicate particle-description.
       particleDescription = particleDescriptions[particleDescriptions.length - 1];
     }
-    let particle = particleDescription._particle;
+    const particle = particleDescription._particle;
 
     if (handleNames.length == 0) {
       // return a  particle token
@@ -285,7 +285,7 @@ export class DescriptionFormatter {
       };
     }
 
-    let handleConn = particle.connections[handleNames[0]];
+    const handleConn = particle.connections[handleNames[0]];
     if (handleConn) { // handle connection
       assert(handleConn.handle && handleConn.handle.id, 'Missing id???');
       return [{
@@ -307,7 +307,7 @@ export class DescriptionFormatter {
       return [];
     }
 
-    let providedSlotConn = particle.consumedSlotConnections[handleNames[0]].providedSlots[handleNames[1]];
+    const providedSlotConn = particle.consumedSlotConnections[handleNames[0]].providedSlots[handleNames[1]];
     assert(providedSlotConn, `Could not find handle ${handleNames.join('.')}`);
     return [{
       fullName: valueTokens[0],
@@ -350,7 +350,7 @@ export class DescriptionFormatter {
 
         // Transformation's hosted particle.
         if (token._handleConn.type.isInterface) {
-          let particleSpec = ParticleSpec.fromLiteral(await token._store.get());
+          const particleSpec = ParticleSpec.fromLiteral(await token._store.get());
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
           return particleSpec.pattern;
         }
@@ -363,7 +363,7 @@ export class DescriptionFormatter {
         // full handle description
         let description = (await this._formatDescriptionPattern(token._handleConn)) ||
                           this._formatStoreDescription(token._handleConn, token._store);
-        let storeValue = await this._formatStoreValue(token.handleName, token._store);
+        const storeValue = await this._formatStoreValue(token.handleName, token._store);
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
           // TODO: should this look at type.getContainedType() (which includes references), or maybe just type.isEntity?
@@ -398,9 +398,9 @@ export class DescriptionFormatter {
         assert(!token.extra, `Unrecognized slot extra ${token.extra}`);
     }
 
-    let results = (await Promise.all(token._providedSlotConn.consumeConnections.map(async consumeConn => {
-      let particle = consumeConn.particle;
-      let particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
+    const results = (await Promise.all(token._providedSlotConn.consumeConnections.map(async consumeConn => {
+      const particle = consumeConn.particle;
+      const particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
       this.seenParticles.add(particle);
       return this.patternToSuggestion(particle.spec.pattern, particleDescription);
     })));
@@ -412,7 +412,7 @@ export class DescriptionFormatter {
     assert(!store.type.isCollection && !store.type.isBigCollection,
            `Cannot return property ${properties.join(',')} for Collection or BigCollection`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
-    let valueVar = await store.get();
+    const valueVar = await store.get();
     if (valueVar) {
       let value = valueVar.rawData;
       properties.forEach(p => {
@@ -435,19 +435,19 @@ export class DescriptionFormatter {
       return;
     }
     if (store.type.isCollection) {
-      let values = await store.toList();
+      const values = await store.toList();
       if (values && values.length > 0) {
         return this._formatCollection(handleName, values);
       }
     } else if (store.type.isBigCollection) {
-      let cursorId = await store.stream(1);
-      let {value, done} = await store.cursorNext(cursorId);
+      const cursorId = await store.stream(1);
+      const {value, done} = await store.cursorNext(cursorId);
       store.cursorClose(cursorId);
       if (!done && value[0].rawData.name) {
         return await this._formatBigCollection(handleName, value[0]);
       }
     } else {
-      let value = await store.get();
+      const value = await store.get();
       if (value) {
         return this._formatSingleton(handleName, value, store.type.data.description.value);
       }
@@ -495,14 +495,14 @@ export class DescriptionFormatter {
     // For "out" connection, use its own description
     // For "in" connection, use description of the highest ranked out connection with description.
     if (!chosenConnection.spec.isOutput) {
-      let otherConnection = this._selectHandleConnection(handleConnection.handle);
+      const otherConnection = this._selectHandleConnection(handleConnection.handle);
       if (otherConnection) {
         chosenConnection = otherConnection;
       }
     }
 
-    let chosenParticleDescription = this._particleDescriptions.find(desc => desc._particle == chosenConnection.particle);
-    let handleDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
+    const chosenParticleDescription = this._particleDescriptions.find(desc => desc._particle == chosenConnection.particle);
+    const handleDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
     // Add description to result array.
     if (handleDescription) {
       // Add the connection spec's description pattern.
@@ -511,8 +511,8 @@ export class DescriptionFormatter {
   }
   _formatStoreDescription(handleConn, store) {
     if (store) {
-      let storeDescription = this._arc.getStoreDescription(store);
-      let handleType = this._formatHandleType(handleConn);
+      const storeDescription = this._arc.getStoreDescription(store);
+      const handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).
       if (!!storeDescription && storeDescription != handleType) {
         return storeDescription;
@@ -520,28 +520,28 @@ export class DescriptionFormatter {
     }
   }
   _formatHandleType(handleConnection) {
-    let type = handleConnection.handle && handleConnection.handle.type.isResolved() ? handleConnection.handle.type : handleConnection.type;
+    const type = handleConnection.handle && handleConnection.handle.type.isResolved() ? handleConnection.handle.type : handleConnection.type;
     return type.toPrettyString().toLowerCase();
   }
 
   _selectHandleConnection(recipeHandle) {
-    let possibleConnections = recipeHandle.connections.filter(connection => {
+    const possibleConnections = recipeHandle.connections.filter(connection => {
       // Choose connections with patterns (manifest-based or dynamic).
-      let connectionSpec = connection.spec;
-      let particleDescription = this._particleDescriptions.find(desc => desc._particle == connection.particle);
+      const connectionSpec = connection.spec;
+      const particleDescription = this._particleDescriptions.find(desc => desc._particle == connection.particle);
       return !!connectionSpec.pattern || !!particleDescription._connections[connection.name];
     });
 
     possibleConnections.sort((c1, c2) => {
-      let isOutput1 = c1.spec.isOutput;
-      let isOutput2 = c2.spec.isOutput;
+      const isOutput1 = c1.spec.isOutput;
+      const isOutput2 = c2.spec.isOutput;
       if (isOutput1 != isOutput2) {
         // Prefer output connections
         return isOutput1 ? -1 : 1;
       }
 
-      let d1 = this._particleDescriptions.find(desc => desc._particle == c1.particle);
-      let d2 = this._particleDescriptions.find(desc => desc._particle == c2.particle);
+      const d1 = this._particleDescriptions.find(desc => desc._particle == c1.particle);
+      const d2 = this._particleDescriptions.find(desc => desc._particle == c2.particle);
       // Sort by particle's rank in descending order.
       return d2._rank - d1._rank;
     });
@@ -552,10 +552,10 @@ export class DescriptionFormatter {
   }
 
   static sort(p1, p2) {
-    let isRoot = (slotSpec) => slotSpec.name == 'root' || slotSpec.tags.includes('root');
+    const isRoot = (slotSpec) => slotSpec.name == 'root' || slotSpec.tags.includes('root');
     // Root slot comes first.
-    let hasRoot1 = Boolean([...p1._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
-    let hasRoot2 = Boolean([...p2._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
+    const hasRoot1 = Boolean([...p1._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
+    const hasRoot2 = Boolean([...p2._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
     if (hasRoot1 != hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }

@@ -16,7 +16,7 @@ export class MatchParticleByVerb extends Strategy {
   }
 
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onParticle(recipe, particle) {
         if (particle.name) {
@@ -24,12 +24,12 @@ export class MatchParticleByVerb extends Strategy {
           return;
         }
 
-        let particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
+        const particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
             .filter(spec => !arc.pec.slotComposer || spec.matchAffordance(arc.pec.slotComposer.affordance));
 
         return particleSpecs.map(spec => {
           return (recipe, particle) => {
-            let score = 1;
+            const score = 1;
 
             particle.name = spec.name;
             particle.spec = spec;

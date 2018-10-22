@@ -36,7 +36,7 @@ export class Entity {
   identify(identifier) {
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;
-    let components = identifier.split(':');
+    const components = identifier.split(':');
     if (components[components.length - 2] == 'uid') {
       this._userIDComponent = components[components.length - 1];
     }
