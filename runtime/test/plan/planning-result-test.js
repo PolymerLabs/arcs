@@ -24,7 +24,7 @@ describe('planning result', function() {
     await resultNew.deserialize({plans: serialization.plans});
     assert.isTrue(resultNew.isEquivalent(helper.plans));
   }
-  it('serializes and deserializes Products recipes', async function() {
+  it.only('serializes and deserializes Products recipes', async function() {
     await testResultSerialization('./runtime/test/artifacts/Products/Products.recipes');
   });
 

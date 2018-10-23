@@ -122,7 +122,7 @@ describe('plan producer', function() {
     assert.equal(producer.cancelCount, 0);
   });
 
-  it.only('cancels planning', async function() {
+  it('cancels planning', async function() {
     let {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 

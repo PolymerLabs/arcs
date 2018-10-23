@@ -105,7 +105,8 @@ type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) 
 
 
 export class Manifest {
-  private _recipes = <Recipe[]>[];
+  // TODO: rename existing getter to `allRecipes` and add getter for this._recipes.
+  _recipes = <Recipe[]>[];
   private _imports = <Manifest[]>[];
     // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: {[index: string]: ParticleSpec} = {};

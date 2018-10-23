@@ -92,8 +92,8 @@ export class PlanningResult {
   async _planFromString(planString) {
     const manifest = await Manifest.parse(
         planString, {loader: this.arc.loader, context: this.arc.context, fileName: ''});
-    assert(manifest.recipes.length === 1);
-    let plan = manifest.recipes[0];
+    assert(manifest._recipes.length === 1);
+    let plan = manifest._recipes[0];
     assert(plan.normalize({}), `can't normalize deserialized suggestion: ${plan.toString()}`);
     if (!plan.isResolved()) {
       const resolvedPlan = await this.recipeResolver.resolve(plan);
