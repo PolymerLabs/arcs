@@ -23,11 +23,6 @@ export class Relation extends Entity {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
   }
 
-  // TODO should this return something else?
-  get key() {
-    return undefined;
-  }
-
   static typeFor(relation) {
     const result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
     return result;
