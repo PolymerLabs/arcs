@@ -13,7 +13,7 @@ import {Schema} from './schema.js';
 
 export abstract class Entity {
   private _userIDComponent?: string;
-  // TODO determine the right type to use for the proxy in schema.ts
+
   // tslint:disable-next-line: no-any
   protected rawData: any;
 
@@ -62,13 +62,5 @@ export abstract class Entity {
 
   toLiteral() {
     return this.rawData;
-  }
-
-  abstract get key(): {tag: string, schema: Schema};
-
-  get type() {
-    // TODO: should the entity's key just be its type?
-    // Should it just be called type in that case?
-    return Type.newEntity(this.key.schema);
   }
 }

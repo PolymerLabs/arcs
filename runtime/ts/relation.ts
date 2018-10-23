@@ -19,7 +19,6 @@ export class Relation extends Entity {
     this.entities = entities;
   }
 
-  // should be rawData???
   get data() {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
   }

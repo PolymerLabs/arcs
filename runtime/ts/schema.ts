@@ -391,7 +391,13 @@ export class Schema {
         return clone;
       }
 
-      get key() {
+      static get type() {
+        // TODO: should the entity's key just be its type?
+        // Should it just be called type in that case?
+        return Type.newEntity(this.key.schema);
+      }
+
+      static get key() {
         return {
           tag: 'entity',
           schema,
