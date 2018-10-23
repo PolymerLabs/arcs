@@ -15,10 +15,11 @@ import {PlanConsumer} from './plan-consumer';
 import {PlanProducer} from './plan-producer';
 import {Recipe} from '../recipe/recipe';
 import {Schema} from '../schema';
+import {StorageProviderBase} from '../storage/storage-provider-base';
 import {Type} from '../type';
 
 export class Planificator {
-  static async create(arc, {userid, protocol}) {
+  static async create(arc: Arc, {userid, protocol}) {
     const store = await Planificator._initStore(arc, {userid, protocol, arcKey: null});
     const planificator = new Planificator(arc, userid, store);
     planificator.requestPlanning();
@@ -38,7 +39,7 @@ export class Planificator {
   arcCallback: ({}) => void;
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc, userid, store) {
+  constructor(arc: Arc, userid: string, store: StorageProviderBase) {
     this.arc = arc;
     this.userid = userid;
     this.producer = new PlanProducer(arc, store);
@@ -85,12 +86,12 @@ export class Planificator {
     return {plan: this.lastActivatedPlan};
   }
 
-  _onPlanInstantiated(plan) {
+  private _onPlanInstantiated(plan) {
     this.lastActivatedPlan = plan;
     this.requestPlanning();
   }
 
-  static async _initStore(arc, {userid, protocol, arcKey}) {
+  private static async _initStore(arc, {userid, protocol, arcKey}) {
     assert(userid, 'Missing user id.');
     let storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);

@@ -27,7 +27,7 @@ export class PlanProducer {
   needReplan: boolean;
   isPlanning: boolean;
 
-  constructor(arc, store) {
+  constructor(arc: Arc, store: StorageProviderBase) {
     assert(arc, 'arc cannot be null');
     assert(store, 'store cannot be null');
     this.arc = arc;
@@ -84,7 +84,7 @@ export class PlanProducer {
     return null;
   }
 
-  _cancelPlanning() {
+  private _cancelPlanning() {
     if (this.planner) {
       this.planner.dispose();
       this.planner = null;
@@ -94,7 +94,7 @@ export class PlanProducer {
     console.log(`Cancel planning`);
   }
 
-  async _updateResult({plans, generations}, options) {
+  private async _updateResult({plans, generations}, options) {
     if (options.append) {
       if (!this.result.append({plans, generations})) {
         return;

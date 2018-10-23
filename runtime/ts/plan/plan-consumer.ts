@@ -27,7 +27,7 @@ export class PlanConsumer {
   storeCallback: Callback;
   suggestionComposer: SuggestionComposer|null = null;
 
-  constructor(arc, store) {
+  constructor(arc: Arc, store: StorageProviderBase) {
     assert(arc, 'arc cannot be null');
     assert(store, 'store cannot be null');
     this.arc = arc;
