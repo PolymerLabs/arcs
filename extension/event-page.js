@@ -28,10 +28,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
  * but I've removed that for simplicity.
  */
 async function loadEntitiesFromTabs() {
-  let tabs = [];
-  let currentTabs =
+  const tabs = [];
+  const currentTabs =
       await new Promise(resolve => chrome.tabs.query({}, resolve));
-  for (let tab of currentTabs) {
+  for (const tab of currentTabs) {
     if (!/^https?/.test(tab.url)) {
       continue;
     }
@@ -43,8 +43,8 @@ async function loadEntitiesFromTabs() {
   }
 
   // Trigger entity extraction.
-  let tabEntityMap = new Map();
-  for (let tab of tabs) {
+  const tabEntityMap = new Map();
+  for (const tab of tabs) {
     tabEntityMap.set(tab, loadEntitiesFromTab(tab));
   }
 

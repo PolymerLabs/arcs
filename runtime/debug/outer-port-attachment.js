@@ -18,6 +18,15 @@ export class OuterPortAttachment {
     this._particleRegistry = {};
   }
 
+  handlePecMessage(name, pecMsgBody) {
+    // Skip speculative and pipes arcs for now.
+    if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
+    this._devtoolsChannel.send({
+      messageType: 'PecLog',
+      messageBody: {name, pecMsgBody, timestamp: Date.now()},
+    });
+  }
+
   InstantiateParticle(particle, {id, spec, handles}) {
     this._particleRegistry[id] = spec;
     this._devtoolsChannel.send({
@@ -30,7 +39,7 @@ export class OuterPortAttachment {
   }
 
   SimpleCallback({callback, data}) {
-    let callbackDetails = this._callbackRegistry[callback];
+    const callbackDetails = this._callbackRegistry[callback];
     if (callbackDetails) {
       // Copying callback data, as the callback can be used multiple times.
       this._sendDataflowMessage(Object.assign({}, callbackDetails), data);
@@ -86,7 +95,7 @@ export class OuterPortAttachment {
   }
 
   _describeHandleCall({operation, handle, particleId}) {
-    let metadata = Object.assign(this._arcMetadata(), {
+    const metadata = Object.assign(this._arcMetadata(), {
       operation,
       handle: this._describeHandle(handle)
     });
@@ -102,7 +111,7 @@ export class OuterPortAttachment {
   }
 
   _trimParticleSpec(id, spec, handles) {
-    let connections = {};
+    const connections = {};
     spec.connectionMap.forEach((value, key) => {
       connections[key] = Object.assign({
         direction: value.direction
@@ -117,7 +126,7 @@ export class OuterPortAttachment {
   }
 
   _describeParticle(id) {
-    let particleSpec = this._particleRegistry[id];
+    const particleSpec = this._particleRegistry[id];
     return {
       id,
       name: particleSpec && particleSpec.name

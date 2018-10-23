@@ -24,7 +24,7 @@ class ArcsCommunicationChannel extends PolymerElement {
         window._msgRaceConditionGuard = 'devtools-webapp-loaded';
         this._preInitMsgQueue = [];
         document.addEventListener('arcs-communication-channel-ready', e => {
-          for (let msg of this._preInitMsgQueue) {
+          for (const msg of this._preInitMsgQueue) {
             this._fire(msg);
           }
           this._preInitMsgQueue = undefined;

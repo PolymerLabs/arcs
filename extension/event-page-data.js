@@ -14,9 +14,9 @@
  */
 function _prepareResults(results) {
   return results.reduce((accumulator, currentValue) => {
-    let value = currentValue['result'];
+    const value = currentValue['result'];
     if (value) {
-      let key = currentValue['tab']['url'];
+      const key = currentValue['tab']['url'];
       accumulator[key] = value;
     }
     return accumulator;

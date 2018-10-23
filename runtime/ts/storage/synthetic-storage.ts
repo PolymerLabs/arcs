@@ -12,7 +12,7 @@ import {KeyBase} from './key-base.js';
 import {FirebaseStorage} from './firebase-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
-import {Manifest} from '../../manifest.js';
+import {Manifest} from '../manifest.js';
 import {setDiffCustom} from '../util.js';
 
 enum Scope {
@@ -118,7 +118,7 @@ class SyntheticCollection extends StorageProviderBase {
       if (snapshot.exists() && snapshot.val()) {
         // TODO: remove the import-removal hack when import statements no longer appear in
         // serialised manifests, or deal with them correctly if they end up staying
-        const manifest = await Manifest.parse(snapshot.val().replace(/\bimport .*\n/g, ''));
+        const manifest = await Manifest.parse(snapshot.val().replace(/\bimport .*\n/g, ''), {});
         handles = manifest.activeRecipe && manifest.activeRecipe.handles;
       }
     } catch (e) {

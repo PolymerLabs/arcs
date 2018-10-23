@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let host = `show-hints`;
+  const host = `show-hints`;
 
   return class extends DomParticle {
     get template() {

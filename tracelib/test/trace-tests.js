@@ -58,11 +58,11 @@ describe('Tracing', function() {
     Tracing.enable();
     Tracing.__clearForTests();
 
-    let beginMicros = Tracing.now();
-    let trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing'});
+    const beginMicros = Tracing.now();
+    const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing'});
     const sum = 2 + 2; // Doing some work.
     trace.end();
-    let endMicros = Tracing.now();
+    const endMicros = Tracing.now();
 
     const events = Tracing.save().traceEvents;
     assert.lengthOf(events, 1);
@@ -84,7 +84,7 @@ describe('Tracing', function() {
     Tracing.enable();
     Tracing.__clearForTests();
 
-    let trace = Tracing.start({cat: 'Stuff'});
+    const trace = Tracing.start({cat: 'Stuff'});
     const sum = 2 + 2; // Doing some work.
     trace.end({name: 'Thingy::thing', args: {content: 'yay'}});
 
@@ -120,7 +120,7 @@ describe('Tracing', function() {
 
     const events = Tracing.save().traceEvents;
     assert.lengthOf(events, 6);
-    for (let event of events) {
+    for (const event of events) {
       assert.equal(event.cat, 'Stuff');
       assert.equal(event.seq, 'stream_1');
       assert.isUndefined(event.args);
@@ -161,7 +161,7 @@ describe('Tracing', function() {
     assertFlowEnclosedInComplete(flowStepEvent, completeEvents[1]);
     assertFlowEnclosedInComplete(flowEndEvent, completeEvents[2]);
 
-    let flowId = flowStartEvent.id;
+    const flowId = flowStartEvent.id;
     assert.isTrue([flowStepEvent, flowEndEvent].every(event => event.id === flowId));
     assert.isTrue(completeEvents.every(event => event.flowId === flowId));
   });
@@ -180,7 +180,7 @@ describe('Tracing', function() {
 
     const events = Tracing.save().traceEvents;
     assert.lengthOf(events, 4);
-    for (let event of events) {
+    for (const event of events) {
       assert.equal(event.cat, 'Stuff');
     }
 
@@ -245,7 +245,7 @@ describe('Tracing', function() {
     Tracing.enable();
     Tracing.__clearForTests();
 
-    let trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', args: {op: 'sum'}});
+    const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', args: {op: 'sum'}});
     const sum = 2 + 2;
     trace.end({args: {result: sum}});
 
@@ -346,7 +346,7 @@ describe('Tracing', function() {
 
     const events = Tracing.save().traceEvents;
     assert.lengthOf(events, 3);
-    for (let event of events) {
+    for (const event of events) {
       assert.equal(event.cat, 'Stuff');
       assert.equal(event.name, 'Flowing');
     }

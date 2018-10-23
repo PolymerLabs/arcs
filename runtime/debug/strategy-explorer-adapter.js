@@ -23,7 +23,7 @@ export class StrategyExplorerAdapter {
     let lastID = 0;
     const assignIdAndCopy = recipe => {
       idMap.set(recipe, lastID);
-      let {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
+      const {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
       return {result, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
     };
     generations = generations.map(pop => ({
@@ -33,8 +33,8 @@ export class StrategyExplorerAdapter {
 
     // CombinedStrategy creates recipes with derivations that are missing
     // from the population. Re-adding them as 'combined'.
-    for (let pop of generations) {
-      let lengthWithoutCombined = pop.generated.length;
+    for (const pop of generations) {
+      const lengthWithoutCombined = pop.generated.length;
       for (let i = 0; i < lengthWithoutCombined; i++) {
         pop.generated[i].derivation.forEach(function addMissing({parent}) {
           if (parent && !idMap.has(parent)) {
@@ -47,8 +47,8 @@ export class StrategyExplorerAdapter {
 
     // Change recipes in derivation to IDs and compute resolved stats.
     return generations.map(pop => {
-      let population = pop.generated;
-      let record = pop.record;
+      const population = pop.generated;
+      const record = pop.record;
       // Adding those here to reuse recipe resolution computation.
       record.resolvedDerivations = 0;
       record.resolvedDerivationsByStrategy = {};
@@ -68,23 +68,23 @@ export class StrategyExplorerAdapter {
         item.resolved = item.result.isResolved();
         if (item.resolved) {
           record.resolvedDerivations++;
-          let strategy = item.derivation[0].strategy;
+          const strategy = item.derivation[0].strategy;
           if (record.resolvedDerivationsByStrategy[strategy] === undefined) {
             record.resolvedDerivationsByStrategy[strategy] = 0;
           }
           record.resolvedDerivationsByStrategy[strategy]++;
         }
-        let options = {showUnresolved: true, showInvalid: false, details: ''};
+        const options = {showUnresolved: true, showInvalid: false, details: ''};
         item.result = item.result.toString(options);
       });
-      let populationMap = {};
+      const populationMap = {};
       population.forEach(item => {
         if (populationMap[item.derivation[0].strategy] == undefined) {
           populationMap[item.derivation[0].strategy] = [];
         }
         populationMap[item.derivation[0].strategy].push(item);
       });
-      let result = {population: [], record};
+      const result = {population: [], record};
       Object.keys(populationMap).forEach(strategy => {
         result.population.push({strategy: strategy, recipes: populationMap[strategy]});
       });

@@ -41,10 +41,10 @@ export class SuggestDomConsumer extends SlotDomConsumer {
   }
 
   static render(container, plan, content) {
-    let consumer = new SlotDomConsumer();
-    let suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
+    const consumer = new SlotDomConsumer();
+    const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
     container.appendChild(suggestionContainer, container.firstElementChild);
-    let rendering = {container: suggestionContainer, model: content.model};
+    const rendering = {container: suggestionContainer, model: content.model};
     consumer._renderingBySubId.set(undefined, rendering);
     consumer._eventHandler = (() => {});
     consumer._stampTemplate(rendering, consumer.createTemplateElement(content.template));

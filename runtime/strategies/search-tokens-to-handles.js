@@ -17,10 +17,10 @@ export class SearchTokensToHandles extends Strategy {
   }
 
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
     // Finds stores matching the provided token and compatible with the provided handle's type,
     // which are not already mapped into the provided handle's recipe
-    let findMatchingStores = (token, handle) => {
+    const findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
       let stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out == 0});
       let fate = 'use';
@@ -41,8 +41,8 @@ export class SearchTokensToHandles extends Strategy {
           return;
         }
 
-        let possibleMatches = [];
-        for (let token of recipe.search.unresolvedTokens) {
+        const possibleMatches = [];
+        for (const token of recipe.search.unresolvedTokens) {
           possibleMatches.push(...findMatchingStores(token, handle));
         }
         if (possibleMatches.length == 0) {

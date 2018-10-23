@@ -19,14 +19,14 @@ export class AddMissingHandles extends Strategy {
           return;
         }
         // Don't add use handles to a recipe with free handles
-        let freeHandles = recipe.handles.filter(handle => handle.connections.length == 0);
+        const freeHandles = recipe.handles.filter(handle => handle.connections.length == 0);
         if (freeHandles.length > 0) {
           return;
         }
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
         // not being properly supported in arc instantiation). For now just hardcode skiping them.
-        let disconnectedConnections = recipe.handleConnections.filter(
+        const disconnectedConnections = recipe.handleConnections.filter(
             hc => hc.handle == null && !hc.isOptional && hc.name != 'descriptions' && hc.direction !== 'host');
         if (disconnectedConnections.length == 0) {
           return;
@@ -34,8 +34,8 @@ export class AddMissingHandles extends Strategy {
 
         return recipe => {
           disconnectedConnections.forEach(hc => {
-            let clonedHC = recipe.updateToClone({hc}).hc;
-            let handle = recipe.newHandle();
+            const clonedHC = recipe.updateToClone({hc}).hc;
+            const handle = recipe.newHandle();
             handle.fate = '?';
             clonedHC.connectToHandle(handle);
           });

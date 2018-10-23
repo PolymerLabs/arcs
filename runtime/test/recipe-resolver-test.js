@@ -10,16 +10,16 @@
 
 import {Arc} from '../ts-build/arc.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest} from '../ts-build/manifest.js';
 import {RecipeResolver} from '../ts-build/recipe/recipe-resolver.js';
 
 import {assert} from './chai-web.js';
 
 describe('RecipeResolver', function() {
   const buildRecipe = async (content) => {
-    let registry = {};
-    let loader = new StubLoader(content);
-    let manifest = await Manifest.load('manifest', loader, {registry});
+    const registry = {};
+    const loader = new StubLoader(content);
+    const manifest = await Manifest.load('manifest', loader, {registry});
     return manifest.recipes[0];
   };
 

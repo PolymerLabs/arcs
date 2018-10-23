@@ -15,6 +15,7 @@ import './arcs-communication-channel.js';
 import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
 import './arcs-tracing.js';
+import './arcs-pec-log.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-strategy-runner.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
@@ -100,6 +101,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon><label>Overview</label></a>
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
           <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon><label>Dataflow</label></a>
+          <a name="pecLog" href="#pecLog"><iron-icon icon="group-work"></iron-icon><label>PEC Channel Log</label></a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
           <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>
         </iron-selector>
@@ -108,6 +110,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
         <arcs-overview name="overview"></arcs-overview>
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
+        <arcs-pec-log name="pecLog"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
         <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>
       </iron-pages>

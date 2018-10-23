@@ -19,8 +19,8 @@ export class CombinedStrategy extends Strategy {
   }
   _getLeaves(results) {
     // Only use leaf recipes.
-    let recipeByParent = new Map();
-    let resultsList = [...results.values()];
+    const recipeByParent = new Map();
+    const resultsList = [...results.values()];
     resultsList.forEach(r => {
       r.derivation.forEach(d => {
         if (d.parent) {
@@ -32,8 +32,8 @@ export class CombinedStrategy extends Strategy {
   }
   async generate(inputParams) {
     let results = this._strategies[0].getResults(inputParams);
-    let totalResults = new Map();
-    for (let strategy of this._strategies) {
+    const totalResults = new Map();
+    for (const strategy of this._strategies) {
       results = Recipe.over(results, strategy.walker, strategy);
       results = await Promise.all(results.map(async result => {
         if (result.hash) {

@@ -104,7 +104,7 @@ class StorageProxyBase {
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
       if (handle.options.notifySync && this._synchronized == SyncState.full) {
-        let syncModel = this._getModelForSync();
+        const syncModel = this._getModelForSync();
         this._scheduler.enqueue(particle, handle, ['sync', particle, syncModel]);
       }
     }
@@ -129,7 +129,7 @@ class StorageProxyBase {
       this._updates.shift();
     }
 
-    let syncModel = this._getModelForSync();
+    const syncModel = this._getModelForSync();
     this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
     this._processUpdates();
   }
@@ -137,7 +137,7 @@ class StorageProxyBase {
   _onUpdate(update) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (this._observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
-      let handleUpdate = this._processUpdate(update, false);
+      const handleUpdate = this._processUpdate(update, false);
       this._notify('update', handleUpdate, options => !options.keepSynced && options.notifyUpdate);
     }
 
@@ -159,7 +159,7 @@ class StorageProxyBase {
   }
 
   _notify(kind, details, predicate=() => true) {
-    for (let {handle, particle} of this._observers) {
+    for (const {handle, particle} of this._observers) {
       if (predicate(handle.options)) {
         this._scheduler.enqueue(particle, handle, [kind, particle, details]);
       }
@@ -168,7 +168,7 @@ class StorageProxyBase {
 
   _processUpdates() {
 
-    let updateIsNext = update => {
+    const updateIsNext = update => {
       if (update.version == this._version + 1) {
         return true;
       }
@@ -187,10 +187,10 @@ class StorageProxyBase {
 
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
     while (this._updates.length > 0 && updateIsNext(this._updates[0])) {
-      let update = this._updates.shift();
+      const update = this._updates.shift();
 
       // Fold the update into our stored model.
-      let handleUpdate = this._processUpdate(update);
+      const handleUpdate = this._processUpdate(update);
       this._version = update.version;
 
       // Notify handles configured with keepSynced and notifyUpdates (non-keepSynced handles are
@@ -206,7 +206,7 @@ class StorageProxyBase {
       if (this._synchronized != SyncState.none) {
         this._synchronized = SyncState.none;
         this._port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
-        for (let {handle, particle} of this._observers) {
+        for (const {handle, particle} of this._observers) {
           if (handle.options.notifyDesync) {
             this._scheduler.enqueue(particle, handle, ['desync', particle]);
           }
@@ -263,22 +263,22 @@ class CollectionProxy extends StorageProxyBase {
     if (this._synchronized == SyncState.full) {
       // If we're synchronized, then any updates we sent have
       // already been applied/notified.
-      for (let {handle} of this._observers) {
+      for (const {handle} of this._observers) {
         if (update.originatorId == handle._particleId) {
           return null;
         }
       }
     }
-    let added = [];
-    let removed = [];
+    const added = [];
+    const removed = [];
     if ('add' in update) {
-      for (let {value, keys, effective} of update.add) {
+      for (const {value, keys, effective} of update.add) {
         if (apply && this._model.add(value.id, value, keys) || !apply && effective) {
           added.push(value);
         }
       }
     } else if ('remove' in update) {
-      for (let {value, keys, effective} of update.remove) {
+      for (const {value, keys, effective} of update.remove) {
         const localValue = this._model.getValue(value.id);
         if (apply && this._model.remove(value.id, keys) || !apply && effective) {
           removed.push(localValue);
@@ -288,7 +288,7 @@ class CollectionProxy extends StorageProxyBase {
       throw new Error(`StorageProxy received invalid update event: ${JSON.stringify(update)}`);
     }
     if (added.length || removed.length) {
-      let result = {};
+      const result = {};
       if (added.length) result.add = added;
       if (removed.length) result.remove = removed;
       result.originatorId = update.originatorId;
@@ -320,8 +320,8 @@ class CollectionProxy extends StorageProxyBase {
   }
 
   store(value, keys, particleId) {
-    let id = value.id;
-    let data = {value, keys};
+    const id = value.id;
+    const data = {value, keys};
     this._port.HandleStore({handle: this, callback: () => {}, data, particleId});
 
     if (this._synchronized != SyncState.full) {
@@ -330,7 +330,7 @@ class CollectionProxy extends StorageProxyBase {
     if (!this._model.add(id, value, keys)) {
       return;
     }
-    let update = {originatorId: particleId, add: [value]};
+    const update = {originatorId: particleId, add: [value]};
     this._notify('update', update, options => options.notifyUpdate);
   }
 
@@ -351,25 +351,25 @@ class CollectionProxy extends StorageProxyBase {
 
   remove(id, keys, particleId) {
     if (this._synchronized != SyncState.full) {
-      let data = {id, keys: []};
+      const data = {id, keys: []};
       this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
       return;
     }
 
-    let value = this._model.getValue(id);
+    const value = this._model.getValue(id);
     if (!value) {
       return;
     }
     if (keys.length == 0) {
       keys = this._model.getKeys(id);
     }
-    let data = {id, keys};
+    const data = {id, keys};
     this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
 
     if (!this._model.remove(id, keys)) {
       return;
     }
-    let update = {originatorId: particleId, remove: [value]};
+    const update = {originatorId: particleId, remove: [value]};
     this._notify('update', update, options => options.notifyUpdate);
   }
 }
@@ -423,7 +423,7 @@ class VariableProxy extends StorageProxyBase {
         // TODO(shans): refactor this code so we don't need to layer-violate. 
         if (this._synchronized !== SyncState.full) {
           this._synchronized = SyncState.full;
-          let syncModel = this._getModelForSync();
+          const syncModel = this._getModelForSync();
           this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
 
         }
@@ -467,7 +467,7 @@ class VariableProxy extends StorageProxyBase {
     this._model = JSON.parse(JSON.stringify(entity));
     this._barrier = barrier;
     this._port.HandleSet({data: entity, handle: this, particleId, barrier});
-    let update = {originatorId: particleId, data: entity};
+    const update = {originatorId: particleId, data: entity};
     this._notify('update', update, options => options.notifyUpdate);
   }
 
@@ -475,11 +475,11 @@ class VariableProxy extends StorageProxyBase {
     if (this._model == null) {
       return;
     }
-    let barrier = this.generateID('barrier');
+    const barrier = this.generateID('barrier');
     this._model = null;
     this._barrier = barrier;
     this._port.HandleClear({handle: this, particleId, barrier});
-    let update = {originatorId: particleId, data: null};
+    const update = {originatorId: particleId, data: null};
     this._notify('update', update, options => options.notifyUpdate);
   }
 }
@@ -532,11 +532,11 @@ export class StorageProxyScheduler {
     if (!this._queues.has(particle)) {
       this._queues.set(particle, new Map());
     }
-    let byHandle = this._queues.get(particle);
+    const byHandle = this._queues.get(particle);
     if (!byHandle.has(handle)) {
       byHandle.set(handle, []);
     }
-    let queue = byHandle.get(handle);
+    const queue = byHandle.get(handle);
     queue.push(args);
     this._schedule();
   }
@@ -577,11 +577,11 @@ export class StorageProxyScheduler {
   _dispatch() {
     // TODO: should we process just one particle per task?
     while (this._queues.size > 0) {
-      let particle = [...this._queues.keys()][0];
-      let byHandle = this._queues.get(particle);
+      const particle = [...this._queues.keys()][0];
+      const byHandle = this._queues.get(particle);
       this._queues.delete(particle);
-      for (let [handle, queue] of byHandle.entries()) {
-        for (let args of queue) {
+      for (const [handle, queue] of byHandle.entries()) {
+        for (const args of queue) {
           try {
             handle._notify(...args);
           } catch (e) {

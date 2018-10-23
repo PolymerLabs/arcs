@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  let host = `address-form`;
+  const host = `address-form`;
 
-  let styles = html`
+  const styles = html`
 <style>
   [${host}] {
     padding: 16px;
@@ -22,7 +22,7 @@ defineParticle(({DomParticle, resolver, html}) => {
 </style>
   `;
 
-  let template = html`
+  const template = html`
 
 ${styles}
 

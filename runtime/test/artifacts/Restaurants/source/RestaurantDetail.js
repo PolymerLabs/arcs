@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let host = `restaurant-detail`;
+  const host = `restaurant-detail`;
 
-  let styles = html`
+  const styles = html`
 <style>
   [${host}] {
     position: relative;
@@ -129,7 +129,7 @@ defineParticle(({DomParticle, html}) => {
 </style>
   `;
 
-  let template = html`
+  const template = html`
 ${styles}
 <div ${host}>
   <div banner style%="{{style}}">
@@ -162,17 +162,17 @@ ${styles}
 </div>
     `.trim();
 
-  let services = `https://xenonjs.com/services/http/php`;
-  let detailsService =`${services}/place-details.php`;
+  const services = `https://xenonjs.com/services/http/php`;
+  const detailsService =`${services}/place-details.php`;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     willReceiveProps(props) {
-      let {selected} = props;
+      const {selected} = props;
       if (selected) {
-        let item = selected;
+        const item = selected;
         if (item && item.id) {
           this._fetchDetail(item.reference);
         }
@@ -193,7 +193,7 @@ ${styles}
       return Boolean(state.item);
     }
     render(props, state) {
-      let model = {
+      const model = {
         style: {
           backgroundImage: `url(${state.item.photo})`
         },
@@ -203,7 +203,7 @@ ${styles}
       };
       let detail;
       if (state.detail) {
-        let url =
+        const url =
             state.detail.website &&
             state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
         detail = {

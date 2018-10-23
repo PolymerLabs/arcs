@@ -15,7 +15,7 @@ defineParticle(({Particle}) => {
     }
     onHandleSync(handle, model) {
       if (handle.name === 'product') {
-        let isBook = handle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
+        const isBook = handle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
                      model.category && model.category.toLowerCase().indexOf('book') >= 0 ||
                      model.name && model.name.toLowerCase().indexOf('book') >= 0;
         if (isBook) {

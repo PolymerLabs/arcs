@@ -63,15 +63,15 @@ const eslintCache = '.eslint_sigh_cache';
 const output = console;
 
 function* findProjectFiles(dir, predicate) {
-  let tests = [];
-  for (let entry of fs.readdirSync(dir)) {
+  const tests = [];
+  for (const entry of fs.readdirSync(dir)) {
     if (/\b(node_modules|deps|build|third_party)\b/.test(entry) ||
         entry.startsWith('.')) {
       continue;
     }
 
-    let fullPath = path.join(dir, entry);
-    let stat = fs.statSync(fullPath);
+    const fullPath = path.join(dir, entry);
+    const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
       yield* findProjectFiles(fullPath, predicate);
     } else if (predicate(fullPath)) {
@@ -92,13 +92,13 @@ function fixPathForWindows(path) {
 }
 
 function targetIsUpToDate(relativeTarget, relativeDeps) {
-  let target = path.resolve(projectRoot, relativeTarget);
+  const target = path.resolve(projectRoot, relativeTarget);
   if (!fs.existsSync(target)) {
     return false;
   }
 
-  let targetTime = fs.statSync(target).mtimeMs;
-  for (let relativePath of relativeDeps) {
+  const targetTime = fs.statSync(target).mtimeMs;
+  for (const relativePath of relativeDeps) {
     if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs >= targetTime) {
       return false;
     }
@@ -127,14 +127,14 @@ function check() {
 }
 
 function clean() {
-  for (let file of [sources.peg.output, sources.peg.railroad, eslintCache]) {
+  for (const file of [sources.peg.output, sources.peg.railroad, eslintCache]) {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
       console.log('Removed', file);
     }
   }
 
-  let recursiveDelete = (dir) => {
+  const recursiveDelete = (dir) => {
     for (let entry of fs.readdirSync(dir)) {
       entry = path.join(dir, entry);
       if (fs.statSync(entry).isDirectory()) {
@@ -145,7 +145,7 @@ function clean() {
     }
     fs.rmdirSync(dir);
   };
-  for (let buildDir of [sources.pack.buildDir]) {
+  for (const buildDir of [sources.pack.buildDir]) {
     if (fs.existsSync(buildDir)) {
       recursiveDelete(buildDir);
       console.log('Removed', buildDir);
@@ -160,13 +160,13 @@ function peg() {
     return true;
   }
 
-  let source = peg.generate(readProjectFile(sources.peg.grammar), {
+  const source = peg.generate(readProjectFile(sources.peg.grammar), {
     format: 'bare',
     output: 'source',
     trace: false
   });
-  let outputFile = path.resolve(projectRoot, sources.peg.output);
-  let dir = path.dirname(outputFile);
+  const outputFile = path.resolve(projectRoot, sources.peg.output);
+  const dir = path.dirname(outputFile);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
@@ -179,17 +179,17 @@ function railroad() {
   const {transform} = require('grammkit/lib/util');
   const handlebars = require('handlebars');
 
-  let diagramStyle = 'node_modules/grammkit/app/diagram.css';
-  let appStyle = 'node_modules/grammkit/app/app.css';
-  let baseTemplate = 'node_modules/grammkit/template/viewer.html';
+  const diagramStyle = 'node_modules/grammkit/app/diagram.css';
+  const appStyle = 'node_modules/grammkit/app/app.css';
+  const baseTemplate = 'node_modules/grammkit/template/viewer.html';
 
-  let deps = [sources.peg.grammar, diagramStyle, appStyle, baseTemplate];
+  const deps = [sources.peg.grammar, diagramStyle, appStyle, baseTemplate];
   if (targetIsUpToDate(sources.peg.railroad, deps)) {
     return true;
   }
 
-  let result = transform(readProjectFile(sources.peg.grammar));
-  let grammars = result.procesedGrammars.map(({rules, references, name}) => {
+  const result = transform(readProjectFile(sources.peg.grammar));
+  const grammars = result.procesedGrammars.map(({rules, references, name}) => {
     rules = rules.map(function(rule) {
       const ref = references[rule.name] || {};
       return {
@@ -203,19 +203,19 @@ function railroad() {
     return {name, rules};
   });
 
-  let data = {
+  const data = {
     title: `Railroad diagram for ${sources.peg.grammar}`,
     style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
     grammars: grammars
   };
-  let template = handlebars.compile(readProjectFile(baseTemplate));
+  const template = handlebars.compile(readProjectFile(baseTemplate));
   fs.writeFileSync(path.resolve(projectRoot, sources.peg.railroad), template(data));
 
   return true;
 }
 
 async function tsc() {
-  let result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
+  const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
   if (result.status) {
     console.log(result.stdout);
   }
@@ -223,20 +223,20 @@ async function tsc() {
 }
 
 async function tslint(args) {
-  let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
+  const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
     if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
   })];
 
-  let options = minimist(args, {
+  const options = minimist(args, {
     boolean: ['fix'],
   });
 
   const tslintArgs = options.fix ? ['--fix', ...jsSources] : jsSources;
     
-  let result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...tslintArgs], {});
+  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...tslintArgs], {});
   if (result.status) {
     console.log(result.stdout);
   }
@@ -246,11 +246,11 @@ async function tslint(args) {
 async function lint(args) {
   const CLIEngine = require('eslint').CLIEngine;
 
-  let options = minimist(args, {
+  const options = minimist(args, {
     boolean: ['fix'],
   });
 
-  let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
+  const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
     if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
@@ -264,8 +264,8 @@ async function lint(args) {
     cacheLocation: eslintCache,
     cache: true
   });
-  let report = cli.executeOnFiles(jsSources);
-  let formatter = cli.getFormatter();
+  const report = cli.executeOnFiles(jsSources);
+  const formatter = cli.getFormatter();
   console.log(formatter(report.results));
 
   if (options.fix) {
@@ -278,18 +278,18 @@ async function lint(args) {
 async function webpack() {
   const webpack = require('webpack');
 
-  let node = {
+  const node = {
     fs: 'empty',
     mkdirp: 'empty',
     minimist: 'empty',
   };
 
-  let buildDir = path.resolve(projectRoot, sources.pack.buildDir);
+  const buildDir = path.resolve(projectRoot, sources.pack.buildDir);
   if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir);
   }
 
-  for (let file of sources.pack.inputs) {
+  for (const file of sources.pack.inputs) {
     await new Promise((resolve, reject) => {
       webpack(
           {
@@ -319,7 +319,7 @@ function spawnWasSuccessful(result) {
   if (result.status === 0 && !result.error) {
     return true;
   }
-  for (let x of [result.stdout, result.stderr]) {
+  for (const x of [result.stdout, result.stderr]) {
     if (x) {
       console.warn(x.toString().trim());
     }
@@ -336,7 +336,7 @@ function saneSpawn(cmd, args, opts) {
   opts = opts || {};
   opts.shell = true;
   // it's OK, I know what I'm doing
-  let result = _DO_NOT_USE_spawn(cmd, args, opts);
+  const result = _DO_NOT_USE_spawn(cmd, args, opts);
   return spawnWasSuccessful(result);
 }
 
@@ -346,7 +346,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
   opts = opts || {};
   opts.shell = true;
   // it's OK, I know what I'm doing
-  let result = _DO_NOT_USE_spawn(cmd, args, opts);
+  const result = _DO_NOT_USE_spawn(cmd, args, opts);
   if (!spawnWasSuccessful(result)) {
     return false;
   }
@@ -354,14 +354,14 @@ function saneSpawnWithOutput(cmd, args, opts) {
 }
 
 function rot13(str) {
-  let input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-  let output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-  let lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
+  const input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  const output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+  const lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
   return str.split('').map(x => lookup[x] || x).join('');
 }
 
 function test(args) {
-  let options = minimist(args, {
+  const options = minimist(args, {
     string: ['grep'],
     inspect: ['inspect'],
     explore: ['explore'],
@@ -387,10 +387,10 @@ function test(args) {
   });
 
   function buildTestRunner() {
-    let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
-    let chain = [];
-    let mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
-    for (let test of testsInDir(process.cwd())) {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
+    const chain = [];
+    const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
+    for (const test of testsInDir(process.cwd())) {
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
@@ -404,8 +404,8 @@ function test(args) {
         mocha.suite.emit('post-require', global, '${test}', mocha);
       `);
     }
-    let chainImports = chain.map((entry, i) => {
-      let file = path.join(tempDir, `chain${i}.js`);
+    const chainImports = chain.map((entry, i) => {
+      const file = path.join(tempDir, `chain${i}.js`);
       fs.writeFileSync(file, entry);
       return `import '${fixPathForWindows(file)}';`;
     });
@@ -416,7 +416,7 @@ function test(args) {
       DevtoolsConnection.ensure();
     `);
     }
-    let runner = `
+    const runner = `
       import {mocha} from '${mochaInstanceFile}';
       ${chainImports.join('\n      ')}
       (async () => {
@@ -434,12 +434,12 @@ function test(args) {
         });
       })();
     `;
-    let runnerFile = path.join(tempDir, 'runner.js');
+    const runnerFile = path.join(tempDir, 'runner.js');
     fs.writeFileSync(runnerFile, runner);
     return runnerFile;
   }
 
-  let extraFlags = [];
+  const extraFlags = [];
   if (options.inspect) {
     extraFlags.push('--inspect-brk');
   }
@@ -447,7 +447,7 @@ function test(args) {
     extraFlags.push('--print_all_exceptions');
   }
 
-  let runner = buildTestRunner();
+  const runner = buildTestRunner();
   return saneSpawn(
       'node',
       [
@@ -475,14 +475,14 @@ async function importSpotify(args) {
 
 // Watches `watchPaths` for changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
-  let funs = steps[arg || watchDefault];
-  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
-  let watcher = chokidar.watch('.', {
+  const funs = steps[arg || watchDefault];
+  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
+  const watcher = chokidar.watch('.', {
     ignored: /(node_modules|\/build\/|ts-build|\.git)/,
     persistent: true
   });
   let timerId = 0;
-  let changes = new Set();
+  const changes = new Set();
   watcher.on('change', path => {
     if (timerId) {
       clearTimeout(timerId);
@@ -497,7 +497,7 @@ async function watch([arg, ...moreArgs]) {
   });
 
   // TODO: Is there a better way to keep the process alive?
-  let forever = () => {
+  const forever = () => {
     setTimeout(forever, 60 * 60 * 1000);
   };
   forever();
@@ -511,7 +511,7 @@ async function run(funsAndArgs) {
   console.log('😌');
   let result = false;
   try {
-    for (let [fun, args] of funsAndArgs) {
+    for (const [fun, args] of funsAndArgs) {
       console.log(`🙋 ${fun.name} ${args.join(' ')}`);
       if (!await fun(args)) {
         console.log(`🙅 ${fun.name}`);
@@ -529,8 +529,8 @@ async function run(funsAndArgs) {
 }
 
 (async () => {
-  let command = process.argv[2] || 'default';
-  let funs = steps[command];
+  const command = process.argv[2] || 'default';
+  const funs = steps[command];
   if (funs === undefined) {
     console.log(`Unknown command: '${command}'`);
     console.log('Available commands are:', Object.keys(steps).join(', '));
@@ -538,8 +538,8 @@ async function run(funsAndArgs) {
   }
 
   // To avoid confusion, only the last step gets args.
-  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
-  let result = await run(funsAndArgs);
+  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
+  const result = await run(funsAndArgs);
   process.on('exit', function() {
     process.exit(result ? 0 : 1);
   });

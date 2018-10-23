@@ -21,7 +21,7 @@ export class CreateDescriptionHandle extends Strategy {
         }
 
         return (recipe, handleConnection) => {
-          let handle = recipe.newHandle();
+          const handle = recipe.newHandle();
           handle.fate = 'create';
           handleConnection.connectToHandle(handle);
           return 1;

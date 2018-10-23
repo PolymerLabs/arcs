@@ -48,7 +48,7 @@ class TestPlanificator extends Planificator {
     this.plannerOptions = options;
     ++this.planCount;
     return new Promise((resolve, reject) => {
-      let plans = this.plannerNextResults.shift();
+      const plans = this.plannerNextResults.shift();
       if (plans) {
         resolve(plans);
       } else {
@@ -59,12 +59,12 @@ class TestPlanificator extends Planificator {
   }
 
   plannerReturnFakeResults(planInfos) {
-    let plans = [];
+    const plans = [];
     planInfos.forEach(info => {
       if (!info.hash) {
         info = {hash: info};
       }
-      let plan = new Recipe(`recipe${info.hash}`);
+      const plan = new Recipe(`recipe${info.hash}`);
       if (!info.options || !info.options.invisible) {
         plan.newSlot('slot0').id = 'id0';
       }
@@ -96,8 +96,8 @@ class TestPlanificator extends Planificator {
 }
 
 async function createPlanificator(options) {
-  let arc = new Arc({id: 'demo-test'});
-  let planificator = new TestPlanificator(arc, options);
+  const arc = new Arc({id: 'demo-test'});
+  const planificator = new TestPlanificator(arc, options);
   assert.isTrue(planificator.isFull);
 
   assert.isTrue(planificator.isPlanning);
@@ -109,15 +109,15 @@ async function createPlanificator(options) {
 }
 
 function newPlan(name, options) {
-  let plan = new Recipe(name);
+  const plan = new Recipe(name);
   options = options || {};
   if (options.hasSlot) {
-    let slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
+    const slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
     slot.id = 'id0';
   }
   if (options.handlesIds) {
     options.handlesIds.forEach(id => {
-      let handle = plan.newHandle();
+      const handle = plan.newHandle();
       handle.id = id;
     });
   }
@@ -126,12 +126,12 @@ function newPlan(name, options) {
 
 describe('Planificator', function() {
   it('creates a planificator', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     assert.lengthOf(planificator._arc.instantiatePlanCallbacks, 1);
 
     assert.isFalse(planificator.isPlanning);
     assert.equal(0, Object.keys(planificator.getLastActivatedPlan()));
-    let {plans} = planificator.getCurrentPlans();
+    const {plans} = planificator.getCurrentPlans();
     assert.isEmpty(plans);
 
     planificator._arc.dispose();
@@ -143,7 +143,7 @@ describe('Planificator', function() {
   });
 
   it('makes replanning requests', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     for (let i = 0; i < 10; ++i) {
       planificator._requestPlanning();
       assert.isTrue(planificator.isPlanning);
@@ -155,14 +155,14 @@ describe('Planificator', function() {
     await planificator.allPlanningDone();
 
     assert.isFalse(planificator.isPlanning);
-    let {plans} = planificator.getCurrentPlans();
+    const {plans} = planificator.getCurrentPlans();
     assert.lengthOf(plans, 4);
     assert.equal(11, planificator.scheduleCount);
     assert.equal(3, planificator.planCount);
   });
 
   it('replans triggered by data change', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     assert.isFalse(planificator.isPlanning);
 
     // Trigger replanning
@@ -192,7 +192,7 @@ describe('Planificator', function() {
   });
 
   it('groups data change triggered replanning', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
 
     // Add 3 data change events with intervals.
     planificator._arc._onDataChange();
@@ -211,7 +211,7 @@ describe('Planificator', function() {
   });
 
   it('caps replanning delay with max-no-replan value', async () => {
-    let planificator = await createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
+    const planificator = await createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
 
     // Add 3 data change events with intervals.
     planificator._arc._onDataChange();
@@ -230,8 +230,8 @@ describe('Planificator', function() {
   });
 
   it('cancels data change triggered replanning if other replanning occured', async () => {
-    let planificator = await createPlanificator();
-    let plan = new Recipe();
+    const planificator = await createPlanificator();
+    const plan = new Recipe();
     plan.normalize();
     planificator._setCurrent({plans: [{plan}]});
 
@@ -251,7 +251,7 @@ describe('Planificator', function() {
   });
 
   it('delays data triggered replanning if planning is in progress', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
 
     // Planning in progress.
     planificator._requestPlanning();
@@ -263,7 +263,7 @@ describe('Planificator', function() {
     assert.lengthOf(planificator._dataChangesQueue._changes, 2);
     assert.isNull(planificator._dataChangesQueue._replanTimer);
 
-    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
+    const plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
     assert.isFalse(planificator.isPlanning);
 
@@ -275,9 +275,9 @@ describe('Planificator', function() {
   });
 
   it('replans triggered by plan instantiation', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     planificator._requestPlanning();
-    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
+    const plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
     assert.lengthOf(planificator.getCurrentSuggestions(), 1);
     assert.equal(plan, planificator.getCurrentSuggestions()[0].plan);
@@ -292,7 +292,7 @@ describe('Planificator', function() {
   });
 
   it('triggers plan and state changed callbacks', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     let stateChanged = 0;
     let planChanged = 0;
     let suggestChanged = 0;
@@ -307,7 +307,7 @@ describe('Planificator', function() {
     assert.equal(0, suggestChanged);
 
     // Planning is done and plans are set, both - state and plans change.
-    let plan = planificator.plannerReturnFakeResults([1])[0].plan;
+    const plan = planificator.plannerReturnFakeResults([1])[0].plan;
     await planificator.allPlanningDone();
     assert.equal(2, stateChanged);
     assert.equal(1, planChanged);
@@ -349,11 +349,11 @@ describe('Planificator', function() {
     assert.equal(3, suggestChanged);
   });
   it('retrieves and filters suggestions', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     planificator._requestPlanning();
 
-    let plans = [];
-    let addPlan = (name, options) => {
+    const plans = [];
+    const addPlan = (name, options) => {
       plans.push(newPlan(name, options));
     };
     addPlan('1', {hasSlot: false, descriptionText: 'invisible plan'});
@@ -391,11 +391,11 @@ describe('Planificator', function() {
    assert.isEmpty(planificator.getCurrentSuggestions());
   });
   it('shows suggestions involving handle from active recipe', async () => {
-    let plan0 = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
-    let plan1 = newPlan('1', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+    const plan0 = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+    const plan1 = newPlan('1', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
     plan1.plan.newSlot('otherSlot').id = 'other-id0';
 
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     planificator._requestPlanning();
     planificator.plannerReturnResults([plan0, plan1]);
     await planificator.allPlanningDone();
@@ -411,7 +411,7 @@ describe('Planificator', function() {
     assert.deepEqual(['1'], planificator.getCurrentSuggestions().map(p => p.hash));
   });
   it('sets or appends current', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
     let planChanged = 0;
     planificator.registerPlansChangedCallback(() => { ++planChanged; });
 
@@ -450,7 +450,7 @@ describe('Planificator', function() {
     assert.equal(4, planChanged);
   });
   it('cancels planning', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
 
     // Verify _cancelPlanning stops the planning.
     planificator._requestPlanning();
@@ -461,7 +461,7 @@ describe('Planificator', function() {
 
     // Set the search string and verify it calls _cancelPlanning, if appropriate.
     let cancelCalled = 0;
-    let cancelPlanning = planificator._cancelPlanning.bind(planificator);
+    const cancelPlanning = planificator._cancelPlanning.bind(planificator);
     planificator._cancelPlanning = () => {
       ++cancelCalled;
       cancelPlanning();
@@ -477,13 +477,13 @@ describe('Planificator', function() {
     assert.equal(1, cancelCalled);
   });
   it('controls contextual planning', async () => {
-    let planificator = await createPlanificator();
+    const planificator = await createPlanificator();
 
     // Initial planning for an empty arc is not contextual.
     planificator._requestPlanning();
     assert.isTrue(planificator.isPlanning);
     assert.isFalse(planificator.plannerOptions.strategyArgs.contextual);
-    let plan = newPlan('1');
+    const plan = newPlan('1');
     planificator.plannerReturnResults([plan]);
     await planificator.allPlanningDone();
 

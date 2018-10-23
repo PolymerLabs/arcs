@@ -82,7 +82,7 @@ class StoreExplorer extends Xen.Base {
   }
   async _queryContextStores(context) {
     const find = manifest => {
-      let tags = [...manifest._storeTags];
+      let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
       }
@@ -92,7 +92,7 @@ class StoreExplorer extends Xen.Base {
     this._setState({contextStores});
   }
   async _queryArcStores(arc) {
-    const arcStores = await this._digestStores(arc._storeTags, true);
+    const arcStores = await this._digestStores(arc.storeTags, true);
     this._setState({arcStores});
   }
   async _digestStores(stores, hideNamed) {

@@ -230,13 +230,13 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
   }
 
   onMessageBundle(messages) {
-    let current = [];
-    let filtered = [];
-    let rest = new Map();
-    for (let msg of messages) {
+    const current = [];
+    const filtered = [];
+    const rest = new Map();
+    for (const msg of messages) {
       switch (msg.messageType) {
         case 'dataflow': {
-          let e = msg.messageBody;
+          const e = msg.messageBody;
           // If user hasn't selected an arc, and this event is not from
           // a speculative execution, select this arc.
           if (!this.selectedArcId && !e.speculative && !e.arcId.endsWith('-pipes')) {
@@ -265,7 +265,7 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
       this.set(`perArcLogs.${btoa(current[0].arcId)}`, this.selectedArcLog);
     }
     this.push('filteredLog', ...filtered);
-    for (let [arcId, events] of rest) {
+    for (const [arcId, events] of rest) {
       if (!this.get(`perArcLogs.${btoa(arcId)}`)) {
         this.set(`perArcLogs.${btoa(arcId)}`, events);
       } else {
@@ -296,9 +296,9 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
   }
 
   _listUnique(extract) {
-    let bag = {};
+    const bag = {};
     this.selectedArcLog.forEach(event => {
-      let extracted = extract(event);
+      const extracted = extract(event);
       if (extracted) bag[extracted.id] = extracted;
     });
     return Object.values(bag).sort((x, y) => this._compareIds(x.id, y.id));
@@ -356,11 +356,11 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
   // Compare the id segments numerically if possible,
   // lexicographically otherwise.
   _compareIds(idString1, idString2) {
-    let ids1 = idString1.split(':');
-    let ids2 = idString2.split(':');
+    const ids1 = idString1.split(':');
+    const ids2 = idString2.split(':');
     for (let i = 0; i < Math.min(ids1.length, ids2.length); i++) {
-      let n1 = Number(ids1[i]);
-      let n2 = Number(ids2[i]);
+      const n1 = Number(ids1[i]);
+      const n2 = Number(ids2[i]);
       let lexComp;
       if ((!n1 || !n2) && (lexComp = ids1[i].localeCompare(ids2[i])) !== 0) {
         return lexComp;

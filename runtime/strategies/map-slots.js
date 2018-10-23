@@ -16,7 +16,7 @@ export class MapSlots extends Strategy {
     this._arc = arc;
   }
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onSlotConnection(recipe, slotConnection) {
@@ -31,7 +31,7 @@ export class MapSlots extends Strategy {
           return;
         }
 
-        let {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
+        const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
 
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
@@ -39,7 +39,7 @@ export class MapSlots extends Strategy {
         }
 
         // If there are any local slots, prefer them over remote slots.
-        let slotList = local.length > 0 ? local : remote;
+        const slotList = local.length > 0 ? local : remote;
         return slotList.map(slot => ((recipe, slotConnection) => {
           MapSlots.connectSlotConnection(slotConnection, slot);
           return 1;
@@ -51,7 +51,7 @@ export class MapSlots extends Strategy {
   // Helper methods.
   // Connect the given slot connection to the selectedSlot, create the slot, if needed.
   static connectSlotConnection(slotConnection, selectedSlot) {
-    let recipe = slotConnection.recipe;
+    const recipe = slotConnection.recipe;
     if (!slotConnection.targetSlot) {
       let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
 
@@ -86,7 +86,7 @@ export class MapSlots extends Strategy {
 
   // Returns the given slot candidates, sorted by "quality".
   static _findSlotCandidates(slotConnection, slots) {
-    let possibleSlots = slots.filter(s => this.slotMatches(slotConnection, s));
+    const possibleSlots = slots.filter(s => this.slotMatches(slotConnection, s));
     possibleSlots.sort((slot1, slot2) => {
         // TODO: implement.
         return slot1.name < slot2.name;
@@ -119,8 +119,8 @@ export class MapSlots extends Strategy {
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
   // TODO: replace with generic tag matcher
   static tagsOrNameMatch(slotConnection, slot) {
-    let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags, slotConnection.targetSlot ? slotConnection.targetSlot.tags : []);
-    let slotTags = new Set([].concat(slot.tags, slot.spec.tags || [], [slot.name]));
+    const consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags, slotConnection.targetSlot ? slotConnection.targetSlot.tags : []);
+    const slotTags = new Set([].concat(slot.tags, slot.spec.tags || [], [slot.name]));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
     if (consumeConnTags.length > 0 && consumeConnTags.some(t => slotTags.has(t))) {
       return true;

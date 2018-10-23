@@ -20,7 +20,7 @@ export class ArcStoresFetcher {
 
   async _listStores() {
     const find = manifest => {
-      let tags = [...manifest._storeTags];
+      let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
       }
@@ -34,7 +34,7 @@ export class ArcStoresFetcher {
 
   async _digestStores(stores) {
     const result = [];
-    for (let [store, tags] of stores) {
+    for (const [store, tags] of stores) {
       let value = `(don't know how to dereference)`;
       if (store.toList) {
         value = await store.toList();

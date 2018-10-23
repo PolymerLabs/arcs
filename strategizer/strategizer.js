@@ -39,9 +39,9 @@ export class Strategizer {
   }
   async generate() {
     // Generate
-    let generation = this.generation + 1;
+    const generation = this.generation + 1;
     let generated = await Promise.all(this._strategies.map(strategy => {
-      let recipeFilter = recipe => this._ruleset.isAllowed(strategy, recipe);
+      const recipeFilter = recipe => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
         generated: this.generated.filter(recipeFilter),
@@ -50,7 +50,7 @@ export class Strategizer {
       });
     }));
 
-    let record = {};
+    const record = {};
     record.generation = generation;
     record.sizeOfLastGeneration = this.generated.length;
     record.generatedDerivationsByStrategy = {};
@@ -77,9 +77,9 @@ export class Strategizer {
     record.duplicateSameParentDerivationsByStrategy = {};
 
     generated = generated.filter(result => {
-      let strategy = result.derivation[0].strategy.constructor.name;
+      const strategy = result.derivation[0].strategy.constructor.name;
       if (result.hash) {
-        let existingResult = this.populationHash.get(result.hash);
+        const existingResult = this.populationHash.get(result.hash);
         if (existingResult) {
           if (result.derivation[0].parent == existingResult) {
             record.nullDerivations += 1;
@@ -115,12 +115,12 @@ export class Strategizer {
     });
 
     let terminal = new Map();
-    for (let candidate of this.generated) {
+    for (const candidate of this.generated) {
       terminal.set(candidate.result, candidate);
     }
     // TODO(piotrs): This is inefficient, improve at some point.
-    for (let result of this.populationHash.values()) {
-      for (let {parent} of result.derivation) {
+    for (const result of this.populationHash.values()) {
+      for (const {parent} of result.derivation) {
         if (parent && terminal.has(parent.result)) {
           terminal.delete(parent.result);
         }
@@ -141,10 +141,10 @@ export class Strategizer {
     });
 
     // Evalute
-    let evaluations = await Promise.all(this._evaluators.map(strategy => {
+    const evaluations = await Promise.all(this._evaluators.map(strategy => {
       return strategy.evaluate(this, generated);
     }));
-    let fitness = Strategizer._mergeEvaluations(evaluations, generated);
+    const fitness = Strategizer._mergeEvaluations(evaluations, generated);
 
     assert(fitness.length == generated.length);
     for (let i = 0; i < fitness.length; i++) {
@@ -167,12 +167,12 @@ export class Strategizer {
   }
 
   static _mergeEvaluations(evaluations, generated) {
-    let n = generated.length;
-    let mergedEvaluations = [];
+    const n = generated.length;
+    const mergedEvaluations = [];
     for (let i = 0; i < n; i++) {
       let merged = NaN;
-      for (let evaluation of evaluations) {
-        let fitness = evaluation[i];
+      for (const evaluation of evaluations) {
+        const fitness = evaluation[i];
         if (isNaN(fitness)) {
           continue;
         }
@@ -267,7 +267,7 @@ export class Ruleset {
   }
 
   isAllowed(strategy, recipe) {
-    let forbiddenAncestors = this._orderingRules.get(strategy.constructor);
+    const forbiddenAncestors = this._orderingRules.get(strategy.constructor);
     if (!forbiddenAncestors) return true;
     // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.
     return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor));
@@ -300,14 +300,14 @@ Ruleset.Builder = class {
    */
   order(...strategiesOrGroups) {
     for (let i = 0; i < strategiesOrGroups.length - 1; i++) {
-      let current = strategiesOrGroups[i];
-      let next = strategiesOrGroups[i + 1];
-      for (let strategy of Array.isArray(current) ? current : [current]) {
+      const current = strategiesOrGroups[i];
+      const next = strategiesOrGroups[i + 1];
+      for (const strategy of Array.isArray(current) ? current : [current]) {
         let set = this._orderingRules.get(strategy);
         if (!set) {
           this._orderingRules.set(strategy, set = new Set());
         }
-        for (let nextStrategy of Array.isArray(next) ? next : [next]) {
+        for (const nextStrategy of Array.isArray(next) ? next : [next]) {
           set.add(nextStrategy);
         }
       }
@@ -317,9 +317,9 @@ Ruleset.Builder = class {
 
   build() {
     // Making the ordering transitive.
-    let beingExpanded = new Set();
-    let alreadyExpanded = new Set();
-    for (let strategy of this._orderingRules.keys()) {
+    const beingExpanded = new Set();
+    const alreadyExpanded = new Set();
+    for (const strategy of this._orderingRules.keys()) {
       this._transitiveClosureFor(strategy, beingExpanded, alreadyExpanded);
     }
     return new Ruleset(this._orderingRules);
@@ -328,13 +328,13 @@ Ruleset.Builder = class {
   _transitiveClosureFor(strategy, beingExpanded, alreadyExpanded) {
     assert(!beingExpanded.has(strategy), 'Detected a loop in the ordering rules');
 
-    let followingStrategies = this._orderingRules.get(strategy);
+    const followingStrategies = this._orderingRules.get(strategy);
     if (alreadyExpanded.has(strategy)) return followingStrategies || [];
 
     if (followingStrategies) {
       beingExpanded.add(strategy);
-      for (let following of followingStrategies) {
-        for (let expanded of this._transitiveClosureFor(
+      for (const following of followingStrategies) {
+        for (const expanded of this._transitiveClosureFor(
             following, beingExpanded, alreadyExpanded)) {
           followingStrategies.add(expanded);
         }

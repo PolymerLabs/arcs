@@ -42,15 +42,15 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
   }
 
   getInnerContainer(innerSlotName) {
-    let model = this.renderings.map(([subId, {model}]) => model)[0];
-    let providedSlotSpec = this.consumeConn.slotSpec.getProvidedSlotSpec(innerSlotName);
+    const model = this.renderings.map(([subId, {model}]) => model)[0];
+    const providedSlotSpec = this.consumeConn.slotSpec.getProvidedSlotSpec(innerSlotName);
     if (!providedSlotSpec) {
       console.warn(`Cannot find provided spec for ${innerSlotName} in ${this.consumeConn.getQualifiedName()}`);
       return;
     }
     if (providedSlotSpec.isSet && model && model.items && model.items.models) {
-      let innerContainers = {};
-      for (let itemModel of model.items.models) {
+      const innerContainers = {};
+      for (const itemModel of model.items.models) {
         assert(itemModel.id);
         innerContainers[itemModel.id] = itemModel.id;
       }

@@ -20,14 +20,14 @@
 //   DLog.log(object, string, [members]) - log the provided string
 //   DLog.logObject(object, logObj, name, [members]) - log the provided logObj 
 
-let StackTrace = require('../node_modules/stacktrace-js/stacktrace.js');
+const StackTrace = require('../node_modules/stacktrace-js/stacktrace.js');
 
-let __reffedObjects = new Map();
+const __reffedObjects = new Map();
 
-let rand255 = () => Math.round((Math.random() * 256) - 0.5);
-let newColor = () => `rgb(${rand255()}, ${rand255()}, ${rand255()})`;
+const rand255 = () => Math.round((Math.random() * 256) - 0.5);
+const newColor = () => `rgb(${rand255()}, ${rand255()}, ${rand255()})`;
 
-let getColor = (object) => {
+const getColor = (object) => {
   if (!__reffedObjects.get(object)) {
     __reffedObjects.set(object, newColor());
   }
@@ -36,7 +36,7 @@ let getColor = (object) => {
 
 export class DLog {
   static trace(object, string, args) {
-    let funName = StackTrace.getSync()[1].functionName;
+    const funName = StackTrace.getSync()[1].functionName;
     console.log(DLog._logString(object, `${funName}: ${string}`, args), getColor(object), '');
   }
 
@@ -50,13 +50,13 @@ export class DLog {
       case 'FirebaseCollection':
       case 'FirebaseVariable':
         {
-          let key = object.storageKey;
+          const key = object.storageKey;
           let keyBits = key.split('://');
           details = keyBits[0];
           if (keyBits[0] == 'firebase') {
             keyBits = keyBits[1].split('/');
             if (keyBits[5] == 'handles') {
-              let idBits = keyBits[6].split(':');
+              const idBits = keyBits[6].split(':');
               details += ` S${idBits[0]} I${idBits[2]}`;
             } else {
               details += ` ${keyBits.slice(2).join('/')}`;
@@ -74,7 +74,7 @@ export class DLog {
     }
 
     if (args && args.length) {
-      for (let arg of args) {
+      for (const arg of args) {
         details += ` ${arg}: ${object[arg]}`;
       }
     }
@@ -87,7 +87,7 @@ export class DLog {
   }
 
   static traceObject(object, logObj, name, args) {
-    let funName = StackTrace.getSync()[1].functionName;
+    const funName = StackTrace.getSync()[1].functionName;
     console.log(DLog._logString(object, `${funName}: ${name}`, args), getColor(object), '', logObj);
   }
 

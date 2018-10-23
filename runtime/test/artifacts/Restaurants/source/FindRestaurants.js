@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, resolver}) => {
 
-  let host = `find-restaurants`;
+  const host = `find-restaurants`;
 
-  let template = `
+  const template = `
 <div ${host}>
   <div hidden="{{complete}}" style="position:absolute;left:50%;top:50%;-webkit-transform: translate3d(-50%,-50%,0);">Finding restaurants...</div>
   <div slotid="masterdetail"></div>
@@ -18,9 +18,9 @@ defineParticle(({DomParticle, resolver}) => {
 
   `.trim();
 
-  let service = `https://xenonjs.com/services/http/php`;
-  let placesService =`${service}/places.php`;
-  let photoService = `${service}/place-photo.php`;
+  const service = `https://xenonjs.com/services/http/php`;
+  const placesService =`${service}/places.php`;
+  const photoService = `${service}/place-photo.php`;
 
   return class extends DomParticle {
     get template() {

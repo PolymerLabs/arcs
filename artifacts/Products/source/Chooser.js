@@ -12,69 +12,26 @@
 
 defineParticle(({DomParticle, html, resolver, log}) => {
 
-  const host = `[chooser]`;
+  const template = html`
 
-  const productStyles = html`
-    <style>
-      ${host} > x-list [row] {
-        display: flex;
-        align-items: center;
-      }
-      ${host} > x-list [col0] {
-        flex: 1;
-        overflow: hidden;
-        line-height: 115%;
-      }
-      ${host} > x-list [col1] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 64px;
-        height: 64px;
-        box-sizing: border-box;
-        text-align: center;
-        background-size: contain;
-        outline: 1px solid rgba(0,0,0,.08);
-        outline-offset: -1px;
-      }
-      ${host} > x-list [col1] > img {
-        max-width: 64px;
-        max-height: 64px;
-      }
-      ${host} > x-list [category] {
-        color: #cccccc;
-      }
-      ${host} > x-list [price] {
-        color: #333333;
-        font-size: 14px;
-      }
-      ${host} > x-list [seller] {
-        font-size: 14px;
-        margin-left: 8px;
-        color: #cccccc;
-      }
-    </style>
-      `;
-
-    let styles = html`
 <style>
-  ${host} {
+  [chooser] {
     padding: 0 16px;
     margin-top: 16px;
     background-color: #f4f4f4;
     border-top: 4px solid silver;
   }
-  ${host} [chevron] {
+  [chevron] {
     color: silver;
     transform: translate3d(50%, -18px, 0);
     height: 0;
   }
-  ${host} [head] {
+  [head] {
     padding: 16px 0;
     color: #555555;
     font-size: 0.8em;
   }
-  ${host} button {
+  button {
     padding: 4px 12px;
     border-radius: 16px;
     border: 1px solid silver;
@@ -82,16 +39,57 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     margin-top: 6px;
     outline: none;
   }
-  ${host} [item] {
+  [item] {
     padding: 16px;
     background-color: white;
     border-bottom: 16px solid #eeeeee;
   }
+  [row] {
+    display: flex;
+    align-items: center;
+  }
+  [col0] {
+    flex: 1;
+    overflow: hidden;
+    line-height: 115%;
+  }
+  [col1] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    box-sizing: border-box;
+    text-align: center;
+    background-size: contain;
+    outline: 1px solid rgba(0,0,0,.08);
+    outline-offset: -1px;
+  }
+  [col1] > img {
+    max-width: 64px;
+    max-height: 64px;
+  }
+  [category] {
+    color: #cccccc;
+  }
+  [price] {
+    color: #333333;
+    font-size: 14px;
+  }
+  [seller] {
+    font-size: 14px;
+    margin-left: 8px;
+    color: #cccccc;
+  }
 </style>
-  `;
 
-  let productTemplate = html`
-<template>
+<div chooser>
+  <div chevron>▲</div>
+  <div head>{{choices.description}}</div>
+  <div>{{items}}</div>
+</div>
+
+<template product>
   <div item>
     <div row>
       <div col0>
@@ -108,18 +106,6 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 </template>
   `;
 
-  let template = html`
-<div chooser>
-${styles}
-${productStyles}
-  <div chevron>▲</div>
-  <div head>{{choices.description}}</div>
-  <x-list items="{{items}}">
-    ${productTemplate}
-  </x-list>
-</div>
-  `;
-
   return class Chooser extends DomParticle {
     get template() {
       return template;
@@ -134,14 +120,20 @@ ${productStyles}
       }
       state.values = result;
       return {
-        items: result.map(({rawData, id}, index) => {
-          return Object.assign({}, rawData, {
-            subId: id,
-            image: resolver ? resolver(rawData.image) : rawData.image,
-            index
-          });
-        })
+        items: {
+          $template: 'product',
+          models: this._dataToModels(result)
+        }
       };
+    }
+    _dataToModels(data) {
+      return data.map((entity, index) =>
+        Object.assign(entity.dataClone(), {
+          subId: entity.id,
+          image: resolver ? resolver(entity.image) : entity.image,
+          index
+        })
+      );
     }
     _onChooseValue(e, state) {
       this.handles.get('resultList').store(state.values[e.data.key]);

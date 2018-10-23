@@ -54,7 +54,7 @@ export class DomParticleBase extends Particle {
   }
   renderSlot(slotName, contentTypes) {
     const stateArgs = this._getStateArgs();
-    let slot = this.getSlot(slotName);
+    const slot = this.getSlot(slotName);
     if (!slot) {
       return; // didn't receive StartRender.
     }
@@ -64,7 +64,7 @@ export class DomParticleBase extends Particle {
     contentTypes.forEach(ct => slot._requestedContentTypes.add(ct));
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
-      let content = {};
+      const content = {};
       if (slot._requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
       }

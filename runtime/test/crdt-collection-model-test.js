@@ -10,8 +10,8 @@ import {CrdtCollectionModel} from '../ts-build/storage/crdt-collection-model.js'
 
 describe('crdt-collection-model', () => {
   it('can add values', async () => {
-    let model = new CrdtCollectionModel();
-    let effective = model.add('id', 'value', ['key1', 'key2']); 
+    const model = new CrdtCollectionModel();
+    const effective = model.add('id', 'value', ['key1', 'key2']); 
     assert.isTrue(effective);
     assert.equal(model.size, 1);
     assert.equal(model.getValue('id'), 'value');
@@ -19,17 +19,17 @@ describe('crdt-collection-model', () => {
   });
 
   it('can remove values', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1', 'key2']); 
-    let effective = model.remove('id', ['key1', 'key2']); 
+    const effective = model.remove('id', ['key1', 'key2']); 
     assert.isTrue(effective);
     assert.equal(model.size, 0);
   });
 
   it('treats add with different keys as idempotent', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1']); 
-    let effective = model.add('id', 'value', ['key2']); 
+    const effective = model.add('id', 'value', ['key2']); 
     assert.isFalse(effective);
     assert.equal(model.size, 1);
     assert.equal(model.getValue('id'), 'value');
@@ -37,15 +37,15 @@ describe('crdt-collection-model', () => {
   });
 
   it('treats remove as idempotent', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1', 'key2']); 
     model.remove('id', ['key1', 'key2']);
-    let effective = model.remove('id', ['key1', 'key2']);
+    const effective = model.remove('id', ['key1', 'key2']);
     assert.isFalse(effective);
   });
 
   it('doesnt treat value as removed until all keys are removed', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1', 'key2']); 
     let effective = model.remove('id', ['key1']);
     assert.isFalse(effective);
@@ -58,26 +58,26 @@ describe('crdt-collection-model', () => {
   });
 
   it('allows a value to be updated', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1', 'key2']); 
-    let effective = model.add('id', 'value2', ['key3']);
+    const effective = model.add('id', 'value2', ['key3']);
     assert.isTrue(effective);
     assert.equal(model.getValue('id'), 'value2');
   });
 
   it('does not allow a value to be updated unless new keys are added', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     model.add('id', 'value', ['key1', 'key2']); 
     assert.throws(() => model.add('id', 'value2', ['key1'], /cannot add without new keys/));
   });
 
   it('does not allow a value to be added without keys', async () => {
-    let model = new CrdtCollectionModel();
+    const model = new CrdtCollectionModel();
     assert.throws(() => model.add('id', 'value', []), /add requires a list of keys/);
   });
 
   it('allows keys to be initialized empty', async () => {
-    let model = new CrdtCollectionModel([
+    const model = new CrdtCollectionModel([
       {id: 'nokeys', 'value': 'value'},
       {id: 'keys', 'value': 'value', keys: ['key1']},
     ]);
@@ -85,7 +85,7 @@ describe('crdt-collection-model', () => {
     assert.isEmpty(model.getKeys('nokeys'));
     assert.sameMembers(model.getKeys('keys'), ['key1']);
 
-    let effective = model.remove('nokeys', []);
+    const effective = model.remove('nokeys', []);
     assert.isTrue(effective);
     assert(model.size, 1);
   });

@@ -14,7 +14,7 @@ import {Type} from './type.js';
 import {ParticleExecutionHost} from '../particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
-import {Manifest} from '../manifest.js';
+import {Manifest, StorageStub} from './manifest.js';
 import {Description} from '../description.js';
 import {compareComparables} from './recipe/util.js';
 import {FakePecFactory} from '../fake-pec-factory.js';
@@ -248,7 +248,7 @@ export class Arc {
     let id = 0;
     const importSet = new Set();
     const handleSet = new Set();
-    const contextSet = new Set(this.context._stores.map(store => store.id));
+    const contextSet = new Set(this.context.stores.map(store => store.id));
     for (const handle of this._activeRecipe.handles) {
       if (handle.fate === 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
@@ -305,12 +305,12 @@ ${this.activeRecipe.toString()}`;
       slotComposer,
       pecFactory,
       loader,
-      storageProviderFactory: manifest._storageProviderFactory,
+      storageProviderFactory: manifest.storageProviderFactory,
       context
     });
     await Promise.all(manifest.stores.map(async store => {
-      const tags = manifest._storeTags.get(store);
-      if (store.constructor.name === 'StorageStub') {
+      const tags = manifest.storeTags.get(store);
+      if (store instanceof StorageStub) {
         store = await store.inflate();
       }
       arc._registerStore(store, tags);

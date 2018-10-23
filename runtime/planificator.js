@@ -14,7 +14,7 @@ import {Speculator} from './ts-build/speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
 import {SuggestionStorage} from './suggestion-storage.js';
 
-let defaultTimeoutMs = 5000;
+const defaultTimeoutMs = 5000;
 
 const log = logFactory('Planificator', '#ff0090', 'log');
 const error = logFactory('Planificator', '#ff0090', 'error');
@@ -45,7 +45,7 @@ class ReplanQueue {
       this._changes = [];
     } else if (this._changes.length > 0) {
       // Schedule delayed planning.
-      let timeNow = now();
+      const timeNow = now();
       this._changes.forEach((ch, i) => this._changes[i] = timeNow);
       this._scheduleReplan(this._options.defaultReplanDelayMs);
     }
@@ -67,9 +67,9 @@ class ReplanQueue {
     if (this._changes.length <= 1) {
       return;
     }
-    let now = this._changes[this._changes.length - 1];
-    let sincePrevChangeMs = now - this._changes[this._changes.length - 2];
-    let sinceFirstChangeMs = now - this._changes[0];
+    const now = this._changes[this._changes.length - 1];
+    const sincePrevChangeMs = now - this._changes[this._changes.length - 2];
+    const sinceFirstChangeMs = now - this._changes[0];
     if (this._canPostponeReplan(sinceFirstChangeMs)) {
       this._cancelReplanIfScheduled();
       let nextReplanDelayMs = this._options.defaultReplanDelayMs;
@@ -168,7 +168,7 @@ export class Planificator {
       return;
     }
 
-    let suggestionStorage = new SuggestionStorage(this._arc, this.userid);
+    const suggestionStorage = new SuggestionStorage(this._arc, this.userid);
     if (this.isConsumer) {
       // Listen to suggestion-store updates, and update the `current` suggestions on change.
       suggestionStorage.registerSuggestionsUpdatedCallback(
@@ -218,21 +218,21 @@ export class Planificator {
 
     search = search ? search.toLowerCase().trim() : null;
     search = (search !== '') ? search : null;
-    let showAll = search === '*';
+    const showAll = search === '*';
     search = showAll ? null : search;
     if (showAll == this.suggestFilter.showAll && search == this.suggestFilter.search) {
       return;
     }
 
-    let previousSuggestions = this.getCurrentSuggestions();
+    const previousSuggestions = this.getCurrentSuggestions();
     this.suggestFilter = {showAll, search};
-    let suggestions = this.getCurrentSuggestions();
+    const suggestions = this.getCurrentSuggestions();
 
     if (this._plansDiffer(suggestions, previousSuggestions)) {
       this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
     }
 
-    let previousSearch = this._search;
+    const previousSearch = this._search;
     this._search = search;
 
     if (!this._current.contextual && (showAll || !search)) {
@@ -279,16 +279,16 @@ export class Planificator {
         });
       } else {
         suggestions = suggestions.filter(suggestion => {
-          let plan = suggestion.plan;
-          let usesHandlesFromActiveRecipe = plan.handles.find(handle => {
+          const plan = suggestion.plan;
+          const usesHandlesFromActiveRecipe = plan.handles.find(handle => {
             // TODO(mmandlis): find a generic way to exlude system handles (eg Theme), either by tagging or
             // by exploring connection directions etc.
             return !!handle.id && this._arc._activeRecipe.handles.find(activeHandle => activeHandle.id == handle.id);
           });
-          let usesRemoteNonRootSlots = plan.slots.find(slot => {
+          const usesRemoteNonRootSlots = plan.slots.find(slot => {
             return !slot.name.includes('root') && !slot.tags.includes('root') && slot.id && !slot.id.includes('root');
           });
-          let onlyUsesNonRootSlots = !plan.slots.find(s => s.name.includes('root') || s.tags.includes('root'));
+          const onlyUsesNonRootSlots = !plan.slots.find(s => s.name.includes('root') || s.tags.includes('root'));
           return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
         });
       }
@@ -307,7 +307,7 @@ export class Planificator {
   }
 
   _onPlanInstantiated(plan) {
-    let planString = plan.toString();
+    const planString = plan.toString();
     // Check that plan is in this._current.plans
     // TODO(mmandlis): re-enable this when the planner asynchrony doesn't cause it to be false.
     // assert(this._current.plans.some(currentPlan => currentPlan.plan.toString() == planString),
@@ -419,7 +419,7 @@ export class Planificator {
     }
 
     if (hasChange) {
-      let previousSuggestions = this.getCurrentSuggestions();
+      const previousSuggestions = this.getCurrentSuggestions();
       if (append) {
         this._current.plans.push(...newPlans);
         this._current.generations.push(...current.generations);
@@ -427,7 +427,7 @@ export class Planificator {
         this._current = current;
       }
       this._plansChangedCallbacks.forEach(callback => callback(this._current));
-      let suggestions = this.getCurrentSuggestions();
+      const suggestions = this.getCurrentSuggestions();
       if (this._plansDiffer(suggestions, previousSuggestions)) {
         this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
       }
@@ -451,7 +451,7 @@ export class Planificator {
   _isArcPopulated() {
     if (this._arc.recipes.length == 0) return false;
     if (this._arc.recipes.length == 1) {
-      let [recipe] = this._arc.recipes;
+      const [recipe] = this._arc.recipes;
       if (recipe.particles.length == 0 ||
           (recipe.particles.length == 1 && recipe.particles[0].name === 'Launcher')) {
         // TODO: Check for Launcher is hacky, find a better way.

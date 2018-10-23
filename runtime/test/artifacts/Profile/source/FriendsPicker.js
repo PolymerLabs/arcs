@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, html, resolver}) => {
 
-  let host = `friends-picker`;
+  const host = `friends-picker`;
 
-  let styles = html`
+  const styles = html`
 <style>
   [${host}] {
   }
@@ -34,7 +34,7 @@ defineParticle(({DomParticle, html, resolver}) => {
 </style>
   `;
 
-  let template = html`
+  const template = html`
 
 ${styles}
 
@@ -58,15 +58,15 @@ ${styles}
       return template;
     }
     render(props, state) {
-      let user = props.person || {};
-      let friends = props.friends || [];
-      let people = (props.people || []).filter(p => p.id !== user.id);
-      let avatars = props.avatars || [];
+      const user = props.person || {};
+      const friends = props.friends || [];
+      const people = (props.people || []).filter(p => p.id !== user.id);
+      const avatars = props.avatars || [];
       console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
-      let avatarModels = people.map((p, i) => {
-        let avatar = avatars.find(a => a.owner === p.id);
+      const avatarModels = people.map((p, i) => {
+        const avatar = avatars.find(a => a.owner === p.id);
         //console.log(p.id, avatar, avatars);
-        let url = (avatar && avatar.url) || `https://$cdn/assets/avatars/user (0).png`;
+        const url = (avatar && avatar.url) || `https://$cdn/assets/avatars/user (0).png`;
         return {
           key: i,
           value: p.id,
@@ -83,9 +83,9 @@ ${styles}
       };
     }
     _onSelectAvatar(e, state) {
-      let selectedId = e.data.value;
-      let friend = this._props.friends.find(f => f.id === selectedId);
-      let friendsHandle = this.handles.get('friends');
+      const selectedId = e.data.value;
+      const friend = this._props.friends.find(f => f.id === selectedId);
+      const friendsHandle = this.handles.get('friends');
       if (friend) {
         friendsHandle.remove(friend);
       } else {

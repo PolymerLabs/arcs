@@ -15,7 +15,7 @@ import {Recipe} from '../ts-build/recipe/recipe.js';
  */
 export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
-    let self = this;
+    const self = this;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
@@ -23,11 +23,11 @@ export class MatchFreeHandlesToConnections extends Strategy {
           return;
         }
 
-        let matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'descriptions');
+        const matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'descriptions');
 
         return matchingConnections.map(connection => {
           return (recipe, handle) => {
-            let newConnection = recipe.updateToClone({connection}).connection;
+            const newConnection = recipe.updateToClone({connection}).connection;
             newConnection.connectToHandle(handle);
             return 1;
           };

@@ -109,9 +109,9 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
 
   onMessageBundle(messages) {
     let needsRedraw = false;
-    let flowEventsCache = new Map();
+    const flowEventsCache = new Map();
 
-    for (let msg of messages) {
+    for (const msg of messages) {
       switch (msg.messageType) {
         case 'startup-time':
           if (this._timeline) {
@@ -126,8 +126,8 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
         case 'trace': {
           needsRedraw = true;
 
-          let trace = msg.messageBody;
-          let group = trace.cat;
+          const trace = msg.messageBody;
+          const group = trace.cat;
 
           this._groups.update({
             id: group,
@@ -144,8 +144,8 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
           }
 
           if (trace.ph === 'X') { // Duration event.
-            let start = Math.floor(trace.ts / 1000 + this._timeBase);
-            let end = Math.ceil((trace.ts + trace.dur) / 1000 + this._timeBase);
+            const start = Math.floor(trace.ts / 1000 + this._timeBase);
+            const end = Math.ceil((trace.ts + trace.dur) / 1000 + this._timeBase);
 
             this._items.update({
               id: `${trace.cat}_${trace.name}_${trace.ts}`,
@@ -169,10 +169,10 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
             if (trace.flowId) {
               // See comment about flowEventsCache below.
               // Updates to _items are only visible after flush() below.
-              let flowItem = flowEventsCache.get(trace.flowId)
+              const flowItem = flowEventsCache.get(trace.flowId)
                   || this._items.get(trace.flowId)
                   || {start, end};
-              let item = {
+              const item = {
                 id: trace.flowId,
                 start: Math.min(flowItem.start, start),
                 end: Math.max(flowItem.end, end),
@@ -188,7 +188,7 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
             let start;
             let end;
             start = end = [trace.ts / 1000 + this._timeBase];
-            for (let item of [
+            for (const item of [
                 this._items.get(trace.id),
                 flowEventsCache.get(trace.id),
                 ...this._items.get({filter: elem => elem.flowId === trace.id})]) {
@@ -198,7 +198,7 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
               }
             }
 
-            let item = {
+            const item = {
               id: trace.id,
               group,
               subgroup,
@@ -317,7 +317,7 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
     this._autoWindowResize = true;
     if (this._timeline && this._items.length > 0) {
       // There's timeline.fit(), but it doesn't leave margins and looks weird.
-      let start = this._items.min('start').start;
+      const start = this._items.min('start').start;
       let end = this._items.max('end').end;
       end = end + (end - start) * .1;
       this._timeline.setWindow({start, end});

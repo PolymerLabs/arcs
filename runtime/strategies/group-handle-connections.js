@@ -21,28 +21,28 @@ export class GroupHandleConnections extends Strategy {
           return;
         }
         // Find all unique types used in the recipe that have unbound handle connections.
-        let types = new Set();
+        const types = new Set();
         recipe.handleConnections.forEach(hc => {
           if (!hc.isOptional && !hc.handle && !Array.from(types).find(t => t.equals(hc.type))) {
             types.add(hc.type);
           }
         });
 
-        let groupsByType = new Map();
+        const groupsByType = new Map();
         types.forEach(type => {
           // Find the particle with the largest number of unbound connections of the same type.
-          let countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
+          const countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
             return !conn.isOptional && !conn.handle && type.equals(conn.type);
           }).length;
-          let sortedParticles = [...recipe.particles].sort((p1, p2) => {
+          const sortedParticles = [...recipe.particles].sort((p1, p2) => {
             return countConnectionsByType(p2.connections) - countConnectionsByType(p1.connections);
           }).filter(p => countConnectionsByType(p.connections) > 0);
           assert(sortedParticles.length > 0);
 
           // Handle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
           // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
-          let particleWithMostConnectionsOfType = sortedParticles[0];
-          let groups = new Map();
+          const particleWithMostConnectionsOfType = sortedParticles[0];
+          const groups = new Map();
           let allTypeHandleConnections = recipe.handleConnections.filter(c => {
             return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
           });
@@ -56,10 +56,10 @@ export class GroupHandleConnections extends Strategy {
               if (!groups.has(handleConnection)) {
                 groups.set(handleConnection, []);
               }
-              let group = groups.get(handleConnection);
+              const group = groups.get(handleConnection);
 
               // filter all connections where this particle is already in a group.
-              let possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
+              const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
               let selectedConn = possibleConnections.find(c => handleConnection.isInput != c.isInput || handleConnection.isOutput != c.isOutput);
               // TODO: consider tags.
               // TODO: Slots handle restrictions should also be accounted for when grouping.
@@ -94,9 +94,9 @@ export class GroupHandleConnections extends Strategy {
           return recipe => {
             groupsByType.forEach((groups, type) => {
               groups.forEach(group => {
-                let recipeHandle = recipe.newHandle();
+                const recipeHandle = recipe.newHandle();
                 group.forEach(conn => {
-                  let cloneConn = recipe.updateToClone({conn}).conn;
+                  const cloneConn = recipe.updateToClone({conn}).conn;
                   cloneConn.connectToHandle(recipeHandle);
                 });
               });

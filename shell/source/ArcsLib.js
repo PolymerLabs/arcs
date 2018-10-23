@@ -15,7 +15,7 @@ import {Arc} from '../../runtime/ts-build/arc.js';
 import {Planificator} from '../../runtime/planificator.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
-import {Manifest} from '../../runtime/manifest.js';
+import {Manifest} from '../../runtime/ts-build/manifest.js';
 
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
