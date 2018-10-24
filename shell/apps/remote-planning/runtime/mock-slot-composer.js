@@ -12,8 +12,8 @@
 import {SlotComposer} from '../../../../runtime/ts-build/slot-composer.js';
 import {SlotDomConsumer} from '../../../../runtime/ts-build/slot-dom-consumer.js';
 
-let logging = false;
-let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
+const logging = false;
+const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
 const assert = (value, msg) => {}; //value || console.log('ASSERT failed: ', msg);
 assert.isAbove = () => {};
@@ -43,7 +43,7 @@ export class MockSlotComposer extends SlotComposer {
    // TODO: get rid of it once the problem is fixed.
   _addSlotConsumer(slot) {
     super._addSlotConsumer(slot);
-    let startCallback = slot.startRenderCallback;
+    const startCallback = slot.startRenderCallback;
     slot.startRenderCallback = ({particle, slotName, contentTypes}) => {
       startCallback({particle, slotName, contentTypes});
     };
@@ -53,7 +53,7 @@ export class MockSlotComposer extends SlotComposer {
    * Sends an event to the given particle and slot.
    */
   sendEvent(particleName, slotName, event, data) {
-    let particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
+    const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
     assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
@@ -94,7 +94,7 @@ export class MockSlotComposer extends SlotComposer {
 
     //this._expectationsMet();
 
-    let slotConsumer = this.getSlotConsumer(particle, slotName);
+    const slotConsumer = this.getSlotConsumer(particle, slotName);
     if (slotConsumer) {
       slotConsumer.updateProvidedContexts();
     } else {

@@ -56,8 +56,8 @@ class SimpleTabs extends HTMLElement {
     }
   }
   get pages() {
-    let nodes = this._root.querySelector('slot').assignedNodes();
-    let pages = nodes.filter(n => {
+    const nodes = this._root.querySelector('slot').assignedNodes();
+    const pages = nodes.filter(n => {
       switch (n.localName) {
         case undefined:
         case 'style':
@@ -80,11 +80,11 @@ class SimpleTabs extends HTMLElement {
     this._render();
   }
   _render() {
-    let pages = this.pages;
+    const pages = this.pages;
     pages.forEach((page, i) => {
       page.style.display = (i !== this.tab) ? 'none' : '';
     });
-    let crumbs = {
+    const crumbs = {
       template: crumb,
       models: pages.map((p, i) => {
         return {

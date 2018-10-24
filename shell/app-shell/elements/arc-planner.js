@@ -62,7 +62,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     }
   }
   _createPlanificator(arc, userid) {
-    let planificatorMode = ArcsUtils.getUrlParam('planificator');
+    const planificatorMode = ArcsUtils.getUrlParam('planificator');
     const planificator = new Arcs.Planificator(arc, {userid, mode: planificatorMode});
     planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));

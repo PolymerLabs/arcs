@@ -32,7 +32,7 @@ class ArcAuth extends Xen.Base {
         const providerData = user.providerData;
         this._credential(user);
       } else {
-        let provider = new firebase.auth.GoogleAuthProvider();
+        const provider = new firebase.auth.GoogleAuthProvider();
         // firebase.auth().signInWithPopup(provider).then(this._credential.bind(this));
         firebase.auth().signInWithRedirect(provider);
         /*

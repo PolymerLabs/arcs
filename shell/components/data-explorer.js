@@ -84,7 +84,7 @@ class DataExplorer extends Xen.Base {
     super._setValueFromAttribute(name, value);
   }
   _render(props, state) {
-    let o = props.object || Object;
+    const o = props.object || Object;
     return {
       items: {
         template: templateDataItem,

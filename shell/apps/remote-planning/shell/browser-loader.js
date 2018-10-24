@@ -34,7 +34,7 @@ export class BrowserLoader extends Loader {
     let url = this._urlMap[path];
     if (!url && path) {
       // TODO(sjmiles): inefficient!
-      let macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
+      const macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
       if (macro) {
         url = this._urlMap[macro] + path.slice(macro.length);
       }
@@ -51,10 +51,10 @@ export class BrowserLoader extends Loader {
     return super.requireParticle(path);
   }
   mapParticleUrl(path) {
-    let parts = path.split('/');
-    let suffix = parts.pop();
-    let folder = parts.join('/');
-    let name = suffix.split('.').shift();
+    const parts = path.split('/');
+    const suffix = parts.pop();
+    const folder = parts.join('/');
+    const name = suffix.split('.').shift();
     this._urlMap[name] = folder;
   }
   unwrapParticle(particleWrapper, log) {

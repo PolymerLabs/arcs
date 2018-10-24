@@ -13,7 +13,7 @@ const log = console.log.bind(console, `%cworker-entry`, `background: #12005e; co
 
 self.onmessage = function(e) {
   self.onmessage = null;
-  let {id, base} = e.data;
+  const {id, base} = e.data;
   //log('starting worker', id);
   new ParticleExecutionContext(e.ports[0], id, new BrowserLoader(base));
 };

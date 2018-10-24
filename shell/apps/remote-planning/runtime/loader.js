@@ -27,7 +27,7 @@ function schemaLocationFor(name) {
 
 export class Loader {
   path(fileName) {
-    let path = fileName.replace(/[/][^/]+$/, '/');
+    const path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 
@@ -86,18 +86,18 @@ export class Loader {
   }
 
   async loadParticleClass(spec) {
-    let clazz = await this.requireParticle(spec.implFile);
+    const clazz = await this.requireParticle(spec.implFile);
     clazz.spec = spec;
     return clazz;
   }
 
   async requireParticle(fileName) {
     if (fileName === null) fileName = '';
-    let src = await this.loadResource(fileName);
+    const src = await this.loadResource(fileName);
     // Note. This is not real isolation.
-    let script = new vm.Script(src, {filename: fileName, displayErrors: true});
-    let result = [];
-    let self = {
+    const script = new vm.Script(src, {filename: fileName, displayErrors: true});
+    const result = [];
+    const self = {
       defineParticle(particleWrapper) {
         result.push(particleWrapper);
       },

@@ -20,13 +20,13 @@ class DocScraper {
       ;
   }
   _processText(text) {
-    let top = {};
-    let classes = [];
+    const top = {};
+    const classes = [];
     let current = top;
     let subCurrent = {};
 
     function makePragma(object, pragma, content) {
-      let p$ = object;
+      const p$ = object;
       let p = p$[pragma];
       if (!p) {
         p$[pragma] = p = [];
@@ -34,30 +34,30 @@ class DocScraper {
       p.push(content);
     }
 
-    let js_matches = text.match(/\/\*\*([\s\S]*?)\*\//g) || [];
+    const js_matches = text.match(/\/\*\*([\s\S]*?)\*\//g) || [];
     text = text.replace(/\/\*\*([\s\S]*?)\*\//g, '');
 
-    let html_matches = text.match(/<!--([\s\S]*?)-->/g) || [];
-    let matches = html_matches.concat(js_matches);
+    const html_matches = text.match(/<!--([\s\S]*?)-->/g) || [];
+    const matches = html_matches.concat(js_matches);
 
     matches.forEach(function(m) {
 
       let lines = m.replace(/\r\n/g, '\n').replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!--|^s*-->/gm, '').split('\n');
 
-      let pragmas = [];
+      const pragmas = [];
       lines = lines.filter(function(l) {
-        let m = l.match(/\s*@([\w-]*) (.*)/);
+        const m = l.match(/\s*@([\w-]*) (.*)/);
         if (!m) {
           return true;
         }
         pragmas.push(m);
       });
 
-      let code = lines.join('\n').trim();
+      const code = lines.join('\n').trim();
 
       pragmas.forEach(function(m) {
-        let pragma = m[1];
-        let content = m[2];
+        const pragma = m[1];
+        const content = m[2];
         switch (pragma) {
 
           case 'class':

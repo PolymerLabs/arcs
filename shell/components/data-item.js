@@ -42,11 +42,11 @@ class DataItem extends Xen.Base {
     state.expanded = Boolean(props.expand);
   }
   _render(props, state) {
-    let type = typeof props.value;
-    let isnull = props.value === null;
-    let isobject = (type === 'object' && !isnull);
-    let isstring = (type === 'string' || type === 'number' || isnull);
-    let isbool = (type==='boolean');
+    const type = typeof props.value;
+    const isnull = props.value === null;
+    const isobject = (type === 'object' && !isnull);
+    const isstring = (type === 'string' || type === 'number' || isnull);
+    const isbool = (type==='boolean');
 
     if (!isNaN(Number(props.name))) {
       state.expanded = true;

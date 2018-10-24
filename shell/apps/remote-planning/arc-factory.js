@@ -39,7 +39,7 @@ const ArcFactory = class {
     //console.log(loader);
     //console.log(slotComposer);
     this.pecFactory = function(id) {
-      let channel = new MessageChannel();
+      const channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, this.loader);
       return channel.port2;
     };
