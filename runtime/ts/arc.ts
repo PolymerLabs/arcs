@@ -29,7 +29,7 @@ import {ParticleSpec} from '../particle-spec.js';
 import {PECInnerPort} from '../api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {HandleConnection} from './recipe/handle-connection.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from './slot-composer.js';
 
 type ArcOptions = {
   id: string;
