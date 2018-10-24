@@ -63,7 +63,7 @@ export class ArcHost {
     } catch (x) {
       console.error(x);
     }
-    const recipe = manifest.recipes[0];
+    const recipe = manifest.allRecipes[0];
     const plan = await env.resolve(arc, recipe);
     if (plan) {
       console.log('instantiating plan');

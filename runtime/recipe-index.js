@@ -30,7 +30,7 @@ class RelevantContextRecipes extends Strategy {
   constructor(context, affordance) {
     super();
     this._recipes = [];
-    for (let recipe of context.recipes) {
+    for (let recipe of context.allRecipes) {
       if (affordance && recipe.particles.find(p => p.spec && !p.spec.matchAffordance(affordance)) !== undefined) {
         continue;
       }
