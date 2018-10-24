@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, resolver, html, log}) => {
 
-  let host = `opener`;
+  const host = `opener`;
 
   const template = html`
 <style>

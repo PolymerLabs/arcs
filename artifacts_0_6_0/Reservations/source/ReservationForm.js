@@ -124,7 +124,7 @@ defineParticle(({DomParticle, html}) => {
          *
          * (i.e. earliest can be 5:30pm and latest 10pm)
          */
-        let when = new Date();
+        const when = new Date();
         if (when.getHours() >= 22) {
           when.setDate(when.getDate() + 1);
           when.setHours(19);
@@ -155,13 +155,13 @@ defineParticle(({DomParticle, html}) => {
       }
     }
     toDateInputValue(date) {
-      let local = new Date(date);
+      const local = new Date(date);
       local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
       return local.toJSON().slice(0, 16);
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time
-      let t = new Date(date);
+      const t = new Date(date);
       t.setMinutes(t.getMinutes() - (n-1)/2*30);
       let hour = (t.getHours()) % 24;
       let minute = t.getMinutes() >= 30 ? '30' : '00';
@@ -171,11 +171,11 @@ defineParticle(({DomParticle, html}) => {
       let ts = t.getTime();
       ts = ts - (ts % 86400000); // Round to closest day
 
-      let result = [];
+      const result = [];
 
       while (n--) {
         // This seems somewhat balanced
-        let notAvailable = false; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
+        const notAvailable = false; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
 
         result.push({
           time: `${hour}:${minute}`,
@@ -194,7 +194,7 @@ defineParticle(({DomParticle, html}) => {
       return result;
     }
     createDescription(restaurantId, participants, startDate) {
-      let times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
+      const times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
       let closest = null;
       times.map(({time, notAvailable}, i) => {
         if (!notAvailable) {
@@ -214,15 +214,15 @@ defineParticle(({DomParticle, html}) => {
     render({restaurant}, {currentEvent}) {
       // TODO(noelutz): remove code that handles list rendering.
       // It has moved to ReservationAnnotation.js.
-      let partySize = parseInt(currentEvent.participants) || 2;
+      const partySize = parseInt(currentEvent.participants) || 2;
       if (restaurant) {
         return this.renderSingle(restaurant, currentEvent.startDate, partySize);
       }
     }
     renderSingle(restaurant, date, partySize) {
-      let restaurantId = restaurant.id || '';
-      let times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
-      let timePicker = {date};
+      const restaurantId = restaurant.id || '';
+      const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
+      const timePicker = {date};
       for (let i = 1; i <= 21; ++i) {
         timePicker[`selected${i}`] = Boolean(partySize == i);
       }
@@ -239,12 +239,12 @@ defineParticle(({DomParticle, html}) => {
       };
     }
     onDateChanged(e, state) {
-      let newEvent = Object.assign({}, state.currentEvent || {participants: 2});
+      const newEvent = Object.assign({}, state.currentEvent || {participants: 2});
       newEvent.startDate = newEvent.endDate = e.data.value;
       this.storeNewEvent(newEvent);
     }
     onPartySizeChanged(e, state) {
-      let newEvent = Object.assign({}, state.currentEvent || {});
+      const newEvent = Object.assign({}, state.currentEvent || {});
       newEvent.participants = Number(e.data.value);
       this.storeNewEvent(newEvent);
     }

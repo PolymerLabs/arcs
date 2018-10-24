@@ -87,7 +87,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       return this._props.user && this._props.user.name || '';
     }
     render(props) {
-      let {messages, user, avatars} = props;
+      const {messages, user, avatars} = props;
       if (messages && user) {
         return {
           scrollTop: 1e6,

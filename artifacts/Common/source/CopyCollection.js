@@ -15,7 +15,7 @@ defineParticle(({Particle}) => {
     }
     onHandleSync(handle, model) {
       if (handle.name === 'input') {
-        for (let item of model) {
+        for (const item of model) {
           this.output.store(item);
         }
         this.relevance = model.length; // TODO: set appropriate relevance.

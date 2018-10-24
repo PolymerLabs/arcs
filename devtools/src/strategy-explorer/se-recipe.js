@@ -82,16 +82,16 @@ Polymer({
 
     this.recipe.derivation.forEach(derivation => {
       if (derivation.parent !== undefined) {
-        let newParent = document.strategyExplorer.idMap.get(derivation.parent);
+        const newParent = document.strategyExplorer.idMap.get(derivation.parent);
 
-        let setupContext = (newParent => {
+        const setupContext = (newParent => {
           this.strategyMap.set(newParent, [[derivation.strategy]]);
           if (!this.parents.has(newParent)) {
             this.parents.add(newParent);
 
             newParent.strategyMap.forEach((valueList, key) => {
               valueList.forEach(value => {
-                let strategyList = value.slice();
+                const strategyList = value.slice();
                 strategyList.push(derivation.strategy);
                 if (this.strategyMap.get(key) == undefined) {
                   this.strategyMap.set(key, []);
@@ -131,7 +131,7 @@ Polymer({
   },
 
   attached: function() {
-    let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
+    const recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
     this.$['recipe-box'].addEventListener('mouseenter', e => {
       recipeView.over = this;
       recipeView.recipe = this.recipe;

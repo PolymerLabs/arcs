@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
     <a-box color="yellow" depth="0.5" height="0.5" width="0.5" position="0 0.75 0">
       <a-entity slotid="box-action" position="0 0.5 0"></a-entity>
     </a-box>

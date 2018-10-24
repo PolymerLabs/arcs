@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
 <template participant>
   <a-entity name$="{{subId}}" position$="{{position}}" scale$="{{scale}}" rotation$="{{rotation}}">
     <a-entity slotid="mouth" subid$="{{subId}}"></a-entity>
@@ -21,7 +21,7 @@ defineParticle(({DomParticle}) => {
 <a-entity>{{participants}}</a-entity>
     `.trim();
 
-  let data = {
+  const data = {
     Scott: {
       position: '350 400 -1500',
       scale: '200 200 200',

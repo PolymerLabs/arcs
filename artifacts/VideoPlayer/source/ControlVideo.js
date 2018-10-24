@@ -45,7 +45,7 @@ defineParticle(({DomParticle, html}) => {
     }
     willReceiveProps(props) {
       if (props.controls && props.controls.length) {
-        let last = props.controls[props.controls.length - 1];
+        const last = props.controls[props.controls.length - 1];
         this._setState({
           mode: last.mode,
           position: Number(last.position),
@@ -64,7 +64,7 @@ defineParticle(({DomParticle, html}) => {
       if (mode == newMode) {
         return;
       }
-      let newTs = Date.now();
+      const newTs = Date.now();
       if (newMode == Pause) {
         // Compute the new position. Mode used to be play.
         console.log('mode', mode);

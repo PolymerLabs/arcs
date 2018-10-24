@@ -20,12 +20,12 @@ defineParticle(({DomParticle}) => {
     }
     willReceiveProps(props, state) {
       if (props.messages && props.participants) {
-        let participants = new Set([
+        const participants = new Set([
           ...state.participants,
           ...props.participants.map(p => p.name)
         ]);
         this._setState({participants});
-        let changes = new Set();
+        const changes = new Set();
         props.messages.forEach(m => {
           if (!participants.has(m.name)) {
             changes.add(m.name);
@@ -38,10 +38,10 @@ defineParticle(({DomParticle}) => {
     }
     update(props, state) {
       if (state.changes) {
-        let changes = state.changes;
+        const changes = state.changes;
         state.participants = new Set([...state.participants, ...state.changes]);
         state.changes = undefined;
-        let Person = this.handles.get('participants').entityClass;
+        const Person = this.handles.get('participants').entityClass;
         changes.forEach(name => {
           this.handles.get('participants').store(new Person({name}));
         });

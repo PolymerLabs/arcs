@@ -12,7 +12,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
 <span>{{mode}}</span> position <span>{{position}}</span> at <span>{{ts}}</span>
 <video muted autoplay id='video' width='100%' preload='none' poster="https://media.w3.org/2010/05/sintel/poster.png">
   <source id='mp4' src="https://media.w3.org/2010/05/sintel/trailer.mp4" type='video/mp4'>
@@ -26,7 +26,7 @@ defineParticle(({DomParticle}) => {
     }
     render(props, state) {
       if (props.controls && props.controls.length) {
-        let c = props.controls[props.controls.length - 1];
+        const c = props.controls[props.controls.length - 1];
         return {
           mode: c.mode,
           position: c.position,

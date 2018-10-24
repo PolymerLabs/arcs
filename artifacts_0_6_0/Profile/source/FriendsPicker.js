@@ -57,7 +57,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       const friends = props.friends || [];
       const people = (props.users || []).filter(p => p.id !== user.id);
       const avatars = props.avatars || [];
-      let avatarModels = people.map((p, i) => {
+      const avatarModels = people.map((p, i) => {
         const avatar = this.boxQuery(avatars, p.id)[0];
         const url = (avatar && avatar.url) || `https://$shell/assets/avatars/user (0).png`;
         return {
@@ -76,9 +76,9 @@ defineParticle(({DomParticle, html, resolver}) => {
       };
     }
     _onSelectAvatar(e, state) {
-      let selectedId = e.data.value;
-      let friend = this._props.friends.find(f => f.id === selectedId);
-      let friendsHandle = this.handles.get('friends');
+      const selectedId = e.data.value;
+      const friend = this._props.friends.find(f => f.id === selectedId);
+      const friendsHandle = this.handles.get('friends');
       if (friend) {
         friendsHandle.remove(friend);
       } else {

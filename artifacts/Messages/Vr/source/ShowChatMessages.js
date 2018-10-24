@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
     <a-entity id={{subId}}>{{inner}}</a-entity>
 
     <template chat>
@@ -23,7 +23,7 @@ defineParticle(({DomParticle}) => {
 
   `.trim();
 
-  let mustache = {
+  const mustache = {
     Scott: {
       position: '0.217 -1.8 0',
     },
@@ -63,7 +63,7 @@ defineParticle(({DomParticle}) => {
     }
     willReceiveProps(props) {
       if (props.participants && props.participants.length && props.messages && props.messages.length) {
-        let latest = new Map();
+        const latest = new Map();
         props.messages.forEach(c => {
           if (c.content &&
               (this.mode == 'mustache' && c.type == 'mustache') ||
@@ -83,7 +83,7 @@ defineParticle(({DomParticle}) => {
     }
     _renderInner(p, message) {
       if (message !== undefined) {
-        let model = {name: p.name, message};
+        const model = {name: p.name, message};
         if (this.mode == 'mustache') {
           model.position = mustache[p.name] ? mustache[p.name].position : '';
           model.opacity = '1';

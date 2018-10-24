@@ -34,9 +34,9 @@ defineParticle(({DomParticle, html}) => {
     }
     shouldRender({person}) { return Boolean(person); }
     render({person}) {
-      let name = (person && person.name) || 'n/a';
-      let occasion = (person && person.occasion) || 'n/a';
-      let inOneWeek =
+      const name = (person && person.name) || 'n/a';
+      const occasion = (person && person.occasion) || 'n/a';
+      const inOneWeek =
         new Date(new Date().setHours(21*24)) // Advance time by three weeks
           .toISOString().substr(0, 10);
       return {

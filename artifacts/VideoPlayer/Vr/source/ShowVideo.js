@@ -12,7 +12,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
   <!-- TODO: the docs say we should add the video to the scene assets and then reference
     it here. This requires a second slot and the ability to render into two slots at once
     which I'm not sure how to do yet.
@@ -34,7 +34,7 @@ defineParticle(({DomParticle}) => {
     }
     render(props, state) {
       if (props.controls && props.controls.length) {
-        let c = props.controls[props.controls.length - 1];
+        const c = props.controls[props.controls.length - 1];
         return {
           mode: c.mode,
           position: c.position,

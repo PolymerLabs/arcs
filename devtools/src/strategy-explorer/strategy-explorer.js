@@ -81,7 +81,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
   }
 
   onMessageBundle(messages) {
-    for (let msg of messages) {
+    for (const msg of messages) {
       switch (msg.messageType) {
         case 'generations':
           this.displayResults(msg.messageBody);
@@ -96,7 +96,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
   onFindPhrase(e) {
     const phrase = e.detail;
     this.findBacklit = !!phrase;
-    for (let seRecipe of this.idMap.values()) {
+    for (const seRecipe of this.idMap.values()) {
       seRecipe.setFindPhrase(phrase);
     }
   }

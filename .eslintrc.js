@@ -37,9 +37,6 @@ module.exports = {
     "comma-dangle": "off",
     "linebreak-style": "off",
     "no-multi-spaces": "off",
-    // eslint-config-google introducted this check in v0.11.0
-    // disable for now as there are 3500+ instances of this to fix.
-    "prefer-const": 0,
   },
   env: {
     browser: true,
