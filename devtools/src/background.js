@@ -2,6 +2,8 @@
 const connections = {};
 // Tab ID to `true` if given tab already pinged us.
 const tabsReady = {};
+// Tab ID to URL, to know when to refresh DevTools when Shell transitions between Arcs.
+const tabsUrl = {};
 
 // DevTools page connecting.
 chrome.runtime.onConnect.addListener(function(port) {
@@ -69,4 +71,18 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
     connections[tabId].postMessage([{messageType: 'page-refresh'}]);
     delete tabsReady[tabId];
   }
+});
+
+chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
+  if (details.frameId !== 0) {
+    return; // Ignore if it's not the top-frame.
+  }
+  const tabId = details.tabId;
+  if (tabId in tabsUrl) {
+    if (tabsUrl[tabId] === details.url) return;
+    console.log(`Found updated URL for tab.${tabId}, notifying about Arc transition.`);
+    connections[tabId].postMessage([{messageType: 'arc-transition'}]);
+  }
+  console.log(`Setting URL for tab.${tabId} : ${details.url}`);
+  tabsUrl[tabId] = details.url;
 });

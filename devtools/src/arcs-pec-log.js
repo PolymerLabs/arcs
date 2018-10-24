@@ -69,8 +69,13 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     const newEntries = [];
     for (const msg of messages) {
       switch (msg.messageType) {
-        case 'PecLog': newEntries.push(this.newEntry(msg.messageBody)); break;
-        case 'page-refresh': this.reset(); return;
+        case 'PecLog':
+          newEntries.push(this.newEntry(msg.messageBody));
+          break;
+        case 'page-refresh':
+        case 'arc-transition':
+          this.reset();
+          return;
       }
     }
     if (newEntries.length) {

@@ -144,6 +144,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
           });
           break;
         case 'page-refresh':
+        case 'arc-transition':
           this.arcId = null;
           this.loading = false;
           this.set('storeGroups.0.items', []);
