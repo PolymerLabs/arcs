@@ -20,7 +20,7 @@ export class SuggestionStorage {
     assert(userid, `User id must not be null`);
 
     this._arc = arc;
-    let storageKeyTokens = this._arc.storageKey.split('/');
+    const storageKeyTokens = this._arc.storageKey.split('/');
     this._arcKey = storageKeyTokens.slice(-1)[0];
     this._storageKey = 
       `${storageKeyTokens.slice(0, -2).join('/')}/users/${userid}/suggestions/${this._arcKey}`;
@@ -47,8 +47,8 @@ export class SuggestionStorage {
   }
 
   _initStore(id, storageKey, callback) {
-    let schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
-    let type = Type.newEntity(schema);
+    const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
+    const type = Type.newEntity(schema);
     const promise = this._arc._storageProviderFactory._storageForKey(storageKey)._join(
         id, type, storageKey, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
     promise.then(
@@ -72,13 +72,13 @@ export class SuggestionStorage {
       return;
     }
 
-    let value = (await (store || this._store).get()) || {};
+    const value = (await (store || this._store).get()) || {};
     if (!value.current) {
       return;
     }
 
-    let plans = [];
-    for (let {descriptionText, recipe, hash, rank, suggestionContent} of value.current.plans) {
+    const plans = [];
+    for (const {descriptionText, recipe, hash, rank, suggestionContent} of value.current.plans) {
       try {
         plans.push({
           plan: await this._planFromString(recipe),
@@ -110,19 +110,19 @@ export class SuggestionStorage {
   }
 
   async _planFromString(planString) {
-    let manifest = await Manifest.parse(
+    const manifest = await Manifest.parse(
         planString, {loader: this._arc.loader, context: this._arc._context, fileName: ''});
     assert(manifest._recipes.length == 1);
     let plan = manifest._recipes[0];
     assert(plan.normalize(), `can't normalize deserialized suggestion: ${plan.toString()}`);
     if (!plan.isResolved()) {
-      let resolvedPlan = await this._recipeResolver.resolve(plan);
+      const resolvedPlan = await this._recipeResolver.resolve(plan);
       assert(resolvedPlan, `can't resolve plan: ${plan.toString({showUnresolved: true})}`);
       if (resolvedPlan) {
         plan = resolvedPlan;
       }
     }
-    for (let store of manifest.stores) {
+    for (const store of manifest.stores) {
       // If recipe has hosted particles, manifest will have stores with hosted
       // particle specs. Moving these stores into the current arc's context.
       // TODO: This is a hack, find a proper way of doing this.
@@ -134,8 +134,8 @@ export class SuggestionStorage {
   async storeCurrent(current) {
     await this.ensureInitialized();
 
-    let plans = [];
-    for (let plan of current.plans) {
+    const plans = [];
+    for (const plan of current.plans) {
       plans.push({
         recipe: this._planToString(plan.plan),
         hash: plan.hash,
@@ -159,16 +159,16 @@ export class SuggestionStorage {
     // TODO: This is a transformation particle hack for plans resolved by
     // FindHostedParticle strategy. Find a proper way to do this.
     // Update hosted particle handles and connections.
-    let planClone = plan.clone();
+    const planClone = plan.clone();
     planClone.slots.forEach(slot => slot.id = slot.id || `slotid-${this._arc.generateID()}`);
 
-    let hostedParticleSpecs = [];
+    const hostedParticleSpecs = [];
     for (let i = 0; i < planClone.handles.length; ++i) {
-      let handle = planClone.handles[i];
+      const handle = planClone.handles[i];
       if (handle.id && handle.id.includes('particle-literal')) {
-        let hostedParticleName = handle.id.substr(handle.id.lastIndexOf(':') + 1);
+        const hostedParticleName = handle.id.substr(handle.id.lastIndexOf(':') + 1);
         // Add particle spec to the list.
-        let hostedParticleSpec = this._arc._context.findParticleByName(hostedParticleName);
+        const hostedParticleSpec = this._arc._context.findParticleByName(hostedParticleName);
         assert(hostedParticleSpec, `Cannot find spec for particle '${hostedParticleName}'.`);
         hostedParticleSpecs.push(hostedParticleSpec.toString());
 

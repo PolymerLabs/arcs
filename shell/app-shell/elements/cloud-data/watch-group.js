@@ -52,7 +52,7 @@ class WatchGroup extends Xen.Base {
     // for nested watches, if we pull the plug on this watch, pull the plug on nested group too
     // note that it's `watch.handler`'s job to install watches into `watch.group`, we only do clean-up
     if (watch.group) {
-      let off = pull;
+      const off = pull;
       pull = () => {
         off();
         watch.group.watches = null;
@@ -61,12 +61,12 @@ class WatchGroup extends Xen.Base {
     plugs.add(pull);
   }
   _watchPath(db, {path, handler, group}) {
-    let node = db.child(path);
+    const node = db.child(path);
     return this._watchNode(node, handler);
   }
   _watchNode(node, handler) {
     WatchGroup.watchCount++;
-    let handle = node.on('value', snap => {
+    const handle = node.on('value', snap => {
       const state = this._state;
       if (++state.callbacksFired === state.plugs.length) {
         state.initialized = true;

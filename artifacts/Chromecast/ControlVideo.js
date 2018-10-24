@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
   `.trim();
 
   return class Compose extends DomParticle {

@@ -50,7 +50,7 @@ class LocalData extends HTMLElement {
     this._dom.set({manifest});
   }
   _onManifestChange(e) {
-    let detail = e.currentTarget.value;
+    const detail = e.currentTarget.value;
     this.dispatchEvent(new CustomEvent('update-manifest', {detail}));
   }
   _onPromoteClick(e) {

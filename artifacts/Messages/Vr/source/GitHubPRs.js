@@ -14,7 +14,7 @@ defineParticle(({DomParticle, html, _fetch}) => {
     <aframe-html id={{subId}} anchor="center" height="1" width="2" position="0 1 0" html="{{pr}}"></aframe-html>
   `.trim();
 
-  let githubIds = {
+  const githubIds = {
     'Scott': 'sjmiles',
     'Shane': 'shans',
     'Doug': 'dstockwell',

@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../../platform/assert-web.js';
 import {Type} from './type.js';
@@ -29,7 +28,7 @@ import {ParticleSpec} from '../particle-spec.js';
 import {PECInnerPort} from '../api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {HandleConnection} from './recipe/handle-connection.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from './slot-composer.js';
 
 type ArcOptions = {
   id: string;

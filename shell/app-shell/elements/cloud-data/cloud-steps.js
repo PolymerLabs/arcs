@@ -68,14 +68,14 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
     }
   }
   _createStep(plan, generations) {
-    let origin = this._findFirstGeneration(plan, generations);
+    const origin = this._findFirstGeneration(plan, generations);
     if (origin) {
       // Really, we should only store the string and upon loading normalize it
       // again and create a new hash. But really, really we should probably
       // do something smarter than literal matching anyway...
       // Find all mapped handles to be remembered.
       // Store as string, as we'll only use it to find exact matches later. (String is easier to compare)
-      let mappedHandles = plan.handles
+      const mappedHandles = plan.handles
         .filter(v => (v.fate == 'map') && (v.id.substr(0, 7) == 'shared:'))
         .map(v => v.id)
         .sort()
@@ -122,7 +122,7 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
     }
   }
   _findPlanForStep(step, plans, generations) {
-    for (let plan of plans) {
+    for (const plan of plans) {
       // TODO(sjmiles): should be (weak) map?
       if (!plan._step) {
         plan._step = this._createStep(plan.plan, generations);

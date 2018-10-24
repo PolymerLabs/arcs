@@ -19,7 +19,7 @@ export class InitSearch extends Strategy {
       return [];
     }
 
-    let recipe = new Recipe();
+    const recipe = new Recipe();
     recipe.setSearchPhrase(this._search);
     assert(recipe.normalize());
     assert(!recipe.isResolved());

@@ -38,7 +38,7 @@ class TileBoard {
     this._chanceOfFire = 0;
     let colCount = 0;
     let rowCount = 0;
-    let letters = board.letters;
+    const letters = board.letters;
     for (let i = 0; i < letters.length; i += 2) {
       if (colCount == 0) {
         this._rows.push([]);
@@ -83,13 +83,13 @@ class TileBoard {
       return true;
     }
     // Selecting the last selected tile is permitted so as to de-select.
-    let lastSelectedTile = selectedTiles[selectedTiles.length - 1];
+    const lastSelectedTile = selectedTiles[selectedTiles.length - 1];
     if (lastSelectedTile.x == tile.x && lastSelectedTile.y == tile.y) {
       return true;
     }
     // Else the new selection must touch the last selection and can't
     // already be selected.
-    let touchesLastSelectedTile =
+    const touchesLastSelectedTile =
         // Above.
         (lastSelectedTile.x == tile.x && lastSelectedTile.y == tile.y - 1) ||
         // Below.
@@ -127,7 +127,7 @@ class TileBoard {
 
     // Destroy one tile beneath each remaining fire tile and end the game if
     // there's at least one already sitting at the bottom.
-    let tilesForCompression = tiles.slice();
+    const tilesForCompression = tiles.slice();
     let gameOver = false;
     for (let y = 0; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
@@ -241,7 +241,7 @@ class TileBoard {
     };
   }
   static pickCharWithFrequencies() {
-    let pick = Math.random() * 100;
+    const pick = Math.random() * 100;
     let accumulator = 0;
     for (let i = 0; i < CHAR_FREQUENCIES.length; i++) {
       accumulator += CHAR_FREQUENCIES[i][1];

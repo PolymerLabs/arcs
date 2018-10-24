@@ -72,7 +72,7 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
     return serialization;
   }
   async _instantiateDefaultRecipe(arc) {
-    const recipe = arc.context.recipes[0];
+    const recipe = arc.context.allRecipes[0];
     if (!recipe) {
       log(`couldn't find default recipe`);
     } else {

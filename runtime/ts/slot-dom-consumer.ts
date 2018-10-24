@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
@@ -17,7 +16,7 @@ import IconStyles from '../../shell/components/icons.css.js';
 const templateByName = new Map();
 
 export class SlotDomConsumer extends SlotConsumer {
-  private _observer: MutationObserver;
+  private readonly _observer: MutationObserver;
   private subId: string;
 
   constructor(consumeConn, containerKind) {

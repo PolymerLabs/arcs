@@ -70,8 +70,8 @@
       const manifest = window.manifest = await Arcs.Runtime.parseManifest(manifestContent, options);
       //console.log(manifest);
       // TODO(sjmiles): clone is probably optional in this context
-      //const recipe = window.recipe = manifest.recipes[0].clone();
-      const recipe = manifest.recipes[0];
+      //const recipe = window.recipe = manifest.allRecipes[0].clone();
+      const recipe = manifest.allRecipes[0];
       // console.log(recipe);
       const errors = new Map();
       if (!recipe.normalize({errors})) {

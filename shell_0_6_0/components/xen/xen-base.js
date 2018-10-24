@@ -16,7 +16,7 @@ class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
     this._invalidate();
   }
   _stamp() {
-    let template = this.template;
+    const template = this.template;
     if (template) {
       // TODO(sjmiles): can just do `events(this)` for default listener, but we use a custom listener
       // so we can append (props, state) to handler signature. All we are really altering is the delegation,

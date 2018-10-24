@@ -10,7 +10,7 @@
 
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from '../ts-build/slot-composer.js';
 import * as util from '../testing/test-util.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Manifest} from '../ts-build/manifest.js';

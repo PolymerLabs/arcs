@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
 <video id='video' width='100%' preload='none' poster="https://media.w3.org/2010/05/sintel/poster.png">
   <source id='mp4' src="https://media.w3.org/2010/05/sintel/trailer.mp4" type='video/mp4'>
 </video>
@@ -23,7 +23,7 @@ defineParticle(({DomParticle}) => {
     }
     render(props) {
       if (props.controls && props.controls.length) {
-        let c = props.controls[props.controls.length - 1];
+        const c = props.controls[props.controls.length - 1];
         return {
           config: {
             mode: c.mode,

@@ -18,7 +18,7 @@ export class ResolveRecipe extends Strategy {
   }
 
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.connections.length == 0 ||
@@ -68,7 +68,7 @@ export class ResolveRecipe extends Strategy {
         }
 
         mappable = mappable.filter(incomingHandle => {
-          for (let existingHandle of recipe.handles) {
+          for (const existingHandle of recipe.handles) {
             if (incomingHandle.id == existingHandle.id &&
                 existingHandle !== handle) {
               return false;
@@ -89,15 +89,15 @@ export class ResolveRecipe extends Strategy {
           return;
         }
 
-        let {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
-        let allSlots = [...local, ...remote];
+        const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
+        const allSlots = [...local, ...remote];
 
         // MapSlots handles a multi-slot case.
         if (allSlots.length !== 1) {
           return;
         }
 
-        let selectedSlot = allSlots[0];
+        const selectedSlot = allSlots[0];
         return (recipe, slotConnection) => {
           MapSlots.connectSlotConnection(slotConnection, selectedSlot);
           return 1;
@@ -105,10 +105,10 @@ export class ResolveRecipe extends Strategy {
       }
 
       onObligation(recipe, obligation) {
-        let fromParticle = obligation.from.instance;
-        let toParticle = obligation.to.instance;
-        for (let fromConnection of Object.values(fromParticle.connections)) {
-          for (let toConnection of Object.values(toParticle.connections)) {
+        const fromParticle = obligation.from.instance;
+        const toParticle = obligation.to.instance;
+        for (const fromConnection of Object.values(fromParticle.connections)) {
+          for (const toConnection of Object.values(toParticle.connections)) {
             if (fromConnection.handle && fromConnection.handle == toConnection.handle) {
               return (recipe, obligation) => {
                 recipe.removeObligation(obligation);

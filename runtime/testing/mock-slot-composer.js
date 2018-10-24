@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from '../ts-build/slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 
 const logging = false;

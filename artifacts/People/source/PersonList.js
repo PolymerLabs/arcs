@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let host = 'person-list';
+  const host = 'person-list';
 
-  let template = html`
+  const template = html`
 <div ${host}>
   <style>
     [${host}] [section] {
@@ -42,7 +42,7 @@ defineParticle(({DomParticle, html}) => {
     }
     willReceiveProps(props) {
       // TODO(sjmiles): best way to translate entity data into POJO?
-      let people = props.people.map((a, i) => {
+      const people = props.people.map((a, i) => {
         return {
           index: i,
           name: a.name

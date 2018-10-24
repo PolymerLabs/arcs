@@ -20,7 +20,7 @@ export class AssignHandles extends Strategy {
   get arc() { return this._arc; }
 
   async generate(inputParams) {
-    let self = this;
+    const self = this;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
@@ -43,23 +43,23 @@ export class AssignHandles extends Strategy {
         // TODO: using the connection to retrieve type information is wrong.
         // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
-        let counts = RecipeUtil.directionCounts(handle);
+        const counts = RecipeUtil.directionCounts(handle);
         if (counts.unknown > 0) {
           return;
         }
 
-        let score = this._getScore(counts, handle.tags);
+        const score = this._getScore(counts, handle.tags);
 
         if (counts.out > 0 && handle.fate == 'map') {
           return;
         }
-        let stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);
+        const stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);
         if (handle.fate != '?' && stores.size < 2) {
           // These handles are mapped by resolve-recipe strategy.
           return;
         }
 
-        let responses = [...stores.keys()].map(store =>
+        const responses = [...stores.keys()].map(store =>
           ((recipe, clonedHandle) => {
             assert(store.id);
             if (recipe.handles.find(handle => handle.id == store.id)) {
@@ -100,9 +100,9 @@ export class AssignHandles extends Strategy {
   }
 
   getMappableStores(fate, type, tags, counts) {
-    let stores = new Map();
+    const stores = new Map();
     if (fate == 'use' || fate == '?') {
-      let subtype = counts.out == 0;
+      const subtype = counts.out == 0;
       // TODO: arc.findStoresByType doesn't use `subtype`. Shall it be removed?
       this.arc.findStoresByType(type, {tags, subtype}).forEach(store => stores.set(store, 'use'));
     }

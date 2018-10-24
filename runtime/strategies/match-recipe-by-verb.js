@@ -29,7 +29,7 @@ export class MatchRecipeByVerb extends Strategy {
   }
 
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onParticle(recipe, particle) {
         if (particle.name) {
@@ -44,21 +44,21 @@ export class MatchRecipeByVerb extends Strategy {
         //
         // Note that slots are only included if connected to other components of the recipe - e.g.
         // the target slot has a source connection.
-        let slotConstraints = {};
-        for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
-          let targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
+        const slotConstraints = {};
+        for (const consumeSlot of Object.values(particle.consumedSlotConnections)) {
+          const targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
           slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
-          for (let providedSlot of Object.keys(consumeSlot.providedSlots)) {
-            let sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;
+          for (const providedSlot of Object.keys(consumeSlot.providedSlots)) {
+            const sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;
             slotConstraints[consumeSlot.name].providedSlots[providedSlot] = sourceSlot;
           }
         }
 
-        let handleConstraints = {named: {}, unnamed: []};
-        for (let handleConnection of Object.values(particle.connections)) {
+        const handleConstraints = {named: {}, unnamed: []};
+        for (const handleConnection of Object.values(particle.connections)) {
           handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction, handle: handleConnection.handle};
         }
-        for (let unnamedConnection of particle.unnamedConnections) {
+        for (const unnamedConnection of particle.unnamedConnections) {
           handleConstraints.unnamed.push({direction: unnamedConnection.direction, handle: unnamedConnection.handle});
         }
 
@@ -67,28 +67,28 @@ export class MatchRecipeByVerb extends Strategy {
 
         return recipes.map(recipe => {
           return (outputRecipe, particleForReplacing) => {
-            let {handles, particles, slots} = recipe.mergeInto(outputRecipe);
+            const {handles, particles, slots} = recipe.mergeInto(outputRecipe);
 
             particleForReplacing.remove();
 
 
-            for (let consumeSlot in slotConstraints) {
+            for (const consumeSlot in slotConstraints) {
               if (slotConstraints[consumeSlot].targetSlot || Object.values(slotConstraints[consumeSlot].providedSlots).filter(a => a != null).length > 0) {
                 let slotMapped = false;
-                for (let particle of particles) {
+                for (const particle of particles) {
                   if (MatchRecipeByVerb.slotsMatchConstraint(particle.consumedSlotConnections, consumeSlot, slotConstraints[consumeSlot].providedSlots)) {
                     if (slotConstraints[consumeSlot].targetSlot) {
-                      let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
+                      const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
                       particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
                       mappedSlot.consumeConnections.push(particle.consumedSlotConnections[consumeSlot]);
                     }
-                    for (let slotName in slotConstraints[consumeSlot].providedSlots) {
-                      let slot = slotConstraints[consumeSlot].providedSlots[slotName];
+                    for (const slotName in slotConstraints[consumeSlot].providedSlots) {
+                      const slot = slotConstraints[consumeSlot].providedSlots[slotName];
                       if (slot == null) {
                         continue;
                       }
-                      let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
-                      let oldSlot = particle.consumedSlotConnections[consumeSlot].providedSlots[slotName];
+                      const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
+                      const oldSlot = particle.consumedSlotConnections[consumeSlot].providedSlots[slotName];
                       oldSlot.remove();
                       particle.consumedSlotConnections[consumeSlot].providedSlots[slotName] = mappedSlot;
                       mappedSlot._sourceConnection = particle.consumedSlotConnections[consumeSlot];
@@ -110,7 +110,7 @@ export class MatchRecipeByVerb extends Strategy {
                 return false;
               }
               for (let i = 0; i < handle.connections.length; i++) {
-                let candidate = handle.connections[i];
+                const candidate = handle.connections[i];
                 if (candidate.particle == particleForReplacing && candidate.name == name) {
                   connection._handle = handle;
                   handle.connections[i] = connection;
@@ -121,8 +121,8 @@ export class MatchRecipeByVerb extends Strategy {
             }
 
             function applyHandleConstraint(name, constraint, handle) {
-              let {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handle});
-              for (let particle of particles) {
+              const {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handle});
+              for (const particle of particles) {
                 if (name) {
                   if (tryApplyHandleConstraint(
                           name,
@@ -132,7 +132,7 @@ export class MatchRecipeByVerb extends Strategy {
                     return true;
                   }
                 } else {
-                  for (let connection of Object.values(particle.connections)) {
+                  for (const connection of Object.values(particle.connections)) {
                     if (tryApplyHandleConstraint(
                             name, connection, constraint, mappedHandle)) {
                       return true;
@@ -143,7 +143,7 @@ export class MatchRecipeByVerb extends Strategy {
               return false;
             }
 
-            for (let name in handleConstraints.named) {
+            for (const name in handleConstraints.named) {
               if (handleConstraints.named[name].handle) {
                 assert(applyHandleConstraint(
                     name,
@@ -152,7 +152,7 @@ export class MatchRecipeByVerb extends Strategy {
               }
             }
 
-            for (let connection of handleConstraints.unnamed) {
+            for (const connection of handleConstraints.unnamed) {
               if (connection.handle) {
                 assert(
                     applyHandleConstraint(null, connection, connection.handle));
@@ -167,13 +167,13 @@ export class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesHandleConstraints(recipe, handleConstraints) {
-    for (let handleName in handleConstraints.named) {
+    for (const handleName in handleConstraints.named) {
       if (!MatchRecipeByVerb.satisfiesHandleConnection(
               recipe, handleName, handleConstraints.named[handleName])) {
         return false;
       }
     }
-    for (let handleData of handleConstraints.unnamed) {
+    for (const handleData of handleConstraints.unnamed) {
       if (!MatchRecipeByVerb.satisfiesUnnamedHandleConnection(
               recipe, handleData)) {
         return false;
@@ -187,8 +187,8 @@ export class MatchRecipeByVerb extends Strategy {
     if (!handleData.handle) {
       return false;
     }
-    for (let particle of recipe.particles) {
-      for (let connection of Object.values(particle.connections)) {
+    for (const particle of recipe.particles) {
+      for (const connection of Object.values(particle.connections)) {
         if (MatchRecipeByVerb.connectionMatchesConstraint(
                 connection, handleData)) {
           return true;
@@ -199,7 +199,7 @@ export class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesHandleConnection(recipe, handleName, handleData) {
-    for (let particle of recipe.particles) {
+    for (const particle of recipe.particles) {
       if (particle.connections[handleName]) {
         if (MatchRecipeByVerb.connectionMatchesConstraint(
                 particle.connections[handleName], handleData)) {
@@ -221,7 +221,7 @@ export class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {
-    for (let slotName in slotConstraints) {
+    for (const slotName in slotConstraints) {
       if (!MatchRecipeByVerb.satisfiesSlotConnection(
               recipe, slotName, slotConstraints[slotName])) {
         return false;
@@ -231,7 +231,7 @@ export class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesSlotConnection(recipe, slotName, constraints) {
-    for (let particle of recipe.particles) {
+    for (const particle of recipe.particles) {
       if (MatchRecipeByVerb.slotsMatchConstraint(
               particle.consumedSlotConnections, slotName, constraints)) {
         return true;
@@ -248,7 +248,7 @@ export class MatchRecipeByVerb extends Strategy {
         constraints.targetSlot != null) {
       return false;
     }
-    for (let provideName in constraints.providedSlots) {
+    for (const provideName in constraints.providedSlots) {
       if (connections[name].providedSlots[provideName] == null) {
         return false;
       }

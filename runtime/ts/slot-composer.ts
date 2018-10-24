@@ -8,12 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-import {Affordance} from './ts-build/affordance.js';
-import {SlotContext} from './ts-build/slot-context.js';
-import {HostedSlotConsumer} from './ts-build/hosted-slot-consumer.js';
+import {assert} from '../../platform/assert-web.js';
+import {Affordance} from './affordance.js';
+import {Arc} from './arc.js';
+import {SlotContext} from './slot-context.js';
+import {SlotConsumer} from './slot-consumer.js';
+import {HostedSlotConsumer} from './hosted-slot-consumer.js';
+import {Particle} from './recipe/particle.js';
 
 export class SlotComposer {
+  arc: Arc;
+  private _containerKind: string;
+  private _affordance: Affordance;
+  private _consumers: SlotConsumer[] = [];
+  private _contexts: SlotContext[] = [];
+  
   /**
    * |options| must contain:
    * - affordance: the UI affordance the slots composer render to (for example: dom).
@@ -25,22 +34,21 @@ export class SlotComposer {
     assert(options.affordance, 'Affordance is mandatory');
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext;
-    assert(options.rootContainer !== undefined ^ options.noRoot === true,
+    assert((options.rootContainer !== undefined)
+           !==
+           (options.noRoot === true),
       'Root container is mandatory unless it is explicitly skipped');
 
     this._containerKind = options.containerKind;
     this._affordance = Affordance.forName(options.affordance);
     assert(this._affordance.slotConsumerClass);
 
-    this._consumers = [];
-    this._contexts = [];
-
     if (options.noRoot) {
       return;
     }
 
-    let containerByName = this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
-    if (Object.keys(containerByName).length == 0) {
+    const containerByName = this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
+    if (Object.keys(containerByName).length === 0) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;
     }
@@ -51,53 +59,54 @@ export class SlotComposer {
     });
   }
 
-  get affordance() { return this._affordance.name; }
-  get consumers() { return this._consumers; }
+  get affordance(): string { return this._affordance.name; }
+  get consumers(): SlotConsumer[] { return this._consumers; }
 
-  getSlotConsumer(particle, slotName) {
-    return this.consumers.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
+  getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
+    return this.consumers.find(s => s.consumeConn.particle === particle && s.consumeConn.name === slotName);
   }
 
-  findContainerByName(name) {
-    let contexts = this._contexts.filter(context => context.name === name);
-    if (contexts.length == 0) {
-      assert(`No containers for '${name}'`);
-    } else if (contexts.length == 1) {
+  findContainerByName(name: string) {
+    const contexts = this._contexts.filter(context => context.name === name);
+    if (contexts.length === 0) {
+      // TODO this is a no-op, but throwing here breaks tests
+      console.warn(`No containers for '${name}'`);
+    } else if (contexts.length === 1) {
       return contexts[0].container;
-    } else {
-      assert(`Ambiguous containers for '${name}'`);
     }
+    console.warn(`Ambiguous containers for '${name}'`);
+    return undefined;
   }
 
   findContextById(slotId) {
-    return this._contexts.find(({id}) => id == slotId);
+    return this._contexts.find(({id}) => id === slotId);
   }
 
-  createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId) {
-    let hostedSlotId = this.arc.generateID();
+  createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId): string {
+    const hostedSlotId = this.arc.generateID();
 
-    let transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
+    const transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
     assert(transformationSlotConsumer,
            `Unexpected transformation slot particle ${transformationParticle.name}:${transformationSlotName}, hosted particle ${hostedParticleName}, slot name ${hostedSlotName}`);
 
-    let hostedSlotConsumer = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, this.arc);
+    const hostedSlotConsumer = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, this.arc);
     hostedSlotConsumer.renderCallback = this.arc.pec.innerArcRender.bind(this.arc.pec);
     this._addSlotConsumer(hostedSlotConsumer);
 
-    let context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
+    const context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
     context.addSlotConsumer(hostedSlotConsumer);
 
     return hostedSlotId;
   }
 
-  _addSlotConsumer(slot) {
+  _addSlotConsumer(slot: HostedSlotConsumer) {
     slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
     slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
     this._consumers.push(slot);
   }
 
-  initializeRecipe(recipeParticles) {
-    let newConsumers = [];
+  initializeRecipe(recipeParticles: Particle[]) {
+    const newConsumers = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
@@ -106,8 +115,9 @@ export class SlotComposer {
           return;
         }
 
-        let slotConsumer = this.consumers.find(slot => slot.hostedSlotId == cs.targetSlot.id);
-        if (slotConsumer) {
+        let slotConsumer = this.consumers.find(slot => slot instanceof HostedSlotConsumer && slot.hostedSlotId === cs.targetSlot.id);
+
+        if (slotConsumer &&  slotConsumer instanceof HostedSlotConsumer) {
           assert(!slotConsumer.consumeConn);
           slotConsumer.consumeConn = cs;
         } else {
@@ -122,26 +132,28 @@ export class SlotComposer {
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
-      let context = this.findContextById(consumer.consumeConn.targetSlot.id);
+      const context = this.findContextById(consumer.consumeConn.targetSlot.id);
       assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
       context.addSlotConsumer(consumer);
     });
   }
 
-  async renderSlot(particle, slotName, content) {
-    let slotConsumer = this.getSlotConsumer(particle, slotName);
+  async renderSlot(particle: Particle, slotName: string, content) {
+    const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
     await slotConsumer.setContent(content, async (eventlet) => {
       this.arc.pec.sendEvent(particle, slotName, eventlet);
       if (eventlet.data && eventlet.data.key) {
-        let hostedConsumers = this.consumers.filter(c => c.transformationSlotConsumer == slotConsumer);
-        for (let hostedConsumer of hostedConsumers) {
-          if (hostedConsumer.storeId) {
-            let store = this.arc.findStoreById(hostedConsumer.storeId);
+        const hostedConsumers = this.consumers.filter(c => c instanceof HostedSlotConsumer && c.transformationSlotConsumer === slotConsumer);
+        for (const hostedConsumer of hostedConsumers) {
+          if (hostedConsumer instanceof HostedSlotConsumer && hostedConsumer.storeId) {
+            const store = this.arc.findStoreById(hostedConsumer.storeId);
             assert(store);
-            let value = await store.get();
-            if (value && (value.id == eventlet.data.key)) {
+            // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc
+            // tslint:disable-next-line: no-any
+            const value = await(store as any).get();
+            if (value && (value.id === eventlet.data.key)) {
               this.arc.pec.sendEvent(
                   hostedConsumer.consumeConn.particle,
                   hostedConsumer.consumeConn.name,
@@ -153,7 +165,7 @@ export class SlotComposer {
     }, this.arc);
   }
 
-  getAvailableContexts() {
+  getAvailableContexts(): SlotContext[] {
     return this._contexts;
   }
 
@@ -162,7 +174,9 @@ export class SlotComposer {
     this._affordance.slotConsumerClass.dispose();
     this._contexts.forEach(context => {
       context.clearSlotConsumers();
-      context.container && this._affordance.slotConsumerClass.clear(context.container);
+      if (context.container) {
+        this._affordance.slotConsumerClass.clear(context.container);
+      }
     });
     this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);
     this._consumers = [];

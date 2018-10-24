@@ -17,7 +17,7 @@ const deepishClone = (obj, depth) => {
     return obj;
   }
   const clone = Object.create(null);
-  for (let n in obj) {
+  for (const n in obj) {
     let value = obj[n];
     //try {
     //  value = JSON.parse(JSON.stringify(value));

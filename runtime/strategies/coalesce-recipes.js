@@ -52,10 +52,10 @@ export class CoalesceRecipes extends Strategy {
         // TODO: also support a consume slot connection that is NOT required,
         // but no other connections are resolved.
 
-        let results = [];
+        const results = [];
         // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
         // these handles are coalescable? Add support for this.
-        for (let providedSlot of index.findProvidedSlot(slotConnection)) {
+        for (const providedSlot of index.findProvidedSlot(slotConnection)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
 
@@ -65,10 +65,10 @@ export class CoalesceRecipes extends Strategy {
           }
 
           results.push((recipe, slotConnection) => {
-            let otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
+            const otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
 
-            let {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
-            let mergedSlot = cloneMap.get(providedSlot);
+            const {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
+            const mergedSlot = cloneMap.get(providedSlot);
             slotConnection.connectToSlot(mergedSlot);
 
             this._connectOtherHandles(otherToHandle, cloneMap, false);
@@ -94,8 +94,8 @@ export class CoalesceRecipes extends Strategy {
           return; // either a remote slot (no source connection), or a not required one.
         }
 
-        let results = [];
-        for (let {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
+        const results = [];
+        for (const {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + slotConn.recipe.particles.length > 10) continue;
 
@@ -111,23 +111,23 @@ export class CoalesceRecipes extends Strategy {
 
           results.push((recipe, slot) => {
             // Find other handles that may be merged, as recipes are being coalesced.
-            let otherToHandle = index.findCoalescableHandles(recipe, slotConn.recipe,
+            const otherToHandle = index.findCoalescableHandles(recipe, slotConn.recipe,
               new Set(slot.handleConnections.map(hc => hc.handle).concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
 
-            let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
-            let mergedSlotConn = cloneMap.get(slotConn);
+            const {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
+            const mergedSlotConn = cloneMap.get(slotConn);
             mergedSlotConn.connectToSlot(slot);
-            for (let {handle, matchingConn} of matchingHandles) {
+            for (const {handle, matchingConn} of matchingHandles) {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
-              let mergedMatchingConn = cloneMap.get(matchingConn);
-              let disconnectedHandle = mergedMatchingConn.handle;
-              let clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
+              const mergedMatchingConn = cloneMap.get(matchingConn);
+              const disconnectedHandle = mergedMatchingConn.handle;
+              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
               if (disconnectedHandle == clonedHandle) {
                 continue; // this handle was already reconnected
               }
 
               while (disconnectedHandle.connections.length > 0) {
-                let conn = disconnectedHandle.connections[0];
+                const conn = disconnectedHandle.connections[0];
                 conn.disconnectHandle();
                 conn.connectToHandle(clonedHandle);
               }
@@ -157,9 +157,9 @@ export class CoalesceRecipes extends Strategy {
             || handle.id
             || handle.connections.length === 0
             || handle.name === 'descriptions') return;
-        let results = [];
+        const results = [];
 
-        for (let otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {
+        for (const otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
@@ -187,9 +187,9 @@ export class CoalesceRecipes extends Strategy {
 
           results.push((recipe, handle) => {
             // Find other handles in the original recipe that could be coalesced with handles in otherHandle's recipe.
-            let otherToHandle = index.findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
+            const otherToHandle = index.findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
 
-            let {cloneMap} = otherHandle.recipe.mergeInto(handle.recipe);
+            const {cloneMap} = otherHandle.recipe.mergeInto(handle.recipe);
 
             // Connect the handle that the recipes are being coalesced on.
             cloneMap.get(otherHandle).mergeInto(handle);
@@ -212,7 +212,7 @@ export class CoalesceRecipes extends Strategy {
 
       _connectOtherHandles(otherToHandle, cloneMap, verifyTypes) {
         otherToHandle.forEach((otherHandle, handle) => {
-          let otherHandleClone = cloneMap.get(otherHandle);
+          const otherHandleClone = cloneMap.get(otherHandle);
 
           // For coalescing that was triggered by handle coalescing (vs slot or slot connection)
           // once the main handle (one that triggered coalescing) was coalesced, types may have changed.
@@ -235,8 +235,8 @@ export class CoalesceRecipes extends Strategy {
       // Returns true, if both handles have types that can be coalesced.
       _reverifyHandleTypes(handle, otherHandle) {
         assert(handle.recipe == otherHandle.recipe);
-        let cloneMap = new Map();
-        let recipeClone = handle.recipe.clone(cloneMap);
+        const cloneMap = new Map();
+        const recipeClone = handle.recipe.clone(cloneMap);
         recipeClone.normalize();
         return Handle.effectiveType(cloneMap.get(handle).type,
             [...cloneMap.get(handle).connections, ...cloneMap.get(otherHandle).connections]);

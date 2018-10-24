@@ -29,7 +29,7 @@ class XList extends Xen.State(Xen.Element(HTMLElement)) {
     this.textContent = '';
   }
   _update(props, state) {
-    let template = props.template || state.template;
+    const template = props.template || state.template;
     if (template) {
       this._renderList(state.container, template, props);
     }
@@ -64,7 +64,7 @@ class XList extends Xen.State(Xen.Element(HTMLElement)) {
       }
       if (child) {
         // scope aka childProps
-        let scope = Object.create(null);
+        const scope = Object.create(null);
         // accumulate scope to implement lexical binding
         if (props.scope) {
           Object.assign(scope, props.scope);

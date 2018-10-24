@@ -36,18 +36,18 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   async _combineSelectedDescriptions(selectedDescriptions, options) {
-    let suggestionByParticleDesc = new Map();
-    for (let particleDesc of selectedDescriptions) {
+    const suggestionByParticleDesc = new Map();
+    for (const particleDesc of selectedDescriptions) {
       if (this.seenParticles.has(particleDesc._particle)) {
         continue;
       }
 
       let {template, model} = this._retrieveTemplateAndModel(particleDesc, suggestionByParticleDesc.size, options || {});
 
-      let success = await Promise.all(Object.keys(model).map(async tokenKey => {
-        let tokens = this._initSubTokens(model[tokenKey], particleDesc);
+      const success = await Promise.all(Object.keys(model).map(async tokenKey => {
+        const tokens = this._initSubTokens(model[tokenKey], particleDesc);
         return (await Promise.all(tokens.map(async token => {
-          let tokenValue = await this.tokenToString(token);
+          const tokenValue = await this.tokenToString(token);
           if (tokenValue == undefined) {
             return false;
           } else if (tokenValue && tokenValue.template && tokenValue.model) {
@@ -57,7 +57,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
             model = Object.assign(model, tokenValue.model);
           } else { // Text token.
             // Replace tokenKey, in case multiple selected suggestions use the same key.
-            let newTokenKey = `${tokenKey}${++this._nextID}`;
+            const newTokenKey = `${tokenKey}${++this._nextID}`;
             template = template.replace(`{{${tokenKey}}}`, `{{${newTokenKey}}}`);
             delete model[tokenKey];
             model[newTokenKey] = tokenValue;
@@ -72,7 +72,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     }
 
     // Populate suggestions list while maintaining original particles order.
-    let suggestions = [];
+    const suggestions = [];
     selectedDescriptions.forEach(desc => {
       if (suggestionByParticleDesc.has(desc)) {
         suggestions.push(suggestionByParticleDesc.get(desc));
@@ -80,7 +80,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     });
 
     if (suggestions.length > 0) {
-      let result = this._joinDescriptions(suggestions);
+      const result = this._joinDescriptions(suggestions);
       if (!options || !options.skipFormatting) {
         result.template += '.';
       }
@@ -94,15 +94,15 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     }
     assert(particleDesc.pattern, 'Description must contain template and model, or pattern');
     let template = '';
-    let model = {};
-    let tokens = this._initTokens(particleDesc.pattern, particleDesc);
+    const model = {};
+    const tokens = this._initTokens(particleDesc.pattern, particleDesc);
 
     tokens.forEach((token, i) => {
       if (token.text) {
         template = template.concat(
             `${(index == 0 && i == 0 && !options.skipFormatting) ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
       } else { // handle or slot handle.
-        let sanitizedFullName = token.fullName.replace(/[.{}_$]/g, '');
+        const sanitizedFullName = token.fullName.replace(/[.{}_$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.
         if (i == 0 && !options.skipFormatting) {
@@ -127,9 +127,9 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     }
 
     // Capitalize the first element in the DOM template.
-    let tokens = sentence.template.match(/<[a-zA-Z0-9]+>{{([a-zA-Z0-9]*)}}<\/[a-zA-Z0-9]+>/);
+    const tokens = sentence.template.match(/<[a-zA-Z0-9]+>{{([a-zA-Z0-9]*)}}<\/[a-zA-Z0-9]+>/);
     if (tokens && tokens.length > 1 && sentence.model[tokens[1]]) {
-      let modelToken = sentence.model[tokens[1]];
+      const modelToken = sentence.model[tokens[1]];
       if (modelToken.length > 0) {
         sentence.model[tokens[1]] = `${modelToken[0].toUpperCase()}${modelToken.substr(1)}`;
       }
@@ -144,8 +144,8 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       return super._joinDescriptions(descs);
     }
 
-    let result = {template: '', model: {}};
-    let count = descs.length;
+    const result = {template: '', model: {}};
+    const count = descs.length;
     descs.forEach((desc, i) => {
       if (typeof desc === 'string') {
         desc = Object.assign({}, {template: desc, model: {}});
@@ -182,7 +182,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       return token;
     });
 
-    let nonEmptyTokens = tokens.filter(token => token && !!token.template && !!token.model);
+    const nonEmptyTokens = tokens.filter(token => token && !!token.template && !!token.model);
     return {
       template: nonEmptyTokens.map(token => token.template).join(''),
       model: nonEmptyTokens.map(token => token.model).reduce((prev, curr) => Object.assign(prev, curr), {})
@@ -196,7 +196,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
         model: Object.assign(description.model, storeValue.model)
       };
     }
-    let descKey = `${token.handleName}Description${++this._nextID}`;
+    const descKey = `${token.handleName}Description${++this._nextID}`;
     return {
       template: `<span>{{${descKey}}}</span> (${storeValue.template})`,
       model: Object.assign({[descKey]: description}, storeValue.model)
@@ -204,7 +204,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _formatEntityProperty(handleName, properties, value) {
-    let key = `${handleName}${properties.join('')}Value${++this._nextID}`;
+    const key = `${handleName}${properties.join('')}Value${++this._nextID}`;
     return {
       template: `<b>{{${key}}}</b>`,
       model: {[`${key}`]: value}
@@ -212,7 +212,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _formatCollection(handleName, values) {
-    let handleKey = `${handleName}${++this._nextID}`;
+    const handleKey = `${handleName}${++this._nextID}`;
     if (values[0].rawData.name) {
       if (values.length > 2) {
         return {
@@ -239,7 +239,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _formatSingleton(handleName, value, handleDescription) {
-    let formattedValue = super._formatSingleton(handleName, value, handleDescription);
+    const formattedValue = super._formatSingleton(handleName, value, handleDescription);
     if (formattedValue) {
       return {
         template: `<b>{{${handleName}Var}}</b>`,

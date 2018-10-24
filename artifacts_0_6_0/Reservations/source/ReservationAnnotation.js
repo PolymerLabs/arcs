@@ -131,7 +131,7 @@ defineParticle(({DomParticle, html}) => {
       }
     }
     toDateInputValue(date) {
-      let local = new Date(date);
+      const local = new Date(date);
       local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
       return local.toJSON().slice(0, 16);
     }
@@ -141,8 +141,8 @@ defineParticle(({DomParticle, html}) => {
       }
     }
     renderSingle(restaurant, date, partySize) {
-      let restaurantId = restaurant.id || '';
-      let times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
+      const restaurantId = restaurant.id || '';
+      const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       return {
         subId: restaurantId,
         availableTimes: {
@@ -153,18 +153,18 @@ defineParticle(({DomParticle, html}) => {
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time
-      let t = new Date(date);
+      const t = new Date(date);
       t.setMinutes(t.getMinutes() - (n-1)/2*30);
       let hour = (t.getHours()) % 24;
       let minute = t.getMinutes() >= 30 ? '30' : '00';
       // Seed per restaurant and day
-      let seed = parseInt(id.substr(0, 8), 16);
+      const seed = parseInt(id.substr(0, 8), 16);
       let ts = t.getTime();
       ts = ts - (ts % 86400000); // Round to closest day
-      let result = [];
+      const result = [];
       while (n--) {
         // This seems somewhat balanced
-        let notAvailable = (seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
+        const notAvailable = (seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
         result.push({
           time: `${hour}:${minute}`,
           notAvailable

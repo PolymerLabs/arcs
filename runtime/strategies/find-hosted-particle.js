@@ -19,17 +19,17 @@ export class FindHostedParticle extends Strategy {
   }
 
   async generate(inputParams) {
-    let arc = this._arc;
+    const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, connection) {
         if (connection.direction !== 'host' || connection.handle) return;
         assert(connection.type.isInterface);
 
-        let results = [];
-        for (let particle of arc.context.particles) {
+        const results = [];
+        for (const particle of arc.context.particles) {
           // This is what shape.particleMatches() does, but we also do
           // canEnsureResolved at the end:
-          let shapeClone = connection.type.interfaceShape.cloneWithResolutions(new Map());
+          const shapeClone = connection.type.interfaceShape.cloneWithResolutions(new Map());
           // If particle doesn't match the requested shape.
           if (shapeClone.restrictType(particle) === false) continue;
           // If we still have unresolvable shape after matching a particle.
@@ -55,7 +55,7 @@ export class FindHostedParticle extends Strategy {
             const id = `${arc.id}:particle-literal:${particle.name}`;
 
             // Reuse a handle if we already hold this particle spec in the recipe.
-            for (let handle of recipe.handles) {
+            for (const handle of recipe.handles) {
               if (handle.id === id && handle.fate === 'copy'
                   && handle._mappedType && handle._mappedType.equals(handleType)) {
                 hc.connectToHandle(handle);
@@ -67,7 +67,7 @@ export class FindHostedParticle extends Strategy {
             //       can ensure we load the correct particle. It is currently
             //       hard as digest is asynchronous and recipe walker is
             //       synchronous.
-            let handle = recipe.newHandle();
+            const handle = recipe.newHandle();
             handle._mappedType = handleType;
             handle.fate = 'copy';
             handle.id = id;

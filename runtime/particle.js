@@ -134,10 +134,10 @@ export class Particle {
   }
 
   static buildManifest(strings, ...bits) {
-    let output = [];
+    const output = [];
     for (let i = 0; i < bits.length; i++) {
-        let str = strings[i];
-        let indent = / *$/.exec(str)[0];
+        const str = strings[i];
+        const indent = / *$/.exec(str)[0];
         let bitStr;
         if (typeof bits[i] == 'string') {
           bitStr = bits[i];
@@ -158,7 +158,7 @@ export class Particle {
     return this.setDescriptionPattern('pattern', pattern);
   }
   setDescriptionPattern(connectionName, pattern) {
-    let descriptions = this.handles.get('descriptions');
+    const descriptions = this.handles.get('descriptions');
     if (descriptions) {
       descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       return true;

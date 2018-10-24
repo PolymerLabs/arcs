@@ -5,7 +5,7 @@ export const App = async (env, composer, manifestPath) => {
   const manifest = await env.parse(`import 'https://$artifacts/${manifestPath || 'Arcs/Login.recipe'}'`);
   console.log(`manifest [${manifest.id}]`);
 
-  const recipe = manifest.recipes[0];
+  const recipe = manifest.allRecipes[0];
   console.log(`recipe [${recipe.name}]`);
 
   const arc = await env.spawn({id: 'smoke-arc', composer, context});

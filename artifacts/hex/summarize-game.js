@@ -14,11 +14,11 @@ defineParticle(({SimpleParticle, html}) => {
       if (!props.gameState) {
         return;
       }
-      let {player1, player2, winner, nextPlayer} = props.gameState;
+      const {player1, player2, winner, nextPlayer} = props.gameState;
       if (!player1 && !player2) {
         state.message = 'Waiting for players.';
       } else if (player1 && player2) {
-        let turn = winner ? `${winner} wins!` : `${nextPlayer}'s turn`;
+        const turn = winner ? `${winner} wins!` : `${nextPlayer}'s turn`;
         state.message = `${player1} vs ${player2}: ${turn}`;
       } else {
         state.message = `${player1 || player2} is waiting for an opponent.`;

@@ -21,7 +21,7 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
       state.invalid = true;
       return;
     }
-    let {arc, options, data} = props;
+    const {arc, options, data} = props;
     if (arc && state.arc !== arc) {
       state.arc = arc;
       // drop stale store on the floor (will it GC?)

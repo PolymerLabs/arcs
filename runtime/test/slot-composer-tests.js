@@ -11,7 +11,7 @@
 
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from '../ts-build/slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../ts-build/manifest.js';

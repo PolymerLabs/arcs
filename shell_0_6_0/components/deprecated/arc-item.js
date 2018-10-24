@@ -30,8 +30,8 @@ class ArcItem extends Xen.Base {
     return this;
   }
   _render(props, state) {
-    let {key, data} = props;
-    let label = data ? data.description : '';
+    const {key, data} = props;
+    const label = data ? data.description : '';
     return {
       key,
       name: label,

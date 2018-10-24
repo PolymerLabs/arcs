@@ -105,8 +105,8 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this.configureHandles(handles);
     this.handles = handles;
     this._handlesToSync = new Set();
-    for (let name of this.config.handleNames) {
-      let handle = handles.get(name);
+    for (const name of this.config.handleNames) {
+      const handle = handles.get(name);
       if (handle && handle.options.keepSynced && handle.options.notifySync) {
         this._handlesToSync.add(name);
       }
@@ -130,9 +130,9 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._debounce('handleUpdateDebounce', work, 100);
   }
   async _handlesToProps() {
-    let config = this.config;
+    const config = this.config;
     // acquire (async) list data from handles; BigCollections map to the handle itself
-    let data = await Promise.all(
+    const data = await Promise.all(
       config.handleNames
       .map(name => this.handles.get(name))
       .map(handle => {
@@ -142,7 +142,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       })
     );
     // convert handle data (array) into props (dictionary)
-    let props = Object.create(null);
+    const props = Object.create(null);
     config.handleNames.forEach((name, i) => {
       props[name] = data[i];
     });

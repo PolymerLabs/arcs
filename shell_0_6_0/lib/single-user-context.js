@@ -169,11 +169,11 @@ export const SingleUserContext = class {
     let promise = this.pendingStores[id];
     if (!promise) {
       promise = new Promise(async (resolve) => {
-        let store = await context.findStoreById(id);
+        const store = await context.findStoreById(id);
         if (store) {
           resolve(store);
         } else {
-          let store = await context.createStore(type, name, id, tags);
+          const store = await context.createStore(type, name, id, tags);
           resolve(store);
         }
       });

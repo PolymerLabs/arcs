@@ -103,12 +103,12 @@ defineParticle(({DomParticle, resolver, html, log}) => {
       return props.messages && props.avatars;
     }
     render(props, state) {
-      let {messages, avatars} = props;
-      let count = messages && messages.length;
+      const {messages, avatars} = props;
+      const count = messages && messages.length;
       // Last points to the last non-custom message.
       // TODO(noelutz): expose a custom slot to render the last message properly even
       // if it's a custom message.
-      let last = count && messages.slice().reverse().find(m => !m.type);
+      const last = count && messages.slice().reverse().find(m => !m.type);
       if (state.open) {
         state.animations = [];
         state.showing = null;

@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  const template = `
   <img src="{{message}}" height="48px" width="84px" id="{{name}}" style%="{{style}}"></img>
   `.trim();
 

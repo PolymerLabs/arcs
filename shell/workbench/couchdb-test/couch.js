@@ -15,7 +15,7 @@ nano.db.destroy('alice', function() {
   // create a new database
   nano.db.create('alice', function() {
     // specify the database we are going to use
-    let alice = nano.use('alice');
+    const alice = nano.use('alice');
     // and insert a document in it
     alice.insert({happy: true}, 'rabbit', function(err, body, header) {
       if (err) {
