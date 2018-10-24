@@ -17,7 +17,7 @@ export class SearchTokensToParticles extends Strategy {
     const thingByToken = {};
     const thingByPhrase = {};
     for (const [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
-                                   ...arc.context.recipes.map(r => [r, {innerRecipe: r}])]) {
+                                   ...arc.context.allRecipes.map(r => [r, {innerRecipe: r}])]) {
       this._addThing(thing.name, packaged, thingByToken, thingByPhrase);
       thing.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
     }

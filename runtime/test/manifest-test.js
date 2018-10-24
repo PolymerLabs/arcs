@@ -509,7 +509,7 @@ ${particleStr1}
       },
     };
     const manifest = await Manifest.load('a', loader);
-    assert.lengthOf(manifest.recipes, 3);
+    assert.lengthOf(manifest.allRecipes, 3);
   });
   it('can parse a schema with union typing', async () => {
     const manifest = await Manifest.parse(`
