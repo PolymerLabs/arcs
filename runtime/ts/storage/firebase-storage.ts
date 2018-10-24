@@ -354,8 +354,8 @@ class FirebaseVariable extends FirebaseStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
-  // TODO(sjmiles): localId collisions occur when using device-client-pipe,
-  // so I'll randomize localId a bit
+  // TODO(sjmiles): localKeyId collisions occur when using device-client-pipe,
+  // so I'll randomize localKeyId a bit
   private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
@@ -634,7 +634,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private readonly initialized: Promise<void>;
   private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: () => void;
-  private localId = 0;
+  private localKeyId = Date.now();
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -932,8 +932,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       // that can be removed once entity mutation is distinct from collection updates.
       // Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
-      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localId++])));
-      //await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + Date.now()])));
+      await Promise.all(pendingWrites.map(pendingItem => this.backingStore.store(pendingItem.value, [this.storageKey + this.localKeyId++])));
 
       // TODO(shans): Returning here prevents us from writing localChanges while there
       // are pendingWrites. This in turn prevents change events for being generated for
