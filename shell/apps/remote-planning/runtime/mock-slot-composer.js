@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {SlotComposer} from '../../../../runtime/slot-composer.js';
+import {SlotComposer} from '../../../../runtime/ts-build/slot-composer.js';
 import {SlotDomConsumer} from '../../../../runtime/ts-build/slot-dom-consumer.js';
 
 let logging = false;

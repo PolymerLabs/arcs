@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from '../ts-build/slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {

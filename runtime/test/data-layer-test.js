@@ -11,7 +11,7 @@
 import {assert} from './chai-web.js';
 import {Arc} from '../ts-build/arc.js';
 import {Schema} from '../ts-build/schema.js';
-import {SlotComposer} from '../slot-composer.js';
+import {SlotComposer} from '../ts-build/slot-composer.js';
 import {Type} from '../ts-build/type.js';
 import {handleFor} from '../ts-build/handle.js';
 

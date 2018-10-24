@@ -15,25 +15,22 @@ import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 
 export class Affordance {
-  constructor(options) {
-    Object.keys(options).forEach(key => {
-      this[`_${key}`] = options[key];
-      Object.defineProperty(this, key, {
-        get() {
-          return this[`_${key}`];
-        }});
-    });
-  }
-  static forName(name) {
-    assert(_affordances[name], `Unsupported affordance ${name}`);
-    return _affordances[name];
+
+  static _affordances = {
+    'dom': new Affordance('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'dom-touch': new Affordance('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'vr': new Affordance('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'mock': new Affordance('mock', MockSlotDomConsumer, MockSuggestDomConsumer)
+  };
+  
+  private constructor(public readonly name: string,
+                      public readonly slotConsumerClass: typeof SlotDomConsumer,
+                      public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
+                      public readonly descriptionFormatter?: typeof DescriptionDomFormatter) {}
+
+  static forName(name: string) {
+    assert(Affordance._affordances[name], `Unsupported affordance ${name}`);
+    return Affordance._affordances[name];
   }
 }
 
-const _affordances = {};
-[
-  {name: 'dom', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'dom-touch', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'vr', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'mock', slotConsumerClass: MockSlotDomConsumer, suggestionConsumerClass: MockSuggestDomConsumer}
-].forEach(options => _affordances[options.name] = new Affordance(options));
