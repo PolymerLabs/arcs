@@ -78,7 +78,7 @@ defineParticle(({DomParticle, log, html}) => {
 
 `;
 
-  let template = html`
+  const template = html`
 
 ${style}
 
@@ -165,7 +165,7 @@ ${style}
       const byTime = arcs.slice().sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
       byTime.forEach((a, i) => {
         if (a.description && !a.deleted) {
-          let model = this._renderArc(a);
+          const model = this._renderArc(a);
           result.items.push(model);
           if (a.starred) {
             result.starred.push(model);

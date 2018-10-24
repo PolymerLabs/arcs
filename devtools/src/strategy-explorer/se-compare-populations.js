@@ -98,7 +98,7 @@ class SeComparePopulations extends PolymerElement {
       return;
     }
 
-    let stats = summaryStats(this.results);
+    const stats = summaryStats(this.results);
     this.current = {
       id: 'current',
       surviving: stats.survivingDerivations,
@@ -112,11 +112,11 @@ class SeComparePopulations extends PolymerElement {
 
   _addCurrent({label} = {}) {
     if (label) {
-      let existingIdx = this.library.findIndex(e => e.label === label);
+      const existingIdx = this.library.findIndex(e => e.label === label);
       if (existingIdx >= 0) this.splice('library', existingIdx, 1);
     }
-    let now = Date.now();
-    let entry = Object.assign({}, this.current, {
+    const now = Date.now();
+    const entry = Object.assign({}, this.current, {
       id: String(now),
       label: label || `@${formatTime(now)}`
     });
@@ -128,7 +128,7 @@ class SeComparePopulations extends PolymerElement {
     if (!e.srcElement.id || e.srcElement.id === 'addCurrent') return;
 
     if (e.srcElement.id === 'compare') {
-      let overlapOther = this.library.find(p => p.id === e.path[1].id).results;
+      const overlapOther = this.library.find(p => p.id === e.path[1].id).results;
       if (this.results.overlapOther === overlapOther) {
         // Clicking on diff again deselects it.
         this._displayResults(this.results.overlapBase);
@@ -138,14 +138,14 @@ class SeComparePopulations extends PolymerElement {
       return;
     }
 
-    let selected = [this.current, ...this.library].find(p => p.id === e.srcElement.id);
+    const selected = [this.current, ...this.library].find(p => p.id === e.srcElement.id);
     this._displayResults(selected.results);
     this._updateSelection();
   }
 
   _updateSelection() {
     const needsNotify = entry => {
-      let shouldBeSelected = (this.results === entry.results || this.results.overlapBase === entry.results);
+      const shouldBeSelected = (this.results === entry.results || this.results.overlapBase === entry.results);
       if (entry.selected !== shouldBeSelected) {
         entry.selected = shouldBeSelected;
         return true;
@@ -164,7 +164,7 @@ class SeComparePopulations extends PolymerElement {
   }
 
   _overlap(base, other) {
-    let copy = JSON.parse(JSON.stringify(base));
+    const copy = JSON.parse(JSON.stringify(base));
     copy.overlapBase = base;
     copy.overlapOther = other;
     base = copy;
@@ -182,26 +182,26 @@ class SeComparePopulations extends PolymerElement {
   }
 
   _overlapGeneration(base, other) {
-    for (let b of base) {
-      let o = other.find(t => t.strategy === b.strategy);
+    for (const b of base) {
+      const o = other.find(t => t.strategy === b.strategy);
       if (o) {
         this._overlapStrategy(b.recipes, o.recipes);
       } else {
         this._markGeneration(b, 'add');
       }
     }
-    for (let o of other.filter(o => !base.find(b => b.strategy === o.strategy))) {
+    for (const o of other.filter(o => !base.find(b => b.strategy === o.strategy))) {
       base.push(this._markGeneration(o, 'remove'));
     }
   }
 
   _overlapStrategy(base, other) {
-    for (let b of base) {
+    for (const b of base) {
       if (!other.find(o => o.hash === b.hash)) {
         b._diff = 'add';
       }
     }
-    for (let o of other.filter(o => !base.find(b => b.hash === o.hash))) {
+    for (const o of other.filter(o => !base.find(b => b.hash === o.hash))) {
       o._diff = 'remove';
       base.push(o);
     }

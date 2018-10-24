@@ -8,9 +8,9 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  let host = `master-detail`;
+  const host = `master-detail`;
 
-  let template = html`
+  const template = html`
 <style>
   [${host}] {
     position: relative;

@@ -38,7 +38,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     getPlayRecord() {
-      let {playRecord} = this._props;
+      const {playRecord} = this._props;
       if (Array.isArray(playRecord)) {
         return playRecord[0];
       }

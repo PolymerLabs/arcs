@@ -164,7 +164,7 @@ defineParticle(({DomParticle, html}) => {
     }
     willReceiveProps({restaurant}) {
       if (restaurant) {
-        let item = restaurant;
+        const item = restaurant;
         if (restaurant && restaurant.id) {
           this._fetchDetail(restaurant.reference);
         }
@@ -185,7 +185,7 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(state.item);
     }
     render(props, {restaurant, detail}) {
-      let model = {
+      const model = {
         style: {
           backgroundImage: `url(${restaurant.photo})`
         },
@@ -194,7 +194,7 @@ defineParticle(({DomParticle, html}) => {
         reviews: ''
       };
       if (detail) {
-        let url =
+        const url =
             detail.website &&
             detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
         Object.assign(model, {

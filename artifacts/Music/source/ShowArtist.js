@@ -92,7 +92,7 @@ ${styles}
     willReceiveProps(props) {
       if (props.artistPlayHistory.length && props.artist) {
         let mostRecent = props.artistPlayHistory[0];
-        for (let song of props.artistPlayHistory) {
+        for (const song of props.artistPlayHistory) {
           if (Number(song.dateTime) > Number(mostRecent.dateTime)) mostRecent = song;
         }
         this.setParticleDescription({
@@ -103,13 +103,13 @@ ${styles}
     }
 
     _formatTime(dateTime) {
-      let delta = Date.now() - dateTime;
+      const delta = Date.now() - dateTime;
       if (delta < 60 * 60 * 1000) {
         let minutes =  Math.round(delta / (60 * 1000));
         if (minutes === 0) minutes = 1;
         return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
       } else if (delta < 24 * 60 * 60 * 1000) {
-        let hours =  Math.round(delta / (60 * 60 * 1000));
+        const hours =  Math.round(delta / (60 * 60 * 1000));
         return `${hours} hour${hours === 1 ? '' : 's'} ago`;
       } else {
         return `on ${new Date(Number(dateTime)).toLocaleDateString()}`;

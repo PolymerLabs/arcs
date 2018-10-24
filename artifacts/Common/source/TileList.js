@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  let host = `show-tiles`;
+  const host = `show-tiles`;
 
   const template = html`
 <style>
@@ -97,7 +97,7 @@ defineParticle(({DomParticle, html, log}) => {
       };
     }
     _onSelect(e) {
-      let item = this._props.items.find(i => i.id === e.data.key);
+      const item = this._props.items.find(i => i.id === e.data.key);
       this.handles.get('selected').set(item);
     }
   };

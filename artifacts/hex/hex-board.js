@@ -90,7 +90,7 @@ defineParticle(({DomParticle, html}) => {
     <hex-board-ratio>
     <hex-board>
       ${(() => {
-        let result = [];
+        const result = [];
         for (let row = 0; row < size; row++) {
           // Every second row is offset by half the width of a tile (by setting
           // the [offset] attribute). After every two rows we need to add an
@@ -104,7 +104,7 @@ defineParticle(({DomParticle, html}) => {
           // .PpXxXxXxXxXxXxPp
           // PpPpXxXxXxXxXxXx
           // .PpPpXxXxXxXxXxXx
-          let offset = row % 2;
+          const offset = row % 2;
           for (let i = 0; i < (row - offset) / 2; i++) {
             result.push(html`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
           }

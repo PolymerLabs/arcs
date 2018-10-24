@@ -105,18 +105,18 @@ defineParticle(({DomParticle, html}) => {
       }
       // Traverse all cells adjacent to {x, y} that are set to the same value.
       // If we can traverse both extremities then we have found a connecting path.
-      let target = this.cell(x, y);
+      const target = this.cell(x, y);
       if (!target) {
         return false;
       }
-      let queue = [[x, y]];
+      const queue = [[x, y]];
       let min = Infinity;
       let max = -Infinity;
-      let size = this.size;
+      const size = this.size;
       while (queue.length) {
-        let [x, y] = queue.pop();
+        const [x, y] = queue.pop();
         seen[x + '-' + y] = true;
-        let neighbours = [
+        const neighbours = [
           [x+0, y-1],
           [x+1, y-1],
           [x-1, y+0],
@@ -125,7 +125,7 @@ defineParticle(({DomParticle, html}) => {
           [x+0, y+1],
         ];
         queue.push(...neighbours.filter(([x, y]) => this.cell(x, y) == target && !seen[x + '-' + y]));
-        let value = target == 'x' ? x : y;
+        const value = target == 'x' ? x : y;
         min = Math.min(value, min);
         max = Math.max(value, max);
       }
@@ -157,22 +157,22 @@ defineParticle(({DomParticle, html}) => {
     }
 
     toModel() {
-      let result = [];
+      const result = [];
       for (let x = 0; x < this.size; x++) {
         for (let y = 0; y < this.size; y++) {
-          let border = [];
+          const border = [];
           if (x == 0) border.push('x');
           if (y == 0) border.push('y');
           if (x == this.size - 1) border.push('X');
           if (y == this.size - 1) border.push('Y');
-          let model = {
+          const model = {
             subId: `${x}-${y}`,
             key: {x, y},
           };
           if (border.length) {
             model.border = border.join('');
           }
-          let move = this.cell(x, y);
+          const move = this.cell(x, y);
           if (move) {
             model.move = move;
           }
@@ -183,7 +183,7 @@ defineParticle(({DomParticle, html}) => {
     }
 
     serialize() {
-      let filledCells = this._board.reduce((acc, v) => acc + (v ? 1 : 0), 0);
+      const filledCells = this._board.reduce((acc, v) => acc + (v ? 1 : 0), 0);
       return {
         board: this._board.map(v => v || ' ').join(''),
         swapped: this._moves != filledCells,
@@ -211,7 +211,7 @@ defineParticle(({DomParticle, html}) => {
       super();
       this._board = new Board(11);
       this._player = 'x';
-      let board = this._board;
+      const board = this._board;
       this.setState({
         player: board.player,
         canSwap: board.canSwap,
@@ -230,7 +230,7 @@ defineParticle(({DomParticle, html}) => {
         state.canMove = false;
         return;
       }
-      let board = this._board;
+      const board = this._board;
       if (!oldProps.gameState || props.gameState.board != oldProps.gameState.board) {
         board.reset(props.gameState);
         state.player = board.player;
@@ -261,7 +261,7 @@ defineParticle(({DomParticle, html}) => {
         gameState = this._props.gameState;
       }
 
-      let newGameState = Object.assign({}, gameState.rawData);
+      const newGameState = Object.assign({}, gameState.rawData);
       Object.assign(newGameState, this._board.serialize());
       if (this._board.winner) {
         newGameState.winner = this._board.winner == 'x' ? newGameState.player1 : newGameState.player2;

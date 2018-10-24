@@ -74,8 +74,8 @@ document.head.appendChild($_documentContainer.content);
 // Basic stats for the entire run.
 export function summaryStats(results) {
   return results.map(r => r.record).reduce((acc, record) => {
-    let result = {};
-    for (let name of [
+    const result = {};
+    for (const name of [
         'generatedDerivations',
         'duplicateDerivations',
         'duplicateSameParentDerivations',
@@ -109,7 +109,7 @@ export function strategySummary(results) {
     strategies: collapseStrategyMaps(summaries.map(summary => summary.strategies))
   }, ...summaries];
 
-  for (let summary of summaries) {
+  for (const summary of summaries) {
     // Array for iterating over with a template.
     summary.strategies = Array.from(summary.strategies.values());
   }
@@ -120,8 +120,8 @@ export function strategySummary(results) {
 
 // Returns a Map(Strategy -> Stats)
 function perStrategyRecord(generation) {
-  let result = new Map();
-  for (let [field, perStrategyField] of [
+  const result = new Map();
+  for (const [field, perStrategyField] of [
     ['generatedDerivations', 'generatedDerivationsByStrategy'],
     ['duplicateDerivations', 'duplicateDerivationsByStrategy'],
     ['duplicateSameParentDerivations', 'duplicateSameParentDerivationsByStrategy'],
@@ -129,10 +129,10 @@ function perStrategyRecord(generation) {
     ['nullDerivations', 'nullDerivationsByStrategy'],
     ['resolvedDerivations', 'resolvedDerivationsByStrategy'],
   ]) {
-    for (let strategy of Object.getOwnPropertyNames(generation.record[perStrategyField])) {
-      let value = generation.record[perStrategyField][strategy];
+    for (const strategy of Object.getOwnPropertyNames(generation.record[perStrategyField])) {
+      const value = generation.record[perStrategyField][strategy];
       if (value > 0) {
-        let obj = {strategy};
+        const obj = {strategy};
         obj[field] = value;
         result.set(strategy, Object.assign(result.get(strategy) || {}, obj));
       }
@@ -152,12 +152,12 @@ function perStrategyRecord(generation) {
 
 // Collapses a [Map(Strategy -> Stats)] into a single Map(Strategy -> Stats).
 function collapseStrategyMaps(strategyMaps) {
-  let result = new Map();
-  for (let map of strategyMaps) {
+  const result = new Map();
+  for (const map of strategyMaps) {
     map.forEach((props, strategy) => {
-      let prevProps = result.get(strategy) || {};
-      let newProps = {strategy};
-      for (let name of [
+      const prevProps = result.get(strategy) || {};
+      const newProps = {strategy};
+      for (const name of [
           'generatedDerivations',
           'duplicateDerivations',
           'duplicateSameParentDerivations',

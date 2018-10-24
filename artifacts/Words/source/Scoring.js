@@ -50,7 +50,7 @@ class Scoring {
         stats.moveCount}.`;
   }
   static applyMoveStats(gameId, user, stats, word, score) {
-    let updatedValues = {
+    const updatedValues = {
       highestScoringWord: stats.highestScoringWord,
       highestScoringWordScore: stats.highestScoringWordScore,
       longestWord: stats.longestWord,

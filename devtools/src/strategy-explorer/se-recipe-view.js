@@ -90,7 +90,7 @@ Polymer({
         recipe.result.replace(/</g, '&lt;'),
         this.pinnedResult.replace(/</g, '&lt;')));
 
-      let strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
+      const strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
       if (strategies) {
         this.strategyString = 'Strategies: [' + strategies.join(']\n[') + ']\n';
       } else {

@@ -114,7 +114,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       return Boolean(choices && resultList && person);
     }
     render({choices, resultList}, state) {
-      let result = [...difference(choices, resultList)];
+      const result = [...difference(choices, resultList)];
       if (result.length > 0) {
         this.relevance = 10;
       }
@@ -141,7 +141,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
   };
 
   function difference(a, b) {
-    let result = new Map();
+    const result = new Map();
     a.forEach(value => result.set(JSON.stringify(value.name), value));
     b.map(a => JSON.stringify(a.name)).forEach(value => result.delete(value));
     return result.values();

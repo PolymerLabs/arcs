@@ -197,7 +197,7 @@ ${styles}
         }
         idx *= 2;
         if (bit % 2 === 0) {
-          let lonMid = (lonMin + lonMax) / 2;
+          const lonMid = (lonMin + lonMax) / 2;
           if (lon >= lonMid) {
             lonMin = lonMid;
             idx++;
@@ -205,7 +205,7 @@ ${styles}
             lonMax = lonMid;
           }
         } else {
-          let latMid = (latMin + latMax) / 2;
+          const latMid = (latMin + latMax) / 2;
           if (lat >= latMid) {
             latMin = latMid;
             idx++;
