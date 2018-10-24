@@ -70,10 +70,11 @@ export class SlotComposer {
     const contexts = this._contexts.filter(context => context.name === name);
     if (contexts.length === 0) {
       // TODO this is a no-op, but throwing here breaks tests
-      assert(`No containers for '${name}'`);
+      console.warn(`No containers for '${name}'`);
     } else if (contexts.length === 1) {
       return contexts[0].container;
     }
+    console.warn(`Ambiguous containers for '${name}'`);
     return undefined;
   }
 
