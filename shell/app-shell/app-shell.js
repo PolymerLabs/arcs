@@ -237,7 +237,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       const loader = arc._loader;
       const fileName = './in-memory.manifest';
       const manny = await Arcs.Runtime.parseManifest(`import 'https://$artifacts/Arcs/Launcher.recipe'`, {loader, fileName});
-      const launcherPlan = manny.recipes[0];
+      const launcherPlan = manny.allRecipes[0];
       launcherPlan.normalize();
       this._setState({launcherPlan});
       return;
