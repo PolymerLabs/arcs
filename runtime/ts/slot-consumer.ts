@@ -44,7 +44,7 @@ export class SlotConsumer {
 
     if (newContainer !== originalContainer) {
       const contextContainerBySubId = new Map();
-      if (this.consumeConn && this.consumeConn.slotSpec.isSet) {
+      if (this.slotContext && this.slotContext.spec.isSet) {
         Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
       } else {
         contextContainerBySubId.set(undefined, this.slotContext.container);
@@ -156,7 +156,7 @@ export class SlotConsumer {
   deleteContainer(container) {}
   clearContainer(rendering) {}
   setContainerContent(rendering, content, subId) {}
-  formatContent(content, subId) {}
+  formatContent(content, subId): object { return null; }
   formatHostedContent(hostedSlot, content): {} { return null; }
   static clear(container) {}
 }
