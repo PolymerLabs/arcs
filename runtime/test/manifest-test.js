@@ -886,6 +886,43 @@ ${particleStr1}
     assert.lengthOf(slotB.consumeConnections, 1);
     assert.equal(slotB.sourceConnection, slotConnA);
   });
+  it('SLANDLES incomplete aliasing', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        \`consume Slot slotA
+          \`provide Slot slotB
+      particle P2 in 'some-particle.js'
+        \`consume Slot slotB
+      recipe
+        P1
+          slotA consume
+          slotB provide s1
+        P2
+          slotB consume s1
+    `)).recipes[0];
+    recipe.normalize();
+
+    assert.lengthOf(recipe.handleConnections, 3);
+    const slotConnA = recipe.handleConnections.find(s => s.name === 'slotA');
+    assert.isUndefined(slotConnA._handle);
+
+    assert.lengthOf(recipe.handles, 1);
+    const slotB = recipe.handles[0];
+    assert.lengthOf(slotB._connections, 2);
+
+    assert.equal(slotB._connections[0]._name, 'slotB');
+    assert.equal(slotB._connections[1]._name, 'slotB');
+
+    const directions = slotB._connections.map(c => c._direction);
+    assert.lengthOf(directions, 2);
+    assert.include(directions, "`provide");
+    assert.include(directions, "`consume");
+
+    console.log(slotB._connections[0]);
+    console.log(slotB._connections[1]);
+    // TODO(jopra): Would like some guidance on if this check makes sense.
+    // assert.equal(slotB.sourceConnection, slotConnA);
+  });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
