@@ -918,8 +918,6 @@ ${particleStr1}
     assert.include(directions, "`provide");
     assert.include(directions, "`consume");
 
-    console.log(slotB._connections[0]);
-    console.log(slotB._connections[1]);
     // TODO(jopra): Would like some guidance on if this check makes sense.
     // assert.equal(slotB.sourceConnection, slotConnA);
   });
