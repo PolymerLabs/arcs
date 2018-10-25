@@ -142,4 +142,71 @@ recipe
     verifySlot('ItemMultiplexer::item');
     verifyHostedSlot('ShowProduct::item');
   });
+
+  it('allows set slots to be consumed as a singleton slot', async () => {
+    const manifestStr = `
+    particle A in 'a.js'
+      consume root
+        provide set of item
+    particle B in 'b.js'
+      consume item
+    particle C in 'C.js'
+      consume item
+    recipe
+      slot 'rootslotid-root' as slot0
+      A
+        consume root as slot0
+          provide item as slot1
+      B
+        consume item as slot1
+      C
+        consume item as slot1
+    `;
+      
+    let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    assert.lengthOf(slotComposer.getAvailableContexts(), 1);
+
+    plan = plan.clone();
+    plan.normalize();
+    assert.isTrue(plan.isResolved());
+    await arc.instantiate(plan);
+
+    assert.deepEqual(['A'], startRenderParticles);
+
+    const [particleA, particleB, particleC] = arc.activeRecipe.particles;
+    await slotComposer.renderSlot(particleA, 'root', {model: {'foo': 'bar'}});
+    const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');
+
+    startRenderParticles.length = 0;
+    rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'item'
+        ? {'id1': 'dummy-inner-container-1', 'id2': 'dummy-inner-container-2'}
+        : null;
+    rootSlot.updateProvidedContexts();
+
+    assert.deepEqual(['B', 'C'], startRenderParticles);
+
+    const gatherRenderings = slotContext => {
+      const result = {};
+      for (const consumer of slotContext.slotConsumers) {
+        for (const [subId, content] of consumer.renderings) {
+          if (!result[subId]) result[subId] = [];
+          if (content.model) result[subId].push(content.model.title);
+        }
+      }
+      return result;
+    };
+
+    const itemSlotContext = slotComposer.getAvailableContexts().find(c => c.name === 'item');
+
+    await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id1', title: 'Rendered by B'}});
+    await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id2', title: 'Rendered by C'}});
+    assert.deepEqual({'id1': ['Rendered by B'], 'id2': ['Rendered by C']}, gatherRenderings(itemSlotContext));
+
+    await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id2', title: 'B moved to id2'}});
+    assert.deepEqual({'id1': [], 'id2': ['B moved to id2', 'Rendered by C']}, gatherRenderings(itemSlotContext));
+
+    await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id1', title: 'C moved to id1'}});
+    assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
+  });
+
 });
