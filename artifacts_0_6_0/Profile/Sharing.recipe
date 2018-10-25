@@ -10,10 +10,10 @@ import 'User.schema'
 resource SYSTEM_usersResource
   start
   [
-    {"id": "Alphonse"},
-    {"id": "Barney"},
-    {"id": "Cletus"},
-    {"id": "Gomer"}
+    {"id": "alphonse"},
+    {"id": "barney"},
+    {"id": "cletus"},
+    {"id": "gomer"}
   ]
 store SYSTEM_users of [User] 'SYSTEM_users' @0 #system #users in SYSTEM_usersResource
 
