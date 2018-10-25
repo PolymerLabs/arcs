@@ -53,7 +53,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
         this.spawnArc(config, state);
       }
     }
-    // will attempt to instantiated first recipe in `manifest`
+    // will attempt to instantiate first recipe in `manifest`
     if (state.host && state.manifest !== manifest) {
       this.state = {manifest};
       if (manifest) {
