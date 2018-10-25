@@ -1115,6 +1115,20 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
       assert.match(e.message, /Consumed slot 'other' is not defined by 'TestParticle'/);
     }
   });
+  it('SLANDLES errors when the manifest references a missing consumed slot', async () => {
+    const manifest = `
+        particle TestParticle in 'tp.js'
+          \`consume Slot root
+        recipe
+          TestParticle
+            other consume`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /param 'other' is not defined by 'TestParticle'/);
+    }
+  });
 
   it('errors when the manifest references a missing provided slot', async () => {
     const manifest = `
