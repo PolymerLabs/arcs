@@ -25,6 +25,7 @@ defineParticle(({DomParticle, html, log}) => {
     border: 3px solid #0068a7;
   }
   [pacify] {
+    padding: 16px;
     font-style: italic;
   }
   @media (min-width: 440px) {

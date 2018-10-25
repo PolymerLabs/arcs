@@ -1,7 +1,10 @@
 import 'List/List.recipes'
-import 'Music/Music.recipes'
+import 'Products/Products.recipe'
 import 'Restaurants/Restaurants.recipes'
 import 'Reservations/Reservations.recipes'
-import 'Demo/Demo.recipes'
+import 'Music/Music.recipes'
+
 import 'Restaurants/RestaurantsDemo.recipes'
 import 'TVMaze/TVMazeDemo.recipes'
+import 'Products/ProductsDemo.recipe'
+import 'Demo/DemoData.manifest'
