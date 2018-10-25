@@ -1705,6 +1705,24 @@ resource SomeName
     assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
   });
 
+  it('SLANDLES can parse a recipe with slot constraints on verbs', async () => {
+    const manifest = await Manifest.parse(`
+      recipe
+        &verb
+          consume consumeSlot
+            provide provideSlot
+    `);
+
+    const recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+
+    assert.equal(recipe.particles[0]._verbs[0], 'verb');
+    assert.isUndefined(recipe.particles[0]._spec);
+    const slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
+    assert(slotConnection._providedSlots.provideSlot);
+    assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
+  });
+
   it('can parse particle arguments with tags and optional names', async () => {
     const manifest = await Manifest.parse(`
       schema Dog
