@@ -875,6 +875,25 @@ ${particleStr1}
     recipe.normalize();
     assert.lengthOf(recipe.slots, 2);
   });
+  it('SLANDLES parses local slots with IDs', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        \`consume Slot slotA
+          \`provide Slot slotB
+      particle P2 in 'some-particle.js'
+        \`consume Slot slotB
+      recipe
+        \`slot 'rootslot-0' as slot0
+        \`slot 'local-slot-0' as slot1
+        P1
+          slotA consume slot0
+          slotB provide slot1
+        P2
+          slotB consume slot1
+    `)).recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.handles, 2);
+  });
   it('relies on the loader to combine paths', async () => {
     const registry = {};
     const loader = {
