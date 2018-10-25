@@ -37,18 +37,10 @@ export class PlanConsumer {
     this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
 
-    this.storeCallback = () => this.onStoreChanged();
+    this.storeCallback = () => this.loadPlans();
     this.store.on('change', this.storeCallback, this);
 
-    // create suggestion composer and register for a callback.
-    const composer = arc.pec.slotComposer;
-    if (composer) {
-      if (composer.findContextById('rootslotid-suggestions')) {
-        this.suggestionComposer = new SuggestionComposer(composer);
-        this.registerSuggestChangedCallback(
-            (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
-      }
-    }
+    this.suggestionComposer = this._initSuggestionComposer();
   }
 
   registerPlansChangedCallback(callback) { this.plansChangeCallbacks.push(callback); }
@@ -61,17 +53,10 @@ export class PlanConsumer {
     }
     const previousSuggestions = this.getCurrentSuggestions();
     this.suggestFilter = {showAll, search};
-    const suggestions = this.getCurrentSuggestions();
-    if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
-      this.suggestionsChangeCallbacks.forEach(callback => callback(suggestions));
-    }
+    this._onMaybeSuggestionsChanged(previousSuggestions);
   }
 
   async loadPlans() {
-    return this.onStoreChanged();
-  }
-
-  async onStoreChanged() {
     assert(this.store['get'], 'Unsupported getter in suggestion storage');
     const value = await this.store['get']() || {};
     if (!value.plans) {
@@ -80,11 +65,8 @@ export class PlanConsumer {
 
     const previousSuggestions = this.getCurrentSuggestions();
     if (await this.result.deserialize(value)) {
-      this.plansChangeCallbacks.forEach(callback => callback({plans: this.result.plans}));
-      const suggestions = this.getCurrentSuggestions();
-      if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
-        this.suggestionsChangeCallbacks.forEach(callback => callback(suggestions));
-      }
+      this._onPlansChanged();
+      this._onMaybeSuggestionsChanged(previousSuggestions);
     }
   }
 
@@ -127,5 +109,27 @@ export class PlanConsumer {
     this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
     this.suggestionComposer.clear();
+  }
+
+  _onPlansChanged() {
+    this.plansChangeCallbacks.forEach(callback => callback({plans: this.result.plans}));
+  }
+
+  _onMaybeSuggestionsChanged(previousSuggestions) {
+    const suggestions = this.getCurrentSuggestions();
+    if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
+      this.suggestionsChangeCallbacks.forEach(callback => callback(suggestions));
+    }
+  }
+
+  _initSuggestionComposer() {
+    const composer = this.arc.pec.slotComposer;
+    if (composer) {
+      if (composer.findContextById('rootslotid-suggestions')) {
+        this.suggestionComposer = new SuggestionComposer(composer);
+        this.registerSuggestChangedCallback(
+            (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
+      }
+    }
   }
 }
