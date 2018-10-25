@@ -31,7 +31,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       invalid: 0
     };
   }
-  _willReceiveProps(props, state, oldProps) {
+  async _willReceiveProps(props, state, oldProps) {
     const changed = name => props[name] !== oldProps[name];
     const {arc, suggestion, search, userid} = props;
     if (suggestion && changed('suggestion')) {
@@ -47,12 +47,12 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
         }
       }
       if (!planificator) {
-        planificator = this._createPlanificator(arc, userid);
+        planificator = await this._createPlanificator(arc, userid);
+        planificator.loadPlans && await planificator.loadPlans();
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
       }
-      planificator._onDataChange();
       this._setState({planificator});
     }
   }
@@ -61,9 +61,10 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
   }
-  _createPlanificator(arc, userid) {
-    const planificatorMode = ArcsUtils.getUrlParam('planificator');
-    const planificator = new Arcs.Planificator(arc, {userid, mode: planificatorMode});
+  async _createPlanificator(arc, userid) {
+    const planificator = ArcsUtils.getUrlParam('planificator') == 'new'
+        ? await Arcs.PlanificatorNew.create(arc, {userid, protocol: ArcsUtils.getUrlParam('planificatorProtocol')})
+        : new Arcs.Planificator(arc, {userid});
     planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     window.planificator = planificator;
