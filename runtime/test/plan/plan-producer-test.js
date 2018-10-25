@@ -43,7 +43,7 @@ class TestPlanProducer extends PlanProducer {
   async runPlanner(options) {
     ++this.plannerRunCount;
     return new Promise((resolve, reject) => {
-      let plans = this.plannerNextResults.shift();
+      const plans = this.plannerNextResults.shift();
       if (plans) {
         resolve(plans);
       } else {
@@ -54,12 +54,12 @@ class TestPlanProducer extends PlanProducer {
   }
 
   plannerReturnFakeResults(planInfos) {
-    let plans = [];
+    const plans = [];
     planInfos.forEach(info => {
       if (!info.hash) {
         info = {hash: info};
       }
-      let plan = new Recipe(`recipe${info.hash}`);
+      const plan = new Recipe(`recipe${info.hash}`);
       if (!info.options || !info.options.invisible) {
         plan.newSlot('slot0').id = 'id0';
       }
@@ -82,17 +82,17 @@ class TestPlanProducer extends PlanProducer {
 
 describe('plan producer', function() {
   async function createProducer(manifestFilename) {
-    let helper = await TestHelper.createAndPlan({
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
     });
     helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
     const store = await Planificator._initStore(helper.arc, {userid: 'TestUser', protocol: 'volatile'});
     assert.isNotNull(store);
-    let producer = new TestPlanProducer(helper.arc, store);
+    const producer = new TestPlanProducer(helper.arc, store);
     return {helper, producer};
   }
   it('produces plans', async function() {
-    let {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
     await producer.producePlans();
@@ -107,7 +107,7 @@ describe('plan producer', function() {
   });
   
   it('throttles requests to produce plans', async function() {
-    let {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
     for (let i = 0; i < 10; ++i) {
@@ -123,7 +123,7 @@ describe('plan producer', function() {
   });
 
   it('cancels planning', async function() {
-    let {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
     producer.producePlans();

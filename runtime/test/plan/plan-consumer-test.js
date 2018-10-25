@@ -15,14 +15,14 @@ import {PlanningResult} from '../../ts-build/plan/planning-result.js';
 
 describe('plan consumer', function() {
   it('consumes', async function() {
-    let helper = await TestHelper.createAndPlan({
+    const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
     });
     const userid = 'TestUser';
     helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
     const store = await Planificator._initStore(helper.arc, {userid, protocol: 'volatile'});
     assert.isNotNull(store);
-    let consumer = new PlanConsumer(helper.arc, store);
+    const consumer = new PlanConsumer(helper.arc, store);
 
     let planChangeCount = 0;
     const planCallback = (plans) => { ++planChangeCount; };
@@ -33,7 +33,7 @@ describe('plan consumer', function() {
     assert.isEmpty(consumer.getCurrentSuggestions());
 
     const storeResults = async (plans) => {
-      let result = new PlanningResult(helper.arc);
+      const result = new PlanningResult(helper.arc);
       result.set({plans});
       await store.set(result.serialize());
       await new Promise(resolve => setTimeout(resolve, 100));
