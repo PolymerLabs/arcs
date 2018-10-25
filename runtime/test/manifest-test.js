@@ -1721,9 +1721,6 @@ resource SomeName
     assert(slotConnection);
     assert.equal(slotConnection._direction, '\`consume');
 
-    console.log(recipe.handles[0]);
-    console.log(slotConnection);
-
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0]._connections, 1);
     assert.equal(recipe.handles[0]._connections[0], slotConnection);
