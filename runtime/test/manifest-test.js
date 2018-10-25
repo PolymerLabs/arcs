@@ -759,8 +759,6 @@ ${particleStr1}
     const slotConn = recipe.particles[0].connections['slotA'];
     assert(slotConn);
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
-    //TODO(jopra): Give recipes the dependentConnections syntax+handling
-    // assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
   });
   it('recipe slots with different names', async () => {
     const manifest = await Manifest.parse(`
@@ -917,9 +915,6 @@ ${particleStr1}
     assert.lengthOf(directions, 2);
     assert.include(directions, "`provide");
     assert.include(directions, "`consume");
-
-    // TODO(jopra): Would like some guidance on if this check makes sense.
-    // assert.equal(slotB.sourceConnection, slotConnA);
   });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
