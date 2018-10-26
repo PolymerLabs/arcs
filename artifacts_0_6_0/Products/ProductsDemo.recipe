@@ -10,7 +10,7 @@ import 'Products.recipe'
 import 'Recommend.recipe'
 
 recipe Products
-  // displayProducts
+  // &displayProducts
   copy #shoplist as shoplist
   create #selected as selected
   SelectableItems
@@ -22,10 +22,9 @@ recipe Products
   ItemMultiplexer
     list = shoplist
     hostedParticle = ProductItem
-  // addFromWishlist
+  // &addFromWishlist
   map #claire as person
   map #wishlist as wishlist
-  //create as choices
   Recommend
     population = wishlist
     known = shoplist

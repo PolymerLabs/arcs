@@ -95,21 +95,21 @@ recipe TVMazeUberDemo
   // most recent show(s)
   map 'PROFILE_piped-tv_show' as pipedShows
   // shows to display (all my collected shows)
-  create #display as display
+  create #nosync #display as display
   // selected show (for detail)
   create #selected as selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
   create #shows #tiles as myshows
   // search results
-  create as foundshows
+  create #nosync #found as foundshows
   // friends ids
   map 'PROFILE_friends' as friends
   // all the userNames
   map 'BOXED_userName' as boxedUserNames
   // friends also watching selected show
-  create as watchers
+  create #nosync #watchers as watchers
   // text about friends watching selected show
-  create as alsoWatch
+  create #nosync #alsowatch as alsoWatch
   //
   TVMazeDemoShell
     user = user

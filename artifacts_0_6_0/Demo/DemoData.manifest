@@ -2,7 +2,7 @@ import '../Music/Playlist.schema'
 store DemoPlaylists of [Playlist] 'demo-playlists' #items in './playlists.json'
 
 import '../Products/Product.schema'
-store PageProducts of [Product] #items #shoplist in 'products.json'
+store PageProducts of [Product] #shoplist in 'products.json'
   description `products from your browsing context`
 
 import '../People/Person.schema'

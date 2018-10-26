@@ -47,7 +47,7 @@ const template = Xen.Template.html`
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
-    <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher>
+    <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- other arcs -->
     <web-arc id="arcs" hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" manifest="{{manifest}}" context="{{context}}" on-arc="onState"></web-arc>
     <!-- suggestions -->

@@ -88,21 +88,21 @@ recipe TVMazeDemo
   // most recent show(s)
   map 'PROFILE_piped-tv_show' as pipedShows
   // selected show (for detail)
-  create #selected as selected
+  create #nosync #selected as selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
   create #shows #tiles as myshows
   // search results
-  create as foundshows
+  create #nosync #found as foundshows
   // friends ids
   map 'PROFILE_friends' as friends
   // all the userNames
   map 'BOXED_userName' as boxedUserNames
   // friends also watching selected show
-  create #nosync as watchers
+  create #nosync #watchers as watchers
   // text about friends watching selected show
-  create #nosync as alsoWatch
+  create #nosync #alsoWatch as alsoWatch
   // internal description storage
-  create as descriptions
+  create #nosync as descriptions
   //
   TVMazeDemoShell
     user = user
@@ -122,11 +122,10 @@ recipe TVMazeDemo
       provide search as search
   //
   // slot `shows` holds my primary show list
-  create #nosync as uniqueProfileShows
+  create #nosync #uniqueProfile as uniqueProfileShows
   TVMazeDeduplicate
     shows = profileShows
     uniqueShows = uniqueProfileShows
-  // which is filtered out of `profileShows`
   SelectableTiles
     consume root as shows
       provide tile as tile1
@@ -140,7 +139,7 @@ recipe TVMazeDemo
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
-  create #nosync as uniquePipedShows
+  create #nosync #uniquePiped as uniquePipedShows
   TVMazeDeduplicate
     shows = allPipedShows
     uniqueShows = uniquePipedShows
@@ -161,7 +160,7 @@ recipe TVMazeDemo
     hostedParticle = TVMazeShowActions
   //
   // slot `search` contains search ui
-  create as query
+  create #nosync #query as query
   TVMazeSearchBarRoot
     consume root as searchbar
     query = query
