@@ -132,7 +132,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   newEntry(msg) {
     let name = msg.name;
     let icon = null;
-    let isCallback = name.endsWith('Callback');
+    const isCallback = name.endsWith('Callback');
 
     if (name.startsWith('on')) { // Host <- Context.
       name = name.substring(2);
@@ -158,7 +158,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       name = this.originalCallName[msg.pecMsgBody.callback] + 'Callback';
     }
 
-    let stack = {
+    const stack = {
       state: msg.stack.length ? 'pointer' : 'invisible',
       frames: msg.stack,
       collapsed: true
