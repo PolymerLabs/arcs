@@ -48,7 +48,7 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
       // add new data
       const rawData = data.filter(filter).map(map);
       await this.appendRawDataToHandle('shows', rawData);
-      log('appended these shows:', rawData);
+      log('stored these shows:', rawData);
     }
     showToEntityData(show) {
       return {

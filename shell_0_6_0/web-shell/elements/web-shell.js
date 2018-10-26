@@ -108,7 +108,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     linkJack(document, anchor => this.routeLink(anchor));
     // create arcs web-environment
     state.env = new ArcsEnvWeb(root);
-    // map in 0_6_0 artifacts
+    // map in 0_6_0 paths
+    state.env.pathMap['https://$shell/'] = `${state.env.rootPath}/shell_0_6_0/`;
     state.env.pathMap['https://$artifacts/'] = `${state.env.rootPath}/artifacts_0_6_0/`;
     // spin up context arc
     await this.spawnContext();

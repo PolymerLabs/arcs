@@ -164,7 +164,7 @@ recipe TVMazeUberDemo
     hostedParticle = TVMazeShowActions
   //
   // slot `search` contains search ui
-  create as query
+  create #nosync as query
   TVMazeSearchBarRoot
     consume root as searchbar
     query = query

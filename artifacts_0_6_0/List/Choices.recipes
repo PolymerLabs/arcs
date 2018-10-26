@@ -6,7 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Tiles.recipes'
-import 'Items.recipes'
-import 'Annotations.recipes'
-import 'Choices.recipes'
+shape HostedChoiceShape
+  in ~any *
+  in [~anyOther] *
+  consume choice
+
+particle ChoicesMultiplexer in 'source/Multiplexer.js'
+  in [~any] list
+  in [~anyOther] choices
+  host HostedChoiceShape hostedParticle
+  consume set of choice

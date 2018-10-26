@@ -9,7 +9,7 @@
 import '../List/List.recipes'
 
 import 'ProductItem.recipe'
-//import 'Recommend.recipe'
+import 'Recommend.recipe'
 //import 'Manufacturer.recipe'
 //import 'Gifts.recipe'
 //import 'Interests.recipe'

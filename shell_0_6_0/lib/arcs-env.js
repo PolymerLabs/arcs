@@ -48,8 +48,9 @@ class ArcsEnv {
     if (!plan.isResolved()) {
       const resolver = new RecipeResolver(arc);
       plan = await resolver.resolve(recipe);
-      if (!plan) {
-        log('failed to resolve recipe', recipe.toString({showUnresolved: true}));
+      if (!plan || !plan.isResolved()) {
+        log('failed to resolve recipe', (plan || recipe).toString({showUnresolved: true}));
+        plan = null;
       }
     }
     return plan;

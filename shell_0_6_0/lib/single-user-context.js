@@ -12,7 +12,9 @@ import {SyntheticStores} from './synthetic-stores.js';
 
 //import {Xen} from '../../../lib/xen.js';
 const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+
 const log = logFactory('SingleUserContext', '#f2ce14');
+const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
 
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
@@ -103,7 +105,7 @@ export const SingleUserContext = class {
       info.add.forEach(async add => {
         let handle = add.value;
         if (!handle) {
-          log('`add` record has no `value`, applying workaround', add);
+          warn('`add` record has no `value`, applying workaround', add);
           handle = add;
         }
         if (handle) { //} && handle.tags.length) {

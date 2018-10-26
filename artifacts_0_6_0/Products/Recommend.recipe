@@ -8,7 +8,7 @@
 
 import 'Product.schema'
 import '../People/Person.schema'
-import '../Common/Multiplexer.manifest'
+import '../List/List.recipes'
 
 particle Recommend in 'source/Recommend.js'
   in [Product] known
@@ -28,25 +28,8 @@ particle Chooser in 'source/Chooser.js'
   description `add items from ${person}'s ${choices}`
 
 particle AlsoOn in 'source/AlsoOn.js'
-  in Thing product
-  in [Thing] choices
-  consume annotation
+  in Product product
+  in [Product] choices
+  consume choice
 
-recipe &addFromWishlist
-  use as shoplist
-  use #claire as person
-  map #wishlist as wishlist
-  create as choices
-  Recommend
-    population = wishlist
-    known = shoplist
-    recommendations = choices
-  Chooser
-    choices = choices
-    resultList = shoplist
-  Multiplexer2
-    list = shoplist
-    others = choices
-    hostedParticle = AlsoOn
-    consume annotation as annotationSlot
 

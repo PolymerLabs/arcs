@@ -75,19 +75,17 @@ defineParticle(({DomParticle, html, log}) => {
       return Boolean(list);
     }
     render({list, selected}) {
-      if (list.length) {
-        const selectedId = selected && selected.id;
-        const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
-        const items = {
-          $template: 'tiled-items',
-          models: sorted.map(item => this.renderItem(item, selectedId === item.id))
-        };
-        log(items.models);
-        return {
-          haveItems: true,
-          items
-        };
-      }
+      const selectedId = selected && selected.id;
+      const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const items = {
+        $template: 'tiled-items',
+        models: sorted.map(item => this.renderItem(item, selectedId === item.id))
+      };
+      log(items.models);
+      return {
+        haveItems: true,
+        items
+      };
     }
     renderItem({id}, selected) {
       return {
