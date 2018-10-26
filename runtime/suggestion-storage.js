@@ -7,6 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+// Deprecated.
+// TODO: Delete, once shell fully migrated to ts/planificator.ts
+
 import {assert} from '../platform/assert-web.js';
 import {Manifest} from './ts-build/manifest.js';
 import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
@@ -112,8 +116,8 @@ export class SuggestionStorage {
   async _planFromString(planString) {
     const manifest = await Manifest.parse(
         planString, {loader: this._arc.loader, context: this._arc._context, fileName: ''});
-    assert(manifest._recipes.length == 1);
-    let plan = manifest._recipes[0];
+    assert(manifest.recipes.length == 1);
+    let plan = manifest.recipes[0];
     assert(plan.normalize(), `can't normalize deserialized suggestion: ${plan.toString()}`);
     if (!plan.isResolved()) {
       const resolvedPlan = await this._recipeResolver.resolve(plan);

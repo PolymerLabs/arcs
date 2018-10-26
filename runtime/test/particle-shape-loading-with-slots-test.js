@@ -29,6 +29,7 @@ describe('particle-shape-loading-with-slots', function() {
       return channel.port2;
     };
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
+    slotComposer._contexts[0].spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
     const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 

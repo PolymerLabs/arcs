@@ -1,6 +1,6 @@
 import {FbUser} from './shell/FbUser.js';
 import {Firebase} from './shell/firebase.js';
-import {Planificator} from '../../../runtime/planificator.js';
+import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
 
 class UserPlanner {
   constructor(factory, context, userid) {
@@ -66,7 +66,7 @@ class UserPlanner {
     console.log(`Arc[${key}]: marshaling for user [${userid}]`);
     try {
       const arc = await this.deserializeArc(serialization);
-      const planificator = this.createPlanificator(userid, key, arc);
+      const planificator = await this.createPlanificator(userid, key, arc);
       this.runners[key] = {arc, planificator};
     } catch (x) {
       // console.log('exception under: ==============================================');
@@ -86,11 +86,10 @@ class UserPlanner {
     }
     return await this.factory.deserialize(this.context, serialization);
   }
-  createPlanificator(userid, key, arc) {
-    const planificator = new Planificator(arc, {userid, mode: 'producer'});
+  async createPlanificator(userid, key, arc) {
+    const planificator = await Planificator.create(arc, {userid}); /*, protocol: 'pouchdb' or 'volatile' */
     planificator.registerPlansChangedCallback(current => this.showPlansForArc(key, current.plans));
     // planificator.registerSuggestChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
-    planificator._requestPlanning();
     return planificator;
   }
   showPlansForArc(key, metaplans) {

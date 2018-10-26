@@ -14,7 +14,7 @@ import {ShellPlanningInterface} from './interface.js';
 
 let userId =  process.env['ARCS_USER_ID'];
 if (!userId) {
-  console.log('No ARCS_USER_ID environment variable, using test user "Cletus"');
   userId = ShellPlanningInterface.USER_ID_CLETUS;
+  console.log(`No ARCS_USER_ID environment variable, using test user "${userId}"`);
 }
 ShellPlanningInterface.start('../../../', userId);

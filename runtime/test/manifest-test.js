@@ -830,6 +830,36 @@ ${particleStr1}
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
   });
+  it('SLANDLES recipe provided slot with no local name', async () => {
+    const manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        \`consume Slot slotA1
+          \`provide Slot slotA2
+      recipe
+        ParticleA
+          slotA1 consume
+          slotA2 provide
+    `);
+    // Check that the manifest was parsed in the way we expect.
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.recipes, 1);
+
+    const recipe = manifest.recipes[0];
+    // Check that the parser found the handleConnections
+    assert.lengthOf(recipe.handleConnections, 2);
+    assert.equal('slotA1', recipe.handleConnections[0]._name);
+    assert.equal('slotA2', recipe.handleConnections[1]._name);
+
+    // Check that the handle connection
+    // wasn't resolved to a handle (even though it was parsed).
+    assert.isUndefined(recipe.handleConnections[0]._handle);
+    assert.isUndefined(recipe.handleConnections[1]._handle);
+
+    // The recipe shouldn't resolve (as there is nothing providing slotA1 or
+    // consuming slotA2).
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+  });
   it('incomplete aliasing', async () => {
     const recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
@@ -874,6 +904,25 @@ ${particleStr1}
     `)).recipes[0];
     recipe.normalize();
     assert.lengthOf(recipe.slots, 2);
+  });
+  it('SLANDLES parses local slots with IDs', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        \`consume Slot slotA
+          \`provide Slot slotB
+      particle P2 in 'some-particle.js'
+        \`consume Slot slotB
+      recipe
+        \`slot 'rootslot-0' as slot0
+        \`slot 'local-slot-0' as slot1
+        P1
+          slotA consume slot0
+          slotB provide slot1
+        P2
+          slotB consume slot1
+    `)).recipes[0];
+    recipe.normalize();
+    assert.lengthOf(recipe.handles, 2);
   });
   it('relies on the loader to combine paths', async () => {
     const registry = {};
@@ -1094,6 +1143,20 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
       assert.fail();
     } catch (e) {
       assert.match(e.message, /Consumed slot 'other' is not defined by 'TestParticle'/);
+    }
+  });
+  it('SLANDLES errors when the manifest references a missing consumed slot', async () => {
+    const manifest = `
+        particle TestParticle in 'tp.js'
+          \`consume Slot root
+        recipe
+          TestParticle
+            other consume`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /param 'other' is not defined by 'TestParticle'/);
     }
   });
 
