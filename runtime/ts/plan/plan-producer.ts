@@ -25,7 +25,8 @@ export class PlanProducer {
   planner: Planner|null = null;
   speculator: Speculator;
   needReplan: boolean;
-  isPlanning: boolean;
+  _isPlanning: boolean;
+  stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
 
   constructor(arc: Arc, store: StorageProviderBase) {
     assert(arc, 'arc cannot be null');
@@ -34,6 +35,19 @@ export class PlanProducer {
     this.result = new PlanningResult(arc);
     this.store = store;
     this.speculator = new Speculator();
+  }
+
+  get isPlanning() { return this._isPlanning; }
+  set isPlanning(isPlanning) {
+    if (this.isPlanning === isPlanning) {
+      return;
+    }
+    this._isPlanning = isPlanning;
+    this.stateChangedCallbacks.forEach(callback => callback(this.isPlanning));
+  }
+
+  registerStateChangedCallback(callback) {
+    this.stateChangedCallbacks.push(callback);
   }
 
   async producePlans(options = {}) {
