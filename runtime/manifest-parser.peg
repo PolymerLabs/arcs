@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 {
   let indent = '';
   let startIndent = '';
-  const indents = [];
+  const indents:string[] = [];
 
   function extractIndented(items) {
     return items[1].map(item => item[1]);
@@ -32,7 +31,7 @@
       return;
     }
     if (result === undefined) {
-      throw new Error(`result was undefined`);
+      throw new SyntaxError(`result was undefined`, [], "", location());
     }
     if (Array.isArray(result)) {
       for (const item of result) {
@@ -61,21 +60,21 @@
 Manifest
   = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
   {
-    const result = items.map(item => {
+    const result: Token.ManifestItem[] = items.map(item => {
       const manifestItem = item[2];
       manifestItem.annotation = optional(item[0], a => a[1], null);
       return manifestItem;
     });
     checkNormal(result);
-    return result;
+    return result as Token.ManifestItem[];
   }
 
 ManifestItem
   = Recipe
-  / ParticleDefinition
+  / Particle
   / Import
-  / SchemaDefinition
-  / SchemaAliasDefinition
+  / Schema
+  / SchemaAlias
   / ManifestStorage
   / Shape
   / Meta
@@ -89,7 +88,8 @@ Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameInd
     name,
     data: body,
     location: location()
-  };
+  } as Token.Resource;
+  // @returns Token.Resource
 }
 
 ResourceStart = 'start' eolWhiteSpace { startIndent = indent; }
@@ -119,7 +119,7 @@ ManifestStorage
       source: source.source,
       origin: source.origin,
       description: items.length > 0 ? items[0][2] : null
-    };
+    } as Token.ManifestStorage;
   }
 
 ManifestStorageType
@@ -129,13 +129,13 @@ ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return {origin: 'file', source }; }
+  = 'in' whiteSpace source:id { return {origin: 'file', source } as Token.ManifestStorageSource; }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:TopLevelIdent { return {origin: 'resource', source }; }
+  = 'in' whiteSpace source:TopLevelIdent { return {origin: 'resource', source } as Token.ManifestStorageSource; }
 
 ManifestStorageStorageSource
-  = 'at' whiteSpace source:id { return {origin: 'storage', source }; }
+  = 'at' whiteSpace source:id { return {origin: 'storage', source }  as Token.ManifestStorageSource; }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -150,7 +150,7 @@ Import
       kind: 'import',
       location: location(),
       path,
-    };
+    } as Token.Import;
   }
 
 Shape
@@ -164,7 +164,7 @@ Shape
         name,
         interface: iface,
         slots: optional(items, extractIndented, []).filter(item => item.kind === 'shape-slot'),
-      };
+      } as Token.Shape;
     } else {
       return {
         kind: 'shape',
@@ -172,8 +172,7 @@ Shape
         name,
         args: optional(items, extractIndented, []).filter(item => item.kind === 'shape-argument'),
         slots: optional(items, extractIndented, []).filter(item => item.kind === 'shape-slot'),
-      };
-
+      } as Token.Shape;
     }
   }
 
@@ -191,7 +190,7 @@ ShapeInterface
       location: location(),
       verb,
       args: args || []
-    };
+    } as Token.ShapeInterface;
   }
 
 ShapeArgumentItem
@@ -203,7 +202,7 @@ ShapeArgumentItem
 ShapeArgumentList
   = head:ShapeArgument tail:(',' whiteSpace ShapeArgument)*
   {
-    return [head].concat(tail.map(a => a[2]));
+    return [head].concat(tail.map(a => a[2])) as Token.ShapeArgument[];
   }
 
 ShapeArgument
@@ -225,7 +224,7 @@ ShapeArgument
       direction,
       type,
       name,
-    };
+    } as Token.ShapeArgument;
   }
 
 ShapeArgumentWithName
@@ -247,7 +246,7 @@ ShapeArgumentWithName
       direction,
       type,
       name,
-    };
+    } as Token.ShapeArgument;
   }
 
 ShapeSlot
@@ -260,34 +259,34 @@ ShapeSlot
       isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       direction,
       isSet: !!isSet,
-    };
+    } as Token.ShapeSlot;
   }
 
 Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
 {
   items = items ? extractIndented(items): [];
-  return {kind: 'meta', items, location: location()};
+  return {kind: 'meta', items, location: location()} as Token.Meta;
 }
 
 MetaItem = MetaStorageKey / MetaName
 
 MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 {
-  return { key: 'name', value: name, location: location(), kind: 'name' };
+  return { key: 'name', value: name, location: location(), kind: 'name' } as Token.MetaName;
 }
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' };
+  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' } as Token.MetaStorageKey;
 };
 
-ParticleDefinition
+Particle
   = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args = [];
+    let args: Token.ParticleArgument[]  = [];
     const affordance = [];
-    const slots = [];
+    const slots: Token.ParticleSlot[] = [];
     let description = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -334,7 +333,7 @@ ParticleDefinition
       slots,
       description,
       hasParticleArgument
-    };
+    } as Token.Particle;
   }
 
 ParticleItem
@@ -352,7 +351,7 @@ ParticleInterface
       location: location(),
       verb,
       args: args || []
-    };
+    } as Token.ParticleInterface;
   }
 
 ParticleHandle
@@ -360,13 +359,13 @@ ParticleHandle
   {
     dependentConnections = optional(dependentConnections, extractIndented, []);
     arg.dependentConnections = dependentConnections;
-    return arg;
+    return arg as Token.ParticleArgument;
   }
 
 ParticleArgumentList
   = head:ParticleArgument tail:(',' whiteSpace ParticleArgument)*
   {
-    return [head].concat(tail.map(a => a[2]));
+    return [head].concat(tail.map(a => a[2])) as Token.ParticleArgument[];
   }
 
 ParticleArgument
@@ -381,7 +380,7 @@ ParticleArgument
       dependentConnections: [],
       name: nametag.name,
       tags: nametag.tags,
-    };
+    } as Token.ParticleArgument;
   }
 
 ParticleArgumentDirection
@@ -406,7 +405,7 @@ CollectionType
       kind: 'collection-type',
       location: location(),
       type,
-    };
+    } as Token.CollectionType;
   }
 
 BigCollectionType
@@ -416,7 +415,7 @@ BigCollectionType
       kind: 'big-collection-type',
       location: location(),
       type,
-    };
+    } as Token.BigCollectionType;
   }
 
 ReferenceType
@@ -426,7 +425,7 @@ ReferenceType
       kind: 'reference-type',
       location: location(),
       type,
-    };
+    } as Token.ReferenceType;
   }
 
 VariableType
@@ -437,7 +436,7 @@ VariableType
       location: location(),
       name,
       constraint: optional(constraint, constraint => constraint[3], null),
-    };
+    } as Token.VariableType;
   }
 
 SlotType
@@ -452,7 +451,7 @@ SlotType
     kind: 'slot-type',
     location: location(),
     fields
-  };
+  } as Token.SlotType;
 }
 
 SlotField
@@ -463,7 +462,7 @@ SlotField
     location: location(),
     name,
     value
-  };
+  } as Token.SlotField;
 }
 
 TypeName
@@ -473,13 +472,13 @@ TypeName
       kind: 'type-name',
       location: location(),
       name,
-    };
+    } as Token.TypeName;
   }
 
 VariableTypeList
   = head:VariableType tail:(',' whiteSpace VariableType)*
   {
-    return [head, ...tail.map(a => a[2])];
+    return [head, ...tail.map(a => a[2])] as Token.VariableType[];
   }
 
 ParticleAffordance
@@ -489,7 +488,7 @@ ParticleAffordance
       kind: 'particle-affordance',
       location: location(),
       affordance,
-    };
+    } as Token.ParticleAffordance;
   }
 
 ParticleSlot
@@ -520,7 +519,7 @@ ParticleSlot
       isSet: !!isSet,
       formFactor,
       providedSlots
-    };
+    } as Token.ParticleSlot;
   }
 
 ParticleSlotItem
@@ -534,7 +533,7 @@ SlotFormFactor
       kind: 'form-factor',
       location: location(),
       formFactor
-    };
+    } as Token.SlotFormFactor;
   }
 
 ParticleProvidedSlot
@@ -562,7 +561,7 @@ ParticleProvidedSlot
       isSet: !!isSet,
       formFactor,
       handles
-    };
+    } as Token.ParticleProvidedSlot;
   }
 
 ParticleProvidedSlotItem
@@ -576,7 +575,7 @@ ParticleProvidedSlotHandle
       kind: 'particle-provided-slot-handle',
       location: location(),
       handle,
-    };
+    } as Token.ParticleProvidedSlotHandle;
   }
 
 Description
@@ -602,7 +601,7 @@ Description
         },
         ...handleDescriptions,
       ],
-    };
+    } as Token.Description;
   }
 
 ParticleHandleDescription
@@ -613,7 +612,7 @@ ParticleHandleDescription
       location: location(),
       name,
       pattern,
-    };
+    } as Token.ParticleHandleDescription;
   }
 
 Recipe
@@ -626,7 +625,7 @@ Recipe
       name: optional(name, name => name[1], null),
       verbs,
       items: optional(items, extractIndented, []),
-    };
+    } as Token.Recipe;
   }
 
 RecipeItem
@@ -671,7 +670,7 @@ RecipeParticle
       ref,
       connections: handleConnections,
       slotConnections,
-    };
+    } as Token.Particle;
   }
 
 RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
@@ -685,7 +684,7 @@ RecipeParticleConnection
       param,
       dir,
       target: optional(target, target => target[1], null),
-    };
+    } as Token.RecipeParticleConnection;
   }
 
 ParticleConnectionTargetComponents
@@ -708,7 +707,7 @@ ParticleConnectionTargetComponents
       name,
       particle,
       tags: optional(tags, tags => tags, []),
-    };
+    } as Token.ParticleConnectionTargetComponents;
   }
 
 RecipeParticleSlotConnection
@@ -721,7 +720,7 @@ RecipeParticleSlotConnection
       tags: ref.tags,
       name: optional(name, name=>name[1], null),
       providedSlots: optional(providedSlots, extractIndented, [])
-    };
+    } as Token.RecipeParticleSlotConnection;
   }
 
 RecipeSlotConnectionRef
@@ -732,7 +731,7 @@ RecipeSlotConnectionRef
       location: location(),
       param,
       tags,
-    };
+    } as Token.RecipeSlotConnectionRef;
   }
 
 RecipeParticleProvidedSlot
@@ -743,7 +742,7 @@ RecipeParticleProvidedSlot
       location: location(),
       param,
       name: optional(name, name=>name[1], null)
-    };
+    } as Token.ParticleProvidedSlot;
   }
 
 RecipeConnection
@@ -755,7 +754,7 @@ RecipeConnection
       direction,
       from,
       to,
-    };
+    } as Token.RecipeConnection;
   }
 
 RecipeSearch
@@ -767,7 +766,7 @@ RecipeSearch
       location: location(),
       phrase,
       tokens: optional(tokens, tokens => tokens[1][2].map(t => t[1]), null)
-    };
+    } as Token.RecipeSearch;
   }
 
 Direction
@@ -787,7 +786,7 @@ VerbConnectionTarget
       verbs,
       param,
       tags
-    };
+    } as Token.ConnectionTarget;
   }
 
 TagConnectionTarget
@@ -797,7 +796,7 @@ TagConnectionTarget
       location: location(),
       targetType: 'tag',
       tags
-    };
+    } as Token.ConnectionTarget;
   }
 
 NameConnectionTarget
@@ -811,7 +810,7 @@ NameConnectionTarget
       name,
       param,
       tags
-    };
+    } as Token.ConnectionTarget;
   }
 
 ParticleConnectionTarget
@@ -825,7 +824,7 @@ ParticleConnectionTarget
       particle,
       param,
       tags
-    };
+    } as Token.ConnectionTarget;
   }
 
 ConnectionTargetHandleComponents
@@ -834,7 +833,7 @@ ConnectionTargetHandleComponents
     return {
       param: optional(param, param => param, null),
       tags: optional(tags, tags => tags[1], []),
-    };
+    } as Token.ConnectionTargetHandleComponents;
   }
 
 RecipeHandle
@@ -846,7 +845,7 @@ RecipeHandle
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null),
       fate: type
-    };
+    } as Token.RecipeHandle;
   }
 
 Tag
@@ -877,21 +876,21 @@ NameAndTagList
      return {
        name,
        tags
-     };
+     } as Token.NameAndTag;
    }
    / whiteSpace name:lowerIdent
    {
      return {
        name,
        tags: []
-     };
+     } as Token.NameAndTag;
    }
    / whiteSpace tags:TagList
    {
       return {
         name: tags[0],
         tags
-      };
+      } as Token.NameAndTag;
    }
 
 ParticleRef
@@ -902,7 +901,7 @@ ParticleRef
       location: location(),
       name,
       verbs: [],
-    };
+    } as Token.ParticleRef;
   }
   / verb:Verb
   {
@@ -910,7 +909,7 @@ ParticleRef
       kind: 'particle-ref',
       location: location(),
       verbs: [verb],
-    };
+    } as Token.ParticleRef;
   }
 
 HandleOrSlotRef
@@ -921,7 +920,7 @@ HandleOrSlotRef
       location: location(),
       id,
       tags: tags || [],
-    };
+    } as Token.HandleRef;
   }
   / name:upperIdent tags:SpaceTagList?
   {
@@ -930,7 +929,7 @@ HandleOrSlotRef
       location: location(),
       name,
       tags: tags || [],
-    };
+    } as Token.HandleRef;
   }
   / tags:TagList
   {
@@ -938,7 +937,7 @@ HandleOrSlotRef
       kind: 'handle-ref',
       location: location(),
       tags,
-    };
+    } as Token.HandleRef;
   }
 
 RecipeSlot
@@ -949,7 +948,7 @@ RecipeSlot
       location: location(),
       ref: optional(ref, ref => ref[1], null),
       name: optional(name, name => name[1], '')
-    };
+    } as Token.RecipeSlot;
   }
 
 SchemaInline
@@ -960,7 +959,7 @@ SchemaInline
       location: location(),
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), []),
       fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
-    };
+    } as Token.SchemaInline;
   }
 
 SchemaInlineField
@@ -971,7 +970,7 @@ SchemaInlineField
       location: location(),
       name,
       type: optional(type, type => type[0], null),
-    };
+    } as Token.SchemaInlineField;
   }
 
 SchemaSpec
@@ -980,10 +979,10 @@ SchemaSpec
     return {
       names: names.map(name => name[1]).filter(name => name !== '*'),
       parents: optional(parents, parents => parents, []),
-    };
+    } as Token.SchemaSpec;
   }
 
-SchemaAliasDefinition
+SchemaAlias
   = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return Object.assign(spec, {
@@ -991,17 +990,17 @@ SchemaAliasDefinition
       location: location(),
       items: optional(items, extractIndented, []),
       alias,
-    });
+    }) as Token.Schema;
   }
 
-SchemaDefinition
+Schema
   = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return Object.assign(spec, {
       kind: 'schema',
       location: location(),
       items: optional(items, extractIndented, []),
-    });
+    }) as Token.Schema;
   }
 
 SchemaExtends
@@ -1027,7 +1026,7 @@ SchemaSection
       location: location(),
       sectionType,
       fields: extractIndented(fields),
-    };
+    } as Token.SchemaSection;
   }
 
 SchemaField
@@ -1038,7 +1037,7 @@ SchemaField
       location: location(),
       type,
       name,
-    };
+    } as Token.SchemaField;
   }
 
 SchemaType
@@ -1050,7 +1049,7 @@ SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
       kind: 'schema-collection',
       location: location(),
       schema
-    };
+    } as Token.SchemaCollectionType;
   }
 
 SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
@@ -1059,7 +1058,7 @@ SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) 
       kind: 'schema-reference',
       location: location(),
       schema
-    };
+    } as Token.SchemaReferenceType;
   }
 
 SchemaPrimitiveType
@@ -1072,7 +1071,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return {kind: 'schema-union', location: location(), types};
+    return {kind: 'schema-union', location: location(), types} as Token.SchemaUnionType;
   }
 
 SchemaTupleType
@@ -1082,7 +1081,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return {kind: 'schema-tuple', location: location(), types};
+    return {kind: 'schema-tuple', location: location(), types} as Token.SchemaTupleType;
   }
 
 Version
