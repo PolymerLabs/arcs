@@ -1718,7 +1718,7 @@ resource SomeName
     assert.equal(recipe.particles[0]._verbs[0], 'verb');
     assert.isUndefined(recipe.particles[0]._spec);
     const slotConnection = recipe.particles[0].connections.foo;
-    assert.equal(slotConnection._direction, '\`consume');
+    assert.equal(slotConnection._direction, '`consume');
 
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0]._connections, 1);
