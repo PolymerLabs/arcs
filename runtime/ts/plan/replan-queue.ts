@@ -17,16 +17,16 @@ const defaultDefaultReplanDelayMs = 3000;
 
 export class ReplanQueue {
   planProducer: PlanProducer;
-  options: {} = {};
+  options: {[index: string]: number} = {};
   changes: number[];
   // tslint:disable-next-line: no-any
   replanTimer: any;
 
   constructor(planProducer: PlanProducer, options = {}) {
     this.planProducer = planProducer;
-    this.options = options || {};
-    this.options['defaultReplanDelayMs'] =
-      this.options['defaultReplanDelayMs'] || defaultDefaultReplanDelayMs;
+    this.options = options;
+    this.options.defaultReplanDelayMs =
+      this.options.defaultReplanDelayMs || defaultDefaultReplanDelayMs;
 
     this.changes = [];
     this.replanTimer = null;
@@ -38,7 +38,7 @@ export class ReplanQueue {
     if (this._isReplanningScheduled()) {
       this._postponeReplan();
     } else if (!this.planProducer.isPlanning) {
-      this._scheduleReplan(this.options['defaultReplanDelayMs']);
+      this._scheduleReplan(this.options.defaultReplanDelayMs);
     }
   }
 
@@ -51,7 +51,7 @@ export class ReplanQueue {
       // Schedule delayed planning.
       const timeNow = now();
       this.changes.forEach((ch, i) => this.changes[i] = timeNow);
-      this._scheduleReplan(this.options['defaultReplanDelayMs']);
+      this._scheduleReplan(this.options.defaultReplanDelayMs);
     }
   }
 
@@ -79,15 +79,15 @@ export class ReplanQueue {
     const sinceFirstChangeMs = now - this.changes[0];
     if (this._canPostponeReplan(sinceFirstChangeMs)) {
       this._cancelReplanIfScheduled();
-      let nextReplanDelayMs = this.options['defaultReplanDelayMs'];
-      if (this.options['maxNoReplanMs']) {
-        nextReplanDelayMs = Math.min(nextReplanDelayMs, this.options['maxNoReplanMs'] - sinceFirstChangeMs);
+      let nextReplanDelayMs = this.options.defaultReplanDelayMs;
+      if (this.options.maxNoReplanMs) {
+        nextReplanDelayMs = Math.min(nextReplanDelayMs, this.options.maxNoReplanMs - sinceFirstChangeMs);
       }
       this._scheduleReplan(nextReplanDelayMs);
     }
   }
 
   private _canPostponeReplan(changesInterval) {
-    return !this.options['maxNoReplanMs'] || changesInterval < this.options['maxNoReplanMs'];
+    return !this.options.maxNoReplanMs || changesInterval < this.options.maxNoReplanMs;
   }
 }

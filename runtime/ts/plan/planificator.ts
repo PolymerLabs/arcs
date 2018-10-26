@@ -38,7 +38,7 @@ export class Planificator {
   // (1) trigger replanning with a local producer and (2) notify shell of the
   // last activated plan, to allow serialization.
   // TODO(mmandlis): Is this really needed in the >0.6 shell?
-  arcCallback: ({}) => void;
+  arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
   constructor(arc, userid, store) {
@@ -49,14 +49,8 @@ export class Planificator {
     this.consumer = new PlanConsumer(arc, store);
 
     this.lastActivatedPlan = null;
-    this.arcCallback = this._onPlanInstantiated.bind(this);
     this.arc.registerInstantiatePlanCallback(this.arcCallback);
-    this.arc.onDataChange(() => this.replanQueue.addChange(), this);
-    this.arc.context.allStores.forEach(store => {
-      if (store.on) { // #2141: some are StorageStubs.
-        store.on('change', this.dataChangeCallback, this);
-      }
-    });
+    this._listenToArcStores();
   }
 
   async requestPlanning(options = {}) {
@@ -88,12 +82,7 @@ export class Planificator {
 
   dispose() {
     this.arc.unregisterInstantiatePlanCallback(this.arcCallback);
-    this.arc.clearDataChange(this);
-    this.arc.context.allStores.forEach(store => {
-      if (store.off) {
-        store.off('change', this.dataChangeCallback);
-      }
-    });
+    this._unlistenToArcStores();
     this.consumer.dispose();
   }
 
@@ -101,12 +90,30 @@ export class Planificator {
     return {plan: this.lastActivatedPlan};
   }
 
-  _onPlanInstantiated(plan) {
+  private _onPlanInstantiated(plan) {
     this.lastActivatedPlan = plan;
     this.requestPlanning();
   }
 
-  static async _initStore(arc, {userid, protocol, arcKey}) {
+  private _listenToArcStores() {
+    this.arc.onDataChange(this.dataChangeCallback, this);
+    this.arc.context.allStores.forEach(store => {
+      if (store.on) { // #2141: some are StorageStubs.
+        store.on('change', this.dataChangeCallback, this);
+      }
+    });
+  }
+
+  private _unlistenToArcStores() {
+    this.arc.clearDataChange(this);
+    this.arc.context.allStores.forEach(store => {
+      if (store.off) { // #2141: some are StorageStubs.
+        store.off('change', this.dataChangeCallback);
+      }
+    });
+  }
+
+  private static async _initStore(arc, {userid, protocol, arcKey}) {
     assert(userid, 'Missing user id.');
     let storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);

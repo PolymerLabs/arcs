@@ -315,9 +315,6 @@ export class Planificator {
     // TODO(mmandlis): re-enable this when the planner asynchrony doesn't cause it to be false.
     // assert(this._current.plans.some(currentPlan => currentPlan.plan.toString() == planString),
     //       `The instantiated plan (${plan.toString()}) doesn't appear in the current plans.`);
-    if (!this._current.plans.some(currentPlan => currentPlan.plan.toString() == planString)) {
-      console.error(`Arc instantiating unplanned plan. (${plan.toString()})`);
-    }
 
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
