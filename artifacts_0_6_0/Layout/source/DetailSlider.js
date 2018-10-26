@@ -8,12 +8,10 @@
 
 defineParticle(({DomParticle, resolver, html, log}) => {
 
-  let host = `detail-slider`;
-
   const template = html`
 
 <style>
-  [${host}] {
+  [detail-slider] {
     position: absolute;
     top: 0;
     right: 0;
@@ -22,7 +20,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     pointer-events: all;
     transform: translate3d(0, 100vh, 0);
   }
-  [${host}][open] {
+  [detail-slider][open] {
     transform: translate3d(0, 0, 0);
   }
   [scrim] {
@@ -85,7 +83,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   }
 </style>
 
-<div ${host} open$="{{open}}">
+<div detail-slider open$="{{open}}">
   <div scrim></div>
   <div modal>
     <div buttons>

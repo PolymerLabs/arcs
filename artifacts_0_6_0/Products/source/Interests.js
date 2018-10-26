@@ -43,7 +43,7 @@ defineParticle(({DomParticle, html}) => {
       return false;
     }
     render({list}) {
-      let items = [];
+      const items = [];
       list.forEach(item => {
         switch (item.name) {
           case 'Field Hockey Stick':

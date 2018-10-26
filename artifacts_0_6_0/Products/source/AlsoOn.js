@@ -28,9 +28,8 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(props.choices);
     }
     render({product, choices}) {
-      let notAlsoOn = !product || !choices.find(c => c.name === product.name);
       return {
-        notAlsoOn
+        notAlsoOn: !product || !choices.find(c => c.name === product.name)
       };
     }
   };

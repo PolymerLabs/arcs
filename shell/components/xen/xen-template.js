@@ -239,7 +239,7 @@ const _set = function(node, property, value, controller) {
       Object.assign(node.style, value);
     }
   } else if (modifier == '$') {
-    let n = property.slice(0, -1);
+    const n = property.slice(0, -1);
     if (typeof value === 'boolean' || value === undefined) {
       setBoolAttribute(node, n, Boolean(value));
     } else {
@@ -272,7 +272,7 @@ const setBoolAttribute = function(node, attr, state) {
 };
 
 const _setSubTemplate = function(node, value, controller) {
-  // TODO(sjmiles): sub-template iteration ability specially implemented to support arcs (serialization boundary)
+  // TODO(sjmiles): subtemplate iteration ability specially implemented to support arcs (serialization boundary)
   // TODO(sjmiles): Aim to re-implement as a plugin.
   let {template, models} = value;
   if (!template) {

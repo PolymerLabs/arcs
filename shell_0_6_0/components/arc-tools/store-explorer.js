@@ -134,7 +134,7 @@ class StoreExplorer extends Xen.Base {
         if (store.description) {
           data.description = store.description;
         }
-        let moniker = store.id.split(':').pop();
+        const moniker = store.id.split(':').pop();
         const name = store.name || data.tags || moniker;
         //const name = `${store.name || moniker}:${data.tags}`;
         if (!store.type || store.type.tag !== 'Interface') {
