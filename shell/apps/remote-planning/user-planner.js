@@ -44,8 +44,10 @@ class UserPlanner {
     const serialization = field.parent.data.serialization;
     //console.log(key, serialization, field);
     this.disposeArc(key);
-    // TODO: cleanup disposed arc's suggestions?
-    if (!field.disposed) {
+    if (field.disposed) {
+      console.log(`Arc ${key} was deleted`);
+      Firebase.db.child(`users/${this.userid}/suggestions/${key}`).set(null);
+    } else {
       if (serialization) {
         this.marshalArc(key, this.userid, serialization);
       } else {

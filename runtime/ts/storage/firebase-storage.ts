@@ -360,6 +360,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
+  private valueChangeCallback: ({}) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -388,7 +389,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // * a value is written to the variable by a call to `set`.
     this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
-    this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
+    this.valueChangeCallback =
+        this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
+  }
+
+  dispose() {
+    this.reference.off('value', this.valueChangeCallback);
   }
 
   backingType() {
@@ -635,6 +641,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: () => void;
   private localKeyId = Date.now();
+  private valueChangeCallback: ({}) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -671,7 +678,12 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // copy of state from firebase.
     this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
-    this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
+    this.valueChangeCallback =
+        this.reference.on('value', dataSnapshot => this.remoteStateChanged(dataSnapshot));
+  }
+
+  dispose() {
+    this.reference.off('value', this.valueChangeCallback);
   }
 
   backingType() {

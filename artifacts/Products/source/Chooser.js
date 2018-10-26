@@ -101,7 +101,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
         <img src="{{image}}">
       </div>
     </div>
-    <div slotid="annotation" subid$="{{subId}}">
+    <div slotid="annotation" subid$="{{id}}">
   </div>
 </template>
   `;
@@ -129,7 +129,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     _dataToModels(data) {
       return data.map((entity, index) =>
         Object.assign(entity.dataClone(), {
-          subId: entity.id,
+          id: entity.id,
           image: resolver ? resolver(entity.image) : entity.image,
           index
         })

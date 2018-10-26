@@ -175,6 +175,9 @@ export abstract class StorageProviderBase {
     return this.id;
   }
 
+  // TODO: make abstract?
+  dispose() {}
+
   /**
    * @returns an object notation of this storage provider.
    */
