@@ -17,35 +17,81 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       [entry] {
         padding: 4px;
       }
-      [icon] {
+      [noPointer] {
+        cursor: default;
+      }
+      [stack] {
+        padding: 4px;
+        border-radius: 10px;
+        margin-left: 6px;
+        --iron-icon-height: 12px;
+        --iron-icon-width: 12px;
+      }
+      [stack]:hover {
+        background-color: lightgreen;
+      }
+      [stack].pointer {
+        cursor: pointer;
+      }
+      [stack].invisible {
+        visibility: hidden;
+      }
+      [stackFrame] {
+        font-size: 11px;
+        font-family: monospace;
+        line-height: 15px;
+        margin-left: 20px;
+      }
+      [stackMethod] {
+        min-width: 300px;
+        display: inline-block;
+        color: green;
+      }
+      [stackLocation] {
+        color: gray;
+      }
+      [dirIcon] {
         font-size: 14px;
         font-family: monospace;
         width: 20px;
         line-height: 20px;
         border-radius: 10px;
         text-align: center;
-        margin: 0 4px;
+        margin-left: 4px;
       }
-      [icon][highlight] {
+      [dirIcon][highlight] {
         color: white;
         background-color: var(--highlight-blue);
       }
-      [icon][callbackId]:hover {
+      [dirIcon][callbackId]:hover {
         color: white;
         background-color: var(--highlight-blue);
       }
       [name] {
-        padding-right: 4px;
+        margin: 0 4px;
       }
     </style>
     <div root>
       <template is="dom-repeat" items="{{entries}}">
         <div entry>
           <object-explorer data="[[item.pecMsgBody]]">
-            [[item.time]]:
-            <span icon highlight$="[[item.highlight]]" callbackId$="[[item.pecMsgBody.callback]]" on-click="_highlightGroup">[[item.icon]]</span>
+            <span noPointer on-click="_blockEvent">
+              [[item.time]]
+              <span stack class$="[[item.stack.state]]" on-click="_toggleStack">
+                <iron-icon icon="menu"></iron-icon>
+              </span>
+            </span>
+            <span dirIcon highlight$="[[item.highlight]]" callbackId$="[[item.pecMsgBody.callback]]" on-click="_highlightGroup">[[item.icon]]</span>
             <span name>[[item.name]]</span>
           </object-explorer>
+          <div hidden$="{{item.stack.collapsed}}">
+            <template is="dom-repeat" items="[[item.stack.frames]]" as="frame">
+              <div stackFrame>
+                <span stackMethod>[[frame.method]]</span>
+                <span stackLocation>[[frame.location]]</span>
+              </div>
+            </template>
+          </div>
         </div>
       </template>
     </div>
@@ -86,23 +132,24 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   newEntry(msg) {
     let name = msg.name;
     let icon = null;
+    const isCallback = name.endsWith('Callback');
 
     if (name.startsWith('on')) { // Host <- Context.
       name = name.substring(2);
       if (msg.pecMsgBody.callback) {
-        icon = name.endsWith('Callback') ? '↩' : '←';
+        icon = isCallback ? '↩' : '←';
       } else {
         icon = '⇤';
       }
     } else { // Host -> Context.
       if (msg.pecMsgBody.callback) {
-        icon = name.endsWith('Callback') ? '↪' : '→';
+        icon = isCallback ? '↪' : '→';
       } else {
         icon = '⇥';
       }
     }
 
-    if (!name.endsWith('Callback') && msg.pecMsgBody.callback) {
+    if (!isCallback && msg.pecMsgBody.callback) {
       this.originalCallName[msg.pecMsgBody.callback] = name;
     }
 
@@ -111,13 +158,29 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       name = this.originalCallName[msg.pecMsgBody.callback] + 'Callback';
     }
 
+    const stack = {
+      state: msg.stack.length ? 'pointer' : 'invisible',
+      frames: msg.stack,
+      collapsed: true
+    };
+
     return {
       icon,
       name,
       pecMsgBody: msg.pecMsgBody,
+      stack,
       time: formatTime(msg.timestamp, 3),
       highlight: msg.pecMsgBody.callback === this.highlightedGroupCallbackId
     };
+  }
+
+  _blockEvent(event) {
+    event.stopPropagation();
+  }
+
+  _toggleStack(event) {
+    this.set(`entries.${event.model.index}.stack.collapsed`, !event.model.item.stack.collapsed);
+    event.stopPropagation();
   }
 
   _highlightGroup(event) {

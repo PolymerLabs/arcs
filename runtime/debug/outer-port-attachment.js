@@ -18,12 +18,32 @@ export class OuterPortAttachment {
     this._particleRegistry = {};
   }
 
-  handlePecMessage(name, pecMsgBody) {
+  handlePecMessage(name, pecMsgBody, isReceiver) {
     // Skip speculative and pipes arcs for now.
     if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
+
+    let stack = [];
+    if (!isReceiver) {
+      // The slice discards the 'Error' string and the 2 stack frames
+      // corresponding to this function and the API channel function,
+      // which is already being displayed in the log entry.
+      stack = new Error().stack.split('\n    at ').slice(3).map(f => {
+        // Convert 'foo.bar (http://some/url/arcs/shell/sub/Source.js:240:35)'
+        // to {method: 'foo.bar', location: 'shell/sub/Source.js:240'}.
+        // Note that some frames may look like 'Array.forEach (<anonymous>)',
+        // which should still work.
+        const m = f.match(/^(.*) \((.*)\)$/);
+        if (m === null) return {method: f, location: ''};
+        return {
+          method: m[1],
+          location: m[2].replace(/^http.*\/arcs\//, '').replace(/:[0-9]+$/, '')
+        };
+      });
+    }
+
     this._devtoolsChannel.send({
       messageType: 'PecLog',
-      messageBody: {name, pecMsgBody, timestamp: Date.now()},
+      messageBody: {name, isReceiver, pecMsgBody, timestamp: Date.now(), stack},
     });
   }
 

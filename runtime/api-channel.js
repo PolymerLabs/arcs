@@ -174,7 +174,7 @@ export class APIPort {
     assert(this[handlerName], `no handler named ${handlerName}`);
     if (this._debugAttachment) {
       if (this._debugAttachment[handlerName]) this._debugAttachment[handlerName](args);
-      this._debugAttachment.handlePecMessage(handlerName, e.data.messageBody);
+      this._debugAttachment.handlePecMessage(handlerName, e.data.messageBody, true /* isReceiver */);
     }
     const result = this[handlerName](args);
     if (handler.isInitializer) {
@@ -206,7 +206,7 @@ export class APIPort {
       this._port.postMessage(call);
       if (this._debugAttachment) {
         if (this._debugAttachment[name]) this._debugAttachment[name](args);
-        this._debugAttachment.handlePecMessage(name, call.messageBody);
+        this._debugAttachment.handlePecMessage(name, call.messageBody, false /* isReceiver */);
       }
     };
   }
@@ -237,7 +237,7 @@ export class APIPort {
       this._port.postMessage(call);
       if (this._debugAttachment) {
         if (this._debugAttachment[name]) this._debugAttachment[name](thing, args);
-        this._debugAttachment.handlePecMessage(name, call.messageBody);
+        this._debugAttachment.handlePecMessage(name, call.messageBody, false /* isReceiver */);
       }
     };
   }
