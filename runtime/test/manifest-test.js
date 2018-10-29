@@ -1176,6 +1176,22 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
       assert.match(e.message, /Provided slot 'noAction' is not defined by 'TestParticle'/);
     }
   });
+  it('SLANDLES errors when the manifest references a missing provided slot', async () => {
+    const manifest = `
+        particle TestParticle in 'tp.js'
+          \`consume Slot root
+            \`provide Slot action
+        recipe
+          TestParticle
+            root consume
+            noAction provide`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /param 'noAction' is not defined by 'TestParticle'/);
+    }
+  });
 
   it('errors when the manifest uses invalid connection constraints', async () => {
     // nonexistent fromParticle
