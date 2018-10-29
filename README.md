@@ -28,12 +28,12 @@ https://polymerlabs.github.io/arcs-live/shell/apps/web/.
 
 ## Install
 
-Arcs is developed with a recent version of Node (v9.4.0 at the time of this
+Arcs is developed with a recent version of Node (v10.0.0 at the time of this
 writing), in particular as we use new ES6 features. You can check our [Travis
 config](https://github.com/PolymerLabs/arcs/blob/master/.travis.yml) to see what
 version is used for automated build status. More recent versions should work,
 but if for example you see test errors on a version that's a full release later
-(ex. v10+) you may want to try rolling back to an earlier version. We welcome
+(ex. v11+) you may want to try rolling back to an earlier version. We welcome
 patches that will allow more recent versions to operate, ideally without
 requiring an upgrade to our current version.
 
