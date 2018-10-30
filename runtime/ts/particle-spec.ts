@@ -8,13 +8,25 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type} from './ts-build/type.js';
-import {TypeChecker} from './ts-build/recipe/type-checker.js';
-import {Shape} from './ts-build/shape.js';
-import {assert} from '../platform/assert-web.js';
+import {Type} from './type.js';
+import {TypeChecker} from './recipe/type-checker.js';
+import {Shape} from './shape.js';
+import {assert} from '../../platform/assert-web.js';
+import { Direction } from './recipe/handle-connection.js';
+
+type SerializedConnectionSpec = {direction: Direction, name: string, type: Type, isOptional: boolean, tags?: string[], dependentConnections: SerializedConnectionSpec[]};
 
 class ConnectionSpec {
-  constructor(rawData, typeVarMap) {
+  rawData: SerializedConnectionSpec;
+  direction: Direction;
+  name: string;
+  type: Type;
+  isOptional: boolean;
+  tags: string[];
+  dependentConnections: ConnectionSpec[];
+  pattern: string;
+  parentConnection: ConnectionSpec | null = null;
+  constructor(rawData: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -24,7 +36,7 @@ class ConnectionSpec {
     this.dependentConnections = [];
   }
 
-  instantiateDependentConnections(particle, typeVarMap) {
+  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>) {
     for (const dependentArg of this.rawData.dependentConnections) {
       const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
@@ -35,11 +47,11 @@ class ConnectionSpec {
 
   get isInput() {
     // TODO: we probably don't really want host to be here.
-    return this.direction == 'in' || this.direction == 'inout' || this.direction == 'host';
+    return this.direction === 'in' || this.direction === 'inout' || this.direction === 'host';
   }
 
   get isOutput() {
-    return this.direction == 'out' || this.direction == 'inout';
+    return this.direction === 'out' || this.direction === 'inout';
   }
 
   isCompatibleType(type) {
@@ -47,8 +59,16 @@ class ConnectionSpec {
   }
 }
 
+type SerializedSlotSpec = {name: string, isRequired: boolean, isSet: boolean, tags: string[], formFactor: string, providedSlots: SerializedProvidedSlotSpec[]};
+
 export class SlotSpec {
-  constructor(slotModel) {
+  name: string;
+  isRequired: boolean;
+  isSet: boolean;
+  tags: string[];
+  formFactor: string;
+  providedSlots: ProvidedSlotSpec[];
+  constructor(slotModel: SerializedSlotSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
@@ -64,12 +84,20 @@ export class SlotSpec {
   }
 
   getProvidedSlotSpec(name) {
-    return this.providedSlots.find(ps => ps.name == name);
+    return this.providedSlots.find(ps => ps.name === name);
   }
 }
 
+type SerializedProvidedSlotSpec = {name: string, isRequired?: boolean, isSet?: boolean, tags?: string[], formFactor?: string, handles?: string[]};
+
 export class ProvidedSlotSpec {
-  constructor(slotModel) {
+  name: string;
+  isRequired: boolean;
+  isSet: boolean;
+  tags: string[];
+  formFactor: string;
+  handles: string[];
+  constructor(slotModel: SerializedProvidedSlotSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired || false;
     this.isSet = slotModel.isSet || false;
@@ -79,8 +107,21 @@ export class ProvidedSlotSpec {
   }
 }
 
+type SerializedParticleSpec = {name: string, id?: string, verbs: string[], args: SerializedConnectionSpec[], description: {pattern?: string}, implFile: string, affordance: string[], slots: SerializedSlotSpec[]};
+
 export class ParticleSpec {
-  constructor(model) {
+  private _model: SerializedParticleSpec;
+  name: string;
+  verbs: string[];
+  connections: ConnectionSpec[];
+  connectionMap: Map<string, ConnectionSpec>;
+  inputs: ConnectionSpec[];
+  outputs: ConnectionSpec[];
+  pattern: string;
+  implFile: string;
+  affordance: string[];
+  slots: Map<string, SlotSpec>;
+  constructor(model : SerializedParticleSpec) {
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -114,22 +155,24 @@ export class ParticleSpec {
     });
   }
 
-  createConnection(arg, typeVarMap) {
+  createConnection(arg: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
     const connection = new ConnectionSpec(arg, typeVarMap);
     this.connections.push(connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
   }
 
-  isInput(param) {
-    for (const input of this.inputs) if (input.name == param) return true;
+  isInput(param: string) {
+    for (const input of this.inputs) if (input.name === param) return true;
+    return false;
   }
 
-  isOutput(param) {
-    for (const outputs of this.outputs) if (outputs.name == param) return true;
+  isOutput(param: string) {
+    for (const outputs of this.outputs) if (outputs.name === param) return true;
+    return false;
   }
 
-  getSlotSpec(slotName) {
+  getSlotSpec(slotName: string) {
     return this.slots.get(slotName);
   }
 
@@ -137,18 +180,19 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
-  matchAffordance(affordance) {
+  matchAffordance(affordance: string) {
     return this.slots.size <= 0 || this.affordance.includes(affordance);
   }
 
-  toLiteral() {
-    let {args, name, verbs, description, implFile, affordance, slots} = this._model;
-    const connectionToLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
-    args = args.map(a => connectionToLiteral(a));
-    return {args, name, verbs, description, implFile, affordance, slots};
+  toLiteral() : SerializedParticleSpec {
+    const {args, name, verbs, description, implFile, affordance, slots} = this._model;
+    const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec = 
+      ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
+    const argsLiteral = args.map(a => connectionToLiteral(a));
+    return {args: argsLiteral, name, verbs, description, implFile, affordance, slots};
   }
 
-  static fromLiteral(literal) {
+  static fromLiteral(literal: SerializedParticleSpec) {
     let {args, name, verbs, description, implFile, affordance, slots} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
@@ -177,9 +221,9 @@ export class ParticleSpec {
   _toShape() {
     const handles = this._model.args;
     // TODO: wat do?
-    assert(!this.slots.length, 'please implement slots toShape');
+    assert(!this.slots.size, 'please implement slots toShape');
     const slots = [];
-    return new Shape(handles, slots);
+    return new Shape(this.name, handles, slots);
   }
 
   toString() {
@@ -204,7 +248,7 @@ export class ParticleSpec {
       writeConnection(connection, indent);
     }
 
-    this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
+    this.affordance.filter(a => a !== 'mock').forEach(a => results.push(`  affordance ${a}`));
     this.slots.forEach(s => {
       // Consume slot.
       const consume = [];

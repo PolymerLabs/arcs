@@ -13,7 +13,7 @@ import {digest} from '../../platform/digest-web.js';
 import {parser} from '../build/manifest-parser.js';
 import {Recipe} from './recipe/recipe.js';
 import {Handle} from './recipe/handle.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
 import {Search} from './recipe/search.js';
 import {Shape} from './shape.js';

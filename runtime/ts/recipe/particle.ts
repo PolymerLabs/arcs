@@ -10,7 +10,7 @@ import {SlotConnection} from './slot-connection.js';
 import {HandleConnection} from './handle-connection.js';
 import {compareComparables, compareStrings, compareArrays} from './util.js';
 import {Recipe} from './recipe.js';
-import {ParticleSpec} from '../../particle-spec.js';
+import {ParticleSpec} from '../particle-spec.js';
 
 export class Particle {
   private _recipe: Recipe;

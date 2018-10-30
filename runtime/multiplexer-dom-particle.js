@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './ts-build/particle-spec.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
 
 export class MultiplexerDomParticle extends TransformationDomParticle {

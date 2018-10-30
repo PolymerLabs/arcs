@@ -10,7 +10,7 @@
 import {Reference} from './reference.js';
 import {Symbols} from './symbols.js';
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import {StorageProxy} from '../storage-proxy.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.

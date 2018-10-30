@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
-import {ProvidedSlotSpec} from '../particle-spec.js';
+import {ProvidedSlotSpec} from './particle-spec.js';
 import {Handle} from './recipe/handle.js';
 
 /**
@@ -41,7 +41,7 @@ export class SlotContext {
 
     // The context's accompanying ProvidedSlotSpec (see particle-spec.js).
     // Initialized to a default spec, if the container is one of the shell provided top root-contexts.
-    this.spec = spec || new ProvidedSlotSpec(name);
+    this.spec = spec || new ProvidedSlotSpec({name});
 
     // The slot consumer providing this container (eg div)
     this.sourceSlotConsumer = sourceSlotConsumer;
