@@ -12,15 +12,15 @@ import '../Arcs/Description.schema'
 import '../Profile/User.schema'
 import '../Profile/UserName.schema'
 
-import 'TVMazeShow.recipes'
-import 'TVMazeQuery.recipes'
+import '../TVMaze/TVMazeShow.recipes'
+import '../TVMaze/TVMazeQuery.recipes'
 
 schema TVMazeShowAction
   Text showid
   Boolean favorite
   Boolean delete
 
-particle TVMazeShowActions in './source/TVMazeShowActions.js'
+particle TVMazeShowActions in '../TVMaze/source/TVMazeShowActions.js'
   in TVMazeShow show
   inout [TVMazeShow] shows
   consume action
@@ -36,7 +36,7 @@ particle ActionMultiplexer in '../List/source/Multiplexer.js'
   in [TVMazeShow] shows
   consume set of action
 
-particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
+particle TVMazeDemoShell in '../TVMaze/source/TVMazeDemoShell.js'
   in [TVMazeShow] recentShows
   inout TVMazeShow selected
   in User user
@@ -56,14 +56,14 @@ particle TVMazeDemoShell in './source/TVMazeDemoShell.js'
   // or fix recipe description to not crash if one is missing.
   description `TV shows`
 
-particle TVMazeSearchBarRoot in './source/TVMazeSearchBar.js'
+particle TVMazeSearchBarRoot in '../TVMaze/source/TVMazeSearchBar.js'
   out TVMazeQuery query
   consume root
 
 schema Text
   Text text
 
-particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
+particle TVMazeShowMultiPanel in '../TVMaze/source/TVMazeShowPanel.js'
   in TVMazeShow show
   in [TVMazeShow] shows
   in Text alsoWatch
@@ -72,7 +72,7 @@ particle TVMazeShowMultiPanel in './source/TVMazeShowPanel.js'
     provide items
   description `${show} details`
 
-particle TVMazeDeduplicate in './source/TVMazeDeduplicate.js'
+particle TVMazeDeduplicate in '../TVMaze/source/TVMazeDeduplicate.js'
   in [TVMazeShow] shows
   inout [TVMazeShow] uniqueShows
 
