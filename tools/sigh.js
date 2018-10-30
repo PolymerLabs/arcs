@@ -31,6 +31,12 @@ const sources = {
       'shell/source/Tracelib.js'
     ],
     buildDir: 'shell/build',
+  },
+  ts: {
+    inputs: [
+      'runtime/ts'
+    ],
+    buildDir: 'runtime/ts-build'
   }
 };
 
@@ -145,7 +151,7 @@ function clean() {
     }
     fs.rmdirSync(dir);
   };
-  for (const buildDir of [sources.pack.buildDir]) {
+  for (const buildDir of [sources.pack.buildDir, sources.ts.buildDir]) {
     if (fs.existsSync(buildDir)) {
       recursiveDelete(buildDir);
       console.log('Removed', buildDir);
