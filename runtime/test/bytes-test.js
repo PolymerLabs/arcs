@@ -16,7 +16,10 @@ const RED_DOT_DATA_URI = 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQV
 
 describe('bytes', function() {
   it('creates a Bytes object', function() {
-    let b = new Bytes(RED_DOT_DATA_URI);
+    const b = new Bytes(RED_DOT_DATA_URI);
     assert.isNotNull(b);
+    const content = b.content();
+    assert.isNotNull(content);
+    assert(b.toString(), '');
   });
 });

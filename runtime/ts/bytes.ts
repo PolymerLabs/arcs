@@ -10,30 +10,29 @@
  * media data.
  */
 
-import {atob} from '../../platform/atob-web.js';
+import {encode, decode} from './keymgmt/base64.js';
 
 export class Bytes {
-  // TODO consider using Uint8Array
-  private blob: ByteString;
+  private blob: Uint8Array;
 
   /**
    * Construct a blob from a base64 string
    */
   constructor(base64bytes: string) {
-    this.blob = atob(base64bytes);
+    this.blob = decode(base64bytes);
   }
 
   /**
    * Returns a Promise with the Blob.
    */
-  async content(): Promise<ByteString> {
+  async content(): Promise<Uint8Array> {
     return this.blob;
   }
 
   /**
    * Returns a Promise with the Blob for the specified range of data.
    */
-  async range(offset: number, length: number): Promise<ByteString> {
+  async range(offset: number, length: number): Promise<Uint8Array> {
     // TODO(wkorman): Slice out the right portion.
     throw new Error('NotImplemented');
   }
