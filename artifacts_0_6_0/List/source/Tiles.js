@@ -19,7 +19,6 @@ defineParticle(({DomParticle, html, log}) => {
   [card] {
     margin: 8px;
     border: 3px solid transparent;
-    width: var(--tile-width, calc(100% - 24px));
   }
   [card][selected] {
     border: 3px solid #0068a7;
@@ -27,31 +26,6 @@ defineParticle(({DomParticle, html, log}) => {
   [pacify] {
     padding: 16px;
     font-style: italic;
-  }
-  @media (min-width: 440px) {
-    [card] {
-      width: var(--tile-width, calc(50% - 24px));
-    }
-  }
-  @media (min-width: 560px) {
-    [card] {
-      width: var(--tile-width, calc(33% - 24px));
-    }
-  }
-  @media (min-width: 800px) {
-    [card] {
-      width: var(--tile-width, calc(25% - 24px));
-    }
-  }
-  @media (min-width: 1100px) {
-    [card] {
-      width: var(--tile-width, calc(20% - 24px));
-    }
-  }
-  @media (min-width: 1400px) {
-    [card] {
-      width: var(--tile-width, calc(15% - 24px));
-    }
   }
 </style>
 
