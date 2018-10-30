@@ -159,14 +159,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   spawnSuggestions() {
     const suggestions = [
       //`Arcs/Login.recipe`,
-      `Products/ProductsDemo.recipe`,
+      //`Profile/EchoUser.recipe`
+      `Demo/ProductsDemo.recipe`,
+      `Demo/RestaurantsDemo.recipes`,
+      `Demo/TVMazeDemo.recipes`,
       `Music/Playlist.recipe`,
       `Profile/BasicProfile.recipe`,
       `Restaurants/Restaurants.recipes`,
-      `Reservations/Reservations.recipes`,
-      `Restaurants/RestaurantsDemo.recipes`,
-      `TVMaze/TVMazeDemo.recipes`,
-      `Profile/EchoUser.recipe`
+      `Reservations/Reservations.recipes`
     ];
     const slot = this.host.querySelector(`[slotid="suggestions"]`);
     if (slot) {
