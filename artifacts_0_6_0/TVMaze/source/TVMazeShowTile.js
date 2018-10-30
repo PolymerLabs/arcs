@@ -12,13 +12,47 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  const host = `show-tile`;
-
   // TODO(sjmiles): encode expected aspect-ratio using div-padding trick, this way the box will be properly sized
   // even if there is no image.
   // The old way: `<img ${host} src="{{image}}" style="width:100%;">`;
   const template = html`
-    <div ${host} trigger$="{{trigger}}" style%="{{image}}" style="width: 100%; padding-bottom: 140%; background-repeat: no-repeat; background-size: contain;"></div>
+    <style>
+      [show-tile] {
+        width: var(--tile-size, 200px);
+        padding-bottom: 140%;
+        background-repeat: no-repeat;
+        background-size: contain;
+      }
+      :host {
+        --tile-size: var(--tile-width, calc(100vw - 24px));
+      }
+      @media (min-width: 440px) {
+        :host {
+          --tile-size: var(--tile-width, calc(50vw - 24px));
+        }
+      }
+      @media (min-width: 560px) {
+        :host {
+          --tile-size: var(--tile-width, calc(33vw - 24px));
+        }
+      }
+      @media (min-width: 800px) {
+        :host {
+          --tile-size: var(--tile-width, calc(25vw - 24px));
+        }
+      }
+      @media (min-width: 1100px) {
+        :host {
+          --tile-size: var(--tile-width, calc(20vw - 24px));
+        }
+      }
+      @media (min-width: 1400px) {
+        :host {
+          --tile-size: var(--tile-width, calc(15vw - 24px));
+        }
+      }
+    </style>
+    <div show-tile trigger$="{{trigger}}" style%="{{image}}"></div>
   `;
 
   return class extends DomParticle {

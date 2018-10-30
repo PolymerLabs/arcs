@@ -10,14 +10,30 @@ defineParticle(({DomParticle, html}) => {
 
   const template = html`
 
-<div restaurant-tile>
+  <style>
+    :host {
+      --tile-size: var(--tile-width, calc(100vw - 24px));
+    }
+    @media (min-width: 720px) {
+      :host {
+        --tile-size: var(--tile-width,  calc(50vw - 48px));
+      }
+    }
+    @media (min-width: 1100px) {
+      :host {
+        --tile-size: var(--tile-width, calc(25vw - 48px));
+      }
+    }
+  </style>
+
   <style>
     [item] {
       display: flex;
       flex-direction: column;
       position: relative;
-      width: 100%;
+      width: var(--tile-size, 300px);
       height: 288px;
+      overflow: hidden;
       padding: 12px;
       box-sizing: border-box;
       color: white;
@@ -88,7 +104,7 @@ defineParticle(({DomParticle, html}) => {
       background-repeat: repeat no-repeat;
     }
   </style>
-  <!-- <div slotid="modifier"></div> -->
+
   <div item xen:style="{{image}}">
     <div fade></div>
     <div columns>
@@ -104,9 +120,8 @@ defineParticle(({DomParticle, html}) => {
       </div>
     </div>
   </div>
-  <!-- <div slotid="annotation" subid$="{{id}}"> -->
-</div>
-    `;
+
+  `;
 
   return class extends DomParticle {
     get template() {
