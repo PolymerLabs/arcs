@@ -11,6 +11,18 @@ import {Firebase} from '../configuration/firebase-config.js';
 
 // TODO(sjmiles): note that firebase agents must be instantiated elsewhere
 
+const Schemas = {
+  serialization: {
+    tag: 'Entity',
+    data: {
+      names: ['Serialization'],
+      fields: {
+        'serialization': 'Text',
+      }
+    }
+  }
+};
+
 export class ArcHost {
   constructor(env, context, storage, composer) {
     Firebase.configure(env.lib.firebase);
@@ -24,6 +36,7 @@ export class ArcHost {
     const context = this.context || await this.env.parse(``);
     const serialization = this.serialization = await this.computeSerialization(config, this.storage);
     this.arc = await this._spawn(this.env, context, this.composer, this.storage, config.id, serialization);
+    //this.computeSerializationStore(serialization);
     if (config.manifest && !serialization) {
       await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
     }
@@ -34,6 +47,18 @@ export class ArcHost {
   }
   dispose() {
     this.arc  && this.arc.dispose();
+  }
+  async computeSerializationStore(serialization) {
+    const type = this.env.lib.Type.fromLiteral(Schemas.serialization);
+    const stores = await this.arc.findStoresByType(type);
+    let store;
+    if (stores.length) {
+      store = stores[0];
+      console.warn('located serial store', store);
+    } else {
+      store = await this.arc.createStore(type, 'Serialization', 'SYSTEM_Serialization');
+      console.warn('created serial store', store);
+    }
   }
   async computeSerialization(config, storage) {
     let serialization;
