@@ -9,8 +9,6 @@
 import '../People/Person.schema'
 import 'Product.schema'
 
-import '../Common/Multiplexer.manifest'
-
 particle GiftList in 'source/GiftList.js'
   in Person person
   consume preamble
@@ -30,19 +28,19 @@ particle AlternateShipping in 'source/AlternateShipping.js'
   description `find alternate shipping for products which won't make it on time`
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-recipe MakeIntoGiftList
-  use #shoplist as shoplist
-  copy as person
-  GiftList
-    person = person
-  Multiplexer
-    list = shoplist
-    hostedParticle = Arrivinator
-    consume annotation as annotationSlot
-  Multiplexer
-    list = shoplist
-    hostedParticle = AlternateShipping
-    consume annotation as annotationSlot
-  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
+//recipe MakeIntoGiftList
+//  use #shoplist as shoplist
+//  copy as person
+//  GiftList
+//    person = person
+//  Multiplexer
+//    list = shoplist
+//    hostedParticle = Arrivinator
+//    consume annotation as annotationSlot
+//  Multiplexer
+//    list = shoplist
+//    hostedParticle = AlternateShipping
+//    consume annotation as annotationSlot
+//  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 
 

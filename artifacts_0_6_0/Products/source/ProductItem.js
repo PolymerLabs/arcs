@@ -10,21 +10,20 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  const host = `[show-product]`;
-
-  const styles = html`
+  const template = html`
+<div item show-product>
   <style>
-    ${host} {
+    [show-product] {
       padding: 16px 0;
     }
-    ${host} div[slotid="annotation"] {
+    div[slotid="annotation"] {
       font-size: 0.7em;
     }
-    ${host} [row] {
+    [row] {
       display: flex;
       /* align-items: center; */
     }
-    ${host} [col0] {
+    [col0] {
       flex: 1;
       overflow: hidden;
       line-height: 115%;
@@ -32,7 +31,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       flex-direction: column;
       justify-content: center;
     }
-    ${host} [col1] {
+    [col1] {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -40,33 +39,33 @@ defineParticle(({DomParticle, resolver, html}) => {
       text-align: center;
       background-size: contain;
     }
-    ${host} img {
+    img {
       max-width: 100%;
       max-height: 320px;
       margin: 0 auto;
     }
-    ${host} [name] {
+    [name] {
       margin-bottom: 4px;
       /* margin-top: 16px; */
     }
-    ${host} [category] {
+    [category] {
       font-size: 0.7em;
       color: #cccccc;
     }
-    ${host} [price] {
+    [price] {
       padding-right: 8px;
       color: #333333;
       font-size: 14px;
     }
-    ${host} [price]:empty {
+    [price]:empty {
       display :none;
     }
-    ${host} [seller] {
+    [seller] {
       /* font-size: 0.8em; */
       color: #cccccc;
       font-size: 14px;
     }
-    ${host} [thumb] {
+    [thumb] {
       width: 64px;
       height: 64px;
       box-sizing: border-box;
@@ -75,11 +74,6 @@ defineParticle(({DomParticle, resolver, html}) => {
       background-size: cover;
     }
   </style>
-  `;
-
-  const template = html`
-<div item show-product>
-${styles}
   <div row>
     <div col0>
       <div name title="{{name}}">{{name}}</div>
@@ -90,7 +84,7 @@ ${styles}
     </div>
     <div col1>
       <!-- TODO(sjmiles): why is there a 'src' attribute here? -->
-      <div thumb style="{{styleBackground}}" src="{{resolvedImage}}" >
+      <div thumb xen:style="{{styleBackground}}" src="{{resolvedImage}}" >
     </div>
   </div>
   </div>
@@ -108,11 +102,13 @@ ${styles}
       if (product) {
         const resolvedImage = resolver ? resolver(product.image) : product.image;
         return Object.assign({
-          resolvedImage,
-          styleBackground: `background-image:url(${resolvedImage})`
-        },
-        product.rawData);
+            resolvedImage,
+            styleBackground: `background-image:url(${resolvedImage})`
+          },
+          product.rawData
+        );
       }
     }
   };
+
 });

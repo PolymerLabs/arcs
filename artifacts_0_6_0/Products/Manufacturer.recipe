@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/Multiplexer.manifest'
-
 import 'Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
@@ -16,10 +14,10 @@ particle ManufacturerInfo in 'source/ManufacturerInfo.js'
   description `check manufacturer information`
 
 // Check manufacturer information for products.
-recipe ManufacturerInfo
-  use #shoplist as shoplist
-  Multiplexer
-    list = shoplist
-    hostedParticle = ManufacturerInfo
+//recipe ManufacturerInfo
+//  use #shoplist as shoplist
+//  Multiplexer
+//    list = shoplist
+//    hostedParticle = ManufacturerInfo
 
 

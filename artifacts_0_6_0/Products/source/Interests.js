@@ -15,19 +15,17 @@ defineParticle(({DomParticle, html}) => {
   const template = html`
 
 <style>
-  [interests] hr {
+  hr {
     border: 1px none #eeeeee;
     border-top-style: solid;
   }
 </style>
 
-<div interests>
-  <x-list items="{{items}}">
-    <template>
-      <div unsafe-html="{{caption}}"></div>
-    </template>
-  </x-list>
-</div>
+<div interests>{{items}}</div>
+
+<template interests>
+  <div unsafe-html="{{caption}}"></div>
+</template>
 
   `;
 
@@ -43,15 +41,18 @@ defineParticle(({DomParticle, html}) => {
       return false;
     }
     render({list}) {
-      const items = [];
+      const models = [];
       list.forEach(item => {
         switch (item.name) {
           case 'Field Hockey Stick':
-            items.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. Players generally require a stick.</i><hr><br><br>'});
-            break;
+            models.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. Players generally require a stick.</i><hr><br><br>'});
+          break;
         }
       });
-      return {items};
+      return {items: {
+        $template: 'interests',
+        models
+      }};
     }
   };
 

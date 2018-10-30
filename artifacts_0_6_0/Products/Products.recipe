@@ -9,9 +9,9 @@
 import '../List/List.recipes'
 
 import 'ProductItem.recipe'
+import 'Gifts.recipe'
 import 'Recommend.recipe'
 //import 'Manufacturer.recipe'
-//import 'Gifts.recipe'
 //import 'Interests.recipe'
 
 recipe Products
