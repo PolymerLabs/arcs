@@ -12,7 +12,7 @@ import {Recipe} from './recipe.js';
 import {HandleConnection} from './handle-connection.js';
 
 export class Slot {
-  private _recipe: Recipe;
+  private readonly _recipe: Recipe;
   private _id: string | undefined = undefined;
   private _localName: string | undefined = undefined;
   _name: string;

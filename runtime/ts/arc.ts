@@ -46,27 +46,27 @@ type PlanCallback = (recipe: Recipe) => void;
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
 export class Arc {
-  private _context: Manifest;
-  private pecFactory: (id: string) => PECInnerPort;
-  private speculative: boolean;
+  private readonly _context: Manifest;
+  private readonly pecFactory: (id: string) => PECInnerPort;
+  private readonly speculative: boolean;
   private nextLocalID = 0;
   private _activeRecipe = new Recipe();
   private _recipes = [];
-  private _loader: Loader;
+  private readonly _loader: Loader;
   private dataChangeCallbacks = new Map<object, () => void>();
   // All the stores, mapped by store ID
   private storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
-  private storageKey: string;
+  private readonly storageKey: string;
   private storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags.
   private storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
   private storeDescriptions = new Map<StorageProviderBase, Description>();
-  private _description: Description;
+  private readonly _description: Description;
   private instantiatePlanCallbacks: PlanCallback[] = [];
-  private _recipeIndex: RecipeIndex;
+  private readonly _recipeIndex: RecipeIndex;
   private waitForIdlePromise: Promise<void> | null;
 
   sessionId = Id.newSessionId();

@@ -14,6 +14,7 @@ import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {setDiffCustom} from '../util.js';
+import firebase from 'firebase/app';
 
 enum Scope {
   arc = 1  // target must be a storage key referring to a serialized manifest

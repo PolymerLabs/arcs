@@ -13,7 +13,7 @@ import {Recipe} from './recipe.js';
 import {ParticleSpec} from '../particle-spec.js';
 
 export class Particle {
-  private _recipe: Recipe;
+  private readonly _recipe: Recipe;
   private _id: string | undefined = undefined;
   private _name: string;
   private _localName: string | undefined = undefined;

@@ -18,7 +18,7 @@ import {Particle} from './recipe/particle.js';
 
 export class SlotComposer {
   arc: Arc;
-  private _containerKind: string;
+  private readonly _containerKind: string;
   private _affordance: Affordance;
   private _consumers: SlotConsumer[] = [];
   private _contexts: SlotContext[] = [];

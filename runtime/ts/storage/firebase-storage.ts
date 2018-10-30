@@ -360,7 +360,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
-  private valueChangeCallback: ({}) => void;
+  private readonly valueChangeCallback: ({}) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -641,7 +641,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: () => void;
   private localKeyId = Date.now();
-  private valueChangeCallback: ({}) => void;
+  private readonly valueChangeCallback: ({}) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
