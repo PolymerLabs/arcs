@@ -26,7 +26,7 @@ class ConnectionSpec {
   dependentConnections: ConnectionSpec[];
   pattern: string;
   parentConnection: ConnectionSpec | null = null;
-  constructor(rawData: SerializedConnectionSpec, typeVarMap) {
+  constructor(rawData: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -36,7 +36,7 @@ class ConnectionSpec {
     this.dependentConnections = [];
   }
 
-  instantiateDependentConnections(particle, typeVarMap) {
+  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>) {
     for (const dependentArg of this.rawData.dependentConnections) {
       const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
@@ -155,24 +155,24 @@ export class ParticleSpec {
     });
   }
 
-  createConnection(arg, typeVarMap) {
+  createConnection(arg: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
     const connection = new ConnectionSpec(arg, typeVarMap);
     this.connections.push(connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
   }
 
-  isInput(param) {
+  isInput(param: string) {
     for (const input of this.inputs) if (input.name === param) return true;
     return false;
   }
 
-  isOutput(param) {
+  isOutput(param: string) {
     for (const outputs of this.outputs) if (outputs.name === param) return true;
     return false;
   }
 
-  getSlotSpec(slotName) {
+  getSlotSpec(slotName: string) {
     return this.slots.get(slotName);
   }
 
@@ -180,7 +180,7 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
-  matchAffordance(affordance) {
+  matchAffordance(affordance: string) {
     return this.slots.size <= 0 || this.affordance.includes(affordance);
   }
 
@@ -192,7 +192,7 @@ export class ParticleSpec {
     return {args: argsLiteral, name, verbs, description, implFile, affordance, slots};
   }
 
-  static fromLiteral(literal) {
+  static fromLiteral(literal: SerializedParticleSpec) {
     let {args, name, verbs, description, implFile, affordance, slots} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
