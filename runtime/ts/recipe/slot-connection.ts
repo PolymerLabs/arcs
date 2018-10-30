@@ -9,7 +9,7 @@ import {assert} from '../../../platform/assert-web.js';
 import {compareStrings, compareComparables} from './util.js';
 import {Recipe} from './recipe.js';
 import {Particle} from './particle.js';
-import {SlotSpec} from '../../particle-spec.js';
+import {SlotSpec} from '../particle-spec.js';
 import {Slot} from './slot.js';
 
 export class SlotConnection {

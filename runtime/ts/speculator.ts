@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+ import {assert} from '../../platform/assert-web.js';
 import {Relevance} from './relevance.js';
 import {Arc} from './arc.js';
 import {Recipe} from './recipe/recipe.js';
@@ -20,6 +21,7 @@ export class Speculator {
   }
 
   async speculate(arc: Arc, plan: Recipe, hash: string): Promise<Relevance> {
+    assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
     if (this._relevanceByHash.has(hash)) {
       const arcStoreVersionById = arc.getStoresState({includeContext: true});
       const relevance = this._relevanceByHash.get(hash);

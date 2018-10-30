@@ -12,7 +12,7 @@ import {Recipe} from './recipe.js';
 import {Particle} from './particle.js';
 import {Handle} from './handle.js';
 
-export type Direction = 'in' | 'out' | 'inout';
+export type Direction = 'in' | 'out' | 'inout' | 'host';
 
 export class HandleConnection {
   _recipe: Recipe;
