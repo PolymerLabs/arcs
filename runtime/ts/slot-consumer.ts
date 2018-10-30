@@ -11,6 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {SlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
+import {HostedSlotConsumer} from './hosted-slot-consumer.js';
 
 export class SlotConsumer {
   _consumeConn: SlotConnection;
@@ -148,6 +149,13 @@ export class SlotConsumer {
   }
 
   isSameContainer(container, contextContainer) { return container === contextContainer; }
+
+  get hostedConsumers(): HostedSlotConsumer[] {
+    return this.providedSlotContexts
+        .filter(context => context.constructor.name === 'HostedSlotContext')
+        .map(context => context.sourceSlotConsumer)
+        .filter(consumer => consumer !== this) as HostedSlotConsumer[];
+  }
 
   // abstract
   constructRenderRequest(hostedSlotConsumer = null): string[] { return []; }

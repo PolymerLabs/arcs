@@ -10,6 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
+import {RamSlotComposer} from '../../shell_0_6_0/lib/ram-slot-composer.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -63,7 +64,7 @@ describe('suggestion composer', function() {
   });
 
   it('singleton suggestion slots', async () => {
-    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const slotComposer = new RamSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
@@ -81,11 +82,6 @@ describe('suggestion composer', function() {
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
     assert.isEmpty(suggestConsumer._content);
-
-    // set the container of the suggestion context, resulting in the suggestion being rendered.
-    const suggestContext = slotComposer._contexts.find(context => context.slotConsumers.find(consumer => consumer == suggestConsumer));
-    assert.isNull(suggestContext.container);
-    suggestContext.container = 'dummy-container';
     await suggestConsumer._setContentPromise;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
@@ -97,7 +93,7 @@ describe('suggestion composer', function() {
   });
 
   it('suggestion set-slots', async () => {
-    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const slotComposer = new RamSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
       slotComposer
@@ -110,8 +106,6 @@ describe('suggestion composer', function() {
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
     await helper.makePlans();
     assert.lengthOf(helper.plans, 1);
-    const suggestContext = suggestionComposer._slotComposer._contexts.find(h => h.id == helper.plans[0].plan.slots[0].id);
-    suggestContext.sourceSlotConsumer.getInnerContainer = (name) => 'dummy-container';
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];

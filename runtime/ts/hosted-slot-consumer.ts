@@ -78,9 +78,9 @@ export class HostedSlotConsumer extends SlotConsumer {
 
   createProvidedContexts() {
     assert(this.consumeConn, `Cannot create provided context without consume connection for hosted slot ${this.hostedSlotId}`);
-    return this.consumeConn.slotSpec.providedSlots.map(providedSpec => {
-      return new HostedSlotContext(this.arc.generateID(), providedSpec, this);
-    });
+    return this.consumeConn.slotSpec.providedSlots.map(providedSpec =>
+      new HostedSlotContext(this.consumeConn.providedSlots[providedSpec.name].id, providedSpec, this)
+    );
   }
 
   updateProvidedContexts() {
