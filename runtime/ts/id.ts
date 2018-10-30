@@ -11,14 +11,15 @@
 import {Random} from './random.js';
 
 export class Id {
-  private session: string;
+  private readonly session: string;
   private readonly currentSession: string;
   private nextIdComponent = 0;
-  private components: string[] = [];
+  private readonly components: string[] = [];
 
-  constructor(currentSession: string) {
+  constructor(currentSession: string, components: string[] = []) {
     this.session = currentSession;
     this.currentSession = currentSession;
+    this.components = components;
   }
 
   static newSessionId() {
@@ -27,17 +28,16 @@ export class Id {
   }
 
   fromString(str: string): Id {
-    const components = str.split(':');
-    const id = new Id(this.currentSession);
+    let components = str.split(':');
+    let session = this.currentSession;
 
     if (components[0][0] === '!') {
-      id.session = components[0].slice(1);
-      id.components = components.slice(1);
+      session = components[0].slice(1);
+      components = components.slice(1);
     } else {
-      id.components = components;
+      components = components;
     }
-
-    return id;
+    return new Id(session, components);
   }
 
   toString(): string {
@@ -50,8 +50,7 @@ export class Id {
   }
 
   createId(component = ''): Id {
-    const id = new Id(this.currentSession);
-    id.components = this.components.slice();
+    const id = new Id(this.currentSession, this.components.slice());
     id.components.push(component + this.nextIdComponent++);
     return id;
   }

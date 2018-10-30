@@ -23,7 +23,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /** The Pouch revision of the data we have stored locally */
   protected _rev: string | undefined;
 
-  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
+  protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, name, id, key);
     this.storageEngine = storageEngine;
     this.pouchDbKey = new PouchDbKey(key);

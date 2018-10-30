@@ -17,7 +17,7 @@ export abstract class Entity {
   // tslint:disable-next-line: no-any
   protected rawData: any;
 
-  constructor(userIDComponent?: string) {
+  protected constructor(userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
     this[Symbols.identifier] = undefined;
     this.userIDComponent = userIDComponent;

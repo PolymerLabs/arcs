@@ -16,9 +16,9 @@ export class Reference {
   public entity = null;
   public type: Type;
 
-  private id: string;
+  private readonly id: string;
   private storageKey: string;
-  private context: ParticleExecutionContext;
+  private readonly context: ParticleExecutionContext;
   private storageProxy = null;
   protected handle = null;
   constructor(data : {id: string, storageKey: string | null}, type, context) {

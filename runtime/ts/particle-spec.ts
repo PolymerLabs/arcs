@@ -110,7 +110,7 @@ export class ProvidedSlotSpec {
 type SerializedParticleSpec = {name: string, id?: string, verbs: string[], args: SerializedConnectionSpec[], description: {pattern?: string}, implFile: string, affordance: string[], slots: SerializedSlotSpec[]};
 
 export class ParticleSpec {
-  private _model: SerializedParticleSpec;
+  private readonly _model: SerializedParticleSpec;
   name: string;
   verbs: string[];
   connections: ConnectionSpec[];

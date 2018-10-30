@@ -55,7 +55,7 @@ const __storageCache = {};
 export class VolatileStorage extends StorageBase {
   _memoryMap: {[index: string]: VolatileStorageProvider};
   _typeMap: {[index: string]: VolatileCollection};
-  private typePromiseMap: {[index: string]: Promise<VolatileCollection>};
+  private readonly typePromiseMap: {[index: string]: Promise<VolatileCollection>};
   localIDBase: number;
 
   constructor(arcId: Id) {

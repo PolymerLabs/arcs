@@ -20,7 +20,7 @@ enum EventKind {
 type Callback = ({}) => void;
 
 export abstract class StorageBase {
-  constructor(protected readonly arcId: Id) {
+  protected constructor(protected readonly arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
   }
 
@@ -52,7 +52,7 @@ export abstract class StorageProviderBase {
   source: string|null;
   description: string;
 
-  constructor(type, name, id, key) {
+  protected constructor(type, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name}});
