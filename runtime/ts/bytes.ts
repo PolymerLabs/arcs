@@ -12,11 +12,22 @@
 
 import {encode, decode} from './keymgmt/base64.js';
 
+/**
+ * A wrapper around a set of Bytes that roughly mimics the browser
+ * Blob type as used in the File API.  This is a separate
+ * implementation that works across Node and the Browser.
+ *
+ * here's a way to construct a Blob from a Bytes object:
+ *
+ * ```
+ *   const blob = new Blob([bytes.content()]);
+ * ```
+ */
 export class Bytes {
   private blob: Uint8Array;
 
   /**
-   * Construct a blob from a base64 string
+   * Constructs a Bytes object from a base64 string.
    */
   constructor(base64bytes: string) {
     this.blob = decode(base64bytes);
@@ -30,7 +41,7 @@ export class Bytes {
   }
 
   /**
-   * Returns a Promise with the Blob for the specified range of data.
+   * Returns a Promise with the bytes for the specified range of data.
    */
   async range(offset: number, length: number): Promise<Uint8Array> {
     // TODO(wkorman): Slice out the right portion.
