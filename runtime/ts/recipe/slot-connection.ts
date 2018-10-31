@@ -13,9 +13,9 @@ import {SlotSpec} from '../particle-spec.js';
 import {Slot} from './slot.js';
 
 export class SlotConnection {
-  private _recipe: Recipe;
-  private _particle: Particle;
-  private _name: string;
+  private readonly _recipe: Recipe;
+  private readonly _particle: Particle;
+  private readonly _name: string;
   private _slotSpec: SlotSpec | undefined = undefined;
   private _targetSlot: Slot | undefined = undefined;
   private _providedSlots: {[index: string]: Slot} = {};

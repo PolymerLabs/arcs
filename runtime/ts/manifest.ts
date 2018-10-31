@@ -115,7 +115,7 @@ export class Manifest {
   storeTags: Map<StorageProviderBase, string[]> = new Map();
   private _fileName: string|null = null;
   private nextLocalID = 0;
-  private _id: Id;
+  private readonly _id: Id;
   private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};

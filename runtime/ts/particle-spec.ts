@@ -110,7 +110,7 @@ export class ProvidedSlotSpec {
 type SerializedParticleSpec = {name: string, id?: string, verbs: string[], args: SerializedConnectionSpec[], description: {pattern?: string}, implFile: string, affordance: string[], slots: SerializedSlotSpec[]};
 
 export class ParticleSpec {
-  private _model: SerializedParticleSpec;
+  private readonly model: SerializedParticleSpec;
   name: string;
   verbs: string[];
   connections: ConnectionSpec[];
@@ -122,7 +122,7 @@ export class ParticleSpec {
   affordance: string[];
   slots: Map<string, SlotSpec>;
   constructor(model : SerializedParticleSpec) {
-    this._model = model;
+    this.model = model;
     this.name = model.name;
     this.verbs = model.verbs;
     const typeVarMap = new Map();
@@ -185,7 +185,7 @@ export class ParticleSpec {
   }
 
   toLiteral() : SerializedParticleSpec {
-    const {args, name, verbs, description, implFile, affordance, slots} = this._model;
+    const {args, name, verbs, description, implFile, affordance, slots} = this.model;
     const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec = 
       ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
@@ -219,7 +219,7 @@ export class ParticleSpec {
   }
 
   _toShape() {
-    const handles = this._model.args;
+    const handles = this.model.args;
     // TODO: wat do?
     assert(!this.slots.size, 'please implement slots toShape');
     const slots = [];

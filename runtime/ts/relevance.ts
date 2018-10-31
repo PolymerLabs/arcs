@@ -16,7 +16,7 @@ export class Relevance {
   // temp use by speculator, figure out why this is here.
   newArc: Arc;
 
-  private relevanceMap: Map<Particle, number[]>;
+  private readonly relevanceMap: Map<Particle, number[]>;
 
   constructor(arcState?: Map<string, string>) {
     this.arcState = arcState;

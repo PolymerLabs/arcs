@@ -15,7 +15,7 @@ import {HandleConnection} from './handle-connection.js';
 type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
 export class Handle {
-  private _recipe: Recipe;
+  private readonly _recipe: Recipe;
   private _id: string | null = null;
   private _localName: string | undefined = undefined;
   private _tags: string[] = [];
