@@ -27,6 +27,12 @@ spec:
           env:
           - name: ARCS_MASTER
             value: "true"
+          - name: MY_APP_NAME
+            value: "{{ include "arcs.name" . }}"
+          - name: MY_RELEASE_NAME
+            value: "{{ .Release.Name }}"
+          - name: MY_NODE_NAME
+            value: "{{ include "arcs.fullname" . }}"
           ports:
             - name: http
               containerPort: 8080

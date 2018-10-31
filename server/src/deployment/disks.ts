@@ -12,13 +12,13 @@ import {Container} from "./containers";
 
 /**
  * Represents a persistent disk volume in the cloud provider's infrastructure that is
- * capable of being attached to VMs.
+ * capable of being attached to VMs (Nodes).
  */
 export interface Disk {
     id(): string;
     type(): string;
     isAttached(): PromiseLike<boolean>;
-    mount(rewrappedKey: string):PromiseLike<boolean>;
+    mount(rewrappedKey: string, node: string):PromiseLike<boolean>;
     dismount():PromiseLike<boolean>;
     wrappedKeyFor(fingerprint:string): PromiseLike<string>;
 }

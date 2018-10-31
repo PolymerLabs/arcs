@@ -60,7 +60,7 @@ class GCPDisk implements Disk {
     }
   }
 
-  async mount(rewrappedKey: string): Promise<boolean> {
+  async mount(rewrappedKey: string, node: string): Promise<boolean> {
     const zone = this.computeApi.zone(GCP_ZONE);
 
     try {
@@ -68,7 +68,7 @@ class GCPDisk implements Disk {
 
       if (vms !== undefined) {
         for (const vm of vms) {
-          if (vm.metadata.metadata.items.find(x => x.key === ARCS_NODE_LABEL) !== undefined) {
+          if (vm.metadata.name == node) {
             const [operation, apiResponse] = await vm.attachDisk(this.diskApi, {
               "diskEncryptionKey": {
                 "rsaEncryptedKey": rewrappedKey
@@ -78,7 +78,7 @@ class GCPDisk implements Disk {
           }
         }
       }
-      return Promise.reject(new Error("Can't find arcs-node VM"));
+      return Promise.reject(new Error("Can't find VM " + node));
     } catch(e) {
       console.log("Error trying to mount disk");
       return Promise.reject(e);

@@ -80,11 +80,13 @@ class ArcsMasterApp extends AppBase {
         if (attached) {
           return;
         }
-        await disk.mount(req.params.rewrappedKey);
         const container: Container | null = await cloud.containers().find(fingerprint);
         if (container != null) {
+          await disk.mount(req.params.rewrappedKey, await container.node());
           await fetch("http://" + container.url() + "/unlock");
           return;
+        } else {
+          // TODO: if container not found, deploy a new one?
         }
       }
     } catch (e) {
