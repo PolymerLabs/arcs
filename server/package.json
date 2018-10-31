@@ -16,7 +16,7 @@
     "lint:fix": "tslint --fix -p tsconfig.json -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "prettier": "prettier --write 'src/**/*.js' 'test/**/*.js' 'src/**/*.ts' 'test/**/*.ts'",
     "start": "node --require esm --require source-map-support/register dist/index.js",
-    "test": "TS_NODE_PROJECT=tsconfig.dev.json mocha --reporter spec -r ts-node/register -r source-map-support/register -r esm test/**/*.test.ts",
+    "test": "TS_NODE_PROJECT=tsconfig.dev.json mocha --exit --reporter spec -r ts-node/register -r source-map-support/register -r esm test/**/*.test.ts",
     "test:watch": "npm test -- --watch --watch-extensions=ts",
     "pretest": "npm run build",
     "posttest": "npm run lint",
