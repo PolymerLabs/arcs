@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: {{ include "arcs.name" . }}
+        arcs: master
         release: {{ .Release.Name }}
     spec:
       containers:
