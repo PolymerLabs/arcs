@@ -1,0 +1,20 @@
+{{- if .Values.tls.enabled }}
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: {{ .Values.domain }}-com-tls
+spec:
+  secretName: {{ .Values.domain }}-com-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: {{ .Values.domain }}
+  dnsNames:
+  - {{ .Values.domain }}
+  acme:
+    config:
+    - dns01: 
+        ingressClass: nginx
+      domains:
+      - {{ .Values.domain }}
+{{- end }}

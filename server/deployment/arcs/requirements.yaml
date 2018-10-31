@@ -1,0 +1,10 @@
+dependencies:
+- name: cert-manager
+  version: "^0.5.0"
+  repository: "@stable"
+- name: nginx-ingress
+  version: "^0.20.0"
+  repository: "@stable"
+- name: external-dns
+  version: "^0.5.7"
+  repository: "@stable"
