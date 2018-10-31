@@ -20,9 +20,11 @@ Xen.Async = class extends Xen.Base {
   async awaitState(name, operation) {
     const state = this._state;
     const semaphore = `_await_${name}`;
+    //console.warn('awaitState', name, state[semaphore]);
     if (!state[semaphore]) {
       state[semaphore] = true;
-      this.state = {[name]: await operation(), [semaphore]: false};
+      const value = await operation();
+      this.state = {[name]: value, [semaphore]: false};
     }
   }
   // underscore relief

@@ -16,8 +16,10 @@ import {Xen} from '../../lib/xen.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';
-import './ui/web-shell-ui.js';
 import './web-launcher.js';
+import './web-planner.js';
+import './ui/web-shell-ui.js';
+import './pipes/device-client-pipe.js';
 
 // disable flushing template cache on dispose
 SlotDomConsumer.multitenant = true;
@@ -36,6 +38,12 @@ const template = Xen.Template.html`
     [hidden] {
       display: none;
     }
+    [suggestions] {
+      background-color: silver;
+    }
+    [slotid=suggestions] {
+      background-color: white;
+    }
   </style>
   <!-- manage configuration (read and persist) -->
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
@@ -43,16 +51,23 @@ const template = Xen.Template.html`
   <web-arc id="context" env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
   <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
+  <!-- web planner -->
+  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" context="{{context}}">
     <!-- launcher -->
-    <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
+    <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- other arcs -->
+    <web-arc id="nullArc" hidden env="{{env}}" storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
     <web-arc id="arcs" hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" manifest="{{manifest}}" context="{{context}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
-    <div slot="suggestions" slotid="suggestions"></div>
+    <div slot="suggestions" suggestions>
+      <div slotid="suggestions"></div>
+    </div>
   </web-shell-ui>
+  <!-- data pipes -->
+  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -65,9 +80,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     return template;
   }
   async update({root}, state) {
-    // for debugging only
+    // globals stored for easy console access
     window.shell = this;
     window.arc = state.arc;
+    //
     if (state.config !== state._config) {
       state._config = state.config;
       if (state.config) {
@@ -81,6 +97,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
+    }
+    if (state.store && !state.pipesInit) {
+      state.pipesInit = true;
+      this.recordPipesArc(state.userid);
     }
     if (state.env && state.arckey && state.context) {
       if (!state.arcConfig || state.arcConfig.id !== state.arckey) {
@@ -97,9 +117,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       // spin up launcher arc
       this.spawnLauncher();
     }
+    if (!state.nullConfig && state.context) {
+      // spin up nullArc
+      this.spawnNullArc();
+    }
     this.state = {hideLauncher: Boolean(state.arckey)};
   }
   render(props, state) {
+    state.plannerArc = state.hideLauncher ? state.arc : state.nullArc;
     state.hideArc = !state.hideLauncher;
     return [props, state];
   }
@@ -144,15 +169,23 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.state = {
       precontext,
       contextConfig: {
-        id: `${this.state.userid}-context`
+        id: `${this.state.userid}/context`
       }
     };
   }
   spawnLauncher() {
     this.state = {
       launcherConfig: {
-        id: `${this.state.userid}-launcher`,
+        id: `${this.state.userid}/launcher`,
         manifest: `import 'https://$artifacts/Arcs/Launcher.recipe'`
+      }
+    };
+  }
+  spawnNullArc() {
+    this.state = {
+      nullConfig: {
+        id: `${this.state.userid}/null`,
+        suggestionContainer: this._dom.$('[slotid="suggestions"]')
       }
     };
   }
@@ -168,7 +201,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       `Restaurants/Restaurants.recipes`,
       `Reservations/Reservations.recipes`
     ];
-    const slot = this.host.querySelector(`[slotid="suggestions"]`);
+    const slot = this.host.querySelector(`[suggestions]`);
     if (slot) {
       suggestions.forEach(suggestion => {
         slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
@@ -188,23 +221,23 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnArc(recipe) {
     const luid = generateId();
-    const id = `${this.state.userid}-${luid}`;
+    //const id = `${this.state.userid}-${luid}`;
+    const id = `${this.state.userid}/${luid}`;
+    const manifest = `import 'https://$artifacts/${recipe}'`;
     this.state = {
       arc: null,
       arckey: id,
-      arcConfig: {
-        id,
-        manifest: `import 'https://$artifacts/${recipe}'`
-      },
+      // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
+      arcConfig: {id, manifest},
       manifest: null
     };
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.recordArcMeta({
       key: id,
       href: `?arc=${id}`,
-      description: `${recipe.split('/').pop().split('.').shift()}`, // [${luid}]`,
+      description: `${recipe.split('/').pop().split('.').shift()}`,
       color,
-      touched: Date.now(),
+      touched: Date.now()
     });
   }
   async recordArcMeta(meta) {
@@ -217,11 +250,24 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       await store.store(metaEntity, [String(Math.random())]);
     }
   }
+  recordPipesArc(userid) {
+    const pipesKey = `${userid}/pipes`;
+    this.recordArcMeta({
+      key: pipesKey,
+      href: `?arc=${pipesKey}`,
+      description: `Pipes!`,
+      color: 'silver',
+      touched: Date.now()
+    });
+  }
   onLauncherArc(e, launcherArc) {
     this.state = {launcherArc};
   }
   onLauncherClick() {
     this.state = {arckey: ''};
+  }
+  onNullArc(e, nullArc) {
+    this.state = {nullArc};
   }
 }
 

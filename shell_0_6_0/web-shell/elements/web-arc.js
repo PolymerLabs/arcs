@@ -34,6 +34,12 @@ const template = Xen.Template.html`
   <div slotid="modal"></div>
 `;
 
+/*
+ * TODO(sjmiles): this is messed up, fix:
+ * `config.manifest` is used by env.spawn to bootstrap a recipe
+ * `manifest` is used by WebArc to add a recipe
+ */
+
 export class WebArc extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'context', 'storage', 'composer', 'config', 'manifest'];
@@ -42,7 +48,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     return template;
   }
   update(props, state) {
-    const {env, storage, config, manifest} = props;
+    const {env, storage, config, manifest, context} = props;
     if (!state.host && env && storage && config) {
       this.createHost(props, state);
     }
@@ -61,9 +67,18 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
-  createHost({env, context, storage, composer}, state) {
+  createHost({env, context, storage, composer, config}, state) {
+    const containers = {
+      toproot: this.host.querySelector('[slotid="toproot"]'),
+      root: this.host.querySelector('[slotid="root"]'),
+      modal: this.host.querySelector('[slotid="modal"]')
+    };
+    if (config.suggestionContainer) {
+      containers.suggestions = config.suggestionContainer;
+    }
     if (!state.composer) {
-      state.composer = composer || new SlotComposer({affordance: 'dom', rootContainer: this.host});
+      state.composer = composer || new SlotComposer({affordance: 'dom', containers});
+          //rootContainer: this.host});
     }
     state.host = new ArcHost(env, context, storage, state.composer);
   }

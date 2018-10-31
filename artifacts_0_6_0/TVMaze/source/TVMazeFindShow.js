@@ -36,6 +36,7 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
     }
     async fetchShow(find) {
       this.setState({receiving: true});
+      log(`searching for [${find.name}]`);
       const response = await _fetch(`${service}/search/shows?q=${find.name}`);
       const shows = await response.json();
       if (shows && shows.length) {
@@ -44,7 +45,7 @@ defineParticle(({DomParticle, _fetch, resolver, log}) => {
       this.setState({receiving: false});
     }
     async receiveShow({show}) {
-      //log(show);
+      log(`found`, show);
       if (show.image && show.image.medium) {
         this.updateVariable('show', {
           showid: String(show.id),

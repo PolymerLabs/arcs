@@ -14,12 +14,12 @@ import 'Recommend.recipe'
 //import 'Manufacturer.recipe'
 //import 'Interests.recipe'
 
-recipe Products
-  map as products
-  create #selected as selected
-  SelectableItems
-    list = products
-    selected = selected
-  ItemMultiplexer
-    list = products
-    hostedParticle = ProductItem
+//recipe Products
+//  map as products
+//  create #selected as selected
+//  SelectableItems
+//    list = products
+//    selected = selected
+//  ItemMultiplexer
+//    list = products
+//   hostedParticle = ProductItem

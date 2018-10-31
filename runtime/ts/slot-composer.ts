@@ -22,7 +22,7 @@ export class SlotComposer {
   private _affordance: Affordance;
   private _consumers: SlotConsumer[] = [];
   private _contexts: SlotContext[] = [];
-  
+
   /**
    * |options| must contain:
    * - affordance: the UI affordance the slots composer render to (for example: dom).
@@ -33,7 +33,7 @@ export class SlotComposer {
   constructor(options) {
     assert(options.affordance, 'Affordance is mandatory');
     // TODO: Support rootContext for backward compatibility, remove when unused.
-    options.rootContainer = options.rootContainer || options.rootContext;
+    options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
     assert((options.rootContainer !== undefined)
            !==
            (options.noRoot === true),
@@ -47,7 +47,7 @@ export class SlotComposer {
       return;
     }
 
-    const containerByName = this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
+    const containerByName = options.containers || this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
     if (Object.keys(containerByName).length === 0) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;

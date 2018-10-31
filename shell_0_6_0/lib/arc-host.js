@@ -78,8 +78,7 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(env, context, composer, storage, id, serialization) {
-    storage = `${storage}/${id}`;
-    return await env.spawn({id, context, composer, serialization, storage});
+    return await env.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
   }
   async instantiateDefaultRecipe(env, arc, manifest) {
     console.log('instantiateDefaultRecipe');

@@ -5,7 +5,7 @@ import {ArcHost} from '../lib/arc-host.js';
 
 const userid = `gomer`;
 const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
-const launcherKey = `${userid}-launcher`;
+const launcherKey = `${userid}/launcher`;
 
 export const App = async (env, composer) => {
   SyntheticStores.init(env);
@@ -26,7 +26,7 @@ import 'https://$artifacts/canonical.manifest'
 `;
 
 const createContextArc = async (env, storage, composer, userid) => {
-  const id = `${userid}-persist-context`;
+  const id = `${userid}/persist-context`;
   const storesManifest = `import 'https://$artifacts/Profile/Sharing.stores'`;
   const storesContext = await env.parse(storesManifest);
   const storesImport = storesContext.imports[0];
@@ -57,14 +57,14 @@ const createContextMapper = async (env, storage, composer, userid) => {
   try {
     const sharingTemplate = `https://$artifacts/Profile/Sharing.template`;
     const template = await env.loader.loadResource(sharingTemplate);
-    const id = `${userid}-persist-context`;
+    const id = `${userid}/persist-context`;
     const key = `${storage}/${id}/handles`;
     const manifest = template.replace(/STORAGE_KEY/g, key);
     //console.log(manifest);
     //
     const context = await env.parse(contextContext);
     const host = new ArcHost(env, context, 'volatile://', composer);
-    const arc = await host.spawn({id: `${userid}-mapper`, manifest});
+    const arc = await host.spawn({id: `${userid}/mapper`, manifest});
     //
     reportShares(arc);
     arc.onDataChange(() => reportShares(arc), host);
