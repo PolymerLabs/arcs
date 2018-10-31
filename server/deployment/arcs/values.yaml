@@ -1,0 +1,92 @@
+# Default values for arcs.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+domain: skarabrae.org
+email: arcs@skarabrae.org
+project: arcs-project
+
+externalDns:
+  enabled: true
+certManager:
+  enabled: true
+nginx:
+  enabled: true
+tls:
+  enabled: true
+
+replicaCount: 2
+
+image:
+  repository: gcr.io/arcs-project/deployment
+  tag: latest
+  pullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    ingress.kubernetes.io/ssl-redirect: "true"
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issue: letsencrypt-prod
+  path: /
+  hosts:
+    - skarabrae.org
+  tls: 
+    - secretName: prod-clouddns-svc-acct-secret
+      hosts:
+        - skarabrae.org
+
+external-dns:
+  provider: google
+  google:
+   project: arcs-project
+   logLevel: debug
+   rbac:
+     create: true
+   source: service
+   policy: upsert-only
+
+cert-manager:
+  ingressShim:
+    defaultIssuerName: letsencrypt-prod 
+    defaultIssuerKind: ClusterIssuer 
+    defaultACMEChallengeType: dns01
+    defaultACMEDNS01ChallengeProvider: clouddns
+
+
+nginx-ingress:
+    controller:
+      publishService:
+        enabled: true
+      service:
+        annotations: 
+          external-dns.alpha.kubernetes.io/hostname: skarabrae.org
+    rbac:
+      create: true
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
