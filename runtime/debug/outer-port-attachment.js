@@ -20,16 +20,19 @@ export class OuterPortAttachment {
     this._particleRegistry = {};
   }
 
-  handlePecMessage(name, pecMsgBody, isReceiver) {
+  handlePecMessage(name, pecMsgBody, stackString) {
     // Skip speculative and pipes arcs for now.
     if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
 
+    // Don't log the message used to set up stack trace passing from the context side.
+//    if (name === 'DevToolsConnected') return;
+
     const stack = [];
-    if (!isReceiver) {
+    if (stackString) {
       // The slice discards the first two stack frames corresponding to this
       // function and the API channel function, which is already being displayed
       // in the log entry.
-      mapStackTrace(new Error().stack, mapped => mapped.slice(2).map(f => {
+      mapStackTrace(stackString, mapped => mapped.slice(2).map(f => {
         // Each frame has the form '    at function (source:line:column)'.
         // Extract the function name and source:line:column text, then set up
         // a frame object with the following fields:
@@ -65,7 +68,7 @@ export class OuterPortAttachment {
 
     this._devtoolsChannel.send({
       messageType: 'PecLog',
-      messageBody: {name, isReceiver, pecMsgBody, timestamp: Date.now(), stack},
+      messageBody: {name, pecMsgBody, timestamp: Date.now(), stack},
     });
   }
 
