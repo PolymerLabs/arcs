@@ -509,7 +509,7 @@ export class Type {
           fields.push(`${key}:${this.data[key]}`);
         }
       }
-      fieldsString = '';
+      let fieldsString = '';
       if(fields.length !== 0) {
         fieldsString = ` {${fields.join(', ')}}`;
       }
