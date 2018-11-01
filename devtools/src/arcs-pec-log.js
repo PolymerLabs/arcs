@@ -51,6 +51,9 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         color: darkblue;
         cursor: pointer;
       }
+      .link:hover {
+        text-decoration: underline;
+      }
       .noLink {
         color: gray;
       }
