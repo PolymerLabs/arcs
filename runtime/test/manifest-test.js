@@ -124,16 +124,13 @@ schema Person
   out Person {} person
   affordance dom
   affordance dom-touch
-  must consume root #master #main
-    formFactor big
-    must provide action #large
-      formFactor big
+  \`consume Slot {formFactor:big} root #master #main
+    \`provide Slot {formFactor:big} action #large
       handle list
-    provide preamble
-      formFactor medium
-    provide annotation
-  consume other
-    provide set of myProvidedSetCell
+    \`provide Slot {formFactor:medium} preamble
+    \`provide Slot annotation
+  \`consume Slot other
+    \`provide set of myProvidedSetCell
   consume set of mySetCell
   description \`hello world \${list}\`
     list \`my special list\``;
