@@ -122,16 +122,15 @@ schema Person
 `particle TestParticle in 'testParticle.js'
   in [Product {}] list
   out Person {} person
-  affordance dom
-  affordance dom-touch
   \`consume Slot {formFactor:big} root #master #main
-    \`provide Slot {formFactor:big} action #large
-      handle list
+    \`provide Slot {formFactor:big, handle:list} action #large
     \`provide Slot {formFactor:medium} preamble
     \`provide Slot annotation
   \`consume Slot other
-    \`provide set of myProvidedSetCell
-  consume set of mySetCell
+    \`provide [~cell] myProvidedSetCell
+  \`consume [~cell] mySetCell
+  affordance dom
+  affordance dom-touch
   description \`hello world \${list}\`
     list \`my special list\``;
 
