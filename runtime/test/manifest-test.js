@@ -913,8 +913,8 @@ ${particleStr1}
 
     const directions = slotB._connections.map(c => c._direction);
     assert.lengthOf(directions, 2);
-    assert.include(directions, "`provide");
-    assert.include(directions, "`consume");
+    assert.include(directions, '`provide');
+    assert.include(directions, '`consume');
   });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
