@@ -10,18 +10,18 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc';
-import {now} from '../../../platform/date-web.js';
 import {PlanConsumer} from './plan-consumer';
 import {PlanProducer} from './plan-producer';
 import {Recipe} from '../recipe/recipe';
 import {ReplanQueue} from './replan-queue';
 import {Schema} from '../schema';
-import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type';
+import {StorageProviderBase} from "../storage/storage-provider-base.js";
+import {StorageProviderFactory} from "../storage/storage-provider-factory";
 
 export class Planificator {
-  static async create(arc: Arc, {userid, protocol}) {
-    const store = await Planificator._initStore(arc, {userid, protocol, arcKey: null});
+  static async create(arc: Arc, {userid, storageKeyBase}) {
+    const store = await Planificator._initStore(arc, {userid, storageKeyBase, arcKey: null});
     const planificator = new Planificator(arc, userid, store);
     planificator.requestPlanning();
     return planificator;
@@ -115,39 +115,37 @@ export class Planificator {
     });
   }
 
-  private static async _initStore(arc, {userid, protocol, arcKey}): Promise<StorageProviderBase> {
+  private static async _initStore(arc: Arc, {userid, storageKeyBase, arcKey}): Promise<StorageProviderBase> {
     assert(userid, 'Missing user id.');
-    let storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
-    const storageKey = storage.parseStringAsKey(arc.storageKey);
-    if (protocol) {
-      storageKey.protocol = protocol;
+    assert(storageKeyBase, 'Missing storageKeyBase');
+    if (!arcKey) {
+      arcKey = arc.id.toString();
     }
-    storageKey.location = storageKey.location
-        .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
-    const storageKeyStr = storageKey.toString();
-    storage = arc.storageProviderFactory._storageForKey(storageKeyStr);
+
+    // TODO evaluate how volatile keys expect to be in the form of volatile://$arcId/$location ...
+    const storageKeyStr = `${storageKeyBase}/users/${userid}/suggestions/${arcKey}`;
+
+    const storage = new StorageProviderFactory(arc.id);
+    if (!storage) {
+      throw new Error('Unable to find storage for ' + arc.id);
+    }
+
+    // storage = arc.storageProviderFactory._storageForKey(storageKeyStr);
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
+    assert(!type.isReference, 'type cannot be a reference');
 
     // TODO: unify initialization of suggestions storage.
     const id = 'suggestions-id';
     let store = null;
-    switch (storageKey.protocol) {
-      case 'firebase':
-        return storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
-      case 'volatile':
-      case 'pouchdb':
-        try {
-          store = await storage.construct(id, type, storageKeyStr);
-        } catch(e) {
-          store = await storage.connect(id, type, storageKeyStr);
-        }
-        assert(store, `Failed initializing '${protocol}' store.`);
-        store.referenceMode = false;
-        return store;
-      default:
-        throw new Error(`Unsupported protocol '${protocol}'`);
+    try {
+      store = await storage.construct(id, type, storageKeyStr);
+    } catch (e) {
+      store = await storage.connect(id, type, storageKeyStr);
     }
+    assert(store, 'Failed initializing store.');
+    store.referenceMode = false;
+    return store;
   }
 
   isArcPopulated(): boolean {

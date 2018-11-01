@@ -80,59 +80,63 @@ class TestPlanProducer extends PlanProducer {
   }
 }
 
-describe('plan producer', function() {
-  async function createProducer(manifestFilename) {
-    const helper = await TestHelper.createAndPlan({
-      manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
-    });
-    helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-    const store = await Planificator._initStore(helper.arc, {userid: 'TestUser', protocol: 'volatile'});
-    assert.isNotNull(store);
-    const producer = new TestPlanProducer(helper.arc, store);
-    return {helper, producer};
-  }
-  it('produces plans', async function() {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
-
-    await producer.producePlans();
-    assert.lengthOf(producer.result.plans, 0);
-
-    producer.plannerReturnFakeResults(helper.plans);
-    await producer.allPlanningDone();
-    assert.lengthOf(producer.result.plans, 1);
-    assert.equal(producer.produceCalledCount, 1);
-    assert.equal(producer.plannerRunCount, 1);
-    assert.equal(producer.cancelCount, 0);
-  });
-  
-  it('throttles requests to produce plans', async function() {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
-
-    for (let i = 0; i < 10; ++i) {
-      producer.producePlans();
+// Run test suite for each storageKeyBase
+['volatile://', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+  describe('plan producer for ' + storageKeyBase, function() {
+    async function createProducer(manifestFilename) {
+      const helper = await TestHelper.createAndPlan({
+        manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
+      });
+      helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
+      const store = await Planificator._initStore(helper.arc, {userid: 'TestUser', storageKeyBase});
+      assert.isNotNull(store);
+      const producer = new TestPlanProducer(helper.arc, store);
+      return {helper, producer};
     }
+    it('produces plans', async function() {
+      const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+      assert.lengthOf(producer.result.plans, 0);
 
-    producer.plannerReturnFakeResults(helper.plans);
-    producer.plannerReturnFakeResults(helper.plans);
-    await producer.allPlanningDone();
-    assert.equal(producer.produceCalledCount, 10);
-    assert.equal(producer.plannerRunCount, 2);
-    assert.equal(producer.cancelCount, 0);
-  });
+      await producer.producePlans();
+      assert.lengthOf(producer.result.plans, 0);
 
-  it('cancels planning', async function() {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
+      producer.plannerReturnFakeResults(helper.plans);
+      await producer.allPlanningDone();
+      assert.lengthOf(producer.result.plans, 1);
+      assert.equal(producer.produceCalledCount, 1);
+      assert.equal(producer.plannerRunCount, 1);
+      assert.equal(producer.cancelCount, 0);
+    });
 
-    producer.producePlans();
-    producer.producePlans({cancelOngoingPlanning: true});
+    it('throttles requests to produce plans', async function() {
+      const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+      assert.lengthOf(producer.result.plans, 0);
 
-    producer.plannerReturnFakeResults(helper.plans);
-    await producer.allPlanningDone();
-    assert.equal(producer.produceCalledCount, 2);
-    assert.equal(producer.plannerRunCount, 2);
-    assert.equal(producer.cancelCount, 1);
-  });
-});
+      for (let i = 0; i < 10; ++i) {
+        producer.producePlans();
+      }
+
+      producer.plannerReturnFakeResults(helper.plans);
+      producer.plannerReturnFakeResults(helper.plans);
+      await producer.allPlanningDone();
+      assert.equal(producer.produceCalledCount, 10);
+      assert.equal(producer.plannerRunCount, 2);
+      assert.equal(producer.cancelCount, 0);
+    });
+
+    it('cancels planning', async function() {
+      const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+      assert.lengthOf(producer.result.plans, 0);
+
+      producer.producePlans();
+      producer.producePlans({cancelOngoingPlanning: true});
+
+      producer.plannerReturnFakeResults(helper.plans);
+      await producer.allPlanningDone();
+      assert.equal(producer.produceCalledCount, 2);
+      assert.equal(producer.plannerRunCount, 2);
+      assert.equal(producer.cancelCount, 1);
+    });
+  }); // end describe
+}); // end forEach
+

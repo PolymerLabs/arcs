@@ -65,7 +65,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     const planificatorParam = ArcsUtils.getUrlParam('planificator');
     const planificator = planificatorParam === 'original'
         ? new Arcs.Planificator(arc, {userid})
-        : await Arcs.PlanificatorNew.create(arc, {userid, protocol: ArcsUtils.getUrlParam('planificatorProtocol') || 'volatile'});
+        : await Arcs.PlanificatorNew.create(arc, {userid, storageKeyBase: ArcsUtils.getUrlParam('storageKeyBase') || 'volatile'});
     planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     window.planificator = planificator;

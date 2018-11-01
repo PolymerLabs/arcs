@@ -13,56 +13,59 @@ import {PlanConsumer} from '../../ts-build/plan/plan-consumer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
 import {PlanningResult} from '../../ts-build/plan/planning-result.js';
 
-describe('plan consumer', function() {
-  it('consumes', async function() {
-    const helper = await TestHelper.createAndPlan({
-      manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
+// Run test suite for each storageKeyBase
+['volatile://', 'pouchdb://memory/user'].forEach(storageKeyBase => {
+  describe('plan consumer for ' + storageKeyBase, function() {
+    it('consumes', async function() {
+      const helper = await TestHelper.createAndPlan({
+        manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
+      });
+      const userid = 'TestUser';
+      helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
+      const store = await Planificator._initStore(helper.arc, {userid, storageKeyBase: 'volatile://'});
+      assert.isNotNull(store);
+      const consumer = new PlanConsumer(helper.arc, store);
+
+      let planChangeCount = 0;
+      const planCallback = (plans) => { ++planChangeCount; };
+      let suggestChangeCount = 0;
+      const suggestCallback = (plans) => { ++suggestChangeCount; };
+      consumer.registerPlansChangedCallback(planCallback);
+      consumer.registerSuggestChangedCallback(suggestCallback);
+      assert.isEmpty(consumer.getCurrentSuggestions());
+
+      const storeResults = async (plans) => {
+        const result = new PlanningResult(helper.arc);
+        result.set({plans});
+        await store.set(result.serialize());
+        await new Promise(resolve => setTimeout(resolve, 100));
+      };
+      // Updates plans.
+      await storeResults([helper.plans[0]]);
+      assert.lengthOf(consumer.result.plans, 1);
+      assert.lengthOf(consumer.getCurrentSuggestions(), 0);
+      assert.equal(planChangeCount, 1);
+      assert.equal(suggestChangeCount, 0);
+
+      // Shows all suggestions.
+      consumer.setSuggestFilter(true);
+      assert.lengthOf(consumer.result.plans, 1);
+      assert.lengthOf(consumer.getCurrentSuggestions(), 1);
+      assert.equal(planChangeCount, 1);
+      assert.equal(suggestChangeCount, 1);
+
+      // Filters suggestions by string.
+      consumer.setSuggestFilter(false, 'show');
+      assert.lengthOf(consumer.result.plans, 1);
+      assert.lengthOf(consumer.getCurrentSuggestions(), 1);
+      assert.equal(planChangeCount, 1);
+      assert.equal(suggestChangeCount, 1);
+
+      consumer.setSuggestFilter(false);
+      assert.lengthOf(consumer.result.plans, 1);
+      assert.lengthOf(consumer.getCurrentSuggestions(), 0);
+      assert.equal(planChangeCount, 1);
+      assert.equal(suggestChangeCount, 2);
     });
-    const userid = 'TestUser';
-    helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-    const store = await Planificator._initStore(helper.arc, {userid, protocol: 'volatile'});
-    assert.isNotNull(store);
-    const consumer = new PlanConsumer(helper.arc, store);
-
-    let planChangeCount = 0;
-    const planCallback = (plans) => { ++planChangeCount; };
-    let suggestChangeCount = 0;
-    const suggestCallback = (plans) => { ++suggestChangeCount; };
-    consumer.registerPlansChangedCallback(planCallback);
-    consumer.registerSuggestChangedCallback(suggestCallback);
-    assert.isEmpty(consumer.getCurrentSuggestions());
-
-    const storeResults = async (plans) => {
-      const result = new PlanningResult(helper.arc);
-      result.set({plans});
-      await store.set(result.serialize());
-      await new Promise(resolve => setTimeout(resolve, 100));
-    };
-    // Updates plans.
-    await storeResults([helper.plans[0]]);
-    assert.lengthOf(consumer.result.plans, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 0);
-
-    // Shows all suggestions.
-    consumer.setSuggestFilter(true);
-    assert.lengthOf(consumer.result.plans, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 1);
-
-    // Filters suggestions by string.
-    consumer.setSuggestFilter(false, 'show');
-    assert.lengthOf(consumer.result.plans, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 1);
-
-    consumer.setSuggestFilter(false);
-    assert.lengthOf(consumer.result.plans, 1);
-    assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 2);
-  });
-});
+  }); // end describe
+}); // end forEach
