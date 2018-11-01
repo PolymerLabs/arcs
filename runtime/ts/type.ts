@@ -503,17 +503,17 @@ export class Type {
       return `~${this.variable.name}`;
     }
     if (this.isSlot) {
-      let fields = [];
-      for(var key in this.data) {
+      const fields = [];
+      for(const key of Object.keys(this.data)) {
         if (this.data[key] !== undefined) {
           fields.push(`${key}:${this.data[key]}`);
         }
       }
-      let fields_string = '';
+      fieldsString = '';
       if(fields.length !== 0) {
-        fields_string = ` {${fields.join(', ')}}`;
+        fieldsString = ` {${fields.join(', ')}}`;
       }
-      return `Slot${fields_string}`;
+      return `Slot${fieldsString}`;
     }
     if (this.isReference) {
       return 'Reference<' + this.referenceReferredType.toString() + '>';
@@ -563,17 +563,17 @@ export class Type {
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
     }
     if (this.isSlot) {
-      let fields = [];
-      for(var key in this.data) {
+      const fields = [];
+      for(const key of Object.keys(this.data)) {
         if (this.data[key] !== undefined) {
           fields.push(`${key}:${this.data[key]}`);
         }
       }
-      let fields_string = '';
+      let fieldsString = '';
       if(fields.length !== 0) {
-        fields_string = ` {${fields.join(', ')}}`;
+        fieldsString = ` {${fields.join(', ')}}`;
       }
-      return `Slot${fields_string}`;
+      return `Slot${fieldsString}`;
     }
     if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
