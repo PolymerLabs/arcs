@@ -62,10 +62,11 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     }
   }
   async _createPlanificator(arc, userid) {
-    const protocol = ArcsUtils.getUrlParam('planificatorProtocol') || 'volatile';
+    const storageKeyBase = ArcsUtils.getUrlParam('storageKeyBase') || 'volatile://';
     const debug = ArcsUtils.getUrlParam('planificatorDebug');
     const onlyConsumer = ArcsUtils.getUrlParam('onlyConsumer') === 'true';
-    const planificator = await Arcs.Planificator.create(arc, {userid, protocol, onlyConsumer, debug});
+    
+    const planificator = await Arcs.Planificator.create(arc, {userid, storageKeyBase, onlyConsumer, debug});
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     window.planificator = planificator;

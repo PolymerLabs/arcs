@@ -35,7 +35,10 @@ export class StorageProviderFactory {
     return instance;
   }
 
-  _storageForKey(key) {
+  _storageForKey(key: string) {
+    if (!key) {
+      throw new Error('key is required');
+    }
     return this.getInstance(key).storage;
   }
 
