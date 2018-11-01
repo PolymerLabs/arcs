@@ -759,8 +759,6 @@ ${particleStr1}
     const slotConn = recipe.particles[0].connections['slotA'];
     assert(slotConn);
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
-    //TODO(jopra): Give recipes the dependentConnections syntax+handling
-    // assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
   });
   it('recipe slots with different names', async () => {
     const manifest = await Manifest.parse(`
@@ -885,6 +883,38 @@ ${particleStr1}
     assert.equal('slotB', slotB.name);
     assert.lengthOf(slotB.consumeConnections, 1);
     assert.equal(slotB.sourceConnection, slotConnA);
+  });
+  it('SLANDLES incomplete aliasing', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        \`consume Slot slotA
+          \`provide Slot slotB
+      particle P2 in 'some-particle.js'
+        \`consume Slot slotB
+      recipe
+        P1
+          slotA consume
+          slotB provide s1
+        P2
+          slotB consume s1
+    `)).recipes[0];
+    recipe.normalize();
+
+    assert.lengthOf(recipe.handleConnections, 3);
+    const slotConnA = recipe.handleConnections.find(s => s.name === 'slotA');
+    assert.isUndefined(slotConnA._handle);
+
+    assert.lengthOf(recipe.handles, 1);
+    const slotB = recipe.handles[0];
+    assert.lengthOf(slotB._connections, 2);
+
+    assert.equal(slotB._connections[0]._name, 'slotB');
+    assert.equal(slotB._connections[1]._name, 'slotB');
+
+    const directions = slotB._connections.map(c => c._direction);
+    assert.lengthOf(directions, 2);
+    assert.include(directions, '`provide');
+    assert.include(directions, '`consume');
   });
   it('parses local slots with IDs', async () => {
     const recipe = (await Manifest.parse(`
