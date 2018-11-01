@@ -495,7 +495,7 @@ ${e.message}
         }
         case 'slot-type': {
           const fields = {};
-          for(const fieldIndex of Object.keys(node.fields)) {
+          for (const fieldIndex of Object.keys(node.fields)) {
             const field = node.fields[fieldIndex];
             fields[field.name] = field.value;
           }
