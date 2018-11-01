@@ -503,7 +503,17 @@ export class Type {
       return `~${this.variable.name}`;
     }
     if (this.isSlot) {
-      return 'Slot';
+      let fields = [];
+      for(var key in this.data) {
+        if (this.data[key] !== undefined) {
+          fields.push(`${key}:${this.data[key]}`);
+        }
+      }
+      let fields_string = '';
+      if(fields.length !== 0) {
+        fields_string = ` {${fields.join(', ')}}`;
+      }
+      return `Slot${fields_string}`;
     }
     if (this.isReference) {
       return 'Reference<' + this.referenceReferredType.toString() + '>';
@@ -551,6 +561,19 @@ export class Type {
     }
     if (this.isVariable) {
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
+    }
+    if (this.isSlot) {
+      let fields = [];
+      for(var key in this.data) {
+        if (this.data[key] !== undefined) {
+          fields.push(`${key}:${this.data[key]}`);
+        }
+      }
+      let fields_string = '';
+      if(fields.length !== 0) {
+        fields_string = ` {${fields.join(', ')}}`;
+      }
+      return `Slot${fields_string}`;
     }
     if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
