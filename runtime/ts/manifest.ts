@@ -494,7 +494,13 @@ ${e.message}
           return;
         }
         case 'slot-type': {
-          const slotInfo = {formFactor: node.fields.formFactor, handle: node.fields.handle};
+          const fields = {};
+          for(const fieldIndex of Object.keys(node.fields)) {
+            const field = node.fields[fieldIndex];
+            fields[field.name] = field.value;
+          }
+          const slotInfo = {formFactor: fields['formFactor'],
+                            handle: fields['handle']};
           node.model = Type.newSlot(new SlotInfo(slotInfo));
           return;
         }

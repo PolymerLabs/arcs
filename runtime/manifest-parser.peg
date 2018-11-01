@@ -442,7 +442,7 @@ SlotType
 {
   fields = optional(fields, fields => {
     let data = fields[2];
-    return [data[0], data[1].map(tail => tail[2])];
+    return [data[0]].concat(data[1].map(tail => tail[2]));
   }, []);
 
   return {
