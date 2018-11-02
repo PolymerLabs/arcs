@@ -89,6 +89,7 @@ export class APIPort {
     this._messageMap = new Map();
     this._port.onmessage = async e => this._processMessage(e);
     this._debugAttachment = null;
+    this._attachStack = false;
     this.messageCount = 0;
 
     this.Direct = {
@@ -174,7 +175,7 @@ export class APIPort {
     assert(this[handlerName], `no handler named ${handlerName}`);
     if (this._debugAttachment) {
       if (this._debugAttachment[handlerName]) this._debugAttachment[handlerName](args);
-      this._debugAttachment.handlePecMessage(handlerName, e.data.messageBody, true /* isReceiver */);
+      this._debugAttachment.handlePecMessage(handlerName, e.data.messageBody, e.data.stack);
     }
     const result = this[handlerName](args);
     if (handler.isInitializer) {
@@ -202,11 +203,12 @@ export class APIPort {
   registerCall(name, argumentTypes) {
     this[name] = args => {
       const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      if (this._attachStack) call.stack = new Error().stack;
       this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment) {
         if (this._debugAttachment[name]) this._debugAttachment[name](args);
-        this._debugAttachment.handlePecMessage(name, call.messageBody, false /* isReceiver */);
+        this._debugAttachment.handlePecMessage(name, call.messageBody, new Error().stack);
       }
     };
   }
@@ -231,13 +233,14 @@ export class APIPort {
     this[name] = (thing, args) => {
       if (redundant && this._mapper.hasMappingForThing(thing)) return;
       const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      if (this._attachStack) call.stack = new Error().stack;
       const requestedId = mappingIdArg && args[mappingIdArg];
       call.messageBody.identifier = this._mapper.createMappingForThing(thing, requestedId);
       this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment) {
         if (this._debugAttachment[name]) this._debugAttachment[name](thing, args);
-        this._debugAttachment.handlePecMessage(name, call.messageBody, false /* isReceiver */);
+        this._debugAttachment.handlePecMessage(name, call.messageBody, new Error().stack);
       }
     };
   }
@@ -293,8 +296,16 @@ export class PECOuterPort extends APIPort {
 
     this.registerHandler('RaiseSystemException', {exception: this.Direct, methodName: this.Direct, particleId: this.Direct});
 
-    DevtoolsConnection.onceConnected.then(
-      devtoolsChannel => this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel));
+    // We need an API call to tell the context side that DevTools has been connected, so it can start sending
+    // stack traces attached to the API calls made from that side.
+    this.registerCall('DevToolsConnected', {});
+    DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+      // The unit test for this class intefere with registerCall, which means the function is not actually present.
+      if (this.DevToolsConnected) {
+        this.DevToolsConnected();
+      }
+      this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel);
+    });
   }
 }
 
@@ -347,5 +358,11 @@ export class PECInnerPort extends APIPort {
     this.registerCall('ArcLoadRecipe', {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
 
     this.registerCall('RaiseSystemException', {exception: this.Direct, methodName: this.Direct, particleId: this.Direct});
+
+    // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
+    // send it along with the message. We only want to do this after a DevTools connection has been detected, which
+    // we can't directly detect inside a worker context, so the PECOuterPort will send an API message instead.
+    this.registerHandler('DevToolsConnected', {});
+    this.onDevToolsConnected = () => this._attachStack = true;
   }
 }
