@@ -113,6 +113,43 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
+  it('SLANDLES can parse a manifest containing a particle specification', async () => {
+    const schemaStr = `
+schema Product
+schema Person
+    `;
+    const particleStr0 =
+`particle TestParticle in 'testParticle.js'
+  in [Product {}] list
+  out Person {} person
+  \`consume Slot {formFactor:big} root #master #main
+    \`provide Slot {formFactor:big, handle:list} action #large
+    \`provide Slot {formFactor:medium} preamble
+    \`provide Slot annotation
+  \`consume Slot other
+    \`provide [~cell] myProvidedSetCell
+  \`consume [~cell] mySetCell
+  affordance dom
+  affordance dom-touch
+  description \`hello world \${list}\`
+    list \`my special list\``;
+
+    const particleStr1 =
+`particle NoArgsParticle in 'noArgsParticle.js'
+  affordance dom`;
+    const manifest = await Manifest.parse(`
+${schemaStr}
+${particleStr0}
+${particleStr1}
+    `);
+    const verify = (manifest) => {
+      assert.lengthOf(manifest.particles, 2);
+      assert.equal(particleStr0, manifest.particles[0].toString());
+      assert.equal(particleStr1, manifest.particles[1].toString());
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString(), {}));
+  });
   it('can parse a manifest containing a particle with an argument list', async () => {
     const manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
