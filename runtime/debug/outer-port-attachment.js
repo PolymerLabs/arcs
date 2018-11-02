@@ -7,7 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- 'use strict';
+'use strict';
+
+import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 
 export class OuterPortAttachment {
   constructor(arc, devtoolsChannel) {
@@ -22,23 +24,43 @@ export class OuterPortAttachment {
     // Skip speculative and pipes arcs for now.
     if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
 
-    let stack = [];
+    const stack = [];
     if (!isReceiver) {
-      // The slice discards the 'Error' string and the 2 stack frames
-      // corresponding to this function and the API channel function,
-      // which is already being displayed in the log entry.
-      stack = new Error().stack.split('\n    at ').slice(3).map(f => {
-        // Convert 'foo.bar (http://some/url/arcs/shell/sub/Source.js:240:35)'
-        // to {method: 'foo.bar', location: 'shell/sub/Source.js:240'}.
-        // Note that some frames may look like 'Array.forEach (<anonymous>)',
-        // which should still work.
-        const m = f.match(/^(.*) \((.*)\)$/);
-        if (m === null) return {method: f, location: ''};
-        return {
-          method: m[1],
-          location: m[2].replace(/^http.*\/arcs\//, '').replace(/:[0-9]+$/, '')
-        };
-      });
+      // The slice discards the first two stack frames corresponding to this
+      // function and the API channel function, which is already being displayed
+      // in the log entry.
+      mapStackTrace(new Error().stack, mapped => mapped.slice(2).map(f => {
+        // Each frame has the form '    at function (source:line:column)'.
+        // Extract the function name and source:line:column text, then set up
+        // a frame object with the following fields:
+        //   location: text to display as the source in devtools Arcs panel
+        //   target: URL to open in devtools Sources panel
+        //   targetClass: CSS class specifier to attach to the location text
+        const m = f.match(/^ {4}at (.*) \((.*)\)$/);
+        if (m === null) return;
+
+        const frame = {method: m[1]};
+        const source = m[2].replace(/:[0-9]+$/, '');
+        if (source.startsWith('http')) {
+          // 'http://<url>/arcs.*/shell/file.js:150'
+          // -> location: 'shell/file.js:150', target: same as source
+          frame.location = source.replace(/^http.*\/arcs[^/]*\//, '');
+          frame.target = source;
+          frame.targetClass = 'link';
+        } else if (source.startsWith('webpack')) {
+          // 'webpack:///runtime/sub/file.js:18'
+          // -> location: 'runtime/sub/file.js:18', target: 'webpack:///./runtime/sub/file.js:18'
+          frame.location = source.slice(11);
+          frame.target = `webpack:///./${frame.location}`;
+          frame.targetClass = 'link';
+        } else {
+          // '<anonymous>' (or similar)
+          frame.location = source;
+          frame.target = null;
+          frame.targetClass = 'noLink';
+        }
+        stack.push(frame);
+      }), {sync: true});
     }
 
     this._devtoolsChannel.send({
