@@ -24,9 +24,6 @@ export class OuterPortAttachment {
     // Skip speculative and pipes arcs for now.
     if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
 
-    // Don't log the message used to set up stack trace passing from the context side.
-//    if (name === 'DevToolsConnected') return;
-
     const stack = [];
     if (stackString) {
       // The slice discards the first two stack frames corresponding to this
