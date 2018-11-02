@@ -235,11 +235,8 @@ export class ParticleSpec {
     results.push(`particle ${this.name}${verbs} in '${this.implFile}'`.trim());
     const indent = '  ';
     const writeConnection = (connection, indent) => {
-      const tags = [];
-      for (const tagIndex of Object.keys(connection.tags)) {
-        tags.push(` #${connection.tags[tagIndex]}`);
-      }
-      results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}${tags.join('')}`);
+      const tags = connection.tags.map((tag) => ` #${tag}`).join('');
+      results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
