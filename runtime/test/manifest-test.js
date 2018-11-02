@@ -1844,6 +1844,19 @@ resource SomeName
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
   });
 
+  it('can round-trip particles with tags', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot {formFactor:big} thing #main #tagname
+    \`provide Slot {handle:thingy} otherThing #testtag
+  affordance dom`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+
   it('can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
