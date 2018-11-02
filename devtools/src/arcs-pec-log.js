@@ -47,7 +47,14 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         display: inline-block;
         color: green;
       }
-      [stackLocation] {
+      .link {
+        color: darkblue;
+        cursor: pointer;
+      }
+      .link:hover {
+        text-decoration: underline;
+      }
+      .noLink {
         color: gray;
       }
       [dirIcon] {
@@ -77,7 +84,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
           <object-explorer data="[[item.pecMsgBody]]">
             <span noPointer on-click="_blockEvent">
               [[item.time]]
-              <span stack class$="[[item.stack.state]]" on-click="_toggleStack">
+              <span stack class$="[[item.stack.iconClass]]" on-click="_toggleStack">
                 <iron-icon icon="menu"></iron-icon>
               </span>
             </span>
@@ -88,7 +95,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
             <template is="dom-repeat" items="[[item.stack.frames]]" as="frame">
               <div stackFrame>
                 <span stackMethod>[[frame.method]]</span>
-                <span stackLocation>[[frame.location]]</span>
+                <span class$="[[frame.targetClass]]" on-click="_goToSource">[[frame.location]]</span>
               </div>
             </template>
           </div>
@@ -159,7 +166,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
 
     const stack = {
-      state: msg.stack.length ? 'pointer' : 'invisible',
+      iconClass: msg.stack.length ? 'pointer' : 'invisible',
       frames: msg.stack,
       collapsed: true
     };
@@ -181,6 +188,15 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   _toggleStack(event) {
     this.set(`entries.${event.model.index}.stack.collapsed`, !event.model.item.stack.collapsed);
     event.stopPropagation();
+  }
+
+  _goToSource(event) {
+    const target = event.model.frame.target;
+    if (target !== null) {
+      const parts = target.split(':');
+      const line = Number(parts.pop()) - 1;
+      chrome.devtools.panels.openResource(parts.join(':'), line);
+    }
   }
 
   _highlightGroup(event) {
