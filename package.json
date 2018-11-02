@@ -87,5 +87,11 @@
   "engines": {
     "node": ">= 10.0.0",
     "npm": ">= 6.4.0"
+  },
+  "greenkeeper": {
+    "ignore": [
+      "node-fetch",
+      "ws"
+    ]
   }
 }
