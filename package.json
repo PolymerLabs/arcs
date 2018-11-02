@@ -18,7 +18,7 @@
     "test-extension": "mocha-chrome extension/test/index.test.html",
     "test-mocha-words": "mocha-chrome artifacts/Words/test/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js",
-    "build:rollup": "rollup -c",
+    "build:rollup": "rollup -c --sourcemap",
     "build:typedoc": "typedoc --mode file --target ES5  --downLevelIteration -out dist/apidocs",
     "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install --no-package-lock && npm --prefix server install --package-lock-only && npm --prefix server run test",
     "server:start": "npm --prefix server start"
