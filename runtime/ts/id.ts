@@ -34,8 +34,6 @@ export class Id {
     if (components[0][0] === '!') {
       session = components[0].slice(1);
       components = components.slice(1);
-    } else {
-      components = components;
     }
     return new Id(session, components);
   }
