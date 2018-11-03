@@ -5,12 +5,13 @@
 Execute the following commands to start the Arcs cloud server
 
 ```
-cd ..
-./tools/sigh
-cd server
-npm build
-npm start
+npm --prefix=.. run server
+npm --prefix=.. run server:start
 ```
+
+Then activate the usage of the pouchdb server by opening
+
+  http://localhost:8080/shell/apps/web/index.html?storageKeyBase=pouchdb://localhost:8080/user
 
 ## Server Layout / Configuration
 
