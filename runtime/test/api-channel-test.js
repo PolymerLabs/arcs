@@ -54,7 +54,12 @@ describe('API channel', function() {
 
     const port = {};
     const arc = {id: ''}; // OuterPortAttachment constructor needs the id.
-    outer = (new PECOuterPort(port, arc))._reg_;
+
+    // PECOuterPort can call DevToolsConnected during setup, so we need to stub that.
+    const outerPort = new PECOuterPort(port, arc);
+    outerPort.DevToolsConnected = () => {};
+
+    outer = outerPort._reg_;
     inner = (new PECInnerPort(port))._reg_;
   });
 
