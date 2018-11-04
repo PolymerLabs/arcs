@@ -17,7 +17,5 @@ COPY . .
 RUN ./tools/sigh && npm run build:rollup
 RUN npm --prefix server test
 
-#RUN npm install --no-package-lock && npm install --package-lock-only
-
 EXPOSE 8080
 CMD [ "npm", "--prefix", "server", "start" ]
