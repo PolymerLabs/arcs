@@ -9,7 +9,7 @@ init:
 install:
   - ps: Install-Product node $env:nodejs_version
   - npm install -g npm@6.4.1
-  - appveyor-retry npm install
+  - appveyor-retry npm ci
 
 build: off
 
