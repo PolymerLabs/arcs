@@ -16,7 +16,7 @@ import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 const loader = new Loader();
 

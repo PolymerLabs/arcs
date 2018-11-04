@@ -61,14 +61,14 @@ export class DomParticleBase extends Particle {
     // Set this to support multiple slots consumed by a particle, without needing
     // to pass slotName to particle's render method, where it useless in most cases.
     this.currentSlotName = slotName;
-    contentTypes.forEach(ct => slot._requestedContentTypes.add(ct));
+    contentTypes.forEach(ct => slot.requestedContentTypes.add(ct));
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
       const content = {};
-      if (slot._requestedContentTypes.has('template')) {
+      if (slot.requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
       }
-      if (slot._requestedContentTypes.has('model')) {
+      if (slot.requestedContentTypes.has('model')) {
         content.model = this.render(...stateArgs);
       }
       content.templateName = this.getTemplateName(slot.slotName);
@@ -85,7 +85,7 @@ export class DomParticleBase extends Particle {
   forceRenderTemplate(slotName) {
     this._slotByName.forEach((slot, name) => {
       if (!slotName || (name == slotName)) {
-        slot._requestedContentTypes.add('template');
+        slot.requestedContentTypes.add('template');
       }
     });
   }

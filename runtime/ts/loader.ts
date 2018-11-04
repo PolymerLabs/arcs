@@ -18,7 +18,7 @@ import {MultiplexerDomParticle} from '../multiplexer-dom-particle.js';
 import {newClientReference} from './reference.js';
 import {TransformationDomParticle} from '../transformation-dom-particle.js';
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 

@@ -21,7 +21,7 @@ import {Manifest} from '../../runtime/ts-build/manifest.js';
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
 
-import {ParticleExecutionContext} from '../../runtime/particle-execution-context.js';
+import {ParticleExecutionContext} from '../../runtime/ts-build/particle-execution-context.js';
 import {StorageProviderFactory} from '../../runtime/ts-build/storage/storage-provider-factory.js';
 
 // Keep in sync with runtime/ts/storage/firebase-storage.ts
