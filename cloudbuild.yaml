@@ -6,12 +6,13 @@
 # subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 
 # Fetches the latest build and uses that as a cache to improve build times.
-#- name: 'gcr.io/cloud-builders/docker'
-#  args: ['pull', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest']
 
 steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build',
   '-t', 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA',
   '-t', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest',
+  '--cache-from', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest',
   '.']
