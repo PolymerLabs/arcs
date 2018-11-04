@@ -10,8 +10,8 @@
 
 import {assert} from './chai-web.js';
 import {Arc} from '../ts-build/arc.js';
-import {Description} from '../description.js';
-import {DescriptionDomFormatter} from '../description-dom-formatter.js';
+import {Description} from '../ts-build/description.js';
+import {DescriptionDomFormatter} from '../ts-build/description-dom-formatter.js';
 import {handleFor} from '../ts-build/handle.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {Relevance} from '../ts-build/relevance.js';
@@ -846,7 +846,7 @@ recipe
       assert.isUndefined(await description.getArcDescription());
 
       const recipeClone = recipe.clone();
-      description._arc._activeRecipe = recipeClone;
+      description.arc._activeRecipe = recipeClone;
       // Particle (static) spec pattern.
       recipeClone.particles[0].spec.pattern = 'hello world';
       await test.verifySuggestion(description, 'Hello world.');

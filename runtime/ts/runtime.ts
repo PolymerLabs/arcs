@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Description} from '../description.js';
+import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 
 // To start with, this class will simply hide the runtime classes that are
