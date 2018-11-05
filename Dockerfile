@@ -15,14 +15,14 @@ WORKDIR /usr/src/app
 # use the 'npm ci' command to get reproducable builds
 COPY package.json package-lock.json ./
 COPY server/package.json server/package-lock.json server/
-RUN npm ci && npm --prefix server ci 
+RUN npm ci && npm --prefix=server ci
 
 # Copy Everything Else
 COPY . .
 
 # Build and test everything
 RUN ./tools/sigh && npm run build:rollup
-RUN npm --prefix server test
+RUN npm --prefix=server test
 
 EXPOSE 8080
-CMD [ "npm", "--prefix", "server", "start" ]
+CMD [ "npm", "--prefix=server", "start" ]

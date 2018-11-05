@@ -16,4 +16,4 @@ steps:
   '-t', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest',
   '--cache-from', 'gcr.io/$PROJECT_ID/$REPO_NAME:latest',
   '.']
-
+images: ['gcr.io/$PROJECT_ID/$REPO_NAME']
