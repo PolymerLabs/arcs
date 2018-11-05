@@ -300,10 +300,7 @@ export class PECOuterPort extends APIPort {
     // stack traces attached to the API calls made from that side.
     this.registerCall('DevToolsConnected', {});
     DevtoolsConnection.onceConnected.then(devtoolsChannel => {
-      // The unit test for this class intefere with registerCall, which means the function is not actually present.
-      if (this.DevToolsConnected) {
-        this.DevToolsConnected();
-      }
+      this.DevToolsConnected();
       this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel);
     });
   }
