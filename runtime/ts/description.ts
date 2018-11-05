@@ -19,13 +19,12 @@ import {HandleConnection} from './recipe/handle-connection.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 export class Description {
-  relevance: {};
+  relevance: {} | null = null;
   readonly arc: Arc;
   _particle: Particle | undefined = undefined;
 
   constructor(arc) {
     this.arc = arc;
-    this.relevance = null;
   }
  
   async getArcDescription(formatterClass = DescriptionFormatter) : Promise<string> {

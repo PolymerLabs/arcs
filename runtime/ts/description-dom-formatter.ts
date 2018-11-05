@@ -14,10 +14,6 @@ import {DescriptionFormatter, CombinedDescriptionsOptions, ParticleDescription} 
 
 export class DescriptionDomFormatter extends DescriptionFormatter {
   private nextID = 0;
-  constructor(description) {
-    super(description);
-    this.nextID = 0;
-  }
 
   _isSelectedDescription(desc) {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
