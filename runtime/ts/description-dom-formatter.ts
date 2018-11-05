@@ -9,14 +9,11 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {DescriptionFormatter} from './description.js';
+import {assert} from '../../platform/assert-web.js';
+import {DescriptionFormatter, CombinedDescriptionsOptions, ParticleDescription} from './description.js';
 
 export class DescriptionDomFormatter extends DescriptionFormatter {
-  constructor(description) {
-    super(description);
-    this._nextID = 0;
-  }
+  private nextID = 0;
 
   _isSelectedDescription(desc) {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
@@ -35,7 +32,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     return result;
   }
 
-  async _combineSelectedDescriptions(selectedDescriptions, options) {
+  async _combineSelectedDescriptions(selectedDescriptions: ParticleDescription[], options: CombinedDescriptionsOptions) {
     const suggestionByParticleDesc = new Map();
     for (const particleDesc of selectedDescriptions) {
       if (this.seenParticles.has(particleDesc._particle)) {
@@ -45,7 +42,10 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       let {template, model} = this._retrieveTemplateAndModel(particleDesc, suggestionByParticleDesc.size, options || {});
 
       const success = await Promise.all(Object.keys(model).map(async tokenKey => {
-        const tokens = this._initSubTokens(model[tokenKey], particleDesc);
+        // TODO(mmandlis): this cast is invalid, as _initSubTokens can sometimes
+        // return a single element
+        const tokens = this._initSubTokens(model[tokenKey], particleDesc) as {}[];
+        
         return (await Promise.all(tokens.map(async token => {
           const tokenValue = await this.tokenToString(token);
           if (tokenValue == undefined) {
@@ -57,7 +57,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
             model = Object.assign(model, tokenValue.model);
           } else { // Text token.
             // Replace tokenKey, in case multiple selected suggestions use the same key.
-            const newTokenKey = `${tokenKey}${++this._nextID}`;
+            const newTokenKey = `${tokenKey}${++this.nextID}`;
             template = template.replace(`{{${tokenKey}}}`, `{{${newTokenKey}}}`);
             delete model[tokenKey];
             model[newTokenKey] = tokenValue;
@@ -100,12 +100,12 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     tokens.forEach((token, i) => {
       if (token.text) {
         template = template.concat(
-            `${(index == 0 && i == 0 && !options.skipFormatting) ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
+            `${(index === 0 && i === 0 && !options.skipFormatting) ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
       } else { // handle or slot handle.
         const sanitizedFullName = token.fullName.replace(/[.{}_$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.
-        if (i == 0 && !options.skipFormatting) {
+        if (i === 0 && !options.skipFormatting) {
           // Capitalize the first letter in the token.
           template = template.concat(`<style>
             [firstletter]::first-letter { text-transform: capitalize; }
@@ -156,7 +156,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       let delim;
       if (i < count - 2) {
         delim = ', ';
-      } else if (i == count - 2) {
+      } else if (i === count - 2) {
         delim = ['', '', ' and ', ', and '][Math.min(3, count)];
       }
       if (delim) {
@@ -175,8 +175,8 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     tokens = tokens.map(token => {
       if (typeof token !== 'object') {
         return {
-          template: `<span>{{text${++this._nextID}}}</span>`,
-          model: {[`text${this._nextID}`]: token}
+          template: `<span>{{text${++this.nextID}}}</span>`,
+          model: {[`text${this.nextID}`]: token}
         };
       }
       return token;
@@ -196,7 +196,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
         model: Object.assign(description.model, storeValue.model)
       };
     }
-    const descKey = `${token.handleName}Description${++this._nextID}`;
+    const descKey = `${token.handleName}Description${++this.nextID}`;
     return {
       template: `<span>{{${descKey}}}</span> (${storeValue.template})`,
       model: Object.assign({[descKey]: description}, storeValue.model)
@@ -204,7 +204,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _formatEntityProperty(handleName, properties, value) {
-    const key = `${handleName}${properties.join('')}Value${++this._nextID}`;
+    const key = `${handleName}${properties.join('')}Value${++this.nextID}`;
     return {
       template: `<b>{{${key}}}</b>`,
       model: {[`${key}`]: value}
@@ -212,7 +212,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _formatCollection(handleName, values) {
-    const handleKey = `${handleName}${++this._nextID}`;
+    const handleKey = `${handleName}${++this.nextID}`;
     if (values[0].rawData.name) {
       if (values.length > 2) {
         return {
@@ -222,7 +222,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       }
       return {
         template: values.map((v, i) => `<b>{{${handleKey}${i}}}</b>`).join(', '),
-        model: Object.assign(...values.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
+        model: Object.assign({}, ...values.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
       };
     }
     return {
@@ -246,5 +246,6 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
         model: {[`${handleName}Var`]: formattedValue}
       };
     }
+    return undefined;
   }
 }

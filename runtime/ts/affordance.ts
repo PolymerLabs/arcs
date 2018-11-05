@@ -12,7 +12,7 @@ import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
-import {DescriptionDomFormatter} from '../description-dom-formatter.js';
+import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 export class Affordance {
 
