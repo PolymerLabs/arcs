@@ -16,10 +16,11 @@ import {PlanProducer} from './plan-producer';
 import {Recipe} from '../recipe/recipe';
 import {ReplanQueue} from './replan-queue';
 import {Schema} from '../schema';
+import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type';
 
 export class Planificator {
-  static async create(arc, {userid, protocol}) {
+  static async create(arc: Arc, {userid, protocol}) {
     const store = await Planificator._initStore(arc, {userid, protocol, arcKey: null});
     const planificator = new Planificator(arc, userid, store);
     planificator.requestPlanning();
@@ -41,7 +42,7 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc, userid, store) {
+  constructor(arc: Arc, userid: string, store: StorageProviderBase) {
     this.arc = arc;
     this.userid = userid;
     this.producer = new PlanProducer(arc, store);
@@ -61,7 +62,7 @@ export class Planificator {
     return this.consumer.loadPlans();
   }
 
-  setSearch(search) {
+  setSearch(search: string) {
     search = search ? search.toLowerCase().trim() : null;
     search = (search !== '') ? search : null;
     if (this.search !== search) {
@@ -114,7 +115,7 @@ export class Planificator {
     });
   }
 
-  private static async _initStore(arc, {userid, protocol, arcKey}) {
+  private static async _initStore(arc, {userid, protocol, arcKey}): Promise<StorageProviderBase> {
     assert(userid, 'Missing user id.');
     let storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);
@@ -135,6 +136,7 @@ export class Planificator {
       case 'firebase':
         return storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
       case 'volatile':
+      case 'pouchdb':
         try {
           store = await storage.construct(id, type, storageKeyStr);
         } catch(e) {
@@ -143,17 +145,12 @@ export class Planificator {
         assert(store, `Failed initializing '${protocol}' store.`);
         store.referenceMode = false;
         return store;
-      case 'pouchdb':
-        store = storage.construct(id, type, storageKeyStr);
-        assert(store, `Failed initializing '${protocol}' store.`);
-        store.referenceMode = false;
-        return store;
       default:
-        assert(false, `Unsupported protocol '${protocol}'`);
+        throw new Error(`Unsupported protocol '${protocol}'`);
     }
   }
 
-  isArcPopulated() {
+  isArcPopulated(): boolean {
     if (this.arc.recipes.length === 0) return false;
     if (this.arc.recipes.length === 1) {
       const [recipe] = this.arc.recipes;
