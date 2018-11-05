@@ -10,7 +10,7 @@ import {Arc} from '../../../runtime/ts-build/arc.js';
 import {BrowserLoader} from './shell/browser-loader.js';
 import {MockSlotComposer} from './runtime/mock-slot-composer.js';
 import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../../../runtime/particle-execution-context.js';
+import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
 import {fetch} from '../../../runtime/fetch-node.js';
 import {Runtime} from '../../../runtime/ts-build/runtime.js';
 

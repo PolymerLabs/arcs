@@ -3,7 +3,7 @@ const runtime = `${arcs}/runtime`;
 const design = `${arcs}/design`;
 
 export default [
-  `${runtime}/particle-execution-context.js`,
+  `${runtime}/ts-build/particle-execution-context.js`,
   `${runtime}/particle.js`,
   `${runtime}/dom-particle-base.js`,
   `${runtime}/dom-particle.js`,

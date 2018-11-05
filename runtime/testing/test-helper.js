@@ -16,7 +16,7 @@ import {Loader} from '../ts-build/loader.js';
 import {Planner} from '../planner.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
