@@ -22,6 +22,7 @@ import {ON_DISK_DB} from './deployment/utils';
  * Environment variables recognized:
  * - `TARGET_DISK` used to store an on-disk pouch database.
  * - `ARCS_USER_ID` used to specify the user that owns this instance.
+ * - `STORAGE_KEY_BASE` default is `pouchdb://localhost:8080/user`
  */
 class PouchDbApp extends AppBase {
   // ref to Express instance
@@ -39,9 +40,16 @@ class PouchDbApp extends AppBase {
       userId = ShellPlanningInterface.USER_ID_CLETUS;
     }
 
+    let storageKeyBase = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user';
+
     // TODO(plindner): extract this into a separate coroutine instead
     // of starting it here.
-    ShellPlanningInterface.start('../', userId);
+    try {
+      console.log("starting shell planning for " + userId + ' with storage Key ' + storageKeyBase);
+      ShellPlanningInterface.start('../', userId, storageKeyBase);
+    } catch (err) {
+      console.warn(err);
+    }
   }
 
   protected addRoutes() {

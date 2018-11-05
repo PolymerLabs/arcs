@@ -24,6 +24,21 @@ By default the server runs on port 8080.  You can override this by passing in th
 The server exposes a `/db` endpoint mapped to an in-memory pouchdb instance.  A basic `index.html`
 page is provided with links to various functionality.
 
+## Environment Variables
+
+The following environment variables can be used to customize the server behavior.
+
+- `TARGET_DISK` if present enables storage of data on disk.
+- `ARCS_USER_ID` is the Profile Arc for a specific user to do cloud planning for.
+- `STORAGE_KEY_BASE` specifies where to store generated cloud planning data.  Default is  `pouchdb://localhost:8080/user`
+
+Here's an example of using environment variables:
+
+```
+  env TARGET_DISK=/var/arcs/db ARCS_USER_ID=-LMtek9LSN6eSMg97nXV STORAGE_KEY_BASE=https://dev.example.com:8080/user npm start
+```
+
+
 ## Development
 
 ### Basics

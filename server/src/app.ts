@@ -90,4 +90,3 @@ export abstract class AppBase {
     this.express.use('/arcs', router);
   }
 }
-
