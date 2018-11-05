@@ -40,7 +40,7 @@ class PouchDbApp extends AppBase {
       userId = ShellPlanningInterface.USER_ID_CLETUS;
     }
 
-    let storageKeyBase = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user';
+    const storageKeyBase = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user';
 
     // TODO(plindner): extract this into a separate coroutine instead
     // of starting it here.
