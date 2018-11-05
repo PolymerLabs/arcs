@@ -6,21 +6,29 @@ env:
     # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
     secure: "qFfvf0YAK5NWkH5fj708Z+1qIHtOFrmNhslB+n14rt5J3fJjY0A/4lbLbhx2jACYME+OU2m66maxh5abEZCF4ZGi4zpJa01IUYesTTa3qdM9kozB2TfFcl0d1xffuGpAh9kPchaadCvx/BU9fYFzkd8CLD5mQWCybwqM+6xpoO/KULDXhlcOPGbzg65xmPJANZH+ldH0NgfVLqofeFUg1j0bke1n+7DLf+Oh4ZiYZavciJjhuYx561TkkSEd1gqQGImEfkmKmhz82E8curx6uJW+kD9WagNbLj4FvEsBETIM7BSE8sei2vOVO42OnzvCej+P98IUelEqBS6sTeUNp79f8cC8n7nSYUJwTpshturBFoIFfcVQNoebdaao6gWpnxhUEnsc36AMl0DpIT0DsA9SxZQRjqhAEZmAWmASJMc5t/jWIjmJrqQxDy80HGJPEhIMTOAZfAiFqwyQwYTvJ0tOTW+jk2P9oriLHwi0Pr88uPGD5HWS6ULPoAutQAWMKCYgb5PoOiB8vbUZT9RTXfdLkHLkpw0ICaj5sam2o32CMLm8KZzfNVLJ/kUgdnkYUpC0vo+PGfguiJX8fvZxB06+niljW9iHteqVuoP1tADQwby4jS2ob3eL7TgCGuGk6gQkvHkLmOzlagKeXu1YZ0ow5vq6C+vSEfKEzIDrhXk="
 
+
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
 addons:
   chrome: stable
 
-script: "cd ${TRAVIS_BUILD_DIR} && npm ci && npm run test-with-start"
+script:
+  - npm run test-with-start
+  - npm run build:rollup
+  - npm --prefix=server test
 
 before_install:
   - npm install -g npm@6.4.1
   - node --version
   - npm --version
 
+install:
+  - npm ci
+  - npm --prefix=server ci
+
 before_deploy:
   # build apidocs
-  - cd ${TRAVIS_BUILD_DIR} && npm run build:typedoc 
+  - cd ${TRAVIS_BUILD_DIR} && npm run build:typedoc
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
   # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^shell\/build$/d' .gitignore
