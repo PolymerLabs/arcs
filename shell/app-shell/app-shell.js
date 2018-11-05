@@ -326,7 +326,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   // TODO(sjmiles): hack to be removed when we no longer support legacy planificator
   _onReplan() {
     const planificator = this.shadowRoot.querySelector('arc-planner')._state.planificator;
-    if (planificator) {
+    if (planificator && planificator._onDataChange) {
       planificator._onDataChange();
     }
   }
