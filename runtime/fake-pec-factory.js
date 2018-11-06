@@ -8,7 +8,7 @@
 
 'use strict';
 
-import {ParticleExecutionContext} from './particle-execution-context.js';
+import {ParticleExecutionContext} from './ts-build/particle-execution-context.js';
 import {MessageChannel} from './ts-build/message-channel.js';
 import {Loader} from './ts-build/loader.js';
 

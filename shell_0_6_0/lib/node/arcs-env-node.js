@@ -1,7 +1,7 @@
 import {NodeLoader} from './node-loader.js';
 import {ArcsEnv} from '../arcs-env.js';
 import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../../../runtime/particle-execution-context.js';
+import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
 
 // TODO(sjmiles): some runtime is ONLY accessible via build because of firebase, leading
 // to this tortured construction which affords access to that runtime via ArcsEnv namespace.

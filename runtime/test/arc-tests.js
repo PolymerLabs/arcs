@@ -18,7 +18,7 @@ import {Loader} from '../ts-build/loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 
 const loader = new Loader();
 

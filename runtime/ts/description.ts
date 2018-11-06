@@ -9,34 +9,40 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './ts-build/particle-spec.js';
+import {assert} from '../../platform/assert-web.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Arc} from './arc.js';
+import {Recipe} from './recipe/recipe.js';
+import {Handle} from './recipe/handle.js';
+import {Particle} from './recipe/particle.js';
+import {HandleConnection} from './recipe/handle-connection.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 export class Description {
+  relevance: {} | null = null;
+  readonly arc: Arc;
+  _particle: Particle | undefined = undefined;
+
   constructor(arc) {
-    this._arc = arc;
-    this._relevance = null;
+    this.arc = arc;
   }
-
-  get arc() { return this._arc; }
-  get relevance() { return this._relevance; }
-  set relevance(relevance) { this._relevance = relevance; }
-
-  async getArcDescription(formatterClass) {
-    const desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe);
+ 
+  async getArcDescription(formatterClass = DescriptionFormatter) : Promise<string> {
+    const desc = await new (formatterClass)(this).getDescription(this.arc.activeRecipe);
     if (desc) {
       return desc;
     }
+    return undefined;
   }
 
   async getRecipeSuggestion(formatterClass) {
     const formatter = await new (formatterClass || DescriptionFormatter)(this);
-    const desc = await formatter.getDescription(this._arc.recipes[this._arc.recipes.length - 1]);
+    const desc = await formatter.getDescription(this.arc.recipes[this.arc.recipes.length - 1]);
     if (desc) {
       return desc;
     }
 
-    return formatter._capitalizeAndPunctuate(this._arc.activeRecipe.name || Description.defaultDescription);
+    return formatter._capitalizeAndPunctuate(this.arc.activeRecipe.name || Description.defaultDescription);
   }
 
   async getHandleDescription(recipeHandle) {
@@ -46,23 +52,32 @@ export class Description {
     formatter.excludeValues = true;
     return await formatter.getHandleDescription(recipeHandle);
   }
+
+  static defaultDescription = 'i\'m feeling lucky';
 }
 
-Description.defaultDescription = 'i\'m feeling lucky';
+export type ParticleDescription = {_particle: Particle, pattern?: string, _connections: {[index: string]: HandleDescription}, _rank?: number};
+export type HandleDescription = {pattern: string, _handleConn: HandleConnection, _store: StorageProviderBase};
+
+export type CombinedDescriptionsOptions = {skipFormatting?: boolean};
 
 export class DescriptionFormatter {
+  private description: Description;
+  private arc: Arc;
+  private particleDescriptions = <ParticleDescription[]>[];
+  private seenHandles: Set<Handle> = new Set();
+  
+  seenParticles: Set<Particle> = new Set();
+  
+  excludeValues = false;
+  
   constructor(description) {
-    this._description = description;
-    this._arc = description._arc;
-    this._particleDescriptions = [];
-
-    this.seenHandles = new Set();
-    this.seenParticles = new Set();
-    this.excludeValues = false;
+    this.description = description;
+    this.arc = description.arc;
   }
 
-  async getDescription(recipe) {
-    await this._updateDescriptionHandles(this._description);
+  async getDescription(recipe: Recipe) {
+    await this._updateDescriptionHandles(this.description);
 
     if (recipe.patterns.length > 0) {
       let recipePatterns = [];
@@ -78,7 +93,7 @@ export class DescriptionFormatter {
 
     // Choose particles, sort them by rank and generate suggestions.
     const particlesSet = new Set(recipe.particles);
-    let selectedDescriptions = this._particleDescriptions
+    let selectedDescriptions = this.particleDescriptions
       .filter(desc => (particlesSet.has(desc._particle) && this._isSelectedDescription(desc)));
     // Prefer particles that render UI, if any.
     if (selectedDescriptions.find(desc => (desc._particle.spec.slots.size > 0))) {
@@ -89,26 +104,27 @@ export class DescriptionFormatter {
     if (selectedDescriptions.length > 0) {
       return this._combineSelectedDescriptions(selectedDescriptions);
     }
+    return undefined;
   }
 
-  _isSelectedDescription(desc) {
+  _isSelectedDescription(desc: ParticleDescription) {
     return !!desc.pattern;
   }
 
-  async getHandleDescription(recipeHandle) {
-    await this._updateDescriptionHandles(this._description);
+  async getHandleDescription(recipeHandle: Handle) {
+    await this._updateDescriptionHandles(this.description);
 
     const handleConnection = this._selectHandleConnection(recipeHandle) || recipeHandle.connections[0];
-    const store = this._arc.findStoreById(recipeHandle.id);
+    const store = this.arc.findStoreById(recipeHandle.id);
     return this._formatDescription(handleConnection, store);
   }
 
-  async _updateDescriptionHandles(description) {
-    this._particleDescriptions = [];
+  async _updateDescriptionHandles(description: Description) {
+    this.particleDescriptions = [];
 
     // Combine all particles from direct and inner arcs.
     const innerParticlesByName = {};
-    description._arc.recipes.forEach(recipe => {
+    description.arc.recipes.forEach(recipe => {
       const innerArcs = [...recipe.innerArcs.values()];
       innerArcs.forEach(innerArc => {
         innerArc.recipes.forEach(innerRecipe => {
@@ -123,12 +139,12 @@ export class DescriptionFormatter {
     const allParticles = description.arc.activeRecipe.particles.concat(Object.values(innerParticlesByName));
 
     await Promise.all(allParticles.map(async particle => {
-      this._particleDescriptions.push(await this._createParticleDescription(particle, description.relevance));
+      this.particleDescriptions.push(await this._createParticleDescription(particle, description.relevance));
     }));
   }
 
-  async _createParticleDescription(particle, relevance) {
-    let pDesc = {
+  async _createParticleDescription(particle: Particle, relevance) {
+    let pDesc : ParticleDescription = {
       _particle: particle,
       _connections: {}
     };
@@ -142,7 +158,7 @@ export class DescriptionFormatter {
       const specConn = particle.spec.connectionMap.get(handleConn.name);
       const pattern = descByName[handleConn.name] || specConn.pattern;
       if (pattern) {
-        const handleDescription = {pattern: pattern, _handleConn: handleConn, _store: this._arc.findStoreById(handleConn.handle.id)};
+        const handleDescription = {pattern, _handleConn: handleConn, _store: this.arc.findStoreById(handleConn.handle.id)};
         pDesc._connections[handleConn.name] = handleDescription;
       }
     });
@@ -152,14 +168,16 @@ export class DescriptionFormatter {
   async _getPatternByNameFromDescriptionHandle(particle) {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      const descHandle = this._arc.findStoreById(descriptionConn.handle.id);
+      const descHandle = this.arc.findStoreById(descriptionConn.handle.id);
       if (descHandle) {
-        const descList = await descHandle.toList();
+        // TODO(shans): fix this mess when there's a unified Collection class or interface.
+        const descList = await (<unknown>descHandle as {toList: () => Promise<{rawData: {key: string, value: string}}[]>}).toList();
         const descByName = {};
         descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
         return descByName;
       }
     }
+    return undefined;
   }
 
   _populateParticleDescription(particle, descriptionByName) {
@@ -167,7 +185,10 @@ export class DescriptionFormatter {
     return pattern ? {pattern} : {};
   }
 
-  async _combineSelectedDescriptions(selectedDescriptions, options) {
+  // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
+  // this into an output type hierarchy before we can assign a useful type to the output of this function.
+  // tslint:disable-next-line: no-any 
+  async _combineSelectedDescriptions(selectedDescriptions: ParticleDescription[], options: CombinedDescriptionsOptions = {}): Promise<any> {
     const suggestions = [];
     await Promise.all(selectedDescriptions.map(async particle => {
       if (!this.seenParticles.has(particle._particle)) {
@@ -176,15 +197,19 @@ export class DescriptionFormatter {
     }));
     const jointDescription = this._joinDescriptions(suggestions);
     if (jointDescription) {
-      if ((options || {}).skipFormatting) {
+      if (options.skipFormatting) {
         return jointDescription;
       } else {
         return this._capitalizeAndPunctuate(jointDescription);
       }
     }
+    return undefined;
   }
 
-  _joinDescriptions(strings) {
+  // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
+  // this into an output type hierarchy before we can assign a useful type to the output of this function.
+  // tslint:disable-next-line: no-any 
+  _joinDescriptions(strings): any {
     const nonEmptyStrings = strings.filter(str => str);
     const count = nonEmptyStrings.length;
     if (count > 0) {
@@ -196,6 +221,7 @@ export class DescriptionFormatter {
       const lastString = nonEmptyStrings.pop();
       return `${nonEmptyStrings.join(', ')}${delim}${lastString}`;
     }
+    return undefined;
   }
 
   _joinTokens(tokens) {
@@ -213,9 +239,10 @@ export class DescriptionFormatter {
     const tokens = this._initTokens(pattern, particleDescription);
     const tokenPromises = tokens.map(async token => await this.tokenToString(token));
     const tokenResults = await Promise.all(tokenPromises);
-    if (tokenResults.filter(res => res == undefined).length == 0) {
+    if (tokenResults.filter(res => res == undefined).length === 0) {
       return this._joinTokens(tokenResults);
     }
+    return undefined;
   }
 
   _initTokens(pattern, particleDescription) {
@@ -249,8 +276,7 @@ export class DescriptionFormatter {
   _initSubTokens(pattern, particleDescription) {
     const valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
     const handleNames = valueTokens[1].split('.');
-    const extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
-    let valueToken;
+    const extra = valueTokens.length === 3 ? valueTokens[2] : undefined;
 
     // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
     if (!particleDescription._particle) {
@@ -259,13 +285,13 @@ export class DescriptionFormatter {
         console.warn(`Invalid particle name '${particleName}' - must start with a capital letter.`);
         return [];
       }
-      const particleDescriptions = this._particleDescriptions.filter(desc => {
-        return desc._particle.name == particleName
+      const particleDescriptions = this.particleDescriptions.filter(desc => {
+        return desc._particle.name === particleName
             // The particle description is from the current recipe.
-            && particleDescription._recipe.particles.find(p => p == desc._particle);
+            && particleDescription._recipe.particles.find(p => p === desc._particle);
       });
 
-      if (particleDescriptions.length == 0) {
+      if (particleDescriptions.length === 0) {
         console.warn(`Cannot find particles with name ${particleName}.`);
         return [];
       }
@@ -277,8 +303,10 @@ export class DescriptionFormatter {
     }
     const particle = particleDescription._particle;
 
-    if (handleNames.length == 0) {
-      // return a  particle token
+    if (handleNames.length === 0) {
+      // return a particle token
+      // TODO(mmandlis): this is inconsistent with the rest of the function, which returns
+      // lists.
       return {
         particleName: particle.spec.name,
         particleDescription
@@ -294,12 +322,12 @@ export class DescriptionFormatter {
         properties: handleNames.splice(1),
         extra,
         _handleConn: handleConn,
-        _store: this._arc.findStoreById(handleConn.handle.id)}];
+        _store: this.arc.findStoreById(handleConn.handle.id)}];
     }
 
     // slot connection
-    if (handleNames.length != 2) {
-      if (handleNames.length == 1) {
+    if (handleNames.length !== 2) {
+      if (handleNames.length === 1) {
         console.warn(`Unknown handle connection name '${handleNames[0]}'`);
       } else {
         console.warn(`Slot connections tokens must have exactly 2 names, found ${handleNames.length} in '${handleNames.join('.')}'`);
@@ -383,7 +411,7 @@ export class DescriptionFormatter {
   }
 
   _combineDescriptionAndValue(token, description, storeValue) {
-    if (description == storeValue) {
+    if (description === storeValue) {
       return description;
     }
     return `${description} (${storeValue})`;
@@ -393,14 +421,14 @@ export class DescriptionFormatter {
     switch (token.extra) {
       case '_empty_':
         // TODO: also return false, if the consuming particles generate an empty description.
-        return token._providedSlotConn.consumeConnections.length == 0;
+        return token._providedSlotConn.consumeConnections.length === 0;
       default:
         assert(!token.extra, `Unrecognized slot extra ${token.extra}`);
     }
 
     const results = (await Promise.all(token._providedSlotConn.consumeConnections.map(async consumeConn => {
       const particle = consumeConn.particle;
-      const particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
+      const particleDescription = this.particleDescriptions.find(desc => desc._particle === particle);
       this.seenParticles.add(particle);
       return this.patternToSuggestion(particle.spec.pattern, particleDescription);
     })));
@@ -465,7 +493,10 @@ export class DescriptionFormatter {
     }
   }
 
-  _formatBigCollection(handleName, firstValue) {
+  // TODO(mmandlis): the override of this function in subclasses also overrides the output. We'll need to unify
+  // this into an output type hierarchy before we can assign a useful type to the output of this function.
+  // tslint:disable-next-line: no-any 
+  _formatBigCollection(handleName, firstValue): any {
     return `collection of items like ${firstValue.rawData.name}`;
   }
 
@@ -501,20 +532,21 @@ export class DescriptionFormatter {
       }
     }
 
-    const chosenParticleDescription = this._particleDescriptions.find(desc => desc._particle == chosenConnection.particle);
+    const chosenParticleDescription = this.particleDescriptions.find(desc => desc._particle === chosenConnection.particle);
     const handleDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
     // Add description to result array.
     if (handleDescription) {
       // Add the connection spec's description pattern.
       return await this.patternToSuggestion(handleDescription.pattern, chosenParticleDescription);
     }
+    return undefined;
   }
   _formatStoreDescription(handleConn, store) {
     if (store) {
-      const storeDescription = this._arc.getStoreDescription(store);
+      const storeDescription = this.arc.getStoreDescription(store);
       const handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).
-      if (!!storeDescription && storeDescription != handleType) {
+      if (!!storeDescription && storeDescription !== handleType) {
         return storeDescription;
       }
     }
@@ -528,20 +560,20 @@ export class DescriptionFormatter {
     const possibleConnections = recipeHandle.connections.filter(connection => {
       // Choose connections with patterns (manifest-based or dynamic).
       const connectionSpec = connection.spec;
-      const particleDescription = this._particleDescriptions.find(desc => desc._particle == connection.particle);
+      const particleDescription = this.particleDescriptions.find(desc => desc._particle === connection.particle);
       return !!connectionSpec.pattern || !!particleDescription._connections[connection.name];
     });
 
     possibleConnections.sort((c1, c2) => {
       const isOutput1 = c1.spec.isOutput;
       const isOutput2 = c2.spec.isOutput;
-      if (isOutput1 != isOutput2) {
+      if (isOutput1 !== isOutput2) {
         // Prefer output connections
         return isOutput1 ? -1 : 1;
       }
 
-      const d1 = this._particleDescriptions.find(desc => desc._particle == c1.particle);
-      const d2 = this._particleDescriptions.find(desc => desc._particle == c2.particle);
+      const d1 = this.particleDescriptions.find(desc => desc._particle === c1.particle);
+      const d2 = this.particleDescriptions.find(desc => desc._particle === c2.particle);
       // Sort by particle's rank in descending order.
       return d2._rank - d1._rank;
     });
@@ -552,16 +584,16 @@ export class DescriptionFormatter {
   }
 
   static sort(p1, p2) {
-    const isRoot = (slotSpec) => slotSpec.name == 'root' || slotSpec.tags.includes('root');
+    const isRoot = (slotSpec) => slotSpec.name === 'root' || slotSpec.tags.includes('root');
     // Root slot comes first.
     const hasRoot1 = Boolean([...p1._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
     const hasRoot2 = Boolean([...p2._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
-    if (hasRoot1 != hasRoot2) {
+    if (hasRoot1 !== hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }
 
     // Sort by rank
-    if (p1._rank != p2._rank) {
+    if (p1._rank !== p2._rank) {
       return p2._rank - p1._rank;
     }
 

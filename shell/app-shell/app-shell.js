@@ -323,9 +323,12 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   _onSerialization(e, serialization) {
     this._setState({pendingSerialization: serialization});
   }
+  // TODO(sjmiles): hack to be removed when we no longer support legacy planificator
   _onReplan() {
-    // hackity hack
-    this.shadowRoot.querySelector('arc-planner')._state.planificator._onDataChange();
+    const planificator = this.shadowRoot.querySelector('arc-planner')._state.planificator;
+    if (planificator && planificator._onDataChange) {
+      planificator._onDataChange();
+    }
   }
 }
 

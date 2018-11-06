@@ -9,108 +9,209 @@
  */
 import {Container, ContainerManager} from "../containers";
 import {Disk} from "../disks";
-
 import {
   Core_v1Api,
+  Extensions_v1beta1Api, ExtensionsV1beta1DeploymentSpec,
   KubeConfig,
+  V1beta1HTTPIngressPath,
+  V1beta1HTTPIngressRuleValue,
+  V1beta1Ingress,
+  V1beta1IngressBackend,
+  V1beta1IngressRule,
+  V1beta1IngressSpec,
   V1Container,
   V1ContainerPort,
   V1EnvVar,
   V1GCEPersistentDiskVolumeSource,
   V1ObjectMeta,
   V1PersistentVolume,
-  V1PersistentVolumeSpec,
-  V1Pod,
-  V1PodSpec,
+  V1PersistentVolumeSpec, V1PodSpec,
+  V1PodTemplateSpec,
   V1Service,
   V1ServicePort,
   V1ServiceSpec,
   V1Volume,
   V1VolumeMount
 } from "@kubernetes/client-node";
-import {ON_DISK_DB} from "../utils";
 
-const CONTAINER_PORT = 8080;
-const EXTERNAL_PORT = 80;
+import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+import {
+  ARCS_DOCKER_IMAGE,
+  ARCS_INGRESS_PREFIX,
+  CONTAINER_PORT,
+  EXTERNAL_PORT,
+  K18S_NAMESPACE
+} from "./k18s-constants";
+import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
+import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
+import {CloudManager} from "../cloud";
+import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
+
+
+const USE_PREFIX_MAPPING = true;
 
 /**
  * An implementation of the Container interface that uses Kubernetes for
  * orchestration of deployed VMs.
  */
-class K18sPod implements Container {
-  private v1Pod: V1Pod;
+class K18sDeployment implements Container {
+  private v1Deployment: ExtensionsV1beta1Deployment;
   private v1Service: V1Service;
+  private k8sApi: Core_v1Api;
+  private ingress: V1beta1Ingress;
 
-  constructor(v1Pod: V1Pod, v1Service: V1Service) {
-    this.v1Pod = v1Pod;
+  constructor(k8sApi: Core_v1Api, v1Deployment: ExtensionsV1beta1Deployment, v1Service: V1Service,
+              ingress: V1beta1Ingress) {
+    this.k8sApi = k8sApi;
+    this.v1Deployment = v1Deployment;
     this.v1Service = v1Service;
+    this.ingress = ingress;
   }
 
   url(): string {
-    // TODO: hacky, we should use JSON
-    if (this.v1Service.status && this.v1Service.status.loadBalancer &&
-      this.v1Service.status.loadBalancer.ingress && this.v1Service.status.loadBalancer.ingress.length) {
-      const ingress = this.v1Service.status.loadBalancer.ingress[0];
-      // TODO: this needs to be HTTPS, which requires an Ingress server + DNS + TLS cert to be configured
-      return 'http://' + ingress.ip + ':' + this.v1Service.spec.ports[0].port;
+    if (USE_PREFIX_MAPPING) {
+      const path = this.ingress.spec.rules[0].http.paths
+        .filter(x => x.backend.serviceName === this.v1Service.metadata.name);
+      return 'https://' + this.ingress.spec.tls[0].hosts[0] + path[0].path;
     } else {
-      return 'pending';
+      const lb = this.v1Service.status.loadBalancer;
+      if (lb && lb.ingress) {
+        return 'http://' + lb && lb.ingress[0].ip;
+      } else {
+        return "pending";
+      }
     }
   }
 
-  disk(): PromiseLike<Disk> {
-    return Promise.reject("not yet implemented");
+  status(): string {
+    return this.v1Deployment.status.readyReplicas > 0 ? 'Running' : 'Pending';
   }
 
+  async disk(): Promise<Disk> {
+    const diskManager = CloudManager.forGCP().disks();
+
+    const disks = await Promise.all(Object.keys(this.v1Deployment.metadata.labels)
+       .filter(x => x.startsWith(ARCS_KEY_PREFIX))
+       .map(x => diskManager.find(x.substring(ARCS_KEY_PREFIX.length))));
+    if (disks != null && disks.length > 0) {
+      const disk:Disk = disks[0] as Disk;
+      return Promise.resolve(disk);
+    }
+    return Promise.reject(new Error("Container has no disk associated"));
+  }
+
+  async node(): Promise<string> {
+    const {body:v1Pod} = await this.k8sApi.readNamespacedPod(this.v1Deployment.metadata.name, K18S_NAMESPACE,
+      undefined, false,false);
+    return Promise.resolve(v1Pod.spec.nodeName);
+  }
 }
 
 export class K18sContainerManager implements ContainerManager {
 
   k8sApi: Core_v1Api;
+  k8sBetaApi: Extensions_v1beta1Api;
+  k8sName: string;
+  appName: string;
+  releaseName: string;
 
   constructor() {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     this.k8sApi = kc.makeApiClient(Core_v1Api);
+    this.k8sBetaApi = kc.makeApiClient(Extensions_v1beta1Api);
+    this.k8sName = process.env['MY_NODE_NAME'] || "";
+    this.appName = process.env['MY_APP_NAME'] || "";
+    this.releaseName = process.env['MY_RELEASE_NAME'] || "";
+    if (this.k8sName === "" || this.appName === "" || this.releaseName === "") {
+      console.log("Missing environment variable MY_NODE_NAME, MY_APP_NAME, MY_RELEASE_NAME for Docker environment");
+      throw new Error("Missing MY_NODE_NAME, MY_APP_NAME, or MY_RELEASE_NAME environment variable");
+    }
   }
 
-  async deploy(fingerprint: string, encryptedDisk: Disk): Promise<Container> {
-    if (encryptedDisk.type() !== 'gcePersistentDisk') {
+  /**
+   * Find a free node in the GCP cluster where we're going to deploy. Currently picks at random:
+   * TODO: watch out for picking full nodes
+   * TODO: can we use K8S node affinity somehow for this instead?
+   */
+  async findAvailableNode(): Promise<string> {
+     const {body: nodeList} = await this.k8sApi.listNode();
+     const nodeNames = [...nodeList.items.map(node => node.metadata.name)];
+     return Promise.resolve(nodeNames[Math.floor(Math.random() * nodeNames.length)]);
+  }
+
+  async deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): Promise<Container> {
+    if (encryptedDisk.type() !== GCE_PERSISTENT_DISK_TYPE) {
       return Promise.reject(new Error('Cant use non-GCE disk on K8s yet'));
     }
 
+    // TODO: we should probably check to see if a container already exists with this id and is stuck
+    // waiting for an unmounted disk, or doesn't exist. We can delete and restart it in that case.
     try {
       /**
-       * We need to do 3 things:
-       * 1. Create a Kubernetes PersistentVolume that references an already existing disk
+       * We need to do 5 things:
+       * 1. Attach a GCE disk to specific GCE node
+       * 2. Create a Kubernetes PersistentVolume that references an already existing disk
        * (https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
        *
-       * 2. Create a Pod that mounts this Persistent Volume and deploys our docker image
+       * 3. Create a Pod that mounts this Persistent Volume and deploys our docker image to this specific node
        *
-       * 3. A Kubernetes Service which acts as an Ingress so that our Pod is visible to the
-       * external world with an external IP address.
+       * 4. A Kubernetes Service which exposes our Pod is visible to the Ingress
        *
-       * TODO: rather than give each Pod their own external IP, we can create an Ingress object
-       * that does virtual hosting. We use a single external load balancer IP, and map
-       * /<user key fingerprint/pathInfo to each deployed pod. So Container addresses returned to client
-       * will be https://<load balancer ip>:443/<base64 user key/<action, e.g. pouchdb>.
-       *
-       * TODO: use lets-encrypt to provision a cert and deploy it as a Kubernetes secret
-       * TODO: need some kind of cloud-dns setup script so SSL cert has a domain name
+       * 5. Update Ingress to map /cloud/fingerprint -> Service so the external world can find out service
        */
+      const node = await this.findAvailableNode();
+      const mounted = await encryptedDisk.mount(rewrappedKey, node);
+      console.log("Disk mounted " + mounted);
       const {body: createdPersistentVolume} = await this.requestNewPersistentVolume(encryptedDisk);
       console.log("Created new persistent volume " + createdPersistentVolume.metadata.name);
-      const {body: createdPod} = await this.requestCreatePod(encryptedDisk, fingerprint);
-      console.log("Created new pod " + createdPod.metadata.name);
-      const {body: createdService} = await this.requestCreateService(fingerprint, createdPod);
+      const {body: createDeployment} = await this.requestCreateDeployment(encryptedDisk, fingerprint, rewrappedKey, node);
+      console.log("Created new deployment " + createDeployment.metadata.name);
+      const {body: createdService} = await this.requestCreateService(fingerprint, createDeployment);
       console.log("Created new service " + createdService.metadata.name);
-      return Promise.resolve(new K18sPod(createdPod, createdService));
+      let ingress;
+      if (USE_PREFIX_MAPPING) {
+        const {body: updatedIngress} = await this.requestUpdateIngress(fingerprint, createdService);
+        console.log("Ingress updated " + JSON.stringify(updatedIngress));
+        ingress = updatedIngress;
+      }
+      return Promise.resolve(new K18sDeployment(this.k8sApi, createDeployment, createdService, ingress));
     } catch (e) {
-      return Promise.reject(e);
+      console.dir(e);
+      return Promise.reject(JSON.stringify(e));
     }
   }
 
-  private async requestCreateService(fingerprint: string, pod: V1Pod) {
+  private async requestUpdateIngress(fingerprint: string, service: V1Service) {
+    const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(this.k8sName, K18S_NAMESPACE,
+      undefined, false, false);
+    const newIngress = new V1beta1Ingress();
+    const spec = new V1beta1IngressSpec();
+    const rule = new V1beta1IngressRule();
+    spec.rules = [rule];
+    rule.http = new V1beta1HTTPIngressRuleValue();
+
+    const path = new V1beta1HTTPIngressPath();
+    path.path = ARCS_INGRESS_PREFIX + fingerprint + '/*';
+    path.backend = new V1beta1IngressBackend();
+    path.backend.serviceName = service.metadata.name;
+    path.backend.servicePort = EXTERNAL_PORT;
+    rule.http.paths = ingress.spec.rules[0].http.paths;
+    rule.http.paths.push(path);
+    newIngress.spec = spec;
+
+    const oldHeaders = this.k8sBetaApi['defaultHeaders'];
+    this.k8sBetaApi['defaultHeaders'] = Object.assign({'Content-Type': 'application/strategic-merge-patch+json'},
+      oldHeaders);
+    try {
+      return await this.k8sBetaApi.patchNamespacedIngress(this.k8sName, K18S_NAMESPACE,
+        newIngress, undefined);
+    } finally {
+      this.k8sBetaApi['defaultHeaders'] = oldHeaders;
+    }
+  }
+
+  private async requestCreateService(fingerprint: string, deployment: ExtensionsV1beta1Deployment) {
     // TODO: consider using NodePort + Ingress
     const service = new V1Service();
     service.apiVersion = 'v1';
@@ -119,8 +220,8 @@ export class K18sContainerManager implements ContainerManager {
     service.metadata = new V1ObjectMeta();
     service.metadata.name = 'svc-' + fingerprint;
     service.spec.selector = {};
-    service.spec.selector['app'] = pod.metadata.name;
-    service.spec.type = 'LoadBalancer';
+    service.spec.selector['app'] = deployment.spec.template.metadata.name;
+    service.spec.type = USE_PREFIX_MAPPING ? 'NodePort' : 'LoadBalancer';
 
     const v1ServicePort = new V1ServicePort();
     v1ServicePort.port = EXTERNAL_PORT;
@@ -128,39 +229,53 @@ export class K18sContainerManager implements ContainerManager {
 
     service.spec.ports = [v1ServicePort];
 
-    return this.k8sApi.createNamespacedService('default', service);
+    return this.k8sApi.createNamespacedService(K18S_NAMESPACE, service);
   }
 
-  private async requestCreatePod(encryptedDisk: Disk, fingerprint: string) {
+  private async requestCreateDeployment(encryptedDisk: Disk, fingerprint: string, rewrappedKey: string, node: string) {
     const volumeName = encryptedDisk.id();
     const gceVolume = this.createGCEVolume(volumeName, encryptedDisk);
     const container = this.createContainer(fingerprint, volumeName);
 
-    const v1Pod = new V1Pod();
-    v1Pod.kind = 'Pod';
-    v1Pod.apiVersion = 'v1';
-    v1Pod.spec = new V1PodSpec();
-    v1Pod.spec.volumes = [gceVolume];
-    v1Pod.spec.containers = [container];
-    v1Pod.metadata = new V1ObjectMeta();
-    v1Pod.metadata.name = 'pod-' + fingerprint;
-    v1Pod.metadata.labels = {};
-    v1Pod.metadata.labels['app'] = v1Pod.metadata.name;
-
-    return this.k8sApi.createNamespacedPod('default', v1Pod);
+    const v1Deployment = new ExtensionsV1beta1Deployment();
+    v1Deployment.kind = 'Deployment';
+    v1Deployment.apiVersion = 'extensions/v1beta1';
+    v1Deployment.metadata = new V1ObjectMeta();
+    v1Deployment.metadata.name = 'pod-' + fingerprint;
+    v1Deployment.spec = new ExtensionsV1beta1DeploymentSpec();
+    v1Deployment.spec.template = new V1PodTemplateSpec();
+    // TODO: use NodeAffinity instead?
+    v1Deployment.spec.template.spec = new V1PodSpec();
+    v1Deployment.spec.template.spec.nodeSelector = {};
+    v1Deployment.spec.template.spec.nodeSelector['kubernetes.io/hostname'] = node;
+    v1Deployment.spec.replicas = 1;
+    v1Deployment.spec.template.spec.volumes = [gceVolume];
+    v1Deployment.spec.template.spec.containers = [container];
+    v1Deployment.spec.template.metadata = new V1ObjectMeta();
+    v1Deployment.spec.template.metadata.name = 'pod-' + fingerprint;
+    v1Deployment.spec.template.metadata.labels = {};
+    v1Deployment.spec.template.metadata.labels['app'] = v1Deployment.spec.template.metadata.name;
+    v1Deployment.spec.template.metadata.annotations = {};
+    v1Deployment.spec.template.metadata.annotations[arcsKeyFor(fingerprint)] = rewrappedKey;
+    return this.k8sBetaApi.createNamespacedDeployment(K18S_NAMESPACE, v1Deployment);
   }
 
   private createContainer(fingerprint: string, volumeName) {
     const container = new V1Container();
     // TODO: use SHA-1/commit hash based tagging?
-    container.image = 'gcr.io/arcs-project/deployment:latest';
+    container.image = ARCS_DOCKER_IMAGE;
     container.name = 'container-image-' + fingerprint;
     const volumeMount = this.createVolumeMount(volumeName);
     container.volumeMounts = [volumeMount];
     const targetDiskEnv = new V1EnvVar();
     targetDiskEnv.name = ON_DISK_DB;
     targetDiskEnv.value = "true";
-    container.env = [targetDiskEnv];
+    const urlPrefix = new V1EnvVar();
+
+    urlPrefix.name = VM_URL_PREFIX;
+    urlPrefix.value = '/';
+
+    container.env = [targetDiskEnv, urlPrefix];
     const v1ContainerPort = new V1ContainerPort();
     v1ContainerPort.containerPort = CONTAINER_PORT;
     container.ports = [v1ContainerPort];
@@ -170,7 +285,7 @@ export class K18sContainerManager implements ContainerManager {
   private createVolumeMount(volumeName) {
     const volumeMount = new V1VolumeMount();
     volumeMount.name = volumeName;
-    volumeMount.mountPath = '/personalcloud';
+    volumeMount.mountPath = DISK_MOUNT_PATH;
     return volumeMount;
   }
 
@@ -206,7 +321,7 @@ export class K18sContainerManager implements ContainerManager {
   private makePersistentVolumeSpec(encryptedDisk: Disk) {
     const spec = new V1PersistentVolumeSpec();
     spec.accessModes = ["ReadWriteOnce"];
-    spec.capacity = {storage: '10Gi'};
+    spec.capacity = {storage: DEFAULT_GCP_DISK_SIZE + 'Gi'};
     spec.gcePersistentDisk = new V1GCEPersistentDiskVolumeSource();
     spec.gcePersistentDisk.fsType = 'ext4';
     spec.gcePersistentDisk.pdName = encryptedDisk.id();
@@ -214,21 +329,20 @@ export class K18sContainerManager implements ContainerManager {
   }
 
   async find(fingerprint: string): Promise<Container | null> {
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
 
-    const k8sApi = kc.makeApiClient(Core_v1Api);
-    const {response, body} = await k8sApi.listNamespacedPod('default', undefined,
+    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(K18S_NAMESPACE, undefined,
       undefined, undefined,
       true, undefined);
+    const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(this.k8sName, K18S_NAMESPACE,
+      undefined, false, false);
 
-    const podList = body.items;
-    if (podList.length > 0) {
+    const deploymentList = v1Deployment.items;
+    if (deploymentList.length > 0) {
 
-      const {response, body} = await k8sApi.listNamespacedService('default', undefined,
+      const {body:v1Service} = await this.k8sApi.listNamespacedService(K18S_NAMESPACE, undefined,
         undefined, "metadata.name=svc-"+fingerprint, true, undefined);
-      if (body.items.length > 0) {
-        return Promise.resolve(new K18sPod(podList[0], body.items[0]));
+      if (v1Service.items.length > 0) {
+        return Promise.resolve(new K18sDeployment(this.k8sApi, deploymentList[0], v1Service.items[0], ingress));
       }
     }
     return Promise.resolve(null);

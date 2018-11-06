@@ -9,22 +9,29 @@
  */
 'use strict';
 
-import {handleFor} from './ts-build/handle.js';
-import {assert} from '../platform/assert-web.js';
-import {PECInnerPort} from './api-channel.js';
-import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
+import {handleFor} from './handle.js';
+import {assert} from '../../platform/assert-web.js';
+import {PECInnerPort} from '../api-channel.js';
+import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Loader} from './loader.js';
+import {Particle} from '../particle.js';
 
 export class ParticleExecutionContext {
-  constructor(port, idBase, loader) {
-    this._apiPort = new PECInnerPort(port);
-    this._particles = [];
-    this._idBase = idBase;
-    this._nextLocalID = 0;
-    this._loader = loader;
+  private apiPort : PECInnerPort;
+  private particles = <Particle[]>[];
+  private idBase: string;
+  private _nextLocalID = 0;
+  private loader: Loader;
+  private pendingLoads = <Promise<void>[]>[]; 
+  private scheduler: StorageProxyScheduler = new StorageProxyScheduler();
+  private keyedProxies: { [index: string]: StorageProxy} = {};
+
+  constructor(port, idBase: string, loader: Loader) {
+    this.apiPort = new PECInnerPort(port);
+    this.idBase = idBase;
+    this.loader = loader;
     loader.setParticleExecutionContext(this);
-    this._pendingLoads = [];
-    this._scheduler = new StorageProxyScheduler();
-    this._keyedProxies = {};
 
     /*
      * This code ensures that the relevant types are known
@@ -36,96 +43,98 @@ export class ParticleExecutionContext {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    this._apiPort.onDefineHandle = ({type, identifier, name}) => {
-      return new StorageProxy(identifier, type, this._apiPort, this, this._scheduler, name);
+    this.apiPort.onDefineHandle = ({type, identifier, name}) => {
+      return new StorageProxy(identifier, type, this.apiPort, this, this.scheduler, name);
     };
 
-    this._apiPort.onGetBackingStoreCallback = ({type, id, name, callback, storageKey}) => {
-      const proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
+    this.apiPort.onGetBackingStoreCallback = ({type, id, name, callback, storageKey}) => {
+      const proxy = new StorageProxy(id, type, this.apiPort, this, this.scheduler, name);
       proxy.storageKey = storageKey;
       return [proxy, () => callback(proxy, storageKey)];
     };
 
 
-    this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      const proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
+    this.apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
+      const proxy = new StorageProxy(id, type, this.apiPort, this, this.scheduler, name);
       return [proxy, () => callback(proxy)];
     };
 
-    this._apiPort.onMapHandleCallback = ({id, callback}) => {
+    this.apiPort.onMapHandleCallback = ({id, callback}) => {
       return [id, () => callback(id)];
     };
 
-    this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
+    this.apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
       return [hostedSlotId, () => callback(hostedSlotId)];
     };
 
-    this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
+    this.apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
       transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
     };
 
-    this._apiPort.onStop = () => {
-      if (global.close) {
-        global.close();
+    this.apiPort.onStop = () => {
+      if (global['close']) {
+        global['close']();
       }
     };
 
-    this._apiPort.onInstantiateParticle =
+    this.apiPort.onInstantiateParticle =
       ({id, spec, handles}) => this._instantiateParticle(id, spec, handles);
 
-    this._apiPort.onSimpleCallback = ({callback, data}) => callback(data);
+    this.apiPort.onSimpleCallback = ({callback, data}) => callback(data);
 
-    this._apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
+    this.apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
 
-    this._apiPort.onAwaitIdle = ({version}) =>
+    this.apiPort.onAwaitIdle = ({version}) =>
       this.idle.then(a => {
         // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
         // update relevance, after handles are updated. Needs better idle signal.
-        setTimeout(() => { this._apiPort.Idle({version, relevance: this.relevance}); }, 0);
+        setTimeout(() => { this.apiPort.Idle({version, relevance: this.relevance}); }, 0);
       });
 
-    this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
+    this.apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 
-    this._apiPort.onStartRender = ({particle, slotName, contentTypes}) => {
+    this.apiPort.onStartRender = ({particle, slotName, contentTypes}) => {
       /** @class Slot
        * A representation of a consumed slot. Retrieved from a particle using
        * particle.getSlot(name)
        */
       class Slotlet {
-        constructor(pec, particle, slotName) {
-          this._slotName = slotName;
-          this._particle = particle;
-          this._handlers = new Map();
-          this._pec = pec;
-          this._requestedContentTypes = new Set();
+        readonly slotName: string;
+        readonly particle: ParticleSpec;
+        private handlers = new Map<string, ((event: {}) => void)[]>();
+        private pec: ParticleExecutionContext;
+        private requestedContentTypes = new Set<string>();
+        private _isRendered = false;
+        constructor(pec: ParticleExecutionContext, particle: ParticleSpec, slotName: string) {
+          this.slotName = slotName;
+          this.particle = particle;
+          this.pec = pec;
         }
-        get particle() { return this._particle; }
-        get slotName() { return this._slotName; }
         get isRendered() { return this._isRendered; }
         /** @method render(content)
          * renders content to the slot.
          */
         render(content) {
-          this._pec._apiPort.Render({particle, slotName, content});
+          this.pec.apiPort.Render({particle, slotName, content});
 
-          Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key); });
+          Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });
           // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-          this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
+          this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
         }
         /** @method registerEventHandler(name, f)
          * registers a callback to be invoked when 'name' event happens.
          */
         registerEventHandler(name, f) {
-          if (!this._handlers.has(name)) {
-            this._handlers.set(name, []);
+          if (!this.handlers.has(name)) {
+            this.handlers.set(name, []);
           }
-          this._handlers.get(name).push(f);
+          this.handlers.get(name).push(f);
         }
         clearEventHandlers(name) {
-          this._handlers.set(name, []);
+          this.handlers.set(name, []);
         }
         fireEvent(event) {
-          for (const handler of this._handlers.get(event.handler) || []) {
+          for (const handler of this.handlers.get(event.handler) || []) {
             handler(event);
           }
         }
@@ -135,7 +144,7 @@ export class ParticleExecutionContext {
       particle.renderSlot(slotName, contentTypes);
     };
 
-    this._apiPort.onStopRender = ({particle, slotName}) => {
+    this.apiPort.onStopRender = ({particle, slotName}) => {
       assert(particle._slotByName.has(slotName),
         `Stop render called for particle ${particle.name} slot ${slotName} without start render being called.`);
       particle._slotByName.delete(slotName);
@@ -143,19 +152,19 @@ export class ParticleExecutionContext {
   }
 
   generateIDComponents() {
-    return {base: this._idBase, component: () => this._nextLocalID++};
+    return {base: this.idBase, component: () => this._nextLocalID++};
   }
 
   generateID() {
-    return `${this._idBase}:${this._nextLocalID++}`;
+    return `${this.idBase}:${this._nextLocalID++}`;
   }
 
   innerArcHandle(arcId, particleId) {
     const pec = this;
     return {
-      createHandle: function(type, name, hostParticle) {
+      createHandle(type, name, hostParticle) {
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
+          pec.apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
             const handle = handleFor(proxy, name, particleId);
             resolve(handle);
             if (hostParticle) {
@@ -163,23 +172,23 @@ export class ParticleExecutionContext {
             }
           }}));
       },
-      mapHandle: function(handle) {
+      mapHandle(handle) {
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcMapHandle({arc: arcId, handle, callback: id => {
+          pec.apiPort.ArcMapHandle({arc: arcId, handle, callback: id => {
             resolve(id);
           }}));
       },
-      createSlot: function(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId) {
+      createSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId) {
         // handleId: the ID of a handle (returned by `createHandle` above) this slot is rendering; null - if not applicable.
         // TODO: support multiple handle IDs.
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcCreateSlot({arc: arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId, callback: hostedSlotId => {
+          pec.apiPort.ArcCreateSlot({arc: arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId, callback: hostedSlotId => {
             resolve(hostedSlotId);
           }}));
       },
-      loadRecipe: function(recipe) {
+      loadRecipe(recipe) {
         // TODO: do we want to return a promise on completion?
-        return new Promise((resolve, reject) => pec._apiPort.ArcLoadRecipe({
+        return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe({
           arc: arcId,
           recipe,
           callback: a => {
@@ -195,37 +204,37 @@ export class ParticleExecutionContext {
   }
 
   getStorageProxy(storageKey, type) {
-    if (!this._keyedProxies[storageKey]) {      
-      this._keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this._apiPort.GetBackingStore({storageKey, type, callback: (proxy, storageKey) => {
-          this._keyedProxies[storageKey] = proxy;
+    if (!this.keyedProxies[storageKey]) {      
+      this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
+        this.apiPort.GetBackingStore({storageKey, type, callback: (proxy, storageKey) => {
+          this.keyedProxies[storageKey] = proxy;
           resolve(proxy);
         }});
       });
     }
-    return this._keyedProxies[storageKey];
+    return this.keyedProxies[storageKey];
   }
 
   defaultCapabilitySet() {
     return {
       constructInnerArc: particle => {
         return new Promise((resolve, reject) =>
-          this._apiPort.ConstructInnerArc({callback: arcId => {resolve(this.innerArcHandle(arcId, particle.id));}, particle}));
+          this.apiPort.ConstructInnerArc({callback: arcId => {resolve(this.innerArcHandle(arcId, particle.id));}, particle}));
       }
     };
   }
 
   async _instantiateParticle(id, spec, proxies) {
     const name = spec.name;
-    let resolve = null;
-    const p = new Promise(res => resolve = res);
-    this._pendingLoads.push(p);
-    const clazz = await this._loader.loadParticleClass(spec);
+    let resolve : () => void = null;
+    const p = new Promise<void>(res => resolve = res);
+    this.pendingLoads.push(p);
+    const clazz = await this.loader.loadParticleClass(spec);
     const capabilities = this.defaultCapabilitySet();
     const particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
     particle.id = id;
     particle.capabilities = capabilities;
-    this._particles.push(particle);
+    this.particles.push(particle);
 
     const handleMap = new Map();
     const registerList = [];
@@ -242,16 +251,16 @@ export class ParticleExecutionContext {
     return [particle, async () => {
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
-      const idx = this._pendingLoads.indexOf(p);
-      this._pendingLoads.splice(idx, 1);
+      const idx = this.pendingLoads.indexOf(p);
+      this.pendingLoads.splice(idx, 1);
       resolve();
     }];
   }
 
   get relevance() {
     const rMap = new Map();
-    this._particles.forEach(p => {
-      if (p.relevances.length == 0) {
+    this.particles.forEach(p => {
+      if (p.relevances.length === 0) {
         return;
       }
       rMap.set(p, p.relevances);
@@ -261,10 +270,10 @@ export class ParticleExecutionContext {
   }
 
   get busy() {
-    if (this._pendingLoads.length > 0 || this._scheduler.busy) {
+    if (this.pendingLoads.length > 0 || this.scheduler.busy) {
       return true;
     }
-    if (this._particles.filter(particle => particle.busy).length > 0) {
+    if (this.particles.filter(particle => particle.busy).length > 0) {
       return true;
     }
     return false;
@@ -274,7 +283,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    const busyParticlePromises = this._particles.filter(particle => particle.busy).map(particle => particle.idle);
-    return Promise.all([this._scheduler.idle, ...this._pendingLoads, ...busyParticlePromises]).then(() => this.idle);
+    const busyParticlePromises = this.particles.filter(particle => particle.busy).map(particle => particle.idle);
+    return Promise.all([this.scheduler.idle, ...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

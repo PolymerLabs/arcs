@@ -9,22 +9,31 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {PECOuterPort} from './api-channel.js';
-import {Manifest} from './ts-build/manifest.js';
-import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
-import {reportSystemException} from './ts-build/arc-exceptions.js';
+import {assert} from '../../platform/assert-web.js';
+import {PECOuterPort} from '../api-channel.js';
+import {Manifest} from './manifest.js';
+import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {reportSystemException} from './arc-exceptions.js';
+import {Arc} from './arc.js';
+import {SlotComposer} from './slot-composer.js';
 
 export class ParticleExecutionHost {
-  constructor(port, slotComposer, arc) {
-    this._particles = [];
+  private _apiPort : PECOuterPort;
+  close : () => void;
+  private arc: Arc;
+  private nextIdentifier = 0;
+  slotComposer: SlotComposer;
+  private idleVersion = 0;
+  private idlePromise: Promise<number> | undefined;
+  private idleResolve: ((relevance: number) => void) | undefined;
+
+  constructor(port, slotComposer: SlotComposer, arc: Arc) {
     this._apiPort = new PECOuterPort(port, arc);
     this.close = () => {
       port.close();
       this._apiPort.close();
     };
-    this._arc = arc;
-    this._nextIdentifier = 0;
+    this.arc = arc;
     this.slotComposer = slotComposer;
 
     this._apiPort.onRender = ({particle, slotName, content}) => {
@@ -80,17 +89,17 @@ export class ParticleExecutionHost {
     this._apiPort.onStreamCursorClose = ({handle, cursorId}) => handle.cursorClose(cursorId);
 
     this._apiPort.onIdle = ({version, relevance}) => {
-      if (version == this._idleVersion) {
-        this._idlePromise = undefined;
-        this._idleResolve(relevance);
+      if (version === this.idleVersion) {
+        this.idlePromise = undefined;
+        this.idleResolve(relevance);
       }
     };
 
     this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
       if (!storageKey) {
-        storageKey = this._arc.storageProviderFactory.baseStorageKey(type, this._arc.storageKey || 'volatile');
+        storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey || 'volatile');
       }
-      const store = await this._arc.storageProviderFactory.baseStorageFor(type, storageKey);
+      const store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
       // TODO(shans): THIS IS NOT SAFE!
       //
       // Without an auditor on the runtime side that inspects what is being fetched from
@@ -108,12 +117,12 @@ export class ParticleExecutionHost {
       // recreated when an arc is deserialized. As a consequence of this, dynamically 
       // created handles for inner arcs must always be volatile to prevent storage 
       // in firebase.
-      const store = await this._arc.createStore(type, name, null, [], 'volatile');
+      const store = await this.arc.createStore(type, name, null, [], 'volatile');
       this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 
     this._apiPort.onArcMapHandle = async ({callback, arc, handle}) => {
-      assert(this._arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
+      assert(this.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
       // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
     };
@@ -127,7 +136,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
-      const manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
+      const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
       let error = undefined;
       // TODO(wkorman): Consider reporting an error or at least warning if
       // there's more than one recipe since currently we silently ignore them.
@@ -135,7 +144,7 @@ export class ParticleExecutionHost {
       if (recipe0) {
         const missingHandles = [];
         for (const handle of recipe0.handles) {
-          const fromHandle = this._arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
+          const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
           if (!fromHandle) {
             missingHandles.push(handle);
             continue;
@@ -143,7 +152,7 @@ export class ParticleExecutionHost {
           handle.mapToStorage(fromHandle);
         }
         if (missingHandles.length > 0) {
-          const resolvedRecipe = await new RecipeResolver(this._arc).resolve(recipe0);
+          const resolvedRecipe = await new RecipeResolver(this.arc).resolve(recipe0);
           if (!resolvedRecipe) {
             error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
           } else {
@@ -158,8 +167,8 @@ export class ParticleExecutionHost {
             if (recipe0.isResolved()) {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
-              manifest.stores.forEach(store => this._arc._registerStore(store, []));
-              this._arc.instantiate(recipe0, arc);
+              manifest.stores.forEach(store => this.arc._registerStore(store, []));
+              this.arc.instantiate(recipe0, arc);
             } else {
               error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
             }
@@ -174,7 +183,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onRaiseSystemException = async ({exception, methodName, particleId}) => {
-     const particle = this._arc.particleHandleMaps.get(particleId).spec.name;
+     const particle = this.arc.particleHandleMaps.get(particleId).spec.name;
       reportSystemException(exception, methodName, particle);
     };
   }
@@ -184,14 +193,14 @@ export class ParticleExecutionHost {
   }
 
   get idle() {
-    if (this._idlePromise == undefined) {
-      this._idlePromise = new Promise((resolve, reject) => {
-        this._idleResolve = resolve;
+    if (this.idlePromise == undefined) {
+      this.idlePromise = new Promise((resolve, reject) => {
+        this.idleResolve = resolve;
       });
     }
-    this._idleVersion = this._nextIdentifier;
-    this._apiPort.AwaitIdle({version: this._nextIdentifier++});
-    return this._idlePromise;
+    this.idleVersion = this.nextIdentifier;
+    this._apiPort.AwaitIdle({version: this.nextIdentifier++});
+    return this.idlePromise;
   }
 
   get messageCount() {

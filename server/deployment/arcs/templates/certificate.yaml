@@ -15,6 +15,7 @@ spec:
     config:
     - dns01: 
         ingressClass: nginx
+        provider: clouddns
       domains:
       - {{ .Values.domain }}
 {{- end }}
