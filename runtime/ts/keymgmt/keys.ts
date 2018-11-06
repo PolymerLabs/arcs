@@ -64,7 +64,7 @@ export interface WrappedKey extends Key, Fingerprintable {
      * @param cloudKey
      */
   rewrap(privKey:PrivateKey, cloudKey: PublicKey): PromiseLike<WrappedKey>;
-
+  unwrap(privKey:PrivateKey): PromiseLike<SessionKey>;
     /**
      * Export this session key in base64 string format.
      */

@@ -17,7 +17,7 @@ gcloud iam service-accounts create prod-clouddns-svc-acct-secret \
   --display-name=${PROJECT_ID} \
   --project=${PROJECT_ID}
 
-gcloud iam service-accounts keys create ./service-account.json \
+gcloud iam service-accounts keys create ./prod-clouddns-service-account.json \
 --iam-account=prod-clouddns-svc-acct-secret@arcs-project.iam.gserviceaccount.com \
 --project=${PROJECT_ID}
 
@@ -26,8 +26,7 @@ gcloud projects add-iam-policy-binding arcs-project \
 --role=roles/dns.admin
 
 kubectl create secret generic prod-clouddns-svc-acct-secret \
---from-file=./service-account.json \
---namespace=kube-system
+--from-file=./prod-clouddns-service-account.json
 
 helm install ./arcs \
   --set domain=${DNS_ZONE} \

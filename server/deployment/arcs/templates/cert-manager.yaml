@@ -16,8 +16,8 @@ spec:
         clouddns:
           project: {{ .Values.project }}
           serviceAccountSecretRef:
-            name: clouddns-service-account-secret
-            key: clouddns-service-account.json
+            name: prod-clouddns-svc-acct-secret
+            key: prod-clouddns-service-account.json
 ---
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: ClusterIssuer
@@ -36,6 +36,6 @@ spec:
         clouddns:
           project: {{ .Values.project }}
           serviceAccountSecretRef:
-            name: clouddns-service-account-secret
-            key: clouddns-service-account.json
+            name: prod-clouddns-svc-acct-secret
+            key: prod-clouddns-service-account.json
 {{- end }}

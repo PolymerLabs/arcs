@@ -54,7 +54,6 @@ export abstract class AppBase {
     // TODO(lindner): disabling because pouchdb needs to access the root level json
     // and fauxton cannot run under a subdirectory.
     // see https://github.com/pouchdb/pouchdb-fauxton/issues/18
-    // this.express.use(express.static('public'));
     this.express.use(express.static('node_modules/arcs'));
   }
 

@@ -13,7 +13,9 @@ import PouchDbServer from 'express-pouchdb';
 import {Runtime} from 'arcs';
 import {ShellPlanningInterface} from 'arcs';
 import {AppBase} from './app';
-import {ON_DISK_DB} from './deployment/utils';
+import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
+import url from "url";
+import path from "path";
 
 /**
  * An app server that additionally configures a pouchdb.
@@ -62,10 +64,27 @@ class PouchDbApp extends AppBase {
    * https://github.com/pouchdb/pouchdb-server
    */
   private addPouchRoutes(): void {
+    // If VM lives at non-root prefix, works but fauxton not fully working yet
+    const urlPrefix = process.env[VM_URL_PREFIX] || '/';
+    const config = {
+      mode: 'fullCouchDB', inMemoryConfig: true,
+      "httpd": {
+        "enable_cors": true
+      },
+      "cors": {
+        "origins": "https://skarabrae.org",
+        "credentials": true,
+        "headers": "accept, authorization, content-type, origin, referer",
+        "methods": "GET, PUT, POST, HEAD, DELETE"
+      }
+    };
+
+
     if (process.env[ON_DISK_DB]) {
       const dboptions = {prefix: '/personalcloud/'} as PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
-      this.express.use('/', PouchDbServer(onDiskPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
+      const pouchDbRouter = PouchDbServer(onDiskPouchDb, config);
+      this.express.use(urlPrefix, pouchDbRouter);
     } else {
       const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
       this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));

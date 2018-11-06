@@ -8,15 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Container} from "./containers";
+
 /**
  * Represents a persistent disk volume in the cloud provider's infrastructure that is
- * capable of being attached to VMs.
+ * capable of being attached to VMs (Nodes).
  */
 export interface Disk {
     id(): string;
     type(): string;
-    isAttached(): boolean;
-    mount(rewrappedKey: string):boolean;
+    isAttached(): PromiseLike<boolean>;
+    mount(rewrappedKey: string, node: string):PromiseLike<boolean>;
+    dismount():PromiseLike<boolean>;
+    wrappedKeyFor(fingerprint:string): PromiseLike<string>;
+    delete(): PromiseLike<void>;
 }
 
 export interface DiskManager {
@@ -31,5 +36,11 @@ export interface DiskManager {
      * @param wrappedKey session key encrypted with device key
      * @param rewrappedKey session key reencrypted with cloud public key
      */
-    create(wrappedKey: string, rewrappedKey: string):PromiseLike<Disk>;
+    create(fingerprint:string, wrappedKey: string, rewrappedKey: string):PromiseLike<Disk>;
+
+    /**
+     * Delete an unattached disk that has *never* been attached and is pristine.
+     * @param param the Disk object to be deleted.
+     */
+    delete(param: Disk): Promise<void>;
 }
