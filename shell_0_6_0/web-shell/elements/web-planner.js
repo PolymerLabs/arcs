@@ -30,8 +30,9 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     };
   }
   _update({env, config, userid, arc, search}, state) {
-    if (state.planificator && state.planificator.arc !== arc) {
-      state.planificator.dispose();
+    const {planificator} = state;
+    if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
+      planificator.dispose();
       state.planificator = null;
     }
     if (env && config && arc && !state.planificator) {
