@@ -190,27 +190,27 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
   }
   spawnSuggestions() {
-    const suggestions = [
-      //`Arcs/Login.recipe`,
-      //`Profile/EchoUser.recipe`
-      `Demo/ProductsDemo.recipe`,
-      `Demo/RestaurantsDemo.recipes`,
-      `Demo/TVMazeDemo.recipes`,
-      `Music/Playlist.recipe`,
-      `Profile/BasicProfile.recipe`,
-      `Restaurants/Restaurants.recipes`,
-      `Reservations/Reservations.recipes`
-    ];
-    const slot = this.host.querySelector(`[suggestions]`);
-    if (slot) {
-      suggestions.forEach(suggestion => {
-        slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
-          suggestion,
-          innerText: suggestion.split('/').pop().split('.').shift()
-        }))
-        .addEventListener('plan-choose', () => this.applySuggestion(suggestion));
-      });
-    }
+    // const suggestions = [
+    //   //`Arcs/Login.recipe`,
+    //   //`Profile/EchoUser.recipe`
+    //   `Demo/ProductsDemo.recipe`,
+    //   `Demo/RestaurantsDemo.recipes`,
+    //   `Demo/TVMazeDemo.recipes`,
+    //   `Music/Playlist.recipe`,
+    //   `Profile/BasicProfile.recipe`,
+    //   `Restaurants/Restaurants.recipes`,
+    //   `Reservations/Reservations.recipes`
+    // ];
+    // const slot = this.host.querySelector(`[suggestions]`);
+    // if (slot) {
+    //   suggestions.forEach(suggestion => {
+    //     slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
+    //       suggestion,
+    //       innerText: suggestion.split('/').pop().split('.').shift()
+    //     }))
+    //     .addEventListener('plan-choose', () => this.applySuggestion(suggestion));
+    //   });
+    // }
   }
   applySuggestion(suggestion) {
     if (this.state.arckey) {
