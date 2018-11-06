@@ -12,14 +12,9 @@
 /* eslint-disable no-invalid-this */
 
 const assert = require('assert');
-const seconds = 1000;
+const utils = require('../utils.js');
 
-function queryShellUi(selector) {
-  return browser.execute(function(selector) {
-    const host = document.querySelector('app-shell').shadowRoot.querySelector('shell-ui').shadowRoot;
-    return host.querySelector(selector);
-  }, selector);
-}
+const {whenExists, click, keys} = utils;
 
 async function openNewArc(testTitle, useSolo) {
   // clean up extra open tabs
@@ -49,50 +44,36 @@ async function openNewArc(testTitle, useSolo) {
 }
 
 describe('demo', function() {
-  it('smoke', async function() {
+  it('restaurants', async function() {
     openNewArc(this.test.fullTitle());
-    const title = await browser.title();
-    assert.equal(title.value, 'Arcs');
-  });
-  it.skip('restaurants', async function() {
+    const input = 'input[search]';
     const search = `restaurants`;
-    const suggestion1 = `[title^="Find restaurants"]`;
-    const particle1 = `#webtest-title`;
-    const suggestion2 = `[title*="ou are free"]`;
-    const particle2 = `[particle-host="Calendar::action"]`;
-    //
-    openNewArc(this.test.fullTitle());
-    browser.waitForVisible('app-shell');
-    queryShellUi('input[search]').click().keys(search);
-    await browser.waitForExist(suggestion1, 20000);
-    browser.click(suggestion1);
-    await browser.waitForExist(particle1, 10000);
-    browser.click(particle1);
-    await browser.waitForExist(suggestion2, 30000);
-    browser.click(suggestion2);
-    await browser.waitForExist(particle2, 5000);
+    const findRestaurants = `[title^="Find restaurants"]`;
+    const restaurantItem = `#webtest-title`;
+    const reservation = `[title*="ou are free"]`;
+    const calendarAction = `[particle-host="Calendar::action"]`;
+    await keys('input[search]', search);
+    await click(findRestaurants);
+    await click(restaurantItem);
+    await click(reservation);
+    await whenExists(calendarAction);
   });
-  it.skip('gifts', async function() {
-    const search = `products`;
-    const suggestion1 = `[title^="Show products"]`;
-    const particle1 = `[particle-host="ItemMultiplexer::item"]`;
-    const suggestion2 = `[title^="Check shipping"]`;
-    const particle2 = `[particle-host="Multiplexer::annotation"]`;
-    const suggestion3= `[title^="Check manufacturer"]`;
-    const suggestion4= `[title^="Find out"]`;
-    //
+
+  it('gifts', async function() {
     openNewArc(this.test.fullTitle());
-    browser.waitForVisible('app-shell');
-    queryShellUi('input[search]').click().keys(search);
-    await browser.waitForExist(suggestion1, 20000);
-    browser.click(suggestion1);
-    await browser.waitForExist(particle1, 10000);
-    await browser.waitForExist(suggestion2, 15000);
-    browser.click(suggestion2);
-    await browser.waitForExist(particle2, 5000);
-    await browser.waitForExist(suggestion3, 15000);
-    browser.click(suggestion3);
-    await browser.waitForExist(suggestion4, 15000);
-    browser.click(suggestion4);
+    const search = `products`;
+    const showProducts = `[title^="Show products"]`;
+    const items = `[particle-host="ItemMultiplexer::item"]`;
+    const checkShipping = `[title^="Check shipping"]`;
+    const annotations = `[particle-host="Multiplexer::annotation"]`;
+    const checkManufacturer = `[title^="Check manufacturer"]`;
+    const interests = `[title^="Find out"]`;
+    await keys('input[search]', search);
+    await click(showProducts);
+    await whenExists(items);
+    await click(checkShipping);
+    await whenExists(annotations);
+    await click(checkManufacturer);
+    await click(interests);
   });
 });
