@@ -53,6 +53,8 @@ const template = Xen.Template.html`
       transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
     [bar][state="open"] {
+      --suggestion-wrap: normal;
+      --content-overflow: auto;
       max-height: var(--bar-max-height);
       transform: translate3d(0, 0, 0);
     }
@@ -63,17 +65,14 @@ const template = Xen.Template.html`
     }
     [contents] {
       flex: 1;
-      display: inline-block;
-      white-space: nowrap;
       width: 100%;
+      display: flex;
+      white-space: nowrap;
       overflow: hidden;
       background-color: white;
     }
-    [bar][state="open"] [contents] {
-      overflow-y: auto;
-    }
   </style>
-  <div bar glowing$="{{glows}}" glowable state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="onBarEnter" on-mouseleave="onBarLeave" on-click="onBarClick">
+  <div bar glowing$="{{glows}}" glowable state$="{{barState}}" on-mouseenter="onBarEnter" on-mouseleave="onBarLeave" on-click="onBarClick">
     <div touchbar></div>
     <div contents scrolltop="{{scrollTop:contentsScrollTop}}" on-click="onContentsClick">
       <panel-ui on-open="onPanelOpen">

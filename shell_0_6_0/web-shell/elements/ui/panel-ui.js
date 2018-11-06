@@ -14,7 +14,8 @@ import IconStyle from '../../../components/icons.css.js';
 const template = Xen.Template.html`
   <style>
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
     }
     ${IconStyle}
     a {
@@ -70,6 +71,11 @@ const template = Xen.Template.html`
     }
     [settings][toolbar][open] {
       transform: translate3d(calc(-200% - 7px), 0, 0);
+    }
+    [contents] {
+      flex: 1;
+      overflow-y: var(--content-overflow);
+      overflow-x: hidden;
     }
   </style>
   <div toolbars on-click="onToolbarsClick">
