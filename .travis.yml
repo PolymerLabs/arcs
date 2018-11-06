@@ -22,6 +22,8 @@ before_install:
   - node --version
   - npm --version
 
+cache: npm
+
 install:
   - npm ci
   - npm --prefix=server ci
