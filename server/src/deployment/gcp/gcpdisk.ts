@@ -16,6 +16,7 @@ import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from "../utils";
 import common from "@google-cloud/common";
 import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from "./gcp-constants";
 import {CloudManager} from "../cloud";
+import {GCPCloud} from "./gcp";
 
 /**
  * Represents disk storage provisioned on a cloud provider.
@@ -83,6 +84,10 @@ class GCPDisk implements Disk {
       console.log("Error trying to mount disk");
       return Promise.reject(e);
     }
+  }
+
+  async delete(): Promise<void> {
+    return CloudManager.forGCP().disks().delete(this);
   }
 
   id(): string {
@@ -155,6 +160,12 @@ export class GCPDiskManager implements DiskManager {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  async delete(disk: Disk): Promise<void> {
+    // TODO: this is a pretty dangerous, irreversible operation, leave unimplemented for now.
+    console.log("Operation not implemented, can't delete disks.");
+    return Promise.resolve();
   }
 
   async find(fingerprint: string): Promise<Disk | null> {

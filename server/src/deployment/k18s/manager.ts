@@ -103,7 +103,7 @@ class K18sDeployment implements Container {
   async node(): Promise<string> {
     const {body:v1Pod} = await this.k8sApi.readNamespacedPod(this.v1Deployment.metadata.name, K18S_NAMESPACE,
       undefined, false,false);
-    return v1Pod.spec.nodeName;
+    return Promise.resolve(v1Pod.spec.nodeName);
   }
 }
 

@@ -191,7 +191,12 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
 
     }
 
-    export():PromiseLike<string> {
+  /**
+   * This encodes the session key as a hexadecimal string.
+   * TODO: this is a temporary hack for the provisioning App's QR-scanning procedure which will be
+   * removed once the the key-blessing algorithm is implemented.
+   */
+  export():PromiseLike<string> {
       return crypto.subtle.exportKey("raw", this.sessionKey).then((raw) => {
         const buf = new Uint8Array(raw);
         let res = "";

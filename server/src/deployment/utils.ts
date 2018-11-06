@@ -40,7 +40,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
   let waiting = true;
   const timeout = maxTimeout / retries;
   try {
-    const [result] = await Promise.race([func(), delay<[T]>(timeout)]);
+    const [result] = await Promise.race([func(), rejectAfter<[T]>(timeout)]);
 
     while (waiting && retries-- > 0) {
       try {
@@ -52,10 +52,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
         }
       }
       if (waiting) {
-        try {
-          await delay(timeout);
-        } catch (e) {
-        }
+        await wait(timeout);
       }
     }
     if (waiting) {
@@ -68,9 +65,16 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
   }
 }
 
+async function wait(timeout) {
+   try {
+     await rejectAfter(timeout);
+   } catch(e) {
+   }
+}
+
 class Timeout extends Error {}
 
-export async function delay<T>(duration: number):Promise<T> {
+export async function rejectAfter<T>(duration: number):Promise<T> {
   return new Promise<T>((resolve, reject) => setTimeout(() => reject(new Timeout()), duration));
 }
 

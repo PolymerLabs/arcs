@@ -21,6 +21,7 @@ export interface Disk {
     mount(rewrappedKey: string, node: string):PromiseLike<boolean>;
     dismount():PromiseLike<boolean>;
     wrappedKeyFor(fingerprint:string): PromiseLike<string>;
+    delete(): PromiseLike<void>;
 }
 
 export interface DiskManager {
@@ -36,4 +37,10 @@ export interface DiskManager {
      * @param rewrappedKey session key reencrypted with cloud public key
      */
     create(fingerprint:string, wrappedKey: string, rewrappedKey: string):PromiseLike<Disk>;
+
+    /**
+     * Delete an unattached disk that has *never* been attached and is pristine.
+     * @param param the Disk object to be deleted.
+     */
+    delete(param: Disk): Promise<void>;
 }

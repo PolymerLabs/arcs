@@ -16,13 +16,13 @@ export interface Container {
   /**
    * Cloud specific identifier (usually the underlying cluster VM.
    */
-  node(): PromiseLike<string>;
+  node(): Promise<string>;
 
   /**
    * Return the storage volume currently attached to this container
    * (possibly unmounted).
    */
-  disk(): PromiseLike<Disk>;
+  disk(): Promise<Disk>;
 
   status(): string;
   
@@ -41,7 +41,7 @@ export interface ContainerManager {
    * Find an existing node vm instance running for this devicekey.
    * @param fingerprint the fingerprint of the wrapped session key (by the devicekey)
    */
-  find(fingerprint: string): PromiseLike<Container | null>;
+  find(fingerprint: string): Promise<Container | null>;
 
-  deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): PromiseLike<Container>;
+  deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): Promise<Container>;
 }

@@ -3,8 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "strictFunctionTypes": false,
-    "strictNullChecks": false
+    "strictFunctionTypes": true,
+    "strictNullChecks": true
   },
   "exclude": [
     "dist/**/*",

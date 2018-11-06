@@ -41,7 +41,7 @@ ingress:
   hosts:
     - skarabrae.org
   tls: 
-    - secretName: prod-clouddns-svc-acct-secret
+    - secretName: clouddns-svc-acct-secret
       hosts:
         - skarabrae.org
 

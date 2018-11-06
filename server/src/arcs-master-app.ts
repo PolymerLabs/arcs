@@ -101,30 +101,32 @@ class ArcsMasterApp extends AppBase {
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().find(fingerprint);
-      if (disk) {
-        const attached = await disk.isAttached();
-        const wrappedKey  = await disk.wrappedKeyFor(fingerprint);
 
-        if (attached) {
-          const container: Container | null = await cloud.containers().find(fingerprint);
-          if (container != null) {
-            const status = container.status();
-            if (status !== 'Running') {
-              res.send('{"id": "' + fingerprint + '", "status": "pending"}');
-            } else {
-              res.send('{"id": "' + fingerprint + '", "status": "attached", "url" : "' + container.url() + '"}');
-            }
-            return;
-          }
-          res.send('{"id": "' + fingerprint + '", "status": "container not found"}');
-          return;
-        } else {
-          res.send('{"id": "' + fingerprint + '", "status": "detached", "key": "' + wrappedKey + '"}');
-          return;
-        }
-      } else {
+      if (!disk) {
         res.send('{"id": "' + fingerprint + '", "status": "disk not found"}');
         return;
+      }
+
+      const attached = await disk.isAttached();
+      const wrappedKey = await disk.wrappedKeyFor(fingerprint);
+
+      if (!attached) {
+        res.send('{"id": "' + fingerprint + '", "status": "detached", "key": "' + wrappedKey + '"}');
+        return;
+      }
+
+      const container: Container | null = await cloud.containers().find(fingerprint);
+
+      if (container == null) {
+        res.send('{"id": "' + fingerprint + '", "status": "container not found"}');
+        return;
+      }
+
+      const status = container.status();
+      if (status !== 'Running') {
+        res.send('{"id": "' + fingerprint + '", "status": "pending"}');
+      } else {
+        res.send('{"id": "' + fingerprint + '", "status": "attached", "url" : "' + container.url() + '"}');
       }
     } catch (e) {
       console.log(e);
@@ -136,11 +138,15 @@ class ArcsMasterApp extends AppBase {
     const wrappedKey = req.params.wrappedKey;
     const rewrappedKey = req.params.rewrappedKey;
 
+
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().create(fingerprint, wrappedKey, rewrappedKey);
       console.log("Disk successfully created with id " + disk.id());
-      const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk);
+      const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk).catch(async (e) => {
+        console.log("Error deploying new container with new disk, deleting disk with id " + disk.id());
+        await disk.delete();
+      });
       console.log("Container successfully created with fingerprint " + fingerprint);
       res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/find/' + fingerprint + '"}');
     } catch (e) {
