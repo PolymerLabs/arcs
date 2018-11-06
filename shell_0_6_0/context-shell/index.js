@@ -1,4 +1,4 @@
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../../runtime/testing/ram-slot-composer.js';
 import {ArcsEnvNode} from '../lib/node/arcs-env-node.js';
 import {App} from './app.js';
 
