@@ -31,7 +31,7 @@ function deepQuerySelector(selector) {
   }, selector);
 }
 
-exports.whenExists = async function(selector, timeout) {
+exports.waitFor = async function(selector, timeout) {
   let resolve;
   let reject;
   const result = new Promise((res, rej) => {
@@ -67,7 +67,7 @@ async function clickJson(webJSON) {
 }
 
 exports.click = async function(selector, timeout) {
-  return clickJson(await exports.whenExists(selector, timeout));
+  return clickJson(await exports.waitFor(selector, timeout));
 };
 
 exports.keys = async function(selector, keys, timeout) {
@@ -98,6 +98,5 @@ exports.openNewArc = async function(testTitle, useSolo) {
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
-  browser.url(`shell/apps/web/?${urlParams.join('&')}`);
-  await browser.pause(2000);
+  await browser.url(`shell/apps/web/?${urlParams.join('&')}`);
 };
