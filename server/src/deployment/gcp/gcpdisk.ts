@@ -69,7 +69,7 @@ class GCPDisk implements Disk {
 
       if (vms !== undefined) {
         for (const vm of vms) {
-          if (vm.metadata.name == node) {
+          if (vm.metadata.name === node) {
             const [operation, apiResponse] = await vm.attachDisk(this.diskApi, {
               "diskEncryptionKey": {
                 "rsaEncryptedKey": rewrappedKey

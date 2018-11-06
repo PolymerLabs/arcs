@@ -85,25 +85,6 @@ class PouchDbApp extends AppBase {
       const onDiskPouchDb = PouchDB.defaults(dboptions);
       const pouchDbRouter = PouchDbServer(onDiskPouchDb, config);
       this.express.use(urlPrefix, pouchDbRouter);
-      if (urlPrefix !== '/') {
-        // For LB healthcheck
-        this.express.get('/', (req, res) => res.send("OK"));
-
-
-        // workaround fauxton not like living at subresource locations
-        const fauxtonIntercept = (req, res, next) => {
-          const referer = req.header('Referer');
-          if (!referer) return next();
-
-          const  parsed = url.parse(referer);
-          if (0 === parsed.pathname.indexOf(path.join(urlPrefix, '_utils/'))) {
-            return pouchDbRouter(req, res);
-          }
-          return next();
-        };
-
-        this.express.use(fauxtonIntercept);
-      }
     } else {
       const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
       this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));

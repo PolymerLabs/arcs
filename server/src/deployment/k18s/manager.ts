@@ -120,9 +120,13 @@ export class K18sContainerManager implements ContainerManager {
     kc.loadFromDefault();
     this.k8sApi = kc.makeApiClient(Core_v1Api);
     this.k8sBetaApi = kc.makeApiClient(Extensions_v1beta1Api);
-    this.k8sName = process.env['MY_NODE_NAME'];
-    this.appName = process.env['MY_APP_NAME'];
-    this.releaseName = process.env['MY_RELEASE_NAME'];
+    this.k8sName = process.env['MY_NODE_NAME'] || "";
+    this.appName = process.env['MY_APP_NAME'] || "";
+    this.releaseName = process.env['MY_RELEASE_NAME'] || "";
+    if (this.k8sName === "" || this.appName === "" || this.releaseName === "") {
+      console.log("Missing environment variable MY_NODE_NAME, MY_APP_NAME, MY_RELEASE_NAME for Docker environment");
+      throw new Error("Missing MY_NODE_NAME, MY_APP_NAME, or MY_RELEASE_NAME environment variable");
+    }
   }
 
   /**
