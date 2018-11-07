@@ -332,9 +332,9 @@ ${this.activeRecipe.toString()}`;
   }
 
   _instantiateParticle(recipeParticle : Particle) {
-    const id = this.generateID('particle');
+    recipeParticle.id = this.generateID('particle');
     const handleMap = {spec: recipeParticle.spec, handles: new Map()};
-    this.particleHandleMaps.set(id, handleMap);
+    this.particleHandleMaps.set(recipeParticle.id, handleMap);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       if (!connection.handle) {
@@ -343,14 +343,13 @@ ${this.activeRecipe.toString()}`;
       }
       const handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
-      this._connectParticleToHandle(id, recipeParticle, name, handle);
+      this._connectParticleToHandle(recipeParticle, name, handle);
     }
 
     // At least all non-optional connections must be resolved
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
-    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.handles);
-    return id;
+    this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
   }
 
   generateID(component: string = '') {
@@ -526,9 +525,9 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  _connectParticleToHandle(particleId, particle, name, targetHandle) {
+  _connectParticleToHandle(particle, name, targetHandle) {
     assert(targetHandle, 'no target handle provided');
-    const handleMap = this.particleHandleMaps.get(particleId);
+    const handleMap = this.particleHandleMaps.get(particle.id);
     assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
     handleMap.handles.set(name, targetHandle);
   }
