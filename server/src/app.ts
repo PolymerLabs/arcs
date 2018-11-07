@@ -55,6 +55,7 @@ export abstract class AppBase {
     // and fauxton cannot run under a subdirectory.
     // see https://github.com/pouchdb/pouchdb-fauxton/issues/18
     this.express.use(express.static('node_modules/arcs'));
+    this.express.use(express.static('node_modules/arcs-provisioning/build/es5-bundled'));
   }
 
 

@@ -15,7 +15,8 @@ WORKDIR /usr/src/app
 # use the 'npm ci' command to get reproducable builds
 COPY package.json package-lock.json ./
 COPY server/package.json server/package-lock.json server/
-RUN npm ci && npm --prefix=server ci
+COPY provisioning/package.json provisioning/package-lock.json provisioning/
+RUN npm ci && npm --prefix=server ci && npm --prefix=provisioning ci
 
 # Copy Everything Else
 COPY . .
@@ -23,6 +24,8 @@ COPY . .
 # Build and test everything
 RUN ./tools/sigh && npm run build:rollup
 RUN npm --prefix=server test
+COPY shell/build/ArcsLib.js provisioning/
+RUN npm --prefix=provisioning run build:static
 
 EXPOSE 8080
 CMD [ "npm", "--prefix=server", "start" ]

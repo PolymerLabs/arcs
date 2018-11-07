@@ -230,7 +230,7 @@ async function tsc() {
 
 async function tslint(args) {
   const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+    if (/provisioning/.test(fullPath) || /ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
@@ -257,7 +257,7 @@ async function lint(args) {
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+    if (/provisioning/.test(fullPath) || /ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.js$/.test(fullPath);

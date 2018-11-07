@@ -1,0 +1,58 @@
+{
+  "/": {
+    "src/components/arcs-cloud-app.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "src/components/arcs-cloud-status.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js": {
+      "type": "script",
+      "weight": 1
+    }
+  },
+  "/status": {
+    "src/components/arcs-cloud-app.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "src/components/arcs-cloud-status.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js": {
+      "type": "script",
+      "weight": 1
+    }
+  },
+  "/settings": {
+    "src/components/arcs-cloud-app.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "src/components/arcs-cloud-settings.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js": {
+      "type": "script",
+      "weight": 1
+    }
+  },
+  "/console": {
+    "src/components/arcs-cloud-app.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "src/components/arcs-cloud-console.js": {
+      "type": "script",
+      "weight": 1
+    },
+    "node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js": {
+      "type": "script",
+      "weight": 1
+    }
+  }
+}

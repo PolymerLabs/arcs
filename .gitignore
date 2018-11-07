@@ -26,3 +26,6 @@ runtime/ts-build
 .vscode
 devtools/build
 server/log.txt
+*.ipr
+*.iml
+*.iws
