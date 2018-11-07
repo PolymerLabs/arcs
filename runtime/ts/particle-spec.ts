@@ -16,7 +16,7 @@ import { Direction } from './recipe/handle-connection.js';
 
 type SerializedConnectionSpec = {direction: Direction, name: string, type: Type, isOptional: boolean, tags?: string[], dependentConnections: SerializedConnectionSpec[]};
 
-class ConnectionSpec {
+export class ConnectionSpec {
   rawData: SerializedConnectionSpec;
   direction: Direction;
   name: string;

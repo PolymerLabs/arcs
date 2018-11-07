@@ -8,14 +8,14 @@
 
 'use strict';
 
-import {ParticleExecutionContext} from './ts-build/particle-execution-context.js';
-import {MessageChannel} from './ts-build/message-channel.js';
-import {Loader} from './ts-build/loader.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
+import {MessageChannel} from './message-channel.js';
+import {Loader} from './loader.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
 export function FakePecFactory(id) {
   const channel = new MessageChannel();
-  new ParticleExecutionContext(channel.port1, `${id}:inner`, new Loader());
+  const pec = new ParticleExecutionContext(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;
 }
