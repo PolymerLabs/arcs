@@ -201,8 +201,8 @@ export class K18sContainerManager implements ContainerManager {
     newIngress.spec = spec;
 
     const oldHeaders = this.k8sBetaApi['defaultHeaders'];
-    this.k8sBetaApi['defaultHeaders'] = Object.assign({'Content-Type': 'application/strategic-merge-patch+json'},
-      oldHeaders);
+    this.k8sBetaApi['defaultHeaders'] = {'Content-Type': 'application/strategic-merge-patch+json',
+      ...oldHeaders};
     try {
       return await this.k8sBetaApi.patchNamespacedIngress(this.k8sName, K18S_NAMESPACE,
         newIngress, undefined);
