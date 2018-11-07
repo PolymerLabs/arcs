@@ -52,10 +52,10 @@ export abstract class StorageProviderBase {
   source: string|null;
   description: string;
 
-  protected constructor(type, name, id, key) {
+  protected constructor(type: Type, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name}});
+    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.toString(), name}});
     this._type = type;
     this.listeners = new Map();
     this.name = name;
@@ -67,15 +67,15 @@ export abstract class StorageProviderBase {
     trace.end();
   }
 
-  enableReferenceMode() {
+  enableReferenceMode(): void {
     this.referenceMode = true;
   }
 
-  get storageKey() {
+  get storageKey(): string {
     return this._storageKey;
   }
 
-  generateID() {
+  generateID(): string {
     return `${this.id}:${this.nextLocalID++}`;
   }
 
@@ -83,9 +83,10 @@ export abstract class StorageProviderBase {
     return {base: this.id, component: () => this.nextLocalID++};
   }
 
-  get type() {
+  get type(): Type {
     return this._type;
   }
+
   // TODO: add 'once' which returns a promise.
   on(kindStr: string, callback: Callback, target): void {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
@@ -147,7 +148,7 @@ export abstract class StorageProviderBase {
     return 0;
   }
 
-  toString(handleTags): string {
+  toString(handleTags: string[]): string {
     const results: string[] = [];
     const handleStr: string[] = [];
     handleStr.push(`store`);
@@ -159,7 +160,7 @@ export abstract class StorageProviderBase {
       handleStr.push(`'${this.id}'`);
     }
     if (handleTags && handleTags.length) {
-      handleStr.push(`${[...handleTags].join(' ')}`);
+      handleStr.push(`${handleTags.join(' ')}`);
     }
     if (this.source) {
       handleStr.push(`in '${this.source}'`);

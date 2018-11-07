@@ -696,7 +696,7 @@ ${this.activeRecipe.toString()}`;
     const results = [];
     const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toString(this.storeTags.get(store)));
+      results.push(store.toString([...this.storeTags.get(store)]));
     });
 
     // TODO: include stores entities

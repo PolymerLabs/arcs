@@ -40,13 +40,13 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   }
 
   // TODO(lindner): write tests
-  clone() {
+  clone(): PouchDbCollection {
     const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
     handle.cloneFrom(this);
     return handle;
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {
@@ -80,7 +80,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   /**
    * Populate this collection with a provided version/model
    */
-  fromLiteral({version, model}) {
+  fromLiteral({version, model}): void {
     this.version = version;
     // TODO(lindner): this might not be initialized yet...
     this._model = new CrdtCollectionModel(model);
@@ -384,7 +384,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   /**
    * Remove this item from the database for testing purposes.
    */
-  async clearItemsForTesting() {
+  async clearItemsForTesting(): Promise<void> {
     // Remove the Pouch Document
     // TODO(lindner): does this need to work with reference mode?
     try {

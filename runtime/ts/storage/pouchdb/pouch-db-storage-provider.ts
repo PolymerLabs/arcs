@@ -33,7 +33,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   // is guaranteed to exist once the await completes. This is because
   // if backingStore doesn't yet exist, the assignment in the then()
   // is guaranteed to execute before anything awaiting this function.
-  async ensureBackingStore() {
+  async ensureBackingStore(): Promise<PouchDbCollection> {
     if (this.backingStore) {
       return this.backingStore;
     }
