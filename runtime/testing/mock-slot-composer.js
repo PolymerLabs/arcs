@@ -10,14 +10,14 @@
 'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {SlotComposer} from '../ts-build/slot-composer.js';
+import {FakeSlotComposer} from './fake-slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
 
 const logging = false;
 const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
 /** @class MockSlotComposer
- * Helper class to test with slot composer.
+ * A helper SlotComposer allowing expressing and asserting expectations on slot rendering.
  * Usage example:
  *   mockSlotComposer
  *       .newExpectations()
@@ -28,14 +28,13 @@ const log = (!logging || global.logging === false) ? () => {} : console.log.bind
  *   mockSlotComposer.sendEvent('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'});
  *   await mockSlotComposer.expectationsCompleted();
  */
-export class MockSlotComposer extends SlotComposer {
+export class MockSlotComposer extends FakeSlotComposer {
   /**
    * |options| may contain:
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
-  constructor(options) {
-    options = options || {};
-    super({rootContainer: options.rootContainer || {'root': 'root-context'}, affordance: 'mock'});
+  constructor(options = {}) {
+    super(options);
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options.strict != undefined ? options.strict : true;
@@ -238,14 +237,6 @@ export class MockSlotComposer extends SlotComposer {
     }
 
     this._expectationsMet();
-
-    const slotConsumer = this.getSlotConsumer(particle, slotName);
-    if (slotConsumer) {
-      slotConsumer.updateProvidedContexts();
-    } else {
-      // Slots of particles hosted in transformation particles.
-    }
-
     this.detailedLogDebug();
   }
 

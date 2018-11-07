@@ -11,8 +11,7 @@
 
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
-import {SlotComposer} from '../ts-build/slot-composer.js';
-import {RamSlotComposer} from '../../shell_0_6_0/lib/ram-slot-composer.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../ts-build/manifest.js';
@@ -23,7 +22,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
-  const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+  const slotComposer = new FakeSlotComposer();
 
   const manifest = (await Manifest.parse(recipeStr));
   const loader = new StubLoader({
@@ -103,15 +102,12 @@ recipe
 
     // render root slot
     const particle = arc.activeRecipe.particles[0];
-    await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
     const rootSlot = slotComposer.getSlotConsumer(particle, 'root');
-    assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
-
-    // update inner slots
-    startRenderParticles.length = 0;
     rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-container' : null;
-    rootSlot.updateProvidedContexts();
+    startRenderParticles.length = 0;
+    await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
     assert.deepEqual(['B', 'BB'], startRenderParticles);
+    assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
 
     assert.lengthOf(slotComposer.getAvailableContexts(), 3);
     verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
@@ -120,7 +116,7 @@ recipe
   });
 
   it('initialize recipe and render hosted slots', async () => {
-    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/particles/artifacts/products-test.recipes',
       slotComposer
@@ -174,15 +170,12 @@ recipe
     assert.deepEqual(['A'], startRenderParticles);
 
     const [particleA, particleB, particleC] = arc.activeRecipe.particles;
-    await slotComposer.renderSlot(particleA, 'root', {model: {'foo': 'bar'}});
     const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');
-
-    startRenderParticles.length = 0;
     rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'item'
         ? {'id1': 'dummy-inner-container-1', 'id2': 'dummy-inner-container-2'}
         : null;
-    rootSlot.updateProvidedContexts();
-
+    startRenderParticles.length = 0;
+    await slotComposer.renderSlot(particleA, 'root', {model: {'foo': 'bar'}});
     assert.deepEqual(['B', 'C'], startRenderParticles);
 
     const gatherRenderings = slotContext => {
@@ -288,7 +281,7 @@ recipe
           };
         });`
       }),
-      slotComposer: new RamSlotComposer(),
+      slotComposer: new FakeSlotComposer(),
     });
 
     const [recipe] = arc.context.recipes;
