@@ -20,9 +20,9 @@ import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type';
 
 export class Planificator {
-  static async create(arc: Arc, {userid, protocol}) {
+  static async create(arc: Arc, {userid, protocol, onlyConsumer}) {
     const store = await Planificator._initStore(arc, {userid, protocol, arcKey: null});
-    const planificator = new Planificator(arc, userid, store);
+    const planificator = new Planificator(arc, userid, store, onlyConsumer);
     planificator.requestPlanning();
     return planificator;
   }
@@ -30,10 +30,10 @@ export class Planificator {
   arc: Arc;
   userid: string;
   consumer: PlanConsumer;
-  producer: PlanProducer;
-  replanQueue: ReplanQueue;
+  producer?: PlanProducer;
+  replanQueue?: ReplanQueue;
   search: string|null = null;
-  dataChangeCallback: () => void = () => this.replanQueue.addChange();
+  dataChangeCallback: () => void;
 
   // In <0.6 shell, this is needed to backward compatibility, in order to (1)
   // (1) trigger replanning with a local producer and (2) notify shell of the
@@ -42,21 +42,28 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc: Arc, userid: string, store: StorageProviderBase) {
+  constructor(arc: Arc, userid: string, store: StorageProviderBase, onlyConsumer: boolean) {
     this.arc = arc;
     this.userid = userid;
-    this.producer = new PlanProducer(arc, store);
-    this.replanQueue = new ReplanQueue(this.producer);
+    if (!onlyConsumer) {
+      this.producer = new PlanProducer(arc, store);
+      this.replanQueue = new ReplanQueue(this.producer);
+      this.dataChangeCallback = () => this.replanQueue.addChange();
+      this._listenToArcStores();
+    }
     this.consumer = new PlanConsumer(arc, store);
 
     this.lastActivatedPlan = null;
     this.arc.registerInstantiatePlanCallback(this.arcCallback);
-    this._listenToArcStores();
   }
 
   async requestPlanning(options = {}) {
-    await this.producer.producePlans(options);
+    if (!this.consumerOnly) {
+      await this.producer.producePlans(options);
+    }
   }
+
+  get consumerOnly() { return !Boolean(this.producer); }
 
   async loadPlans() {
     return this.consumer.loadPlans();
@@ -83,8 +90,10 @@ export class Planificator {
 
   dispose() {
     this.arc.unregisterInstantiatePlanCallback(this.arcCallback);
-    this._unlistenToArcStores();
-    this.producer.store.dispose();
+    if (!this.consumerOnly) {
+      this._unlistenToArcStores();
+    }
+    this.consumer.store.dispose();
     this.consumer.dispose();
   }
 
