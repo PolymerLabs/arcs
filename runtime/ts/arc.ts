@@ -16,7 +16,7 @@ import {Recipe} from './recipe/recipe.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Description} from './description.js';
 import {compareComparables} from './recipe/util.js';
-import {FakePecFactory} from '../fake-pec-factory.js';
+import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {DevtoolsConnection} from '../debug/devtools-connection.js';
 import {Id} from './id.js';
@@ -160,11 +160,11 @@ export class Arc {
     return this.waitForIdlePromise;
   }
 
-  get isSpeculative() {
+  get isSpeculative(): boolean {
     return this.speculative;
   }
 
-  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string) {
+  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
     const type = handle.type.getContainedType() || handle.type;
     if (type.isInterface) {
       context.interfaces += type.interfaceShape.toString() + '\n';
@@ -280,7 +280,7 @@ export class Arc {
     return '';
   }
 
-  async serialize() {
+  async serialize(): Promise<string> {
     await this.idle;
     return `
 meta
@@ -295,7 +295,7 @@ ${this._serializeParticles()}
 ${this.activeRecipe.toString()}`;
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}) {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: manifest.meta.name,
@@ -655,7 +655,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: s.type.isInterface ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id) {
+  findStoreById(id): StorageProviderBase {
     let store = this.storesById.get(id);
     if (store == null) {
       store = this._context.findStoreById(id);
@@ -684,15 +684,15 @@ ${this.activeRecipe.toString()}`;
     return versionById;
   }
 
-  keyForId(id) {
+  keyForId(id): string {
     return this.storageKeys[id];
   }
 
-  stop() {
+  stop(): void {
     this.pec.stop();
   }
 
-  toContextString(options) {
+  toContextString(options): string {
     const results = [];
     const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {

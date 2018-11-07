@@ -21,7 +21,7 @@ export class Reference {
   private readonly context: ParticleExecutionContext;
   private storageProxy = null;
   protected handle = null;
-  constructor(data : {id: string, storageKey: string | null}, type, context) {
+  constructor(data : {id: string, storageKey: string | null}, type, context: ParticleExecutionContext) {
     this.id = data.id;
     this.storageKey = data.storageKey;
     this.context = context;
@@ -29,7 +29,7 @@ export class Reference {
     this.type = type;
   }
 
-  protected async ensureStorageProxy() {
+  protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referenceReferredType);
       this.handle = handleFor(this.storageProxy);
@@ -41,7 +41,7 @@ export class Reference {
     }
   }
 
-  async dereference() {
+  async dereference(): Promise<void> {
     assert(this.context, "Must have context to dereference");
 
     if (this.entity) {
@@ -54,14 +54,14 @@ export class Reference {
     return this.entity;
   }
 
-  dataClone() {
+  dataClone(): {storageKey: string, id: string} {
     return {storageKey: this.storageKey, id: this.id};
   }
 }
 
 enum ReferenceMode {Unstored, Stored}
 
-export function newClientReference(context) {
+export function newClientReference(context: ParticleExecutionContext) {
   return class extends Reference {
     private mode = ReferenceMode.Unstored;
     public stored: Promise<undefined>;
@@ -89,7 +89,7 @@ export function newClientReference(context) {
       return super.dereference();
     }
 
-    isIdentified() {
+    isIdentified(): boolean {
       return this.entity.isIdentified();
     }
   };
