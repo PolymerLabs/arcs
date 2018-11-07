@@ -12,7 +12,7 @@ import {vm} from '../../../../platform/vm-node.js';
 import {fetch} from '../../../../runtime/fetch-node.js';
 
 import {assert} from '../../../../platform/assert-web.js';
-import {Particle} from '../../../../runtime/particle.js';
+import {Particle} from '../../../../runtime/ts-build/particle.js';
 import {DomParticle} from '../../../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
 import {newClientReference} from '../../../../runtime/ts-build/reference.js';

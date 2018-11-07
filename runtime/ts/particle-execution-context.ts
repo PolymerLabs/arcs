@@ -15,7 +15,7 @@ import {PECInnerPort} from '../api-channel.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Loader} from './loader.js';
-import {Particle} from '../particle.js';
+import {Particle} from './particle.js';
 
 export class ParticleExecutionContext {
   private apiPort : PECInnerPort;

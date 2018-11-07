@@ -44,7 +44,8 @@ export class Handle {
   options: {};
   entityClass: string|null;
 
-  constructor(proxy, name, particleId, canRead, canWrite) {
+  // TODO type particleId, marked as string, but called with number
+  constructor(proxy: StorageProxy, name: string, particleId, canRead: boolean, canWrite: boolean) {
     assert(!(proxy instanceof Handle));
     this._proxy = proxy;
     this.name = name || this._proxy.name;
@@ -102,6 +103,10 @@ export class Handle {
 
   get _id() {
     return this._proxy._id;
+  }
+
+  async store(entity) {
+    throw new Error('unimplemented');
   }
 
   toManifestString() {
