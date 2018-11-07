@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Arc} from './arc.js';
-import {Particle} from '../particle.js';
+import {Particle} from './particle.js';
 
 export class Relevance {
   // stores a copy of arc.getStoresState

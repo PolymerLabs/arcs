@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {Particle} from './particle.js';
+import {Particle} from './ts-build/particle.js';
 
 /** @class DomParticleBase
  * Particle that interoperates with DOM.

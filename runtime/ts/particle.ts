@@ -7,25 +7,43 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
-import {Tracing} from '../tracelib/trace.js';
-import {assert} from '../platform/assert-web.js';
+import {Tracing} from '../../tracelib/trace.js';
+import {assert} from '../../platform/assert-web.js';
+import {Handle} from './handle.js';
+import {ConnectionSpec, ParticleSpec} from './particle-spec.js';
+import {Relevance} from './relevance.js';
 
 /** @class Particle
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
 export class Particle {
+    public static spec: ParticleSpec;
+    public spec: ParticleSpec;
+    public extraData: boolean;
+    public relevances: Relevance[] = [];
+    public handles: Map<string, Handle>;
+
+    // Figure out what this is...
+    // tslint:disable-next-line: no-any
+    consumedSlotConnections: any[];
+    
+    private _idle: Promise<void> = Promise.resolve();
+    private _idleResolver: (() => void);
+    private _busy = 0;
+    
+    // Only used by a Slotlet class in particle-execution-context
+    // tslint:disable-next-line: no-any
+    private _slotByName: Map<string, any> = new Map();
+    private capabilities: {constructInnerArc?: Function};
+    
   constructor(capabilities) {
-    this.spec = this.constructor.spec;
-    if (this.spec.inputs.length == 0) {
+    // Typescript only sees this.constructor as a Function type.
+    this.spec = this.constructor['spec'];
+    if (this.spec.inputs.length === 0) {
       this.extraData = true;
     }
-    this.relevances = [];
-    this._idle = Promise.resolve();
-    this._busy = 0;
-    this._slotByName = new Map();
     this.capabilities = capabilities || {};
   }
 
@@ -37,7 +55,7 @@ export class Particle {
    *
    * Handles is a map from handle names to store handles.
    */
-  setHandles(handles) {
+  setHandles(handles: Map<string, Handle>) {
   }
   
   /** @method setViews(views)
@@ -55,7 +73,7 @@ export class Particle {
    * model: For Variable-backed Handles, the Entity data or null if the Variable is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
-  onHandleSync(handle, model) {
+  onHandleSync(handle: Handle, model) {
   }
 
   /** @method onHandleUpdate(handle, update)
@@ -70,7 +88,7 @@ export class Particle {
    *    added: An Array of Entities added to a Collection-backed Handle.
    *    removed: An Array of Entities removed from a Collection-backed Handle.
    */
-  onHandleUpdate(handle, update) {
+  onHandleUpdate(handle: Handle, update) {
   }
 
   /** @method onHandleDesync(handle)
@@ -82,7 +100,7 @@ export class Particle {
    *
    * handle: The Handle instance that was desynchronized.
    */
-  onHandleDesync(handle) {
+  onHandleDesync(handle: Handle) {
   }
 
   constructInnerArc() {
@@ -92,37 +110,37 @@ export class Particle {
     return this.capabilities.constructInnerArc(this);
   }
 
-  get busy() {
+  get busy(): boolean {
     return this._busy > 0;
   }
 
-  get idle() {
+  get idle(): Promise<void>  {
     return this._idle;
   }
 
-  set relevance(r) {
+  set relevance(r: Relevance) {
     this.relevances.push(r);
   }
 
-  startBusy() {
-    if (this._busy == 0) {
+  startBusy(): void {
+    if (this._busy === 0) {
       this._idle = new Promise(resolve => this._idleResolver = resolve);
     }
     this._busy++;
   }
   
-  doneBusy() {
+  doneBusy(): void {
     this._busy--;
-    if (this._busy == 0) {
+    if (this._busy === 0) {
       this._idleResolver();
     }
   }
 
-  inputs() {
+  inputs(): ConnectionSpec[] {
     return this.spec.inputs;
   }
 
-  outputs() {
+  outputs(): ConnectionSpec[] {
     return this.spec.outputs;
   }
 
@@ -133,13 +151,13 @@ export class Particle {
     return this._slotByName.get(name);
   }
 
-  static buildManifest(strings, ...bits) {
-    const output = [];
+  static buildManifest(strings: string[], ...bits): string {
+    const output:string[] = [];
     for (let i = 0; i < bits.length; i++) {
         const str = strings[i];
         const indent = / *$/.exec(str)[0];
         let bitStr;
-        if (typeof bits[i] == 'string') {
+        if (typeof bits[i] === 'string') {
           bitStr = bits[i];
         } else {
           bitStr = bits[i].toManifestString();
@@ -154,13 +172,17 @@ export class Particle {
     return output.join('');
   }
 
-  setParticleDescription(pattern) {
+  setParticleDescription(pattern): boolean {
     return this.setDescriptionPattern('pattern', pattern);
   }
-  setDescriptionPattern(connectionName, pattern) {
+
+  setDescriptionPattern(connectionName: string, pattern): boolean {
     const descriptions = this.handles.get('descriptions');
     if (descriptions) {
-      descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
+      // Typescript can't infer the type here and fails with TS2351
+      // tslint:disable-next-line: no-any
+      const entityClass:any = descriptions.entityClass;
+      descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
       return true;
     }
     throw new Error('A particle needs a description handle to set a decription pattern');
