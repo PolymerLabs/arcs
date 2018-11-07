@@ -360,4 +360,13 @@ describe('schema', function() {
       fields: {}
     }));
   });
+
+  // Firebase doesn't store empty lists or objects, so we need to
+  // handle instantiation of an empty schema from an undefined literal.
+  it('handles schema instantiation from undefined spec', async function() {
+    const emptySchema = Schema.fromLiteral(undefined);
+    assert.isEmpty(emptySchema.fields);
+    assert.isEmpty(emptySchema.names);
+    assert.equal('* {}', emptySchema.toInlineSchemaString());
+  });
 });

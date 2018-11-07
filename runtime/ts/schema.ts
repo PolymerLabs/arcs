@@ -76,7 +76,7 @@ export class Schema {
     return {names: this._model.names, fields, description: this.description};
   }
 
-  static fromLiteral(data) {
+  static fromLiteral(data = {fields: {}, names: [], description: {}}) {
     const fields = {};
     const updateField = field => {
       if (field.kind === 'schema-reference') {
@@ -422,7 +422,7 @@ export class Schema {
   }
 
   toInlineSchemaString(options) {
-    const names = (this.names || ['*']).join(' ');
+    const names = this.names.join(' ') || '*';
     const fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
   }
