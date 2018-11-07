@@ -1,6 +1,7 @@
 import {assert} from '../../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider';
-import {PouchDbStorage} from './pouch-db-storage';
+import {PouchDbStorage} from './pouch-db-storage.js';
+import {Type} from '../../type.js';
 
 /**
  * Loosely defines the value object stored.
@@ -37,22 +38,22 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   private _stored: ValueStorage | null = null;
   private localKeyId = 0;
 
-  constructor(type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
+  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, storageEngine, name, id, key);
     this.backingStore = null;
   }
 
-  backingType() {
+  backingType(): Type {
     return this.type;
   }
 
-  clone() {
+  clone(): PouchDbVariable {
     const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null);
     variable.cloneFrom(this);
     return variable;
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
 
@@ -138,8 +139,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
   /**
    * @return a promise containing the variable value or null if it does not exist.
    */
-
-  async get() {
+  async get(): Promise<ValueStorage> {
     const value = await this.getStored();
 
     if (this.referenceMode && value) {
@@ -161,7 +161,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: {id: string}, originatorId = null, barrier = null) {
+  async set(value: {id: string}, originatorId = null, barrier = null): Promise<void> {
     assert(value !== undefined);
 
     if (this.referenceMode && value) {
@@ -228,14 +228,14 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async clear(originatorId = null, barrier = null) {
+  async clear(originatorId = null, barrier = null): Promise<void> {
     await this.set(null, originatorId, barrier);
   }
 
   /**
    * Triggered when the storage key has been modified or deleted.
    */
-  onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<VariableStorage>) {
+  onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<VariableStorage>): void {
     // Same revs?  No changes, just return.
     if (doc._rev === this._rev) {
       return;

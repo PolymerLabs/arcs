@@ -37,7 +37,9 @@ export class PouchDbKey extends KeyBase {
   constructor(key: string) {
     super();
 
-    assert(key.startsWith('pouchdb://'), `can't construct pouchdb key for input key ${key}`);
+    if (!key.startsWith('pouchdb://')) {
+      throw new Error(`can't construct pouchdb key for input key ${key}`);
+    }
 
     const parts = key.replace(/^pouchdb:\/\//, '').split('/');
     this.protocol = 'pouchdb';
@@ -45,7 +47,9 @@ export class PouchDbKey extends KeyBase {
     this.dbName = parts[1] || 'user';
     this.location = parts.slice(2).join('/') || '';
 
-    assert(this.toString() === key, 'PouchDb keys must match ' + this.toString() + ' vs ' + key);
+    if(this.toString() !== key) {
+      throw new Error('PouchDb keys must match ' + this.toString() + ' vs ' + key);
+    }
   }
 
   /**
