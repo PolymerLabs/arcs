@@ -3,6 +3,7 @@ import 'Products/Products.recipe'
 import 'Restaurants/Restaurants.recipes'
 import 'Reservations/Reservations.recipes'
 import 'Music/Music.recipes'
+import 'Profile/Profile.recipes'
 
 import 'Demo/RestaurantsDemo.recipes'
 import 'Demo/TVMazeDemo.recipes'

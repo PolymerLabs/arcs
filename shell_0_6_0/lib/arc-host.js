@@ -40,10 +40,20 @@ export class ArcHost {
     if (config.manifest && !serialization) {
       await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
     }
+    if (this.pendingPlan) {
+      this.instantiatePlan(this.arc, this.pendingPlan);
+    }
     return this.arc;
   }
   set manifest(manifest) {
     this.instantiateDefaultRecipe(this.env, this.arc, manifest);
+  }
+  set plan(plan) {
+    if (this.arc) {
+      this.instantiatePlan(this.arc, plan);
+    } else {
+      this.pendingPlan = plan;
+    }
   }
   dispose() {
     this.arc  && this.arc.dispose();
@@ -90,16 +100,19 @@ export class ArcHost {
     const recipe = manifest.allRecipes[0];
     const plan = await env.resolve(arc, recipe);
     if (plan) {
-      console.log('instantiating plan');
-      try {
-        await arc.instantiate(plan);
-      } catch (x) {
-        console.error(x);
-        //console.error(plan.toString());
-      }
-      this.persistSerialization(); //arc);
-      this.plan = plan;
+      this.instantiatePlan(arc, plan);
     }
+  }
+  async instantiatePlan(arc, plan) {
+    console.log('instantiatePlan');
+    try {
+      await arc.instantiate(plan);
+    } catch (x) {
+      console.error(x);
+      //console.error(plan.toString());
+    }
+    this.persistSerialization(); //arc);
+    //this.plan = plan;
   }
   async persistSerialization() {
     const {arc, config: {id}, storage} = this;

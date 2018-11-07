@@ -42,13 +42,13 @@ const template = Xen.Template.html`
 
 export class WebArc extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'storage', 'composer', 'config', 'manifest'];
+    return ['env', 'context', 'storage', 'composer', 'config', 'manifest', 'plan'];
   }
   get template() {
     return template;
   }
   update(props, state) {
-    const {env, storage, config, manifest, context} = props;
+    const {env, storage, config, manifest, plan} = props;
     if (!state.host && env && storage && config) {
       this.createHost(props, state);
     }
@@ -65,6 +65,9 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
       if (manifest) {
         state.host.manifest = manifest;
       }
+    }
+    if (plan && state.host && plan !== state.plan) {
+      state.host.plan = state.plan = plan;
     }
   }
   createHost({env, context, storage, composer, config}, state) {

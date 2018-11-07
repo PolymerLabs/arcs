@@ -24,7 +24,16 @@ import './pipes/device-client-pipe.js';
 // disable flushing template cache on dispose
 SlotDomConsumer.multitenant = true;
 
-// templates
+const manifests = {
+  context: `
+    import 'https://$artifacts/canonical.manifest'
+    import 'https://$artifacts/Profile/Sharing.recipe'
+  `,
+  launcher: `
+    import 'https://$artifacts/Arcs/Launcher.recipe'
+  `
+};
+
 const template = Xen.Template.html`
   <style>
     :host {
@@ -60,10 +69,10 @@ const template = Xen.Template.html`
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- other arcs -->
     <web-arc id="nullArc" hidden env="{{env}}" storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <web-arc id="arcs" hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" config="{{arcConfig}}" manifest="{{manifest}}" context="{{context}}" on-arc="onState"></web-arc>
+    <web-arc id="arc" hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
     <div slot="suggestions" suggestions>
-      <div slotid="suggestions"></div>
+      <div slotid="suggestions" on-plan-choose="onChooseSuggestion"></div>
     </div>
   </web-shell-ui>
   <!-- data pipes -->
@@ -93,7 +102,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     if (!state.env && root) {
       this.updateEnv({root}, state);
-      this.spawnSuggestions();
+      this.spawnContext();
+      //this.handrollSuggestions();
     }
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
@@ -121,6 +131,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       // spin up nullArc
       this.spawnNullArc();
     }
+    // if (state.arc && state.pendingSuggestion) {
+    //   const plan = state.pendingSuggestion.plan;
+    //   state.pendingSuggestion = null;
+    //   state.arc.instantiate(plan);
+    // }
     this.state = {hideLauncher: Boolean(state.arckey)};
   }
   render(props, state) {
@@ -134,10 +149,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // create arcs web-environment
     state.env = new ArcsEnvWeb(root);
     // map in 0_6_0 paths
-    state.env.pathMap['https://$shell/'] = `${state.env.rootPath}/shell_0_6_0/`;
-    state.env.pathMap['https://$artifacts/'] = `${state.env.rootPath}/artifacts_0_6_0/`;
-    // spin up context arc
-    await this.spawnContext();
+    Object.assign(state.env.pathMap, {
+      'https://$shell/': `${root}/shell_0_6_0/`,
+      'https://$artifacts/': `${root}/artifacts_0_6_0/`,
+      'https://$shell/build/': `${root}/shell/build/`
+    });
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
@@ -162,80 +178,105 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   async spawnContext() {
-    const precontext = await this.state.env.parse(`
-  import 'https://$artifacts/canonical.manifest'
-  import 'https://$artifacts/Profile/Sharing.recipe'
-    `);
+    const precontext = await this.state.env.parse(manifests.context);
     this.state = {
       precontext,
       contextConfig: {
-        id: `${this.state.userid}/context`
+        id: `${this.state.userid}-context`
       }
     };
   }
   spawnLauncher() {
     this.state = {
       launcherConfig: {
-        id: `${this.state.userid}/launcher`,
-        manifest: `import 'https://$artifacts/Arcs/Launcher.recipe'`
+        id: `${this.state.userid}-launcher`,
+        manifest: manifests.launcher
       }
     };
   }
   spawnNullArc() {
     this.state = {
       nullConfig: {
-        id: `${this.state.userid}/null`,
+        id: `${this.state.userid}-null`,
         suggestionContainer: this._dom.$('[slotid="suggestions"]')
       }
     };
   }
-  spawnSuggestions() {
-    // const suggestions = [
-    //   //`Arcs/Login.recipe`,
-    //   //`Profile/EchoUser.recipe`
-    //   `Demo/ProductsDemo.recipe`,
-    //   `Demo/RestaurantsDemo.recipes`,
-    //   `Demo/TVMazeDemo.recipes`,
-    //   `Music/Playlist.recipe`,
-    //   `Profile/BasicProfile.recipe`,
-    //   `Restaurants/Restaurants.recipes`,
-    //   `Reservations/Reservations.recipes`
-    // ];
-    // const slot = this.host.querySelector(`[suggestions]`);
-    // if (slot) {
-    //   suggestions.forEach(suggestion => {
-    //     slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
-    //       suggestion,
-    //       innerText: suggestion.split('/').pop().split('.').shift()
-    //     }))
-    //     .addEventListener('plan-choose', () => this.applySuggestion(suggestion));
-    //   });
-    // }
-  }
+  // handrollSuggestions() {
+  //   const suggestions = [
+  //     //`Arcs/Login.recipe`,
+  //     //`Profile/EchoUser.recipe`
+  //     `Demo/ProductsDemo.recipe`,
+  //     `Demo/RestaurantsDemo.recipes`,
+  //     `Demo/TVMazeDemo.recipes`,
+  //     `Music/Playlist.recipe`,
+  //     `Profile/BasicProfile.recipe`,
+  //     `Restaurants/Restaurants.recipes`,
+  //     `Reservations/Reservations.recipes`
+  //   ];
+  //   const slot = this.host.querySelector(`[suggestions]`);
+  //   if (slot) {
+  //     suggestions.forEach(suggestion => {
+  //       slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
+  //         suggestion,
+  //         innerText: suggestion.split('/').pop().split('.').shift()
+  //       }))
+  //       .addEventListener('plan-choose', () => this.applyHandrolledSuggestion(suggestion));
+  //     });
+  //   }
+  // }
+  // applyHandrolledSuggestion(suggestion) {
+  //   if (this.state.arckey) {
+  //     this.state = {manifest: `import 'https://$artifacts/${suggestion}'`};
+  //   } else {
+  //     this.spawnHandrolledArc(suggestion);
+  //   }
+  // }
+  // spawnHandrolledArc(recipeName) {
+  //   const luid = generateId();
+  //   //const id = `${this.state.userid}-${luid}`;
+  //   const id = `${this.state.userid}/${luid}`;
+  //   const manifest = `import 'https://$artifacts/${recipeName}'`;
+  //   this.state = {
+  //     arc: null,
+  //     arckey: id,
+  //     // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
+  //     arcConfig: {id, manifest},
+  //     manifest: null
+  //   };
+  //   const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+  //   this.recordArcMeta({
+  //     key: id,
+  //     href: `?arc=${id}`,
+  //     description: `${recipeName.split('/').pop().split('.').shift()}`,
+  //     color,
+  //     touched: Date.now()
+  //   });
+  // }
   applySuggestion(suggestion) {
-    if (this.state.arckey) {
-      this.state = {manifest: `import 'https://$artifacts/${suggestion}'`};
-    } else {
+    if (!this.state.arckey) {
       this.spawnArc(suggestion);
     }
+    this.state = {plan: suggestion.plan};
   }
-  spawnArc(recipe) {
+  spawnArc(suggestion) {
     const luid = generateId();
-    //const id = `${this.state.userid}-${luid}`;
-    const id = `${this.state.userid}/${luid}`;
-    const manifest = `import 'https://$artifacts/${recipe}'`;
+    const key = `${this.state.userid}-${luid}`;
+    //const id = `${this.state.userid}/${luid}`;
+    const manifest = null; //`import 'https://$artifacts/${recipe}'`;
     this.state = {
       arc: null,
-      arckey: id,
+      arckey: key,
       // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
-      arcConfig: {id, manifest},
+      arcConfig: {id: key, manifest},
       manifest: null
     };
+    const description = suggestion.descriptionText;
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.recordArcMeta({
-      key: id,
-      href: `?arc=${id}`,
-      description: `${recipe.split('/').pop().split('.').shift()}`,
+      key,
+      href: `?arc=${key}`,
+      description,
       color,
       touched: Date.now()
     });
@@ -243,15 +284,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   async recordArcMeta(meta) {
     const {store} = this._state;
     if (store) {
-      const metaEntity = {
-        id: meta.key,
-        rawData: meta
-      };
-      await store.store(metaEntity, [String(Math.random())]);
+      await store.store({id: meta.key, rawData: meta}, [generateId()]);
     }
   }
   recordPipesArc(userid) {
-    const pipesKey = `${userid}/pipes`;
+    const pipesKey = `${userid}-pipes`;
     this.recordArcMeta({
       key: pipesKey,
       href: `?arc=${pipesKey}`,
@@ -260,14 +297,18 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       touched: Date.now()
     });
   }
-  onLauncherArc(e, launcherArc) {
-    this.state = {launcherArc};
-  }
   onLauncherClick() {
     this.state = {arckey: ''};
   }
+  onLauncherArc(e, launcherArc) {
+    this.state = {launcherArc};
+  }
   onNullArc(e, nullArc) {
     this.state = {nullArc};
+  }
+  onChooseSuggestion(e, suggestion) {
+    log('onChooseSuggestion', suggestion);
+    this.applySuggestion(suggestion);
   }
 }
 

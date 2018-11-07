@@ -44,36 +44,6 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       state.planificator.setSearch(state.search);
     }
   }
-  // async _willReceiveProps(props, state, oldProps) {
-  //   const changed = name => props[name] !== oldProps[name];
-  //   const {arc, suggestion, search, userid} = props;
-  //   if (suggestion && changed('suggestion')) {
-  //     state.pendingPlans.push(suggestion.plan);
-  //   }
-  //   if (arc && userid) {
-  //     let {planificator} = state;
-  //     if (changed('arc') || changed('userid')) {
-  //       state.pendingPlans = [];
-  //       if (planificator) {
-  //         planificator.dispose();
-  //         planificator = null;
-  //       }
-  //     }
-  //     if (!planificator) {
-  //       planificator = await this._createPlanificator(arc, userid);
-  //       planificator.loadPlans && await planificator.loadPlans();
-  //       planificator.setSearch(search);
-  //     } else if (changed('search')) {
-  //       planificator.setSearch(search);
-  //     }
-  //     this._setState({planificator});
-  //   }
-  // }
-  // _update({arc}, {pendingPlans}) {
-  //   if (arc && pendingPlans.length) {
-  //     this._instantiatePlan(arc, pendingPlans.shift());
-  //   }
-  // }
   async _createPlanificator(env, config, arc, userid) {
     const planificator = config.planificator === 'original'
         ? new env.lib.Planificator(arc, {userid})
