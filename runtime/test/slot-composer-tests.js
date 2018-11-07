@@ -12,6 +12,7 @@
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
+import {RamSlotComposer} from '../../shell_0_6_0/lib/ram-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../ts-build/manifest.js';
@@ -19,7 +20,6 @@ import {Planner} from '../planner.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import * as util from '../testing/test-util.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
@@ -150,7 +150,7 @@ recipe
         provide set of item
     particle B in 'b.js'
       consume item
-    particle C in 'C.js'
+    particle C in 'c.js'
       consume item
     recipe
       slot 'rootslotid-root' as slot0
@@ -209,4 +209,109 @@ recipe
     assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
   });
 
+  it('renders inner slots in transformations without intercepting', async () => {
+    const {arc, slotComposer} = await TestHelper.create({
+      manifestString: `
+        particle TransformationParticle in 'TransformationParticle.js'
+          consume root
+    
+        recipe
+          slot 'rootslotid-root' as slot0
+          TransformationParticle
+            consume root as slot0`,
+      loader: new StubLoader({
+        'TransformationParticle.js': `defineParticle(({DomParticle}) => {
+          return class extends DomParticle {
+            async setHandles(handles) {
+              super.setHandles(handles);
+  
+              const innerArc = await this.constructInnerArc();
+              const hostedSlotId = await innerArc.createSlot(this, 'root', 'A', 'content');
+        
+              innerArc.loadRecipe(\`
+                particle A in 'A.js'
+                  consume content
+                    provide detail
+                
+                particle B in 'B.js'
+                  consume detail
+                
+                recipe
+                  slot '\` + hostedSlotId + \`' as hosted
+                  A
+                    consume content as hosted
+                      provide detail as detail
+                  B
+                    consume detail as detail
+              \`);
+            }
+        
+            renderHostedSlot(slotName, hostedSlotId, content) {
+              this.setState(content);
+            }
+        
+            shouldRender() {
+              return Boolean(this.state.template);
+            }
+        
+            getTemplate() {
+              return '<div>intercepted-template' + this.state.template + '</div>';
+            }
+        
+            getTemplateName() {
+              return this.state.templateName + '/intercepted';
+            }
+        
+            render() {
+              return Object.assign({}, this.state.model, {a: this.state.model.a + '/intercepted-model'});
+            }
+          };
+        });`,
+        'A.js': `defineParticle(({DomParticle}) => {
+          return class extends DomParticle {
+            get template() {
+              return '<div><span>{{a}}</span><div slotid="detail"></div></div>';
+            }
+            render() {
+              return {a: 'A content'};
+            }
+          };
+        });`,
+        'B.js': `defineParticle(({DomParticle}) => {
+          return class extends DomParticle {
+            get template() {
+              return '<div>{{b}}</div>';
+            }
+            render() {
+              return {b: 'B content'};
+            }
+          };
+        });`
+      }),
+      slotComposer: new RamSlotComposer(),
+    });
+
+    const [recipe] = arc.context.recipes;
+    recipe.normalize();
+
+    await arc.instantiate(recipe);
+
+    const rootSlotConsumer = slotComposer._contexts.find(c => c.name === 'root').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer);
+    await rootSlotConsumer.contentAvailable;
+
+    const detailSlotConsumer = slotComposer._contexts.find(c => c.name === 'detail').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer);
+    await detailSlotConsumer.contentAvailable;
+    
+    assert.deepEqual({
+      model: {a: 'A content/intercepted-model'},
+      template: '<div>intercepted-template<div><span>{{a}}</span><div slotid="detail"></div></div></div>',
+      templateName: 'A::content::default/intercepted'
+    }, rootSlotConsumer._content);
+
+    assert.deepEqual({
+      model: {b: 'B content'},
+      template: '<div>{{b}}</div>',
+      templateName: 'default',
+    }, detailSlotConsumer._content);
+  });
 });

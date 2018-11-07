@@ -24,7 +24,4 @@ export class HostedSlotContext extends SlotContext {
       this.handles = [{id: hostedSourceSlotConsumer.storeId} as Handle];
     }
   }
-  get container() {
-    return this.sourceSlotConsumer.getInnerContainer(this.name) || null;
-  }
 }

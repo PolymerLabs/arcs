@@ -16,6 +16,7 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
   constructor(consumeConn) {
     super(consumeConn);
     this._content = {};
+    this.contentAvailable = new Promise(resolve => this._contentAvailableResolve = resolve);
   }
 
   async setContent(content, handler) {
@@ -29,10 +30,12 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
         this._content.template = content.template;
       }
       this._content.model = content.model;
+      this._contentAvailableResolve();
     } else {
       this._content = {};
     }
-  }  
+  }
+
   createNewContainer(container, subId) {
     return container;
   }
@@ -43,7 +46,7 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
 
   getInnerContainer(innerSlotName) {
     const model = this.renderings.map(([subId, {model}]) => model)[0];
-    const providedSlotSpec = this.consumeConn.slotSpec.getProvidedSlotSpec(innerSlotName);
+    const providedSlotSpec = this._findProvidedSlotSpec(innerSlotName);
     if (!providedSlotSpec) {
       console.warn(`Cannot find provided spec for ${innerSlotName} in ${this.consumeConn.getQualifiedName()}`);
       return;
