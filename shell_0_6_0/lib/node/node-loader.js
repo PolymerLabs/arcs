@@ -9,7 +9,7 @@
  */
 
 import {Loader} from '../../../runtime/ts-build/loader.js';
-import {Particle} from '../../../runtime/particle.js';
+import {Particle} from '../../../runtime/ts-build/particle.js';
 import {DomParticle} from '../../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../../runtime/multiplexer-dom-particle.js';
 import {TransformationDomParticle} from '../../../runtime/transformation-dom-particle.js';
