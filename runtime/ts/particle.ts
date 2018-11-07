@@ -25,7 +25,7 @@ export class Particle {
     public relevances: Relevance[] = [];
     public handles: Map<string, Handle>;
 
-    // Figure out what this is...
+    // TODO(mmandlis): add proper types
     // tslint:disable-next-line: no-any
     consumedSlotConnections: any[];
     
@@ -40,6 +40,7 @@ export class Particle {
     
   constructor(capabilities) {
     // Typescript only sees this.constructor as a Function type.
+    // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
     if (this.spec.inputs.length === 0) {
       this.extraData = true;
@@ -58,47 +59,48 @@ export class Particle {
   setHandles(handles: Map<string, Handle>) {
   }
   
-  /** @method setViews(views)
+  /**
    * This method is deprecated. Use setHandles instead.
    */
   setViews(views) {
   }
 
-  /** @method onHandleSync(handle, model)
+  /**
    * Called for handles that are configured with both keepSynced and notifySync, when they are
    * updated with the full model of their data. This will occur once after setHandles() and any time
    * thereafter if the handle is resynchronized.
    *
-   * handle: The Handle instance that was updated.
-   * model: For Variable-backed Handles, the Entity data or null if the Variable is not set.
+   * @param handle The Handle instance that was updated.
+   * @param model For Variable-backed Handles, the Entity data or null if the Variable is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
   onHandleSync(handle: Handle, model) {
   }
 
-  /** @method onHandleUpdate(handle, update)
+  /**
    * Called for handles that are configued with notifyUpdate, when change events are received from
    * the backing store. For handles also configured with keepSynced these events will be correctly
    * ordered, with some potential skips if a desync occurs. For handles not configured with
    * keepSynced, all change events will be passed through as they are received.
    *
-   * handle: The Handle instance that was updated.
-   * update: An object containing one of the following fields:
-   *    data: The full Entity for a Variable-backed Handle.
-   *    added: An Array of Entities added to a Collection-backed Handle.
-   *    removed: An Array of Entities removed from a Collection-backed Handle.
+   * @param handle The Handle instance that was updated.
+   * @param update An object containing one of the following fields:
+   *  - data: The full Entity for a Variable-backed Handle.
+   *  - added: An Array of Entities added to a Collection-backed Handle.
+   *  - removed: An Array of Entities removed from a Collection-backed Handle.
    */
-  onHandleUpdate(handle: Handle, update) {
+  // tslint:disable-next-line: no-any
+  onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}) {
   }
 
-  /** @method onHandleDesync(handle)
+  /**
    * Called for handles that are configured with both keepSynced and notifyDesync, when they are
    * detected as being out-of-date against the backing store. For Variables, the event that triggers
    * this will also resync the data and thus this call may usually be ignored. For Collections, the
    * underlying proxy will automatically request a full copy of the stored data to resynchronize.
    * onHandleSync will be invoked when that is received.
    *
-   * handle: The Handle instance that was desynchronized.
+   * @param handle The Handle instance that was desynchronized.
    */
   onHandleDesync(handle: Handle) {
   }
