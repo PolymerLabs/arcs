@@ -160,7 +160,7 @@ export abstract class StorageProviderBase {
       handleStr.push(`'${this.id}'`);
     }
     if (handleTags && handleTags.length) {
-      handleStr.push(`${[...handleTags].join(' ')}`);
+      handleStr.push(`${handleTags.join(' ')}`);
     }
     if (this.source) {
       handleStr.push(`in '${this.source}'`);
