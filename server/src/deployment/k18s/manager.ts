@@ -190,7 +190,6 @@ export class K18sContainerManager implements ContainerManager {
     const rule = new V1beta1IngressRule();
     spec.rules = [rule];
     rule.http = new V1beta1HTTPIngressRuleValue();
-
     const path = new V1beta1HTTPIngressPath();
     path.path = ARCS_INGRESS_PREFIX + fingerprint + '/*';
     path.backend = new V1beta1IngressBackend();
@@ -198,6 +197,7 @@ export class K18sContainerManager implements ContainerManager {
     path.backend.servicePort = EXTERNAL_PORT;
     rule.http.paths = ingress.spec.rules[0].http.paths;
     rule.http.paths.push(path);
+    rule.host = ingress.spec.rules[0].host;
     newIngress.spec = spec;
 
     const oldHeaders = this.k8sBetaApi['defaultHeaders'];
