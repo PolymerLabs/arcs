@@ -66,7 +66,6 @@ const template = Xen.Template.html`
     [contents] {
       flex: 1;
       width: 100%;
-      display: flex;
       white-space: nowrap;
       overflow: hidden;
       background-color: white;
