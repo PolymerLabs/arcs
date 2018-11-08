@@ -59,7 +59,7 @@ Polymer({
 
   _recipeChanged: function(recipe) {
     // Maintain find-highlight after results are reloaded.
-    this.setFindPhrase(document.strategyExplorer.$.find.phrase);
+    this.setFindPhrase(document.strategyExplorer.searchPhrase);
 
     this.selected = false;
     this.selectedParent = false;

@@ -13,7 +13,6 @@ import './se-legend.js';
 import './se-recipe-view.js';
 import './se-stats.js';
 import './se-compare-populations.js';
-import './se-find.js';
 import {MessengerMixin} from '../arcs-shared.js';
 import '../../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {PolymerElement} from '../../deps/@polymer/polymer/polymer-element.js';
@@ -39,7 +38,6 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
         <se-explorer results="{{results}}"></se-explorer>
       </div>
       <aside style="flex: .3" class="paddedBlocks">
-        <se-find id="find" on-find-phrase="onFindPhrase"></se-find>
         <se-compare-populations results="{{results}}" id='compare'></se-compare-populations>
         <se-recipe-view></se-recipe-view>
         <!--<se-arc-view></se-arc-view> this is disconnected today, PRs welcome-->
@@ -57,8 +55,17 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
         type: Array,
         value: []
       },
+      searchPhrase: {
+        type: String,
+        observer: '_onSearchPhraseChanged'
+      },
       findBacklit: Boolean
     };
+  }
+
+  constructor() {
+    super();
+    this.reset();    
   }
 
   reset() {
@@ -70,7 +77,6 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
   ready() {
     super.ready();
     document.strategyExplorer = this;
-    this.reset();
   }
 
   displayResults({results, options}, force = false) {
@@ -93,8 +99,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
     }
   }
 
-  onFindPhrase(e) {
-    const phrase = e.detail;
+  _onSearchPhraseChanged(phrase) {
     this.findBacklit = !!phrase;
     for (const seRecipe of this.idMap.values()) {
       seRecipe.setFindPhrase(phrase);

@@ -6,8 +6,11 @@ import '../deps/@polymer/iron-icons/communication-icons.js';
 import '../deps/@polymer/iron-pages/iron-pages.js';
 import '../deps/@polymer/iron-selector/iron-selector.js';
 import '../deps/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
+import '../deps/@polymer/paper-input/paper-input.js';
 import '../deps/@polymer/paper-item/paper-item.js';
 import '../deps/@polymer/paper-listbox/paper-listbox.js';
+import {IronA11yKeysBehavior} from '../deps/@polymer/iron-a11y-keys-behavior/iron-a11y-keys-behavior.js';
+import {mixinBehaviors} from '../deps/@polymer/polymer/lib/legacy/class.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import './arcs-overview.js';
 import './arcs-dataflow.js';
@@ -20,7 +23,7 @@ import './strategy-explorer/strategy-explorer.js';
 import './arcs-strategy-runner.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
-class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
+class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMixin(PolymerElement)) {
   static get template() {
     return html`
     <style include="shared-styles">
@@ -48,6 +51,10 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
         border-bottom: 1px solid var(--mid-gray);
         padding: 1px;
         line-height: 0;
+      }
+      header > div {
+        display: flex;
+        align-items: center;
       }
       .nav-toggle {
         -webkit-mask-position: -112px 192px;
@@ -82,6 +89,9 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
         left: 0;
         right: 0;
       }
+      #search {
+        outline: 0;
+      }
     </style>
     <div id="container" nav-narrow="">
       <arcs-communication-channel></arcs-communication-channel>
@@ -94,7 +104,11 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
           --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
           --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
      --></div>
-        <div><arcs-notifications id="notifications"></arcs-notifications></div>
+        <div>
+          <input id="search" value="{{searchPhrase::input}}">
+          <iron-icon icon="search" on-click="_focus" title="Focus: ctrl+f, Clear: ctrl+esc"></iron-icon>
+          <arcs-notifications id="notifications"></arcs-notifications>
+        </div>
       </header>
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
@@ -111,7 +125,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <arcs-pec-log name="pecLog"></arcs-pec-log>
-        <strategy-explorer name="strategyExplorer"></strategy-explorer>
+        <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
         <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>
       </iron-pages>
     </div>
@@ -119,6 +133,21 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
   }
 
   static get is() { return 'arcs-devtools-app'; }
+
+  static get properties() {
+    return {
+      searchPhrase: {
+        type: String,
+        observer: '_onSearchPhraseChanged'
+      },
+      keyEventTarget: {
+        type: Object,
+        value: function() {
+          return document.body;
+        }
+      }
+    };
+  }
 
   ready() {
     super.ready();
@@ -147,6 +176,30 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       this.$.illuminateToggle.setAttribute('active', '');
       this.send({messageType: 'illuminate', messageBody: 'on'});
     }
+  }
+
+  _onSearchPhraseChanged(phrase) {
+    if (phrase === '') {
+      this.searchPhrase = null;
+    }
+  }
+
+  get keyBindings() {
+    return {
+      'ctrl+f': '_focus',
+      // CTRL to avoid clashing with devtools toolbar showing/hiding, which I cannot supress.
+      'ctrl+esc': '_clear'
+    };
+  }
+
+  _focus() {
+    this.$.search.focus();
+  }
+
+  _clear(e) {
+    this.$.search.value = '';
+    this.searchPhrase = null;
+    this.$.search.blur();
   }
 }
 
