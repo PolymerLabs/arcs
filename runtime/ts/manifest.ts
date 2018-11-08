@@ -939,6 +939,26 @@ ${e.message}
           store.referenceMode = false;
           await store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
+        } else if (connection.type && connection.type.isInterface) {
+          let hostedParticleStore = manifest.findStoreById(targetHandle.id);
+          if (!hostedParticleStore) {
+            throw new ManifestError(
+              connectionItem.target.location,
+              `Hosted particle spec store '${targetHandle.id}' cannot be found.`);
+          }
+          let hostedParticleSpec = await hostedParticleStore.get();
+          if (!hostedParticleSpec) {
+            throw new ManifestError(
+              connectionItem.target.location,
+              `Hosted particle spec '${targetHandle.id}' is null.`);
+          }
+          const hostedParticle = manifest.findParticleByName(hostedParticleSpec.name);
+          // Parsing a serialized manifest, where the hosted particle is already a handle.
+          if (!connection.type.interfaceShape.restrictType(hostedParticle)) {
+            throw new ManifestError(
+                connectionItem.target.location,
+                `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
+          }
         }
 
         if (targetParticle) {
