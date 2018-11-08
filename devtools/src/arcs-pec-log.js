@@ -1,7 +1,8 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
-import './object-explorer.js';
-import {formatTime, indentPrint, MessengerMixin} from './arcs-shared.js';
+import '../deps/@polymer/iron-list/iron-list.js';
+import {ObjectExplorer} from './object-explorer.js';
+import {formatTime, MessengerMixin} from './arcs-shared.js';
 
 class ArcsPecLog extends MessengerMixin(PolymerElement) {
   static get template() {
@@ -10,12 +11,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       :host {
         display: block;
       }
-      [root] {
-        overflow: scroll;
+      iron-list {
         height: calc(100vh - 27px);
-      }
-      [entry] {
-        padding: 4px;
       }
       [noPointer] {
         cursor: default;
@@ -81,11 +78,14 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         margin: 0 1ch;
         color: var(--devtools-blue);
       }
+      object-explorer {
+        margin: 2px;
+      }
     </style>
-    <div root>
-      <template is="dom-repeat" items="{{entries}}">
+    <iron-list id="list" items="{{filteredEntries}}" searchPhrase$="[[searchPhrase]]">
+      <template>
         <div entry>
-          <object-explorer data="[[item.pecMsgBody]]">
+          <object-explorer data="[[item.explorerData]]" on-expand="_handleExpand">
             <span noPointer on-click="_blockEvent">
               <span index>[[item.msgCount]]:</span>[[item.time]]
               <span stack class$="[[item.stack.iconClass]]" on-click="_toggleStack">
@@ -105,8 +105,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
           </div>
         </div>
       </template>
-    </div>
-    <div id="content"></div>`;
+    </iron-list>`;
   }
 
   static get is() { return 'arcs-pec-log'; }
@@ -116,27 +115,71 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     this.reset();
   }
 
+  static get properties() {
+    return {
+      searchPhrase: {
+        type: String,
+        value: null,
+        observer: '_onSearchPhraseChanged'
+      },
+      entries: Array,
+      filteredEntries: Array,
+    };
+  }
+
+  _onSearchPhraseChanged(phrase) {
+    // Go through filtered and non-filtered entries at the same time and
+    // check which messages should be removed/added/kept to the filtered entries.
+    let fi = 0; // Filtered index.
+    for (const entry of this.entries) {
+      const found = ObjectExplorer.find(entry.explorerData, phrase);
+      const filter = !phrase || found;
+      if (entry === this.filteredEntries[fi]) {
+        if (filter) {
+          fi++;
+        } else {
+          this.splice('filteredEntries', fi, 1);
+        }
+      } else {
+        if (filter) {
+          this.splice('filteredEntries', fi, 0, entry);
+          this.notifyPath(`filteredEntries.${fi}.highlight`);
+          fi++;
+        }
+      }
+    }
+    for (const explorer of this.shadowRoot.querySelectorAll('[entry] > object-explorer')) {
+      explorer.find = phrase;
+    }
+  }
+
   reset() {
     this.entries = [];
+    this.filteredEntries = [];
     this.originalCallName = {}; // Callback id to original method name;
     this.highlightedGroupCallbackId = null;
   }
 
   onMessageBundle(messages) {
-    const newEntries = [];
+    const newFilteredEntries = [];
     for (const msg of messages) {
       switch (msg.messageType) {
-        case 'PecLog':
-          newEntries.push(this.newEntry(msg.messageBody));
+        case 'PecLog': {
+          const entry = this.newEntry(msg.messageBody);
+          this.entries.push(entry);
+          if (!this.searchPhrase || entry.explorerData.found) {
+            newFilteredEntries.push(entry);
+          }
           break;
+        }
         case 'page-refresh':
         case 'arc-transition':
           this.reset();
           return;
       }
     }
-    if (newEntries.length) {
-      this.push('entries', ...newEntries);
+    if (newFilteredEntries.length) {
+      this.push('filteredEntries', ...newFilteredEntries);
     }
   }
 
@@ -175,10 +218,14 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       collapsed: true
     };
 
+    const explorerData = ObjectExplorer.prepareData(msg.pecMsgBody);
+    ObjectExplorer.find(explorerData, this.searchPhrase);
+
     return {
       icon,
       name,
       pecMsgBody: msg.pecMsgBody,
+      explorerData,
       stack,
       msgCount: msg.pecMsgCount,
       time: formatTime(msg.timestamp, 3),
@@ -191,7 +238,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   }
 
   _toggleStack(event) {
-    this.set(`entries.${event.model.index}.stack.collapsed`, !event.model.item.stack.collapsed);
+    this.set(`filteredEntries.${event.model.index}.stack.collapsed`, !event.model.item.stack.collapsed);
+    this.$.list.updateSizeForIndex(event.model.index);
     event.stopPropagation();
   }
 
@@ -204,20 +252,31 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     }
   }
 
+  _handleExpand(e) {
+    const ix = this.filteredEntries.findIndex(item => item.explorerData === e.detail);
+    this.$.list.updateSizeForIndex(ix);
+  }
+
   _highlightGroup(event) {
-    const callbackId = event.currentTarget.getAttribute('callbackId');
+    const callbackId = event.model.item.pecMsgBody.callback;
     if (!callbackId || this.highlightedGroupCallbackId === callbackId) {
       this.highlightedGroupCallbackId = null;
     } else {
       this.highlightedGroupCallbackId = callbackId;
     }
 
-    for (let i = 0; i < this.entries.length; i++) {
-      const entry = this.entries[i];
+    // Update filtered items.
+    for (let i = 0; i < this.filteredEntries.length; i++) {
+      const entry = this.filteredEntries[i];
       const inHighlightedGroup = entry.pecMsgBody.callback === this.highlightedGroupCallbackId;
       if (entry.highlight !== inHighlightedGroup) {
-        this.set(`entries.${i}.highlight`, inHighlightedGroup);
+        this.set(`filteredEntries.${i}.highlight`, inHighlightedGroup);
       }
+    }
+
+    // Update data in the unfiltered list.
+    for (const entry of this.entries) {
+      entry.highlight = entry.pecMsgBody.callback === this.highlightedGroupCallbackId;
     }
 
     event.stopPropagation();

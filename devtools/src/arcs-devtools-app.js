@@ -1,6 +1,7 @@
 import '../deps/@polymer/app-route/app-location.js';
 import '../deps/@polymer/app-route/app-route.js';
 import '../deps/@polymer/iron-icons/iron-icons.js';
+import '../deps/@polymer/iron-icons/device-icons.js';
 import '../deps/@polymer/iron-icons/social-icons.js';
 import '../deps/@polymer/iron-icons/communication-icons.js';
 import '../deps/@polymer/iron-pages/iron-pages.js';
@@ -14,6 +15,7 @@ import {mixinBehaviors} from '../deps/@polymer/polymer/lib/legacy/class.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import './arcs-overview.js';
 import './arcs-dataflow.js';
+import './arcs-stores.js';
 import './arcs-communication-channel.js';
 import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
@@ -72,6 +74,12 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       header iron-icon[active] {
         color: var(--highlight-blue);
       }
+      header [divider] {
+        background-color: #ccc;
+        width: 1px;
+        margin: 4px 5px;
+        height: 16px;
+      }
       nav {
         grid-area: sidebar;
         background-color: var(--light-gray);
@@ -91,6 +99,15 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       }
       #search {
         outline: 0;
+        border: 1px solid white;
+        padding: 2px;
+        margin: 0 3px;
+      }
+      #search:hover {
+        border-color: var(--mid-gray);
+      }
+      #search:focus {
+        border-color: var(--focus-blue);
       }
     </style>
     <div id="container" nav-narrow="">
@@ -103,16 +120,17 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         <div><!--
           --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
           --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
-     --></div>
+         --><div divider></div><!--
+         --><input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
+        </div>
         <div>
-          <input id="search" value="{{searchPhrase::input}}">
-          <iron-icon icon="search" on-click="_focus" title="Focus: ctrl+f, Clear: ctrl+esc"></iron-icon>
           <arcs-notifications id="notifications"></arcs-notifications>
         </div>
       </header>
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon><label>Overview</label></a>
+          <a name="stores" href="#stores"><iron-icon icon="device:sd-storage"></iron-icon><label>Stores Explorer</label></a>
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
           <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon><label>Dataflow</label></a>
           <a name="pecLog" href="#pecLog"><iron-icon icon="group-work"></iron-icon><label>PEC Channel Log</label></a>
@@ -122,9 +140,10 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
+        <arcs-stores name="stores" search-phrase="[[searchPhrase]]"></arcs-stores>
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
-        <arcs-pec-log name="pecLog"></arcs-pec-log>
+        <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
         <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>
       </iron-pages>
@@ -136,7 +155,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
 
   static get properties() {
     return {
-      searchPhrase: {
+      searchPhrase: String,
+      searchInputPhrase: {
         type: String,
         observer: '_onSearchPhraseChanged'
       },
@@ -179,9 +199,13 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
   }
 
   _onSearchPhraseChanged(phrase) {
-    if (phrase === '') {
-      this.searchPhrase = null;
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
     }
+    this.searchDebounce = setTimeout(() => {
+      this.searchPhrase = phrase || null;
+      this.searchDebounce = null;
+    }, 100);
   }
 
   get keyBindings() {
