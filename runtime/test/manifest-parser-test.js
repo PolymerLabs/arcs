@@ -89,7 +89,9 @@ describe('manifest parser', function() {
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
     const reservedWords = ['inout', 'in', 'out', 'host', '`consume',
-      '`provide', 'provide', 'consume'];
+      '`provide', 'provide', 'consume', '?', 'use', 'map', 'create', 'copy',
+      '`slot'
+    ];
     reservedWords.map(reserved => {
       try {
         parse(`
