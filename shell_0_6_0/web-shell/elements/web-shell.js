@@ -61,9 +61,9 @@ const template = Xen.Template.html`
   <!-- context feed -->
   <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
   <!-- web planner -->
-  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}"></web-planner>
+  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}"></web-planner>
   <!-- ui chrome -->
-  <web-shell-ui arc="{{arc}}" context="{{context}}">
+  <web-shell-ui arc="{{arc}}" context="{{context}}" on-search="onState">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->

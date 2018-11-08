@@ -75,7 +75,7 @@ const template = Xen.Template.html`
   <div bar glowing$="{{glows}}" glowable state$="{{barState}}" on-mouseenter="onBarEnter" on-mouseleave="onBarLeave" on-click="onBarClick">
     <div touchbar></div>
     <div contents scrolltop="{{scrollTop:contentsScrollTop}}" on-click="onContentsClick">
-      <panel-ui on-open="onPanelOpen">
+      <panel-ui on-open="onPanelOpen" on-search="onForward">
         <slot></slot>
       </panel-ui>
     </div>
@@ -160,6 +160,9 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
   onContentsClick(e) {
     // empty space below panel-ui, assuming panel-ui does stopPropagation()
     this.collapseBar();
+  }
+  onForward(e, data) {
+    this.fire(e.type, data);
   }
 }
 

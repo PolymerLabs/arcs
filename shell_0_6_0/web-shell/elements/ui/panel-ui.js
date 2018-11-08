@@ -139,7 +139,7 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   }
   commitSearch(search) {
     this.state = {search};
-    //this._fire('search', search || '');
+    this.fire('search', search || '');
   }
   onToolbarsClick(e) {
     e.stopPropagation();

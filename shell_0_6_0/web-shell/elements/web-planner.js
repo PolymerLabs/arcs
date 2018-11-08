@@ -34,11 +34,11 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
       planificator.dispose();
       state.planificator = null;
+      log('planificator was disposed');
     }
     if (env && config && arc && !state.planificator) {
       this.awaitState('planificator', () => this._createPlanificator(env, config, arc, userid));
     }
-    search = '*';
     if (state.planificator && search !== state.search) {
       state.search = search;
       state.planificator.setSearch(state.search);
