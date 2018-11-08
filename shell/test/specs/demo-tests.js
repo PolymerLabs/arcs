@@ -31,7 +31,7 @@ describe('pipes', function() {
     await browser.pause(seconds(5));
     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
     await searchFor('*');
-    await waitFor(bodyguardIsOn);
+    await waitFor(bodyguardIsOn, seconds(60));
   });
 });
 
