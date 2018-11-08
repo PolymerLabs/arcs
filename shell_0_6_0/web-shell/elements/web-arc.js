@@ -54,7 +54,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     }
     if (state.host && config && config !== state.config) {
       this.state = {config};
-      this.dispose(state);
+      this.disposeHost(state.host);
       if (config) {
         this.spawnArc(config, state);
       }
@@ -85,17 +85,20 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     }
     state.host = new ArcHost(env, context, storage, state.composer);
   }
-  async spawnArc(config, state) {
-    this.state = {arc: await state.host.spawn(config)};
-    if (state.host.plan) {
-      this.fire('recipe', state.host.plan);
+  disposeHost(host) {
+    if (host) {
+      host.dispose();
     }
-    this.fire('arc', state.arc);
+    this.state = {arc: null};
+    this.fire('arc', null);
   }
-  dispose(state) {
-    if (state.host) {
-      state.host.dispose();
-    }
+  async spawnArc(config, state) {
+    const arc = await state.host.spawn(config);
+    this.state = {arc};
+    this.fire('arc', arc);
+    //if (state.host.plan) {
+    //  this.fire('recipe', state.host.plan);
+    //}
   }
 }
 customElements.define('web-arc', WebArc);
