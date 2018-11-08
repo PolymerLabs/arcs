@@ -256,8 +256,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   applySuggestion(suggestion) {
     if (!this.state.arckey) {
       this.spawnArc(suggestion);
+    } else {
+      this.state = {plan: suggestion.plan};
     }
-    this.state = {plan: suggestion.plan};
   }
   spawnArc(suggestion) {
     const luid = generateId();
@@ -269,7 +270,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       arckey: key,
       // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
       arcConfig: {id: key, manifest},
-      manifest: null
+      manifest: null,
+      plan: suggestion.plan
     };
     const description = suggestion.descriptionText;
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
