@@ -47,17 +47,24 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
   get template() {
     return template;
   }
+  _didMount() {
+    this.containers = {
+      toproot: this.host.querySelector('[slotid="toproot"]'),
+      root: this.host.querySelector('[slotid="root"]'),
+      modal: this.host.querySelector('[slotid="modal"]')
+    };
+  }
   update(props, state) {
     const {env, storage, config, manifest, plan} = props;
     if (!state.host && env && storage && config) {
-      this.createHost(props, state);
+      this.state = {host: this.createHost()};
     }
     if (state.host && config && config !== state.config) {
-      this.state = {config};
-      this.disposeHost(state.host);
-      if (config) {
-        this.spawnArc(config, state);
-      }
+      this.disposeArc(state.host);
+      this.state = {config, arc: null};
+    }
+    if (!state.arc && config && state.host) {
+      this.awaitState('arc', async () => this.spawnArc(state.host, config));
     }
     // will attempt to instantiate first recipe in `manifest`
     if (state.host && state.manifest !== manifest) {
@@ -70,32 +77,28 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
       state.host.plan = state.plan = plan;
     }
   }
-  createHost({env, context, storage, composer, config}, state) {
-    const containers = {
-      toproot: this.host.querySelector('[slotid="toproot"]'),
-      root: this.host.querySelector('[slotid="root"]'),
-      modal: this.host.querySelector('[slotid="modal"]')
-    };
+  createHost() {
+    log('creating host');
+    let {env, context, storage, composer, config} = this.props;
     if (config.suggestionContainer) {
-      containers.suggestions = config.suggestionContainer;
+      this.containers.suggestions = config.suggestionContainer;
     }
-    if (!state.composer) {
-      state.composer = composer || new SlotComposer({affordance: 'dom', containers});
-          //rootContainer: this.host});
+    if (!composer) {
+      composer = new SlotComposer({affordance: 'dom', containers: this.containers});
     }
-    state.host = new ArcHost(env, context, storage, state.composer);
+    return new ArcHost(env, context, storage, composer);
   }
-  disposeHost(host) {
-    if (host) {
-      host.dispose();
-    }
-    this.state = {arc: null};
+  disposeArc(host) {
+    log('disposing arc');
+    host.disposeArc();
     this.fire('arc', null);
   }
-  async spawnArc(config, state) {
-    const arc = await state.host.spawn(config);
-    this.state = {arc};
+  async spawnArc(host, config) {
+    log(`spawning arc [${config.id}]`);
+    const arc = await host.spawn(config);
+    log(`arc spawned [${config.id}]`);
     this.fire('arc', arc);
+    return arc;
     //if (state.host.plan) {
     //  this.fire('recipe', state.host.plan);
     //}

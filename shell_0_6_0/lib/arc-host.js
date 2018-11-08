@@ -7,9 +7,14 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import {Firebase} from '../configuration/firebase-config.js';
 
 // TODO(sjmiles): note that firebase agents must be instantiated elsewhere
+import {Firebase} from '../configuration/firebase-config.js';
+import {logFactory} from './log-factory.js';
+
+const log = logFactory('ArcHost', '#cade57');
+const warn = logFactory('ArcHost', '#cade57', 'warn');
+const error = logFactory('ArcHost', '#cade57', 'error');
 
 const Schemas = {
   serialization: {
@@ -31,7 +36,12 @@ export class ArcHost {
     this.storage = storage;
     this.composer = composer;
   }
+  disposeArc() {
+    this.arc && this.arc.dispose();
+    this.arc = null;
+  }
   async spawn(config) {
+    log('spawning arc', config);
     this.config = config;
     const context = this.context || await this.env.parse(``);
     const serialization = this.serialization = await this.computeSerialization(config, this.storage);
@@ -41,7 +51,9 @@ export class ArcHost {
       await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
     }
     if (this.pendingPlan) {
-      this.instantiatePlan(this.arc, this.pendingPlan);
+      const plan = this.pendingPlan;
+      this.pendingPlan = null;
+      this.instantiatePlan(this.arc, plan);
     }
     return this.arc;
   }
@@ -55,19 +67,16 @@ export class ArcHost {
       this.pendingPlan = plan;
     }
   }
-  dispose() {
-    this.arc  && this.arc.dispose();
-  }
   async computeSerializationStore(serialization) {
     const type = this.env.lib.Type.fromLiteral(Schemas.serialization);
     const stores = await this.arc.findStoresByType(type);
     let store;
     if (stores.length) {
       store = stores[0];
-      console.warn('located serial store', store);
+      log('located serial store', store);
     } else {
       store = await this.arc.createStore(type, 'Serialization', 'SYSTEM_Serialization');
-      console.warn('created serial store', store);
+      log('created serial store', store);
     }
   }
   async computeSerialization(config, storage) {
@@ -91,11 +100,11 @@ export class ArcHost {
     return await env.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
   }
   async instantiateDefaultRecipe(env, arc, manifest) {
-    console.log('instantiateDefaultRecipe');
+    log('instantiateDefaultRecipe');
     try {
       manifest = await env.parse(manifest);
     } catch (x) {
-      console.error(x);
+      error(x);
     }
     const recipe = manifest.allRecipes[0];
     const plan = await env.resolve(arc, recipe);
@@ -104,11 +113,11 @@ export class ArcHost {
     }
   }
   async instantiatePlan(arc, plan) {
-    console.log('instantiatePlan');
+    log('instantiatePlan');
     try {
       await arc.instantiate(plan);
     } catch (x) {
-      console.error(x);
+      error(x);
       //console.error(plan.toString());
     }
     this.persistSerialization(); //arc);
@@ -117,16 +126,16 @@ export class ArcHost {
   async persistSerialization() {
     const {arc, config: {id}, storage} = this;
     if (!storage.includes('volatile')) {
-      console.log(`persisting serialization to [${id}/serialization]`);
+      log(`persisting serialization to [${id}/serialization]`);
       let serialization = await arc.serialize();
       // TODO(sjmiles): elide attempt to import ephemeral manifest
       const pattern = /import .*$/gm;
       const modified = serialization.replace(pattern, '');
       if (modified !== pattern) {
-        console.warn(`removed import statements from serialization before persisting`);
+        warn(`removed import statements from serialization before persisting`);
       }
       serialization = modified;
-      //console.log(serialization);
+      //log(serialization);
       Firebase.db.child(`${id}/serialization`).set(serialization);
     }
   }

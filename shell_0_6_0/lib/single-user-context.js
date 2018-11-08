@@ -9,9 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {SyntheticStores} from './synthetic-stores.js';
-
-//import {Xen} from '../../../lib/xen.js';
-const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+import {logFactory} from './log-factory.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');
 const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
