@@ -54,7 +54,7 @@ requiring an upgrade to our current version.
 1) Install node.
 
    ```
-   $ nvm install 9.4
+   $ nvm install 10
    ```
 
 1) If you need to update npm to a later version (our build checks for the
