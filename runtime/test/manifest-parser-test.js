@@ -87,29 +87,21 @@ describe('manifest parser', function() {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
-  it('fails to parse an argument list that use reserved word \'consume\' as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          in MyThing consume
-          out BigCollection<MyThing>? out`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected',
-          `bad error: '${e}'`);
-    }
-  });
-  it('fails to parse an argument list that use reserved word \'provide\' as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          in MyThing provide
-          out BigCollection<MyThing>? out`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected',
-          `bad error: '${e}'`);
-    }
+  it('fails to parse an argument list that use a reserved word as an identifier', () => {
+    const reservedWords = ['inout', 'in', 'out', 'host', '`consume',
+      '`provide', 'provide', 'consume'];
+    reservedWords.map(reserved => {
+      try {
+        parse(`
+          particle MyParticle
+            in MyThing ${reserved}
+            out BigCollection<MyThing>? output`);
+        assert.fail('this parse should have failed, identifiers should not be reserved words!');
+      } catch (e) {
+        assert.include(e.message, 'Expected',
+            `bad error: '${e}'`);
+      }
+    });
   });
   it('fails to parse a nonsense argument list', () => {
     try {
