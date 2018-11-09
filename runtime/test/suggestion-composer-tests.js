@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
-import {RamSlotComposer} from '../../shell_0_6_0/lib/ram-slot-composer.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -64,7 +64,7 @@ describe('suggestion composer', function() {
   });
 
   it('singleton suggestion slots', async () => {
-    const slotComposer = new RamSlotComposer();
+    const slotComposer = new FakeSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
@@ -93,7 +93,7 @@ describe('suggestion composer', function() {
   });
 
   it('suggestion set-slots', async () => {
-    const slotComposer = new RamSlotComposer();
+    const slotComposer = new FakeSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
       slotComposer
