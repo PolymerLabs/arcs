@@ -24,7 +24,7 @@ export interface Container {
    */
   disk(): Promise<Disk>;
 
-  status(): string;
+  status(): DeploymentStatus;
   
   /**
    * Return an externally accessible URL that maps to the running
@@ -44,4 +44,31 @@ export interface ContainerManager {
   find(fingerprint: string): Promise<Container | null>;
 
   deploy(fingerprint: string, rewrappedKey: string, encryptedDisk: Disk): Promise<Container>;
+}
+
+/**
+ * Current status of a container, such as running, pending, failed.
+ */
+export enum DeploymentStatus {
+  /**
+   * There is no container configured for this reference, possibly deleted.
+   */
+  NONEXISTENT,
+  /**
+   * Container is running (and attached), and ready to receive requests.
+   */
+  ATTACHED,
+  /**
+   * The Container is running, but it's disk is detached (or locked).
+   */
+  DETACHED,
+  /**
+   * Container in the process of becoming ready, such as after a reboot, or deploymeny.
+   */
+  PENDING,
+  /**
+   * Container currently in a failure state, such as insufficient cluster resources, or disks
+   * not available.
+   */
+  FAILURE
 }
