@@ -86,7 +86,7 @@ describe('plan producer', function() {
       manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
     });
     helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-    const store = await Planificator._initStore(helper.arc, {userid: 'TestUser', protocol: 'volatile'});
+    const store = await Planificator._initSuggestStore(helper.arc, {userid: 'TestUser', protocol: 'volatile'});
     assert.isNotNull(store);
     const producer = new TestPlanProducer(helper.arc, store);
     return {helper, producer};

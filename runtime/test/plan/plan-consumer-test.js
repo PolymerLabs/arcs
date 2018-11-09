@@ -20,7 +20,7 @@ describe('plan consumer', function() {
     });
     const userid = 'TestUser';
     helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-    const store = await Planificator._initStore(helper.arc, {userid, protocol: 'volatile'});
+    const store = await Planificator._initSuggestStore(helper.arc, {userid, protocol: 'volatile'});
     assert.isNotNull(store);
     const consumer = new PlanConsumer(helper.arc, store);
 
