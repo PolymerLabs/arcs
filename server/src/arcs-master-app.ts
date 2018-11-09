@@ -14,8 +14,8 @@ import cors from "cors";
 import fetch from 'node-fetch';
 
 interface Deployment {
-  id: string,
-  status: DeploymentStatus,
+  id: string;
+  status: DeploymentStatus;
 }
 
 interface RunningDeployment extends Deployment {
