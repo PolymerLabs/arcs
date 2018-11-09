@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Container, ContainerManager} from "../containers";
+import {Container, ContainerManager, DeploymentStatus} from "../containers";
 import {Disk} from "../disks";
 import {
   Core_v1Api,
@@ -72,7 +72,7 @@ class K18sDeployment implements Container {
     if (USE_PREFIX_MAPPING) {
       const path = this.ingress.spec.rules[0].http.paths
         .filter(x => x.backend.serviceName === this.v1Service.metadata.name);
-      return 'https://' + this.ingress.spec.tls[0].hosts[0] + path[0].path;
+      return 'https://' + this.ingress.spec.tls[0].hosts[0] + path[0].path.replace('/*', '');
     } else {
       const lb = this.v1Service.status.loadBalancer;
       if (lb && lb.ingress) {
@@ -83,8 +83,8 @@ class K18sDeployment implements Container {
     }
   }
 
-  status(): string {
-    return this.v1Deployment.status.readyReplicas > 0 ? 'Running' : 'Pending';
+  status(): DeploymentStatus {
+    return this.v1Deployment.status.readyReplicas > 0 ? DeploymentStatus.ATTACHED: DeploymentStatus.PENDING;
   }
 
   async disk(): Promise<Disk> {
