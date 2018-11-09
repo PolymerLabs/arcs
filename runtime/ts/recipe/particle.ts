@@ -150,6 +150,7 @@ export class Particle {
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
+  set id(id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
   get name() { return this._name; }
   set name(name) { this._name = name; }
   get spec() { return this._spec; }
