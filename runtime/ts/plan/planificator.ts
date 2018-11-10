@@ -86,7 +86,7 @@ export class Planificator {
     }
   }
 
-  get arcKey() {
+  get arcKey() : string {
     return this.arc.storageKey.substring(this.arc.storageKey.lastIndexOf('/') + 1);
   }
 
@@ -134,32 +134,32 @@ export class Planificator {
     });
   }
 
-  private static async _initSuggestStore(arc, {userid, protocol, arcKey}): Promise<StorageProviderBase> {
+  private static async _initSuggestStore(arc: Arc, {userid, protocol, arcKey}): Promise<StorageProviderBase> {
     assert(userid, 'Missing user id.');
     const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);
     if (protocol) {
       storageKey.protocol = protocol;
     }
-    storageKey.location = storageKey.location
+    storageKey['location'] = storageKey['location']
         .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
     return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
   }
 
-  private static async _initSearchStore(arc, {userid}): Promise<StorageProviderBase> {
+  private static async _initSearchStore(arc: Arc, {userid}): Promise<StorageProviderBase> {
     const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);
-    storageKey.location =
-        storageKey.location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
+    storageKey['location'] = storageKey['location']
+        .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
     return Planificator._initStore(arc, 'search-id', type, storageKey);
   }
 
-  private static async _initStore(arc, id, type, storageKey) : Promise<StorageProviderBase> {
+  private static async _initStore(arc: Arc, id: string, type: Type, storageKey) : Promise<StorageProviderBase> {
     // TODO: unify initialization of suggestions storage.
     const storageKeyStr = storageKey.toString();
     const storage = arc.storageProviderFactory._storageForKey(storageKeyStr);
@@ -167,7 +167,7 @@ export class Planificator {
     let store = null;
     switch (storageKey.protocol) {
       case 'firebase':
-        return storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
+        return storage['_join'](id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
       case 'volatile':
       case 'pouchdb':
         try {
@@ -183,7 +183,7 @@ export class Planificator {
     }
   }
 
-  async _storeSearch(arcKey, search) {
+  async _storeSearch(arcKey: string, search: string): Promise<void> {
     const values = await this.searchStore['get']() || [];
     const newValues = [];
     for (const {arc, search} of values) {
