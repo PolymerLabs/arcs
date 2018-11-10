@@ -24,7 +24,7 @@ export class Planificator {
     const store = await Planificator._initSuggestStore(arc, {userid, protocol, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid});
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer);
-    planificator.requestPlanning();
+    planificator.requestPlanning({contextual: true});
     return planificator;
   }
 
@@ -49,7 +49,7 @@ export class Planificator {
     this.userid = userid;
     this.searchStore = searchStore;
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(arc, store);
+      this.producer = new PlanProducer(arc, store, searchStore);
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
@@ -86,7 +86,7 @@ export class Planificator {
     }
   }
 
-  get arcKey() : string {
+  get arcKey(): string {
     return this.arc.storageKey.substring(this.arc.storageKey.lastIndexOf('/') + 1);
   }
 
@@ -102,6 +102,7 @@ export class Planificator {
     this.arc.unregisterInstantiatePlanCallback(this.arcCallback);
     if (!this.consumerOnly) {
       this._unlistenToArcStores();
+      this.producer.dispose();
     }
     this.consumer.store.dispose();
     this.consumer.dispose();

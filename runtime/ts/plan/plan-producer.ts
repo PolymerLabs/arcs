@@ -10,6 +10,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc';
+import {InitSearch} from '../../strategies/init-search.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
@@ -27,14 +28,23 @@ export class PlanProducer {
   needReplan: boolean;
   _isPlanning: boolean;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
+  search: string;
+  searchStore: StorageProviderBase;
+  searchStoreCallback: ({}) => void;
 
-  constructor(arc: Arc, store: StorageProviderBase) {
+  constructor(arc: Arc, store: StorageProviderBase, searchStore: StorageProviderBase) {
     assert(arc, 'arc cannot be null');
     assert(store, 'store cannot be null');
     this.arc = arc;
     this.result = new PlanningResult(arc);
     this.store = store;
     this.speculator = new Speculator();
+    this.searchStore = searchStore;
+    if (this.searchStore) {
+      this.searchStore = searchStore;
+      this.searchStoreCallback = () => this.onSearchChanged();
+      this.searchStore.on('change', this.searchStoreCallback, this);
+    }
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -48,6 +58,56 @@ export class PlanProducer {
 
   registerStateChangedCallback(callback) {
     this.stateChangedCallbacks.push(callback);
+  }
+
+  async onSearchChanged() {
+    const values = await this.searchStore['get']() || [];
+    const value = values.find(value => value.arc === this.arcKey);
+    if (!value) {
+      return;
+    }
+    if (value.search === this.search) {
+      return;
+    }
+
+    this.search = value.search;
+    if (!this.search) {
+      // search string turned empty, no need to replan, going back to contextual plans.
+      return;
+    }
+    if (this.search === '*') { // Search for ALL (including non-contextual) plans.
+      if (this.result.contextual) {
+        this.producePlans({contextual: false});
+      }
+    } else { // Search by search term.
+      const options = {
+        cancelOngoingPlanning: this.result.plans.length > 0,
+        search: this.search
+      };
+      if (this.result.contextual) {
+        // If we're searching but currently only have contextual plans,
+        // we need get non-contextual plans as well.
+        Object.assign(options, {contextual: false});
+      } else {
+        // If search changed and we already how all plans (i.e. including
+        // non-contextual ones) then it's enough to initialize with InitSearch
+        // with a new search phrase.
+        Object.assign(options, {
+          strategies: [InitSearch].concat(Planner.ResolutionStrategies),
+          append: true
+        });
+      }
+
+      this.producePlans(options);
+    }
+  }
+
+  get arcKey(): string {
+    return this.arc.storageKey.substring(this.arc.storageKey.lastIndexOf('/') + 1);
+  }
+
+  dispose() {
+    this.searchStore.off('change', this.searchStoreCallback);
   }
 
   async producePlans(options = {}) {
@@ -85,8 +145,11 @@ export class PlanProducer {
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
     this.planner.init(this.arc, {
-      strategies: options['strategies']
-      // TODO: add `search` and `contextual` params.
+      strategies: options['strategies'],
+      strategyArgs: {
+        contextual: options['contextual'],
+        search: options['search']
+      }
     });
 
     plans = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
@@ -110,11 +173,12 @@ export class PlanProducer {
 
   private async _updateResult({plans, generations}, options) {
     if (options.append) {
+      assert(!options['contextual'], `Cannot append to contextual options`);
       if (!this.result.append({plans, generations})) {
         return;
       }
     } else {
-      if (!this.result.set({plans, generations})) {
+      if (!this.result.set({plans, generations, contextual: options['contextual']})) {
         return;
       }
     }
