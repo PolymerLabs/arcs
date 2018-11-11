@@ -20,6 +20,8 @@
 //   DLog.log(object, string, [members]) - log the provided string
 //   DLog.logObject(object, logObj, name, [members]) - log the provided logObj 
 
+// test change do not submit
+
 const StackTrace = require('../node_modules/stacktrace-js/stacktrace.js');
 
 const __reffedObjects = new Map();
