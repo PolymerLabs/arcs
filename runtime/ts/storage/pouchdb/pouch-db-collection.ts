@@ -1,4 +1,4 @@
-import {CrdtCollectionModel, Model} from '../crdt-collection-model.js';
+import {CrdtCollectionModel} from '../crdt-collection-model.js';
 import {assert} from '../../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {Type} from '../../type.js';

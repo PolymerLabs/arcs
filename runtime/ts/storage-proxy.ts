@@ -9,10 +9,15 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {CrdtCollectionModel} from './ts-build/storage/crdt-collection-model.js';
+import {assert} from '../../platform/assert-web.js';
+import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
+import {Type} from './type.js';
+import {PECInnerPort} from '../api-channel.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
+import {Particle} from './particle.js';
+import {Handle, HandleOptions} from './handle.js';
 
-const SyncState = {none: 0, pending: 1, full: 2};
+enum SyncState {none=0, pending=1, full=2};
 
 /** @class StorageProxy
  * Mediates between one or more Handles and the backing store outside the PEC.
@@ -33,8 +38,8 @@ const SyncState = {none: 0, pending: 1, full: 2};
  * - once the resync response is received, stale queued updates are discarded and any remaining ones
  *   are applied.
  */
-export class StorageProxy {
-  constructor(id, type, port, pec, scheduler, name) {
+export abstract class StorageProxy {
+  static newProxy(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
     if (type.isCollection) {
       return new CollectionProxy(id, type, port, pec, scheduler, name);
     }
@@ -43,38 +48,47 @@ export class StorageProxy {
     }
     return new VariableProxy(id, type, port, pec, scheduler, name);
   }
-}
 
-class StorageProxyBase {
-  constructor(id, type, port, pec, scheduler, name) {
-    this._id = id;
-    this._type = type;
-    this._port = port;
-    this._scheduler = scheduler;
+  storageKey: string;
+  readonly id: string;
+  readonly type: Type;
+  protected readonly port: PECInnerPort;
+  protected readonly scheduler: StorageProxyScheduler;
+  name: string;
+  private baseForNewID: string;
+  pec: ParticleExecutionContext;
+
+  private localIDComponent = 0;
+  protected version: number | undefined = undefined;
+  protected listenerAttached = false;
+  private keepSynced = false;
+  protected synchronized = SyncState.none;
+  protected observers: {particle: Particle, handle: Handle}[] = [];
+  private updates: {version: number}[] = [];
+  protected barrier: string | null = null;
+  constructor(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
+    this.id = id;
+    this.type = type;
+    this.port = port;
+    this.scheduler = scheduler;
     this.name = name;
-    this._baseForNewID = pec.generateID();
-    this._localIDComponent = 0;
+    this.baseForNewID = pec.generateID();
 
-    this._version = undefined;
-    this._listenerAttached = false;
-    this._keepSynced = false;
-    this._synchronized = SyncState.none;
-    this._observers = [];
-    this._updates = [];
+    this.updates = [];
 
     this.pec = pec;
   }
 
+
+  // TODO(shans): _getModelForSync returns a list from collections and
+  // a singleton from variables. Fix this.
+  // tslint:disable-next-line: no-any
+  abstract _getModelForSync() : any;
+  abstract _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean;
+  abstract _processUpdate(update: {version: number}, apply?: boolean): any;
+
   raiseSystemException(exception, methodName, particleId) {
-    this._port.RaiseSystemException({exception: {message: exception.message, stack: exception.stack, name: exception.name}, methodName, particleId});
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get type() {
-    return this._type;
+    this.port.RaiseSystemException({exception: {message: exception.message, stack: exception.stack, name: exception.name}, methodName, particleId});
   }
 
   /**
@@ -84,36 +98,36 @@ class StorageProxyBase {
     if (!handle.canRead) {
       return;
     }
-    this._observers.push({particle, handle});
+    this.observers.push({particle, handle});
 
     // Attach an event listener to the backing store when the first readable handle is registered.
-    if (!this._listenerAttached) {
-      this._port.InitializeProxy({handle: this, callback: x => this._onUpdate(x)});
-      this._listenerAttached = true;
+    if (!this.listenerAttached) {
+      this.port.InitializeProxy({handle: this, callback: x => this._onUpdate(x)});
+      this.listenerAttached = true;
     }
 
     // Change to synchronized mode as soon as we get any handle configured with keepSynced and send
     // a request to get the full model (once).
     // TODO: drop back to non-sync mode if all handles re-configure to !keepSynced
     if (handle.options.keepSynced) {
-      if (!this._keepSynced) {
-        this._port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
-        this._keepSynced = true;
+      if (!this.keepSynced) {
+        this.port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
+        this.keepSynced = true;
       }
 
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
-      if (handle.options.notifySync && this._synchronized == SyncState.full) {
+      if (handle.options.notifySync && this.synchronized == SyncState.full) {
         const syncModel = this._getModelForSync();
-        this._scheduler.enqueue(particle, handle, ['sync', particle, syncModel]);
+        this.scheduler.enqueue(particle, handle, ['sync', particle, syncModel]);
       }
     }
   }
 
   _onSynchronize({version, model}) {
-    if (this._version !== undefined && version <= this._version) {
-      console.warn(`StorageProxy '${this._id}' received stale model version ${version}; ` +
-                   `current is ${this._version}`);
+    if (this.version !== undefined && version <= this.version) {
+      console.warn(`StorageProxy '${this.id}' received stale model version ${version}; ` +
+                   `current is ${this.version}`);
       return;
     }
 
@@ -124,9 +138,9 @@ class StorageProxyBase {
 
     // We may have queued updates that were received after a desync; discard any that are stale
     // with respect to the received model.
-    this._synchronized = SyncState.full;
-    while (this._updates.length > 0 && this._updates[0].version <= version) {
-      this._updates.shift();
+    this.synchronized = SyncState.full;
+    while (this.updates.length > 0 && this.updates[0].version <= version) {
+      this.updates.shift();
     }
 
     const syncModel = this._getModelForSync();
@@ -136,32 +150,32 @@ class StorageProxyBase {
 
   _onUpdate(update) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
-    if (this._observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
+    if (this.observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
       const handleUpdate = this._processUpdate(update, false);
       this._notify('update', handleUpdate, options => !options.keepSynced && options.notifyUpdate);
     }
 
     // Bail if we're not in synchronized mode or this is a stale event.
-    if (!this._keepSynced) {
+    if (!this.keepSynced) {
       return;
     }
-    if (update.version <= this._version) {
-      console.warn(`StorageProxy '${this._id}' received stale update version ${update.version}; ` +
-                   `current is ${this._version}`);
+    if (update.version <= this.version) {
+      console.warn(`StorageProxy '${this.id}' received stale update version ${update.version}; ` +
+                   `current is ${this.version}`);
       return;
     }
 
     // Add the update to the queue and process. Most of the time the queue should be empty and
     // _processUpdates will consume this event immediately.
-    this._updates.push(update);
-    this._updates.sort((a, b) => a.version - b.version);
+    this.updates.push(update);
+    this.updates.sort((a, b) => a.version - b.version);
     this._processUpdates();
   }
 
-  _notify(kind, details, predicate=() => true) {
-    for (const {handle, particle} of this._observers) {
+  _notify(kind, details, predicate=(ignored: HandleOptions) => true) {
+    for (const {handle, particle} of this.observers) {
       if (predicate(handle.options)) {
-        this._scheduler.enqueue(particle, handle, [kind, particle, details]);
+        this.scheduler.enqueue(particle, handle, [kind, particle, details]);
       }
     }
   }
@@ -169,7 +183,7 @@ class StorageProxyBase {
   _processUpdates() {
 
     const updateIsNext = update => {
-      if (update.version == this._version + 1) {
+      if (update.version == this.version + 1) {
         return true;
       }
       // Holy Layering Violation Batman
@@ -179,19 +193,19 @@ class StorageProxyBase {
       // regardless of version numbers.
       //
       // TODO(shans): refactor this code so we don't need to layer-violate. 
-      if (this._barrier && update.barrier == this._barrier) {
+      if (this.barrier && update.barrier == this.barrier) {
         return true;
       }
       return false;
     };
 
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
-    while (this._updates.length > 0 && updateIsNext(this._updates[0])) {
-      const update = this._updates.shift();
+    while (this.updates.length > 0 && updateIsNext(this.updates[0])) {
+      const update = this.updates.shift();
 
       // Fold the update into our stored model.
       const handleUpdate = this._processUpdate(update);
-      this._version = update.version;
+      this.version = update.version;
 
       // Notify handles configured with keepSynced and notifyUpdates (non-keepSynced handles are
       // notified as updates are received).
@@ -202,28 +216,28 @@ class StorageProxyBase {
 
     // If we still have update events queued, we must have received a future version are are now
     // desynchronized. Send a request for the full model and notify handles configured for it.
-    if (this._updates.length > 0) {
-      if (this._synchronized != SyncState.none) {
-        this._synchronized = SyncState.none;
-        this._port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
-        for (const {handle, particle} of this._observers) {
+    if (this.updates.length > 0) {
+      if (this.synchronized != SyncState.none) {
+        this.synchronized = SyncState.none;
+        this.port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
+        for (const {handle, particle} of this.observers) {
           if (handle.options.notifyDesync) {
-            this._scheduler.enqueue(particle, handle, ['desync', particle]);
+            this.scheduler.enqueue(particle, handle, ['desync', particle]);
           }
         }
       }
-    } else if (this._synchronized != SyncState.full) {
+    } else if (this.synchronized != SyncState.full) {
       // If we were desynced but have now consumed all update events, we've caught up.
-      this._synchronized = SyncState.full;
+      this.synchronized = SyncState.full;
     }
   }
 
   generateID() {
-    return `${this._baseForNewID}:${this._localIDComponent++}`;
+    return `${this.baseForNewID}:${this.localIDComponent++}`;
   }
 
   generateIDComponents() {
-    return {base: this._baseForNewID, component: () => this._localIDComponent++};
+    return {base: this.baseForNewID, component: () => this.localIDComponent++};
   }
 }
 
@@ -243,27 +257,24 @@ class StorageProxyBase {
  * of keys that exist at the storage object at the time it receives the
  * request.
  */
-class CollectionProxy extends StorageProxyBase {
-  constructor(...args) {
-    super(...args);
-    this._model = new CrdtCollectionModel();
-  }
+export class CollectionProxy extends StorageProxy {
+  private model = new CrdtCollectionModel();
 
   _getModelForSync() {
-    return this._model.toList();
+    return this.model.toList();
   }
 
-  _synchronizeModel(version, model) {
-    this._version = version;
-    this._model = new CrdtCollectionModel(model);
+  _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean {
+    this.version = version;
+    this.model = new CrdtCollectionModel(model);
     return true;
   }
 
   _processUpdate(update, apply=true) {
-    if (this._synchronized == SyncState.full) {
+    if (this.synchronized == SyncState.full) {
       // If we're synchronized, then any updates we sent have
       // already been applied/notified.
-      for (const {handle} of this._observers) {
+      for (const {handle} of this.observers) {
         if (update.originatorId == handle._particleId) {
           return null;
         }
@@ -273,14 +284,14 @@ class CollectionProxy extends StorageProxyBase {
     const removed = [];
     if ('add' in update) {
       for (const {value, keys, effective} of update.add) {
-        if (apply && this._model.add(value.id, value, keys) || !apply && effective) {
+        if (apply && this.model.add(value.id, value, keys) || !apply && effective) {
           added.push(value);
         }
       }
     } else if ('remove' in update) {
       for (const {value, keys, effective} of update.remove) {
-        const localValue = this._model.getValue(value.id);
-        if (apply && this._model.remove(value.id, keys) || !apply && effective) {
+        const localValue = this.model.getValue(value.id);
+        if (apply && this.model.remove(value.id, keys) || !apply && effective) {
           removed.push(localValue);
         }
       }
@@ -288,10 +299,9 @@ class CollectionProxy extends StorageProxyBase {
       throw new Error(`StorageProxy received invalid update event: ${JSON.stringify(update)}`);
     }
     if (added.length || removed.length) {
-      const result = {};
+      const result: {add?: {}[], remove?: {}[], originatorId: string} = {originatorId: update.originatorId};
       if (added.length) result.add = added;
       if (removed.length) result.remove = removed;
-      result.originatorId = update.originatorId;
       return result;
     }
     return null;
@@ -300,34 +310,34 @@ class CollectionProxy extends StorageProxyBase {
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
   toList(particleId) {
-    if (this._synchronized == SyncState.full) {
-      return Promise.resolve(this._model.toList());
+    if (this.synchronized == SyncState.full) {
+      return Promise.resolve(this.model.toList());
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
       return new Promise(resolve =>
-        this._port.HandleToList({callback: resolve, handle: this, particleId}));
+        this.port.HandleToList({callback: resolve, handle: this, particleId}));
     }
   }
 
   get(id, particleId) {
-    if (this._synchronized == SyncState.full) {
-      return Promise.resolve(this._model.getValue(id));
+    if (this.synchronized == SyncState.full) {
+      return Promise.resolve(this.model.getValue(id));
     } else {
       return new Promise((resolve, reject) =>
-        this._port.HandleToList({callback: r => resolve(r.find(entity => entity.id === id)), handle: this, particleId}));
+        this.port.HandleToList({callback: r => resolve(r.find(entity => entity.id === id)), handle: this, particleId}));
     }
   }
 
   store(value, keys, particleId) {
     const id = value.id;
     const data = {value, keys};
-    this._port.HandleStore({handle: this, callback: () => {}, data, particleId});
+    this.port.HandleStore({handle: this, callback: () => {}, data, particleId});
 
-    if (this._synchronized != SyncState.full) {
+    if (this.synchronized != SyncState.full) {
       return;
     }
-    if (!this._model.add(id, value, keys)) {
+    if (!this.model.add(id, value, keys)) {
       return;
     }
     const update = {originatorId: particleId, add: [value]};
@@ -335,38 +345,38 @@ class CollectionProxy extends StorageProxyBase {
   }
 
   clear(particleId) {
-    if (this._synchronized != SyncState.full) {
-      this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: [], particleId});
+    if (this.synchronized != SyncState.full) {
+      this.port.HandleRemoveMultiple({handle: this, callback: () => {}, data: [], particleId});
     }
 
-    let items = this._model.toList().map(item => ({id: item.id, keys: this._model.getKeys(item.id)}));
-    this._port.HandleRemoveMultiple({handle: this, callback: () => {}, data: items, particleId});
+    let items = this.model.toList().map(item => ({id: item.id, keys: this.model.getKeys(item.id)}));
+    this.port.HandleRemoveMultiple({handle: this, callback: () => {}, data: items, particleId});
 
-    items = items.map(({id, keys}) => ({rawData: this._model.getValue(id).rawData, id, keys}));
-    items = items.filter(item => this._model.remove(item.id, item.keys));
+    items = items.map(({id, keys}) => ({rawData: this.model.getValue(id).rawData, id, keys}));
+    items = items.filter(item => this.model.remove(item.id, item.keys));
     if (items.length > 0) {
       this._notify('update', {originatorId: particleId, remove: items}, options => options.notifyUpdate);
     }
   }
 
   remove(id, keys, particleId) {
-    if (this._synchronized != SyncState.full) {
+    if (this.synchronized != SyncState.full) {
       const data = {id, keys: []};
-      this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
+      this.port.HandleRemove({handle: this, callback: () => {}, data, particleId});
       return;
     }
 
-    const value = this._model.getValue(id);
+    const value = this.model.getValue(id);
     if (!value) {
       return;
     }
     if (keys.length == 0) {
-      keys = this._model.getKeys(id);
+      keys = this.model.getKeys(id);
     }
     const data = {id, keys};
-    this._port.HandleRemove({handle: this, callback: () => {}, data, particleId});
+    this.port.HandleRemove({handle: this, callback: () => {}, data, particleId});
 
-    if (!this._model.remove(id, keys)) {
+    if (!this.model.remove(id, keys)) {
       return;
     }
     const update = {originatorId: particleId, remove: [value]};
@@ -381,26 +391,22 @@ class CollectionProxy extends StorageProxyBase {
  * Between those two points in time updates are not applied or
  * notified about as these reflect concurrent writes that did not 'win'.
  */
-class VariableProxy extends StorageProxyBase {
-  constructor(...args) {
-    super(...args);
-    this._model = null;
-    this._barrier = null;
-  }
-
+export class VariableProxy extends StorageProxy {
+  model: {id: string} | null = null;
+  
   _getModelForSync() {
-    return this._model;
+    return this.model;
   }
 
-  _synchronizeModel(version, model) {
+  _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean {
     // If there's an active barrier then we shouldn't apply the model here, because
     // there is a more recent write from the particle side that is still in flight.
-    if (this._barrier != null) {
+    if (this.barrier != null) {
       return false;
     }
-    this._version = version;
-    this._model = model.length == 0 ? null : model[0].value;
-    assert(this._model !== undefined);
+    this.version = version;
+    this.model = model.length == 0 ? null : model[0].value;
+    assert(this.model !== undefined);
     return true;
   }
 
@@ -411,9 +417,9 @@ class VariableProxy extends StorageProxyBase {
     }
     // If we have set a barrier, suppress updates until after
     // we have seen the barrier return via an update.
-    if (this._barrier != null) {
-      if (update.barrier == this._barrier) {
-        this._barrier = null;
+    if (this.barrier != null) {
+      if (update.barrier == this.barrier) {
+        this.barrier = null;
 
         // HOLY LAYERING VIOLATION BATMAN
         //
@@ -421,8 +427,8 @@ class VariableProxy extends StorageProxyBase {
         // synchronized already, then we need to tell the handles.
         //
         // TODO(shans): refactor this code so we don't need to layer-violate. 
-        if (this._synchronized !== SyncState.full) {
-          this._synchronized = SyncState.full;
+        if (this.synchronized !== SyncState.full) {
+          this.synchronized = SyncState.full;
           const syncModel = this._getModelForSync();
           this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
 
@@ -430,7 +436,7 @@ class VariableProxy extends StorageProxyBase {
       }
       return null;
     }
-    this._model = update.data;
+    this.model = update.data;
     return update;
   }
 
@@ -439,17 +445,17 @@ class VariableProxy extends StorageProxyBase {
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
   //       sending a parallel request
   get(particleId) {
-    if (this._synchronized == SyncState.full) {
-      return Promise.resolve(this._model);
+    if (this.synchronized === SyncState.full) {
+      return Promise.resolve(this.model);
     } else {
       return new Promise(resolve =>
-        this._port.HandleGet({callback: resolve, handle: this, particleId}));
+        this.port.HandleGet({callback: resolve, handle: this, particleId}));
     }
   }
 
   set(entity, particleId) {
     assert(entity !== undefined);
-    if (JSON.stringify(this._model) == JSON.stringify(entity)) {
+    if (JSON.stringify(this.model) === JSON.stringify(entity)) {
       return;
     }
     let barrier;
@@ -458,27 +464,30 @@ class VariableProxy extends StorageProxyBase {
     // then there's no point creating a barrier. In fact, if the response 
     // to the set comes back before a listener is registered then this proxy will
     // end up locked waiting for a barrier that will never arrive.
-    if (this._listenerAttached) {
-      barrier = this.generateID('barrier');
+    if (this.listenerAttached) {
+      // TODO(shans): this.generateID() used to take a parameter. Is this the
+      // cause of some of the key collisions we're seeing?
+      barrier = this.generateID(/* 'barrier' */);
     } else {
       barrier = null;
     }
     // TODO: is this already a clone?
-    this._model = JSON.parse(JSON.stringify(entity));
-    this._barrier = barrier;
-    this._port.HandleSet({data: entity, handle: this, particleId, barrier});
+    this.model = JSON.parse(JSON.stringify(entity));
+    this.barrier = barrier;
+    this.port.HandleSet({data: entity, handle: this, particleId, barrier});
     const update = {originatorId: particleId, data: entity};
+    console.log(update);
     this._notify('update', update, options => options.notifyUpdate);
   }
 
   clear(particleId) {
-    if (this._model == null) {
+    if (this.model == null) {
       return;
     }
-    const barrier = this.generateID('barrier');
-    this._model = null;
-    this._barrier = barrier;
-    this._port.HandleClear({handle: this, particleId, barrier});
+    const barrier = this.generateID(/* 'barrier' */);
+    this.model = null;
+    this.barrier = barrier;
+    this.port.HandleClear({handle: this, particleId, barrier});
     const update = {originatorId: particleId, data: null};
     this._notify('update', update, options => options.notifyUpdate);
   }
@@ -486,41 +495,57 @@ class VariableProxy extends StorageProxyBase {
 
 // BigCollections are never synchronized. No local state is held and all operations are passed
 // directly through to the backing store.
-class BigCollectionProxy extends StorageProxyBase {
+export class BigCollectionProxy extends StorageProxy {
   register(particle, handle) {
     if (handle.canRead) {
-      this._scheduler.enqueue(particle, handle, ['sync', particle, {}]);
+      this.scheduler.enqueue(particle, handle, ['sync', particle, {}]);
     }
   }
 
+  // tslint:disable-next-line: no-any
+  _getModelForSync() : any {
+    throw new Error("_getModelForSync not implemented for BigCollectionProxy");
+  }
+
+  _processUpdate() {
+    throw new Error("_processUpdate not implemented for BigCollectionProxy");
+  }
+
+  _synchronizeModel() : boolean {
+    throw new Error("_synchronizeModel not implemented for BigCollectionProxy");
+  }
   // TODO: surface get()
 
   async store(value, keys, particleId) {
-    return new Promise(resolve =>
-      this._port.HandleStore({handle: this, callback: resolve, data: {value, keys}, particleId}));
+    return new Promise<void>(resolve =>
+      this.port.HandleStore({handle: this, callback: resolve, data: {value, keys}, particleId}));
   }
 
   async remove(id, particleId) {
     return new Promise(resolve =>
-      this._port.HandleRemove({handle: this, callback: resolve, data: {id, keys: []}, particleId}));
+      this.port.HandleRemove({handle: this, callback: resolve, data: {id, keys: []}, particleId}));
   }
 
   async stream(pageSize, forward) {
     return new Promise(resolve =>
-      this._port.HandleStream({handle: this, callback: resolve, pageSize, forward}));
+      this.port.HandleStream({handle: this, callback: resolve, pageSize, forward}));
   }
 
   async cursorNext(cursorId) {
-    return new Promise(resolve =>
-      this._port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
+    return new Promise<{done: boolean, value: {}[]}>(resolve =>
+      this.port.StreamCursorNext({handle: this, callback: resolve, cursorId}));
   }
 
   cursorClose(cursorId) {
-    this._port.StreamCursorClose({handle: this, cursorId});
+    this.port.StreamCursorClose({handle: this, cursorId});
   }
 }
 
 export class StorageProxyScheduler {
+  private _scheduled = false;
+  private _queues = new Map<Particle, Map<Handle, [string, Particle, {}][]>>();
+  private _idleResolver: (() => void) | null = null;
+  private _idle: Promise<void> | null = null;
   constructor() {
     this._scheduled = false;
     // Particle -> {Handle -> [Queue of events]}
@@ -586,7 +611,7 @@ export class StorageProxyScheduler {
             handle._notify(...args);
           } catch (e) {
             console.error('Error dispatching to particle', e);
-            handle._proxy.raiseSystemException(e, 'StorageProxyScheduler::_dispatch', particle.id);
+            handle._proxy.raiseSystemException(e, 'StorageProxyScheduler::_dispatch', handle._particleId);
           }
         }
       }

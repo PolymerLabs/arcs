@@ -17,14 +17,25 @@ import {assert} from '../../../platform/assert-web.js';
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
 
-export interface Model {
+export interface ModelValue {
   id: string;
-  value: {};
+  rawData?: {};
+  storageKey?: string;
+}
+
+export interface SerializedModelEntry {
+  id: string;
+  value: ModelValue;
   keys: string[];
 }
 
+interface ModelEntry {
+  value: ModelValue,
+  keys: Set<string>
+}
+
 export class CrdtCollectionModel {
-  private items: Map<string, {value: {storageKey: string, id: {}}, keys: Set<string>}>;
+  private items: Map<string, ModelEntry>;
 
   constructor(model = undefined) {
     // id => {value, Set[keys]}
@@ -112,7 +123,7 @@ export class CrdtCollectionModel {
   }
 
   // [{id, value, keys: []}]
-  toLiteral(): {id, value, keys}[] {
+  toLiteral(): SerializedModelEntry[] {
     const result: {id, value, keys}[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});

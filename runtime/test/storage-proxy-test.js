@@ -12,7 +12,7 @@
 import {assert} from './chai-web.js';
 import {Schema} from '../ts-build/schema.js';
 import {Type} from '../ts-build/type.js';
-import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler} from '../ts-build/storage-proxy.js';
 import {handleFor} from '../ts-build/handle.js';
 import {VolatileStorage} from '../ts-build/storage/volatile-storage.js';
 import {CrdtCollectionModel} from '../ts-build/storage/crdt-collection-model.js';
@@ -203,7 +203,7 @@ class TestEngine {
     const pec = {
       generateID() { return `${id++}`; }
     };
-    return new StorageProxy('X' + this._idCounters[1]++, store.type, this, pec, this._scheduler, store.name);
+    return StorageProxy.newProxy('X' + this._idCounters[1]++, store.type, this, pec, this._scheduler, store.name);
   }
 
   newHandle(store, proxy, particle, canRead, canWrite) {

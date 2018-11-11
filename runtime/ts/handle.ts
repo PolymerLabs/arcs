@@ -11,7 +11,8 @@ import {Reference} from './reference.js';
 import {Symbols} from './symbols.js';
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
-import {StorageProxy} from '../storage-proxy.js';
+import {StorageProxy, CollectionProxy, VariableProxy, BigCollectionProxy} from './storage-proxy.js';
+import { Particle } from './particle.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -32,17 +33,21 @@ function restore(entry, entityClass) {
   return entity;
 }
 
+export interface HandleOptions {keepSynced: boolean, notifySync: boolean, notifyUpdate: boolean, notifyDesync: boolean};
+
 /** @class Handle
  * Base class for Collections and Variables.
  */
-export class Handle {
+export abstract class Handle {
   _proxy: StorageProxy;
   name: string;
   canRead: boolean;
   canWrite: boolean;
   _particleId: string|null;
-  options: {};
+  options: HandleOptions;
   entityClass: string|null;
+
+  abstract _notify(kind: string, particle: Particle, details: {});
 
   // TODO type particleId, marked as string, but called with number
   constructor(proxy: StorageProxy, name: string, particleId, canRead: boolean, canWrite: boolean) {
@@ -98,11 +103,11 @@ export class Handle {
   }
 
   get type() {
-    return this._proxy._type;
+    return this._proxy.type;
   }
 
   get _id() {
-    return this._proxy._id;
+    return this._proxy.id;
   }
 
   async store(entity) {
@@ -123,6 +128,7 @@ export class Handle {
  */
 class Collection extends Handle {
   // Called by StorageProxy.
+  _proxy: CollectionProxy;
   _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
@@ -203,7 +209,7 @@ class Collection extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    return this._proxy.clear();
+    return this._proxy.clear(this._particleId);
   }
 
   /** @method remove(entity)
@@ -228,6 +234,7 @@ class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 class Variable extends Handle {
+  _proxy: VariableProxy;
   // Called by StorageProxy.
   async _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -325,7 +332,7 @@ class Variable extends Handle {
  * implicit iteration in Javascript.
  */
 class Cursor {
-  _parent: Handle;
+  _parent: BigCollection;
   _cursorId: number;
 
   constructor(parent, cursorId) {
@@ -361,6 +368,7 @@ class Cursor {
  * trigger onHandleSync() or onHandleUpdate().
  */
 class BigCollection extends Handle {
+  _proxy: BigCollectionProxy;
   configure(options) {
     throw new Error('BigCollections do not support sync/update configuration');
   }
@@ -395,7 +403,7 @@ class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    return this._proxy.remove(serialization.id, [], this._particleId);
+    return this._proxy.remove(serialization.id, this._particleId);
   }
 
   /** @method stream({pageSize, forward})
