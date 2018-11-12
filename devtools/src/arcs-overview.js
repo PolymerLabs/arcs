@@ -80,11 +80,21 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
 
   static get is() { return 'arcs-overview'; }
 
+  static get properties() {
+    return {
+      active: {
+        type: Boolean,
+        observer: '_onActiveChanged',
+        reflectToAttribute: true
+      }
+    };
+  }
   constructor() {
     super();
     this._particles = new Map();
     this._handles = new Map();
     this._operations = new Map();
+    this._needsRedraw = false;
   }
 
   ready() {
@@ -100,7 +110,6 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
   }
 
   onMessageBundle(messages) {
-    let needsRedraw = false;
     for (const msg of messages) {
       const m = msg.messageBody;
       switch (msg.messageType) {
@@ -174,7 +183,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
             });
           }
 
-          needsRedraw = true;
+          this._needsRedraw = true;
           break;
         }
         case 'page-refresh':
@@ -184,10 +193,15 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       }
     }
 
-    if (needsRedraw) this._redraw();
+    if (this._needsRedraw && this.active) this._redraw();
+  }
+
+  _onActiveChanged() {
+    if (this._needsRedraw && this.active) this._redraw();
   }
 
   _redraw() {
+    this._needsRedraw = false;
     const nodes = [...this._particles.values(), ...this._handles.values()];
     const edges = [...this._operations.values()];
     if (this.graph) {
