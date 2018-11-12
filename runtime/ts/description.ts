@@ -35,8 +35,8 @@ export class Description {
     return undefined;
   }
 
-  async getRecipeSuggestion(formatterClass) {
-    const formatter = await new (formatterClass || DescriptionFormatter)(this);
+  async getRecipeSuggestion(formatterClass = DescriptionFormatter) {
+    const formatter = await new (formatterClass)(this);
     const desc = await formatter.getDescription(this.arc.recipes[this.arc.recipes.length - 1]);
     if (desc) {
       return desc;

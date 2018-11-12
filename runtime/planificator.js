@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {InitSearch} from './strategies/init-search.js';
 import {logFactory} from '../platform/log-web.js';
-import {Planner} from './planner.js';
+import {Planner} from './ts-build/planner.js';
 import {Speculator} from './ts-build/speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
 import {SuggestionStorage} from './suggestion-storage.js';

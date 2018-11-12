@@ -15,7 +15,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../ts-build/manifest.js';
-import {Planner} from '../planner.js';
+import {Planner} from '../ts-build/planner.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
