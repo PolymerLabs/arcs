@@ -50,9 +50,9 @@ export class MockSlotComposer extends FakeSlotComposer {
   _addSlotConsumer(slot) {
     super._addSlotConsumer(slot);
     const startCallback = slot.startRenderCallback;
-    slot.startRenderCallback = ({particle, slotName, contentTypes}) => {
+    slot.startRenderCallback = ({particle, slotName, providedSlots, contentTypes}) => {
       this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
-      startCallback({particle, slotName, contentTypes});
+      startCallback({particle, slotName, providedSlots, contentTypes});
     };
   }
 

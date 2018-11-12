@@ -24,7 +24,7 @@ export class SlotConsumer {
   // Contains `container` and other affordance specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
   private _renderingBySubId: Map<string, {container?: {}}> = new Map();
-  private _innerContainerBySlotName: {} = {};
+  private innerContainerBySlotId: {} = {};
 
   constructor(consumeConn, containerKind) {
     this._consumeConn = consumeConn;
@@ -80,7 +80,7 @@ export class SlotConsumer {
 
   updateProvidedContexts() {
     this.providedSlotContexts.forEach(providedContext => {
-      providedContext.container = this.getInnerContainer(providedContext.name);
+      providedContext.container = this.getInnerContainer(providedContext.id);
     });
   }
 
@@ -89,6 +89,7 @@ export class SlotConsumer {
       this.startRenderCallback({
         particle: this.consumeConn.particle,
         slotName: this.consumeConn.name,
+        providedSlots: new Map(this.providedSlotContexts.map(context => ([context.name, context.id] as [string, string]))),
         contentTypes: this.constructRenderRequest()
       });
     }
@@ -123,27 +124,27 @@ export class SlotConsumer {
     return descriptions;
   }
 
-  getInnerContainer(providedSlotName) {
-    return this._innerContainerBySlotName[providedSlotName];
+  getInnerContainer(slotId) {
+    return this.innerContainerBySlotId[slotId];
   }
 
   _initInnerSlotContainer(slotId, subId, container) {
     if (subId) {
-      if (!this._innerContainerBySlotName[slotId]) {
-        this._innerContainerBySlotName[slotId] = {};
+      if (!this.innerContainerBySlotId[slotId]) {
+        this.innerContainerBySlotId[slotId] = {};
       }
-      assert(!this._innerContainerBySlotName[slotId][subId], `Multiple ${slotId}:${subId} inner slots cannot be provided`);
-      this._innerContainerBySlotName[slotId][subId] = container;
+      assert(!this.innerContainerBySlotId[slotId][subId], `Multiple ${slotId}:${subId} inner slots cannot be provided`);
+      this.innerContainerBySlotId[slotId][subId] = container;
     } else {
-      this._innerContainerBySlotName[slotId] = container;
+      this.innerContainerBySlotId[slotId] = container;
     }
   }
   _clearInnerSlotContainers(subIds) {
     subIds.forEach(subId => {
       if (subId) {
-        Object.values(this._innerContainerBySlotName).forEach(inner => delete inner[subId]);
+        Object.values(this.innerContainerBySlotId).forEach(inner => delete inner[subId]);
       } else {
-        this._innerContainerBySlotName = {};
+        this.innerContainerBySlotId = {};
       }
     });
   }

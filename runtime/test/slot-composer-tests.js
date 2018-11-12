@@ -40,7 +40,7 @@ async function initSlotComposer(recipeStr) {
     slotComposer,
   });
   const startRenderParticles = [];
-  arc.pec.startRender = ({particle, slotName, contentTypes}) => { startRenderParticles.push(particle.name); };
+  arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };
   const planner = new Planner();
   planner.init(arc);
   await planner.strategizer.generate();
@@ -103,7 +103,8 @@ recipe
     // render root slot
     const particle = arc.activeRecipe.particles[0];
     const rootSlot = slotComposer.getSlotConsumer(particle, 'root');
-    rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-container' : null;
+    const mySlotId = slotComposer._contexts.find(ctx => ctx.name === 'mySlot').id;
+    rootSlot.getInnerContainer = (slotId) => slotId == mySlotId ? 'dummy-inner-container' : null;
     startRenderParticles.length = 0;
     await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
     assert.deepEqual(['B', 'BB'], startRenderParticles);
@@ -171,7 +172,8 @@ recipe
 
     const [particleA, particleB, particleC] = arc.activeRecipe.particles;
     const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');
-    rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'item'
+    const itemSlotId = slotComposer._contexts.find(ctx => ctx.name === 'item').id;
+    rootSlot.getInnerContainer = (slotId) => slotId == itemSlotId
         ? {'id1': 'dummy-inner-container-1', 'id2': 'dummy-inner-container-2'}
         : null;
     startRenderParticles.length = 0;
@@ -297,7 +299,7 @@ recipe
     
     assert.deepEqual({
       model: {a: 'A content/intercepted-model'},
-      template: '<div>intercepted-template<div><span>{{a}}</span><div slotid="detail"></div></div></div>',
+      template: `<div>intercepted-template<div><span>{{a}}</span><div slotid="${detailSlotConsumer.slotContext.id}"></div></div></div>`,
       templateName: 'A::content::default/intercepted'
     }, rootSlotConsumer._content);
 
