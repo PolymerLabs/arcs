@@ -37,6 +37,7 @@ export interface Type {
   isInterface: boolean;
   isSlot: boolean;
   isReference: boolean;
+  isSynthesized: boolean;
 
   entitySchema: Schema;
   variable: TypeVariable;
@@ -517,6 +518,9 @@ export class Type {
     }
     if (this.isReference) {
       return 'Reference<' + this.referenceReferredType.toString() + '>';
+    }
+    if (this.isSynthesized) {
+      return 'Synthesized';
     }
     throw new Error(`Add support to serializing type: ${JSON.stringify(this)}`);
   }
