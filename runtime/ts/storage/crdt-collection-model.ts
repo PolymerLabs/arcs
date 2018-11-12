@@ -30,8 +30,8 @@ export interface SerializedModelEntry {
 }
 
 interface ModelEntry {
-  value: ModelValue,
-  keys: Set<string>
+  value: ModelValue;
+  keys: Set<string>;
 }
 
 export class CrdtCollectionModel {

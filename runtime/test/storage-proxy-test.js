@@ -686,7 +686,7 @@ describe('storage-proxy', function() {
     await engine.verify();
 
     // Commit the change to the backing store, and reflect the barrier.
-    fooStore.set(changed, {barrier: fooProxy._barrier});
+    fooStore.set(changed, {barrier: fooProxy.barrier});
     await engine.verify();
 
     // Subsequent updates should be visible in the handle.

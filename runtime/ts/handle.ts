@@ -33,7 +33,7 @@ function restore(entry, entityClass) {
   return entity;
 }
 
-export interface HandleOptions {keepSynced: boolean, notifySync: boolean, notifyUpdate: boolean, notifyDesync: boolean};
+export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notifyUpdate: boolean; notifyDesync: boolean;}
 
 /** @class Handle
  * Base class for Collections and Variables.
