@@ -32,6 +32,7 @@ function deepQuerySelector(selector) {
 }
 
 exports.waitFor = async function(selector, timeout) {
+  timeout = timeout || exports.defaultTimeout;
   let resolve;
   let reject;
   const result = new Promise((res, rej) => {
@@ -39,7 +40,7 @@ exports.waitFor = async function(selector, timeout) {
     reject = rej;
   });
   let fail = false;
-  setTimeout(() => fail = true, timeout || exports.defaultTimeout);
+  setTimeout(() => fail = true, timeout);
   const tryQuery = () => setTimeout(async () => {
     if (fail) {
       //console.log(`rejecting "${selector}"`);
