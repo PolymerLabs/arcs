@@ -12,7 +12,7 @@ I'm still a newb, but I stumbled on these things:
 */
 
 exports.seconds = s => s * 1e3;
-exports.defaultTimeout = exports.seconds(15);
+exports.defaultTimeout = exports.seconds(60);
 
 function deepQuerySelector(selector) {
   return browser.execute(function(selector) {
@@ -31,7 +31,7 @@ function deepQuerySelector(selector) {
   }, selector);
 }
 
-exports.whenExists = async function(selector, timeout) {
+exports.waitFor = async function(selector, timeout) {
   let resolve;
   let reject;
   const result = new Promise((res, rej) => {
@@ -43,7 +43,7 @@ exports.whenExists = async function(selector, timeout) {
   const tryQuery = () => setTimeout(async () => {
     if (fail) {
       //console.log(`rejecting "${selector}"`);
-      reject(new Error(`timedout waiting for "${selector}"`));
+      reject(new Error(`timedout [${Math.floor(timeout/1e3)}] waiting for "${selector}"`));
       //resolve(true);
     } else {
       const element = await deepQuerySelector(selector);
@@ -67,7 +67,7 @@ async function clickJson(webJSON) {
 }
 
 exports.click = async function(selector, timeout) {
-  return clickJson(await exports.whenExists(selector, timeout));
+  return clickJson(await exports.waitFor(selector, timeout));
 };
 
 exports.keys = async function(selector, keys, timeout) {
@@ -98,6 +98,7 @@ exports.openNewArc = async function(testTitle, useSolo) {
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
-  browser.url(`shell/apps/web/?${urlParams.join('&')}`);
-  await browser.pause(2000);
+  await browser.url(`shell/apps/web/?${urlParams.join('&')}`);
+  // only to ensure the app has configured itself
+  await exports.waitFor('input[search]');
 };
