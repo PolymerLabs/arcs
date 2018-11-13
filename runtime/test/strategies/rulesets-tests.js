@@ -11,7 +11,7 @@
 
 import {Strategy, Ruleset} from '../../../strategizer/strategizer.js';
 import {Manifest} from '../../ts-build/manifest.js';
-import {Planner} from '../../planner.js';
+import {Planner} from '../../ts-build/planner.js';
 import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';

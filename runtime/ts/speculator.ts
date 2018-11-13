@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {assert} from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {Relevance} from './relevance.js';
 import {Arc} from './arc.js';
 import {Recipe} from './recipe/recipe.js';

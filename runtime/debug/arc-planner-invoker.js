@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Planner} from '../planner.js';
+import {Planner} from '../ts-build/planner.js';
 import {Manifest} from '../ts-build/manifest.js';
 
 export class ArcPlannerInvoker {
