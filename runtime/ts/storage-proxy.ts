@@ -17,7 +17,7 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {Handle, HandleOptions} from './handle.js';
 
-enum SyncState {none=0, pending=1, full=2}
+enum SyncState {none, pending, full}
 
 /** @class StorageProxy
  * Mediates between one or more Handles and the backing store outside the PEC.
