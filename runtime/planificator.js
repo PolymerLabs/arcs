@@ -14,7 +14,7 @@ import {InitSearch} from './strategies/init-search.js';
 import {logFactory} from '../platform/log-web.js';
 import {Planner} from './ts-build/planner.js';
 import {Speculator} from './ts-build/speculator.js';
-import {SuggestionComposer} from './suggestion-composer.js';
+import {SuggestionComposer} from './ts-build/suggestion-composer.js';
 import {SuggestionStorage} from './suggestion-storage.js';
 
 const defaultTimeoutMs = 5000;
