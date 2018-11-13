@@ -17,7 +17,7 @@ class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
     super(arc, store);
     this.produceCalledCount = 0;
-    this.plannerRunCount = 0;
+    this.plannerRunOptions = [];
     this.cancelCount = 0;
     this.producePromises = [];
     this.plannerNextResults = [];
@@ -41,7 +41,7 @@ class TestPlanProducer extends PlanProducer {
   }
 
   async runPlanner(options) {
-    ++this.plannerRunCount;
+    this.plannerRunOptions.push(options);
     return new Promise((resolve, reject) => {
       const plans = this.plannerNextResults.shift();
       if (plans) {
@@ -52,6 +52,8 @@ class TestPlanProducer extends PlanProducer {
       }
     }).then(plans => plans);
   }
+
+  get plannerRunCount() { return this.plannerRunOptions.length; }
 
   plannerReturnFakeResults(planInfos) {
     const plans = [];
@@ -111,7 +113,7 @@ describe('plan producer', function() {
     assert.lengthOf(producer.result.plans, 0);
 
     for (let i = 0; i < 10; ++i) {
-      producer.producePlans();
+      producer.producePlans({test: i});
     }
 
     producer.plannerReturnFakeResults(helper.plans);
@@ -120,6 +122,8 @@ describe('plan producer', function() {
     assert.equal(producer.produceCalledCount, 10);
     assert.equal(producer.plannerRunCount, 2);
     assert.equal(producer.cancelCount, 0);
+    assert.equal(0, producer.plannerRunOptions[0].test);
+    assert.equal(9, producer.plannerRunOptions[1].test);
   });
 
   it('cancels planning', async () => {

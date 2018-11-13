@@ -26,6 +26,7 @@ export class PlanProducer {
   planner: Planner|null = null;
   speculator: Speculator;
   needReplan: boolean;
+  replanOptions: {};
   _isPlanning: boolean;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
@@ -68,7 +69,6 @@ export class PlanProducer {
     if (value.search === this.search) {
       return;
     }
-
     this.search = value.search;
     if (!this.search) {
       // search string turned empty, no need to replan, going back to contextual plans.
@@ -116,6 +116,7 @@ export class PlanProducer {
     }
 
     this.needReplan = true;
+    this.replanOptions = options;
     if (this.isPlanning) {
       return;
     }
@@ -128,15 +129,15 @@ export class PlanProducer {
     while (this.needReplan) {
       this.needReplan = false;
       generations = [];
-      plans = await this.runPlanner(options, generations);
+      plans = await this.runPlanner(this.replanOptions, generations);
     }
     time = ((now() - time) / 1000).toFixed(2);
 
     // Plans are null, if planning was cancelled.
     if (plans) {
-      console.log(`Produced ${plans.length}${options['append'] ? ' additional' : ''} plans [elapsed=${time}s].`);
+      console.log(`Produced ${plans.length}${this.replanOptions['append'] ? ' additional' : ''} plans [elapsed=${time}s].`);
       this.isPlanning = false;
-      await this._updateResult({plans, generations}, options);
+      await this._updateResult({plans, generations}, this.replanOptions);
     }
   }
 
