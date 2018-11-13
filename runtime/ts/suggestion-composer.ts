@@ -7,21 +7,24 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../platform/assert-web.js';
-import {Affordance} from './ts-build/affordance.js';
+import {Affordance} from './affordance.js';
+import {SlotComposer} from './slot-composer.js';
+import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
 
 export class SuggestionComposer {
-  constructor(slotComposer) {
-    assert(slotComposer);
+  private _affordance: Affordance;
+  private _container: HTMLElement | undefined; // eg div element.
+
+  private readonly _slotComposer: SlotComposer;
+  private _suggestions = [];
+  private _suggestionsQueue = [];
+  private _updateComplete = null;
+  private _suggestConsumers: SuggestDomConsumer = [];
+  
+  constructor(slotComposer: SlotComposer) {
     this._affordance = Affordance.forName(slotComposer.affordance);
     this._container = slotComposer.findContainerByName('suggestions');
-
-    this._suggestions = [];
-    this._suggestionsQueue = [];
-    this._updateComplete = null;
-
     this._slotComposer = slotComposer;
-    this._suggestConsumers = [];
   }
 
   async setSuggestions(suggestions) {
@@ -38,7 +41,7 @@ export class SuggestionComposer {
     });
   }
 
-  clear() {
+  clear(): void {
     if (this._container) {
       this._affordance.slotConsumerClass.clear(this._container);
     }
@@ -46,7 +49,7 @@ export class SuggestionComposer {
     this._suggestConsumers = [];
   }
 
-  async _updateSuggestions(suggestions) {
+  private async _updateSuggestions(suggestions) {
     this.clear();
 
     const sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
@@ -55,7 +58,9 @@ export class SuggestionComposer {
       // instead serialize the description object and generation suggestion content here.
       const suggestionContent = suggestion.suggestionContent ? suggestion.suggestionContent :
         await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
-      assert(suggestionContent, 'No suggestion content available');
+      if (!suggestionContent) {
+        throw new Error('No suggestion content available');
+      }
 
       if (this._container) {
         this._affordance.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
@@ -65,15 +70,17 @@ export class SuggestionComposer {
     }
   }
 
-  _addInlineSuggestion(suggestion, suggestionContent) {
+  private _addInlineSuggestion(suggestion, suggestionContent): void {
     const remoteSlots = suggestion.plan.slots.filter(s => !!s.id);
-    if (remoteSlots.length != 1) {
+    if (remoteSlots.length !== 1) {
       return;
     }
     const remoteSlot = remoteSlots[0];
 
     const context = this._slotComposer.findContextById(remoteSlot.id);
-    assert(context);
+    if (!context) {
+      throw new Error('Missing context for ' + remoteSlot.id);
+    }
 
     if (context.spec.isSet) {
       // TODO: Inline suggestion in a set slot is not supported yet. Implement!
@@ -85,23 +92,25 @@ export class SuggestionComposer {
     if (!context.sourceSlotConsumer) {
       return;
     }
-    if (context.spec.handles.length == 0) {
+    if (context.spec.handles.length === 0) {
       return;
     }
 
     const handleIds = context.spec.handles.map(
       handleName => context.sourceSlotConsumer.consumeConn.particle.connections[handleName].handle.id);
-    if (!handleIds.find(handleId => suggestion.plan.handles.find(handle => handle.id == handleId))) {
+    if (!handleIds.find(handleId => suggestion.plan.handles.find(handle => handle.id === handleId))) {
       // the suggestion doesn't use any of the handles that the context is restricted to.
       return;
     }
 
-    const suggestConsumer = new this._affordance.suggestionConsumerClass(this._slotComposer._containerKind, suggestion, suggestionContent, (eventlet) => {
-      const suggestion = this._suggestions.find(s => s.hash == eventlet.data.key);
+    const suggestConsumer = new this._affordance.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
+      const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {
-        const index = this._suggestConsumers.findIndex(consumer => consumer == suggestConsumer);
-        assert(index >= 0, 'cannot find suggest slot context');
+        const index = this._suggestConsumers.findIndex(consumer => consumer === suggestConsumer);
+        if (index < 0) {
+          throw new Error('cannot find suggest slot context');
+        }
         this._suggestConsumers.splice(index, 1);
 
         this._slotComposer.arc.instantiate(suggestion.plan);

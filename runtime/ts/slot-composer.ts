@@ -61,12 +61,13 @@ export class SlotComposer {
 
   get affordance(): string { return this._affordance.name; }
   get consumers(): SlotConsumer[] { return this._consumers; }
+  get containerKind(): string { return this._containerKind; }
 
   getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
     return this.consumers.find(s => s.consumeConn.particle === particle && s.consumeConn.name === slotName);
   }
 
-  findContainerByName(name: string) {
+  findContainerByName(name: string): HTMLElement | undefined  {
     const contexts = this._contexts.filter(context => context.name === name);
     if (contexts.length === 0) {
       // TODO this is a no-op, but throwing here breaks tests
@@ -78,7 +79,7 @@ export class SlotComposer {
     return undefined;
   }
 
-  findContextById(slotId) {
+  findContextById(slotId): SlotContext {
     return this._contexts.find(({id}) => id === slotId);
   }
 

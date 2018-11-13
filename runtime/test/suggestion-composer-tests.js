@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
+import {SuggestionComposer} from '../ts-build/suggestion-composer.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
