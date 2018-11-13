@@ -11,45 +11,56 @@
 /* global browser */
 /* eslint-disable no-invalid-this */
 
-//const assert = require('assert');
-const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
+const assert = require('assert');
+const utils = require('../utils.js');
 
-const searchFor = text => keys('input[search]', text);
-const receiveEntity = async entity =>
-  browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
+const {whenExists, click, keys} = utils;
 
-describe('pipes', function() {
-  it('searches', async function() {
-    const findRestaurants = `[title^="Find restaurants"]`;
-    await openNewArc(this.test.fullTitle());
-    await receiveEntity({type: 'search', query: 'restaurants'});
-    await waitFor(findRestaurants);
+async function openNewArc(testTitle, useSolo) {
+  // clean up extra open tabs
+  const openTabs = browser.getTabIds();
+  browser.switchTab(openTabs[0]);
+  openTabs.slice(1).forEach(tabToClose => {
+    browser.close(tabToClose);
   });
-  it('receives', async function() {
-    const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
-    await openNewArc(this.test.fullTitle());
-    await browser.pause(seconds(5));
-    await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-    await searchFor('*');
-    await waitFor(bodyguardIsOn);
-  });
-});
+  // setup url params
+  let firebaseKey = new Date().toISOString() + testTitle;
+  firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
+  console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+  const urlParams = [
+    `testFirebaseKey=${firebaseKey}`,
+    `log`,
+    'user=*selenium'
+  ];
+  if (useSolo) {
+    urlParams.push(`solo=${browser.options.baseUrl}/artifacts/canonical.manifest`);
+  }
+  // note - baseUrl (currently specified on the command line) must end in a
+  // trailing `/`, and this must not begin with a preceding `/`.
+  // `browser.url()` will prefix its argument with baseUrl, and avoiding a
+  // doubling `//` situation avoids some bugs.
+  browser.url(`shell/apps/web/?${urlParams.join('&')}`);
+  await browser.pause(2000);
+}
 
 describe('demo', function() {
   it('restaurants', async function() {
+    openNewArc(this.test.fullTitle());
+    const input = 'input[search]';
     const search = `restaurants`;
     const findRestaurants = `[title^="Find restaurants"]`;
     const restaurantItem = `#webtest-title`;
     const reservation = `[title*="ou are free"]`;
     const calendarAction = `[particle-host="Calendar::action"]`;
-    await openNewArc(this.test.fullTitle());
-    await searchFor(search);
+    await keys('input[search]', search);
     await click(findRestaurants);
     await click(restaurantItem);
     await click(reservation);
-    await waitFor(calendarAction);
+    await whenExists(calendarAction);
   });
+
   it('gifts', async function() {
+    openNewArc(this.test.fullTitle());
     const search = `products`;
     const showProducts = `[title^="Show products"]`;
     const items = `[particle-host="ItemMultiplexer::item"]`;
@@ -57,12 +68,11 @@ describe('demo', function() {
     const annotations = `[particle-host="Multiplexer::annotation"]`;
     const checkManufacturer = `[title^="Check manufacturer"]`;
     const interests = `[title^="Find out"]`;
-    await openNewArc(this.test.fullTitle());
-    await searchFor(search);
+    await keys('input[search]', search);
     await click(showProducts);
-    await waitFor(items);
+    await whenExists(items);
     await click(checkShipping);
-    await waitFor(annotations);
+    await whenExists(annotations);
     await click(checkManufacturer);
     await click(interests);
   });
