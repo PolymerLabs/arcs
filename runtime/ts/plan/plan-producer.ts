@@ -41,7 +41,6 @@ export class PlanProducer {
     this.speculator = new Speculator();
     this.searchStore = searchStore;
     if (this.searchStore) {
-      this.searchStore = searchStore;
       this.searchStoreCallback = () => this.onSearchChanged();
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
@@ -103,6 +102,7 @@ export class PlanProducer {
   }
 
   get arcKey(): string {
+    // TODO: this is a duplicate method of one in planificator.ts, refactor?
     return this.arc.storageKey.substring(this.arc.storageKey.lastIndexOf('/') + 1);
   }
 
