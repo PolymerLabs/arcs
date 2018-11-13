@@ -89,7 +89,7 @@ exports.openNewArc = async function(testTitle, useSolo) {
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
-    `log`,
+    //`log`,
     'user=*selenium'
   ];
   if (useSolo) {
