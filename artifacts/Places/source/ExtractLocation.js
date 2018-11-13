@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle}) => {
   return class ExtractLocation extends DomParticle {
-    update({person}, state, lastProps) {
+    update({person}, state) {
       if (person && person.location) {
         const {latitude, longitude} = person.location;
         if (state.latitude !== latitude || state.longitude !== longitude) {

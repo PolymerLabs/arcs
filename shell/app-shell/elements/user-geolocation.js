@@ -20,11 +20,13 @@ class UserGeolocation extends Xen.Debug(Xen.Base, log) {
   }
   _watchGeolocation() {
     const fallback = () => this._maybeUpdateGeoCoords(fallbackCoords);
+    // make sure some coords got set no matter what else occurs
+    // TODO(sjmiles): calling fallback() right away may cause some unneeded thrash,
+    // but otherwise tests can fail from lack of geocoords
+    fallback();
     if ('geolocation' in navigator) {
       const update = ({coords}) => this._maybeUpdateGeoCoords(coords);
       navigator.geolocation.watchPosition(update, fallback, {timeout: 3000, maximumAge: Infinity});
-    } else {
-      fallback();
     }
   }
   _maybeUpdateGeoCoords({latitude, longitude}) {
