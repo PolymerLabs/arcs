@@ -119,7 +119,6 @@ export class SlotComposer {
         let transformationSlotConsumer = null;
 
         if (slotConsumer && slotConsumer instanceof HostedSlotConsumer) {
-          assert(!slotConsumer.consumeConn);
           slotConsumer.consumeConn = cs;
           transformationSlotConsumer = slotConsumer.transformationSlotConsumer;
         } else {
@@ -131,7 +130,12 @@ export class SlotComposer {
         this._contexts = this._contexts.concat(providedContexts);
 
         // Slot contexts provided by the HostedSlotConsumer are managed by the transformation.
-        if (transformationSlotConsumer) transformationSlotConsumer.providedSlotContexts.push(...providedContexts);
+        if (transformationSlotConsumer) {
+          transformationSlotConsumer.providedSlotContexts.push(...providedContexts);
+          if (transformationSlotConsumer.slotContext.container) {
+            slotConsumer.startRender();
+          }
+        }
       });
     });
 

@@ -219,8 +219,8 @@ export class ParticleExecutionHost {
     this._apiPort.InstantiateParticle(particle, {id: particle.id, spec, handles});
     return particle;
   }
-  startRender({particle, slotName, contentTypes}) {
-    this._apiPort.StartRender({particle, slotName, contentTypes});
+  startRender({particle, slotName, providedSlots, contentTypes}) {
+    this._apiPort.StartRender({particle, slotName, providedSlots, contentTypes});
   }
   stopRender({particle, slotName}) {
     this._apiPort.StopRender({particle, slotName});

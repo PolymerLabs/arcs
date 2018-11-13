@@ -37,6 +37,7 @@ export class HostedSlotConsumer extends SlotConsumer {
 
   get consumeConn() { return this._consumeConn; }
   set consumeConn(consumeConn) {
+    assert(!this._consumeConn, 'Consume connection can be set only once');
     assert(this.hostedSlotId === consumeConn.targetSlot.id,
       `Expected target slot ${this.hostedSlotId}, but got ${consumeConn.targetSlot.id}`);
     assert(this.hostedParticleName === consumeConn.particle.name,
@@ -44,10 +45,6 @@ export class HostedSlotConsumer extends SlotConsumer {
     assert(this.hostedSlotName === consumeConn.name,
       `Expected slot ${this.hostedSlotName} for slot ${this.hostedSlotId}, but got ${consumeConn.name}`);
     this._consumeConn = consumeConn;
-
-    if (this.transformationSlotConsumer.slotContext.container) {
-      this.startRender();
-    }
   }
 
   async setContent(content, handler, arc) {

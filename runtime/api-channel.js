@@ -258,7 +258,7 @@ export class PECOuterPort extends APIPort {
     this.registerCall('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerCall('SimpleCallback', {callback: this.Direct, data: this.Direct});
     this.registerCall('AwaitIdle', {version: this.Direct});
-    this.registerCall('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
+    this.registerCall('StartRender', {particle: this.Mapped, slotName: this.Direct, providedSlots: this.Map(this.Direct, this.Direct), contentTypes: this.List(this.Direct)});
     this.registerCall('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
     this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
@@ -318,7 +318,7 @@ export class PECInnerPort extends APIPort {
     this.registerHandler('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerHandler('SimpleCallback', {callback: this.LocalMapped, data: this.Direct});
     this.registerHandler('AwaitIdle', {version: this.Direct});
-    this.registerHandler('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
+    this.registerHandler('StartRender', {particle: this.Mapped, slotName: this.Direct, providedSlots: this.Map(this.Direct, this.Direct), contentTypes: this.List(this.Direct)});
     this.registerHandler('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
