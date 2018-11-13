@@ -15,7 +15,7 @@ const log = Xen.logFactory('UserGeolocation', '#004f00');
 const fallbackCoords = {latitude: 37.7610927, longitude: -122.4208173}; // San Francisco
 
 class UserGeolocation extends Xen.Debug(Xen.Base, log) {
-  _getInitialState() {
+  _didMount() {
     this._watchGeolocation();
   }
   _watchGeolocation() {
