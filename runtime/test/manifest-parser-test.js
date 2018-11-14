@@ -208,32 +208,32 @@ describe('manifest parser', function() {
   it('parses an inline schema with a reference to a schema', () => {
     parse(`
       particle Foo
-        in Product {Reference<Review> review} in
+        in Product {Reference<Review> review} inReview
     `);
   });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review>] review} in
+        in Product {[Reference<Review>] review} inResult
     `);
   });
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
-      in Product {Reference<Review {Text reviewText}> review} in`
-    );
+      in Product {Reference<Review {Text reviewText}> review} inReview
+    `);
   });
   it('parses an inline schema with a collection of references to inline schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review {Text reviewText}>] review} in
+        in Product {[Reference<Review {Text reviewText}>] review} productReviews
     `);
   });
   it('parses reference types', () => {
     parse(`
       particle Foo
-        in Reference<Foo> in
-        out Reference<Bar> out
+        in Reference<Foo> inRef
+        out Reference<Bar> outRef
     `);
   });
 });
