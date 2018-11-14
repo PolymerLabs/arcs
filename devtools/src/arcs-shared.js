@@ -14,6 +14,7 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --highlight-blue: #3879d9;
         --dark-red: #b71c1c;
         --dark-green: #09ba12;
+        --darker-green: #08780e;
 
         --devtools-purple: rgb(136, 19, 145);
         --devtools-blue: rgb(13, 34, 170);

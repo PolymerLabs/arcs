@@ -19,22 +19,45 @@ DevtoolsConnection.onceConnected.then(devtoolsChannel => {
 });
 
 export class ArcDebugHandler {
-  constructor(arc, devtoolsChannel) {
+  constructor(arc) {
+    this._devtoolsChannel = null;
+    this._arcId = arc.id.toString();
+    this._isSpeculative = arc.isSpeculative;
 
-    // Message handles go here.
-    if (!arc.isSpeculative) {
-      new ArcPlannerInvoker(arc, devtoolsChannel);
-      new ArcStoresFetcher(arc, devtoolsChannel);
-    }
-
-    // TODO: Disconnect when arc is disposed?
-
-    devtoolsChannel.send({
-      messageType: 'arc-available',
-      messageBody: {
-        id: arc.id.toString(),
-        isSpeculative: arc.isSpeculative
+    DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+      this._devtoolsChannel = devtoolsChannel;
+      if (!arc.isSpeculative) {
+        // Message handles go here.
+        new ArcPlannerInvoker(arc, devtoolsChannel);
+        new ArcStoresFetcher(arc, devtoolsChannel);
       }
+
+      devtoolsChannel.send({
+        messageType: 'arc-available',
+        messageBody: {
+          id: arc.id.toString(),
+          isSpeculative: arc.isSpeculative
+        }
+      });
+    });
+  }
+
+  recipeInstantiated({particles}) {
+    if (!this._devtoolsChannel || this._isSpeculative) return;
+
+    const truncate = ({id, name}) => ({id, name});
+    const slotConnections = [];
+    particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
+      slotConnections.push({
+        arcId: this._arcId,
+        particleId: cs.particle.id,
+        consumed: truncate(cs.targetSlot),
+        provided: Object.values(cs.providedSlots).map(slot  => truncate(slot)),
+      });
+    }));
+    this._devtoolsChannel.send({
+      messageType: 'recipe-instantiated',
+      messageBody: {slotConnections}
     });
   }
 }

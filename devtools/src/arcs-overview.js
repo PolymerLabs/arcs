@@ -36,6 +36,40 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         height: 2px;
         display: inline-block;
         vertical-align: middle;
+        position: relative;
+      }
+      .legend span[edge][arrow-right]::after {
+        content: ' ';
+        display: block;
+        border: solid;
+        border-width: 4px 6px;
+        border-color: transparent;
+        border-left-color: inherit;
+        position: absolute;
+        top: -3px;
+        left: 6px;
+      }
+      .legend span[edge][arrow-left]::before {
+        content: ' ';
+        display: block;
+        border: solid;
+        border-width: 4px 6px;
+        border-color: transparent;
+        border-right-color: inherit;
+        position: absolute;
+        top: -3px;
+        right: 6px;
+      }
+      .legend span[edge][circle]::after {
+        content: ' ';
+        display: block;
+        position: absolute;
+        top: -2px;
+        left: 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 3px;
+        background-color: inherit;
       }
       #popup {
         position: absolute;
@@ -56,12 +90,16 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     <vaadin-split-layout>
       <div id="graphContainer" style="flex: .5">
         <div class="legend">
-          <div><span node="" style="background: var(--highlight-blue)"></span> Particle</div>
-          <div><span node="" style="background: var(--light-gray)"></span> Handle</div>
-          <div><span edge="" style="background: var(--dark-green)"></span> Read</div>
-          <div><span edge="" style="background: var(--dark-red)"></span> Write</div>
-          <div><span edge="" style="background: var(--highlight-blue)"></span> Read-Write</div>
-          <div><span edge="" style="background: var(--dark-gray)"></span> Hosted</div>
+          <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
+          <div><span node style="background: var(--light-gray)"></span> Handle</div>
+          <div><span node style="background: var(--dark-green)"></span> Slot</div>
+          <div><span node style="background: var(--darker-green)"></span> Hosted Slot</div>
+          <div><span edge arrow-right style="background: var(--dark-green); border-color: var(--dark-green);"></span> Read</div>
+          <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
+          <div><span edge arrow-left arrow-right style="background: var(--highlight-blue); border-color: var(--highlight-blue);"></span> Read-Write</div>
+          <div><span edge circle style="background: var(--dark-gray)"></span> Hosted</div>
+          <div><span edge circle style="background: var(--dark-green)"></span> Provide</div>
+          <div><span edge circle style="background: var(--dark-red); border-color: var(--dark-red);"></span> Consume</div>
         </div>
         <div id="popup">
           <pre id="popupText"></pre>
@@ -93,7 +131,10 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     super();
     this._particles = new Map();
     this._handles = new Map();
+    this._slots = new Map();
     this._operations = new Map();
+    this._callbackIdToPecMsg = new Map();
+    this._innerArcToTransformationParticle = new Map();
     this._needsRedraw = false;
   }
 
@@ -113,6 +154,152 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     for (const msg of messages) {
       const m = msg.messageBody;
       switch (msg.messageType) {
+        case 'recipe-instantiated': {
+          for (const sc of m.slotConnections) {
+            if (sc.consumed) {
+              // TODO: Instead of fetching existing slot, use vis.DataSet,
+              // which allows per-attribute updates.
+              const existingSlotEntry = this._slots.get(sc.consumed.id);
+              const hosted = existingSlotEntry && existingSlotEntry.hosted;
+              
+              this._slots.set(sc.consumed.id, {
+                id: sc.consumed.id,
+                label: sc.consumed.name,
+                hosted,
+                color: this._cssVar(hosted ? '--darker-green' : '--dark-green'),
+                font: {color: 'white'},
+                details: {
+                  id: sc.consumed.id
+                }
+              });
+  
+              const edgeId = `${sc.particleId}¯\\_(ツ)_/¯${sc.consumed.id}`;
+              this._operations.set(edgeId, {
+                id: edgeId,
+                from: sc.particleId,
+                to: sc.consumed.id,
+                arrows: {
+                  to: {
+                    enabled: true,
+                    type: 'circle'
+                  }
+                },
+                color: {color: this._cssVar('--dark-red')}
+              });
+            }
+  
+            for (const provided of sc.provided) {
+              this._slots.set(provided.id, {
+                id: provided.id,
+                label: provided.name,
+                color: this._cssVar('--dark-green'),
+                font: {color: 'white'},
+                details: {
+                  id: provided.id
+                }
+              });
+  
+              const edgeId = `${sc.particleId}¯\\_(ツ)_/¯${provided.id}`;
+              this._operations.set(edgeId, {
+                id: edgeId,
+                from: sc.particleId,
+                to: provided.id,
+                arrows: {
+                  to: {
+                    enabled: true,
+                    type: 'circle'
+                  }
+                },
+                color: {color: this._cssVar(provided.hosted ? '--darker-green' : '--dark-green')}
+              });
+            }
+          }          
+          break;
+        }
+        case 'PecLog': {
+          switch (m.name) {
+            case 'onConstructInnerArc':
+            case 'onArcCreateHandle':
+            case 'onArcCreateSlot':
+              this._callbackIdToPecMsg.set(m.pecMsgBody.callback, m.pecMsgBody);
+              break;
+            case 'ConstructArcCallback': {
+              const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
+              if (!request) continue;
+              this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
+              this._innerArcToTransformationParticle.set(m.pecMsgBody.arc, request.particle);
+              break;
+            }
+            case 'CreateHandleCallback': {
+              const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
+              if (!request) continue;
+              this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
+
+              const handleId = m.pecMsgBody.id;
+              const handleName = m.pecMsgBody.name;
+              const particleId = this._innerArcToTransformationParticle.get(request.arc);
+              if (!particleId) continue;
+
+              this._handles.set(handleId, {
+                id: handleId,
+                label: handleName ? `"${handleName}"` : '?',
+                color: this._cssVar('--light-gray'),
+                details: {
+                  id: handleId,
+                  name: handleName,
+                }
+              });
+
+              const edgeId = `${particleId}¯\\_(ツ)_/¯${handleId}`;
+              this._operations.set(edgeId, {
+                id: edgeId,
+                from: particleId,
+                to: handleId,
+                arrows: 'to, from',
+                color: {color: this._cssVar('--highlight-blue')},
+                details: {
+                  direction: 'both',
+                }
+              });
+              break;
+            }
+            case 'CreateSlotCallback': {
+              const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
+              if (!request) continue;
+              this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
+
+              const slotId = m.pecMsgBody.hostedSlotId;
+              const particleId = request.transformationParticle;
+
+              this._slots.set(slotId, {
+                id: slotId,
+                hosted: true,
+                color: this._cssVar('--darker-green'),
+                font: {color: 'white'},
+                details: {
+                  id: slotId
+                }
+              });
+
+              const edgeId = `${particleId}¯\\_(ツ)_/¯${slotId}`;
+              this._operations.set(edgeId, {
+                id: edgeId,
+                from: particleId,
+                to: slotId,
+                arrows: {
+                  to: {
+                    enabled: true,
+                    type: 'circle'
+                  }
+                },
+                color: {color: this._cssVar('--darker-green')}
+              });
+            }
+          }
+          break;
+        }
+        // TODO: Move handle connections to 'recipe-instantiated' call.
+        // Stop relying on 'InstantiateParticle' as it will get deleted soon.
         case 'InstantiateParticle': {
           if (m.speculative || m.arcId.endsWith('-pipes')) continue;
 
@@ -202,7 +389,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
 
   _redraw() {
     this._needsRedraw = false;
-    const nodes = [...this._particles.values(), ...this._handles.values()];
+    const nodes = [...this._particles.values(), ...this._handles.values(), ...this._slots.values()];
     const edges = [...this._operations.values()];
     if (this.graph) {
       this.graph.setData({nodes, edges});
@@ -248,7 +435,10 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
   _clear() {
     this._particles.clear();
     this._handles.clear();
+    this._slots.clear();
     this._operations.clear();
+    this._innerArcToTransformationParticle.clear();
+    this._callbackIdToPecMsg.clear();
     this._redraw();
   }
 
