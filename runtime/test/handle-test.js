@@ -19,6 +19,7 @@ import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {Schema} from '../ts-build/schema.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
+import {assertThrowsAsync} from '../testing/test-util.js';
 
 const loader = new Loader();
 
@@ -149,16 +150,7 @@ describe('Handle', function() {
     const arc = new Arc({slotComposer, id: 'test'});
     const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    const assert_throws_async = async (f, message) => {
-      try {
-        await f();
-        assert.throws(() => undefined, message);
-      } catch (e) {
-        assert.throws(() => {throw e;}, message);
-      }
-    };
-
-    await assert_throws_async(async () => await arc.createStore('not a type'), /isn't a Type/);
+    await assertThrowsAsync(async () => await arc.createStore('not a type'), /isn't a Type/);
 
     await arc.createStore(Bar.type, 'name', 'id1', '#sufficient');
     await arc.createStore(Bar.type, 'name', 'id2', ['#valid']);

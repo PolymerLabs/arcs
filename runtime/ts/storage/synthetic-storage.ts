@@ -1,4 +1,4 @@
-// @
+// @license
 // Copyright (c) 2018 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -8,36 +8,63 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {StorageProviderFactory} from './storage-provider-factory.js';
 import {KeyBase} from './key-base.js';
-import {FirebaseStorage} from './firebase-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {setDiffCustom} from '../util.js';
 import firebase from 'firebase/app';
 
+export class ArcHandle {
+  public readonly storageKey: string;
+  public readonly type: Type;
+  public readonly tags: string[];
+
+  constructor(storageKey, type, tags) {
+    this.storageKey = storageKey;
+    this.type = type;
+    this.tags = tags;
+  }
+}
+
 enum Scope {
-  arc = 1  // target must be a storage key referring to a serialized manifest
+  arc = 1  // target must be a storage key for an ArcInfo Variable
 }
 
 enum Category {
-  handles = 1
+  handles = 1  // synthetic data will be a collection of ArcHandles
 }
 
 // Format is 'synthetic://<scope>/<category>/<target>'
 class SyntheticKey extends KeyBase {
-  scope: Scope;
-  category: Category;
-  target: string;
+  readonly scope: Scope;
+  readonly category: Category;
+  readonly targetKey: string;
+  readonly targetType: Type;
+  readonly syntheticType: Type;
+
   constructor(key: string) {
     super();
-    const match = key.match(/^synthetic:\/\/([^/]*)\/([^/]*)\/(.*)$/);
-    assert(match && match.length === 4, `invalid synthetic key: ${key}`);
+    const match = key.match(/^synthetic:\/\/([^/]+)\/([^/]+)\/(.+)$/);
+    if (match === null || match.length !== 4) {
+      throw new Error(`invalid synthetic key: ${key}`);
+    }
+
     this.scope = Scope[match[1]];
     this.category = Category[match[2]];
-    this.target = match[3];
-    assert(this.scope, `invalid scope '${match[1]}' for synthetic key: ${key}`);
-    assert(this.category, `invalid category '${match[2]}' for synthetic key: ${key}`);
+    this.targetKey = match[3];
+
+    if (this.scope === Scope.arc) {
+      this.targetType = Type.newArcInfo();
+    } else {
+      throw new Error(`invalid scope '${match[1]}' for synthetic key: ${key}`);
+    }
+    if (this.category === Category.handles) {
+      this.syntheticType = Type.newHandleInfo();
+    } else {
+      throw new Error(`invalid category '${match[2]}' for synthetic key: ${key}`);
+    }
   }
 
   get protocol() {
@@ -50,48 +77,38 @@ class SyntheticKey extends KeyBase {
   }
 
   toString() {
-    return `${this.protocol}://${Scope[this.scope]}/${Category[this.category]}/${this.target}`;
+    return `${this.protocol}://${Scope[this.scope]}/${Category[this.category]}/${this.targetKey}`;
   }
-}
-
-// TODO: unhack this
-function isFirebaseKey(key) {
-  return key && key.startsWith('firebase:');
 }
 
 export class SyntheticStorage extends StorageBase {
-  private firebaseStorage: FirebaseStorage;
+  private readonly storageFactory: StorageProviderFactory;
 
-  constructor(arcId: Id, firebaseStorage) {
+  constructor(arcId: Id, storageFactory) {
     super(arcId);
-    this.firebaseStorage = firebaseStorage;
+    this.storageFactory = storageFactory;
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<SyntheticCollection> {
-    throw new Error('cannot construct synthetic storage providers; use connect');
+    throw new Error('cannot construct SyntheticStorage providers; use connect');
   }
 
   async connect(id: string, type: Type, key: string) : Promise<SyntheticCollection> {
-    // TODO: add handle type to the type system
-    assert(type === null, 'synthetic storage does not accept a type parameter');
-
+    assert(type === null, 'SyntheticStorage does not accept a type parameter');
     const synthKey = new SyntheticKey(key);
-    if (isFirebaseKey(synthKey.target)) {
-      const {reference} = this.firebaseStorage.attach(synthKey.target);
-      return new SyntheticCollection(Type.newSynthesized(), id, key, reference);
-    } else {
-      throw new Error('synthetic storage target must be a firebase storage key (for now)');
+    const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey);
+    if (targetStore === null) {
+      return null;
     }
+    return new SyntheticCollection(synthKey.syntheticType, id, key, targetStore, this.storageFactory);
   }
 
-  async baseStorageFor(type: Type, key: string) {
-    assert(false, 'baseStorageFor not implemented for SyntheticStorage');
-    return Promise.reject();
+  async baseStorageFor(type: Type, key: string) : Promise<StorageProviderBase> {
+    throw new Error('baseStorageFor not implemented for SyntheticStorage');
   }
 
-  baseStorageKey(type: Type, key: string) {
-    assert(false, 'baseStorageKey not implemented for SyntheticStorage');
-    return '';
+  baseStorageKey(type: Type, key: string) : string {
+    throw new Error('baseStorageKey not implemented for SyntheticStorage');
   }
 
   parseStringAsKey(s: string) : SyntheticKey {
@@ -99,51 +116,51 @@ export class SyntheticStorage extends StorageBase {
   }
 }
 
+// Currently hard-wired to parse serialized data in an ArcInfo Variable to provide a list of ArcHandles.
 class SyntheticCollection extends StorageProviderBase {
-  private readonly reference: firebase.database.Reference;
+  private readonly targetStore: StorageProviderBase;
+  private readonly storageFactory: StorageProviderFactory;
   private readonly initialized: Promise<void>;
-  private resolveInitialized: () => void | null;
-  private model: {storageKey: string, type: Type, tags: string[]}[];
+  private model: ArcHandle[] = [];
+  backingStore = undefined;
 
-  constructor(type, id, key, reference) {
+  constructor(type, id, key, targetStore, storageFactory) {
     super(type, undefined, id, key);
-    this.reference = reference;
-    this.model = [];
-    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
-    this.reference.on('value', snapshot => this.remoteStateChanged(snapshot));
+    this.targetStore = targetStore;
+    this.storageFactory = storageFactory;
+
+    let resolveInitialized;
+    this.initialized = new Promise(resolve => resolveInitialized = resolve);
+    targetStore.get().then(async data => {
+      await this.process(data, false);
+      resolveInitialized();
+      targetStore.on('change', details => this.process(details.data, true), this);
+    });
   }
 
-  private async remoteStateChanged(snapshot) {
+  private async process(data, fireEvent) {
     let handles;
     try {
-      if (snapshot.exists() && snapshot.val()) {
+      if (data) {
         // TODO: remove the import-removal hack when import statements no longer appear in
-        // serialised manifests, or deal with them correctly if they end up staying
-        const manifest = await Manifest.parse(snapshot.val().replace(/\bimport .*\n/g, ''), {});
+        // serialized manifests, or deal with them correctly if they end up staying
+        const manifest = await Manifest.parse(data.serialized.replace(/\bimport .*\n/g, ''), {});
         handles = manifest.activeRecipe && manifest.activeRecipe.handles;
       }
     } catch (e) {
-      console.warn(`Error parsing manifest at ${this._storageKey}:\n${e.message}`);
+      console.warn(`Error parsing manifest at ${this.storageKey}:\n${e.message}`);
     }
 
-    const newModel = [];
+    const oldModel = this.model;
+    this.model = [];
     for (const handle of handles || []) {
-      if (isFirebaseKey(handle._storageKey)) {
-        newModel.push({
-          storageKey: handle.storageKey,
-          type: handle.mappedType,
-          tags: handle.tags
-        });
+      if (this.storageFactory.isPersistent(handle._storageKey)) {
+        this.model.push(new ArcHandle(handle.storageKey, handle.mappedType, handle.tags));
       }
     }
-    const diff = setDiffCustom(this.model, newModel, JSON.stringify);
-    this.model = newModel;
-
-    if (this.resolveInitialized) {
-      this.resolveInitialized();
-      this.resolveInitialized = null;
+    if (fireEvent) {
+      this._fire('change', setDiffCustom(oldModel, this.model, JSON.stringify));
     }
-    this._fire('change', diff);
   }
 
   async toList() {
@@ -156,12 +173,10 @@ class SyntheticCollection extends StorageProviderBase {
   }
 
   cloneFrom() {
-    throw new Error("cloneFrom should never be called on SyntheticCollection!");
+    throw new Error('cloneFrom should never be called on SyntheticCollection!');
   }
 
   ensureBackingStore() {
-    throw new Error("ensureBackingStore should never be called on SyntheticCollection!");
+    throw new Error('ensureBackingStore should never be called on SyntheticCollection!');
   }
-
-  backingStore = undefined;
 }
