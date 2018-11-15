@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {handleFor} from './handle.js';
 import {assert} from '../../platform/assert-web.js';
@@ -94,7 +93,7 @@ export class ParticleExecutionContext {
     this.apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 
     this.apiPort.onStartRender = ({particle, slotName, providedSlots, contentTypes}) => {
-      /** @class Slot
+      /**
        * A representation of a consumed slot. Retrieved from a particle using
        * particle.getSlot(name)
        */
@@ -113,7 +112,7 @@ export class ParticleExecutionContext {
           this.providedSlots = providedSlots;
         }
         get isRendered() { return this._isRendered; }
-        /** @method render(content)
+        /**
          * renders content to the slot.
          */
         render(content) {
@@ -144,7 +143,7 @@ export class ParticleExecutionContext {
           });
           return template;
         }
-        /** @method registerEventHandler(name, f)
+        /**
          * registers a callback to be invoked when 'name' event happens.
          */
         registerEventHandler(name, f) {
