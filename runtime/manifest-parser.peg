@@ -1008,20 +1008,8 @@ SchemaExtends
 }
 
 SchemaItem
-  = SchemaSection
-  / SchemaField
+  = SchemaField
   / Description
-
-SchemaSection
-  = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField)+)
-  {
-    return {
-      kind: 'schema-section',
-      location: location(),
-      sectionType,
-      fields: extractIndented(fields),
-    };
-  }
 
 SchemaField
   = type:SchemaType whiteSpace name:lowerIdent eolWhiteSpace

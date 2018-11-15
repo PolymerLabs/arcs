@@ -550,17 +550,6 @@ ${e.message}
           fields[field.name] = field.type;
           break;
         }
-        case 'schema-section': {
-          const section = item;
-          manifest._warnings.push(new ManifestError(section.location, `Schema sections are deprecated`));
-          for (const field of section.fields) {
-            if (fields[field.name]) {
-              throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`);
-            }
-            fields[field.name] = field.type;
-          }
-          break;
-        }
         case 'description': {
           if (description) {
             throw new ManifestError(item.location, `Duplicate schema description`);
