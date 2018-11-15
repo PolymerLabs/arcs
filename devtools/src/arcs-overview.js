@@ -98,8 +98,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
           <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
           <div><span edge arrow-left arrow-right style="background: var(--highlight-blue); border-color: var(--highlight-blue);"></span> Read-Write</div>
           <div><span edge circle style="background: var(--dark-gray)"></span> Hosted</div>
-          <div><span edge circle style="background: var(--dark-green)"></span> Provide</div>
-          <div><span edge circle style="background: var(--dark-red); border-color: var(--dark-red);"></span> Consume</div>
+          <div><span edge circle style="background: var(--dark-green)"></span> Consume</div>
+          <div><span edge circle style="background: var(--dark-red); border-color: var(--dark-red);"></span> Provide</div>
         </div>
         <div id="popup">
           <pre id="popupText"></pre>
@@ -179,12 +179,12 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 from: sc.particleId,
                 to: sc.consumed.id,
                 arrows: {
-                  to: {
+                  from: {
                     enabled: true,
                     type: 'circle'
                   }
                 },
-                color: {color: this._cssVar('--dark-red')}
+                color: {color: this._cssVar(hosted ? '--darker-green' : '--dark-green')}
               });
             }
   
@@ -210,7 +210,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                     type: 'circle'
                   }
                 },
-                color: {color: this._cssVar(provided.hosted ? '--darker-green' : '--dark-green')}
+                color: {color: this._cssVar('--dark-red')}
               });
             }
           }          
@@ -292,7 +292,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                     type: 'circle'
                   }
                 },
-                color: {color: this._cssVar('--darker-green')}
+                color: {color: this._cssVar('--dark-red')}
               });
             }
           }
