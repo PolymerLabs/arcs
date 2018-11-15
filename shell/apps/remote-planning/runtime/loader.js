@@ -26,12 +26,12 @@ function schemaLocationFor(name) {
 }
 
 export class Loader {
-  path(fileName) {
+  dirname(fileName) {
     const path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 
-  join(prefix, path) {
+  joinDir(prefix, path) {
     if (/^https?:\/\//.test(path)) {
       return path;
     }
@@ -39,7 +39,7 @@ export class Loader {
     if (path[0] == '/' || path[1] == ':') {
       return path;
     }
-    prefix = this.path(prefix);
+    prefix = this.dirname(prefix);
     path = this.normalizeDots(`${prefix}${path}`);
     return path;
   }
