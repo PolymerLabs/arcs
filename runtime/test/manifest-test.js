@@ -714,8 +714,8 @@ ${particleStr1}
     const parseRecipe = async (args) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
-          \`consume Slot${args.isRequiredSlotA ? '' : '?'} slotA
-          \`consume Slot${args.isRequiredSlotB ? '' : '?'} slotB
+          \`consume Slot slotA${args.isRequiredSlotA ? '' : '?'}
+          \`consume Slot slotB${args.isRequiredSlotB ? '' : '?'}
 
         recipe
           \`slot 'slota-0' as s0
@@ -1460,7 +1460,7 @@ resource SomeName
       schema Something
       particle Thing in 'thing.js'
         in [Something] inThing
-        out [Something]? maybeOutThings
+        out [Something] maybeOutThings?
       recipe
         create as handle0 // [Something]
         Thing
