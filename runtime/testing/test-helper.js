@@ -45,7 +45,7 @@ export class TestHelper {
     }
     if (options.manifestString) {
       assert(!options.context, 'context should not be provided if manifestString is given');
-      options.context = await Manifest.parse(options.manifestString, loader);
+      options.context = await Manifest.parse(options.manifestString, {loader, fileName: ''});
     }
 
     // Explicitly not using a constructor to force using this factory method.
@@ -131,10 +131,7 @@ export class TestHelper {
     let plan;
     if (options) {
       if (options.particles) {
-        let plans = this.plans.filter(p => {
-          const planParticles = p.plan.particles.map(particle => particle.name);
-          return planParticles.length == options.particles.length && planParticles.every(p => options.particles.includes(p));
-        });
+        let plans = this.findPlanByParticleNames(options.particles);
         if (options.hostedParticles) {
           plans = plans.filter(p => {
             return options.hostedParticles.every(hosted => {
@@ -155,6 +152,13 @@ export class TestHelper {
     }
     this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(plan.descriptionText)}'`);
     await this.instantiatePlan(plan.plan);
+  }
+
+  findPlanByParticleNames(particlesNames) {
+    return this.plans.filter(p => {
+      const planParticles = p.plan.particles.map(particle => particle.name);
+      return planParticles.length == particlesNames.length && planParticles.every(p => particlesNames.includes(p));
+    });
   }
 
   async instantiatePlan(plan) {
