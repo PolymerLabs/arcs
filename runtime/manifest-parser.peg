@@ -1116,9 +1116,9 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
-//TODO Add ParticleArgumentDirection (rewrite recipes to not use directions as identifiers.
 ReservedWord
   = Direction
+  / ParticleArgumentDirection
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
