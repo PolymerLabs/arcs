@@ -88,8 +88,9 @@ describe('manifest parser', function() {
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
-    const reservedWords = ['inout', 'in', 'out', 'host', '`consume',
-      '`provide', 'provide', 'consume'];
+    const reservedWords = ['inout', 'in', 'out', 'host', '`consume', '`provide',
+                           'provide', 'consume', '?', 'use', 'map', 'create', 'copy',
+                           '`slot'];
     reservedWords.map(reserved => {
       try {
         parse(`

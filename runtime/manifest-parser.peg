@@ -808,8 +808,16 @@ ConnectionTargetHandleComponents
     }
   }
 
+RecipeHandleFate
+  = '?'
+  / 'use'
+  / 'map'
+  / 'create'
+  / 'copy'
+  / '`slot'
+
 RecipeHandle
-  = type:('?' / 'use' / 'map' / 'create' / 'copy' / '`slot') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
+  = type:RecipeHandleFate ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',
@@ -1085,6 +1093,7 @@ TopLevelIdent
 ReservedWord
   = Direction
   / ParticleArgumentDirection
+  / RecipeHandleFate
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
