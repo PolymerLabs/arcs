@@ -13,7 +13,9 @@ export class InitPopulation extends Strategy {
     super();
     this._arc = arc;
     this._contextual = contextual;
-    this._loadedParticles = new Set(this._arc.loadedParticles().map(spec => spec.implFile));
+    this._loadedParticles = new Set(this._arc.activeRecipe
+        ? this._arc.activeRecipe.particles.map(particle => particle.spec.implFile)
+        : []);
   }
 
   async generate({generation}) {

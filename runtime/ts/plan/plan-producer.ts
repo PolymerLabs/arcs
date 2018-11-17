@@ -149,7 +149,8 @@ export class PlanProducer {
     let suggestions = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
-    this.planner.init(this.arc, {
+    // this.planner.init(this.arc, {
+    this.planner.init(this.arc.context, {
       strategies: options['strategies'],
       strategyArgs: {
         contextual: options['contextual'],

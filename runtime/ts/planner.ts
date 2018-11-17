@@ -45,7 +45,7 @@ export class Planner {
   private strategizer: Strategizer;
   
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}} = {}) {
+  init(arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}} = {}) {
     strategyArgs = Object.freeze({...strategyArgs});
     this._arc = arc;
     strategies = strategies.map(strategy => new strategy(arc, strategyArgs));

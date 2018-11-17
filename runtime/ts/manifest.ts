@@ -27,6 +27,8 @@ import {Id} from './id.js';
 import {TypeVariable} from './type-variable.js';
 import {SlotInfo} from './slot-info.js';
 
+import {RecipeIndex} from '../recipe-index.js';
+
 class ManifestError extends Error {
   location: {offset: number, line: number, column: number};
   key: string;
@@ -123,6 +125,7 @@ export class Manifest {
   private warnings = <ManifestError[]>[];
   constructor({id}) {
     this._id = id;
+    this['recipeIndex'] = {recipes: []};
   }
   get id() {
     if (this._meta.name) {
@@ -173,6 +176,23 @@ export class Manifest {
   }
   get resources() {
     return this._resources;
+  }
+  get context() {
+    return this;
+  }
+  get pec() { // This is a hack :(
+    // QUESTION: slotComposer is a member of PEC.
+    // Shouln't it also be a direct member of Arc?
+    return {
+      slotComposer: {
+        getAvailableContexts: () => {
+          return [
+            {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
+            {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], spec: {isSet: false}},
+          ];
+        }
+      }
+    };
   }
   applyMeta(section) {
     if (this._storageProviderFactory !== undefined) {
@@ -382,6 +402,8 @@ ${e.message}
     }
     const manifest = new Manifest({id});
     manifest._fileName = fileName;
+    // This is a hack.
+    this['recipeIndex'] = new RecipeIndex(manifest, loader, /* affordance= */ 'dom');
 
     // TODO(sjmiles): optionally include pre-existing context
     if (context) {
