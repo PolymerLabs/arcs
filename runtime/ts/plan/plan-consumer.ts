@@ -13,7 +13,7 @@ import {Arc} from '../arc';
 import {Recipe} from '../recipe/recipe';
 import {PlanningResult} from './planning-result';
 import {StorageProviderBase} from '../storage/storage-provider-base';
-import {SuggestionComposer} from '../../suggestion-composer.js';
+import {SuggestionComposer} from '../suggestion-composer.js';
 
 type Callback = ({}) => void;
 
@@ -96,7 +96,7 @@ export class PlanConsumer {
       });
       const usesRemoteNonRootSlots = suggestion['plan'].slots.find(slot => {
         return !slot.name.includes('root') && !slot.tags.includes('root') &&
-               slot.id && !slot.id.includes('root');
+               slot.id && !slot.id.includes('root') && this.arc.pec.slotComposer.findContextById(slot.id);
       });
       const onlyUsesNonRootSlots =
           !suggestion['plan'].slots.find(s => s.name.includes('root') || s.tags.includes('root'));

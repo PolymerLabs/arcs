@@ -17,26 +17,34 @@ import {RecipeResolver} from '../recipe/recipe-resolver';
 export class PlanningResult {
   arc: Arc;
   recipeResolver: RecipeResolver;
-  plans: {}[];
+  _plans: {}[];
   lastUpdated: Date;
   generations: {}[];
+  contextual = true;
 
   constructor(arc, result = {}) {
     assert(arc, 'Arc cannot be null');
     this.arc = arc;
     this.recipeResolver = new RecipeResolver(this.arc);
-    this.plans = result['plans'] || [];
+    this._plans = result['plans'];
     this.lastUpdated = result['lastUpdated'] || new Date(null);
     this.generations = result['generations'] || [];
   }
 
-  set({plans, lastUpdated = new Date(), generations = []}) {
+  get plans() { return this._plans || []; }
+  set plans(plans) {
+    assert(Boolean(plans), `Cannot set uninitialized plans`);
+    this._plans = plans;
+  }
+
+  set({plans, lastUpdated = new Date(), generations = [], contextual = true}) {
     if (this.isEquivalent(plans)) {
       return false;
     }
     this.plans = plans;
     this.generations = generations;
     this.lastUpdated = lastUpdated;
+    this.contextual = contextual;
     return true;
   }
 
@@ -57,7 +65,7 @@ export class PlanningResult {
   }
 
   isEquivalent(plans) {
-    return PlanningResult.isEquivalent(this.plans, plans);
+    return PlanningResult.isEquivalent(this._plans, plans);
   }
 
   static isEquivalent(oldPlans, newPlans) {
@@ -86,7 +94,11 @@ export class PlanningResult {
         console.error(`Failed to parse plan ${e}.`);
       }
     }
-    return this.set({plans: deserializedPlans, lastUpdated: new Date(lastUpdated)});
+    return this.set({
+      plans: deserializedPlans,
+      lastUpdated: new Date(lastUpdated),
+      contextual: plans.contextual
+    });
   }
 
   async _planFromString(planString) {
@@ -123,7 +135,11 @@ export class PlanningResult {
         suggestionContent: {template: plan['descriptionText'], model: {}}
       });
     }
-    return {plans: serializedPlans, lastUpdated: this.lastUpdated.toString()};
+    return {
+      plans: serializedPlans,
+      lastUpdated: this.lastUpdated.toString(),
+      contextual: this.contextual
+    };
   }
 
   _planToString(plan) {

@@ -87,29 +87,22 @@ describe('manifest parser', function() {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
-  it('fails to parse an argument list that use reserved word \'consume\' as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          in MyThing consume
-          out BigCollection<MyThing>? out`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected',
-          `bad error: '${e}'`);
-    }
-  });
-  it('fails to parse an argument list that use reserved word \'provide\' as an identifier', () => {
-    try {
-      parse(`
-        particle MyParticle
-          in MyThing provide
-          out BigCollection<MyThing>? out`);
-      assert.fail('this parse should have failed, identifiers should not be reserved words!');
-    } catch (e) {
-      assert.include(e.message, 'Expected',
-          `bad error: '${e}'`);
-    }
+  it('fails to parse an argument list that use a reserved word as an identifier', () => {
+    const reservedWords = ['inout', 'in', 'out', 'host', '`consume', '`provide',
+                           'provide', 'consume', '?', 'use', 'map', 'create', 'copy',
+                           '`slot'];
+    reservedWords.map(reserved => {
+      try {
+        parse(`
+          particle MyParticle
+            in MyThing ${reserved}
+            out BigCollection<MyThing>? output`);
+        assert.fail('this parse should have failed, identifiers should not be reserved words!');
+      } catch (e) {
+        assert.include(e.message, 'Expected',
+            `bad error: '${e}'`);
+      }
+    });
   });
   it('fails to parse a nonsense argument list', () => {
     try {
@@ -208,32 +201,32 @@ describe('manifest parser', function() {
   it('parses an inline schema with a reference to a schema', () => {
     parse(`
       particle Foo
-        in Product {Reference<Review> review} in
+        in Product {Reference<Review> review} inReview
     `);
   });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review>] review} in
+        in Product {[Reference<Review>] review} inResult
     `);
   });
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
-      in Product {Reference<Review {Text reviewText}> review} in`
-    );
+      in Product {Reference<Review {Text reviewText}> review} inReview
+    `);
   });
   it('parses an inline schema with a collection of references to inline schemas', () => {
     parse(`
       particle Foo
-        in Product {[Reference<Review {Text reviewText}>] review} in
+        in Product {[Reference<Review {Text reviewText}>] review} productReviews
     `);
   });
   it('parses reference types', () => {
     parse(`
       particle Foo
-        in Reference<Foo> in
-        out Reference<Bar> out
+        in Reference<Foo> inRef
+        out Reference<Bar> outRef
     `);
   });
 });

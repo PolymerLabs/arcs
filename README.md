@@ -120,10 +120,6 @@ See [extension](extension/README.md).
 
 See [devtools](devtools/README.md).
 
-### Enclaves
-
-See [enclave](enclave/README.md).
-
 ## Testing
 
 The simplest way to run tests is to let the targets do all the work. These

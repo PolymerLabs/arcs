@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../chai-web.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanConsumer} from '../../ts-build/plan/plan-consumer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
@@ -16,10 +17,29 @@ import {PlanningResult} from '../../ts-build/plan/planning-result.js';
 describe('plan consumer', function() {
   it('consumes', async function() {
     const helper = await TestHelper.createAndPlan({
-      manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
+      slotComposer: new FakeSlotComposer(),
+      manifestString: `
+import './runtime/test/artifacts/Products/Products.recipes'
+
+particle Test1 in './runtime/test/artifacts/consumer-particle.js'
+  in [Product] products
+  consume root
+    provide other
+particle Test2 in './runtime/test/artifacts/consumer-particle.js'
+  consume other
+
+recipe
+  use #shoplist as list
+  Test1
+    products = list
+    consume root
+      provide other as other
+  Test2
+    consume other as other
+`
     });
     const userid = 'TestUser';
-    helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
+    helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
     const store = await Planificator._initSuggestStore(helper.arc, {userid, protocol: 'volatile'});
     assert.isNotNull(store);
     const consumer = new PlanConsumer(helper.arc, store);
@@ -39,7 +59,7 @@ describe('plan consumer', function() {
       await new Promise(resolve => setTimeout(resolve, 100));
     };
     // Updates plans.
-    await storeResults([helper.plans[0]]);
+    await storeResults(helper.findPlanByParticleNames(['ItemMultiplexer', 'List']));
     assert.lengthOf(consumer.result.plans, 1);
     assert.lengthOf(consumer.getCurrentSuggestions(), 0);
     assert.equal(planChangeCount, 1);
@@ -64,5 +84,15 @@ describe('plan consumer', function() {
     assert.lengthOf(consumer.getCurrentSuggestions(), 0);
     assert.equal(planChangeCount, 1);
     assert.equal(suggestChangeCount, 2);
+
+    await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
+    await helper.makePlans();
+    await storeResults(helper.plans);
+    assert.lengthOf(consumer.result.plans, 3);
+    // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
+    assert.lengthOf(consumer.getCurrentSuggestions(), 2);
+
+    consumer.setSuggestFilter(true);
+    assert.lengthOf(consumer.getCurrentSuggestions(), 3);
   });
 });

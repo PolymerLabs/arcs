@@ -24,23 +24,23 @@ describe('references', function() {
           Text value  
 
         particle Referencer in 'referencer.js'
-          in Result in
-          out Reference<Result> out
+          in Result inResult
+          out Reference<Result> outResult
 
         particle Dereferencer in 'dereferencer.js'
-          in Reference<Result> in
-          out Result out
+          in Reference<Result> inResult
+          out Result outResult
         
         recipe
           create 'input:1' as handle0
           create 'reference:1' as handle1
           create 'output:1' as handle2
           Referencer
-            in <- handle0
-            out -> handle1
+            inResult <- handle0
+            outResult -> handle1
           Dereferencer
-            in <- handle1
-            out -> handle2
+            inResult <- handle1
+            outResult -> handle2
     `);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -58,25 +58,25 @@ describe('references', function() {
           Text value
         
         particle Dereferencer in 'dereferencer.js'
-          in Reference<Result> in
-          out Result out
+          in Reference<Result> inResult
+          out Result outResult
         
         recipe
           create 'input:1' as handle0
           create 'output:1' as handle1
           Dereferencer
-            in <- handle0
-            out -> handle1
+            inResult <- handle0
+            outResult -> handle1
       `,
       'dereferencer.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
-              this.output = handles.get('out');
+              this.output = handles.get('outResult');
             }
 
             async onHandleUpdate(handle, update) {
-              if (handle.name == 'in') {
+              if (handle.name == 'inResult') {
                 await update.data.dereference();
                 this.output.set(update.data.entity);
               }
@@ -121,25 +121,25 @@ describe('references', function() {
           Text value
         
         particle Referencer in 'referencer.js'
-          in Result in
-          out Reference<Result> out
+          in Result inResult
+          out Reference<Result> outResult
         
         recipe
           create 'input:1' as handle0
           create 'output:1' as handle1
           Referencer
-            in <- handle0
-            out -> handle1
+            inResult <- handle0
+            outResult -> handle1
       `,
       'referencer.js': `
         defineParticle(({Particle, Reference}) => {
           return class Referencer extends Particle {
             setHandles(handles) {
-              this.output = handles.get('out');
+              this.output = handles.get('outResult');
             }
 
             async onHandleSync(handle, model) {
-              if (handle.name == 'in') {
+              if (handle.name == 'inResult') {
                 let entity = await handle.get();
                 let reference = new Reference(entity);
                 await reference.stored;
@@ -259,7 +259,7 @@ describe('references', function() {
         particle Referencer in 'referencer.js'
           in [Result] inResult
           in Foo {Reference<Result> result, Text shortForm} inFoo
-          inout [Foo {Reference<Result> result, Text shortForm}] out
+          inout [Foo {Reference<Result> result, Text shortForm}] outResult
         
         recipe
           create 'input:1' as handle0
@@ -268,13 +268,13 @@ describe('references', function() {
           Referencer
             inResult <- handle0
             inFoo <- handle1
-            out = handle2
+            outResult = handle2
       `,
       'referencer.js': `
         defineParticle(({Particle, Reference}) => {
           return class Referencer extends Particle {
             setHandles(handles) {
-              this.output = handles.get('out');
+              this.output = handles.get('outResult');
               this.foos = [];
               this.models = [];
             }

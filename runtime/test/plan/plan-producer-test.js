@@ -17,7 +17,7 @@ class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
     super(arc, store);
     this.produceCalledCount = 0;
-    this.plannerRunCount = 0;
+    this.plannerRunOptions = [];
     this.cancelCount = 0;
     this.producePromises = [];
     this.plannerNextResults = [];
@@ -41,7 +41,7 @@ class TestPlanProducer extends PlanProducer {
   }
 
   async runPlanner(options) {
-    ++this.plannerRunCount;
+    this.plannerRunOptions.push(options);
     return new Promise((resolve, reject) => {
       const plans = this.plannerNextResults.shift();
       if (plans) {
@@ -52,6 +52,8 @@ class TestPlanProducer extends PlanProducer {
       }
     }).then(plans => plans);
   }
+
+  get plannerRunCount() { return this.plannerRunOptions.length; }
 
   plannerReturnFakeResults(planInfos) {
     const plans = [];
@@ -91,7 +93,7 @@ describe('plan producer', function() {
     const producer = new TestPlanProducer(helper.arc, store);
     return {helper, producer};
   }
-  it('produces plans', async function() {
+  it('produces plans', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
@@ -106,12 +108,12 @@ describe('plan producer', function() {
     assert.equal(producer.cancelCount, 0);
   });
   
-  it('throttles requests to produce plans', async function() {
+  it('throttles requests to produce plans', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
     for (let i = 0; i < 10; ++i) {
-      producer.producePlans();
+      producer.producePlans({test: i});
     }
 
     producer.plannerReturnFakeResults(helper.plans);
@@ -120,9 +122,11 @@ describe('plan producer', function() {
     assert.equal(producer.produceCalledCount, 10);
     assert.equal(producer.plannerRunCount, 2);
     assert.equal(producer.cancelCount, 0);
+    assert.equal(0, producer.plannerRunOptions[0].test);
+    assert.equal(9, producer.plannerRunOptions[1].test);
   });
 
-  it('cancels planning', async function() {
+  it('cancels planning', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.plans, 0);
 
@@ -134,5 +138,82 @@ describe('plan producer', function() {
     assert.equal(producer.produceCalledCount, 2);
     assert.equal(producer.plannerRunCount, 2);
     assert.equal(producer.cancelCount, 1);
+  });
+});
+
+describe('plan producer - search', function() {
+  const arcKey = '123';
+  class TestSearchPlanProducer extends PlanProducer {
+    constructor(searchStore) {
+      super({}, {}, searchStore);
+      this.producePlansCalled = 0;
+    }
+    get arcKey() { return arcKey; }
+
+    producePlans(options) {
+      this.producePlansCalled++;
+      this.options = options;
+    }
+    setNextSearch(search) {
+      this.searchStore.values = [{arc: arcKey, search}];
+      return this.onSearchChanged();
+    }
+  }
+
+  function init() {
+    const searchStore = {on: () => {}};
+    searchStore.get = () => searchStore.values;
+    const producer = new TestSearchPlanProducer(searchStore);
+    assert.isUndefined(producer.search);
+    assert.equal(producer.producePlansCalled, 0);
+    return producer;
+  }
+
+  it('searches all', async () => {
+    const producer = init();
+
+    // Search for non-contextual results.
+    await producer.setNextSearch('*');
+    assert.equal('*', producer.search);
+    assert.equal(producer.producePlansCalled, 1);
+    assert.isFalse(producer.options.contextual);
+    assert.isFalse(Boolean(producer.options.append));
+
+    // Unchanged search term.
+    await producer.setNextSearch('*');
+    assert.equal('*', producer.search);
+    assert.equal(producer.producePlansCalled, 1);
+
+    // Requires contextual results only, no need to replan.
+    await producer.setNextSearch('');
+    assert.equal('', producer.search);
+    assert.equal(producer.producePlansCalled, 1);
+  });
+
+  it('searches for term given contextual results', async () => {
+    const producer = init();
+
+    // Search for a given string
+    const search = 'foo';
+    await producer.setNextSearch(search);
+    assert.equal(search, producer.search);
+    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(search, producer.options.search);
+    assert.isFalse(producer.options.contextual);
+    assert.isFalse(Boolean(producer.options.append));
+  });
+
+  it('searches for term given non-contextual results', async () => {
+    const producer = init();
+    producer.result.contextual = false;
+
+    // Search for a given string
+    const search = 'foo';
+    await producer.setNextSearch(search);
+    assert.equal(search, producer.search);
+    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(search, producer.options.search);
+    assert.isTrue(producer.options.append);
+    assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));
   });
 });
