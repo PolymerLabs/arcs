@@ -67,8 +67,7 @@ class TestPlanProducer extends PlanProducer {
         plan.newSlot('slot0').id = 'id0';
       }
       plan.normalize();
-      const suggestion = new Suggestion(plan, this.arc);
-      suggestion.hash = info.hash;
+      const suggestion = new Suggestion(plan, info.hash, info.rank || 0, this.arc);
       plans.push(suggestion);
     });
     this.plannerReturnResults(plans);

@@ -9,19 +9,19 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
-import {Description} from '../description';
+import {Arc} from '../arc.js';
+import {Description} from '../description.js';
 import {InitSearch} from '../../strategies/init-search.js';
 import {logFactory} from '../../../platform/log-web.js';
-import {Manifest} from '../manifest';
+import {Manifest} from '../manifest.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
-import {Speculator} from '../speculator';
-import {StorageProviderBase} from '../storage/storage-provider-base';
-import {Recipe} from '../recipe/recipe';
-import {RecipeResolver} from '../recipe/recipe-resolver';
-import {Relevance} from '../relevance';
+import {Speculator} from '../speculator.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {Relevance} from '../relevance.js';
 
 export class Suggestion {
   arc: Arc;
@@ -31,12 +31,14 @@ export class Suggestion {
   descriptionText: string;
   descriptionDom: {};
   relevance: Relevance;
-  hash: string;
-  rank: number;
+  readonly hash: string;
+  readonly rank: number;
   groupIndex: number; // TODO: only used in tests
 
-  constructor(plan, arc) {
+  constructor(plan: Recipe, hash: string, rank: number, arc: Arc) {
     this.plan = plan;
+    this.hash = hash;
+    this.rank = rank;
     this.arc = arc;
   }
 
@@ -44,7 +46,7 @@ export class Suggestion {
     return (this.hash === other.hash) && (this.descriptionText === other.descriptionText);
   }
 
-  static compare(s1: Suggestion, s2: Suggestion) {
+  static compare(s1: Suggestion, s2: Suggestion): number {
     return s2.rank - s1.rank;
   }
 
@@ -60,9 +62,7 @@ export class Suggestion {
 
   static async deserialize({plan, hash, rank, descriptionText, descriptionDom}, arc, recipeResolver) {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
-    const suggestion = new Suggestion(deserializedPlan, arc);
-    suggestion.hash = hash;
-    suggestion.rank = rank;
+    const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
     suggestion.descriptionText = descriptionText;
     suggestion.descriptionDom = descriptionDom;
     return suggestion;
@@ -76,7 +76,7 @@ export class Suggestion {
     }
   }
 
-  _planToString(plan) {
+  _planToString(plan): string {
     // Special handling is only needed for plans (1) with hosted particles or
     // (2) local slot (ie missing slot IDs).
     if (!plan.handles.some(h => h.id && h.id.includes('particle-literal')) &&

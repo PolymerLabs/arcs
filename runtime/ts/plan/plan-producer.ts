@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
+import {Arc} from '../arc.js';
 import {InitSearch} from '../../strategies/init-search.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
-import {Speculator} from '../speculator';
-import {StorageProviderBase} from '../storage/storage-provider-base';
+import {Speculator} from '../speculator.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const defaultTimeoutMs = 5000;
 

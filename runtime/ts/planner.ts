@@ -172,9 +172,7 @@ export class Planner {
         // before returning.
         relevance.newArc.stop();
 
-        const suggestion = new Suggestion(plan, this._arc);
-        suggestion.rank = rank;
-        suggestion.hash = hash;
+        const suggestion = new Suggestion(plan, hash, rank, this._arc);
         suggestion.description = relevance.newArc.description;
         // TODO(mmandlis): exclude the text description from returned results.
         suggestion.descriptionText = description;

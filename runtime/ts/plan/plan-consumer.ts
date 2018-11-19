@@ -9,11 +9,11 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
-import {Recipe} from '../recipe/recipe';
-import {PlanningResult} from './planning-result';
-import {StorageProviderBase} from '../storage/storage-provider-base';
-import {Suggestion} from './suggestion';
+import {Arc} from '../arc.js';
+import {Recipe} from '../recipe/recipe.js';
+import {PlanningResult} from './planning-result.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Suggestion} from './suggestion.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 type Callback = ({}) => void;
