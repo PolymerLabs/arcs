@@ -853,14 +853,9 @@ SpaceTagList
 NameAndTagList
    = name:lowerIdent tags:(whiteSpace TagList)?
    {
-     if(tags) {
-      tags = tags[1];
-     } else {
-      tags = [];
-     }
      return {
        name: name,
-       tags: tags
+       tags: tags = optional(tags, list => list[1], [])
      }
    }
    / whiteSpace name:lowerIdent
