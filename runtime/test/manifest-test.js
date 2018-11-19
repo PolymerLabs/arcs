@@ -714,8 +714,8 @@ ${particleStr1}
     const parseRecipe = async (args) => {
       const recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
-          \`consume Slot${args.isRequiredSlotA ? '' : '?'} slotA
-          \`consume Slot${args.isRequiredSlotB ? '' : '?'} slotB
+          \`consume${args.isRequiredSlotA ? '' : '?'} Slot slotA
+          \`consume${args.isRequiredSlotB ? '' : '?'} Slot slotB
 
         recipe
           \`slot 'slota-0' as s0
@@ -1460,7 +1460,7 @@ resource SomeName
       schema Something
       particle Thing in 'thing.js'
         in [Something] inThing
-        out [Something]? maybeOutThings
+        out? [Something] maybeOutThings
       recipe
         create as handle0 // [Something]
         Thing
@@ -1852,13 +1852,13 @@ resource SomeName
     assert.equal(recipe.handles[0]._connections[0], slotConnection);
   });
 
-  it('can parse particle arguments with tags and optional names', async () => {
+  it('can parse particle arguments with tags', async () => {
     const manifest = await Manifest.parse(`
       schema Dog
       schema Sled
       schema DogSled
       particle DogSledMaker in 'thing.js'
-        in Dog #leader
+        in Dog leader #leader
         in [Dog] team
         in Sled sled #dogsled
         out DogSled dogsled #multidog #winter #sled

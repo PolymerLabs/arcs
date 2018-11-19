@@ -141,7 +141,7 @@ describe('recipe', function() {
   it(`is resolved if an optional handle with dependents is not connected`, async () => {
     const manifest = await Manifest.parse(`
       particle A in 'A.js'
-        in [Foo {}]? optionalIn
+        in? [Foo {}] optionalIn
           out [Foo {}] dependentOut
 
       recipe
@@ -156,7 +156,7 @@ describe('recipe', function() {
   it(`is not resolved if a handle is connected but its parent isn't`, async () => {
     const manifest = await Manifest.parse(`
       particle A in 'A.js'
-        in [Foo {}]? optionalIn
+        in? [Foo {}] optionalIn
           out [Foo {}] dependentOut
 
       particle B in 'B.js'

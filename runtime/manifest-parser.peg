@@ -345,7 +345,7 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType isOptional:'?'? nametag:NameAndTagList
+  = direction:ParticleArgumentDirection isOptional:'?'? whiteSpace type:ParticleArgumentType whiteSpace nametag:NameAndTagList
   {
     return {
       kind: 'particle-argument',
@@ -851,11 +851,11 @@ SpaceTagList
 // - If name is not specified the first tag is used for the name
 // - Syntax error if no name or taglist are provided.
 NameAndTagList
-   = whiteSpace name:lowerIdent whiteSpace tags:TagList
+   = name:lowerIdent tags:(whiteSpace TagList)?
    {
      return {
        name: name,
-       tags: tags
+       tags: tags = optional(tags, list => list[1], [])
      }
    }
    / whiteSpace name:lowerIdent
