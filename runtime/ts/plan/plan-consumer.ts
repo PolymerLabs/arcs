@@ -9,10 +9,11 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
-import {Recipe} from '../recipe/recipe';
-import {PlanningResult} from './planning-result';
-import {StorageProviderBase} from '../storage/storage-provider-base';
+import {Arc} from '../arc.js';
+import {Recipe} from '../recipe/recipe.js';
+import {PlanningResult} from './planning-result.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Suggestion} from './suggestion.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 type Callback = ({}) => void;
@@ -22,7 +23,9 @@ export class PlanConsumer {
   result: PlanningResult;
   store: StorageProviderBase;
   suggestFilter: {};
+  // Plans change callback is triggered when planning results have changed.
   plansChangeCallbacks: Callback[] = [];
+  // Suggestions change callback is triggered when suggestions visible to the user have changed.
   suggestionsChangeCallbacks: Callback[] = [];
   storeCallback: Callback;
   suggestionComposer: SuggestionComposer|null = null;
@@ -70,9 +73,9 @@ export class PlanConsumer {
     }
   }
 
-  getCurrentSuggestions() {
+  getCurrentSuggestions(): Suggestion[] {
     const suggestions = this.result.plans.filter(
-        suggestion => suggestion['plan'].slots.length > 0);
+        suggestion => suggestion.plan.slots.length > 0);
 
     // `showAll`: returns all plans that render into slots.
     if (this.suggestFilter['showAll']) {
@@ -82,24 +85,25 @@ export class PlanConsumer {
     // search filter non empty: match plan search phrase or description text.
     if (this.suggestFilter['search']) {
       return suggestions.filter(suggestion =>
-        suggestion['descriptionText'].toLowerCase().includes(this.suggestFilter['search']) ||
-        (suggestion['plan'].search &&
-         suggestion['plan'].search.phrase.includes(this.suggestFilter['search'])));
+        suggestion.descriptionText.toLowerCase().includes(this.suggestFilter['search']) ||
+        (suggestion.plan.search &&
+         suggestion.plan.search.phrase.includes(this.suggestFilter['search'])));
     }
 
     return suggestions.filter(suggestion => {
-      const usesHandlesFromActiveRecipe = suggestion['plan'].handles.find(handle => {
+      const usesHandlesFromActiveRecipe = suggestion.plan.handles.find(handle => {
         // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
         // either by tagging or by exploring connection directions etc.
         return !!handle.id &&
-               this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
+               !!this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
       });
-      const usesRemoteNonRootSlots = suggestion['plan'].slots.find(slot => {
+      const usesRemoteNonRootSlots = suggestion.plan.slots.find(slot => {
         return !slot.name.includes('root') && !slot.tags.includes('root') &&
-               slot.id && !slot.id.includes('root') && this.arc.pec.slotComposer.findContextById(slot.id);
+               slot.id && !slot.id.includes('root') &&
+               Boolean(this.arc.pec.slotComposer.findContextById(slot.id));
       });
       const onlyUsesNonRootSlots =
-          !suggestion['plan'].slots.find(s => s.name.includes('root') || s.tags.includes('root'));
+          !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root'));
       return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
     });
   }

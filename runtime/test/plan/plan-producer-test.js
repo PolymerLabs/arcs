@@ -12,6 +12,7 @@ import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanProducer} from '../../ts-build/plan/plan-producer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
+import {Suggestion} from '../../ts-build/plan/suggestion.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
@@ -66,7 +67,8 @@ class TestPlanProducer extends PlanProducer {
         plan.newSlot('slot0').id = 'id0';
       }
       plan.normalize();
-      plans.push({plan, hash: info.hash});
+      const suggestion = new Suggestion(plan, info.hash, info.rank || 0, this.arc);
+      plans.push(suggestion);
     });
     this.plannerReturnResults(plans);
     return plans;

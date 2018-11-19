@@ -31,6 +31,7 @@ import {FindHostedParticle} from '../strategies/find-hosted-particle.js';
 import {CoalesceRecipes} from '../strategies/coalesce-recipes.js';
 import {ResolveRecipe} from '../strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
+import {Suggestion} from './plan/suggestion';
 import {Tracing} from '../../tracelib/trace.js';
 import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
 import {DevtoolsConnection} from '../debug/devtools-connection.js';
@@ -121,7 +122,7 @@ export class Planner {
     return groups;
   }
 
-  async suggest(timeout: number, generations: [], speculator?: Speculator) {
+  async suggest(timeout: number, generations: [], speculator?: Speculator) : Promise<Suggestion[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
     const plans = await trace.wait(this.plan(timeout, generations));
@@ -171,14 +172,12 @@ export class Planner {
         // before returning.
         relevance.newArc.stop();
 
-        results.push({
-          plan,
-          rank,
-          description: relevance.newArc.description,
-          descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
-          hash,
-          groupIndex
-        });
+        const suggestion = new Suggestion(plan, hash, rank, this._arc);
+        suggestion.description = relevance.newArc.description;
+        // TODO(mmandlis): exclude the text description from returned results.
+        suggestion.descriptionText = description;
+        suggestion.groupIndex = groupIndex;
+        results.push(suggestion);
 
         planTrace.end({name: description, args: {rank, hash, groupIndex}});
       }

@@ -27,7 +27,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      pendingPlans: [],
+      pendingSuggestions: [],
       invalid: 0
     };
   }
@@ -35,12 +35,12 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     const changed = name => props[name] !== oldProps[name];
     const {arc, suggestion, search, userid} = props;
     if (suggestion && changed('suggestion')) {
-      state.pendingPlans.push(suggestion.plan);
+      state.pendingSuggestions.push(suggestion);
     }
     if (arc && userid) {
       let {planificator} = state;
       if (changed('arc') || changed('userid')) {
-        state.pendingPlans = [];
+        state.pendingSuggestions = [];
         if (planificator) {
           planificator.dispose();
           planificator = null;
@@ -56,9 +56,9 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._setState({planificator});
     }
   }
-  _update({arc}, {pendingPlans}) {
-    if (arc && pendingPlans.length) {
-      this._instantiatePlan(arc, pendingPlans.shift());
+  _update({arc}, {pendingSuggestions}) {
+    if (arc && pendingSuggestions.length) {
+      this._instantiateSuggestion(arc, pendingSuggestions.shift());
     }
   }
   async _createPlanificator(arc, userid) {
@@ -79,10 +79,10 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   _suggestionsChanged(suggestions) {
     this._fire('suggestions', suggestions);
   }
-  async _instantiatePlan(arc, plan) {
-    log('instantiating plan', plan);
+  async _instantiateSuggestion(arc, suggestion) {
+    log('instantiating plan', suggestion.plan);
     try {
-      await arc.instantiate(plan);
+      await suggestion.instantiate();
     } catch (x) {
       error('plan instantiation failed', x);
     }

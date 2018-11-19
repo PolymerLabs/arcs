@@ -9,6 +9,7 @@
  */
 import {Affordance} from './affordance.js';
 import {SlotComposer} from './slot-composer.js';
+import {Suggestion} from './plan/suggestion';
 import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
 
 export class SuggestionComposer {
@@ -16,7 +17,7 @@ export class SuggestionComposer {
   private _container: HTMLElement | undefined; // eg div element.
 
   private readonly _slotComposer: SlotComposer;
-  private _suggestions = [];
+  private _suggestions: Suggestion[] = []; 
   private _suggestionsQueue = [];
   private _updateComplete = null;
   private _suggestConsumers: SuggestDomConsumer = [];
@@ -27,7 +28,7 @@ export class SuggestionComposer {
     this._slotComposer = slotComposer;
   }
 
-  async setSuggestions(suggestions) {
+  async setSuggestions(suggestions: Suggestion[]) {
     this._suggestionsQueue.push(suggestions);
     Promise.resolve().then(async () => {
       if (this._updateComplete) {
@@ -52,11 +53,11 @@ export class SuggestionComposer {
   private async _updateSuggestions(suggestions) {
     this.clear();
 
-    const sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
+    const sortedSuggestions = suggestions.sort(Suggestion.compare);
     for (const suggestion of sortedSuggestions) {
       // TODO(mmandlis): This hack is needed for deserialized suggestions to work. Should
       // instead serialize the description object and generation suggestion content here.
-      const suggestionContent = suggestion.suggestionContent ? suggestion.suggestionContent :
+      const suggestionContent = suggestion.descriptionDom ? suggestion.descriptionDom :
         await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
       if (!suggestionContent) {
         throw new Error('No suggestion content available');

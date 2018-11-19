@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
+import {Arc} from '../arc.js';
 import {InitSearch} from '../../strategies/init-search.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
-import {Speculator} from '../speculator';
-import {StorageProviderBase} from '../storage/storage-provider-base';
+import {Speculator} from '../speculator.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -75,10 +75,10 @@ export class PlanProducer {
     }
     this.search = value.search;
     if (!this.search) {
-      // search string turned empty, no need to replan, going back to contextual plans.
+      // search string turned empty, no need to replan, going back to contextual suggestions.
       return;
     }
-    if (this.search === '*') { // Search for ALL (including non-contextual) plans.
+    if (this.search === '*') { // Search for ALL (including non-contextual) suggestions.
       if (this.result.contextual) {
         this.producePlans({contextual: false});
       }
@@ -88,11 +88,11 @@ export class PlanProducer {
         search: this.search
       };
       if (this.result.contextual) {
-        // If we're searching but currently only have contextual plans,
-        // we need get non-contextual plans as well.
+        // If we're searching but currently only have contextual suggestions,
+        // we need get non-contextual suggestions as well.
         Object.assign(options, {contextual: false});
       } else {
-        // If search changed and we already how all plans (i.e. including
+        // If search changed and we already how all suggestions (i.e. including
         // non-contextual ones) then it's enough to initialize with InitSearch
         // with a new search phrase.
         Object.assign(options, {
@@ -137,16 +137,16 @@ export class PlanProducer {
     }
     time = ((now() - time) / 1000).toFixed(2);
 
-    // Plans are null, if planning was cancelled.
+    // Suggestions are null, if planning was cancelled.
     if (plans) {
-      log(`Produced ${plans.length}${this.replanOptions['append'] ? ' additional' : ''} plans [elapsed=${time}s].`);
+      log(`Produced ${plans.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
       await this._updateResult({plans, generations}, this.replanOptions);
     }
   }
 
   async runPlanner(options, generations) {
-    let plans = [];
+    let suggestions = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
     this.planner.init(this.arc, {
@@ -157,10 +157,10 @@ export class PlanProducer {
       }
     });
 
-    plans = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
+    suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
     if (this.planner) {
       this.planner = null;
-      return plans;
+      return suggestions;
     }
     // Planning was cancelled.
     return null;
@@ -187,7 +187,7 @@ export class PlanProducer {
         return;
       }
     }
-    // Store plans to store.
+    // Store suggestions to store.
     try {
       assert(this.store['set'], 'Unsupported setter in suggestion storage');
       await this.store['set'](this.result.serialize());

@@ -9,15 +9,15 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
+import {Arc} from '../arc.js';
 import {now} from '../../../platform/date-web.js';
-import {PlanConsumer} from './plan-consumer';
-import {PlanProducer} from './plan-producer';
-import {Recipe} from '../recipe/recipe';
-import {ReplanQueue} from './replan-queue';
-import {Schema} from '../schema';
+import {PlanConsumer} from './plan-consumer.js';
+import {PlanProducer} from './plan-producer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {ReplanQueue} from './replan-queue.js';
+import {Schema} from '../schema.js';
 import {StorageProviderBase} from "../storage/storage-provider-base.js";
-import {Type} from '../type';
+import {Type} from '../type.js';
 
 export class Planificator {
   static async create(arc: Arc, {userid, protocol, onlyConsumer}) {
