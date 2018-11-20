@@ -77,7 +77,8 @@ export class PlanningResult {
   async deserialize({suggestions, lastUpdated}) {
     const recipeResolver = new RecipeResolver(this.arc);
     return this.set({
-      suggestions: await Promise.all(suggestions.map(suggestion => Suggestion.deserialize(suggestion, this.arc, recipeResolver))),
+      suggestions: (await Promise.all(suggestions.map(
+          suggestion => Suggestion.deserialize(suggestion, this.arc, recipeResolver)))).filter(s => s),
       lastUpdated: new Date(lastUpdated),
       contextual: suggestions.contextual
     });

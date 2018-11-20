@@ -19,6 +19,12 @@ const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
 // suggestions -> filtered array of (simple-)plans
 // suggestion -> (simple-)plan
 
+// TODO(sjmiles): requires more info than this module should need
+const PlanificatorFactory = async (config, env, userid, arc) =>
+ config.planificator === 'original'
+  ? new env.lib.Planificator(arc, {userid})
+  : await env.lib.PlanificatorNew.create(arc, {userid, protocol: config.planificatorProtocol});
+
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'config', 'userid', 'arc', 'suggestion', 'search'];
@@ -34,6 +40,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
       planificator.dispose();
       state.planificator = null;
+      state.search = null;
       log('planificator was disposed');
     }
     if (env && config && arc && !state.planificator) {
@@ -45,11 +52,10 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     }
   }
   async _createPlanificator(env, config, arc, userid) {
-    const planificator = config.planificator === 'original'
-        ? new env.lib.Planificator(arc, {userid})
-        : await env.lib.PlanificatorNew.create(arc, {userid, protocol: config.planificatorProtocol});
-    planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
-    planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    const planificator = await PlanificatorFactory(config, env, userid, arc);
+    planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
+    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    planificator.loadSuggestions && await planificator.loadSuggestions();
     // for debugging only
     window.planificator = planificator;
     return planificator;

@@ -36,6 +36,8 @@ export class Suggestion {
   groupIndex: number; // TODO: only used in tests
 
   constructor(plan: Recipe, hash: string, rank: number, arc: Arc) {
+    assert(plan, `plan cannot be null`);
+    assert(hash, `hash cannot be null`);
     this.plan = plan;
     this.hash = hash;
     this.rank = rank;
@@ -60,12 +62,15 @@ export class Suggestion {
     };
   }
 
-  static async deserialize({plan, hash, rank, descriptionText, descriptionDom}, arc, recipeResolver) {
+  static async deserialize({plan, hash, rank, descriptionText, descriptionDom}, arc, recipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
-    const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
-    suggestion.descriptionText = descriptionText;
-    suggestion.descriptionDom = descriptionDom;
-    return suggestion;
+    if (deserializedPlan) {
+      const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
+      suggestion.descriptionText = descriptionText;
+      suggestion.descriptionDom = descriptionDom;
+      return suggestion;
+    }
+    return undefined;
   }
 
   async instantiate() {
