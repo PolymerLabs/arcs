@@ -25,9 +25,11 @@ recipe Reservations
   use as restaurants
   use #selected as restaurant
   create #event as event
+  create as descriptions
   ReservationForm
     restaurant = restaurant
     event = event
+    descriptions = descriptions
   AnnotationMultiplexer
     list = restaurants
     annotation = event

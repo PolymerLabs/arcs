@@ -5,13 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Reservations/Reservations.recipes'
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 import '../Restaurants/RestaurantFind.recipes'
 import '../Restaurants/RestaurantDisplay.recipes'
+import '../Reservations/Reservations.recipes'
 
-recipe Restaurants
+recipe RestaurantsDemo
   create as location
   create as restaurants
   create #restaurant as selected

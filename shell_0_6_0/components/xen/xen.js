@@ -108,7 +108,11 @@ const walker = (node, tree) => {
       if (children) {
         record.children = children;
       }
-      subtree[`${name} (${index++})`] = record;
+      let moniker = `${name}${child.id ? `#${child.id}` : ``} (${index++})`;
+      while (subtree[moniker]) {
+        moniker += '_';
+      }
+      subtree[moniker] = record;
     }
     walker(child, subtree);
     child = child.nextElementSibling;

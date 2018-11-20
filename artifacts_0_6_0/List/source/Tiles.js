@@ -8,56 +8,30 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  const host = `tile-list`;
-
   const template = html`
 <style>
-  [${host}] {
+  [tile-list] {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     padding: 8px 0;
-    /* need to be able to theme these colors */
-    /* background-color: #333333;
-    color: whitesmoke; */
   }
-  [${host}] > [card] {
+  [card] {
     margin: 8px;
-    width: calc(100% - 24px);
     border: 3px solid transparent;
   }
-  [${host}] > [card][selected] {
+  [card][selected] {
     border: 3px solid #0068a7;
   }
-  @media (min-width: 540px) {
-    [${host}] > [card] {
-      width: calc(50% - 24px);
-    }
-  }
-  @media (min-width: 800px) {
-    [${host}] > [card] {
-      width: calc(33% - 24px);
-    }
-  }
-  @media (min-width: 1400px) {
-    [${host}] > [card] {
-      width: calc(25% - 24px);
-    }
-  }
-  @media (min-width: 1800px) {
-    [${host}] > [card] {
-      width: calc(20% - 24px);
-    }
-  }
-  @media (min-width: 2200px) {
-    [${host}] > [card] {
-      width: calc(10% - 24px);
-    }
+  [pacify] {
+    padding: 16px;
+    font-style: italic;
   }
 </style>
 
 <div slotid="action"></div>
-<div ${host}>{{items}}</div>
+<div pacify hidden="{{haveItems}}">(nothing to show)</div>
+<div tile-list>{{items}}</div>
 
 <template tiled-items>
   <div card selected$="{{selected}}">
@@ -74,32 +48,23 @@ defineParticle(({DomParticle, html, log}) => {
     shouldRender({list}) {
       return Boolean(list);
     }
-    update({list, selected}) {
-      // if (selected && selected.delete) {
-      //   this.handles.get('selected').clear();
-      //   log('request to delete', selected);
-      //   const item = list.find(item => item.id === selected.id);
-      //   if (item) {
-      //     this.handles.get('list').remove(item);
-      //     //log('new list', await this.handles.get('list').toList());
-      //   }
-      // }
-    }
     render({list, selected}) {
       const selectedId = selected && selected.id;
-      //log(`selected: ${selectedId}`);
       const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const items = {
+        $template: 'tiled-items',
+        models: sorted.map(item => this.renderItem(item, selectedId === item.id))
+      };
+      log(items.models);
       return {
-        items: {
-          $template: 'tiled-items',
-          models: sorted.map(item => {
-            log(`rendering: ${item.id}`);
-            return {
-              id: item.id,
-              selected: selectedId === item.id
-            };
-          })
-        }
+        haveItems: true,
+        items
+      };
+    }
+    renderItem({id}, selected) {
+      return {
+        id,
+        selected
       };
     }
     _onSelect(e) {

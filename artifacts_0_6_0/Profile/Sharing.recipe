@@ -10,51 +10,77 @@ import 'User.schema'
 resource SYSTEM_usersResource
   start
   [
-    {"id": "Alphonse"},
-    {"id": "Barney"},
-    {"id": "Cletus"},
-    {"id": "Gomer"}
+    {"id": "alphonse"},
+    {"id": "barney"},
+    {"id": "cletus"},
+    {"id": "gomer"}
   ]
-store SYSTEM_users of [User] 'SYSTEM_users' @0 #system #users in SYSTEM_usersResource
+store SYSTEM_users of [User] 'SYSTEM_users' @0 #system in SYSTEM_usersResource
 
 resource SYSTEM_userResource
   start
   []
-store SYSTEM_user of User 'SYSTEM_user' @0 #system #user in SYSTEM_userResource
+store SYSTEM_user of User 'SYSTEM_user' @0 #system in SYSTEM_userResource
 
 resource PROFILE_friendsResource
   start
   []
-store PROFILE_friends of [User] 'PROFILE_friends' @0 #friends #profile in PROFILE_friendsResource
+store PROFILE_friends of [User] 'PROFILE_friends' @0 #profile in PROFILE_friendsResource
 
 resource BOXED_friendsResource
   start
   []
-store BOXED_friends of [User] 'BOXED_friends' @0 #friends #boxed in BOXED_friendsResource
+store BOXED_friends of [User] 'BOXED_friends' @0 #boxed in BOXED_friendsResource
 
 import 'UserName.schema'
 resource PROFILE_userNameResource
   start
   []
-store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #userName #profile in PROFILE_userNameResource
+store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
 
 resource BOXED_userNameResource
   start
   []
-store BOXED_userName of [UserName] 'BOXED_userName' @0 #userName #boxed in BOXED_userNameResource
+store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
 
 import 'Avatar.schema'
 resource PROFILE_avatarResource
   start
   []
-store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #avatar #profile in PROFILE_avatarResource
+store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
 
 resource BOXED_avatarResource
   start
   []
-store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #avatar #boxed in BOXED_avatarResource
+store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
 
-// all of the below is required to make the arc aware of these stores
+import '../TVMaze/TVMazeShow.schema'
+resource PROFILE_piped_tv_showResource
+  start
+  []
+store PROFILE_piped_tv_show of [TVMazeShow] 'PROFILE_piped-tv_show' @0 #profile in PROFILE_piped_tv_showResource
+
+resource PROFILE_all_piped_all_tv_showsResource
+  start
+  []
+store PROFILE_all_piped_all_tv_shows of [TVMazeShow] 'PROFILE_all_piped-all_tv_shows' @0 #profile in PROFILE_all_piped_all_tv_showsResource
+
+resource BOXED_all_piped_all_tv_showsResource
+  start
+  []
+store BOXED_all_piped_all_tv_shows of [TVMazeShow] 'BOXED_all_piped-all_tv_shows' @0 #boxed in BOXED_all_piped_all_tv_showsResource
+
+resource PROFILE_shows_tilesResource
+  start
+  []
+store PROFILE_shows_tiles of [TVMazeShow] 'PROFILE_shows-tiles' @0 #profile in PROFILE_shows_tilesResource
+
+resource BOXED_shows_tilesResource
+  start
+  []
+store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_shows_tilesResource
+
+// the below is required to make the arc aware of these stores
 
 particle Sharing in './source/sharing.js'
   in [User] systemUsers
@@ -65,6 +91,11 @@ particle Sharing in './source/sharing.js'
   in [UserName] boxedUserName
   in [Avatar] profileAvatar
   in [Avatar] boxedAvatar
+  in [TVMazeShow] profilePipedShow
+  in [TVMazeShow] profilePipedShows
+  in [TVMazeShow] boxedPipedShows
+  in [TVMazeShow] profileShowsTiles
+  in [TVMazeShow] boxedShowsTiles
 
 recipe Sharing
   use 'SYSTEM_users' as systemUsers
@@ -75,6 +106,11 @@ recipe Sharing
   use 'BOXED_userName' as boxedUserName
   use 'PROFILE_avatar' as profileAvatar
   use 'BOXED_avatar' as boxedAvatar
+  use 'PROFILE_piped-tv_show' as profilePipedShow
+  use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
+  use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
+  use 'PROFILE_shows-tiles' as profileShowsTiles
+  use 'BOXED_shows-tiles' as boxedShowsTiles
   Sharing
     systemUsers = systemUsers
     systemUser = systemUser
@@ -84,3 +120,8 @@ recipe Sharing
     boxedUserName = boxedUserName
     profileAvatar = profileAvatar
     boxedAvatar = boxedAvatar
+    profilePipedShow = profilePipedShow
+    profilePipedShows = profilePipedShows
+    boxedPipedShows = boxedPipedShows
+    profileShowsTiles = profileShowsTiles
+    boxedShowsTiles = boxedShowsTiles

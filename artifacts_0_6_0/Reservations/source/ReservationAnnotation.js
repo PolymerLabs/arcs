@@ -14,18 +14,18 @@ defineParticle(({DomParticle, html}) => {
 
 <div ${host} id={{subId}}>
   <style>
-    [${host}] {
+    [reservation-form] {
       text-align: center;
     }
-    [${host}] > * {
+    * {
       vertical-align: middle;
     }
-    [${host}] .x-select {
+    .x-select {
       padding-left: 16px;
       display: flex;
       position: relative;
     }
-    [${host}] .x-select::after {
+    .x-select::after {
       content: '▼';
       display: block;
       position: absolute;
@@ -34,7 +34,7 @@ defineParticle(({DomParticle, html}) => {
       transform: scaleY(0.4) scaleX(0.8);
       pointer-events: none;
     }
-    [${host}] .x-select > select {
+    .x-select > select {
       position: relative;
       margin: 0;
       padding: 0;
@@ -47,7 +47,7 @@ defineParticle(({DomParticle, html}) => {
       -webkit-appearance: none;
       vertical-align: top;
     }
-    [${host}] input {
+    input {
       font-family: 'Google Sans';
       font-size: 16px;
       vertical-align: top;
@@ -55,29 +55,24 @@ defineParticle(({DomParticle, html}) => {
       background: transparent;
       padding-left: 16px;
     }
-    [${host}] input::-webkit-clear-button {
+    input::-webkit-clear-button {
       display: none;
     }
-    /* [${host}] [timePicker] {
+    /* [timePicker] {
       display: flex;
       flex-direction: row;
     } */
-    [${host}] [times] {
+    [times] {
       display: flex;
       justify-content: space-between;
       padding: 4px 0;
     }
-    @media (min-width:480px) {
-      [${host}] [times] {
-        Xpadding: 16px 20px;
+    /* @media (min-width:480px) {
+      [times] {
       }
-    }
-    [${host}] [times] > button {
+    } */
+    [times] > button {
       position: relative;
-      Xdisplay: block;
-      Xdisplay: inline-flex;
-      Xalign-items: center;
-      Xtext-align: center;
       width: 44px;
       height: 44px;
       padding: 0;
@@ -90,7 +85,7 @@ defineParticle(({DomParticle, html}) => {
       font-size: 14px;
       font-weight: bold;
     }
-    [${host}] [times] > button:disabled {
+    [times] > button:disabled {
       opacity: 0.3;
     }
   </style>
@@ -120,7 +115,7 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    willReceiveProps(props, state) {
+    update(props, state) {
       if (!props.event) {
         const now = this.toDateInputValue(new Date());
         const event = {startDate: now, endDate: now, participants: 2};

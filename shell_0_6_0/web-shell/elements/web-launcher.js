@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
+//import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
 import {Xen} from '../../lib/xen.js';
 import './web-arc.js';
 
@@ -32,7 +32,11 @@ const template = Xen.Template.html`
     [preview] {
       padding: 16px;
     }
+    [preview] > div {
+      display: inline-block;
+    }
     [wrapper] {
+      position: relative;
       display: inline-block;
       border: 1px solid silver;
       width: 192px;
@@ -42,11 +46,20 @@ const template = Xen.Template.html`
       text-align: left;
     }
     [label] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
       background-color: whitesmoke;
-      height: 32px;
-      white-space: nowrap;
       font-size: 12px;
-      padding: 4px;
+      padding: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      transition: all 100ms ease-in-out;
+    }
+    [wrapper]:hover [label] {
+      opacity: 0.8;
     }
     [box] {
       transform-origin: top left;
@@ -67,10 +80,10 @@ const template = Xen.Template.html`
 
 const preview = Xen.Template.html`
   <a wrapper href="{{href}}">
-    <div label unsafe-html="{{description}}"></div>
     <div box>
-      <web-arc env="{{env}}" storage="{{storage}}" config="{{config}}"></web-arc>
+      <web-arc env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{config}}"></web-arc>
     </div>
+    <div label unsafe-html="{{description}}"></div>
   </a>
 `;
 
@@ -78,13 +91,13 @@ const log = Xen.logFactory('WebLauncher', '#BF8A57');
 
 export class WebLauncher extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'storage', 'info'];
+    return ['env', 'storage', 'context', 'info'];
   }
   get template() {
     return template;
   }
   async update(props, state) {
-    if (props.info !== state.info) {
+    if (props.context && props.info !== state.info) {
       state.info = props.info;
       this.launcherStoreChange(props);
     }
@@ -92,12 +105,12 @@ export class WebLauncher extends Xen.Debug(Xen.Async, log) {
   render(props, state) {
     return [props, state];
   }
-  launcherStoreChange({env, storage, info}) {
+  launcherStoreChange({env, storage, context, info}) {
     log(info);
     info.remove && info.remove.forEach(({value: {id}}) => this.removeArc(id));
     info.add && info.add.forEach(({value: {id, rawData}}) => {
       if (!rawData.deleted) {
-        this.addArc(env, storage, id, rawData);
+        this.addArc(env, storage, id, context, rawData);
       }
     });
   }
@@ -110,13 +123,15 @@ export class WebLauncher extends Xen.Debug(Xen.Async, log) {
       this.boxes[id] = null;
     }
   }
-  addArc(env, storage, id, {key, href, description}) {
+  addArc(env, storage, id, context, {key, href, description}) {
     this.boxes = this.boxes || {};
     const oldarc = this.boxes[id];
     if (!oldarc) {
-      const dom = Xen.Template.stamp(preview).appendTo(this.host.querySelector('[preview]'));
-      dom.set({description, href, env, storage, config: {id: key}});
-      this.boxes[id] = dom.root.querySelector('web-arc');
+      const container = this.host.querySelector('[preview]');
+      const host = container.appendChild(document.createElement('div'));
+      const dom = Xen.Template.stamp(preview).appendTo(host);
+      dom.set({description, href, env, storage, context, config: {id: key}});
+      this.boxes[id] = dom.$('web-arc');
       log(id, this.boxes[id]);
     }
   }

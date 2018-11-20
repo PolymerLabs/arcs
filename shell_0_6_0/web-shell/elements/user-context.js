@@ -20,6 +20,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
   }
   _getInitialState() {
     return {
+      // ms to wait until we think there is probably some context
+      contextWait: 800,
       // maps userid to SingleUserContext for friends
       friends: {},
       // maps entityid's to userid's for friends to workaround missing data
@@ -34,12 +36,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       state.env = props.env;
       SyntheticStores.init(props.env);
     }
+    // if (props.context && state.systemUserId !== props.userid) {
+    //   state.systemUserId = props.userid;
+    //   if (props.userid) {
+    //     this.updateSystemUser(props);
+    //   }
+    // }
     if (props.storage && props.context && props.arcstore && props.userid !== state.userid) {
-       state.userid = props.userid;
-       this.updateUser(props, state);
-    }
-    if (props.context) {
+      state.userid = props.userid;
       this.updateSystemUser(props);
+      this.updateUserContext(props, state);
+      setTimeout(() => this.fire('context', props.context), state.contextWait);
     }
     //const {context, userid, coords, users} = props;
     //const {user, userStore, usersStore} = state;
@@ -60,7 +67,20 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     //   userStore.set(user);
     // }
   }
-  async updateUser({storage, userid, context, arcstore}, {userContext}) {
+  async updateSystemUser({userid, context}) {
+    const store = await context.findStoreById('SYSTEM_user');
+    if (store) {
+      const user = {
+        id: store.generateID(),
+        rawData: {
+          id: userid,
+        }
+      };
+      store.set(user);
+      log('installed SYSTEM_user');
+    }
+  }
+  async updateUserContext({storage, userid, context, arcstore}, {userContext}) {
     if (userContext) {
       this.state = {userContext: null};
       try {
@@ -76,11 +96,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
         userContext: new SingleUserContext(storage, context, userid, arcstore, isProfile)
       };
     }
-  }
-  async updateSystemUser({userid, context}) {
-    const store = await context.findStoreById('SYSTEM_user');
-    //log('SYSTEM_user', store);
-    store.set({id: userid});
   }
   // _updateSystemUsers(users, usersStore) {
   //   log('updateSystemUsers');

@@ -9,10 +9,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {SyntheticStores} from './synthetic-stores.js';
+import {logFactory} from './log-factory.js';
 
-//import {Xen} from '../../../lib/xen.js';
-const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 const log = logFactory('SingleUserContext', '#f2ce14');
+const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
 
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
@@ -103,7 +103,7 @@ export const SingleUserContext = class {
       info.add.forEach(async add => {
         let handle = add.value;
         if (!handle) {
-          log('`add` record has no `value`, applying workaround', add);
+          warn('`add` record has no `value`, applying workaround', add);
           handle = add;
         }
         if (handle) { //} && handle.tags.length) {
@@ -136,13 +136,13 @@ export const SingleUserContext = class {
       const storeName = shortid;
       const storeId = isProfile ? shortid : shareid;
       log('share id:', storeId);
-      const store = await this.getShareStore(context, type, storeName, storeId, handle.tags);
+      const store = await this.getShareStore(context, type, storeName, storeId, ['shared']); //handle.tags);
       //
       const boxStoreId = `BOXED_${tags}`;
       const boxDataId = `${userid}|${arcid}`;
       //const boxId = `${tags}|${boxDataId}`;
       log('box ids:', boxStoreId, boxDataId/*, boxId*/);
-      const boxStore = await this.getShareStore(context, type, boxStoreId, boxStoreId, [boxStoreId]);
+      const boxStore = await this.getShareStore(context, type, boxStoreId, boxStoreId, ['shared']); //[boxStoreId]);
       //
       // TODO(sjmiles): no mutation
       if (handle.type.isEntity) {

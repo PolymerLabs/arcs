@@ -1,0 +1,3 @@
+particle PopCollectionItem in './source/PopCollectionItem.js'
+  in [~a] collection
+  out ~a item

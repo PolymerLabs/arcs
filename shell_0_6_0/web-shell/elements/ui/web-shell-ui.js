@@ -64,7 +64,7 @@ const template = Xen.Template.html`
   <!-- -->
   <slot></slot>
   <!-- -->
-  <system-ui open="{{system}}" on-open="onSystemUiOpen">
+  <system-ui open="{{system}}" on-open="onSystemUiOpen" on-search="onForward">
     <slot name="suggestions"></slot>
   </system-ui>
   <!-- -->
@@ -91,6 +91,9 @@ export class WebShellUi extends Xen.Debug(Xen.Async, log) {
   }
   onSystemUiOpen(e, system) {
     this.state = {system};
+  }
+  onForward(e, data) {
+    this.fire(e.type, data);
   }
 }
 
