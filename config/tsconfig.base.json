@@ -4,6 +4,7 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "alwaysStrict": true,
+    "declaration": true,
     "esModuleInterop": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,

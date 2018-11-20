@@ -27,11 +27,11 @@ export abstract class Entity {
     return undefined;
   }
 
-  getUserID() {
+  getUserID(): string {
     return this.userIDComponent;
   }
 
-  isIdentified() {
+  isIdentified(): boolean {
     return this[Symbols.identifier] !== undefined;
   }
 

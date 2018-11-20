@@ -12,7 +12,8 @@ import {assert} from '../../platform/assert-web.js';
 import {Type} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Entity} from './entity.js';
-import { Reference } from './reference.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
+import {Reference} from './reference.js';
 
 export class Schema {
   // tslint:disable-next-line: no-any
@@ -82,12 +83,12 @@ export class Schema {
     return this.names[0];
   }
 
-  static typesEqual(fieldType1, fieldType2) {
+  static typesEqual(fieldType1, fieldType2): boolean {
     // TODO: structural check instead of stringification.
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
-  static _typeString(type) {
+  static _typeString(type): string {
     if (typeof(type) !== 'object') {
       assert(typeof type === 'string');
       return type;
@@ -109,7 +110,7 @@ export class Schema {
     }
   }
 
-  static union(schema1, schema2) {
+  static union(schema1: Schema, schema2: Schema): Schema {
     const names = [...new Set([...schema1.names, ...schema2.names])];
     const fields = {};
 
@@ -129,7 +130,7 @@ export class Schema {
     });
   }
 
-  static intersect(schema1, schema2) {
+  static intersect(schema1: Schema, schema2: Schema): Schema {
     const names = [...schema1.names].filter(name => schema2.names.includes(name));
     const fields = {};
 
@@ -146,14 +147,14 @@ export class Schema {
     });
   }
 
-  equals(otherSchema) {
+  equals(otherSchema: Schema): boolean {
     return this === otherSchema || (this.name === otherSchema.name
        // TODO: Check equality without calling contains.
        && this.isMoreSpecificThan(otherSchema)
        && otherSchema.isMoreSpecificThan(this));
   }
 
-  isMoreSpecificThan(otherSchema) {
+  isMoreSpecificThan(otherSchema: Schema): boolean {
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
@@ -175,11 +176,11 @@ export class Schema {
     return true;
   }
 
-  get type() {
+  get type(): Type {
     return Type.newEntity(this);
   }
 
-  entityClass(context = null) {
+  entityClass(context: ParticleExecutionContext = null): typeof Entity {
     const schema = this;
     const className = this.name;
     const classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
@@ -277,7 +278,7 @@ export class Schema {
     };
 
     const clazz = class extends Entity {
-      constructor(data, userIDComponent) {
+      constructor(data, userIDComponent?: string) {
         super(userIDComponent);
         this.rawData = new Proxy({}, {
           get: (target, name : string) => {
@@ -363,7 +364,7 @@ export class Schema {
         return clone;
       }
 
-      static get type() {
+      static get type(): Type {
         // TODO: should the entity's key just be its type?
         // Should it just be called type in that case?
         return Type.newEntity(this.key.schema);
@@ -390,16 +391,20 @@ export class Schema {
         }
       });
     }
-    return clazz;
+    // TODO: this type-erases the dynamically generated clazz so we
+    // can force it into an Entity type.
+    // tslint:disable-next-line: no-any
+    const c: any = clazz;
+    return c as typeof Entity;
   }
 
-  toInlineSchemaString(options) {
+  toInlineSchemaString(options): string {
     const names = this.names.join(' ') || '*';
     const fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
   }
 
-  toManifestString() {
+  toManifestString(): string {
     const results:string[] = [];
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(([name, type]) => `  ${Schema._typeString(type)} ${name}`));

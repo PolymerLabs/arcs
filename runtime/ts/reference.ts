@@ -7,10 +7,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js'; 
+import {assert} from '../../platform/assert-web.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Type} from './type.js';
 import {handleFor} from './handle.js';
+
+enum ReferenceMode {Unstored, Stored}
 
 export class Reference {
   public entity = null;
@@ -57,41 +59,39 @@ export class Reference {
   dataClone(): {storageKey: string, id: string} {
     return {storageKey: this.storageKey, id: this.id};
   }
-}
 
-enum ReferenceMode {Unstored, Stored}
+  static newClientReference(context: ParticleExecutionContext) : typeof Reference {
+    return class extends Reference {
+      private mode = ReferenceMode.Unstored;
+      public stored: Promise<undefined>;
+      constructor(entity) {
+        // TODO(shans): start carrying storageKey information around on Entity objects
+        super({id: entity.id, storageKey: null}, Type.newReference(entity.constructor.type), context);
 
-export function newClientReference(context: ParticleExecutionContext) {
-  return class extends Reference {
-    private mode = ReferenceMode.Unstored;
-    public stored: Promise<undefined>;
-    constructor(entity) {
-      // TODO(shans): start carrying storageKey information around on Entity objects
-      super({id: entity.id, storageKey: null}, Type.newReference(entity.constructor.type), context);
-    
-      this.entity = entity;
-      this.stored = new Promise(async (resolve, reject) => {
-        await this.storeReference(entity);
-        resolve();
-      });
-    }
-
-    private async storeReference(entity) {
-      await this.ensureStorageProxy();
-      await this.handle.store(entity);
-      this.mode = ReferenceMode.Stored;
-    }
-
-    async dereference() {
-      if (this.mode === ReferenceMode.Unstored) {
-        return null;
+        this.entity = entity;
+        this.stored = new Promise(async (resolve, reject) => {
+          await this.storeReference(entity);
+          resolve();
+        });
       }
-      return super.dereference();
-    }
 
-    isIdentified(): boolean {
-      return this.entity.isIdentified();
-    }
-  };
+      private async storeReference(entity) {
+        await this.ensureStorageProxy();
+        await this.handle.store(entity);
+        this.mode = ReferenceMode.Stored;
+      }
+
+      async dereference() {
+        if (this.mode === ReferenceMode.Unstored) {
+          return null;
+        }
+        return super.dereference();
+      }
+
+      isIdentified(): boolean {
+        return this.entity.isIdentified();
+      }
+    };
+  }
 }
 
