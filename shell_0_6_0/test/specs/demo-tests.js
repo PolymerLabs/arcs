@@ -14,6 +14,7 @@
 const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
 
 const searchFor = text => keys('input[search]', text);
+
 const receiveEntity = async entity =>
   browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 

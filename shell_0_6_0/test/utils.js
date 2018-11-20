@@ -88,9 +88,9 @@ exports.openNewArc = async function(testTitle, useSolo) {
   firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
   const urlParams = [
-    `testFirebaseKey=${firebaseKey}`,
+    //`testFirebaseKey=${firebaseKey}`,
     //`log`,
-    'user=*selenium'
+    'user=selenium'
   ];
   if (useSolo) {
     urlParams.push(`solo=${browser.options.baseUrl}/artifacts/canonical.manifest`);

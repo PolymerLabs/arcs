@@ -13,7 +13,10 @@ const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
-const HEADLESS = '--headless';
+const beHeadless = true;
+
+const HEADLESS = beHeadless ? '--headless' : '';
+const root = `shell`;
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
@@ -29,7 +32,7 @@ exports.config = {
   // NPM script (see https://docs.npmjs.com/cli/run-script) then the current working
   // directory is where your package.json resides, so `wdio` will be called from there.
   //
-  specs: ['./shell/test/specs/**/*.js'],
+  specs: [`./${root}/test/specs/**/*.js`],
   // Patterns to exclude.
   exclude: [
     // 'path/to/excluded/files'
@@ -98,7 +101,7 @@ exports.config = {
   bail: 0,
   //
   // Saves a screenshot to a given path if a command fails.
-  screenshotPath: './shell/test/errorShots/',
+  screenshotPath: `./${root}/test/errorShots/`,
   //
   // Set a base URL in order to shorten url command calls. If your `url` parameter starts
   // with `/`, the base url gets prepended, not including the path portion of your baseUrl.

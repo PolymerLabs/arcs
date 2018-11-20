@@ -13,7 +13,9 @@ const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
-const HEADLESS = '--headless';
+const beHeadless = true;
+
+const HEADLESS = beHeadless ? '--headless' : '';
 const root = `shell_0_6_0`;
 
 exports.config = {
