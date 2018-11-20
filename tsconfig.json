@@ -5,9 +5,10 @@
   ],
   "compilerOptions": {
     "outDir": "runtime/ts-build",
+    "declaration": true
   },
   "exclude": [
     "runtime/ts-build/**/*",
     "server/**/*"
-  ]
+  ],
 }
