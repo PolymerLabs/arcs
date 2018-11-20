@@ -77,13 +77,17 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       [name] {
         margin: 0 4px;
       }
+      [index] {
+        margin: 0 1ch;
+        color: var(--devtools-blue);
+      }
     </style>
     <div root>
       <template is="dom-repeat" items="{{entries}}">
         <div entry>
           <object-explorer data="[[item.pecMsgBody]]">
             <span noPointer on-click="_blockEvent">
-              [[item.time]]
+              <span index>[[item.msgCount]]:</span>[[item.time]]
               <span stack class$="[[item.stack.iconClass]]" on-click="_toggleStack">
                 <iron-icon icon="menu"></iron-icon>
               </span>
@@ -176,6 +180,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       name,
       pecMsgBody: msg.pecMsgBody,
       stack,
+      msgCount: msg.pecMsgCount,
       time: formatTime(msg.timestamp, 3),
       highlight: msg.pecMsgBody.callback === this.highlightedGroupCallbackId
     };
