@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {InitSearch} from '../../strategies/init-search.js';
+import {InitSearch} from '../../ts-build/strategies/init-search.js';
 import {assert} from '../chai-web.js';
 
 describe('InitSearch', async () => {

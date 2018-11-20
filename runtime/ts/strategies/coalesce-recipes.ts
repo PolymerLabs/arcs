@@ -5,26 +5,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Handle} from '../ts-build/recipe/handle.js';
-import {Type} from '../ts-build/type.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Handle} from '../recipe/handle.js';
+import {Type} from '../type.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Arc} from '../arc.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
 // use/? handle and finding a matching create/? handle in another recipe and
 // merging those.
 export class CoalesceRecipes extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
-
-  get arc() { return this._arc; }
-
   getResults(inputParams) {
     // Coalescing for terminal recipes that are either unresolved recipes or have no UI.
     return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length === 0);
@@ -83,6 +77,7 @@ export class CoalesceRecipes extends Strategy {
         if (results.length > 0) {
           return results;
         }
+        return undefined;
       }
 
       onSlot(recipe, slot) {

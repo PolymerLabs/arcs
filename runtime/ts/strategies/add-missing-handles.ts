@@ -5,15 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
 export class AddMissingHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe) {
         // Don't add use handles while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0) {
           return undefined;

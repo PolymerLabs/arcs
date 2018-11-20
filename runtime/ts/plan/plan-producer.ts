@@ -10,13 +10,14 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
-import {InitSearch} from '../../strategies/init-search.js';
+import {InitSearch} from '../strategies/init-search.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
 import {Speculator} from '../speculator.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Strategy, StrategyDerived} from '../strategizer/strategizer';
 
 const defaultTimeoutMs = 5000;
 
@@ -83,22 +84,25 @@ export class PlanProducer {
         this.produceSuggestions({contextual: false});
       }
     } else { // Search by search term.
-      const options = {
+      const options: {cancelOngoingPlanning: boolean,
+      search: string,
+      strategies?: StrategyDerived[],
+      append?: boolean,
+      contextual?: boolean} = {
+
         cancelOngoingPlanning: this.result.suggestions.length > 0,
         search: this.search
       };
       if (this.result.contextual) {
         // If we're searching but currently only have contextual suggestions,
         // we need get non-contextual suggestions as well.
-        Object.assign(options, {contextual: false});
+        options.contextual = false;
       } else {
         // If search changed and we already how all suggestions (i.e. including
         // non-contextual ones) then it's enough to initialize with InitSearch
         // with a new search phrase.
-        Object.assign(options, {
-          strategies: [InitSearch].concat(Planner.ResolutionStrategies),
-          append: true
-        });
+        options.append = true;
+        options.strategies = [InitSearch, ...Planner.ResolutionStrategies];
       }
 
       this.produceSuggestions(options);

@@ -12,8 +12,8 @@
 import {Arc} from '../../ts-build/arc.js';
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MapSlots} from '../../strategies/map-slots.js';
-import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+import {MapSlots} from '../../ts-build/strategies/map-slots.js';
+import {ResolveRecipe} from '../../ts-build/strategies/resolve-recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('MapSlots', function() {

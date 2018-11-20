@@ -5,22 +5,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import {MapSlots} from './map-slots.js';
+import {ConnectionConstraint, InstanceEndPoint, ParticleEndPoint} from '../recipe/connection-constraint';
+import {Handle} from '../recipe/handle';
 
 export class ResolveRecipe extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
 
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onHandle(recipe, handle) {
+      onHandle(recipe: Recipe, handle: Handle) {
         if (handle.connections.length === 0 ||
             (handle.id && handle.storageKey) || (!handle.type) ||
             (!handle.fate)) {
@@ -82,9 +80,10 @@ export class ResolveRecipe extends Strategy {
             handle.mapToStorage(mappable[0]);
           };
         }
+        return undefined;
       }
 
-      onSlotConnection(recipe, slotConnection) {
+      onSlotConnection(recipe: Recipe, slotConnection) {
         if (slotConnection.isConnected()) {
           return undefined;
         }
@@ -103,12 +102,13 @@ export class ResolveRecipe extends Strategy {
           return 1;
         };
       }
-
-      onObligation(recipe, obligation) {
+      // TODO(lindner): add typeof checks here and figure out where handle is coming from.
+      onObligation(recipe: Recipe, obligation) {
         const fromParticle = obligation.from.instance;
         const toParticle = obligation.to.instance;
         for (const fromConnection of Object.values(fromParticle.connections)) {
           for (const toConnection of Object.values(toParticle.connections)) {
+            // @ts-ignore
             if (fromConnection.handle && fromConnection.handle === toConnection.handle) {
               return (recipe, obligation) => {
                 recipe.removeObligation(obligation);
@@ -117,6 +117,7 @@ export class ResolveRecipe extends Strategy {
             }
           }
         }
+        return undefined;
       }
     }(Walker.Permuted), this);
   }

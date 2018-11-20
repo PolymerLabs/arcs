@@ -59,7 +59,7 @@ export class HandleConnection {
     Object.freeze(this);
   }
 
-  _compareTo(other) {
+  _compareTo(other): number {
     let cmp;
     if ((cmp = compareComparables(this._particle, other._particle)) !== 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
@@ -94,8 +94,8 @@ export class HandleConnection {
   get handle() { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
 
-  set tags(tags) { this._tags = tags; }
-  set type(type) {
+  set tags(tags: string[]) { this._tags = tags; }
+  set type(type: Type) {
     this._rawType = type;
     this._type = undefined;
     this._resetHandleType();
@@ -113,14 +113,14 @@ export class HandleConnection {
     return this.particle.spec.connectionMap.get(this.name);
   }
 
-  get isOptional() {
+  get isOptional(): boolean {
     if (this.spec == null) {
       return false;
     }
     return this.spec.isOptional;
   }
 
-  _isValid(options) {
+  _isValid(options): boolean {
     if (this.direction && !['in', 'out', 'inout', 'host', '`consume', '`provide'].includes(this.direction)) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
@@ -145,7 +145,7 @@ export class HandleConnection {
     return true;
   }
 
-  isResolved(options?) {
+  isResolved(options?): boolean {
     assert(Object.isFrozen(this));
 
     if (this.isOptional) {

@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Ruleset} from '../../strategizer/strategizer.js';
+import {Ruleset} from '../strategizer/strategizer.js';
 import {ConvertConstraintsToConnections} from './convert-constraints-to-connections.js';
 import {AssignHandles} from './assign-handles.js';
 import {InitPopulation} from './init-population.js';
@@ -20,8 +20,10 @@ import {GroupHandleConnections} from './group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
 import {ResolveRecipe} from './resolve-recipe.js';
 
+// tslint:disable-next-line: variable-name
 export const Empty = new Ruleset.Builder().build();
 
+// tslint:disable-next-line: variable-name
 export const ExperimentalPhased = new Ruleset.Builder().order(
   [
     InitPopulation,
@@ -44,6 +46,7 @@ export const ExperimentalPhased = new Ruleset.Builder().order(
   ResolveRecipe
 ).build();
 
+// tslint:disable-next-line: variable-name
 export const ExperimentalLinear = new Ruleset.Builder().order(
   InitPopulation,
   InitSearch,

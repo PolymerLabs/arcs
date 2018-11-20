@@ -8,28 +8,28 @@
 import {now} from '../../platform/date-web.js';
 import {Arc} from './arc.js';
 import {Relevance} from './relevance.js';
-import {Strategizer} from '../../strategizer/strategizer.js';
-import * as Rulesets from '../strategies/rulesets.js';
+import {Strategizer, Strategy, StrategyDerived} from './strategizer/strategizer.js';
+import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../../platform/deviceinfo-web.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
-import {ConvertConstraintsToConnections} from '../strategies/convert-constraints-to-connections.js';
-import {AssignHandles} from '../strategies/assign-handles.js';
-import {InitPopulation} from '../strategies/init-population.js';
-import {MapSlots} from '../strategies/map-slots.js';
-import {MatchParticleByVerb} from '../strategies/match-particle-by-verb.js';
-import {MatchRecipeByVerb} from '../strategies/match-recipe-by-verb.js';
-import {NameUnnamedConnections} from '../strategies/name-unnamed-connections.js';
-import {AddMissingHandles} from '../strategies/add-missing-handles.js';
-import {CreateDescriptionHandle} from '../strategies/create-description-handle.js';
-import {InitSearch} from '../strategies/init-search.js';
-import {SearchTokensToHandles} from '../strategies/search-tokens-to-handles.js';
-import {SearchTokensToParticles} from '../strategies/search-tokens-to-particles.js';
-import {GroupHandleConnections} from '../strategies/group-handle-connections.js';
-import {MatchFreeHandlesToConnections} from '../strategies/match-free-handles-to-connections.js';
-import {CreateHandleGroup} from '../strategies/create-handle-group.js';
-import {FindHostedParticle} from '../strategies/find-hosted-particle.js';
-import {CoalesceRecipes} from '../strategies/coalesce-recipes.js';
-import {ResolveRecipe} from '../strategies/resolve-recipe.js';
+import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {AssignHandles} from './strategies/assign-handles.js';
+import {InitPopulation} from './strategies/init-population.js';
+import {MapSlots} from './strategies/map-slots.js';
+import {MatchParticleByVerb} from './strategies/match-particle-by-verb.js';
+import {MatchRecipeByVerb} from './strategies/match-recipe-by-verb.js';
+import {NameUnnamedConnections} from './strategies/name-unnamed-connections.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
+import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
+import {InitSearch} from './strategies/init-search.js';
+import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
+import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
+import {GroupHandleConnections} from './strategies/group-handle-connections.js';
+import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
+import {CreateHandleGroup} from './strategies/create-handle-group.js';
+import {FindHostedParticle} from './strategies/find-hosted-particle.js';
+import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
+import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
 import {Suggestion} from './plan/suggestion';
 import {Tracing} from '../../tracelib/trace.js';
@@ -48,8 +48,8 @@ export class Planner {
   init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}} = {}) {
     strategyArgs = Object.freeze({...strategyArgs});
     this._arc = arc;
-    strategies = strategies.map(strategy => new strategy(arc, strategyArgs));
-    this.strategizer = new Strategizer(strategies, [], ruleset);
+    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
+    this.strategizer = new Strategizer(strategyImpls, [], ruleset);
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -215,13 +215,13 @@ export class Planner {
   }
 
   // tslint:disable-next-line: variable-name
-  static InitializationStrategies = [
+  static InitializationStrategies: StrategyDerived[] = [
     InitPopulation,
     InitSearch
   ];
 
   // tslint:disable-next-line: variable-name
-  static ResolutionStrategies = [
+  static ResolutionStrategies: StrategyDerived[] = [
     SearchTokensToParticles,
     SearchTokensToHandles,
     GroupHandleConnections,
@@ -241,5 +241,5 @@ export class Planner {
   ];
 
   // tslint:disable-next-line: variable-name
-  static AllStrategies = Planner.InitializationStrategies.concat(Planner.ResolutionStrategies);
+  static AllStrategies: StrategyDerived[] = Planner.InitializationStrategies.concat(Planner.ResolutionStrategies);
 }

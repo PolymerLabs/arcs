@@ -5,15 +5,18 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Arc} from '../arc.js';
+import {assert} from '../../../platform/assert-web.js';
 
 export class InitPopulation extends Strategy {
-  constructor(arc, {contextual = false}) {
-    super();
-    this._arc = arc;
+  _contextual: boolean;
+  _loadedParticles;
+  
+  constructor(arc: Arc, {contextual = false}) {
+    super(arc, {contextual});
     this._contextual = contextual;
-    this._loadedParticles = new Set(this._arc.loadedParticles().map(spec => spec.implFile));
+    this._loadedParticles = new Set(this.arc.loadedParticles().map(spec => spec.implFile));
   }
 
   async generate({generation}) {
@@ -21,7 +24,7 @@ export class InitPopulation extends Strategy {
       return [];
     }
 
-    await this._arc.recipeIndex.ready;
+    await this.arc.recipeIndex.ready;
     const results = this._contextual
         ? this._contextualResults()
         : this._allResults();
@@ -35,27 +38,27 @@ export class InitPopulation extends Strategy {
     }));
   }
 
-  _contextualResults() {
+  private _contextualResults() {
     const results = [];
-    for (const slot of this._arc.activeRecipe.slots.filter(s => s.sourceConnection)) {
-      results.push(...this._arc.recipeIndex.findConsumeSlotConnectionMatch(slot).map(
+    for (const slot of this.arc.activeRecipe.slots.filter(s => s.sourceConnection)) {
+      results.push(...this.arc.recipeIndex.findConsumeSlotConnectionMatch(slot).map(
           ({slotConn}) => ({recipe: slotConn.recipe})));
     }
     let innerArcHandles = [];
-    for (const recipe of this._arc._recipes) {
+    for (const recipe of this.arc.recipes) {
       for (const innerArc of [...recipe.innerArcs.values()]) {
         innerArcHandles = innerArcHandles.concat(innerArc.activeRecipe.handles);
       }
     }
-    for (const handle of this._arc.activeRecipe.handles.concat(innerArcHandles)) {
-      results.push(...this._arc.recipeIndex.findHandleMatch(handle, ['use', '?']).map(
+    for (const handle of this.arc.activeRecipe.handles.concat(innerArcHandles)) {
+      results.push(...this.arc.recipeIndex.findHandleMatch(handle, ['use', '?']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }
     return results;
   }
 
-  _allResults() {
-    return this._arc.recipeIndex.recipes.map(recipe => ({
+  private _allResults() {
+    return this.arc.recipeIndex.recipes.map(recipe => ({
       recipe,
       score: 1 - recipe.particles.filter(
           particle => particle.spec && this._loadedParticles.has(particle.spec.implFile)).length

@@ -10,7 +10,7 @@
 'use strict';
 
 import {Manifest} from '../../ts-build/manifest.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {ConvertConstraintsToConnections} from '../../ts-build/strategies/convert-constraints-to-connections.js';
 import {assert} from '../chai-web.js';
 
 describe('ConvertConstraintsToConnections', async () => {

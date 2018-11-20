@@ -5,20 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Arc} from '../arc.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 export class AssignHandles extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
-
-  get arc() { return this._arc; }
-
   async generate(inputParams) {
     const self = this;
 
@@ -99,8 +94,9 @@ export class AssignHandles extends Strategy {
     }(Walker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags, counts) {
-    const stores = new Map();
+  getMappableStores(fate, type, tags, counts): Map<StorageProviderBase, string> {
+    const stores: Map<StorageProviderBase, string> = new Map();
+
     if (fate === 'use' || fate === '?') {
       const subtype = counts.out === 0;
       // TODO: arc.findStoresByType doesn't use `subtype`. Shall it be removed?

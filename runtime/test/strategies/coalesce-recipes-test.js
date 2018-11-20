@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
+import {CoalesceRecipes} from '../../ts-build/strategies/coalesce-recipes.js';
 import {assert} from '../chai-web.js';
 
 async function tryCoalesceRecipes(manifestStr) {

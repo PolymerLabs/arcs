@@ -5,23 +5,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Type} from '../type.js';
+import {Walker} from '../recipe/walker.js';
+import {HandleConnection} from '../recipe/handle-connection.js';
+import {Arc} from '../arc.js';
 
 export class GroupHandleConnections extends Strategy {
-  constructor() {
-    super();
+  _walker: Walker;
+
+  constructor(arc: Arc, args?) {
+    super(arc, args);
 
     this._walker = new class extends Walker {
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe, result) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
           return undefined;
         }
         // Find all unique types used in the recipe that have unbound handle connections.
-        const types = new Set();
+        const types: Set<Type> = new Set();
         recipe.handleConnections.forEach(hc => {
           if (!hc.isOptional && !hc.handle && !Array.from(types).find(t => t.equals(hc.type))) {
             types.add(hc.type);
@@ -31,7 +36,7 @@ export class GroupHandleConnections extends Strategy {
         const groupsByType = new Map();
         types.forEach(type => {
           // Find the particle with the largest number of unbound connections of the same type.
-          const countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
+          const countConnectionsByType = (connections: {[index: string]: HandleConnection}) => Object.values(connections).filter(conn => {
             return !conn.isOptional && !conn.handle && type.equals(conn.type);
           }).length;
           const sortedParticles = [...recipe.particles].sort((p1, p2) => {

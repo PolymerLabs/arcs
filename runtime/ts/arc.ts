@@ -103,11 +103,11 @@ export class Arc {
     return this._loader;
   }
 
-  get description() {
+  get description(): Description {
     return this._description;
   }
 
-  get recipeIndex() {
+  get recipeIndex(): RecipeIndex {
     return this._recipeIndex;
   }
 
