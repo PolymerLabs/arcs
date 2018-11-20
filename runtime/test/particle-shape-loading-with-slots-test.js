@@ -10,7 +10,7 @@
 
 import {Manifest} from '../ts-build/manifest.js';
 import {assert} from './chai-web.js';
-import * as util from '../ts-build/testing/test-util.js';
+import * as util from '../testing/test-util.js';
 import {Arc} from '../ts-build/arc.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';

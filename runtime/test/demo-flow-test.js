@@ -13,7 +13,7 @@
 import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {assert} from './chai-web.js';
-import * as testUtil from '../ts-build/testing/test-util.js';
+import * as testUtil from '../testing/test-util.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 describe('demo flow', function() {
