@@ -11,7 +11,6 @@
 /* global browser */
 /* eslint-disable no-invalid-this */
 
-//const assert = require('assert');
 const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
 
 const searchFor = text => keys('input[search]', text);
