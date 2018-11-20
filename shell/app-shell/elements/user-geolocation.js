@@ -15,16 +15,18 @@ const log = Xen.logFactory('UserGeolocation', '#004f00');
 const fallbackCoords = {latitude: 37.7610927, longitude: -122.4208173}; // San Francisco
 
 class UserGeolocation extends Xen.Debug(Xen.Base, log) {
-  _getInitialState() {
+  _didMount() {
     this._watchGeolocation();
   }
   _watchGeolocation() {
     const fallback = () => this._maybeUpdateGeoCoords(fallbackCoords);
+    // make sure some coords got set no matter what else occurs
+    // TODO(sjmiles): calling fallback() right away may cause some unneeded thrash,
+    // but otherwise tests can fail from lack of geocoords
+    fallback();
     if ('geolocation' in navigator) {
       const update = ({coords}) => this._maybeUpdateGeoCoords(coords);
       navigator.geolocation.watchPosition(update, fallback, {timeout: 3000, maximumAge: Infinity});
-    } else {
-      fallback();
     }
   }
   _maybeUpdateGeoCoords({latitude, longitude}) {
