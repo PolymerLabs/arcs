@@ -196,14 +196,4 @@ export abstract class StorageProviderBase {
   modelForSynchronization() {
     return this.toLiteral();
   }
-
-  // Override if clearing items is supported, used by tests
-  clearItemsForTesting(): void {
-  }
-
-  // Override if  items is supported, used by tests
-  // tslint:disable-next-line: no-any
-  async toList(): Promise<any[]> {
-    throw new Error('unimmplemented');
-  }
 }

@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import * as util from '../ts-build/testing/test-util.js';
+import * as util from '../testing/test-util.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 

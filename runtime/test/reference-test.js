@@ -15,7 +15,7 @@ import {ParticleExecutionContext} from '../ts-build/particle-execution-context.j
 import {StubLoader} from '../testing/stub-loader.js';
 import {Type} from '../ts-build/type.js';
 import {Arc} from '../ts-build/arc.js';
-import {assertSingletonWillChangeTo} from '../ts-build/testing/test-util.js';
+import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
 describe('references', function() {
   it('can parse & validate a recipe containing references', async () => {
