@@ -80,11 +80,11 @@ export class PlanProducer {
     }
     if (this.search === '*') { // Search for ALL (including non-contextual) suggestions.
       if (this.result.contextual) {
-        this.producePlans({contextual: false});
+        this.produceSuggestions({contextual: false});
       }
     } else { // Search by search term.
       const options = {
-        cancelOngoingPlanning: this.result.plans.length > 0,
+        cancelOngoingPlanning: this.result.suggestions.length > 0,
         search: this.search
       };
       if (this.result.contextual) {
@@ -101,7 +101,7 @@ export class PlanProducer {
         });
       }
 
-      this.producePlans(options);
+      this.produceSuggestions(options);
     }
   }
 
@@ -114,7 +114,7 @@ export class PlanProducer {
     this.searchStore.off('change', this.searchStoreCallback);
   }
 
-  async producePlans(options = {}) {
+  async produceSuggestions(options = {}) {
     if (options['cancelOngoingPlanning'] && this.isPlanning) {
       this._cancelPlanning();
     }
@@ -128,20 +128,20 @@ export class PlanProducer {
 
     let time = now();
 
-    let plans = [];
+    let suggestions = [];
     let generations = [];
     while (this.needReplan) {
       this.needReplan = false;
       generations = [];
-      plans = await this.runPlanner(this.replanOptions, generations);
+      suggestions = await this.runPlanner(this.replanOptions, generations);
     }
     time = ((now() - time) / 1000).toFixed(2);
 
     // Suggestions are null, if planning was cancelled.
-    if (plans) {
-      log(`Produced ${plans.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
+    if (suggestions) {
+      log(`Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
-      await this._updateResult({plans, generations}, this.replanOptions);
+      await this._updateResult({suggestions, generations}, this.replanOptions);
     }
   }
 
@@ -176,14 +176,14 @@ export class PlanProducer {
     log(`Cancel planning`);
   }
 
-  private async _updateResult({plans, generations}, options) {
+  private async _updateResult({suggestions, generations}, options) {
     if (options.append) {
       assert(!options['contextual'], `Cannot append to contextual options`);
-      if (!this.result.append({plans, generations})) {
+      if (!this.result.append({suggestions, generations})) {
         return;
       }
     } else {
-      if (!this.result.set({plans, generations, contextual: options['contextual']})) {
+      if (!this.result.set({suggestions, generations, contextual: options['contextual']})) {
         return;
       }
     }

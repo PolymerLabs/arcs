@@ -160,7 +160,8 @@ export class Planificator {
     if (composer) {
       if (composer.findContextById('rootslotid-suggestions')) {
         const suggestionComposer = new SuggestionComposer(composer);
-        this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
+        this.registerVisibleSuggestionsChangedCallback(
+            (suggestions) => suggestionComposer.setSuggestions(suggestions));
       }
     }
   }
@@ -299,10 +300,10 @@ export class Planificator {
     return suggestions || [];
   }
 
-  registerPlansChangedCallback(callback) {
+  registerSuggestionsChangedCallback(callback) {
     this._plansChangedCallbacks.push(callback);
   }
-  registerSuggestChangedCallback(callback) {
+  registerVisibleSuggestionsChangedCallback(callback) {
     this._suggestChangedCallbacks.push(callback);
   }
   registerStateChangedCallback(callback) {

@@ -76,7 +76,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (context && state.lastEntity && metaplans && metaplans.plans) {
+    if (context && state.lastEntity && metaplans && metaplans.suggestions) {
       if (state.lastEntity.type !== 'search') {
         this._updateMetaplans(metaplans, context, state.lastEntity);
       }
@@ -167,7 +167,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   }
   _updateMetaplans(metaplans, context, entity) {
     // find metaplans that use #piped stores
-    const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
+    const piped = metaplans.suggestions.filter(({plan}) => plan._handles.some(handle => {
       const tags = context.findStoreTags(context.findStoreById(handle._id));
       // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
       return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
@@ -198,8 +198,8 @@ class DeviceClientPipe extends Xen.Debug(Xen.Base, log) {
   }
   _chooseSuggestion(suggestion) {
     const {metaplans} = this._props;
-    if (metaplans && metaplans.plans) {
-      const metaplan = metaplans.plans.find(metaplan => metaplan.descriptionText === suggestion);
+    if (metaplans && metaplans.suggestions) {
+      const metaplan = metaplans.suggestions.find(suggestion => suggestion.descriptionText === suggestion);
       log('piped plan', metaplan);
       this._fire('suggestion', metaplan);
     }

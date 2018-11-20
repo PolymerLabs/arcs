@@ -76,9 +76,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const helper = await TestHelper.createAndPlan({
       manifestString: createManifestString(options), loader
     });
-    assert.lengthOf(helper.plans, 1);
+    assert.lengthOf(helper.suggestions, 1);
 
-    return helper.plans[0].description.getRecipeSuggestion(options.formatter);
+    return helper.suggestions[0].description.getRecipeSuggestion(options.formatter);
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
@@ -250,10 +250,10 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo <- h0
         description \`do "\${HelloFoo}"\`
     `, loader});
-    assert.lengthOf(helper.plans, 1);
+    assert.lengthOf(helper.suggestions, 1);
 
-    assert.equal('Do "hello foo"', await helper.plans[0].description.getRecipeSuggestion());
-    const domDescription = await helper.plans[0].description.getRecipeSuggestion(DescriptionDomFormatter);
+    assert.equal('Do "hello foo"', await helper.suggestions[0].description.getRecipeSuggestion());
+    const domDescription = await helper.suggestions[0].description.getRecipeSuggestion(DescriptionDomFormatter);
     assert.equal(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
     assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
   });
@@ -278,14 +278,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
     `, loader});
-    assert.lengthOf(helper.plans, 2);
-    assert.equal('Show foo.', await helper.plans[0].description.getRecipeSuggestion());
+    assert.lengthOf(helper.suggestions, 2);
+    assert.equal('Show foo.', await helper.suggestions[0].description.getRecipeSuggestion());
 
     await helper.acceptSuggestion({particles: ['ShowFoo']});
     await helper.makePlans();
-    assert.lengthOf(helper.plans, 1);
+    assert.lengthOf(helper.suggestions, 1);
 
-    assert.equal('Show foo with dummy.', await helper.plans[0].description.getRecipeSuggestion());
+    assert.equal('Show foo with dummy.', await helper.suggestions[0].description.getRecipeSuggestion());
   });
   it('joins recipe descriptions', async () => {
     const helper = await TestHelper.createAndPlan({manifestString: `
@@ -303,24 +303,24 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         C
         description \`do C\`
     `, loader});
-    assert.lengthOf(helper.plans, 3);
+    assert.lengthOf(helper.suggestions, 3);
     const recipe1 = new Recipe();
-    helper.plans[0].plan.mergeInto(recipe1);
+    helper.suggestions[0].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 1);
     assert.lengthOf(recipe1.patterns, 1);
 
-    helper.plans[1].plan.mergeInto(recipe1);
+    helper.suggestions[1].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 2);
     assert.lengthOf(recipe1.patterns, 2);
 
-    helper.plans[2].plan.mergeInto(recipe1);
+    helper.suggestions[2].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 3);
     assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
 
     const recipe2 = new Recipe();
-    helper.plans[2].plan.mergeInto(recipe2);
-    helper.plans[0].plan.mergeInto(recipe2);
-    helper.plans[1].plan.mergeInto(recipe2);
+    helper.suggestions[2].plan.mergeInto(recipe2);
+    helper.suggestions[0].plan.mergeInto(recipe2);
+    helper.suggestions[1].plan.mergeInto(recipe2);
     assert.deepEqual(['do C', 'do A', 'do B'], recipe2.patterns);
     assert.notDeepEqual(recipe1.patterns, recipe2.patterns);
 

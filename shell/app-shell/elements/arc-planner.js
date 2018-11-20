@@ -48,7 +48,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       }
       if (!planificator) {
         planificator = await this._createPlanificator(arc, userid);
-        planificator.loadPlans && await planificator.loadPlans();
+        planificator.loadSuggestions && await planificator.loadSuggestions();
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
@@ -67,8 +67,8 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     const planificator = planificatorParam === 'original'
         ? new Arcs.Planificator(arc, {userid})
         : await Arcs.PlanificatorNew.create(arc, {userid, protocol: ArcsUtils.getUrlParam('planificatorProtocol') || 'volatile', onlyConsumer});
-    planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
-    planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
+    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     window.planificator = planificator;
     return planificator;
   }

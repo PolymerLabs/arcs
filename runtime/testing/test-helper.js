@@ -97,13 +97,13 @@ export class TestHelper {
   async makePlans(options) {
     const planner = new Planner();
     planner.init(this.arc);
-    this.plans = await planner.suggest();
+    this.suggestions = await planner.suggest();
     if (options) {
       if (options.expectedNumPlans) {
-        assert.lengthOf(this.plans, options.expectedNumPlans);
+        assert.lengthOf(this.suggestions, options.expectedNumPlans);
       }
       if (options.expectedSuggestions) {
-        const suggestions = await Promise.all(this.plans.map(async p => await p.description.getRecipeSuggestion()));
+        const suggestions = await Promise.all(this.suggestions.map(async p => await p.description.getRecipeSuggestion()));
         const missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
         const unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
         const errors = [];
@@ -116,10 +116,10 @@ export class TestHelper {
         assert.equal(0, missingSuggestions.length + unexpectedSuggestions.length, errors.join('\n'));
       }
       if (options.verify) {
-        await options.verify(this.plans);
+        await options.verify(this.suggestions);
       }
     }
-    this.log(`Made ${this.plans.length} plans.`);
+    this.log(`Made ${this.suggestions.length} plans.`);
     return this;
   }
 
@@ -128,34 +128,34 @@ export class TestHelper {
    * suggestion to accept. Otherwise, fallback to a single generated suggestion, if appropriate.
    */
   async acceptSuggestion(options) {
-    let plan;
+    let suggestion;
     if (options) {
       if (options.particles) {
-        let plans = this.findPlanByParticleNames(options.particles);
+        let suggestions = this.findSuggestionByParticleNames(options.particles);
         if (options.hostedParticles) {
-          plans = plans.filter(p => {
+          suggestions = suggestions.filter(p => {
             return options.hostedParticles.every(hosted => {
               const interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
               return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name == hosted);
             });
           });
         }
-        assert.lengthOf(plans, 1);
-        plan = plans[0];
+        assert.lengthOf(suggestions, 1);
+        suggestion = suggestions[0];
       } else if (options.descriptionText) {
-        plan = this.plans.find(p => p.descriptionText == options.descriptionText);
+        suggestion = this.suggestions.find(p => p.descriptionText == options.descriptionText);
       }
     }
-    if (!plan) {
-      assert.lengthOf(this.plans, 1);
-      plan = this.plans[0];
+    if (!suggestion) {
+      assert.lengthOf(this.suggestions, 1);
+      suggestion = this.suggestions[0];
     }
-    this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(plan.descriptionText)}'`);
-    await this.instantiatePlan(plan.plan);
+    this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(suggestion.descriptionText)}'`);
+    await this.instantiatePlan(suggestion.plan);
   }
 
-  findPlanByParticleNames(particlesNames) {
-    return this.plans.filter(p => {
+  findSuggestionByParticleNames(particlesNames) {
+    return this.suggestions.filter(p => {
       const planParticles = p.plan.particles.map(particle => particle.name);
       return planParticles.length == particlesNames.length && planParticles.every(p => particlesNames.includes(p));
     });
@@ -171,8 +171,8 @@ export class TestHelper {
    * Getter for a single available suggestion plan (fails, if there is more than one).
    */
   get plan() {
-    assert.lengthOf(this.plans, 1);
-    return this.plans[0].plan;
+    assert.lengthOf(this.suggestions, 1);
+    return this.suggestions[0].plan;
   }
 
   /** @method sendSlotEvent(particleName, slotName, event, data)

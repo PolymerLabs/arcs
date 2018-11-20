@@ -70,15 +70,15 @@ describe('suggestion composer', function() {
       slotComposer
     });
     const suggestionComposer = new SuggestionComposer(slotComposer);
-    await suggestionComposer._updateSuggestions(helper.plans);
-    assert.lengthOf(helper.plans, 1);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
+    assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     await helper.acceptSuggestion({particles: ['MakeCake']});
     await helper.makePlans();
-    assert.lengthOf(helper.plans, 1);
-    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(helper.suggestions, 1);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
     assert.isEmpty(suggestConsumer._content);
@@ -87,8 +87,8 @@ describe('suggestion composer', function() {
 
     await helper.acceptSuggestion({particles: ['LightCandles']});
     await helper.makePlans();
-    assert.isEmpty(helper.plans);
-    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.isEmpty(helper.suggestions);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 
@@ -99,14 +99,14 @@ describe('suggestion composer', function() {
       slotComposer
     });
     const suggestionComposer = new SuggestionComposer(slotComposer);
-    await suggestionComposer._updateSuggestions(helper.plans);
-    assert.lengthOf(helper.plans, 1);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
+    assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
     await helper.makePlans();
-    assert.lengthOf(helper.plans, 1);
-    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(helper.suggestions, 1);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
     await suggestConsumer._setContentPromise;
@@ -115,8 +115,8 @@ describe('suggestion composer', function() {
     await helper.acceptSuggestion({particles: ['LightCandles']});
 
     await helper.makePlans();
-    assert.isEmpty(helper.plans);
-    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.isEmpty(helper.suggestions);
+    await suggestionComposer._updateSuggestions(helper.suggestions);
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 });

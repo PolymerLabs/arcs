@@ -16,8 +16,7 @@ import {Suggestion} from './suggestion';
 
 export class PlanningResult {
   arc: Arc;
-  // TODO(mmandlis): Rename plans to suggestions everywhere.
-  _plans: Suggestion[];
+  _suggestions: Suggestion[];
   lastUpdated: Date;
   generations: {}[];
   contextual = true;
@@ -25,36 +24,36 @@ export class PlanningResult {
   constructor(arc, result = {}) {
     assert(arc, 'Arc cannot be null');
     this.arc = arc;
-    this._plans = result['plans'];
+    this._suggestions = result['suggestions'];
     this.lastUpdated = result['lastUpdated'] || new Date(null);
     this.generations = result['generations'] || [];
   }
 
-  get plans(): Suggestion[] { return this._plans || []; }
-  set plans(plans) {
-    assert(Boolean(plans), `Cannot set uninitialized plans`);
-    this._plans = plans;
+  get suggestions(): Suggestion[] { return this._suggestions || []; }
+  set suggestions(suggestions) {
+    assert(Boolean(suggestions), `Cannot set uninitialized suggestions`);
+    this._suggestions = suggestions;
   }
 
-  set({plans, lastUpdated = new Date(), generations = [], contextual = true}) {
-    if (this.isEquivalent(plans)) {
+  set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}) {
+    if (this.isEquivalent(suggestions)) {
       return false;
     }
-    this.plans = plans;
+    this.suggestions = suggestions;
     this.generations = generations;
     this.lastUpdated = lastUpdated;
     this.contextual = contextual;
     return true;
   }
 
-  append({plans, lastUpdated = new Date(), generations = []}) {
-    const newPlans = plans.filter(newPlan => !this.plans.find(
-        plan => plan.isEquivalent(newPlan)));
-    if (newPlans.length === 0) {
+  append({suggestions, lastUpdated = new Date(), generations = []}) {
+    const newSuggestions = suggestions.filter(newSuggestion => !this.suggestions.find(
+        suggestion => suggestion.isEquivalent(newSuggestion)));
+    if (newSuggestions.length === 0) {
       return false;
     }
-    this.plans.push(...newPlans);
-    // TODO: filter out generations of other plans.
+    this.suggestions.push(...newSuggestions);
+    // TODO: filter out generations of other suggestions.
     this.generations.push(...generations);
     this.lastUpdated = lastUpdated;
     return true;
@@ -64,29 +63,29 @@ export class PlanningResult {
     return this.lastUpdated < other.lastUpdated;
   }
 
-  isEquivalent(plans) {
-    return PlanningResult.isEquivalent(this._plans, plans);
+  isEquivalent(suggestions) {
+    return PlanningResult.isEquivalent(this._suggestions, suggestions);
   }
 
-  static isEquivalent(oldPlans, newPlans) {
-    assert(newPlans, `New plans cannot be null.`);
-    return oldPlans &&
-           oldPlans.length === newPlans.length &&
-           oldPlans.every(plan => newPlans.find(newPlan => plan.isEquivalent(newPlan)));
+  static isEquivalent(oldSuggestions, newSuggestions) {
+    assert(newSuggestions, `New suggestions cannot be null.`);
+    return oldSuggestions &&
+           oldSuggestions.length === newSuggestions.length &&
+           oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  async deserialize({plans, lastUpdated}) {
+  async deserialize({suggestions, lastUpdated}) {
     const recipeResolver = new RecipeResolver(this.arc);
     return this.set({
-      plans: await Promise.all(plans.map(plan => Suggestion.deserialize(plan, this.arc, recipeResolver))),
+      suggestions: await Promise.all(suggestions.map(suggestion => Suggestion.deserialize(suggestion, this.arc, recipeResolver))),
       lastUpdated: new Date(lastUpdated),
-      contextual: plans.contextual
+      contextual: suggestions.contextual
     });
   }
 
   serialize() {
     return {
-      plans: this.plans.map(plan => plan.serialize()),
+      suggestions: this.suggestions.map(suggestion => suggestion.serialize()),
       lastUpdated: this.lastUpdated.toString(),
       contextual: this.contextual
     };
