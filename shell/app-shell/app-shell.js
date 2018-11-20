@@ -256,10 +256,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     } else {
       state.launched = false;
     }
-    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.plans.length) {
+    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.suggestions.length) {
       log('matching pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
-      state.suggestion = metaplans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
+      state.suggestion = metaplans.suggestions.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       if (state.suggestion) {
         state.pendingSuggestion = null;
       } else {

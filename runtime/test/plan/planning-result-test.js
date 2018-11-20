@@ -14,15 +14,15 @@ import {PlanningResult} from '../../ts-build/plan/planning-result.js';
 describe('planning result', function() {
   async function testResultSerialization(manifestFilename) {
     const helper = await TestHelper.createAndPlan({manifestFilename});
-    assert.isNotEmpty(helper.plans);
-    const result = new PlanningResult(helper.arc, {plans: helper.plans});
+    assert.isNotEmpty(helper.suggestions);
+    const result = new PlanningResult(helper.arc, {suggestions: helper.suggestions});
 
     const serialization = result.serialize();
-    assert(serialization.plans);
+    assert(serialization.suggestions);
     const resultNew = new PlanningResult(helper.arc);
-    assert.isEmpty(resultNew.plans);
-    await resultNew.deserialize({plans: serialization.plans});
-    assert.isTrue(resultNew.isEquivalent(helper.plans));
+    assert.isEmpty(resultNew.suggestions);
+    await resultNew.deserialize({suggestions: serialization.suggestions});
+    assert.isTrue(resultNew.isEquivalent(helper.suggestions));
   }
   it('serializes and deserializes Products recipes', async function() {
     await testResultSerialization('./runtime/test/artifacts/Products/Products.recipes');

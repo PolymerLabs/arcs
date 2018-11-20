@@ -14,11 +14,11 @@ import {ReplanQueue} from '../../ts-build/plan/replan-queue.js';
 class TestPlanProducer extends PlanProducer {
   constructor() {
     super({}, {});
-    this.producePlansCalled = 0;
+    this.produceSuggestionsCalled = 0;
   }
-  producePlans() {
+  produceSuggestions() {
     this.isPlanning = true;
-    ++this.producePlansCalled;
+    ++this.produceSuggestionsCalled;
     this.isPlanning = false;
   }
 }
@@ -30,7 +30,7 @@ function init(options) {
   const queue = new ReplanQueue(producer, options);
   const expectedCalls = 0;
   assert.isFalse(queue._isReplanningScheduled());
-  assert.equal(producer.producePlansCalled, 0);
+  assert.equal(producer.produceSuggestionsCalled, 0);
   return {producer, queue};
 }
 
@@ -39,9 +39,9 @@ describe('replan queue', function() {
     const {producer, queue} = init();
     queue.addChange();
     assert.lengthOf(queue.changes, 1);
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 350));
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -51,9 +51,9 @@ describe('replan queue', function() {
     queue.addChange();
     queue.addChange();
     assert.lengthOf(queue.changes, 3);
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 350));
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -63,11 +63,11 @@ describe('replan queue', function() {
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();
     assert.lengthOf(queue.changes, 2);
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 
@@ -77,9 +77,9 @@ describe('replan queue', function() {
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();
     assert.lengthOf(queue.changes, 2);
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     await new Promise(resolve => setTimeout(resolve, 150));
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isEmpty(queue.changes);
   });
 });

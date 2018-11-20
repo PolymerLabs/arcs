@@ -44,51 +44,51 @@ recipe
     assert.isNotNull(store);
     const consumer = new PlanConsumer(helper.arc, store);
 
-    let planChangeCount = 0;
-    const planCallback = (plans) => { ++planChangeCount; };
-    let suggestChangeCount = 0;
-    const suggestCallback = (plans) => { ++suggestChangeCount; };
-    consumer.registerPlansChangedCallback(planCallback);
-    consumer.registerSuggestChangedCallback(suggestCallback);
+    let suggestionsChangeCount = 0;
+    const suggestionsCallback = (suggestions) => { ++suggestionsChangeCount; };
+    let visibleSuggestionsChangeCount = 0;
+    const visibleSuggestionsCallback = (suggestions) => { ++visibleSuggestionsChangeCount; };
+    consumer.registerSuggestionsChangedCallback(suggestionsCallback);
+    consumer.registerVisibleSuggestionsChangedCallback(visibleSuggestionsCallback);
     assert.isEmpty(consumer.getCurrentSuggestions());
 
-    const storeResults = async (plans) => {
+    const storeResults = async (suggestions) => {
       const result = new PlanningResult(helper.arc);
-      result.set({plans});
+      result.set({suggestions});
       await store.set(result.serialize());
       await new Promise(resolve => setTimeout(resolve, 100));
     };
-    // Updates plans.
-    await storeResults(helper.findPlanByParticleNames(['ItemMultiplexer', 'List']));
-    assert.lengthOf(consumer.result.plans, 1);
+    // Updates suggestions.
+    await storeResults(helper.findSuggestionByParticleNames(['ItemMultiplexer', 'List']));
+    assert.lengthOf(consumer.result.suggestions, 1);
     assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 0);
+    assert.equal(suggestionsChangeCount, 1);
+    assert.equal(visibleSuggestionsChangeCount, 0);
 
     // Shows all suggestions.
     consumer.setSuggestFilter(true);
-    assert.lengthOf(consumer.result.plans, 1);
+    assert.lengthOf(consumer.result.suggestions, 1);
     assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 1);
+    assert.equal(suggestionsChangeCount, 1);
+    assert.equal(visibleSuggestionsChangeCount, 1);
 
     // Filters suggestions by string.
     consumer.setSuggestFilter(false, 'show');
-    assert.lengthOf(consumer.result.plans, 1);
+    assert.lengthOf(consumer.result.suggestions, 1);
     assert.lengthOf(consumer.getCurrentSuggestions(), 1);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 1);
+    assert.equal(suggestionsChangeCount, 1);
+    assert.equal(visibleSuggestionsChangeCount, 1);
 
     consumer.setSuggestFilter(false);
-    assert.lengthOf(consumer.result.plans, 1);
+    assert.lengthOf(consumer.result.suggestions, 1);
     assert.lengthOf(consumer.getCurrentSuggestions(), 0);
-    assert.equal(planChangeCount, 1);
-    assert.equal(suggestChangeCount, 2);
+    assert.equal(suggestionsChangeCount, 1);
+    assert.equal(visibleSuggestionsChangeCount, 2);
 
     await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
     await helper.makePlans();
-    await storeResults(helper.plans);
-    assert.lengthOf(consumer.result.plans, 3);
+    await storeResults(helper.suggestions);
+    assert.lengthOf(consumer.result.suggestions, 3);
     // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
     assert.lengthOf(consumer.getCurrentSuggestions(), 2);
 

@@ -23,10 +23,10 @@ export class PlanConsumer {
   result: PlanningResult;
   store: StorageProviderBase;
   suggestFilter: {};
-  // Plans change callback is triggered when planning results have changed.
-  plansChangeCallbacks: Callback[] = [];
-  // Suggestions change callback is triggered when suggestions visible to the user have changed.
+  // Callback is triggered when planning results have changed.
   suggestionsChangeCallbacks: Callback[] = [];
+  // Callback is triggered when suggestions visible to the user have changed.
+  visibleSuggestionsChangeCallbacks: Callback[] = [];
   storeCallback: Callback;
   suggestionComposer: SuggestionComposer|null = null;
 
@@ -37,17 +37,17 @@ export class PlanConsumer {
     this.result = new PlanningResult(arc);
     this.store = store;
     this.suggestFilter = {showAll: false};
-    this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
+    this.visibleSuggestionsChangeCallbacks = [];
 
-    this.storeCallback = () => this.loadPlans();
+    this.storeCallback = () => this.loadSuggestions();
     this.store.on('change', this.storeCallback, this);
 
     this._initSuggestionComposer();
   }
 
-  registerPlansChangedCallback(callback) { this.plansChangeCallbacks.push(callback); }
-  registerSuggestChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
+  registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
+  registerVisibleSuggestionsChangedCallback(callback) { this.visibleSuggestionsChangeCallbacks.push(callback); }
 
   setSuggestFilter(showAll, search) {
     assert(!showAll || !search);
@@ -59,25 +59,25 @@ export class PlanConsumer {
     this._onMaybeSuggestionsChanged(previousSuggestions);
   }
 
-  async loadPlans() {
+  async loadSuggestions() {
     assert(this.store['get'], 'Unsupported getter in suggestion storage');
     const value = await this.store['get']() || {};
-    if (!value.plans) {
+    if (!value.suggestions) {
       return;
     }
 
     const previousSuggestions = this.getCurrentSuggestions();
     if (await this.result.deserialize(value)) {
-      this._onPlansChanged();
+      this._onSuggestionsChanged();
       this._onMaybeSuggestionsChanged(previousSuggestions);
     }
   }
 
   getCurrentSuggestions(): Suggestion[] {
-    const suggestions = this.result.plans.filter(
+    const suggestions = this.result.suggestions.filter(
         suggestion => suggestion.plan.slots.length > 0);
 
-    // `showAll`: returns all plans that render into slots.
+    // `showAll`: returns all suggestions that render into slots.
     if (this.suggestFilter['showAll']) {
       return suggestions;
     }
@@ -110,21 +110,21 @@ export class PlanConsumer {
 
   dispose() {
     this.store.off('change', this.storeCallback);
-    this.plansChangeCallbacks = [];
     this.suggestionsChangeCallbacks = [];
+    this.visibleSuggestionsChangeCallbacks = [];
     if (this.suggestionComposer) {
       this.suggestionComposer.clear();
     }
   }
 
-  _onPlansChanged() {
-    this.plansChangeCallbacks.forEach(callback => callback({plans: this.result.plans}));
+  _onSuggestionsChanged() {
+    this.suggestionsChangeCallbacks.forEach(callback => callback({suggestions: this.result.suggestions}));
   }
 
   _onMaybeSuggestionsChanged(previousSuggestions) {
     const suggestions = this.getCurrentSuggestions();
     if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
-      this.suggestionsChangeCallbacks.forEach(callback => callback(suggestions));
+      this.visibleSuggestionsChangeCallbacks.forEach(callback => callback(suggestions));
     }
   }
 
@@ -132,7 +132,7 @@ export class PlanConsumer {
     const composer = this.arc.pec.slotComposer;
     if (composer && composer.findContextById('rootslotid-suggestions')) {
       this.suggestionComposer = new SuggestionComposer(composer);
-      this.registerSuggestChangedCallback(
+      this.registerVisibleSuggestionsChangedCallback(
           (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
     }
   }

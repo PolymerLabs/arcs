@@ -174,8 +174,8 @@
 
     function createPlanificator(userid, arckey) {
       const planificator = new Arcs.Planificator(arcs[arckey].arc, {userid, mode: 'producer'});
-      planificator.registerPlansChangedCallback(current => showPlansForArc(arckey, current.plans.length));
-      planificator.registerSuggestChangedCallback(suggestions => showSuggestionsForArc(arckey, suggestions.length));
+      planificator.registerSuggestionsChangedCallback(current => showPlansForArc(arckey, current.plans.length));
+      planificator.registerVisibleSuggestionsChangedCallback(suggestions => showSuggestionsForArc(arckey, suggestions.length));
       planificator._requestPlanning();
       return planificator;
     }
