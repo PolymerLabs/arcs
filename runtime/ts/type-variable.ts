@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type} from './type.js';
+import {Type, VariableType} from './type.js';
 import {assert} from '../../platform/assert-web.js';
 import {Schema} from './schema.js';
 
@@ -99,7 +99,7 @@ export class TypeVariable {
     if (!constraint.isEntity || !type.isEntity) {
       throw new Error(`constraint checking not implemented for ${this} and ${type}`);
     }
-    return type.entitySchema.isMoreSpecificThan(constraint.entitySchema);
+    return type.getEntitySchema().isMoreSpecificThan(constraint.getEntitySchema());
   }
 
   get resolution() {
@@ -118,7 +118,7 @@ export class TypeVariable {
 
     let probe = value;
     while (probe) {
-      if (!probe.isVariable) {
+      if (!(probe instanceof VariableType)) {
         break;
       }
       if (probe.variable === this) {
@@ -135,7 +135,7 @@ export class TypeVariable {
   get canWriteSuperset() {
     if (this._resolution) {
       assert(!this._canWriteSuperset);
-      if (this._resolution.isVariable) {
+      if (this._resolution instanceof VariableType) {
         return this._resolution.variable.canWriteSuperset;
       }
       return null;
@@ -151,7 +151,7 @@ export class TypeVariable {
   get canReadSubset() {
     if (this._resolution) {
       assert(!this._canReadSubset);
-      if (this._resolution.isVariable) {
+      if (this._resolution instanceof VariableType) {
         return this._resolution.variable.canReadSubset;
       }
       return null;

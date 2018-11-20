@@ -10,6 +10,7 @@
 'use strict';
 
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
+import {Type} from '../ts-build/type.js';
 
 export class OuterPortAttachment {
   constructor(arc, devtoolsChannel) {
@@ -217,13 +218,14 @@ export class OuterPortAttachment {
   // TODO: This is fragile and incomplete. Change this into sending entire
   //       handle object once and refer back to it via its ID in the tool.
   _describeHandleType(handleType) {
+    if (handleType instanceof Type) {
+      switch (handleType.tag) {
+        case 'Collection': return `[${this._describeHandleType(handleType.data)}]`;
+        case 'Entity': return this._describeHandleType(handleType.data);
+        default: return `${handleType.tag} ${this._describeHandleType(handleType.data)}`;
+      }
+    }
     switch (handleType.constructor.name) {
-      case 'Type':
-        switch (handleType.tag) {
-          case 'Collection': return `[${this._describeHandleType(handleType.data)}]`;
-          case 'Entity': return this._describeHandleType(handleType.data);
-          default: return `${handleType.tag} ${this._describeHandleType(handleType.data)}`;
-        }
       case 'Schema':
         return handleType.name;
       case 'Shape':

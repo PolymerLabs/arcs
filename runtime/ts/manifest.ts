@@ -185,7 +185,6 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async createStore(type, name, id, tags, storageKey) {
-    assert(!type.hasVariableReference, `stores can't have variable references`);
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store.version !== null);
     store.name = name;
@@ -904,7 +903,6 @@ ${e.message}
                 connectionItem.target.location,
                 `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
-          assert(!connection.type.hasVariableReference);
           assert(connection.type.isInterface);
           if (!connection.type.interfaceShape.restrictType(hostedParticle)) {
             throw new ManifestError(
