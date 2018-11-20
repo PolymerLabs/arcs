@@ -156,9 +156,11 @@ export class FirebaseStorage extends StorageBase {
     return new FirebaseKey(s);
   }
 
-  // Exposed for SyntheticStorage to share this.apps.
-  // TODO: refactor storage so synthesized views can just use the standard API
-  attach(keyString: string) : {fbKey: FirebaseKey, reference: firebase.database.Reference} {
+  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
+  // but this _join creates the storage location.
+  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
+    assert(!type.isVariable);
+    assert(!type.isTypeContainer() || !type.getContainedType().isVariable);
     const fbKey = new FirebaseKey(keyString);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (fbKey.databaseUrl == undefined || fbKey.apiKey == undefined) {
@@ -185,16 +187,6 @@ export class FirebaseStorage extends StorageBase {
     }
 
     const reference = firebase.database(this.apps[fbKey.projectId].app).ref(fbKey.location);
-    return {fbKey, reference};
-  }
-
-  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
-  // but this _join creates the storage location.
-  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
-    assert(!type.isVariable);
-    assert(!type.isTypeContainer() || !type.getContainedType().isVariable);
-
-    const {fbKey, reference} = this.attach(keyString);
     const currentSnapshot = await getSnapshot(reference);
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;

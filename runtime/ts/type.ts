@@ -37,7 +37,8 @@ export interface Type {
   isInterface: boolean;
   isSlot: boolean;
   isReference: boolean;
-  isSynthesized: boolean;
+  isArcInfo: boolean;
+  isHandleInfo: boolean;
 
   entitySchema: Schema;
   variable: TypeVariable;
@@ -50,11 +51,11 @@ export interface Type {
 }
 
 export class Type {
-  tag: 'Entity' | 'Variable' | 'Collection' | 'BigCollection' | 'Relation' | 'Interface' | 'Slot' | 'Reference';
+  tag: 'Entity' | 'Variable' | 'Collection' | 'BigCollection' | 'Relation' |
+       'Interface' | 'Slot' | 'Reference' | 'ArcInfo' | 'HandleInfo';
   data: Schema | TypeVariable | Type | [Type] | Shape | SlotInfo;
   constructor(tag, data) {
     assert(typeof tag === 'string');
-    assert(data);
     if (tag === 'Entity') {
       assert(data instanceof Schema);
     }
@@ -106,9 +107,12 @@ export class Type {
     return new Type('Reference', reference);
   }
 
-  // Provided only to get a Type object for SyntheticStorage; do not use otherwise.
-  static newSynthesized() {
-    return new Type('Synthesized', 1);
+  static newArcInfo() {
+    return new Type('ArcInfo', null);
+  }
+
+  static newHandleInfo() {
+    return new Type('HandleInfo', null);
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -519,8 +523,8 @@ export class Type {
     if (this.isReference) {
       return 'Reference<' + this.referenceReferredType.toString() + '>';
     }
-    if (this.isSynthesized) {
-      return 'Synthesized';
+    if (this.isArcInfo || this.isHandleInfo) {
+      return this.tag;
     }
     throw new Error(`Add support to serializing type: ${JSON.stringify(this)}`);
   }
@@ -600,9 +604,8 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Slot');
 addType('Reference', 'referredType');
-
-// Special case for SyntheticStorage, not a real Type in the usual sense.
-addType('Synthesized');
+addType('ArcInfo');
+addType('HandleInfo');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
