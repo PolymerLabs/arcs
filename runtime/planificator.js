@@ -328,6 +328,10 @@ export class Planificator {
     this._dataChangesQueue.addChange();
   }
 
+  loadSuggestions() {
+    this._requestPlanning();
+  }
+
   _requestPlanning(options) {
     if (this.isConsumer) {
       // Consumer-mode plannificator only consumes suggestions that are

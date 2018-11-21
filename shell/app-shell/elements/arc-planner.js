@@ -48,7 +48,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       }
       if (!planificator) {
         planificator = await this._createPlanificator(arc, userid);
-        planificator.loadSuggestions && await planificator.loadSuggestions();
+        await planificator.loadSuggestions();
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
