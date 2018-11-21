@@ -15,7 +15,7 @@ import {assert} from '../../../../platform/assert-web.js';
 import {Particle} from '../../../../runtime/ts-build/particle.js';
 import {DomParticle} from '../../../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
-import {newClientReference} from '../../../../runtime/ts-build/reference.js';
+import {Reference} from '../../../../runtime/ts-build/reference.js';
 import {TransformationDomParticle} from '../../../../runtime/transformation-dom-particle.js';
 import {JsonldToManifest} from '../../../../runtime/ts-build/converters/jsonldToManifest.js';
 
@@ -115,7 +115,7 @@ export class Loader {
 
   unwrapParticle(particleWrapper) {
     assert(this._pec);
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: newClientReference(this._pec), html});
+    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: Reference.newClientReference(this._pec), html});
   }
 
 }
