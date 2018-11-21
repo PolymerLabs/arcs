@@ -13,10 +13,9 @@ const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
-const beHeadless = true;
-
-const HEADLESS = beHeadless ? '--headless' : '';
-const root = `shell`;
+const headless = true;
+const chromeArgs = headless ? ['--headless'] : [];
+const root = `shell_0_6_0`;
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
@@ -67,10 +66,8 @@ exports.config = {
       maxInstances: 5,
       browserName: 'chrome',
       chromeOptions: {
-        args: [
-          // debug hint: comment this out to see the system running
-          HEADLESS
-        ]
+        // debug hint: modify at top of file
+        args: chromeArgs
       }
     }
   ],

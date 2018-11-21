@@ -19,7 +19,7 @@ const receiveEntity = async entity =>
   browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 
 describe('pipes', function() {
-  it('searches', async function() {
+  it.skip('searches', async function() {
     const findRestaurants = `[title^="Find restaurants"]`;
     await openNewArc(this.test.fullTitle());
     // TODO(sjmiles): wait for context to prepare, need a signal instead
@@ -27,7 +27,7 @@ describe('pipes', function() {
     await receiveEntity({type: 'search', query: 'restaurants'});
     await waitFor(findRestaurants);
   });
-  it('receives', async function() {
+  it.skip('receives', async function() {
     const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
     await openNewArc(this.test.fullTitle());
     // TODO(sjmiles): wait for context to prepare, need a signal instead
@@ -39,11 +39,11 @@ describe('pipes', function() {
 });
 
 describe('demo', function() {
-  it('restaurants', async function() {
+  it.skip('restaurants', async function() {
     const search = `restaurants`;
     const findRestaurants = `[title^="Find restaurants"]`;
     const restaurantItem = `#webtest-title`;
-    const reservation = `[title*="ou are free"]`;
+    const reservation = `[title*="ou are busy"]`;
     const calendarAction = `[particle-host="Calendar::action"]`;
     await openNewArc(this.test.fullTitle());
     await searchFor(search);
@@ -52,7 +52,7 @@ describe('demo', function() {
     await click(reservation);
     await waitFor(calendarAction);
   });
-  it('gifts', async function() {
+  it.skip('gifts', async function() {
     const search = `products`;
     const showProducts = `[title^="Show products"]`;
     const items = `[particle-host="ItemMultiplexer::item"]`;
