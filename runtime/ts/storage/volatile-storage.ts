@@ -22,7 +22,7 @@ export function resetVolatileStorageForTesting() {
 
 class VolatileKey extends KeyBase {
   arcId: string;
-  location: string;
+
   constructor(key: string) {
     super();
     let parts = key.split('://');

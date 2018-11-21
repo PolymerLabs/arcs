@@ -144,8 +144,8 @@ export class Planificator {
     if (protocol) {
       storageKey.protocol = protocol;
     }
-    storageKey['location'] = storageKey['location']
-        .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
+    storageKey.location = storageKey.location.replace(
+        /\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
     return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
@@ -154,8 +154,8 @@ export class Planificator {
   private static async _initSearchStore(arc: Arc, {userid}): Promise<StorageProviderBase> {
     const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);
-    storageKey['location'] = storageKey['location']
-        .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
+    storageKey.location = storageKey.location.replace(
+        /\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);

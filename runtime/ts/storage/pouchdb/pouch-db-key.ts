@@ -32,7 +32,6 @@ import {KeyBase} from '../key-base.js';
 export class PouchDbKey extends KeyBase {
   readonly dbLocation: string;
   readonly dbName: string;
-  location: string;
 
   constructor(key: string) {
     super();
