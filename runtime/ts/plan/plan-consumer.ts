@@ -15,6 +15,8 @@ import {PlanningResult} from './planning-result.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
+import {DevtoolsConnection} from '../../debug/devtools-connection.js';
+import {StrategyExplorerAdapter} from '../../debug/strategy-explorer-adapter.js';
 
 type Callback = ({}) => void;
 
@@ -70,6 +72,10 @@ export class PlanConsumer {
     if (await this.result.deserialize(value)) {
       this._onSuggestionsChanged();
       this._onMaybeSuggestionsChanged(previousSuggestions);
+
+      if (this.result.generations && DevtoolsConnection.isConnected) {
+        StrategyExplorerAdapter.processGenerations(this.result.generations, DevtoolsConnection.get());
+      }
     }
   }
 

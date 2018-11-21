@@ -25,6 +25,7 @@ import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './ts-build/recipe/recipe-util.js';
 import {Handle} from './ts-build/recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
+import {PlanningResult} from './ts-build/plan/planning-result.js';
 
 class RelevantContextRecipes extends Strategy {
   constructor(context, modality) {
@@ -101,7 +102,8 @@ export class RecipeIndex {
 
       if (DevtoolsConnection.isConnected) {
         StrategyExplorerAdapter.processGenerations(
-            generations, DevtoolsConnection.get(), {label: 'Index', keep: true});
+            PlanningResult.formatSerializableGenerations(generations), 
+            DevtoolsConnection.get(), {label: 'Index', keep: true});
       }
 
       const population = strategizer.population;

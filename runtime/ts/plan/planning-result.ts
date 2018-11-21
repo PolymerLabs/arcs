@@ -18,7 +18,7 @@ export class PlanningResult {
   arc: Arc;
   _suggestions: Suggestion[];
   lastUpdated: Date;
-  generations: {}[];
+  _generations: {}[];
   contextual = true;
 
   constructor(arc, result = {}) {
@@ -33,6 +33,26 @@ export class PlanningResult {
   set suggestions(suggestions) {
     assert(Boolean(suggestions), `Cannot set uninitialized suggestions`);
     this._suggestions = suggestions;
+  }
+  get generations(): {}[] { return this._generations; }
+  set generations(generations: {}[]) {
+    this._generations = PlanningResult.formatSerializableGenerations(generations);
+  }
+
+  static formatSerializableGenerations(generations) {
+    for (const g of generations) {
+      for (const gg of g['generated']) {
+        if (gg.result) {
+          gg.resultString = gg.result.toString({showUnresolved: true, showInvalid: false, details: ''});
+          gg.isResolved = gg.result.isResolved();
+          delete gg.result;
+        }
+        for (const d of gg.derivation) {
+          d.strategy = (typeof d.strategy === 'string') ? d.strategy : d.strategy.constructor.name;
+        }
+      }
+    }
+    return generations;
   }
 
   set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}) {
@@ -74,11 +94,12 @@ export class PlanningResult {
            oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  async deserialize({suggestions, lastUpdated}) {
+  async deserialize({suggestions, generations, lastUpdated}) {
     const recipeResolver = new RecipeResolver(this.arc);
     return this.set({
       suggestions: (await Promise.all(suggestions.map(
           suggestion => Suggestion.deserialize(suggestion, this.arc, recipeResolver)))).filter(s => s),
+      generations: JSON.parse(generations || '[]'),
       lastUpdated: new Date(lastUpdated),
       contextual: suggestions.contextual
     });
@@ -87,6 +108,7 @@ export class PlanningResult {
   serialize() {
     return {
       suggestions: this.suggestions.map(suggestion => suggestion.serialize()),
+      generations: JSON.stringify(this.generations),
       lastUpdated: this.lastUpdated.toString(),
       contextual: this.contextual
     };

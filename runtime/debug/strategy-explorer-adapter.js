@@ -22,9 +22,9 @@ export class StrategyExplorerAdapter {
     const idMap = new Map(); // Recipe -> ID
     let lastID = 0;
     const assignIdAndCopy = recipe => {
-      idMap.set(recipe, lastID);
-      const {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
-      return {result, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
+      idMap.set(JSON.stringify(recipe), lastID);
+      const {resultString, isResolved, score, derivation, description, hash, valid, active, irrelevant} = recipe;
+      return {resultString, isResolved, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
     };
     generations = generations.map(pop => ({
       record: pop.record,
@@ -44,14 +44,14 @@ export class StrategyExplorerAdapter {
           let parent;
           let strategy;
           if (derivItem.parent) {
-            parent = idMap.get(derivItem.parent);
+            parent = idMap.get(JSON.stringify(derivItem.parent));
           }
           if (derivItem.strategy) {
-            strategy = derivItem.strategy.constructor.name;
+            strategy = derivItem.strategy;
           }
           return {parent, strategy};
         });
-        item.resolved = item.result.isResolved();
+        item.resolved = item.isResolved;
         if (item.resolved) {
           record.resolvedDerivations++;
           const strategy = item.derivation[0].strategy;
@@ -61,7 +61,7 @@ export class StrategyExplorerAdapter {
           record.resolvedDerivationsByStrategy[strategy]++;
         }
         const options = {showUnresolved: true, showInvalid: false, details: ''};
-        item.result = item.result.toString(options);
+        item.result = item.resultString;
       });
       const populationMap = {};
       population.forEach(item => {
