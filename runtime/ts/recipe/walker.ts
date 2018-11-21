@@ -5,6 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {ConnectionConstraint} from './connection-constraint.js';
+import {Handle} from './handle.js';
+import {HandleConnection} from './handle-connection.js';
+import {Particle} from './particle.js';
+import {Recipe} from './recipe.js';
+import {Slot} from './slot.js';
+import {SlotConnection} from './slot-connection.js';
 import {WalkerBase, WalkerTactic} from './walker-base.js';
 
 export class Walker extends WalkerBase {
@@ -12,9 +19,27 @@ export class Walker extends WalkerBase {
   static Permuted: WalkerTactic;
   // tslint:disable-next-line: variable-name
   static Independent: WalkerTactic;
+
+  // Optional lifecycle events
+
+  // tslint:disable-next-line: no-any
+  onHandle?(recipe: Recipe, handle: Handle): any;
+  // tslint:disable-next-line: no-any
+  onHandleConnection?(recipe: Recipe, handleConnection: HandleConnection): any;
+  // tslint:disable-next-line: no-any
+  onParticle?(recipe: Recipe, particle: Particle): any;
+  // tslint:disable-next-line: no-any
+  onRecipe?(recipe: Recipe, result): any;
+  // tslint:disable-next-line: no-any
+  onSlotConnection?(recipe: Recipe, slotConnection: SlotConnection): any;
+  // tslint:disable-next-line: no-any
+  onSlot?(recipe: Recipe, slot: Slot): any;
+  // tslint:disable-next-line: no-any
+  onObligation?(recipe: Recipe, obligation: ConnectionConstraint): any;
+
   onResult(result) {
     super.onResult(result);
-    const recipe = result.result;
+    const recipe: Recipe = result.result;
     const updateList = [];
 
     // update phase - walk through recipe and call onRecipe,

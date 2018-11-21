@@ -145,7 +145,7 @@ export class HandleConnection {
     return true;
   }
 
-  isResolved(options) {
+  isResolved(options?) {
     assert(Object.isFrozen(this));
 
     if (this.isOptional) {
