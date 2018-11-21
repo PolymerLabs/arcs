@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase} from './storage-provider-base';
+import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base';
 
 // keep in sync with shell/source/ArcsLib.js
 import firebase from 'firebase/app';
@@ -417,10 +417,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
       const version = this.version;
       this.ensureBackingStore().then(async store => {
         const data = await store.get(this.value.id);
-        this._fire('change', {data, version});
+        this._fire('change', new ChangeEvent({data, version}));
       });
-      } else {
-      this._fire('change', {data: data.value || null, version: this.version});
+    } else {
+      this._fire('change', new ChangeEvent({data: data.value || null, version: this.version}));
     }
   }
 
@@ -523,7 +523,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
     await this._persistChanges();
 
-    this._fire('change', {data: value, version, originatorId, barrier});
+    this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
 
   async clear(originatorId=null, barrier=null) {
@@ -544,11 +544,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this.localModified = true;
     this.resolveInitialized();
     // TODO: do we need to fire an event here?
-    if (this.referenceMode) {
-      this._fire('change', {data, version: this.version, originatorId: null, barrier: null});
-    } else {
-      this._fire('change', {data: this.value, version: this.version, originatorId: null, barrier: null});
-    }
+    this._fire('change', new ChangeEvent({data: this.referenceMode ? data : this.value, version: this.version}));
     await this._persistChanges();
   }
 
@@ -788,11 +784,11 @@ class FirebaseCollection extends FirebaseStorageProvider {
         values.forEach(value => valueMap[value.id] = value);
         const addPrimitives = add.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
         const removePrimitives = remove.map(({value, keys, effective}) => ({value: valueMap[value.id], keys, effective}));
-        this._fire('change', {originatorId: null, version: this.version, add: addPrimitives, remove: removePrimitives});
+        this._fire('change', new ChangeEvent({add: addPrimitives, remove: removePrimitives, version: this.version}));
       });
 
     } else {
-      this._fire('change', {originatorId: null, version: this.version, add, remove});
+      this._fire('change', new ChangeEvent({add, remove, version: this.version}));
     }
   }
 
@@ -837,7 +833,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     // 2. Notify listeners.
     items = items.filter(item => item.value);
-    this._fire('change', {remove: items, version: this.version, originatorId});
+    this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     items.forEach(item => {
@@ -872,7 +868,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this.version++;
 
     // 2. Notify listeners.
-    this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId});
+    this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {
@@ -905,7 +901,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     }
 
     // 2. Notify listeners.
-    this._fire('change', {add: [{value, keys, effective}], version: this.version, originatorId});
+    this._fire('change', new ChangeEvent({add: [{value, keys, effective}], version: this.version, originatorId}));
 
     // 3. Add this modification to the set of local changes that need to be persisted.
     if (!this.localChanges.has(id)) {

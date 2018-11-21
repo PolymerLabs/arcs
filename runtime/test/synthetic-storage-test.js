@@ -152,8 +152,8 @@ describe('synthetic storage', function() {
         use Store0 #bars as handle0`.trim()});
 
     const e = await eventPromise;
-    assert.deepEqual(e.add.map(h => flatten(h)), ['pouchdb://aa.pouchdb.org/bb [Bar {}] <bars>']);
-    assert.deepEqual(e.remove.map(h => flatten(h)), ['firebase://xx.firebaseio.com/yy [Foo {}] <>']);
+    assert.deepEqual(e.add.map(x => flatten(x.value)), ['pouchdb://aa.pouchdb.org/bb [Bar {}] <bars>']);
+    assert.deepEqual(e.remove.map(x => flatten(x.value)), ['firebase://xx.firebaseio.com/yy [Foo {}] <>']);
 
     list = await synth.toList();
     assert.deepEqual(list.map(h => flatten(h)), ['pouchdb://aa.pouchdb.org/bb [Bar {}] <bars>']);
