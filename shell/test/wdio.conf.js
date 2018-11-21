@@ -15,7 +15,7 @@ const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio
 
 const headless = true;
 const chromeArgs = headless ? ['--headless'] : [];
-const root = `shell_0_6_0`;
+const root = `shell`;
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
