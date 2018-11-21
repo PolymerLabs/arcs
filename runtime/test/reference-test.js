@@ -15,7 +15,7 @@ import {ParticleExecutionContext} from '../ts-build/particle-execution-context.j
 import {StubLoader} from '../testing/stub-loader.js';
 import {Type} from '../ts-build/type.js';
 import {Arc} from '../ts-build/arc.js';
-import {assertSingletonWillChangeTo} from '../ts-build/testing/test-util.js';
+import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
 describe('references', function() {
   it('can parse & validate a recipe containing references', async () => {
@@ -104,7 +104,7 @@ describe('references', function() {
 
     assert.isTrue(arc._stores[0]._type.isReference);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'];
+    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
     const backingStore = await volatileEngine.baseStorageFor(arc._stores[1]._type, volatileEngine.baseStorageKey(arc._stores[1]._type));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
@@ -231,7 +231,7 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'];
+    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
     const baseStoreType = Type.newEntity(manifest.schemas.Result);
     const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
@@ -416,7 +416,7 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'];
+    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
     const baseStoreType = Type.newEntity(manifest.schemas.Result);
     const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);

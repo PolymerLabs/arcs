@@ -90,8 +90,8 @@ class UserPlanner {
   }
   async createPlanificator(userid, key, arc) {
     const planificator = await Planificator.create(arc, {userid}); /*, protocol: 'pouchdb' or 'volatile' */
-    planificator.registerPlansChangedCallback(current => this.showPlansForArc(key, current.plans));
-    // planificator.registerSuggestChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
+    planificator.registerSuggestionsChangedCallback(current => this.showPlansForArc(key, current.plans));
+    // planificator.registerVisibleSuggestionsChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
     return planificator;
   }
   showPlansForArc(key, metaplans) {

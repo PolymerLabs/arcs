@@ -16,21 +16,31 @@ import {Type} from '../type.js';
 import {KeyBase} from './key-base.js';
 
 export class StorageProviderFactory {
-  _storageInstances: {[index: string]: StorageBase};
+  private _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
 
   constructor(private readonly arcId: Id) {
-    // TODO: Pass this factory into storage objects instead of linking them directly together.
-    // This needs changes to the StorageBase API to facilitate the FirebaseStorage.open functionality.
-    const volatile = new VolatileStorage(arcId);
-    const firebase = new FirebaseStorage(arcId);
-    const pouchdb = new PouchDbStorage(arcId);
-    const synthetic = new SyntheticStorage(arcId, firebase);
-    this._storageInstances = {volatile, firebase, synthetic, pouchdb};
+    this._storageInstances = {
+      volatile: {storage: new VolatileStorage(arcId), isPersistent: false},
+      firebase: {storage: new FirebaseStorage(arcId), isPersistent: true},
+      pouchdb: {storage: new PouchDbStorage(arcId), isPersistent: true},
+      synthetic: {storage: new SyntheticStorage(arcId, this), isPersistent: false},
+    };
+  }
+
+  private getInstance(key) {
+    const instance = this._storageInstances[key.split(':')[0]];
+    if (!instance) {
+      throw new Error(`unknown storage protocol: ${key}`);
+    }
+    return instance;
   }
 
   _storageForKey(key) {
-    const protocol = key.split(':')[0];
-    return this._storageInstances[protocol];
+    return this.getInstance(key).storage;
+  }
+
+  isPersistent(key) {
+    return this.getInstance(key).isPersistent;
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase> {
@@ -61,6 +71,6 @@ export class StorageProviderFactory {
 
   // For testing
   shutdown() {
-    Object.values(this._storageInstances).map(s => s.shutdown());
+    Object.values(this._storageInstances).map(item => item.storage.shutdown());
   }
 }

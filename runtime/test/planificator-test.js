@@ -294,50 +294,50 @@ describe('Planificator', function() {
   it('triggers plan and state changed callbacks', async () => {
     const planificator = await createPlanificator();
     let stateChanged = 0;
-    let planChanged = 0;
-    let suggestChanged = 0;
+    let suggestionsChanged = 0;
+    let visibleSuggestionsChanged = 0;
     planificator.registerStateChangedCallback(() => { ++stateChanged; });
-    planificator.registerPlansChangedCallback(() => { ++planChanged; });
-    planificator.registerSuggestChangedCallback(() => { ++suggestChanged; });
+    planificator.registerSuggestionsChangedCallback(() => { ++suggestionsChanged; });
+    planificator.registerVisibleSuggestionsChangedCallback(() => { ++visibleSuggestionsChanged; });
 
     // Request replanning - state changes, plans do not.
     planificator._requestPlanning();
     assert.equal(1, stateChanged);
-    assert.equal(0, planChanged);
-    assert.equal(0, suggestChanged);
+    assert.equal(0, suggestionsChanged);
+    assert.equal(0, visibleSuggestionsChanged);
 
     // Planning is done and plans are set, both - state and plans change.
     const plan = planificator.plannerReturnFakeResults([1])[0].plan;
     await planificator.allPlanningDone();
     assert.equal(2, stateChanged);
-    assert.equal(1, planChanged);
-    assert.equal(1, suggestChanged);
+    assert.equal(1, suggestionsChanged);
+    assert.equal(1, visibleSuggestionsChanged);
 
     // Plan is being instantiated, both - state and plans change.
     await planificator._arc.instantiate(plan);
     assert.equal(3, stateChanged);
-    assert.equal(2, planChanged);
-    assert.equal(2, suggestChanged);
+    assert.equal(2, suggestionsChanged);
+    assert.equal(2, visibleSuggestionsChanged);
 
     // Planning is done and plans are set, both - state and plans change.
     planificator.plannerReturnFakeResults([2]);
     await planificator.allPlanningDone();
     assert.equal(4, stateChanged);
-    assert.equal(3, planChanged);
-    assert.equal(3, suggestChanged);
+    assert.equal(3, suggestionsChanged);
+    assert.equal(3, visibleSuggestionsChanged);
 
     // Request replanning - state changes, plans do not.
     planificator._requestPlanning();
     assert.equal(5, stateChanged);
-    assert.equal(3, planChanged);
-    assert.equal(3, suggestChanged);
+    assert.equal(3, suggestionsChanged);
+    assert.equal(3, visibleSuggestionsChanged);
 
     // Same plan is returned - state chagnes, plans do not.
     planificator.plannerReturnFakeResults([2]);
     await planificator.allPlanningDone();
     assert.equal(6, stateChanged);
-    assert.equal(3, planChanged);
-    assert.equal(3, suggestChanged);
+    assert.equal(3, suggestionsChanged);
+    assert.equal(3, visibleSuggestionsChanged);
 
     // Additional plan returned, but it doesn't have any slots, so not included in suggestions -
     // state and plans change, but suggestions do not.
@@ -345,8 +345,8 @@ describe('Planificator', function() {
     planificator.plannerReturnFakeResults([2, {hash: 3, options: {invisible: true}}]);
     await planificator.allPlanningDone();
     assert.equal(8, stateChanged);
-    assert.equal(4, planChanged);
-    assert.equal(3, suggestChanged);
+    assert.equal(4, suggestionsChanged);
+    assert.equal(3, visibleSuggestionsChanged);
   });
   it('retrieves and filters suggestions', async () => {
     const planificator = await createPlanificator();
@@ -412,42 +412,42 @@ describe('Planificator', function() {
   });
   it('sets or appends current', async () => {
     const planificator = await createPlanificator();
-    let planChanged = 0;
-    planificator.registerPlansChangedCallback(() => { ++planChanged; });
+    let suggestionsChanged = 0;
+    planificator.registerSuggestionsChangedCallback(() => { ++suggestionsChanged; });
 
     planificator._setCurrent({plans: [], generations: []});
     assert.isEmpty(planificator._current.plans);
-    assert.equal(0, planChanged);
+    assert.equal(0, suggestionsChanged);
 
     // Sets current plans
     planificator._setCurrent({plans: [newPlan('1'), newPlan('2')], generations: []});
     assert.deepEqual(['1', '2'], planificator._current.plans.map(p => p.hash));
-    assert.equal(1, planChanged);
+    assert.equal(1, suggestionsChanged);
 
     // Overrides current plans
     planificator._setCurrent({plans: [newPlan('3'), newPlan('4')], generations: []});
     assert.deepEqual(['3', '4'], planificator._current.plans.map(p => p.hash));
-    assert.equal(2, planChanged);
+    assert.equal(2, suggestionsChanged);
 
     // Appends to current plans.
     planificator._setCurrent({plans: [newPlan('3'), newPlan('5')], generations: []}, true);
     assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
-    assert.equal(3, planChanged);
+    assert.equal(3, suggestionsChanged);
 
     // Appends already existing plans.
     planificator._setCurrent({plans: [newPlan('4'), newPlan('5')], generations: []}, true);
     assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
-    assert.equal(3, planChanged);
+    assert.equal(3, suggestionsChanged);
 
     // Appends empty to current plans.
     planificator._setCurrent({plans: [], generations: []}, true);
     assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
-    assert.equal(3, planChanged);
+    assert.equal(3, suggestionsChanged);
 
     // Override with empty plans.
     planificator._setCurrent({plans: [], generations: []});
     assert.isEmpty(planificator._current.plans);
-    assert.equal(4, planChanged);
+    assert.equal(4, suggestionsChanged);
   });
   it('cancels planning', async () => {
     const planificator = await createPlanificator();

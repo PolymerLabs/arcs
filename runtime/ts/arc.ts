@@ -356,7 +356,7 @@ ${this.activeRecipe.toString()}`;
     return {base: this.id, component: () => this.nextLocalID++};
   }
 
-  get _stores() {
+  get _stores(): StorageProviderBase[] {
     return [...this.storesById.values()];
   }
 

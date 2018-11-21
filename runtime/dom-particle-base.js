@@ -106,6 +106,8 @@ export class DomParticleBase extends Particle {
    * Remove entities from named handle.
    */
   async clearHandle(handleName) {
+    await this.handles.get(handleName).clear();
+    /*
     const handle = this.handles.get(handleName);
     if (handle.clear) {
       handle.clear();
@@ -115,6 +117,7 @@ export class DomParticleBase extends Particle {
         return Promise.all(entities.map(entity => handle.remove(entity)));
       }
     }
+    */
   }
   /** @method mergeEntitiesToHandle(handleName, entityArray)
    * Merge entities from Array into named handle.

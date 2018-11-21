@@ -25,9 +25,9 @@ class TestPlanProducer extends PlanProducer {
     this.plannerPromise = null;
   }
 
-  async producePlans(options) {
+  async produceSuggestions(options) {
     ++this.produceCalledCount;
-    this.producePromises.push(super.producePlans(options));
+    this.producePromises.push(super.produceSuggestions(options));
   }
 
   _cancelPlanning() {
@@ -44,20 +44,20 @@ class TestPlanProducer extends PlanProducer {
   async runPlanner(options) {
     this.plannerRunOptions.push(options);
     return new Promise((resolve, reject) => {
-      const plans = this.plannerNextResults.shift();
-      if (plans) {
-        resolve(plans);
+      const suggestions = this.plannerNextResults.shift();
+      if (suggestions) {
+        resolve(suggestions);
       } else {
         assert(!this.plannerPromise);
         this.plannerPromise = resolve;
       }
-    }).then(plans => plans);
+    }).then(suggestions => suggestions);
   }
 
   get plannerRunCount() { return this.plannerRunOptions.length; }
 
   plannerReturnFakeResults(planInfos) {
-    const plans = [];
+    const suggestions = [];
     planInfos.forEach(info => {
       if (!info.hash) {
         info = {hash: info};
@@ -68,18 +68,18 @@ class TestPlanProducer extends PlanProducer {
       }
       plan.normalize();
       const suggestion = new Suggestion(plan, info.hash, info.rank || 0, this.arc);
-      plans.push(suggestion);
+      suggestions.push(suggestion);
     });
-    this.plannerReturnResults(plans);
-    return plans;
+    this.plannerReturnResults(suggestions);
+    return suggestions;
   }
 
-  plannerReturnResults(plans) {
+  plannerReturnResults(suggestions) {
     if (this.plannerPromise) {
-      this.plannerPromise(plans);
+      this.plannerPromise(suggestions);
       this.plannerPromise = null;
     } else {
-      this.plannerNextResults.push(plans);
+      this.plannerNextResults.push(suggestions);
     }
   }
 }
@@ -95,31 +95,31 @@ describe('plan producer', function() {
     const producer = new TestPlanProducer(helper.arc, store);
     return {helper, producer};
   }
-  it('produces plans', async () => {
+  it('produces suggestions', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
+    assert.lengthOf(producer.result.suggestions, 0);
 
-    await producer.producePlans();
-    assert.lengthOf(producer.result.plans, 0);
+    await producer.produceSuggestions();
+    assert.lengthOf(producer.result.suggestions, 0);
 
-    producer.plannerReturnFakeResults(helper.plans);
+    producer.plannerReturnFakeResults(helper.suggestions);
     await producer.allPlanningDone();
-    assert.lengthOf(producer.result.plans, 1);
+    assert.lengthOf(producer.result.suggestions, 1);
     assert.equal(producer.produceCalledCount, 1);
     assert.equal(producer.plannerRunCount, 1);
     assert.equal(producer.cancelCount, 0);
   });
   
-  it('throttles requests to produce plans', async () => {
+  it('throttles requests to produce suggestions', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
+    assert.lengthOf(producer.result.suggestions, 0);
 
     for (let i = 0; i < 10; ++i) {
-      producer.producePlans({test: i});
+      producer.produceSuggestions({test: i});
     }
 
-    producer.plannerReturnFakeResults(helper.plans);
-    producer.plannerReturnFakeResults(helper.plans);
+    producer.plannerReturnFakeResults(helper.suggestions);
+    producer.plannerReturnFakeResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.equal(producer.produceCalledCount, 10);
     assert.equal(producer.plannerRunCount, 2);
@@ -130,12 +130,12 @@ describe('plan producer', function() {
 
   it('cancels planning', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
-    assert.lengthOf(producer.result.plans, 0);
+    assert.lengthOf(producer.result.suggestions, 0);
 
-    producer.producePlans();
-    producer.producePlans({cancelOngoingPlanning: true});
+    producer.produceSuggestions();
+    producer.produceSuggestions({cancelOngoingPlanning: true});
 
-    producer.plannerReturnFakeResults(helper.plans);
+    producer.plannerReturnFakeResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.equal(producer.produceCalledCount, 2);
     assert.equal(producer.plannerRunCount, 2);
@@ -148,12 +148,12 @@ describe('plan producer - search', function() {
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
       super({}, {}, searchStore);
-      this.producePlansCalled = 0;
+      this.produceSuggestionsCalled = 0;
     }
     get arcKey() { return arcKey; }
 
-    producePlans(options) {
-      this.producePlansCalled++;
+    produceSuggestions(options) {
+      this.produceSuggestionsCalled++;
       this.options = options;
     }
     setNextSearch(search) {
@@ -167,7 +167,7 @@ describe('plan producer - search', function() {
     searchStore.get = () => searchStore.values;
     const producer = new TestSearchPlanProducer(searchStore);
     assert.isUndefined(producer.search);
-    assert.equal(producer.producePlansCalled, 0);
+    assert.equal(producer.produceSuggestionsCalled, 0);
     return producer;
   }
 
@@ -177,19 +177,19 @@ describe('plan producer - search', function() {
     // Search for non-contextual results.
     await producer.setNextSearch('*');
     assert.equal('*', producer.search);
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isFalse(producer.options.contextual);
     assert.isFalse(Boolean(producer.options.append));
 
     // Unchanged search term.
     await producer.setNextSearch('*');
     assert.equal('*', producer.search);
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
 
     // Requires contextual results only, no need to replan.
     await producer.setNextSearch('');
     assert.equal('', producer.search);
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
   });
 
   it('searches for term given contextual results', async () => {
@@ -199,7 +199,7 @@ describe('plan producer - search', function() {
     const search = 'foo';
     await producer.setNextSearch(search);
     assert.equal(search, producer.search);
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.equal(search, producer.options.search);
     assert.isFalse(producer.options.contextual);
     assert.isFalse(Boolean(producer.options.append));
@@ -213,7 +213,7 @@ describe('plan producer - search', function() {
     const search = 'foo';
     await producer.setNextSearch(search);
     assert.equal(search, producer.search);
-    assert.equal(producer.producePlansCalled, 1);
+    assert.equal(producer.produceSuggestionsCalled, 1);
     assert.equal(search, producer.options.search);
     assert.isTrue(producer.options.append);
     assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));

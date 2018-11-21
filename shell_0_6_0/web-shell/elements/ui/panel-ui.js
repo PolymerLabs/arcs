@@ -14,7 +14,8 @@ import IconStyle from '../../../components/icons.css.js';
 const template = Xen.Template.html`
   <style>
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
     }
     ${IconStyle}
     a {
@@ -71,29 +72,34 @@ const template = Xen.Template.html`
     [settings][toolbar][open] {
       transform: translate3d(calc(-200% - 7px), 0, 0);
     }
+    [contents] {
+      flex: 1;
+      overflow-y: var(--content-overflow);
+      overflow-x: hidden;
+    }
   </style>
   <div toolbars on-click="onToolbarsClick">
     <div main toolbar open$="{{mainToolbarOpen}}">
-      <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-      <input search placeholder="Search" value="{{search}}" on-focus="_onSearchFocus" on-input="_onSearchChange" on-blur="_onSearchBlur" on-dblclick="_onResetSearch">
-      <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
-      <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
-      <icon on-click="_onSettingsClick">settings</icon>
+      <a href="{{launcherHref}}" title="Go to Launcher" on-click="onNoBubble"><icon>apps</icon></a>
+      <input search placeholder="Search" value="{{search}}" on-focus="onSearchFocus" on-input="onSearchChange" on-blur="onSearchBlur" on-dblclick="onResetSearch">
+      <icon hidden="{{hideMic}}" on-click="onListen">mic</icon>
+      <icon hidden="{{hideClear}}" on-click="onClearSearch">highlight_off</icon>
+      <icon on-click="onSettingsClick">settings</icon>
     </div>
     <div search toolbar open$="{{searchToolbarOpen}}">
-      <icon on-click="_onMainClick">arrow_back</icon>
+      <icon on-click="onMainClick">arrow_back</icon>
     </div>
     <div settings toolbar open$="{{settingsToolbarOpen}}">
-      <icon on-click="_onMainClick">arrow_back</icon>
+      <icon on-click="onMainClick">arrow_back</icon>
       <span style="flex: 1;">Settings</span>
-      <avatar title="{{avatar_title}}" xen:style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
+      <avatar title="{{avatar_title}}" xen:style="{{avatar_style}}" on-click="onAvatarClick"></avatar>
     </div>
   </div>
   <div contents scrolltop="{{scrollTop:contentsScrollTop}}" on-click="onContentsClick">
     <div suggestions content open$="{{suggestionsContentOpen}}">
-      <slot on-plan-choose="_onChooseSuggestion"></slot>
+      <slot on-plan-choose="onChooseSuggestion"></slot>
     </div>
-    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
+    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare"></settings-panel>
   </div>
 `;
 
@@ -131,6 +137,10 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
       hideClear: micVsClear
     }];
   }
+  commitSearch(search) {
+    this.state = {search};
+    this.fire('search', search || '');
+  }
   onToolbarsClick(e) {
     e.stopPropagation();
     this.fire('open', true);
@@ -139,28 +149,27 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
     e.stopPropagation();
     this.fire('open', false);
   }
-  _onSearchChange(e) {
+  onSearchChange(e) {
     const search = e.target.value;
     // internal search property
     this.state = {search};
     // don't re-plan until typing has stopped for this length of time
-    this._debounce(`searchDebounce`, () => this._commitSearch(search), 300);
+    this._debounce(`searchDebounce`, () => this.commitSearch(search), 300);
   }
-  _onClearSearch(e) {
-    this._commitSearch('');
+  onClearSearch(e) {
+    this.commitSearch('');
   }
-  _onResetSearch(e) {
+  onResetSearch(e) {
     // Doubleclick on empty search box searches for '*'
     if (e.target.value === '') {
-      this._commitSearch('*');
+      this.commitSearch('*');
     }
   }
-  _onVoiceSearch(e, search) {
-    this._commitSearch(search);
+  onVoiceSearch(e, search) {
+    this.commitSearch(search);
   }
-  _commitSearch(search) {
-    this.state = {search};
-    //this._fire('search', search || '');
+  onNoBubble(e) {
+    e.stopPropagation();
   }
 }
 

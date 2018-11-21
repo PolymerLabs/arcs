@@ -22,22 +22,22 @@ export class SearchTokensToHandles extends Strategy {
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
-      let stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out == 0});
+      let stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
       let fate = 'use';
-      if (stores.length == 0) {
-        stores = arc._context.findStoreByType(handle.type, {tags: [`${token}`], subtype: counts.out == 0});
-        fate = counts.out == 0 ? 'map' : 'copy';
+      if (stores.length === 0) {
+        stores = arc._context.findStoreByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
+        fate = counts.out === 0 ? 'map' : 'copy';
       }
-      stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id == store.id));
+      stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id === store.id));
       return stores.map(store => { return {store, fate, token}; });
     };
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (!recipe.search || recipe.search.unresolvedTokens.length == 0) {
+        if (!recipe.search || recipe.search.unresolvedTokens.length === 0) {
           return;
         }
-        if (handle.isResolved() || handle.connections.length == 0) {
+        if (handle.isResolved() || handle.connections.length === 0) {
           return;
         }
 
@@ -45,7 +45,7 @@ export class SearchTokensToHandles extends Strategy {
         for (const token of recipe.search.unresolvedTokens) {
           possibleMatches.push(...findMatchingStores(token, handle));
         }
-        if (possibleMatches.length == 0) {
+        if (possibleMatches.length === 0) {
           return;
         }
         return possibleMatches.map(match => {

@@ -81,7 +81,7 @@ export class Strategizer {
       if (result.hash) {
         const existingResult = this.populationHash.get(result.hash);
         if (existingResult) {
-          if (result.derivation[0].parent == existingResult) {
+          if (result.derivation[0].parent === existingResult) {
             record.nullDerivations += 1;
             if (record.nullDerivationsByStrategy[strategy] == undefined) {
               record.nullDerivationsByStrategy[strategy] = 0;

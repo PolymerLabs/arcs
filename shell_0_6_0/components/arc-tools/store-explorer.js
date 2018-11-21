@@ -135,9 +135,11 @@ class StoreExplorer extends Xen.Base {
           data.description = store.description;
         }
         const moniker = store.id.split(':').pop();
+        const name = store.name || data.tags || moniker;
+        //const name = `${store.name || moniker}:${data.tags}`;
         if (!store.type || store.type.tag !== 'Interface') {
-          const label = data.name || `${store.type.toPrettyString()}`; // (type)`;
-          result.push({tags: data.tags, data: {[label]: data}, name: store.name || data.tags || moniker});
+          const label = `${data.name || store.type.toPrettyString()} [${data.tags}]`; // (type)`;
+          result.push({tags: data.tags, data: {[label]: data}, name});
         }
       }
     }

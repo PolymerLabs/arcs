@@ -7,15 +7,15 @@
 
 import {compareArrays, compareStrings, compareComparables, Comparable} from './util.js';
 import {assert} from '../../../platform/assert-web.js';
-import {Particle} from './particle.js';
+import {ParticleSpec} from '../particle-spec.js';
 import {Recipe} from './recipe.js';
 import {Handle} from './handle.js';
 import {HandleConnection, Direction} from './handle-connection.js';
 
 export class ParticleEndPoint {
-  particle: Particle;
+  particle: ParticleSpec;
   connection: string;
-  constructor(particle, connection) {
+  constructor(particle: ParticleSpec, connection: string) {
     this.particle = particle;
     this.connection = connection;
   }
@@ -43,7 +43,7 @@ export class InstanceEndPoint {
   recipe: Recipe;
   instance: Comparable;
   connection: string;
-  constructor(instance, connection) {
+  constructor(instance, connection: string) {
     assert(instance);
     this.recipe = instance.recipe;
     this.instance = instance;
@@ -71,7 +71,8 @@ export class InstanceEndPoint {
 
 export class HandleEndPoint {
   readonly handle: Handle;
-  constructor(handle) {
+
+  constructor(handle: Handle) {
     this.handle = handle;
   }
 
@@ -92,7 +93,8 @@ export class HandleEndPoint {
 
 export class TagEndPoint {
   readonly tags: string[];
-  constructor(tags) {
+
+  constructor(tags: string[]) {
     this.tags = tags;
   }
 
@@ -118,7 +120,7 @@ export class ConnectionConstraint {
   to: EndPoint;
   direction: Direction;
   type: 'constraint' | 'obligation';
-  constructor(fromConnection, toConnection, direction, type) {
+  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);
     this.from = fromConnection;

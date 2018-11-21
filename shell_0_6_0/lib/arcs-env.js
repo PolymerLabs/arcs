@@ -2,6 +2,7 @@
 import {RecipeResolver} from '../../runtime/ts-build/recipe/recipe-resolver.js';
 
 const log = console.log.bind(console);
+const warn = console.warn.bind(console);
 
 class ArcsEnv {
   constructor(rootPath, loaderKind) {
@@ -41,18 +42,19 @@ class ArcsEnv {
     return ArcsEnv.Manifest.parse(content, localOptions);
   }
   async resolve(arc, recipe) {
-    if (!recipe.normalize()) {
-      log(`Couldn't normalize recipe ${recipe.toString()}`);
-    }
-    let plan = recipe;
-    if (!plan.isResolved()) {
-      const resolver = new RecipeResolver(arc);
-      plan = await resolver.resolve(recipe);
-      if (!plan) {
-        log('failed to resolve recipe', recipe.toString({showUnresolved: true}));
+    if (recipe.normalize()) {
+      let plan = recipe;
+      if (!plan.isResolved()) {
+        const resolver = new RecipeResolver(arc);
+        plan = await resolver.resolve(recipe);
+        if (!plan || !plan.isResolved()) {
+          warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
+          log(arc.context, arc, arc.context.storeTags);
+          plan = null;
+        }
       }
+      return plan;
     }
-    return plan;
   }
   async spawn({id, serialization, context, composer, storage}) {
     const params = {

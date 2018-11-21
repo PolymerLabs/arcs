@@ -17,18 +17,11 @@ import {Planificator} from '../../runtime/planificator.js';
 import {SlotComposer} from '../../runtime/ts-build/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
 import {Manifest} from '../../runtime/ts-build/manifest.js';
-
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
-
 import {ParticleExecutionContext} from '../../runtime/ts-build/particle-execution-context.js';
 import {StorageProviderFactory} from '../../runtime/ts-build/storage/storage-provider-factory.js';
-
-// Keep in sync with runtime/ts/storage/firebase-storage.ts
-import firebase from 'firebase/app';
-import 'firebase/database';
-import 'firebase/storage';
-
+import {firebase} from '../../runtime/firebase.js';
 import {KeyManager} from '../../runtime/ts-build/keymgmt/manager.js';
 
 const Arcs = {

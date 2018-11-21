@@ -44,26 +44,19 @@ Group together handle connections of different particles that are not bound to a
 Handle connections of the same particle must be bound to different handles. If several handles of the same type exist, the preference is to group “in” connections with “out” ones.<br/>
 [group-handle-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/group-handle-connections.js)
 
-## CombinedStrategy
-Run several strategy in a single transaction.
-Each strategy is performed on leaf results of previously executed strategies. Only the leaf-results are returned to the strategizer.
-
-Currently this strategy is used to execute SearchTokensToParticles together with GroupHandleConnections (that otherwise causes explosion of recipes in next generations).<br/>
-[combined-strategy.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/combined-strategy.js)
-
 ## MatchParticleByVerb
 For recipe particles identified by verb rather than name, find particles matching the given verbs and names them.<br/>
 [match-particle-by-verb.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/match-particle-by-verb.js)
 
 ## NameUnnamedConnections
 Names unnamed connections of a particle based on its spec.<br/>
-[name-unnamed-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/name-unnamed-connections.js)
+[name-unnamed-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/name-unnamed-connections.js)
 
 ## CoalesceRecipes
 Merges 2 unresolved terminal recipes and connects them through merging one unresolved handle from each recipe.
 Handles that are merged need to be one of use/map/copy fate, connected to particles on both sides, and need to facilitate communication (everyone writing or everyone reading is not valid) and have connections of types and directions that allow such merge.
-[coalesce-recipes.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/coalesce-recipes.js)
+[coalesce-recipes.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/coalesce-recipes.js)
 
 ## FindHostedParticle
 Finds a matching particle for an unresolved _host_ connection.<br/>
-[find-hosted-particle.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/find-hosted-particle.js)
+[find-hosted-particle.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/find-hosted-particle.js)

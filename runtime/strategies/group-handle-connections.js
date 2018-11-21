@@ -44,7 +44,7 @@ export class GroupHandleConnections extends Strategy {
           const particleWithMostConnectionsOfType = sortedParticles[0];
           const groups = new Map();
           let allTypeHandleConnections = recipe.handleConnections.filter(c => {
-            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
+            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle !== particleWithMostConnectionsOfType);
           });
 
           let iteration = 0;
@@ -59,12 +59,12 @@ export class GroupHandleConnections extends Strategy {
               const group = groups.get(handleConnection);
 
               // filter all connections where this particle is already in a group.
-              const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
-              let selectedConn = possibleConnections.find(c => handleConnection.isInput != c.isInput || handleConnection.isOutput != c.isOutput);
+              const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle === c.particle));
+              let selectedConn = possibleConnections.find(c => handleConnection.isInput !== c.isInput || handleConnection.isOutput !== c.isOutput);
               // TODO: consider tags.
               // TODO: Slots handle restrictions should also be accounted for when grouping.
               if (!selectedConn) {
-                if (possibleConnections.length == 0 || iteration == 0) {
+                if (possibleConnections.length === 0 || iteration === 0) {
                   // During first iteration only bind opposite direction connections ("in" with "out" and vice versa)
                   // to ensure each group has both direction connections as much as possible.
                   return;
@@ -72,13 +72,13 @@ export class GroupHandleConnections extends Strategy {
                 selectedConn = possibleConnections[0];
               }
               group.push(selectedConn);
-              allTypeHandleConnections = allTypeHandleConnections.filter(c => c != selectedConn);
+              allTypeHandleConnections = allTypeHandleConnections.filter(c => c !== selectedConn);
             });
             iteration++;
           }
           // Remove groups where no connections were bound together.
           groups.forEach((otherConns, conn) => {
-            if (otherConns.length == 0) {
+            if (otherConns.length === 0) {
               groups.delete(conn);
             } else {
               otherConns.push(conn);
