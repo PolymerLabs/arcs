@@ -8,4 +8,4 @@ store PageProducts of [Product] #shoplist in 'products.json'
 import '../People/Person.schema'
 store ClairesWishlist of [Product] #items #wishlist in 'wishlist.json'
   description `wishlist`
-store Claire of Person #claire in 'claire.json'
+store Claire of Person #claire in 'Claire.json'
