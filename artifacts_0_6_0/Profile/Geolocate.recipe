@@ -2,7 +2,7 @@ schema Geolocation
   Number latitude
   Number longitude
 
-particle Geolocate in './source/geolocate.js'
+particle Geolocate in './source/Geolocate.js'
   consume root
   out Geolocation location
   description `you`
