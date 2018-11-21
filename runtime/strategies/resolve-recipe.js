@@ -21,7 +21,7 @@ export class ResolveRecipe extends Strategy {
     const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (handle.connections.length == 0 ||
+        if (handle.connections.length === 0 ||
             (handle.id && handle.storageKey) || (!handle.type) ||
             (!handle.fate)) {
           return;
@@ -34,7 +34,7 @@ export class ResolveRecipe extends Strategy {
           const counts = RecipeUtil.directionCounts(handle);
           switch (handle.fate) {
             case 'use':
-              mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
+              mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out === 0});
               break;
             case 'map':
             case 'copy':
@@ -69,7 +69,7 @@ export class ResolveRecipe extends Strategy {
 
         mappable = mappable.filter(incomingHandle => {
           for (const existingHandle of recipe.handles) {
-            if (incomingHandle.id == existingHandle.id &&
+            if (incomingHandle.id === existingHandle.id &&
                 existingHandle !== handle) {
               return false;
             }
@@ -77,7 +77,7 @@ export class ResolveRecipe extends Strategy {
           return true;
         });
 
-        if (mappable.length == 1) {
+        if (mappable.length === 1) {
           return (recipe, handle) => {
             handle.mapToStorage(mappable[0]);
           };
@@ -109,7 +109,7 @@ export class ResolveRecipe extends Strategy {
         const toParticle = obligation.to.instance;
         for (const fromConnection of Object.values(fromParticle.connections)) {
           for (const toConnection of Object.values(toParticle.connections)) {
-            if (fromConnection.handle && fromConnection.handle == toConnection.handle) {
+            if (fromConnection.handle && fromConnection.handle === toConnection.handle) {
               return (recipe, obligation) => {
                 recipe.removeObligation(obligation);
                 return 1;

@@ -45,7 +45,7 @@ export class SearchTokensToParticles extends Strategy {
 
         for (const [phrase, things] of Object.entries(thingByPhrase)) {
           const tokens = phrase.split(' ');
-          if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
+          if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved === token)) &&
               recipe.search.phrase.includes(phrase)) {
             _addThingsByToken(phrase, things);
           }
@@ -59,7 +59,7 @@ export class SearchTokensToParticles extends Strategy {
           things && _addThingsByToken(token, things);
         }
 
-        if (resolvedTokens.size == 0) {
+        if (resolvedTokens.size === 0) {
           return;
         }
 
@@ -111,14 +111,14 @@ export class SearchTokensToParticles extends Strategy {
 
     // split DoSomething into "do something" and add the phrase
     const phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
-    if (phrase != token) {
+    if (phrase !== token) {
       this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
     }
   }
   _addThingByToken(key, thing, thingByKey) {
-    assert(key == key.toLowerCase());
+    assert(key === key.toLowerCase());
     thingByKey[key] = thingByKey[key] || [];
-    if (!thingByKey[key].find(t => t == thing)) {
+    if (!thingByKey[key].find(t => t === thing)) {
       thingByKey[key].push(thing);
     }
   }

@@ -16,7 +16,7 @@ export class CreateDescriptionHandle extends Strategy {
         if (handleConnection.handle) {
           return;
         }
-        if (handleConnection.name != 'descriptions') {
+        if (handleConnection.name !== 'descriptions') {
           return;
         }
 
