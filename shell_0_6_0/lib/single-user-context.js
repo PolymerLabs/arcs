@@ -63,7 +63,11 @@ export const SingleUserContext = class {
     const {deleted, key} = arcmeta;
     if (!deleted) {
       const store = await SyntheticStores.getStore(storage, key);
-      await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
+      if (store) {
+        await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
+      } else {
+        warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]`);
+      }
     }
   }
   unobserve(key) {
