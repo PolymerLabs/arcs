@@ -22,7 +22,7 @@ defineParticle(({TransformationDomParticle}) => {
 
     async setHandles(handles) {
       const arc = await this.constructInnerArc();
-      const hostedParticle = await handles.get('particle').get();
+      const hostedParticle = await handles.get('particle0').get();
 
       this.setState({arc, hostedParticle, type: handles.get('foos').type});
 

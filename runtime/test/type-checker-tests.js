@@ -213,13 +213,13 @@ describe('TypeChecker', () => {
         in Product {} item
 
       particle Transformation
-        host Shape particle
+        host Shape particle0
         in [~a] collection
 
       recipe
         create as h0
         Transformation
-          particle <- Concrete
+          particle0 <- Concrete
           collection <- h0
     `);
 
