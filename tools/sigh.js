@@ -459,6 +459,7 @@ function test(args) {
       [
         '--experimental-modules',
         '--trace-warnings',
+        '--no-deprecation',
         ...extraFlags,
         '--loader',
         fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
