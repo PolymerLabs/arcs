@@ -84,9 +84,10 @@ exports.openNewArc = async function(testTitle, useSolo) {
     browser.close(tabToClose);
   });
   // setup url params
-  let firebaseKey = new Date().toISOString() + testTitle;
-  firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
-  console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+  //let firebaseKey = new Date().toISOString() + testTitle;
+  //firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
+  //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+  console.log(`running test "${testTitle}"`);
   const urlParams = [
     //`testFirebaseKey=${firebaseKey}`,
     //`log`,
@@ -99,7 +100,7 @@ exports.openNewArc = async function(testTitle, useSolo) {
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
-  await browser.url(`shell/apps/web/?${urlParams.join('&')}`);
-  // only to ensure the app has configured itself
+  await browser.url(`shell_0_6_0/web-shell/?${urlParams.join('&')}`);
+  // only to ensure time for the app to configure itself
   await exports.waitFor('input[search]');
 };
