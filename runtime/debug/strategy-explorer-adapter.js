@@ -31,20 +31,6 @@ export class StrategyExplorerAdapter {
       generated: pop.generated.map(assignIdAndCopy)
     }));
 
-    // CombinedStrategy creates recipes with derivations that are missing
-    // from the population. Re-adding them as 'combined'.
-    for (const pop of generations) {
-      const lengthWithoutCombined = pop.generated.length;
-      for (let i = 0; i < lengthWithoutCombined; i++) {
-        pop.generated[i].derivation.forEach(function addMissing({parent}) {
-          if (parent && !idMap.has(parent)) {
-            pop.generated.push(Object.assign(assignIdAndCopy(parent), {combined: true}));
-            parent.derivation.forEach(addMissing);
-          }
-        });
-      }
-    }
-
     // Change recipes in derivation to IDs and compute resolved stats.
     return generations.map(pop => {
       const population = pop.generated;
