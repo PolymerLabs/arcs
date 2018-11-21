@@ -48,7 +48,7 @@ describe('demo', function() {
     await openNewArc(this.test.fullTitle());
     await searchFor(search);
     await click(findRestaurants);
-    await click(restaurantItem);
+    //await click(restaurantItem);
     //await click(reservation);
     //await waitFor(calendarAction);
   });
