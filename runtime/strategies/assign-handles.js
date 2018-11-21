@@ -28,7 +28,7 @@ export class AssignHandles extends Strategy {
           return;
         }
 
-        if (handle.connections.length == 0) {
+        if (handle.connections.length === 0) {
           return;
         }
 
@@ -50,11 +50,11 @@ export class AssignHandles extends Strategy {
 
         const score = this._getScore(counts, handle.tags);
 
-        if (counts.out > 0 && handle.fate == 'map') {
+        if (counts.out > 0 && handle.fate === 'map') {
           return;
         }
         const stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);
-        if (handle.fate != '?' && stores.size < 2) {
+        if (handle.fate !== '?' && stores.size < 2) {
           // These handles are mapped by resolve-recipe strategy.
           return;
         }
@@ -62,13 +62,13 @@ export class AssignHandles extends Strategy {
         const responses = [...stores.keys()].map(store =>
           ((recipe, clonedHandle) => {
             assert(store.id);
-            if (recipe.handles.find(handle => handle.id == store.id)) {
+            if (recipe.handles.find(handle => handle.id === store.id)) {
               // TODO: Why don't we link the handle connections to the existingHandle?
               return 0;
             }
 
             clonedHandle.mapToStorage(store);
-            if (clonedHandle.fate == '?') {
+            if (clonedHandle.fate === '?') {
               clonedHandle.fate = stores.get(store);
             } else {
               assert(clonedHandle.fate, stores.get.store);
@@ -81,8 +81,8 @@ export class AssignHandles extends Strategy {
 
       _getScore(counts, tags) {
         let score = -1;
-        if (counts.in == 0 || counts.out == 0) {
-          if (counts.out == 0) {
+        if (counts.in === 0 || counts.out === 0) {
+          if (counts.out === 0) {
             score = 1;
           } else {
             score = 0;
@@ -101,12 +101,12 @@ export class AssignHandles extends Strategy {
 
   getMappableStores(fate, type, tags, counts) {
     const stores = new Map();
-    if (fate == 'use' || fate == '?') {
+    if (fate === 'use' || fate === '?') {
       const subtype = counts.out == 0;
       // TODO: arc.findStoresByType doesn't use `subtype`. Shall it be removed?
       this.arc.findStoresByType(type, {tags, subtype}).forEach(store => stores.set(store, 'use'));
     }
-    if (fate == 'map' || fate == 'copy' || fate == '?') {
+    if (fate === 'map' || fate === 'copy' || fate === '?') {
       this.arc.context.findStoreByType(type, {tags, subtype: true}).forEach(
           store => stores.set(store, fate == '?' ? (counts.out > 0 ? 'copy' : 'map') : fate));
     }

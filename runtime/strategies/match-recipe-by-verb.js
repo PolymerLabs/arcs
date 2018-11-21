@@ -111,7 +111,8 @@ export class MatchRecipeByVerb extends Strategy {
               }
               for (let i = 0; i < handle.connections.length; i++) {
                 const candidate = handle.connections[i];
-                if (candidate.particle == particleForReplacing && candidate.name == name) {
+                // TODO candidate.name === name triggers test failures
+                if (candidate.particle === particleForReplacing && candidate.name == name) {
                   connection._handle = handle;
                   handle.connections[i] = connection;
                   return true;

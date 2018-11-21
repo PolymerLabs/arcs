@@ -56,7 +56,7 @@ export class MapSlots extends Strategy {
       let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
 
       if (!clonedSlot) {
-        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id == s.id);
+        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id === s.id);
         if (clonedSlot == undefined) {
           clonedSlot = recipe.newSlot(selectedSlot.name);
           clonedSlot.id = selectedSlot.id;
@@ -65,7 +65,7 @@ export class MapSlots extends Strategy {
       slotConnection.connectToSlot(clonedSlot);
     }
 
-    assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id == slotConnection.targetSlot.id),
+    assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id === slotConnection.targetSlot.id),
            `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
     slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
 
@@ -113,7 +113,7 @@ export class MapSlots extends Strategy {
 
   static specMatch(slotConnection, slot) {
     return slotConnection.slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
-          slotConnection.slotSpec.isSet == slot.spec.isSet;
+          slotConnection.slotSpec.isSet === slot.spec.isSet;
   }
 
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
@@ -132,7 +132,7 @@ export class MapSlots extends Strategy {
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
   // TODO: should we move some of this logic to the recipe? Or type matching?
   static handlesMatch(slotConnection, slot) {
-    if (slot.handles.length == 0) {
+    if (slot.handles.length === 0) {
       return true; // slot is not limited to specific handles
     }
     return Object.values(slotConnection.particle.connections).find(handleConn => {

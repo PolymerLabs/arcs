@@ -31,7 +31,7 @@ export class ConvertConstraintsToConnections extends Strategy {
         const particlesByName = {};
         let handleCount = 0;
         const obligations = [];
-        if (recipe.connectionConstraints.length == 0) {
+        if (recipe.connectionConstraints.length === 0) {
           return;
         }
 
@@ -105,10 +105,10 @@ export class ConvertConstraintsToConnections extends Strategy {
           }
 
           const unionDirections = (a, b) => {
-            if (a == '=') {
+            if (a === '=') {
               return '=';
             }
-            if (b == '=') {
+            if (b === '=') {
               return '=';
             }
             if (a !== b) {

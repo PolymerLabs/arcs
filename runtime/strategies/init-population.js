@@ -17,7 +17,7 @@ export class InitPopulation extends Strategy {
   }
 
   async generate({generation}) {
-    if (generation != 0) {
+    if (generation !== 0) {
       return [];
     }
 

@@ -15,7 +15,7 @@ export class InitSearch extends Strategy {
     this._search = search;
   }
   async generate({generation}) {
-    if (this._search == null || generation != 0) {
+    if (this._search == null || generation !== 0) {
       return [];
     }
 

@@ -27,7 +27,7 @@ export class CoalesceRecipes extends Strategy {
 
   getResults(inputParams) {
     // Coalescing for terminal recipes that are either unresolved recipes or have no UI.
-    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length == 0);
+    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length === 0);
   }
 
   async generate(inputParams) {
@@ -121,8 +121,8 @@ export class CoalesceRecipes extends Strategy {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
               const mergedMatchingConn = cloneMap.get(matchingConn);
               const disconnectedHandle = mergedMatchingConn.handle;
-              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
-              if (disconnectedHandle == clonedHandle) {
+              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === handle.id).handle;
+              if (disconnectedHandle === clonedHandle) {
                 continue; // this handle was already reconnected
               }
 
@@ -234,7 +234,7 @@ export class CoalesceRecipes extends Strategy {
 
       // Returns true, if both handles have types that can be coalesced.
       _reverifyHandleTypes(handle, otherHandle) {
-        assert(handle.recipe == otherHandle.recipe);
+        assert(handle.recipe === otherHandle.recipe);
         const cloneMap = new Map();
         const recipeClone = handle.recipe.clone(cloneMap);
         recipeClone.normalize();
