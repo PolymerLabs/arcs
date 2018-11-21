@@ -156,7 +156,7 @@ ${styles}
   </div>
 
   <div class="scroll-container">
-    <div style="{{scrollTransform}}">
+    <div xen:style="{{scrollTransform}}">
       ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
         .map(i => `
         <div class="hour-row">
@@ -170,10 +170,10 @@ ${styles}
           </div>
         </div>`).join('')}
       <div class="events-container">
-        <div class="event" style="{{eventOneStyle}}">{{eventOneName}}</div>
-        <div class="event" style="{{eventTwoStyle}}">{{eventTwoName}}</div>
-        <div class="event" style="{{eventThreeStyle}}">{{eventThreeName}}</div>
-        <div class="selected-event" style="{{selectedEventStyle}}">Selected Time <icon class="date-icon">date_range</icon></div>
+        <div class="event" xen:style="{{eventOneStyle}}">{{eventOneName}}</div>
+        <div class="event" xen:style="{{eventTwoStyle}}">{{eventTwoName}}</div>
+        <div class="event" xen:style="{{eventThreeStyle}}">{{eventThreeName}}</div>
+        <div class="selected-event" xen:style="{{selectedEventStyle}}">Selected Time <icon class="date-icon">date_range</icon></div>
       </div>
     </div>
   </div>
