@@ -34,6 +34,23 @@ export abstract class StorageBase {
   shutdown() {}
 }
 
+// tslint:disable-next-line: no-any
+type DeltaItems = {value: any, keys?: string[], effective?: boolean}[];
+
+export class ChangeEvent {
+  public readonly add: DeltaItems;
+  public readonly remove: DeltaItems;
+  // tslint:disable-next-line: no-any
+  public readonly data: any;
+  public readonly version: number;
+  public readonly originatorId: string;
+  public readonly barrier: string;
+
+  constructor(args: {add?: DeltaItems, remove?: DeltaItems, data?, version?: number, originatorId?: string, barrier?: string}) {
+    Object.assign(this, args);
+  }
+}
+
 /**
  * Docs TBD
  */
@@ -112,7 +129,7 @@ export abstract class StorageProviderBase {
    * @param kindStr the type of event, only 'change' is supported.
    * @param details details about the change
    */
-  protected async _fire(kindStr: 'change', details: {}) {
+  protected async _fire(kindStr: 'change', details: ChangeEvent) {
     const kind: EventKind = EventKind[kindStr];
 
     const listenerMap = this.listeners.get(kind);

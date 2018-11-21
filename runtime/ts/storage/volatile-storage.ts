@@ -8,7 +8,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Tracing} from '../../../tracelib/trace.js';
-import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
@@ -279,7 +279,7 @@ class VolatileCollection extends VolatileStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::store', args: {name: this.name}});
 
-    const changeEvent = {value, keys, effective: undefined};
+    const item = {value, keys, effective: undefined};
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
 
@@ -287,17 +287,17 @@ class VolatileCollection extends VolatileStorageProvider {
 
       // It's important to store locally first, as the upstream consumers
       // are set up to assume all writes are processed (at least locally) synchronously.
-      changeEvent.effective = this._model.add(value.id, {id: value.id, storageKey}, keys);
+      item.effective = this._model.add(value.id, {id: value.id, storageKey}, keys);
       await this.ensureBackingStore();
       await this.backingStore.store(value, keys);
     } else {
-      changeEvent.effective = this._model.add(value.id, value, keys);
+      item.effective = this._model.add(value.id, value, keys);
     }
 
     this.version++;
 
     await trace.wait(
-        this._fire('change', {add: [changeEvent], version: this.version, originatorId}));
+        this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId})));
     trace.end({args: {value}});
   }
 
@@ -316,7 +316,7 @@ class VolatileCollection extends VolatileStorageProvider {
     });
     this.version++;
 
-    this._fire('change', {remove: items, version: this.version, originatorId});
+    this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {
@@ -329,7 +329,7 @@ class VolatileCollection extends VolatileStorageProvider {
       const effective = this._model.remove(id, keys);
       this.version++;
       await trace.wait(
-          this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId}));
+          this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId})));
     }
     trace.end({args: {entity: value}});
   }
@@ -459,11 +459,8 @@ class VolatileVariable extends VolatileStorageProvider {
       this._stored = value;
     }
     this.version++;
-    if (this.referenceMode) {
-      await this._fire('change', {data: value, version: this.version, originatorId, barrier});
-    } else {
-      await this._fire('change', {data: this._stored, version: this.version, originatorId, barrier});
-    }
+    const data = this.referenceMode ? value : this._stored;
+    await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
   }
 
   async clear(originatorId=null, barrier=null) {

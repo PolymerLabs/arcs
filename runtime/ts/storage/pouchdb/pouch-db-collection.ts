@@ -3,6 +3,7 @@ import {assert} from '../../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {Type} from '../../type.js';
 import {PouchDbStorage} from './pouch-db-storage';
+import {ChangeEvent} from '../storage-provider-base.js';
 import PouchDB from 'pouchdb';
 
 /**
@@ -169,7 +170,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const id = value.id;
 
-    const changeEvent = {value, keys, effective: undefined};
+    const item = {value, keys, effective: undefined};
 
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
@@ -177,7 +178,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
       // Update the referred data
       await this.getModelAndUpdate(crdtmodel => {
-        changeEvent.effective = crdtmodel.add(value.id, {id: value.id, storageKey}, keys);
+        item.effective = crdtmodel.add(value.id, {id: value.id, storageKey}, keys);
         return crdtmodel;
       });
 
@@ -186,7 +187,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     } else {
       await this.getModelAndUpdate(crdtmodel => {
         // check for existing keys?
-        changeEvent.effective = crdtmodel.add(value.id, value, keys);
+        item.effective = crdtmodel.add(value.id, value, keys);
         return crdtmodel;
       });
     }
@@ -194,7 +195,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     this.version++;
 
     // Notify Listeners
-    this._fire('change', {add: [changeEvent], version: this.version, originatorId});
+    this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
   }
 
   async removeMultiple(items, originatorId=null) {
@@ -214,7 +215,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       });
       return crdtmodel;
     }).then(() => {
-      this._fire('change', {remove: items, version: this.version, originatorId});
+      this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
     });
   }
 
@@ -235,7 +236,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         const effective = crdtmodel.remove(id, keys);
         // TODO(lindner): isolate side effects...
         this.version++;
-        this._fire('change', {remove: [{value, keys, effective}], version: this.version, originatorId});
+        this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
       }
       return crdtmodel;
     });
@@ -264,7 +265,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     // TODO(lindner): handle referenceMode
     // TODO(lindner): calculate added/removed keys from previousModel/model
     // TODO(lindner): fire change events here?
-    //   this._fire('change', {originatorId: null, version: this.version, add, remove});
+    //   this._fire('change', new ChangeEvent({add, remove, version: this.version}));
   }
 
   /**
