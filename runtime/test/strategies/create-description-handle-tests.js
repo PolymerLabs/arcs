@@ -10,7 +10,7 @@
 'use strict';
 
 import {Manifest} from '../../ts-build/manifest.js';
-import {CreateDescriptionHandle} from '../../strategies/create-description-handle.js';
+import {CreateDescriptionHandle} from '../../ts-build/strategies/create-description-handle.js';
 import {assert} from '../chai-web.js';
 
 describe('CreateDescriptionHandle', function() {

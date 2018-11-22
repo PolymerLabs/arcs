@@ -7,7 +7,7 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {digest} from '../../../platform/digest-web.js';
-import {Strategizer} from '../../../strategizer/strategizer.js';
+import {Strategizer} from '../strategizer/strategizer.js';
 import {ConnectionConstraint} from './connection-constraint.js';
 import {Particle} from './particle.js';
 import {Search} from './search.js';

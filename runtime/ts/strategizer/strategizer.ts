@@ -5,10 +5,21 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../platform/assert-web.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Arc} from '../arc';
 
 export class Strategizer {
-  constructor(strategies, evaluators, ruleset) {
+  _strategies: Strategy[];
+  _evaluators: Strategy[];
+  _generation: number;
+  _internalPopulation: {fitness: number, individual}[];
+  _population;
+  _generated;
+  _ruleset: Ruleset;
+  _terminal;
+  populationHash;
+
+  constructor(strategies: Strategy[], evaluators: Strategy[], ruleset: Ruleset) {
     this._strategies = strategies;
     this._evaluators = evaluators;
     this._generation = 0;
@@ -20,7 +31,7 @@ export class Strategizer {
     this.populationHash = new Map();
   }
   // Latest generation number.
-  get generation() {
+  get generation(): number {
     return this._generation;
   }
   // All individuals in the current population.
@@ -31,12 +42,16 @@ export class Strategizer {
   get generated() {
     return this._generated;
   }
-  // Individuals from the previous generation that were not decended from in the
-  // current generation.
+
+  /**
+   * @return   Individuals from the previous generation that were not descended from in the
+   * current generation.
+   */
   get terminal() {
     assert(this._terminal);
     return this._terminal;
   }
+
   async generate() {
     // Generate
     const generation = this.generation + 1;
@@ -50,10 +65,27 @@ export class Strategizer {
       });
     }));
 
-    const record = {};
-    record.generation = generation;
-    record.sizeOfLastGeneration = this.generated.length;
-    record.generatedDerivationsByStrategy = {};
+    const record :
+      {generation: number,
+        sizeOfLastGeneration: number,
+        generatedDerivationsByStrategy,
+        generatedDerivations?: number,
+        nullDerivations?: number,
+        invalidDerivations?: number,
+        duplicateDerivations?: number,
+        duplicateSameParentDerivations?: number;
+        nullDerivationsByStrategy?,
+        invalidDerivationsByStrategy?,
+        duplicateDerivationsByStrategy?,
+        duplicateSameParentDerivationsByStrategy?,
+        survivingDerivations?
+      }
+      = {
+      generation,
+      sizeOfLastGeneration: this.generated.length,
+      generatedDerivationsByStrategy: {}
+    };
+
     for (let i = 0; i < this._strategies.length; i++) {
       record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generatedResults[i].length;
     }
@@ -193,7 +225,7 @@ export class Strategizer {
     return mergedEvaluations;
   }
 
-  static over(results, walker, strategy) {
+  static over(results, walker: StrategizerWalker, strategy: Strategy): Descendant[] {
     walker.onStrategy(strategy);
     results.forEach(result => {
       walker.onResult(result);
@@ -204,20 +236,26 @@ export class Strategizer {
   }
 }
 
-class Walker {
-  constructor() {
+export interface Descendant {result; score: number; derivation; hash; valid: boolean;}
+
+export abstract class StrategizerWalker {
+  descendants: Descendant[];
+  currentStrategy;
+  currentResult;
+
+  protected constructor() {
     this.descendants = [];
   }
 
-  onStrategy(strategy) {
+  onStrategy(strategy: Strategy) {
     this.currentStrategy = strategy;
   }
 
-  onResult(result) {
+  onResult(result): void {
     this.currentResult = result;
   }
 
-  createDescendant(result, score, hash, valid) {
+  createDescendant(result, score, hash, valid): void {
     assert(this.currentResult, 'no current result');
     assert(this.currentStrategy, 'no current strategy');
     if (this.currentResult.score) {
@@ -232,19 +270,26 @@ class Walker {
     });
   }
 
-  onResultDone() {
+  onResultDone(): void {
     this.currentResult = undefined;
   }
 
-  onStrategyDone() {
+  onStrategyDone(): void {
     this.currentStrategy = undefined;
   }
 }
 
-Strategizer.Walker = Walker;
-
 // TODO: Doc call convention, incl strategies are stateful.
-export class Strategy {
+export abstract class Strategy {
+  private _arc: Arc;
+  private _args?;
+
+  constructor(arc: Arc, args?) {
+    this._arc = arc;
+    this._args = args;
+  }
+  get arc(): Arc { return this._arc; }
+
   async activate(strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
@@ -254,28 +299,21 @@ export class Strategy {
   getResults(inputParams) {
     return inputParams.generated;
   }
-  async generate(inputParams) {
+  async generate(inputParams): Promise<Descendant[]> {
     return [];
   }
   async evaluate(strategizer, individuals) {
     return individuals.map(() => NaN);
   }
 }
+// These types allow us to create lists of StrategyDerived classes and
+// construct them while avoiding TS2511 "Cannot create an instance of an abstract type
+type StrategyClass = typeof Strategy;
+export interface StrategyDerived extends StrategyClass {}
 
-export class Ruleset {
-  constructor(orderingRules) {
-    this._orderingRules = orderingRules;
-  }
+export class RulesetBuilder {
+  _orderingRules;
 
-  isAllowed(strategy, recipe) {
-    const forbiddenAncestors = this._orderingRules.get(strategy.constructor);
-    if (!forbiddenAncestors) return true;
-    // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.
-    return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor));
-  }
-}
-
-Ruleset.Builder = class {
   constructor() {
     // Strategy -> [Strategy*]
     this._orderingRules = new Map();
@@ -316,7 +354,7 @@ Ruleset.Builder = class {
     return this;
   }
 
-  build() {
+  build(): Ruleset {
     // Making the ordering transitive.
     const beingExpanded = new Set();
     const alreadyExpanded = new Set();
@@ -346,4 +384,22 @@ Ruleset.Builder = class {
 
     return followingStrategies || [];
   }
-};
+}
+
+export class Ruleset {
+  _orderingRules;
+
+  constructor(orderingRules) {
+    this._orderingRules = orderingRules;
+  }
+
+  isAllowed(strategy: Strategy, recipe): boolean {
+    const forbiddenAncestors = this._orderingRules.get(strategy.constructor);
+    if (!forbiddenAncestors) return true;
+    // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.
+    return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor));
+  }
+  // tslint:disable-next-line: variable-name
+  static Builder = RulesetBuilder;
+}
+

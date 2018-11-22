@@ -5,19 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Arc} from '../arc.js';
 
 export class SearchTokensToHandles extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
 
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     // Finds stores matching the provided token and compatible with the provided handle's type,
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
@@ -25,11 +22,11 @@ export class SearchTokensToHandles extends Strategy {
       let stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
       let fate = 'use';
       if (stores.length === 0) {
-        stores = arc._context.findStoreByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
+        stores = arc.context.findStoreByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
         fate = counts.out === 0 ? 'map' : 'copy';
       }
       stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id === store.id));
-      return stores.map(store => { return {store, fate, token}; });
+      return stores.map(store => ({store, fate, token}));
     };
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {

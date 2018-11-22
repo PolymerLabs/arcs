@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
+import {CreateHandleGroup} from '../../ts-build/strategies/create-handle-group.js';
 import {assert} from '../chai-web.js';
 
 describe('CreateHandleGroup', function() {

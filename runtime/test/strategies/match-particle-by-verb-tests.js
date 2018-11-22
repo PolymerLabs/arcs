@@ -12,7 +12,7 @@
 import {Manifest} from '../../ts-build/manifest.js';
 import {Planner} from '../../ts-build/planner.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
+import {MatchParticleByVerb} from '../../ts-build/strategies/match-particle-by-verb.js';
 import {assert} from '../chai-web.js';
 
 describe('MatchParticleByVerb', function() {

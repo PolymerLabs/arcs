@@ -5,18 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Arc} from '../arc.js';
 
 export class MatchParticleByVerb extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
 
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onParticle(recipe, particle) {
         if (particle.name) {

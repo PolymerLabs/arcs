@@ -5,23 +5,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {TypeChecker} from '../ts-build/recipe/type-checker.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {TypeChecker} from '../recipe/type-checker.js';
+import {Arc} from '../arc.js';
+import {assert} from '../../../platform/assert-web.js';
+import {HandleConnection} from '../recipe/handle-connection.js';
 
 export class FindHostedParticle extends Strategy {
 
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
-
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onHandleConnection(recipe, connection) {
+      onHandleConnection(recipe: Recipe, connection: HandleConnection) {
         if (connection.direction !== 'host' || connection.handle) return undefined;
         assert(connection.type.isInterface);
 

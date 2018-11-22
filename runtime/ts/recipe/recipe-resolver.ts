@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+import {ResolveRecipe} from '../strategies/resolve-recipe.js';
 
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {

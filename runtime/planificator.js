@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
-import {InitSearch} from './strategies/init-search.js';
+import {InitSearch} from './ts-build/strategies/init-search.js';
 import {logFactory} from '../platform/log-web.js';
 import {Planner} from './ts-build/planner.js';
 import {Speculator} from './ts-build/speculator.js';

@@ -12,10 +12,19 @@ import {Recipe} from './recipe.js';
 import {Handle} from './handle.js';
 import {HandleConnection, Direction} from './handle-connection.js';
 
-export class ParticleEndPoint {
+export abstract class EndPoint implements Comparable {
+  abstract _compareTo(other): number;
+  abstract _clone(cloneMap?);
+  abstract toString(nameMap?);
+}
+
+
+export class ParticleEndPoint extends EndPoint {
   particle: ParticleSpec;
   connection: string;
+
   constructor(particle: ParticleSpec, connection: string) {
+    super();
     this.particle = particle;
     this.connection = connection;
   }
@@ -24,7 +33,7 @@ export class ParticleEndPoint {
     return new ParticleEndPoint(this.particle, this.connection);
   }
 
-  _compareTo(other) {
+  _compareTo(other): number {
     let cmp;
     if ((cmp = compareStrings(this.particle.name, other.particle.name)) !== 0) return cmp;
     if ((cmp = compareStrings(this.connection, other.connection)) !== 0) return cmp;
@@ -39,13 +48,13 @@ export class ParticleEndPoint {
   }
 }
 
-export class InstanceEndPoint {
-  recipe: Recipe;
-  instance: Comparable;
+export class InstanceEndPoint extends EndPoint {
+  instance: EndPoint;
   connection: string;
-  constructor(instance, connection: string) {
+  constructor(instance: EndPoint, connection: string) {
+    super();
     assert(instance);
-    this.recipe = instance.recipe;
+    //this.recipe = instance.recipe;
     this.instance = instance;
     this.connection = connection;
   }
@@ -69,10 +78,11 @@ export class InstanceEndPoint {
   }
 }
 
-export class HandleEndPoint {
+export class HandleEndPoint extends EndPoint {
   readonly handle: Handle;
 
   constructor(handle: Handle) {
+    super();
     this.handle = handle;
   }
 
@@ -91,10 +101,10 @@ export class HandleEndPoint {
   }
 }
 
-export class TagEndPoint {
+export class TagEndPoint extends EndPoint {
   readonly tags: string[];
-
   constructor(tags: string[]) {
+    super();
     this.tags = tags;
   }
 
@@ -113,13 +123,14 @@ export class TagEndPoint {
   }
 }
 
-type EndPoint = ParticleEndPoint | InstanceEndPoint | HandleEndPoint | TagEndPoint;
+//type EndPoint = ParticleEndPoint | InstanceEndPoint | HandleEndPoint | TagEndPoint;
 
 export class ConnectionConstraint {
   from: EndPoint;
   to: EndPoint;
   direction: Direction;
   type: 'constraint' | 'obligation';
+
   constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);

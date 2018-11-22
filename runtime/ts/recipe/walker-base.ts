@@ -5,8 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer} from '../../../strategizer/strategizer.js';
+import {Strategizer} from '../strategizer/strategizer.js';
 import {assert} from '../../../platform/assert-web.js';
+import {StrategizerWalker} from '../strategizer/strategizer.js';
 
 /**
  * Walkers traverse an object, calling methods based on the
@@ -36,11 +37,11 @@ import {assert} from '../../../platform/assert-web.js';
 
 export enum WalkerTactic {Permuted='permuted', Independent='independent'}
 
-type Walker = Strategizer.Walker & { onResult(arg: {}): void };
+type Walker = StrategizerWalker & { onResult(arg: {}): void };
 
-export class WalkerBase extends (Strategizer.Walker as Walker) {
+export abstract class WalkerBase extends StrategizerWalker {
   tactic: WalkerTactic;
-  
+
   constructor(tactic) {
     super();
     assert(tactic);

@@ -11,8 +11,8 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {MatchRecipeByVerb} from '../../ts-build/strategies/match-recipe-by-verb.js';
+import {ConvertConstraintsToConnections} from '../../ts-build/strategies/convert-constraints-to-connections.js';
 import {assert} from '../chai-web.js';
 
 describe('MatchRecipeByVerb', function() {

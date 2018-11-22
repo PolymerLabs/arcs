@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {SearchTokensToParticles} from '../../strategies/search-tokens-to-particles.js';
+import {SearchTokensToParticles} from '../../ts-build/strategies/search-tokens-to-particles.js';
 import {assert} from '../chai-web.js';
 
 describe('SearchTokensToParticles', function() {

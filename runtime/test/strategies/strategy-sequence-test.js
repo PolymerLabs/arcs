@@ -9,12 +9,12 @@
  */
 import {assert} from '../chai-web.js';
 import {Manifest} from '../../ts-build/manifest.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
-import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
-import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
+import {ConvertConstraintsToConnections} from '../../ts-build/strategies/convert-constraints-to-connections.js';
+import {GroupHandleConnections} from '../../ts-build/strategies/group-handle-connections.js';
+import {ResolveRecipe} from '../../ts-build/strategies/resolve-recipe.js';
+import {MatchRecipeByVerb} from '../../ts-build/strategies/match-recipe-by-verb.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
+import {CreateHandleGroup} from '../../ts-build/strategies/create-handle-group.js';
 
 const {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 

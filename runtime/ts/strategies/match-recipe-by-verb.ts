@@ -5,11 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Handle} from '../ts-build/recipe/handle.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Particle} from '../recipe/particle.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Handle} from '../recipe/handle.js';
+import {Arc} from '../arc.js';
+import {assert} from '../../../platform/assert-web.js';
 
 // This strategy substitutes '&verb' declarations with recipes,
 // according to the following conditions:
@@ -23,15 +25,11 @@ import {assert} from '../../platform/assert-web.js';
 // this strategy currently only connects the first instance of the pattern up
 // if there are multiple instances.
 export class MatchRecipeByVerb extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
 
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onParticle(recipe, particle) {
+      onParticle(recipe: Recipe, particle: Particle) {
         if (particle.name) {
           // Particle already has explicit name.
           return undefined;
@@ -82,7 +80,7 @@ export class MatchRecipeByVerb extends Strategy {
                       particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
                       mappedSlot.consumeConnections.push(particle.consumedSlotConnections[consumeSlot]);
                     }
-                    for (const slotName in slotConstraints[consumeSlot].providedSlots) {
+                    for (const slotName of Object.keys(slotConstraints[consumeSlot].providedSlots)) {
                       const slot = slotConstraints[consumeSlot].providedSlots[slotName];
                       if (slot == null) {
                         continue;
@@ -112,6 +110,7 @@ export class MatchRecipeByVerb extends Strategy {
               for (let i = 0; i < handle.connections.length; i++) {
                 const candidate = handle.connections[i];
                 // TODO candidate.name === name triggers test failures
+                // tslint:disable-next-line: triple-equals
                 if (candidate.particle === particleForReplacing && candidate.name == name) {
                   connection._handle = handle;
                   handle.connections[i] = connection;

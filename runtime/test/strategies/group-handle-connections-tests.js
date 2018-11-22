@@ -10,7 +10,7 @@
 'use strict';
 
 import {Manifest} from '../../ts-build/manifest.js';
-import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
+import {GroupHandleConnections} from '../../ts-build/strategies/group-handle-connections.js';
 import {assert} from '../chai-web.js';
 
 describe('GroupHandleConnections', function() {
