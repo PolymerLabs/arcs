@@ -175,9 +175,9 @@ Shape
   }
 
 ShapeItem
-  = ShapeInterface
+  = ShapeSlot
   / ShapeArgumentItem
-  / ShapeSlot
+  / ShapeInterface
 
 
 ShapeInterface
@@ -313,11 +313,11 @@ ParticleDefinition
   }
 
 ParticleItem
-  = ParticleInterface
-  / ParticleHandle
-  / ParticleModality
+  = ParticleModality
   / ParticleSlot
   / Description
+  / ParticleHandle
+  / ParticleInterface
 
 ParticleInterface
   = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
@@ -607,8 +607,8 @@ RecipeItem
   = RecipeParticle
   / RecipeHandle
   / RecipeSlot
-  / RecipeConnection
   / RecipeSearch
+  / RecipeConnection
   / Description
 
 LocalName
@@ -647,7 +647,7 @@ RecipeParticle
     };
   }
 
-RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
+RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
   = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace
@@ -746,7 +746,7 @@ Direction
   = dir:('<-' / '->' / '=' / 'consume' / 'provide')
 
 ConnectionTarget
-  = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
+  = VerbConnectionTarget / TagConnectionTarget / ParticleConnectionTarget / NameConnectionTarget
 
 VerbConnectionTarget
   = verbs:VerbList components:ConnectionTargetHandleComponents?
