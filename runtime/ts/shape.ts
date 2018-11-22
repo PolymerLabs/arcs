@@ -320,9 +320,6 @@ ${this._slotsToManifestString()}
     if (shapeHandle.type == undefined) {
       return true;
     }
-    if (shapeHandle.type.isVariableReference) {
-      return false;
-    }
     const [left, right] = Type.unwrapPair(shapeHandle.type, particleHandle.type);
     if (left.isVariable) {
       return [{var: left, value: right, direction: shapeHandle.direction}];

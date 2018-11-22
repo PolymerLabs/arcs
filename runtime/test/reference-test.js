@@ -48,7 +48,7 @@ describe('references', function() {
     assert.equal(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
     assert.isTrue(recipe.handles[0].type.isReference);
-    assert.equal(recipe.handles[0].type.resolvedType().referenceReferredType.data.name, 'Result');
+    assert.equal(recipe.handles[0].type.resolvedType().referredType.data.name, 'Result');
   });
 
   it('exposes a dereference API to particles', async () => {

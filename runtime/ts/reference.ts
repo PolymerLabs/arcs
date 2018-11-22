@@ -9,14 +9,14 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {Type} from './type.js';
+import {ReferenceType} from './type.js';
 import {handleFor} from './handle.js';
 
 enum ReferenceMode {Unstored, Stored}
 
 export class Reference {
   public entity = null;
-  public type: Type;
+  public type: ReferenceType;
 
   private readonly id: string;
   private storageKey: string;
@@ -33,7 +33,7 @@ export class Reference {
 
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
-      this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referenceReferredType);
+      this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
       this.handle = handleFor(this.storageProxy);
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
@@ -66,7 +66,7 @@ export class Reference {
       public stored: Promise<undefined>;
       constructor(entity) {
         // TODO(shans): start carrying storageKey information around on Entity objects
-        super({id: entity.id, storageKey: null}, Type.newReference(entity.constructor.type), context);
+        super({id: entity.id, storageKey: null}, new ReferenceType(entity.constructor.type), context);
 
         this.entity = entity;
         this.stored = new Promise(async (resolve, reject) => {

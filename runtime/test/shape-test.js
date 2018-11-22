@@ -14,18 +14,18 @@ import {Type} from '../ts-build/type.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {Schema} from '../ts-build/schema.js';
-
+import {TypeVariable} from '../ts-build/type-variable.js';
 
 describe('shape', function() {
   it('finds type variable references in handles', function() {
-    const shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariable('a'))}], []);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'type');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
-    const shape = new Shape('Test', [], [{name: Type.newVariable({name: 'a'})}]);
+    const shape = new Shape('Test', [], [{name: Type.newVariable(new TypeVariable('a'))}]);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'name');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
@@ -34,12 +34,12 @@ describe('shape', function() {
   it('upgrades type variable references', function() {
     let shape = new Shape('Test',
       [
-        {name: Type.newVariable({name: 'a'})},
-        {type: Type.newVariable({name: 'b'}), name: 'singleton'},
-        {type: Type.newVariable({name: 'b'}).collectionOf(), name: 'set'}
+        {name: Type.newVariable(new TypeVariable('a'))},
+        {type: Type.newVariable(new TypeVariable('b')), name: 'singleton'},
+        {type: Type.newVariable(new TypeVariable('b')).collectionOf(), name: 'set'}
       ],
       [
-        {name: Type.newVariable({name: 'a'})},
+        {name: Type.newVariable(new TypeVariable('a'))},
       ]);
     assert.lengthOf(shape.typeVars, 4);
     let type = Type.newInterface(shape);
@@ -115,7 +115,7 @@ describe('shape', function() {
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
-    const shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariable('a'))}], []);
     assert.isFalse(shape.canEnsureResolved());
   });
 
@@ -128,20 +128,20 @@ describe('shape', function() {
 
   it('Maybe ensure resolved does not mutate on failure', () => {
     const constrainedType1 = TypeChecker.processTypeList(
-      Type.newVariable({name: 'a'}),
+      Type.newVariable(new TypeVariable('a')),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'in'
       }]
     );
     const constrainedType2 = TypeChecker.processTypeList(
-      Type.newVariable({name: 'b'}),
+      Type.newVariable(new TypeVariable('b')),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'out'
       }]
     );
-    const unconstrainedType = Type.newVariable({name: 'c'});
+    const unconstrainedType = Type.newVariable(new TypeVariable('c'));
     const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
     const allTypesShape = new Shape('Test', [
