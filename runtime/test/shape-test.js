@@ -170,7 +170,6 @@ describe('shape', function() {
 
   it('restricted type constraints type variables in the recipe', async () => {
     const manifest = await Manifest.parse(`
-      schema Burrito
       particle Transformer
         in [~a] input
         out [~a] output
@@ -191,8 +190,9 @@ describe('shape', function() {
         Multiplexer
           items = transformed
 
-        particle BurritoDisplayer
-          in Burrito burrito
+      schema Burrito
+      particle BurritoDisplayer
+        in Burrito burrito
     `);
 
     const recipe = manifest.recipes[0];
