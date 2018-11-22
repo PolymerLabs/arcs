@@ -1432,11 +1432,11 @@ resource SomeName
       shape Shape
         in Foo foo
       particle ShapeParticle
-        host Shape shape
+        host Shape shape0
       recipe
         create as handle0
         ShapeParticle
-          shape = handle0`);
+          shape0 = handle0`);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
   });
@@ -1446,11 +1446,11 @@ resource SomeName
       shape Shape
         in Foo foo
       particle ShapeParticle
-        host Shape shape
+        host Shape shape0
       recipe
         create as handle0
         ShapeParticle
-          shape = handle0
+          shape0 = handle0
     `);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());

@@ -190,9 +190,9 @@ describe('shape', function() {
         Multiplexer
           items = transformed
 
-        schema Burrito
-        particle BurritoDisplayer
-          in Burrito burrito
+      schema Burrito
+      particle BurritoDisplayer
+        in Burrito burrito
     `);
 
     const recipe = manifest.recipes[0];

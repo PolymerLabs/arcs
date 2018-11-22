@@ -21,7 +21,7 @@ shape TestShape
   out Bar bar
 
 particle OuterParticle in 'outer-particle.js'
-  host TestShape particle
+  host TestShape particle0
   in Foo input
   out Bar output
 

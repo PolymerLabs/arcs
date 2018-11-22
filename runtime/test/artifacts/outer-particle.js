@@ -21,7 +21,7 @@ defineParticle(({Particle}) => {
       if (handle.name === 'input' && model) {
         this.inHandle.set(model);
       }
-      if (handle.name === 'particle') {
+      if (handle.name === 'particle0') {
         await this.arc.loadRecipe(Particle.buildManifest`
           ${model}
 

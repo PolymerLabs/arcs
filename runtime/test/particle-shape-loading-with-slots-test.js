@@ -37,7 +37,7 @@ describe('particle-shape-loading-with-slots', function() {
         create as handle0
         slot 'rootslotid-set-slotid-0' as slot0
         MultiplexSlotsParticle
-          particle = SingleSlotParticle
+          particle0 = SingleSlotParticle
           foos <- handle0
           consume annotationsSet as slot0
       `, {loader, fileName: './test.manifest'});
