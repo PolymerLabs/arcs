@@ -107,7 +107,7 @@ export class ProvidedSlotSpec {
   }
 }
 
-type SerializedParticleSpec = {name: string, id?: string, verbs: string[], args: SerializedConnectionSpec[], description: {pattern?: string}, implFile: string, affordance: string[], slots: SerializedSlotSpec[]};
+type SerializedParticleSpec = {name: string, id?: string, verbs: string[], args: SerializedConnectionSpec[], description: {pattern?: string}, implFile: string, modality: string[], slots: SerializedSlotSpec[]};
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
@@ -119,7 +119,7 @@ export class ParticleSpec {
   outputs: ConnectionSpec[];
   pattern: string;
   implFile: string;
-  affordance: string[];
+  modality: string[];
   slots: Map<string, SlotSpec>;
   constructor(model : SerializedParticleSpec) {
     this.model = model;
@@ -142,7 +142,7 @@ export class ParticleSpec {
     });
 
     this.implFile = model.implFile;
-    this.affordance = model.affordance;
+    this.modality = model.modality;
     this.slots = new Map();
     if (model.slots) {
       model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
@@ -180,24 +180,24 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
-  matchAffordance(affordance: string) {
-    return this.slots.size <= 0 || this.affordance.includes(affordance);
+  matchModality(modality: string) {
+    return this.slots.size <= 0 || this.modality.includes(modality);
   }
 
   toLiteral() : SerializedParticleSpec {
-    const {args, name, verbs, description, implFile, affordance, slots} = this.model;
+    const {args, name, verbs, description, implFile, modality, slots} = this.model;
     const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec = 
       ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, implFile, affordance, slots};
+    return {args: argsLiteral, name, verbs, description, implFile, modality, slots};
   }
 
   static fromLiteral(literal: SerializedParticleSpec) {
-    let {args, name, verbs, description, implFile, affordance, slots} = literal;
+    let {args, name, verbs, description, implFile, modality, slots} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, affordance, slots});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
   }
 
   clone() {
@@ -249,7 +249,7 @@ export class ParticleSpec {
       writeConnection(connection, indent);
     }
 
-    this.affordance.filter(a => a !== 'mock').forEach(a => results.push(`  affordance ${a}`));
+    this.modality.filter(a => a !== 'mock').forEach(a => results.push(`  modality ${a}`));
     this.slots.forEach(s => {
       // Consume slot.
       const consume = [];

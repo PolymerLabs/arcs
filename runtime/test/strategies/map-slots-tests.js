@@ -151,7 +151,7 @@ describe('MapSlots', function() {
   it('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({id: 'test-plan-arc', slotComposer: {
-      affordance: 'dom',
+      modality: 'dom',
       getAvailableContexts: (() => [
         {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
         {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], spec: {isSet: false}},

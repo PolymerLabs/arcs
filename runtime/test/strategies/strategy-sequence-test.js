@@ -125,8 +125,8 @@ describe('A Strategy Sequence', function() {
       particle ShowCollection in 'source/ShowCollection.js'
         in [~a] collection
         out [Description] descriptions
-        affordance dom
-        affordance dom-touch
+        modality dom
+        modality dom-touch
         consume master #root
           provide action
             handle collection
@@ -139,8 +139,8 @@ describe('A Strategy Sequence', function() {
       
       particle ShowProduct in 'source/ShowProduct.js'
         in Product product
-        affordance dom
-        affordance dom-touch
+        modality dom
+        modality dom-touch
         consume item
   
       particle AlsoOn in 'source/AlsoOn.js'

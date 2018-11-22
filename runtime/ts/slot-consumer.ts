@@ -21,7 +21,7 @@ export class SlotConsumer {
   stopRenderCallback: ({}) => void;
   eventHandler: ({}) => void;
   readonly containerKind: string;
-  // Contains `container` and other affordance specific rendering information
+  // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
   private _renderingBySubId: Map<string, {container?: {}}> = new Map();
   private innerContainerBySlotId: {} = {};

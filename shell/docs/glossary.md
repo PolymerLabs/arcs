@@ -100,7 +100,7 @@ The resolver runs under the hood in Arcs as part of the strategizer. It's job is
 
 A slot is a UI placeholder that particles may render content into. In practice it can be a <div> with an ID that is reserved and available for Arcs to render content. A slot may be filled with content by a recipe that is running as part of an Arc or may be empty in which case it's waiting to receive content from Arcs. An empty slot is invisible to the user and doesn't take up any UI real estate.
 
-A recipe that renders content into a slot may decide to split that slot (or UI affordance) up into sub-slots that can be exposed for other recipes to render content into. I.e., a "parent" recipe can delegate what and how content should be rendered into its slot to other children recipes.
+A recipe that renders content into a slot may decide to split that slot (or UI modality) up into sub-slots that can be exposed for other recipes to render content into. I.e., a "parent" recipe can delegate what and how content should be rendered into its slot to other children recipes.
 
 
 ## **Speculator** ![Internal](images/internal.png)

@@ -60,7 +60,7 @@ const ArcFactory = class {
   }
   createComposer() {
     return new ComposerKind({
-      affordance: 'mock',
+      modality: 'mock',
       rootContainer: {
         toproot: 'toproot-context',
         root: 'root-context',

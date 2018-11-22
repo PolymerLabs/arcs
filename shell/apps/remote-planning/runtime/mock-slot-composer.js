@@ -28,7 +28,7 @@ export class MockSlotComposer extends SlotComposer {
    */
   constructor(options) {
     options = options || {};
-    super({rootContainer: options.rootContainer || {'root': 'root-context'}, affordance: 'mock'});
+    super({rootContainer: options.rootContainer || {'root': 'root-context'}, modality: 'mock'});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options.strict != undefined ? options.strict : true;
