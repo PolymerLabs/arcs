@@ -18,7 +18,7 @@ export class GroupHandleConnections extends Strategy {
       onRecipe(recipe) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
-          return;
+          return undefined;
         }
         // Find all unique types used in the recipe that have unbound handle connections.
         const types = new Set();
@@ -104,6 +104,7 @@ export class GroupHandleConnections extends Strategy {
             // TODO: score!
           };
         }
+        return undefined;
       }
     }(Walker.Permuted);
   }

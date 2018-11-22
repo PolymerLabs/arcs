@@ -21,7 +21,7 @@ export class MatchParticleByVerb extends Strategy {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.
-          return;
+          return undefined;
         }
 
         const particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)

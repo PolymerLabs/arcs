@@ -35,10 +35,10 @@ export class SearchTokensToHandles extends Strategy {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (!recipe.search || recipe.search.unresolvedTokens.length === 0) {
-          return;
+          return undefined;
         }
         if (handle.isResolved() || handle.connections.length === 0) {
-          return;
+          return undefined;
         }
 
         const possibleMatches = [];
@@ -46,7 +46,7 @@ export class SearchTokensToHandles extends Strategy {
           possibleMatches.push(...findMatchingStores(token, handle));
         }
         if (possibleMatches.length === 0) {
-          return;
+          return undefined;
         }
         return possibleMatches.map(match => {
           return (recipe, handle) => {

@@ -39,14 +39,14 @@ export class CoalesceRecipes extends Strategy {
       // Find a provided slot for unfulfilled consume connection.
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.isResolved()) {
-          return;
+          return undefined;
         }
         if (!slotConnection.name || !slotConnection.particle) {
-          return;
+          return undefined;
         }
 
         if (slotConnection.targetSlot) {
-          return;
+          return undefined;
         }
 
         // TODO: also support a consume slot connection that is NOT required,
@@ -88,10 +88,10 @@ export class CoalesceRecipes extends Strategy {
       onSlot(recipe, slot) {
         // Find slots that according to their provided-spec must be consumed, but have no consume connection.
         if (slot.consumeConnections.length > 0) {
-          return; // slot has consume connections.
+          return undefined; // slot has consume connections.
         }
         if (!slot.sourceConnection || !slot.sourceConnection.slotSpec.getProvidedSlotSpec(slot.name).isRequired) {
-          return; // either a remote slot (no source connection), or a not required one.
+          return undefined; // either a remote slot (no source connection), or a not required one.
         }
 
         const results = [];
@@ -150,13 +150,14 @@ export class CoalesceRecipes extends Strategy {
         if (results.length > 0) {
           return results;
         }
+        return undefined;
       }
 
       onHandle(recipe, handle) {
         if (!index.coalescableFates.includes(handle.fate)
             || handle.id
             || handle.connections.length === 0
-            || handle.name === 'descriptions') return;
+            || handle.name === 'descriptions') return undefined;
         const results = [];
 
         for (const otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {

@@ -22,7 +22,7 @@ export class FindHostedParticle extends Strategy {
     const arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, connection) {
-        if (connection.direction !== 'host' || connection.handle) return;
+        if (connection.direction !== 'host' || connection.handle) return undefined;
         assert(connection.type.isInterface);
 
         const results = [];
@@ -59,7 +59,7 @@ export class FindHostedParticle extends Strategy {
               if (handle.id === id && handle.fate === 'copy'
                   && handle._mappedType && handle._mappedType.equals(handleType)) {
                 hc.connectToHandle(handle);
-                return;
+                return undefined;
               }
             }
 

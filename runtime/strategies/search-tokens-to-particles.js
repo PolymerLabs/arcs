@@ -30,7 +30,7 @@ export class SearchTokensToParticles extends Strategy {
 
       onRecipe(recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
-          return;
+          return undefined;
         }
 
         const byToken = {};
@@ -60,7 +60,7 @@ export class SearchTokensToParticles extends Strategy {
         }
 
         if (resolvedTokens.size === 0) {
-          return;
+          return undefined;
         }
 
         const flatten = (arr) => [].concat(...arr);

@@ -24,7 +24,7 @@ export class ResolveRecipe extends Strategy {
         if (handle.connections.length === 0 ||
             (handle.id && handle.storageKey) || (!handle.type) ||
             (!handle.fate)) {
-          return;
+          return undefined;
         }
 
         let mappable;
@@ -86,7 +86,7 @@ export class ResolveRecipe extends Strategy {
 
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.isConnected()) {
-          return;
+          return undefined;
         }
 
         const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
@@ -94,7 +94,7 @@ export class ResolveRecipe extends Strategy {
 
         // MapSlots handles a multi-slot case.
         if (allSlots.length !== 1) {
-          return;
+          return undefined;
         }
 
         const selectedSlot = allSlots[0];

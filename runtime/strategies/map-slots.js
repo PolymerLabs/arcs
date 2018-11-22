@@ -24,18 +24,18 @@ export class MapSlots extends Strategy {
         // TODO: is this right? Should constraints be connectible, in order to precompute the
         // recipe side once the verb is substituted?
         if (slotConnection.slotSpec == undefined) {
-          return;
+          return undefined;
         }
 
         if (slotConnection.isConnected()) {
-          return;
+          return undefined;
         }
 
         const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
 
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
-          return;
+          return undefined;
         }
 
         // If there are any local slots, prefer them over remote slots.

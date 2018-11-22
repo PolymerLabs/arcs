@@ -6,14 +6,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {WalkerBase} from './walker-base.js';
+import {Recipe} from './recipe';
+import {ConnectionConstraint} from './connection-constraint.js';
 
 export class ConstraintWalker extends WalkerBase {
+  // Optional handler
+  onConstraint?(recipe: Recipe, constraint: ConnectionConstraint);
+  
   onResult(result) {
     super.onResult(result);
-    const recipe = result.result;
+    const recipe: Recipe = result.result as Recipe;
     const updateList = [];
 
-    recipe._connectionConstraints.forEach(constraint => {
+    recipe.connectionConstraints.forEach(constraint => {
       if (this.onConstraint) {
         const result = this.onConstraint(recipe, constraint);
         if (result) {

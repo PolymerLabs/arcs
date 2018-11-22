@@ -40,7 +40,7 @@ export class Strategizer {
   async generate() {
     // Generate
     const generation = this.generation + 1;
-    let generated = await Promise.all(this._strategies.map(strategy => {
+    const generatedResults = await Promise.all(this._strategies.map(strategy => {
       const recipeFilter = recipe => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
@@ -55,14 +55,16 @@ export class Strategizer {
     record.sizeOfLastGeneration = this.generated.length;
     record.generatedDerivationsByStrategy = {};
     for (let i = 0; i < this._strategies.length; i++) {
-      record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generated[i].length;
+      record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generatedResults[i].length;
     }
 
-    generated = [].concat(...generated);
+    let generated = [].concat(...generatedResults);
 
     // TODO: get rid of this additional asynchrony
     generated = await Promise.all(generated.map(async result => {
-      if (result.hash) result.hash = await result.hash;
+      if (result.hash) {
+        result.hash = await result.hash;
+      }
       return result;
     }));
 
@@ -87,7 +89,7 @@ export class Strategizer {
               record.nullDerivationsByStrategy[strategy] = 0;
             }
             record.nullDerivationsByStrategy[strategy]++;
-          } else if (existingResult.derivation.map(a => a.parent).indexOf(result.derivation[0].parent) != -1) {
+          } else if (existingResult.derivation.map(a => a.parent).indexOf(result.derivation[0].parent) !== -1) {
             record.duplicateSameParentDerivations += 1;
             if (record.duplicateSameParentDerivationsByStrategy[strategy] ==
                 undefined) {
@@ -114,19 +116,19 @@ export class Strategizer {
       return true;
     });
 
-    let terminal = new Map();
+    const terminalMap = new Map();
     for (const candidate of this.generated) {
-      terminal.set(candidate.result, candidate);
+      terminalMap.set(candidate.result, candidate);
     }
     // TODO(piotrs): This is inefficient, improve at some point.
     for (const result of this.populationHash.values()) {
       for (const {parent} of result.derivation) {
-        if (parent && terminal.has(parent.result)) {
-          terminal.delete(parent.result);
+        if (parent && terminalMap.has(parent.result)) {
+          terminalMap.delete(parent.result);
         }
       }
     }
-    terminal = [...terminal.values()];
+    const terminal = [...terminalMap.values()];
 
     record.survivingDerivations = generated.length;
 
@@ -140,13 +142,12 @@ export class Strategizer {
       return 0;
     });
 
-    // Evalute
     const evaluations = await Promise.all(this._evaluators.map(strategy => {
       return strategy.evaluate(this, generated);
     }));
     const fitness = Strategizer._mergeEvaluations(evaluations, generated);
 
-    assert(fitness.length == generated.length);
+    assert(fitness.length === generated.length);
     for (let i = 0; i < fitness.length; i++) {
       this._internalPopulation.push({
         fitness: fitness[i],
