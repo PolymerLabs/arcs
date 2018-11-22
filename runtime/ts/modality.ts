@@ -14,13 +14,13 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
-export class Affordance {
+export class Modality {
 
-  static _affordances = {
-    'dom': new Affordance('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'dom-touch': new Affordance('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'vr': new Affordance('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'mock': new Affordance('mock', MockSlotDomConsumer, MockSuggestDomConsumer)
+  static _modalities = {
+    'dom': new Modality('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'dom-touch': new Modality('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'vr': new Modality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
+    'mock': new Modality('mock', MockSlotDomConsumer, MockSuggestDomConsumer)
   };
   
   private constructor(public readonly name: string,
@@ -29,8 +29,8 @@ export class Affordance {
                       public readonly descriptionFormatter?: typeof DescriptionDomFormatter) {}
 
   static forName(name: string) {
-    assert(Affordance._affordances[name], `Unsupported affordance ${name}`);
-    return Affordance._affordances[name];
+    assert(Modality._modalities[name], `Unsupported modality ${name}`);
+    return Modality._modalities[name];
   }
 }
 

@@ -18,7 +18,7 @@ When the demo is loaded, the Arcs runtime is initialized by including the [playg
 
 ![Demo](images/demo.gif)
 
-Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
+Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI modality required for the recipe to run are available.
 
 Clicking on the suggestion runs all the particles in the recipe and renders their output in the main UI slot. A UI slot corresponds to a named DOM element that particles may render content into. In this example the Greet particle renders a green `<div>` into the main Arcs UI slot called "root".
 

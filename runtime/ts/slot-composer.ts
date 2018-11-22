@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Affordance} from './affordance.js';
+import {Modality} from './modality.js';
 import {Arc} from './arc.js';
 import {SlotContext} from './slot-context.js';
 import {SlotConsumer} from './slot-consumer.js';
@@ -19,19 +19,19 @@ import {Particle} from './recipe/particle.js';
 export class SlotComposer {
   arc: Arc;
   private readonly _containerKind: string;
-  private _affordance: Affordance;
+  private _modality: Modality;
   private _consumers: SlotConsumer[] = [];
   private _contexts: SlotContext[] = [];
 
   /**
    * |options| must contain:
-   * - affordance: the UI affordance the slots composer render to (for example: dom).
+   * - modality: the UI modality the slots composer render to (for example: dom).
    * - rootContainer: the top level container to be used for slots.
    * and may contain:
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
   constructor(options) {
-    assert(options.affordance, 'Affordance is mandatory');
+    assert(options.modality, 'Modality is mandatory');
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
     assert((options.rootContainer !== undefined)
@@ -40,14 +40,14 @@ export class SlotComposer {
       'Root container is mandatory unless it is explicitly skipped');
 
     this._containerKind = options.containerKind;
-    this._affordance = Affordance.forName(options.affordance);
-    assert(this._affordance.slotConsumerClass);
+    this._modality = Modality.forName(options.modality);
+    assert(this._modality.slotConsumerClass);
 
     if (options.noRoot) {
       return;
     }
 
-    const containerByName = options.containers || this._affordance.slotConsumerClass.findRootContainers(options.rootContainer) || {};
+    const containerByName = options.containers || this._modality.slotConsumerClass.findRootContainers(options.rootContainer) || {};
     if (Object.keys(containerByName).length === 0) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;
@@ -59,7 +59,7 @@ export class SlotComposer {
     });
   }
 
-  get affordance(): string { return this._affordance.name; }
+  get modality(): string { return this._modality.name; }
   get consumers(): SlotConsumer[] { return this._consumers; }
   get containerKind(): string { return this._containerKind; }
 
@@ -123,7 +123,7 @@ export class SlotComposer {
           slotConsumer.consumeConn = cs;
           transformationSlotConsumer = slotConsumer.transformationSlotConsumer;
         } else {
-          slotConsumer = new this._affordance.slotConsumerClass(cs, this._containerKind);
+          slotConsumer = new this._modality.slotConsumerClass(cs, this._containerKind);
           newConsumers.push(slotConsumer);
         }
 
@@ -182,11 +182,11 @@ export class SlotComposer {
 
   dispose() {
     this.consumers.forEach(consumer => consumer.dispose());
-    this._affordance.slotConsumerClass.dispose();
+    this._modality.slotConsumerClass.dispose();
     this._contexts.forEach(context => {
       context.clearSlotConsumers();
       if (context.container) {
-        this._affordance.slotConsumerClass.clear(context.container);
+        this._modality.slotConsumerClass.clear(context.container);
       }
     });
     this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);

@@ -141,7 +141,7 @@ describe('manifest parser', function() {
       particle SomeParticle
         in Energy energy
         out Height height
-        affordance dom`);
+        modality dom`);
   });
   it('parses recipe with particle verbs', () => {
     parse(`

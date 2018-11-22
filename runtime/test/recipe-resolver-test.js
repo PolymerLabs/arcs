@@ -27,7 +27,7 @@ describe('RecipeResolver', function() {
     return new Arc({
       id: 'test',
       slotComposer: {
-        affordance: 'dom',
+        modality: 'dom',
         getAvailableContexts: (() => {
           return [{
             name: 'root',
@@ -49,7 +49,7 @@ describe('RecipeResolver', function() {
       manifest: `
       particle P in 'A.js'
         consume root
-        affordance dom
+        modality dom
 
       recipe
         P
@@ -75,7 +75,7 @@ describe('RecipeResolver', function() {
       particle P in 'A.js'
         out * {Text value} text
         consume root
-        affordance dom
+        modality dom
 
       recipe
         P
@@ -88,7 +88,7 @@ describe('RecipeResolver', function() {
   it('returns null for an invalid recipe', async () => {
     const arc = createArc();
     const resolver = new RecipeResolver(arc);
-    // The recipe below is invalid as it's  missing consume and affordance.
+    // The recipe below is invalid as it's  missing consume and modality.
     const recipe = await buildRecipe({
       manifest: `
       particle P in 'A.js'

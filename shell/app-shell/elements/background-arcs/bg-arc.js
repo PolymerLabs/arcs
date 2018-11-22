@@ -36,7 +36,7 @@ class BgArc extends Xen.Debug(Xen.Base, log) {
   _update({userid, key}, state) {
     if (!state.config) {
       state.config = {
-        affordance: 'dom',
+        modality: 'dom',
         root: window.arcsPath,
         rootContainer: this.shadowRoot,
         useStorage: true
