@@ -735,11 +735,11 @@ ${particleStr1}
       particle SomeParticle in 'some-particle.js'
         consume slotA #aaa
           provide slotB #bbb
-        recipe
-          slot 'slot-id0' #aa #aaa as s0
-          SomeParticle
-            consume slotA #aa #hello as s0
-              provide slotB
+      recipe
+        slot 'slot-id0' #aa #aaa as s0
+        SomeParticle
+          consume slotA #aa #hello as s0
+            provide slotB
     `);
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);
@@ -769,11 +769,11 @@ ${particleStr1}
       particle SomeParticle in 'some-particle.js'
         \`consume Slot slotA #aaa
           \`provide Slot slotB #bbb
-        recipe
-          \`slot 'slot-id0' #aa #aaa as s0
-          SomeParticle
-            slotA consume s0 #aa #hello
-            slotB provide
+      recipe
+        \`slot 'slot-id0' #aa #aaa as s0
+        SomeParticle
+          slotA consume s0 #aa #hello
+          slotB provide
     `);
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);

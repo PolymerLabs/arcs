@@ -18,17 +18,17 @@ import {assert} from '../chai-web.js';
 
 describe('MapSlots', function() {
   const particlesSpec = `
-    particle A in 'A.js'
-      consume root
+      particle A in 'A.js'
+        consume root
 
-    particle B in 'B.js'
-      consume root`;
+      particle B in 'B.js'
+        consume root`;
 
   const testManifest = async (recipeManifest, expectedSlots) => {
     const manifest = (await Manifest.parse(`
-      ${particlesSpec}
+${particlesSpec}
 
-      ${recipeManifest}
+${recipeManifest}
     `));
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);

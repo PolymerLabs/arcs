@@ -156,21 +156,21 @@ describe('Planner', function() {
 
 describe('AssignOrCopyRemoteHandles', function() {
   const particlesSpec = `
-  schema Foo
+      schema Foo
 
-  particle A in 'A.js'
-    in [Foo] list
-    consume root
+      particle A in 'A.js'
+        in [Foo] list
+        consume root
 
-  particle B in 'A.js'
-    inout [Foo] list
-    consume root
+      particle B in 'A.js'
+        inout [Foo] list
+        consume root
   `;
   const testManifest = async (recipeManifest, expectedResults) => {
     const manifest = (await Manifest.parse(`
-      ${particlesSpec}
+${particlesSpec}
 
-      ${recipeManifest}
+${recipeManifest}
     `));
 
     const schema = manifest.findSchemaByName('Foo');

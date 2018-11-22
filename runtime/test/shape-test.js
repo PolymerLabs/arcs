@@ -168,7 +168,7 @@ describe('shape', function() {
     assert.isTrue(constrainedType2.isResolved());
   });
 
-  it('restricted type constraints type variables in the recipe', async () => {
+  it('restricted type constrains type variables in the recipe', async () => {
     const manifest = await Manifest.parse(`
       particle Transformer
         in [~a] input
