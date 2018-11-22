@@ -16,7 +16,7 @@ export class CreateHandleGroup extends Strategy {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onRecipe(recipe) {
         // Resolve constraints before assuming connections are free.
-        if (recipe.connectionConstraints.length > 0) return;
+        if (recipe.connectionConstraints.length > 0) return undefined;
 
         const freeConnections = recipe.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
         let maximalGroup = null;
@@ -64,6 +64,7 @@ export class CreateHandleGroup extends Strategy {
             }
           };
         }
+        return undefined;
       }
     }(Walker.Independent), this);
   }

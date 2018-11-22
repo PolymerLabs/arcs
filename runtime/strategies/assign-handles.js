@@ -25,19 +25,19 @@ export class AssignHandles extends Strategy {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (!['?', 'use', 'copy', 'map'].includes(handle.fate)) {
-          return;
+          return undefined;
         }
 
         if (handle.connections.length === 0) {
-          return;
+          return undefined;
         }
 
         if (handle.id) {
-          return;
+          return undefined;
         }
 
         if (!handle.type) {
-          return;
+          return undefined;
         }
 
         // TODO: using the connection to retrieve type information is wrong.
@@ -45,18 +45,18 @@ export class AssignHandles extends Strategy {
         // we should switch to using that instead.
         const counts = RecipeUtil.directionCounts(handle);
         if (counts.unknown > 0) {
-          return;
+          return undefined;
         }
 
         const score = this._getScore(counts, handle.tags);
 
         if (counts.out > 0 && handle.fate === 'map') {
-          return;
+          return undefined;
         }
         const stores = self.getMappableStores(handle.fate, handle.type, handle.tags, counts);
         if (handle.fate !== '?' && stores.size < 2) {
           // These handles are mapped by resolve-recipe strategy.
-          return;
+          return undefined;
         }
 
         const responses = [...stores.keys()].map(store =>
@@ -71,7 +71,7 @@ export class AssignHandles extends Strategy {
             if (clonedHandle.fate === '?') {
               clonedHandle.fate = stores.get(store);
             } else {
-              assert(clonedHandle.fate, stores.get.store);
+              assert(clonedHandle.fate, stores.get(store));
             }
             return score;
           }));
@@ -102,13 +102,13 @@ export class AssignHandles extends Strategy {
   getMappableStores(fate, type, tags, counts) {
     const stores = new Map();
     if (fate === 'use' || fate === '?') {
-      const subtype = counts.out == 0;
+      const subtype = counts.out === 0;
       // TODO: arc.findStoresByType doesn't use `subtype`. Shall it be removed?
       this.arc.findStoresByType(type, {tags, subtype}).forEach(store => stores.set(store, 'use'));
     }
     if (fate === 'map' || fate === 'copy' || fate === '?') {
       this.arc.context.findStoreByType(type, {tags, subtype: true}).forEach(
-          store => stores.set(store, fate == '?' ? (counts.out > 0 ? 'copy' : 'map') : fate));
+          store => stores.set(store, fate === '?' ? (counts.out > 0 ? 'copy' : 'map') : fate));
     }
     return stores;
   }

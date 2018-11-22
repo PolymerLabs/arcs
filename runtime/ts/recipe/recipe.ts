@@ -13,6 +13,7 @@ import {Particle} from './particle.js';
 import {Search} from './search.js';
 import {Slot} from './slot.js';
 import {Handle} from './handle.js';
+import {HandleConnection} from './handle-connection.js';
 import {compareComparables} from './util.js';
 
 export class Recipe {
@@ -193,7 +194,7 @@ export class Recipe {
     return slotConnections;
   }
 
-  get handleConnections() {
+  get handleConnections(): HandleConnection[] {
     const handleConnections = [];
     this._particles.forEach(particle => {
       handleConnections.push(...Object.values(particle.connections));
@@ -247,7 +248,7 @@ export class Recipe {
     return digest(this.toString());
   }
 
-  normalize(options) {
+  normalize(options?) {
     if (Object.isFrozen(this)) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');

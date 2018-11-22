@@ -16,12 +16,12 @@ export class AddMissingHandles extends Strategy {
       onRecipe(recipe) {
         // Don't add use handles while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0) {
-          return;
+          return undefined;
         }
         // Don't add use handles to a recipe with free handles
         const freeHandles = recipe.handles.filter(handle => handle.connections.length === 0);
         if (freeHandles.length > 0) {
-          return;
+          return undefined;
         }
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
@@ -29,7 +29,7 @@ export class AddMissingHandles extends Strategy {
         const disconnectedConnections = recipe.handleConnections.filter(
             hc => hc.handle == null && !hc.isOptional && hc.name !== 'descriptions' && hc.direction !== 'host');
         if (disconnectedConnections.length === 0) {
-          return;
+          return undefined;
         }
 
         return recipe => {

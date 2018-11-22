@@ -15,8 +15,6 @@ import {Recipe} from '../ts-build/recipe/recipe.js';
  */
 export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
-    const self = this;
-
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.connections.length > 0) {
