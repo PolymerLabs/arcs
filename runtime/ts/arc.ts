@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Type} from './type.js';
+import {Type, EntityType, VariableType, InterfaceType, RelationType} from './type.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
@@ -162,7 +162,7 @@ export class Arc {
 
   async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
     const type = handle.type.getContainedType() || handle.type;
-    if (type.isInterface) {
+    if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceShape.toString() + '\n';
     }
     const key = this.storageProviderFactory.parseStringAsKey(handle.storageKey);
@@ -459,7 +459,7 @@ ${this.activeRecipe.toString()}`;
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
         const newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
-        if (recipeHandle.id && recipeHandle.type.isInterface
+        if (recipeHandle.id && recipeHandle.type instanceof InterfaceType
             && recipeHandle.id.includes(':particle-literal:')) {
           // 'particle-literal' handles are created by the FindHostedParticle strategy.
           const particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
@@ -533,7 +533,7 @@ ${this.activeRecipe.toString()}`;
   async createStore(type, name, id, tags, storageKey = undefined) {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
-    if (type.isRelation) {
+    if (type instanceof RelationType) {
       type = Type.newCollection(type);
     }
 
@@ -609,13 +609,13 @@ ${this.activeRecipe.toString()}`;
       if (key) {
         return `list:${key}`;
       }
-    } else if (type.isEntity) {
+    } else if (type instanceof EntityType) {
       return type.entitySchema.name;
     } else if (type.isShape) {
       // TODO we need to fix this too, otherwise all handles of shape type will
       // be of the 'same type' when searching by type.
       return type.shapeShape;
-    } else if (type.isVariable && type.isResolved()) {
+    } else if (type instanceof VariableType && type.isResolved()) {
       return Arc._typeToKey(type.resolvedType());
     }
   }
@@ -629,13 +629,13 @@ ${this.activeRecipe.toString()}`;
           return true;
         }
       } else {
-        if (type.isVariable && !type.isResolved() && handle.type.isEntity) {
+        if (type instanceof VariableType && !type.isResolved() && handle.type instanceof EntityType) {
           return true;
         }
         // elementType will only be non-null if type is either Collection or BigCollection; the tag
         // comparison ensures that handle.type is the same sort of collection.
         const elementType = type.getContainedType();
-        if (elementType && elementType.isVariable && !elementType.isResolved() && type.tag === handle.type.tag) {
+        if (elementType && elementType instanceof VariableType && !elementType.isResolved() && type.tag === handle.type.tag) {
           return true;
         }
       }
@@ -649,7 +649,7 @@ ${this.activeRecipe.toString()}`;
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
-      type, [{type: s.type, direction: s.type.isInterface ? 'host' : 'inout'}]));
+      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
   findStoreById(id): StorageProviderBase {

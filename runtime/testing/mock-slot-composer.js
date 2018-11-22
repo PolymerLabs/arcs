@@ -12,6 +12,7 @@
 import {assert} from '../test/chai-web.js';
 import {FakeSlotComposer} from './fake-slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
+import {InterfaceType} from '../ts-build/type.js';
 
 const logging = false;
 const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
@@ -169,7 +170,7 @@ export class MockSlotComposer extends FakeSlotComposer {
   // exists - should await ensureBackingStore() before accessing it.
   _getHostedParticleNames(particle) {
     return Object.values(particle.connections)
-        .filter(conn => conn.type.isInterface)
+        .filter(conn => conn.type instanceof InterfaceType)
         .map(conn => {
           const store = this.arc.findStoreById(conn.handle.id);
           if (store.referenceMode) {

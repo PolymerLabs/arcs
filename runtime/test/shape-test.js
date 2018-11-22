@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {Shape} from '../ts-build/shape.js';
-import {Type} from '../ts-build/type.js';
+import {Type, EntityType, VariableType} from '../ts-build/type.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {Schema} from '../ts-build/schema.js';
@@ -207,7 +207,7 @@ describe('shape', function() {
     for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
-      assert.isTrue(resolved.isVariable);
+      assert.isTrue(resolved instanceof VariableType);
       assert.isFalse(resolved.canEnsureResolved());
     }
 
@@ -219,10 +219,10 @@ describe('shape', function() {
     for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
-      assert.isTrue(collectionType.isVariable);
+      assert.isTrue(collectionType instanceof VariableType);
       assert.isTrue(resolved.canEnsureResolved());
       const canWriteSuperset = resolved.canWriteSuperset;
-      assert.isTrue(canWriteSuperset.isEntity);
+      assert.isTrue(canWriteSuperset instanceof EntityType);
       assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
     }
   });

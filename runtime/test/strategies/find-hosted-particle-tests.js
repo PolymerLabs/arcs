@@ -14,6 +14,7 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Loader} from '../../ts-build/loader.js';
 import {Arc} from '../../ts-build/arc.js';
 import {FindHostedParticle} from '../../ts-build/strategies/find-hosted-particle.js';
+import {InterfaceType} from '../../ts-build/type.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {
@@ -58,7 +59,7 @@ describe('FindHostedParticle', function() {
     const handle = recipe.handles[0];
     assert.equal(handle.fate, 'copy');
     assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
-    assert.isTrue(handle.type.isInterface);
+    assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
     assert.equal(handle.type.interfaceShape.name, 'HostedShape');
   });
@@ -89,7 +90,7 @@ describe('FindHostedParticle', function() {
     const handle = recipe.handles[0];
     assert.equal(handle.fate, 'copy');
     assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
-    assert.isTrue(handle.type.isInterface);
+    assert.isTrue(handle.type instanceof InterfaceType);
     assert.equal(handle.type.interfaceShape.name, 'HostedShape');
 
     const connections = Object.values(recipe.particles[0].connections);
@@ -205,7 +206,7 @@ describe('FindHostedParticle', function() {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(store => store.type.isInterface);
+    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType);
     const particleSpec = await particleSpecStore.get();
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;

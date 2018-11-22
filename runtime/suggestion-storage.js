@@ -15,7 +15,7 @@ import {assert} from '../platform/assert-web.js';
 import {Manifest} from './ts-build/manifest.js';
 import {RecipeResolver} from './ts-build/recipe/recipe-resolver.js';
 import {Schema} from './ts-build/schema.js';
-import {Type} from './ts-build/type.js';
+import {InterfaceType} from './ts-build/type.js';
 
 export class SuggestionStorage {
   constructor(arc, userid) {
@@ -178,7 +178,7 @@ export class SuggestionStorage {
 
         // Override handle conenctions with particle name as local name.
         Object.values(handle.connections).forEach(conn => {
-          assert(conn.type.isInterface);
+          assert(conn.type instanceof InterfaceType);
           conn._handle = {localName: hostedParticleName};
         });
 

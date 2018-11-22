@@ -24,18 +24,6 @@ export class Type {
     this.data = data;
   }
 
-  // TODO: replace with instanceof checks
-  get isEntity()        { return false; }
-  get isVariable()      { return false; }
-  get isCollection()    { return false; }
-  get isBigCollection() { return false; }
-  get isRelation()      { return false; }
-  get isInterface()     { return false; }
-  get isSlot()          { return false; }
-  get isReference()     { return false; }
-  get isArcInfo()       { return false; }
-  get isHandleInfo()    { return false; }
-
   // TODO: remove these; callers can directly construct the classes now
   static newEntity(entity : Schema) {
     return new EntityType(entity);
@@ -164,11 +152,11 @@ export class Type {
   }
 
   get hasVariable() {
-    return this._applyExistenceTypeTest(type => type.isVariable);
+    return this._applyExistenceTypeTest(type => type instanceof VariableType);
   }
 
   get hasUnresolvedVariable() {
-    return this._applyExistenceTypeTest(type => type.isVariable && !type.variable.isResolved());
+    return this._applyExistenceTypeTest(type => type instanceof VariableType && !type.variable.isResolved());
   }
 
   primitiveType() {
@@ -293,6 +281,7 @@ export class EntityType extends Type {
     super('Entity', schema);
   }
 
+  // These type identifier methods are being left in place for non-runtime code.
   get isEntity() {
     return true;
   }

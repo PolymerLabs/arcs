@@ -13,7 +13,7 @@
 import {assert} from './chai-web.js';
 
 import {Schema} from '../ts-build/schema.js';
-import {Type} from '../ts-build/type.js';
+import {Type, SlotType} from '../ts-build/type.js';
 import {SlotInfo} from '../ts-build/slot-info.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {TypeVariable} from '../ts-build/type-variable.js';
@@ -358,6 +358,6 @@ describe('TypeChecker', () => {
     assert(result.canEnsureResolved());
     result.maybeEnsureResolved();
     assert(result.isResolved());
-    assert(result.resolvedType().isSlot);
+    assert(result.resolvedType() instanceof SlotType);
   });
 });

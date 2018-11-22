@@ -23,11 +23,10 @@ export class Reference {
   private readonly context: ParticleExecutionContext;
   private storageProxy = null;
   protected handle = null;
-  constructor(data : {id: string, storageKey: string | null}, type, context: ParticleExecutionContext) {
+  constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) {
     this.id = data.id;
     this.storageKey = data.storageKey;
     this.context = context;
-    assert(type.isReference);
     this.type = type;
   }
 

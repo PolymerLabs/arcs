@@ -10,7 +10,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
-import {Type} from '../type.js';
+import {VariableType} from '../type.js';
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 
@@ -168,7 +168,7 @@ export class CoalesceRecipes extends Strategy {
             let resolved = otherHandle.type.resolvedType();
             // TODO: getContainedType returns non-null for references ... is that correct here?
             resolved = resolved.getContainedType() || resolved;
-            if (resolved.isVariable && !resolved.canReadSubset) continue;
+            if (resolved instanceof VariableType && !resolved.canReadSubset) continue;
           }
 
           if (RecipeUtil.matchesRecipe(arc.activeRecipe, otherHandle.recipe)) {

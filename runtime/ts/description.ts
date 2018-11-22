@@ -17,6 +17,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {CollectionType, BigCollectionType, InterfaceType} from './type.js';
 
 export class Description {
   relevance: {} | null = null;
@@ -374,7 +375,7 @@ export class DescriptionFormatter {
         assert(!token.extra, `Unrecognized extra ${token.extra}`);
 
         // Transformation's hosted particle.
-        if (token._handleConn.type.isInterface) {
+        if (token._handleConn.type instanceof InterfaceType) {
           const particleSpec = ParticleSpec.fromLiteral(await token._store.get());
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
           return particleSpec.pattern;
@@ -391,8 +392,10 @@ export class DescriptionFormatter {
         const storeValue = await this._formatStoreValue(token.handleName, token._store);
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
-          // TODO: should this look at type.getContainedType() (which includes references), or maybe just type.isEntity?
-          if (storeValue && !this.excludeValues && !token._store.type.isCollection && !token._store.type.isBigCollection) {
+          // TODO: should this look at type.getContainedType() (which includes references), or maybe just check for EntityType?
+          const storeType = token._store.type;
+          if (storeValue && !this.excludeValues &&
+              !(storeType instanceof CollectionType) && !(storeType instanceof BigCollectionType)) {
             return storeValue;
           }
         }
@@ -434,7 +437,7 @@ export class DescriptionFormatter {
   }
 
   async _propertyTokenToString(handleName, store, properties) {
-    assert(!store.type.isCollection && !store.type.isBigCollection,
+    assert(!(store.type instanceof CollectionType) && !(store.type instanceof BigCollectionType),
            `Cannot return property ${properties.join(',')} for Collection or BigCollection`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     const valueVar = await store.get();
@@ -459,12 +462,12 @@ export class DescriptionFormatter {
     if (!store) {
       return;
     }
-    if (store.type.isCollection) {
+    if (store.type instanceof CollectionType) {
       const values = await store.toList();
       if (values && values.length > 0) {
         return this._formatCollection(handleName, values);
       }
-    } else if (store.type.isBigCollection) {
+    } else if (store.type instanceof BigCollectionType) {
       const cursorId = await store.stream(1);
       const {value, done} = await store.cursorNext(cursorId);
       store.cursorClose(cursorId);

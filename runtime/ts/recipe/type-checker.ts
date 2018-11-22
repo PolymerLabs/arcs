@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type} from '../type.js';
+import {Type, EntityType, VariableType, CollectionType, BigCollectionType, InterfaceType, SlotType} from '../type.js';
 import {TypeVariable} from '../type-variable.js';
 
 export class TypeChecker {
@@ -55,7 +55,7 @@ export class TypeChecker {
     }
 
     const getResolution = candidate => {
-      if (candidate.isVariable === false) {
+      if (!(candidate instanceof VariableType)) {
         return candidate;
       }
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
@@ -72,11 +72,11 @@ export class TypeChecker {
 
     const candidate = baseType.resolvedType();
 
-    if (candidate.isCollection) {
+    if (candidate instanceof CollectionType) {
       const resolution = getResolution(candidate.collectionType);
       return (resolution !== null) ? resolution.collectionOf() : null;
     }
-    if (candidate.isBigCollection) {
+    if (candidate instanceof BigCollectionType) {
       const resolution = getResolution(candidate.bigCollectionType);
       return (resolution !== null) ? resolution.bigCollectionOf() : null;
     }
@@ -87,8 +87,8 @@ export class TypeChecker {
   static _tryMergeTypeVariable(base, onto) {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
-    if (primitiveBase.isVariable) {
-      if (primitiveOnto.isVariable) {
+    if (primitiveBase instanceof VariableType) {
+      if (primitiveOnto instanceof VariableType) {
         // base, onto both variables.
         const result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
         if (result === false) {
@@ -102,11 +102,11 @@ export class TypeChecker {
         primitiveBase.variable.resolution = primitiveOnto;
       }
       return base;
-    } else if (primitiveOnto.isVariable) {
+    } else if (primitiveOnto instanceof VariableType) {
       // onto variable, base not.
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
-    } else if (primitiveBase.isInterface && primitiveOnto.isInterface) {
+    } else if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
       const result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
       if (result == null) {
         return null;
@@ -122,7 +122,7 @@ export class TypeChecker {
 
   static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
-    if (primitiveHandleType.isVariable) {
+    if (primitiveHandleType instanceof VariableType) {
       while (primitiveConnectionType.isTypeContainer()) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
@@ -134,8 +134,14 @@ export class TypeChecker {
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
         const newVar = Type.newVariable(new TypeVariable('a', null, null));
-        primitiveHandleType.variable.resolution = 
-            primitiveConnectionType.isCollection ? Type.newCollection(newVar) : (primitiveConnectionType.isBigCollection ? Type.newBigCollection(newVar) : Type.newReference(newVar));
+        if (primitiveConnectionType instanceof CollectionType) {
+          primitiveHandleType.variable.resolution = Type.newCollection(newVar);
+        } else if (primitiveConnectionType instanceof BigCollectionType) {
+          primitiveHandleType.variable.resolution = Type.newBigCollection(newVar);
+        } else {
+          primitiveHandleType.variable.resolution = Type.newReference(newVar);
+        }
+
         const unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         [primitiveHandleType, primitiveConnectionType] = unwrap;
       }
@@ -216,14 +222,14 @@ export class TypeChecker {
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType.isVariable && rightType.isTypeContainer()) {
+    if (leftType instanceof VariableType && rightType.isTypeContainer()) {
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
     }
-    if (rightType.isVariable && leftType.isTypeContainer()) {
+    if (rightType instanceof VariableType && leftType.isTypeContainer()) {
       return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
     }
 
-    if (leftType.isVariable || rightType.isVariable) {
+    if (leftType instanceof VariableType || rightType instanceof VariableType) {
       // TODO: everything should use this, eventually. Need to implement the
       // right functionality in Shapes first, though.
       return Type.canMergeConstraints(leftType, rightType);
@@ -240,19 +246,19 @@ export class TypeChecker {
       return false;
     }
 
-    if (leftType.isSlot) {
+    if (leftType instanceof SlotType) {
       return true;
     }
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc
-    if (leftType.isInterface && rightType.isInterface) {
+    if (leftType instanceof InterfaceType && rightType instanceof InterfaceType) {
       if (leftType.interfaceShape.equals(rightType.interfaceShape)) {
         return true;
       }
     }
 
-    if (!leftType.isEntity || !rightType.isEntity) {
+    if (!(leftType instanceof EntityType) || !(rightType instanceof EntityType)) {
       return false;
     }
 
