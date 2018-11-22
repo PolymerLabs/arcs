@@ -12,8 +12,7 @@ import {Runtime} from '../../runtime/ts-build/runtime.js';
 
 // The following will be pulled into Runtime.
 import {Arc} from '../../runtime/ts-build/arc.js';
-import {Planificator as PlanificatorNew} from '../../runtime/ts-build/plan/planificator.js';
-import {Planificator} from '../../runtime/planificator.js';
+import {Planificator} from '../../runtime/ts-build/plan/planificator.js';
 import {SlotComposer} from '../../runtime/ts-build/slot-composer.js';
 import {Type} from '../../runtime/ts-build/type.js';
 import {Manifest} from '../../runtime/ts-build/manifest.js';
@@ -31,7 +30,6 @@ const Arcs = {
   Manifest,
   Runtime,
   Planificator,
-  PlanificatorNew,
   SlotComposer,
   Type,
   BrowserLoader,
