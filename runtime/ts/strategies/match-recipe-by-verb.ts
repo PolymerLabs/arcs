@@ -110,6 +110,7 @@ export class MatchRecipeByVerb extends Strategy {
               for (let i = 0; i < handle.connections.length; i++) {
                 const candidate = handle.connections[i];
                 // TODO candidate.name === name triggers test failures
+                // tslint:disable-next-line: triple-equals
                 if (candidate.particle === particleForReplacing && candidate.name == name) {
                   connection._handle = handle;
                   handle.connections[i] = connection;
