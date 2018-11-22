@@ -14,10 +14,10 @@ import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '.
 export class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
     super();
-    this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
+    this.modality = arc.pec.slotComposer ? arc.pec.slotComposer.modality : null;
   }
   async generate(inputParams) {
-    const affordance = this.affordance;
+    const modality = this.modality;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onRecipe(recipe) {
         // The particles & handles Sets are used as input to RecipeUtil's shape functionality
@@ -36,8 +36,8 @@ export class ConvertConstraintsToConnections extends Strategy {
         }
 
         for (const constraint of recipe.connectionConstraints) {
-          // Don't process constraints if their listed particles don't match the current affordance.
-          if (affordance && (!constraint.from.particle.matchAffordance(affordance) || !constraint.to.particle.matchAffordance(affordance))) {
+          // Don't process constraints if their listed particles don't match the current modality.
+          if (modality && (!constraint.from.particle.matchModality(modality) || !constraint.to.particle.matchModality(modality))) {
             return undefined;
           }
 

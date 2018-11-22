@@ -84,7 +84,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
       this.containers.suggestions = config.suggestionContainer;
     }
     if (!composer) {
-      composer = new SlotComposer({affordance: 'dom', containers: this.containers});
+      composer = new SlotComposer({modality: 'dom', containers: this.containers});
     }
     return new ArcHost(env, context, storage, composer);
   }

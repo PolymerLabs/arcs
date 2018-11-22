@@ -10,8 +10,8 @@ import '../Product.schema'
 
 particle ManageProducts in 'source/ManageProducts.js'
   ManageProducts(inout [Product] list)
-  affordance dom
-  affordance dom-touch
+  modality dom
+  modality dom-touch
   consume root
     provide action
       handle list

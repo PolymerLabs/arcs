@@ -27,11 +27,11 @@ import {Handle} from './ts-build/recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
 
 class RelevantContextRecipes extends Strategy {
-  constructor(context, affordance) {
+  constructor(context, modality) {
     super();
     this._recipes = [];
     for (let recipe of context.allRecipes) {
-      if (affordance && recipe.particles.find(p => p.spec && !p.spec.matchAffordance(affordance)) !== undefined) {
+      if (modality && recipe.particles.find(p => p.spec && !p.spec.matchModality(modality)) !== undefined) {
         continue;
       }
 
@@ -72,20 +72,20 @@ const IndexStrategies = [
 ];
 
 export class RecipeIndex {
-  constructor(context, loader, affordance) {
+  constructor(context, loader, modality) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
       loader,
-      slotComposer: affordance ? new SlotComposer({affordance, noRoot: true}) : null,
+      slotComposer: modality ? new SlotComposer({modality, noRoot: true}) : null,
       recipeIndex: {},
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
       speculative: true
     });
     const strategizer = new Strategizer(
       [
-        new RelevantContextRecipes(context, affordance),
+        new RelevantContextRecipes(context, modality),
         ...IndexStrategies.map(S => new S(arcStub))
       ],
       [],

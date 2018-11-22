@@ -12,7 +12,7 @@ import 'Restaurant.schema'
 particle FindRestaurants in 'source/FindRestaurants.js'
   in GeoCoordinates location
   inout [Restaurant] restaurants
-  affordance dom
+  modality dom
   consume root
     must provide masterdetail
       handle restaurants

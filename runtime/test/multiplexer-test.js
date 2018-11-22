@@ -42,7 +42,7 @@ describe('Multiplexer', function() {
 
     const barType = manifest.findTypeByName('Bar');
 
-    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new SlotComposer({modality: 'mock', rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

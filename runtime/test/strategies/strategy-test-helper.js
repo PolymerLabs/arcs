@@ -13,12 +13,12 @@ import {Arc} from '../../ts-build/arc.js';
 import {assert} from '../chai-web.js';
 
 export class StrategyTestHelper {
-  static createTestArc(id, context, affordance) {
+  static createTestArc(id, context, modality) {
     return new Arc({
       id,
       context,
       slotComposer: {
-        affordance,
+        modality,
         getAvailableContexts: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], spec: {isSet: false}}]; })
       }
     });

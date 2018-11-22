@@ -10,7 +10,7 @@ import 'Event.schema'
 
 particle PartySize in 'source/PartySize.js'
   inout Event event
-  affordance dom
+  modality dom
   consume modifier
 // removing description for now to clean up suggestions
 //  description `number of people`

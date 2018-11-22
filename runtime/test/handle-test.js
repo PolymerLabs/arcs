@@ -23,7 +23,7 @@ import {assertThrowsAsync} from '../testing/test-util.js';
 
 const loader = new Loader();
 
-const createSlotComposer = () => new SlotComposer({rootContainer: 'test', affordance: 'mock'});
+const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock'});
 
 describe('Handle', function() {
 

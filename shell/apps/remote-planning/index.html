@@ -46,7 +46,7 @@
         // THIS IS A HACK!!!
         // TODO: Remove the <div>, when arc is disposed? use mockslotcomposer?
         rootContainer: document.createElement('div'),
-        affordance: config.affordance,
+        modality: config.modality,
         containerKind: config.containerKind,
       });
     }
@@ -54,7 +54,7 @@
     async function getParams() {
       if (!params) {
         let config = {
-          affordance: 'mock',
+          modality: 'mock',
           root: '../../..',
           urls: {},
           useSerialization: true,

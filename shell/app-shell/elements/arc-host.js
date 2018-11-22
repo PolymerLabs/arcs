@@ -134,7 +134,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   _createSlotComposer(config) {
     return new Arcs.SlotComposer({
       rootContainer: config.rootContainer || document.body,
-      affordance: config.affordance,
+      modality: config.modality,
       containerKind: config.containerKind,
       // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config
       suggestionsContext: config.suggestionsNode

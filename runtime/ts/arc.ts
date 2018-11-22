@@ -96,7 +96,7 @@ export class Arc {
     }
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this._description = new Description(this);
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.affordance);
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.modality);
     this.debugHandler = new ArcDebugHandler(this);
   }
   get loader() {
