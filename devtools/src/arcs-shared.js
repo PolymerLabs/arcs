@@ -12,6 +12,7 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --mid-gray: #ccc;
         --dark-gray: #888;
         --highlight-blue: #3879d9;
+        --focus-blue: #03a9f4;
         --dark-red: #b71c1c;
         --dark-green: #09ba12;
         --darker-green: #08780e;
