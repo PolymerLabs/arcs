@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {Type} from './type.js';
+import {Type, CollectionType, BigCollectionType} from './type.js';
 import {PECInnerPort} from '../api-channel.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
@@ -40,10 +40,10 @@ enum SyncState {none, pending, full}
  */
 export abstract class StorageProxy {
   static newProxy(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
-    if (type.isCollection) {
+    if (type instanceof CollectionType) {
       return new CollectionProxy(id, type, port, pec, scheduler, name);
     }
-    if (type.isBigCollection) {
+    if (type instanceof BigCollectionType) {
       return new BigCollectionProxy(id, type, port, pec, scheduler, name);
     }
     return new VariableProxy(id, type, port, pec, scheduler, name);

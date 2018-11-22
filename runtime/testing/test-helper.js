@@ -17,6 +17,7 @@ import {Planner} from '../ts-build/planner.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
+import {InterfaceType} from '../ts-build/type.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
@@ -135,7 +136,7 @@ export class TestHelper {
         if (options.hostedParticles) {
           suggestions = suggestions.filter(p => {
             return options.hostedParticles.every(hosted => {
-              const interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
+              const interfaceHandles = p.plan.handles.filter(h => h.type instanceof InterfaceType);
               return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name == hosted);
             });
           });

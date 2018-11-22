@@ -13,7 +13,7 @@ import {Manifest} from '../ts-build/manifest.js';
 import {MessageChannel} from '../ts-build/message-channel.js';
 import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Type} from '../ts-build/type.js';
+import {Type, ReferenceType} from '../ts-build/type.js';
 import {Arc} from '../ts-build/arc.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
@@ -47,7 +47,7 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     assert.equal(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
-    assert.isTrue(recipe.handles[0].type.isReference);
+    assert.isTrue(recipe.handles[0].type instanceof ReferenceType);
     assert.equal(recipe.handles[0].type.resolvedType().referredType.data.name, 'Result');
   });
 
@@ -102,7 +102,7 @@ describe('references', function() {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    assert.isTrue(arc._stores[0]._type.isReference);
+    assert.isTrue(arc._stores[0]._type instanceof ReferenceType);
 
     const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
     const backingStore = await volatileEngine.baseStorageFor(arc._stores[1]._type, volatileEngine.baseStorageKey(arc._stores[1]._type));

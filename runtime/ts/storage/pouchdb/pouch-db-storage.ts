@@ -10,7 +10,7 @@ import {assert} from '../../../../platform/assert-web.js';
 import {StorageBase} from '../storage-provider-base.js';
 import {PouchDbKey} from './pouch-db-key.js';
 import {Id} from '../../id.js';
-import {Type} from '../../type.js';
+import {Type, CollectionType, BigCollectionType, ReferenceType} from '../../type.js';
 import {PouchDbCollection} from './pouch-db-collection.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbBigCollection} from './pouch-db-big-collection.js';
@@ -47,10 +47,10 @@ export class PouchDbStorage extends StorageBase {
    */
   async construct(id: string, type: Type, keyFragment: string): Promise<PouchDbStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
-    if (type.isReference) {
+    if (type instanceof ReferenceType) {
       return provider;
     }
-    if (type.isTypeContainer() && type.getContainedType().isReference) {
+    if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
       return provider;
     }
     provider.enableReferenceMode();
@@ -138,10 +138,10 @@ export class PouchDbStorage extends StorageBase {
 
   /** Creates a new Variable or Collection given basic parameters */
   newProvider(type: Type, name, id, key): PouchDbStorageProvider {
-    if (type.isCollection) {
+    if (type instanceof CollectionType) {
       return new PouchDbCollection(type, this, name, id, key);
     }
-    if (type.isBigCollection) {
+    if (type instanceof BigCollectionType) {
       return new PouchDbBigCollection(type, this, name, id, key);
     }
     return new PouchDbVariable(type, this, name, id, key);

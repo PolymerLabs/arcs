@@ -21,7 +21,7 @@ export class FindHostedParticle extends Strategy {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe: Recipe, connection: HandleConnection) {
         if (connection.direction !== 'host' || connection.handle) return undefined;
-        assert(connection.type.isInterface);
+        assert(connection.type instanceof InterfaceType);
         const iface = connection.type as InterfaceType;
 
         const results = [];
