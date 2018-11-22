@@ -1091,15 +1091,25 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
+// Should only be used as a negative match.
 ReservedWord
-  = Direction
+  = (Direction
   / ParticleArgumentDirection
   / RecipeHandleFate
+  / 'particle'
+  / 'recipe'
+  / 'import'
+  / 'shape'
+  / 'schema'
+  ) (whiteSpace / eolWhiteSpace)
+{
+  throw new Error(`Expected identifier but keyword, '${text()}' found.`);
+}
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text()}
+lowerIdent = ident:((!ReservedWord)([a-z][a-z0-9_]i*)) {return text()}
 whiteSpace
   = " "+
 eolWhiteSpace
