@@ -142,7 +142,6 @@ export class Strategizer {
       return 0;
     });
 
-    // Evaluate
     const evaluations = await Promise.all(this._evaluators.map(strategy => {
       return strategy.evaluate(this, generated);
     }));
