@@ -58,7 +58,7 @@ const steps = {
 const watchPaths = [
   './platform',
   './runtime',
-  './strategizer',
+  './planning',
   './tracelib',
 ];
 
