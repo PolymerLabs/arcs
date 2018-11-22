@@ -96,7 +96,7 @@ describe('manifest parser', function() {
         parse(`
           particle MyParticle
             in MyThing ${reserved}
-            out BigCollection<MyThing>? output`);
+            out? BigCollection<MyThing> output`);
         assert.fail('this parse should have failed, identifiers should not be reserved words!');
       } catch (e) {
         assert.include(e.message, 'Expected',
