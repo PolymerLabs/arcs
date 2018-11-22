@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {Strategy, Ruleset} from '../../../strategizer/strategizer.js';
+import {Strategy, Ruleset} from '../../../planning/strategizer.js';
 import {Manifest} from '../../ts-build/manifest.js';
 import {Planner} from '../../ts-build/planner.js';
 import {Recipe} from '../../ts-build/recipe/recipe.js';

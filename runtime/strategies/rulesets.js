@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Ruleset} from '../../strategizer/strategizer.js';
+import {Ruleset} from '../../planning/strategizer.js';
 import {ConvertConstraintsToConnections} from './convert-constraints-to-connections.js';
 import {AssignHandles} from './assign-handles.js';
 import {InitPopulation} from './init-population.js';

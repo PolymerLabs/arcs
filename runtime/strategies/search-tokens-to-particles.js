@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Strategy} from '../../strategizer/strategizer.js';
+import {Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
 import {Walker} from '../ts-build/recipe/walker.js';
 

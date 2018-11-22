@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
+import {Strategy} from '../../planning/strategizer.js';
 import {Walker} from '../ts-build/recipe/walker.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
 import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';

@@ -8,7 +8,7 @@
 import {now} from '../../platform/date-web.js';
 import {Arc} from './arc.js';
 import {Relevance} from './relevance.js';
-import {Strategizer} from '../../strategizer/strategizer.js';
+import {Strategizer} from '../../planning/strategizer.js';
 import * as Rulesets from '../strategies/rulesets.js';
 import {DeviceInfo} from '../../platform/deviceinfo-web.js';
 import {RecipeUtil} from './recipe/recipe-util.js';

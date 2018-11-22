@@ -11,7 +11,7 @@
 import {Manifest} from './ts-build/manifest.js';
 import {Arc} from './ts-build/arc.js';
 import {SlotComposer} from './ts-build/slot-composer.js';
-import {Strategizer, Strategy} from '../strategizer/strategizer.js';
+import {Strategizer, Strategy} from '../planning/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
