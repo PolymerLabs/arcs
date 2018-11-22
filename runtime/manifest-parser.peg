@@ -457,6 +457,7 @@ VariableTypeList
     return [head, ...tail.map(a => a[2])];
   }
 
+// TODO: remove 'affordance' when all particle manifests updated.
 ParticleModality
   = ('affordance' / 'modality') whiteSpace modality:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
   {
