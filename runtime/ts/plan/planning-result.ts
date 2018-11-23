@@ -18,7 +18,7 @@ export class PlanningResult {
   arc: Arc;
   _suggestions: Suggestion[];
   lastUpdated: Date;
-  _generations: {}[];
+  generations: {}[];
   contextual = true;
 
   constructor(arc, result = {}) {
@@ -34,25 +34,68 @@ export class PlanningResult {
     assert(Boolean(suggestions), `Cannot set uninitialized suggestions`);
     this._suggestions = suggestions;
   }
-  get generations(): {}[] { return this._generations; }
-  set generations(generations: {}[]) {
-    this._generations = PlanningResult.formatSerializableGenerations(generations);
-  }
 
   static formatSerializableGenerations(generations) {
-    for (const g of generations) {
-      for (const gg of g['generated']) {
-        if (gg.result) {
-          gg.resultString = gg.result.toString({showUnresolved: true, showInvalid: false, details: ''});
-          gg.isResolved = gg.result.isResolved();
-          delete gg.result;
+    // Make a copy of everything and assign IDs to recipes.
+    const idMap = new Map(); // Recipe -> ID
+    let lastID = 0;
+    const assignIdAndCopy = recipe => {
+      idMap.set(recipe, lastID);
+      const {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
+      const resultString = result.toString({showUnresolved: true, showInvalid: false, details: ''});
+      const isResolved = result.isResolved();
+      return {resultString, isResolved, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
+    };
+    generations = generations.map(pop => ({
+      record: pop.record,
+      generated: pop.generated.map(assignIdAndCopy)
+    }));
+
+    // Change recipes in derivation to IDs and compute resolved stats.
+    return generations.map(pop => {
+      const population = pop.generated;
+      const record = pop.record;
+      // Adding those here to reuse recipe resolution computation.
+      record.resolvedDerivations = 0;
+      record.resolvedDerivationsByStrategy = {};
+
+      population.forEach(item => {
+        item.derivation = item.derivation.map(derivItem => {
+          let parent;
+          let strategy;
+          if (derivItem.parent) {
+            parent = idMap.get(derivItem.parent);
+          }
+          if (derivItem.strategy) {
+            strategy = derivItem.strategy.constructor.name;
+          }
+          return {parent, strategy};
+        });
+        item.resolved = item.isResolved;
+        if (item.resolved) {
+          record.resolvedDerivations++;
+          const strategy = item.derivation[0].strategy;
+          if (record.resolvedDerivationsByStrategy[strategy] === undefined) {
+            record.resolvedDerivationsByStrategy[strategy] = 0;
+          }
+          record.resolvedDerivationsByStrategy[strategy]++;
         }
-        for (const d of gg.derivation) {
-          d.strategy = (typeof d.strategy === 'string') ? d.strategy : d.strategy.constructor.name;
+        const options = {showUnresolved: true, showInvalid: false, details: ''};
+        item.result = item.resultString;
+      });
+      const populationMap = {};
+      population.forEach(item => {
+        if (populationMap[item.derivation[0].strategy] == undefined) {
+          populationMap[item.derivation[0].strategy] = [];
         }
-      }
-    }
-    return generations;
+        populationMap[item.derivation[0].strategy].push(item);
+      });
+      const result = {population: [], record};
+      Object.keys(populationMap).forEach(strategy => {
+        result.population.push({strategy, recipes: populationMap[strategy]});
+      });
+      return result;
+    });
   }
 
   set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}) {

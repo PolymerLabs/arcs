@@ -37,9 +37,9 @@ export class PlanProducer {
   search: string;
   searchStore: StorageProviderBase;
   searchStoreCallback: ({}) => void;
-  devTools = false;
+  debug = false;
 
-  constructor(arc: Arc, store: StorageProviderBase, searchStore: StorageProviderBase, {devTools = false} = {}) {
+  constructor(arc: Arc, store: StorageProviderBase, searchStore: StorageProviderBase, {debug = false} = {}) {
     assert(arc, 'arc cannot be null');
     assert(store, 'store cannot be null');
     this.arc = arc;
@@ -51,7 +51,7 @@ export class PlanProducer {
       this.searchStoreCallback = () => this.onSearchChanged();
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
-    this.devTools = devTools;
+    this.debug = debug;
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -148,7 +148,7 @@ export class PlanProducer {
       log(`Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
       
-      await this._updateResult({suggestions, generations: this.devTools ? generations : []}, this.replanOptions);
+      await this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions);
     }
   }
 
@@ -184,6 +184,7 @@ export class PlanProducer {
   }
 
   private async _updateResult({suggestions, generations}, options) {
+    generations = PlanningResult.formatSerializableGenerations(generations);
     if (options.append) {
       assert(!options['contextual'], `Cannot append to contextual options`);
       if (!this.result.append({suggestions, generations})) {
