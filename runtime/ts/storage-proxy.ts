@@ -309,14 +309,14 @@ export class CollectionProxy extends StorageProxy {
 
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
-  toList(particleId) {
+  toList() {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model.toList());
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
       return new Promise(resolve =>
-        this.port.HandleToList({callback: resolve, handle: this, particleId}));
+        this.port.HandleToList({callback: resolve, handle: this}));
     }
   }
 
@@ -444,12 +444,12 @@ export class VariableProxy extends StorageProxy {
   // Otherwise, send a request to the backing store.
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
   //       sending a parallel request
-  get(particleId) {
+  get() {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model);
     } else {
       return new Promise(resolve =>
-        this.port.HandleGet({callback: resolve, handle: this, particleId}));
+        this.port.HandleGet({callback: resolve, handle: this}));
     }
   }
 

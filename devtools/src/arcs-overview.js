@@ -1,7 +1,5 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
-import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {MessengerMixin} from './arcs-shared.js';
-import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsOverview extends MessengerMixin(PolymerElement) {
@@ -288,83 +286,78 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 },
                 color: {color: this._cssVar('--dark-red')}
               });
+              break;
             }
-          }
-          break;
-        }
-        // TODO: Move handle connections to 'recipe-instantiated' call.
-        // Stop relying on 'InstantiateParticle' as it will get deleted soon.
-        case 'InstantiateParticle': {
-          if (m.speculative || m.arcId.endsWith('-pipes')) continue;
-
-          if (!this._particles.has(m.id)) {
-            this._particles.set(m.id, {
-              id: m.id,
-              label: m.name,
-              color: this._cssVar('--highlight-blue'),
-              font: {color: 'white'},
-              details: {
-                id: m.id,
-                implFile: m.implFile
-              }
-            });
-          }
-
-          for (const name of Object.getOwnPropertyNames(m.connections)) {
-            const con = m.connections[name];
-            this._handles.set(con.id, {
-              id: con.id,
-              label: `${con.name ? ('"' + con.name + '"') : ''} ${con.type}`,
-              color: this._cssVar('--light-gray'),
-              details: {
-                id: con.id,
-                storageKey: con.storageKey,
-                name: con.name,
-                type: con.type
-              }
-            });
-
-            let color;
-            let arrows;
-            switch (con.direction) {
-              case 'in':
-                arrows = 'from';
-                color = this._cssVar('--dark-green');
-                break;
-              case 'out':
-                arrows = 'to';
-                color = this._cssVar('--dark-red');
-                break;
-              case 'inout':
-                arrows = 'to, from';
-                color = this._cssVar('--highlight-blue');
-                break;
-              case 'host':
-                arrows = {
-                  from: {
-                    enabled: true,
-                    type: 'circle'
+            case 'InstantiateParticle': {
+              const particleId = m.pecMsgBody.id;
+              const spec = m.pecMsgBody.spec;
+              if (!this._particles.has(particleId)) {
+                this._particles.set(particleId, {
+                  id: particleId,
+                  label: spec.name,
+                  color: this._cssVar('--highlight-blue'),
+                  font: {color: 'white'},
+                  details: {
+                    id: particleId,
+                    implFile: spec.implFile
                   }
-                };
-                color = this._cssVar('--dark-gray');
-                break;
-            }
-
-            const edgeId = `${m.id}¯\\_(ツ)_/¯${con.id}`;
-            this._operations.set(edgeId, {
-              id: edgeId,
-              from: m.id,
-              to: con.id,
-              arrows,
-              color: {color},
-              details: {
-                direction: con.direction,
-                handleConnection: name
+                });
               }
-            });
-          }
 
-          this._needsRedraw = true;
+              for (const [name, id] of Object.entries(m.pecMsgBody.handles)) {
+                this._handles.set(id, {
+                  id: id,
+                  label: `"${name}"`,
+                  color: this._cssVar('--light-gray'),
+                  details: {id, name}
+                });
+
+                const connSpec = spec.args.find(conn => conn.name === name);
+
+                let color;
+                let arrows;
+                switch (connSpec.direction) {
+                  case 'in':
+                    arrows = 'from';
+                    color = this._cssVar('--dark-green');
+                    break;
+                  case 'out':
+                    arrows = 'to';
+                    color = this._cssVar('--dark-red');
+                    break;
+                  case 'inout':
+                    arrows = 'to, from';
+                    color = this._cssVar('--highlight-blue');
+                    break;
+                  case 'host':
+                    arrows = {
+                      from: {
+                        enabled: true,
+                        type: 'circle'
+                      }
+                    };
+                    color = this._cssVar('--dark-gray');
+                    break;
+                }
+
+                const edgeId = `${particleId}¯\\_(ツ)_/¯${id}`;
+                this._operations.set(edgeId, {
+                  id: edgeId,
+                  from: particleId,
+                  to: id,
+                  arrows,
+                  color: {color},
+                  details: {
+                    direction: connSpec.direction,
+                    handleConnection: name
+                  }
+                });
+              }
+
+              this._needsRedraw = true;
+              break;
+            }
+          }
           break;
         }
         case 'page-refresh':
