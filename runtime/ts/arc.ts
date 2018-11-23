@@ -241,13 +241,16 @@ export class Arc {
 
     let id = 0;
     const importSet = new Set();
-    const handleSet = new Set();
+    const handlesToSerialize = new Set();
     const contextSet = new Set(this.context.stores.map(store => store.id));
     for (const handle of this._activeRecipe.handles) {
       if (handle.fate === 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
       } else {
-        handleSet.add(handle.id);
+        // Immediate value handles have values inlined in the recipe and are not serialized.
+        if (handle.immediateValue) continue;
+
+        handlesToSerialize.add(handle.id);
       }
     }
     for (const url of importSet.values()) {
@@ -255,7 +258,7 @@ export class Arc {
     }
 
     for (const handle of this._stores) {
-      if (!handleSet.has(handle.id) || contextSet.has(handle.id)) {
+      if (!handlesToSerialize.has(handle.id) || contextSet.has(handle.id)) {
         continue;
       }
 
@@ -266,7 +269,24 @@ export class Arc {
   }
 
   _serializeParticles() {
-    return this._activeRecipe.particles.map(entry => entry.spec.toString()).join('\n');
+    const particleSpecs = [];
+    // Particles used directly.
+    particleSpecs.push(...this._activeRecipe.particles.map(entry => entry.spec));
+    // Particles referenced in an immediate mode.
+    particleSpecs.push(...this._activeRecipe.handles
+        .filter(h => h.immediateValue)
+        .map(h => h.immediateValue));
+
+    const results = [];
+    particleSpecs.forEach(spec => {
+      for (const connection of spec.connections) {
+        if (connection.type instanceof InterfaceType) {
+          results.push(connection.type.interfaceShape.toString());
+        }
+      }
+      results.push(spec.toString());
+    });
+    return results.join('\n');
   }
 
   _serializeStorageKey() {
@@ -458,15 +478,13 @@ ${this.activeRecipe.toString()}`;
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
-        if (recipeHandle.id && recipeHandle.type instanceof InterfaceType
-            && recipeHandle.id.includes(':particle-literal:')) {
-          // 'particle-literal' handles are created by the FindHostedParticle strategy.
-          const particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
-          const particle = this.context.findParticleByName(particleName);
-          assert(recipeHandle.type.interfaceShape.particleMatches(particle));
-          const particleClone = particle.clone().toLiteral();
-          particleClone.id = recipeHandle.id;
+        const newStore = await this.createStore(type, /* name= */ null, this.generateID(),
+            recipeHandle.tags, recipeHandle.immediateValue ? 'volatile' : null);
+        if (recipeHandle.immediateValue) {
+          const particleSpec = recipeHandle.immediateValue;
+          assert(recipeHandle.type.interfaceShape.particleMatches(particleSpec));
+          const particleClone = particleSpec.clone().toLiteral();
+          particleClone.id = newStore.id;
           // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc.
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);

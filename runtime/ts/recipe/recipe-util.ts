@@ -10,6 +10,8 @@ import {assert} from '../../../platform/assert-web.js';
 import {Particle} from './particle.js';
 import {Handle} from './handle.js';
 import {HandleConnection} from './handle-connection.js';
+import {InterfaceType} from '../type.js';
+import {ParticleSpec} from '../particle-spec.js';
 
 class Shape {
   recipe: Recipe;
@@ -141,12 +143,21 @@ export class RecipeUtil {
             continue;
           }
           // Check whether shapeHC and recipeHC reference the same handle.
-          // Note: the id of a handle with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
-          // Skip the check if handles have 'create' fate (their ids are arbitrary).
-          if ((shapeHC.handle.fate !== 'create' || (recipeHC.handle.fate !== 'create' && recipeHC.handle.originalFate !== 'create')) &&
-              shapeHC.handle.id !== recipeHC.handle.id && shapeHC.handle.id !== recipeHC.handle.originalId) {
-            // this is a different handle.
-            continue;
+          if (shapeHC.handle.fate !== 'create' || (recipeHC.handle.fate !== 'create' && recipeHC.handle.originalFate !== 'create')) {
+            if (Boolean(shapeHC.handle.immediateValue) !== Boolean(recipeHC.handle.immediateValue)) {
+              continue; // One is an immediate value handle and the other is not.
+            }
+            if (recipeHC.handle.immediateValue) {
+              if (!recipeHC.handle.immediateValue.equals(shapeHC.handle.immediateValue)) {
+                continue; // Immediate values are different.
+              }
+            } else {
+              // Note: the id of a handle with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
+              // Skip the check if handles have 'create' fate (their ids are arbitrary).
+              if (shapeHC.handle.id !== recipeHC.handle.id && shapeHC.handle.id !== recipeHC.handle.originalId) {
+                continue; // This is a different handle.
+              }
+            }
           }
         }
 
@@ -343,6 +354,33 @@ export class RecipeUtil {
     });
   }
 
+  static constructImmediateValueHandle(
+      connection: HandleConnection, particleSpec: ParticleSpec, id: string): Handle {
+    assert(connection.type instanceof InterfaceType);
+    
+    if (!(connection.type instanceof InterfaceType) ||
+        !connection.type.interfaceShape.restrictType(particleSpec)) {
+      // Type of the connection does not match the ParticleSpec.
+      return null;
+    }
+    
+    // The connection type may have type variables:
+    // E.g. if connection shape requires `in ~a *`
+    //      and particle has `in Entity input`
+    //      then type system has to ensure ~a is at least Entity.
+    // The type of a handle hosting the particle literal has to be
+    // concrete, so we concretize connection type with maybeEnsureResolved().
+    const handleType = connection.type.clone(new Map());
+    handleType.maybeEnsureResolved();
+
+    const handle = connection.recipe.newHandle();
+    handle.id = id;
+    handle.mappedType = handleType;
+    handle.fate = 'copy';
+    handle.immediateValue = particleSpec;
+
+    return handle;
+  }
 
   static directionCounts(handle): DirectionCounts {
     const counts: DirectionCounts = {in: 0, out: 0, inout: 0, unknown: 0};

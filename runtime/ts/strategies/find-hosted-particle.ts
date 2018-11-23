@@ -13,6 +13,7 @@ import {Arc} from '../arc.js';
 import {assert} from '../../../platform/assert-web.js';
 import {HandleConnection} from '../recipe/handle-connection.js';
 import {InterfaceType} from '../type.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 
 export class FindHostedParticle extends Strategy {
 
@@ -38,38 +39,9 @@ export class FindHostedParticle extends Strategy {
           if (!shapeClone.canEnsureResolved()) continue;
 
           results.push((recipe, hc) => {
-            // Restricting the type of the connection to the concrete particle
-            // may restrict type variable across the recipe.
-            hc.type.interfaceShape.restrictType(particle);
-
-            // The connection type may still have type variables:
-            // E.g. if shape requires `in ~a *`
-            //      and particle has `in Entity input`
-            //      then type system has to ensure ~a is at least Entity.
-            // The type of a handle hosting the particle literal has to be
-            // concrete, so we concretize connection type with maybeEnsureResolved().
-            const handleType = hc.type.clone(new Map());
-            handleType.maybeEnsureResolved();
-
-            const id = `${arc.id}:particle-literal:${particle.name}`;
-
-            // Reuse a handle if we already hold this particle spec in the recipe.
-            for (const handle of recipe.handles) {
-              if (handle.id === id && handle.fate === 'copy'
-                  && handle._mappedType && handle._mappedType.equals(handleType)) {
-                hc.connectToHandle(handle);
-                return undefined;
-              }
-            }
-
-            // TODO: Add a digest of a particle literal to the ID, so that we
-            //       can ensure we load the correct particle. It is currently
-            //       hard as digest is asynchronous and recipe walker is
-            //       synchronous.
-            const handle = recipe.newHandle();
-            handle._mappedType = handleType;
-            handle.fate = 'copy';
-            handle.id = id;
+            const handle = RecipeUtil.constructImmediateValueHandle(
+              hc, particle, arc.generateID());
+            assert(handle); // Type matching should have been ensure by the checks above;
             hc.connectToHandle(handle);
           });
         }

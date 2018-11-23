@@ -215,7 +215,11 @@ export class HandleConnection {
     // TODO: better deal with unspecified direction.
     result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '=', '`consume': '<-', '`provide': '->'}[this.direction] || this.direction || '=');
     if (this.handle) {
-      result.push(`${(nameMap && nameMap.get(this.handle)) || this.handle.localName}`);
+      if (this.handle.immediateValue) {
+        result.push(this.handle.immediateValue.name);
+      } else {
+        result.push(`${(nameMap && nameMap.get(this.handle)) || this.handle.localName}`);
+      }
     }
     result.push(...this.tags.map(a => `#${a}`));
 
