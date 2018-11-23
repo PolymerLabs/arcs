@@ -43,8 +43,8 @@ export class PlanningResult {
       idMap.set(recipe, lastID);
       const {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
       const resultString = result.toString({showUnresolved: true, showInvalid: false, details: ''});
-      const isResolved = result.isResolved();
-      return {resultString, isResolved, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
+      const resolved = result.isResolved();
+      return {result: resultString, resolved, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
     };
     generations = generations.map(pop => ({
       record: pop.record,
@@ -71,7 +71,6 @@ export class PlanningResult {
           }
           return {parent, strategy};
         });
-        item.resolved = item.isResolved;
         if (item.resolved) {
           record.resolvedDerivations++;
           const strategy = item.derivation[0].strategy;
@@ -81,7 +80,6 @@ export class PlanningResult {
           record.resolvedDerivationsByStrategy[strategy]++;
         }
         const options = {showUnresolved: true, showInvalid: false, details: ''};
-        item.result = item.resultString;
       });
       const populationMap = {};
       population.forEach(item => {
