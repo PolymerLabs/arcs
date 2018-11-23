@@ -18,28 +18,12 @@ export class SuggestionComposer {
 
   private readonly _slotComposer: SlotComposer;
   private _suggestions: Suggestion[] = []; 
-  private _suggestionsQueue = [];
-  private _updateComplete = null;
   private _suggestConsumers: SuggestDomConsumer = [];
   
   constructor(slotComposer: SlotComposer) {
     this._modality = Modality.forName(slotComposer.modality);
     this._container = slotComposer.findContainerByName('suggestions');
     this._slotComposer = slotComposer;
-  }
-
-  async setSuggestions(suggestions: Suggestion[]) {
-    this._suggestionsQueue.push(suggestions);
-    Promise.resolve().then(async () => {
-      if (this._updateComplete) {
-        await this._updateComplete;
-      }
-      if (this._suggestionsQueue.length > 0) {
-        this._suggestions = this._suggestionsQueue.pop();
-        this._suggestionsQueue = [];
-        this._updateComplete = this._updateSuggestions(this._suggestions);
-      }
-    });
   }
 
   clear(): void {
@@ -50,15 +34,12 @@ export class SuggestionComposer {
     this._suggestConsumers = [];
   }
 
-  private async _updateSuggestions(suggestions) {
+  setSuggestions(suggestions: Suggestion[]) {
     this.clear();
 
     const sortedSuggestions = suggestions.sort(Suggestion.compare);
     for (const suggestion of sortedSuggestions) {
-      // TODO(mmandlis): This hack is needed for deserialized suggestions to work. Should
-      // instead serialize the description object and generation suggestion content here.
-      const suggestionContent = suggestion.descriptionDom ? suggestion.descriptionDom :
-        await suggestion.description.getRecipeSuggestion(this._modality.descriptionFormatter);
+      const suggestionContent = suggestion.getDescription(this._modality.name) || suggestion.descriptionText;
       if (!suggestionContent) {
         throw new Error('No suggestion content available');
       }

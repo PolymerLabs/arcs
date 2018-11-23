@@ -13,8 +13,9 @@
 import {assert} from './chai-web.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../ts-build/description-dom-formatter.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Modality} from '../ts-build/modality.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 describe('recipe descriptions test', function() {
   const loader = new StubLoader({
@@ -73,12 +74,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
+    const originalFormatter = Modality.forName('mock').descriptionFormatter;
+    Modality.forName('mock').descriptionFormatter = options.formatter;
     const helper = await TestHelper.createAndPlan({
-      manifestString: createManifestString(options), loader
+      manifestString: options.manifestString || createManifestString(options), loader
     });
     assert.lengthOf(helper.suggestions, 1);
-
-    return helper.suggestions[0].description.getRecipeSuggestion(options.formatter);
+    Modality.forName('mock').descriptionFormatter = originalFormatter;
+    return helper.suggestions[0].getDescription('mock');
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
@@ -238,7 +241,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('refers to particle description', async () => {
-    const helper = await TestHelper.createAndPlan({manifestString: `
+    const manifestString = `
       schema Foo
       particle HelloFoo
         in Foo foo
@@ -249,11 +252,11 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         HelloFoo
           foo <- h0
         description \`do "\${HelloFoo}"\`
-    `, loader});
-    assert.lengthOf(helper.suggestions, 1);
+    `;
+    const description = await generateRecipeDescription({manifestString});
 
-    assert.equal('Do "hello foo"', await helper.suggestions[0].description.getRecipeSuggestion());
-    const domDescription = await helper.suggestions[0].description.getRecipeSuggestion(DescriptionDomFormatter);
+    assert.equal('Do "hello foo"', description);
+    const domDescription = await generateRecipeDescription({manifestString, formatter: DescriptionDomFormatter});
     assert.equal(domDescription.template, '<span>{{text2}}</span>hello <span>{{foo1}}</span><span>{{text3}}</span>.');
     assert.deepEqual(domDescription.model, {text2: 'Do "', foo1: 'foo', text3: '"'});
   });
@@ -279,13 +282,13 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, loader});
     assert.lengthOf(helper.suggestions, 2);
-    assert.equal('Show foo.', await helper.suggestions[0].description.getRecipeSuggestion());
+    assert.equal('Show foo.', await helper.suggestions[0].descriptionText);
 
     await helper.acceptSuggestion({particles: ['ShowFoo']});
     await helper.makePlans();
     assert.lengthOf(helper.suggestions, 1);
 
-    assert.equal('Show foo with dummy.', await helper.suggestions[0].description.getRecipeSuggestion());
+    assert.equal('Show foo with dummy.', await helper.suggestions[0].descriptionText);
   });
   it('joins recipe descriptions', async () => {
     const helper = await TestHelper.createAndPlan({manifestString: `
