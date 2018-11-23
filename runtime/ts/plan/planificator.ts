@@ -20,10 +20,10 @@ import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type.js';
 
 export class Planificator {
-  static async create(arc: Arc, {userid, protocol, onlyConsumer}) {
+  static async create(arc: Arc, {userid, protocol, onlyConsumer, debug = false}) {
     const store = await Planificator._initSuggestStore(arc, {userid, protocol, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid});
-    const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer);
+    const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
     // TODO(mmandlis): Switch to always use `contextual: true` once new arc doesn't need
     // to produce a plan in order to instantiate it.
     planificator.requestPlanning({contextual: planificator.isArcPopulated()});
@@ -46,12 +46,12 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc: Arc, userid: string, store: StorageProviderBase, searchStore: StorageProviderBase, onlyConsumer: boolean) {
+  constructor(arc: Arc, userid: string, store: StorageProviderBase, searchStore: StorageProviderBase, onlyConsumer: boolean, debug: boolean) {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(arc, store, searchStore);
+      this.producer = new PlanProducer(arc, store, searchStore, {debug});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();

@@ -122,7 +122,7 @@ export class Planner {
     return groups;
   }
 
-  async suggest(timeout: number, generations: [], speculator?: Speculator) : Promise<Suggestion[]> {
+  async suggest(timeout: number, generations: {}[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
     const plans = await trace.wait(this.plan(timeout, generations));
@@ -186,10 +186,6 @@ export class Planner {
     results = [].concat(...results);
 
     this._relevances = [];
-
-    if (generations && DevtoolsConnection.isConnected) {
-      StrategyExplorerAdapter.processGenerations(generations, DevtoolsConnection.get());
-    }
 
     return trace.endWith(results);
   }
