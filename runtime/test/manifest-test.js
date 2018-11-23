@@ -1325,9 +1325,10 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
     recipe.normalize();
     assert.isFalse(recipe.search.isResolved());
     assert.isFalse(recipe.isResolved());
-    assert.equal(recipe.toString(), `recipe
+    assert.equal(recipe.toString(), `recipe`);
+    assert.equal(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
-    tokens \`dear\` \`hello\` \`world\``);
+    tokens \`dear\` \`hello\` \`world\` // unresolved search tokens`);
 
     recipe = (await Manifest.parse(manifestSource)).recipes[0];
     // resolve some tokens.
@@ -1336,9 +1337,10 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
     assert.equal('Hello dear world', recipe.search.phrase);
     assert.deepEqual(['dear'], recipe.search.unresolvedTokens);
     assert.deepEqual(['hello', 'world'], recipe.search.resolvedTokens);
-    assert.equal(recipe.toString(), `recipe
+    assert.equal(recipe.toString(), `recipe`);
+    assert.equal(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
-    tokens \`dear\` // \`hello\` \`world\``);
+    tokens \`dear\` // \`hello\` \`world\` // unresolved search tokens`);
 
     // resolve all tokens.
     recipe.search.resolveToken('dear');
@@ -1348,7 +1350,8 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
     assert.deepEqual(['dear', 'hello', 'world'], recipe.search.resolvedTokens);
     assert.isTrue(recipe.search.isResolved());
     assert.isTrue(recipe.isResolved());
-    assert.equal(recipe.toString(), `recipe
+    assert.equal(recipe.toString(), `recipe`);
+    assert.equal(recipe.toString({showUnresolved: true}), `recipe
   search \`Hello dear world\`
     tokens // \`dear\` \`hello\` \`world\``);
   });

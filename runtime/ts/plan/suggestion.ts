@@ -35,6 +35,8 @@ export class Suggestion {
   readonly hash: string;
   readonly rank: number;
   groupIndex: number; // TODO: only used in tests
+  // List of search resolved token groups, this suggestion corresponds to.
+  searchGroups: string[][] = [];
 
   constructor(plan: Recipe, hash: string, rank: number, arc: Arc) {
     assert(plan, `plan cannot be null`);
@@ -53,22 +55,62 @@ export class Suggestion {
     return s2.rank - s1.rank;
   }
 
+  hasSearch(search) {
+    const tokens = search.split(' ');
+    return this.searchGroups.some(group => tokens.every(token => group.includes(token)));
+  }
+
+  setSearch(search) {
+    this.searchGroups = [];
+    if (search) {
+      this._addSearch(search.resolvedTokens);
+    }
+  }
+
+  mergeSearch(suggestion: Suggestion) {
+    let updated = false;
+    for (const other of suggestion.searchGroups) {
+      if (this._addSearch(other)) {
+        if (this.searchGroups.length === 1) {
+          this.searchGroups.push(['']);
+        }
+        updated = true;
+      }
+    }
+    this.searchGroups.sort();
+    return updated;
+  }
+
+  _addSearch(searchGroup): boolean {
+    const equivalentGroup = (group, otherGroup) => {
+      return group.length === otherGroup.length &&
+             group.every(token => otherGroup.includes(token));
+    };
+    if (!this.searchGroups.find(group => equivalentGroup(group, searchGroup))) {
+      this.searchGroups.push(searchGroup);
+      return true;
+    }
+    return false;
+  }
+
   serialize() {
     return {
       plan: this._planToString(this.plan),
       hash: this.hash,
       rank: this.rank,
       descriptionText: this.descriptionText,
-      descriptionDom: {template: this.descriptionText, model: {}}
+      descriptionDom: {template: this.descriptionText, model: {}},
+      searchGroups: this.searchGroups
     };
   }
 
-  static async deserialize({plan, hash, rank, descriptionText, descriptionDom}, arc, recipeResolver): Promise<Suggestion> {
+  static async deserialize({plan, hash, rank, descriptionText, descriptionDom, searchGroups}, arc, recipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
       const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
       suggestion.descriptionText = descriptionText;
       suggestion.descriptionDom = descriptionDom;
+      suggestion.searchGroups = searchGroups;
       return suggestion;
     }
     return undefined;

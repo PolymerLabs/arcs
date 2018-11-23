@@ -492,8 +492,10 @@ export class Recipe {
     const result = [];
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
     result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
-    if (this.search) {
-      result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
+    if (options && options.showUnresolved) {
+      if (this.search) {
+        result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
+      }
     }
     for (const constraint of this._connectionConstraints) {
       let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
