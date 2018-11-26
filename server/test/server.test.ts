@@ -17,7 +17,7 @@ chai.use(chaiHttp);
 describe('baseRoute', () => {
   it.skip('/ should be static html', () => {
     return chai
-      .request(app)
+      .request(app.express)
       .get('/')
       .then(res => {
         expect(res.type).to.eql('text/html');
@@ -26,7 +26,7 @@ describe('baseRoute', () => {
 
   it.skip('/ should have a welcome message', () => {
     return chai
-      .request(app)
+      .request(app.express)
       .get('/')
       .then(res => {
         expect(res.text).to.include('Welcome to Arcs');
@@ -35,7 +35,7 @@ describe('baseRoute', () => {
 
   it('/shell/apps/web/index.html should be static html', () => {
     return chai
-      .request(app)
+      .request(app.express)
       .get('/shell/apps/web/index.html')
       .then(res => {
         expect(res.type).to.eql('text/html');
@@ -44,7 +44,7 @@ describe('baseRoute', () => {
 
   it('/arcs/manifest should return id and text', () => {
     return chai
-      .request(app)
+      .request(app.express)
       .get('/arcs/manifest')
       .then(res => {
         expect(res.body.id).to.equal('manifest:undefined:');
