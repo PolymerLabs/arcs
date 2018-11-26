@@ -52,15 +52,9 @@ export class TestHelper {
     // Explicitly not using a constructor to force using this factory method.
     const helper = new TestHelper();
     helper.slotComposer = options.slotComposer || new MockSlotComposer({strict: options.slotComposerStrict, logging: options.logging});
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
     helper.loader = loader;
     helper.arc = new Arc({
       id: 'demo',
-      pecFactory,
       slotComposer: helper.slotComposer,
       loader: helper.loader,
       context: options.context

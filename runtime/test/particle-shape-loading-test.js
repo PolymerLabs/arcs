@@ -12,8 +12,6 @@ import {Manifest} from '../ts-build/manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../ts-build/arc.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
@@ -61,13 +59,7 @@ describe('particle-shape-loading', function() {
             };
           });`});
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-
-    const arc = new Arc({id: 'test', pecFactory});
+    const arc = new Arc({id: 'test', loader});
 
     const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -123,13 +115,6 @@ describe('particle-shape-loading', function() {
 
   it('loads shapes into particles declaratively', async () => {
     const loader = new Loader();
-
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-
     const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/test-particles.manifest'
 
@@ -142,7 +127,7 @@ describe('particle-shape-loading', function() {
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: 'test', pecFactory, context: manifest});
+    const arc = new Arc({id: 'test', context: manifest});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');

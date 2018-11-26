@@ -38,4 +38,8 @@ export class StubLoader extends Loader {
         ? path
         : super.join(prefix, path);
   }
+  clone() {
+    // Each ParticleExecutionContext should get its own Loader, this facilitates that.
+    return new StubLoader(this._fileMap);
+  }
 }

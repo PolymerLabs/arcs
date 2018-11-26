@@ -10,24 +10,15 @@
 
 import {Manifest} from '../ts-build/manifest.js';
 import {assert} from './chai-web.js';
-import * as util from '../testing/test-util.js';
 import {Arc} from '../ts-build/arc.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {Loader} from '../ts-build/loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../ts-build/slot-dom-consumer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
     slotComposer._contexts[0].spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
     const manifest = await Manifest.parse(`
@@ -43,7 +34,7 @@ describe('particle-shape-loading-with-slots', function() {
       `, {loader, fileName: './test.manifest'});
     const recipe = manifest.recipes[0];
 
-    const arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
+    const arc = new Arc({id: 'test', slotComposer, context: manifest});
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');
