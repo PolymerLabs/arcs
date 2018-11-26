@@ -8,6 +8,7 @@
 
 export abstract class KeyBase {
   protocol: string;
+  location: string;
   abstract childKeyForHandle(id): KeyBase;
   abstract toString(): string;
 }

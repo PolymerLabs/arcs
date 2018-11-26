@@ -144,12 +144,12 @@ export class Planificator {
     if (protocol) {
       storageKey.protocol = protocol;
     }
-    if (storageKey['location'].includes('/arcs/')) {
+    if (storageKey.location.includes('/arcs/')) {
       // Backward compatibility for shell older than 0_6_0.
-      storageKey['location'] = storageKey['location']
+      storageKey.location = storageKey['location']
           .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
     } else {
-      storageKey['location'] = storageKey['location'].replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/$1`);
+      storageKey.location = storageKey.location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/$1`);
     }
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
@@ -161,10 +161,10 @@ export class Planificator {
     const storageKey = storage.parseStringAsKey(arc.storageKey);
     if (storageKey['location'].includes('/arcs/')) {
       // Backward compatibility for shell older than 0_6_0.
-      storageKey['location'] = storageKey['location']
+      storageKey.location = storageKey.location
           .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
     } else {
-      storageKey['location'] = storageKey['location'].replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
+      storageKey.location = storageKey.location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
     }
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});

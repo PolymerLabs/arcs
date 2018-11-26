@@ -42,7 +42,6 @@ class FirebaseKey extends KeyBase {
   databaseUrl?: string;
   projectId?: string;
   apiKey?: string;
-  location: string;
 
   constructor(key: string) {
     super();
