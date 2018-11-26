@@ -12,17 +12,18 @@ import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {InitSearch} from '../strategies/init-search.js';
+import {InterfaceType} from '../type.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {Manifest} from '../manifest.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
-import {Speculator} from '../speculator.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
-import {InterfaceType} from '../type.js';
+import {Search} from '../recipe/search.js';
+import {Speculator} from '../speculator.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 export class Suggestion {
   arc: Arc;
@@ -47,7 +48,7 @@ export class Suggestion {
     this.arc = arc;
   }
 
-  isEquivalent(other) {
+  isEquivalent(other: Suggestion): boolean {
     return (this.hash === other.hash) && (this.descriptionText === other.descriptionText);
   }
 
@@ -55,12 +56,12 @@ export class Suggestion {
     return s2.rank - s1.rank;
   }
 
-  hasSearch(search) {
+  hasSearch(search: string): boolean {
     const tokens = search.split(' ');
     return this.searchGroups.some(group => tokens.every(token => group.includes(token)));
   }
 
-  setSearch(search) {
+  setSearch(search: Search) {
     this.searchGroups = [];
     if (search) {
       this._addSearch(search.resolvedTokens);
@@ -81,7 +82,7 @@ export class Suggestion {
     return updated;
   }
 
-  _addSearch(searchGroup): boolean {
+  _addSearch(searchGroup: string[]): boolean {
     const equivalentGroup = (group, otherGroup) => {
       return group.length === otherGroup.length &&
              group.every(token => otherGroup.includes(token));
