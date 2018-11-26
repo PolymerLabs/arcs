@@ -47,6 +47,15 @@ export abstract class AppBase {
   }
 
   /**
+   * Override this method to execute code after the server starts listening.
+   * Used to run background processes like Shell Planning.
+   */
+  public startBackgroundProcessing(): void {
+    // optional method that starts background processing.
+    console.log("Running optional background process");
+  }
+
+  /**
    * Adds handlers for static content.  The public directory is
    * checked first.  If not found then the legacy arcs directory is searched.
    */
@@ -56,8 +65,6 @@ export abstract class AppBase {
     // see https://github.com/pouchdb/pouchdb-fauxton/issues/18
     this.express.use(express.static('node_modules/arcs'));
   }
-
-
 
   /**
    * Endpoints that end up mapped under /arcs are defined here.

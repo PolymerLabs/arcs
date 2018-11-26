@@ -11,8 +11,9 @@ import http from 'http';
 
 import {app as dbapp} from './pouch-db-app';
 import {app as masterapp} from './arcs-master-app';
+import {AppBase} from './app-base';
 
-const app = process.env.ARCS_MASTER ? masterapp : dbapp;
+const app: AppBase = process.env.ARCS_MASTER ? masterapp : dbapp;
 
 /**
  * Basic code that sets up and configures a Arcs Cloud Instance.
@@ -21,9 +22,9 @@ const app = process.env.ARCS_MASTER ? masterapp : dbapp;
 debug('ts-express:server');
 
 const port = normalizePort(process.env.PORT || 8080);
-app.set('port', port);
+app.express.set('port', port);
 
-const server = http.createServer(app);
+const server = http.createServer(app.express);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
@@ -61,4 +62,7 @@ function onListening(): void {
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
   console.log(`Arcs Server listening on ${bind}`);
+  setTimeout(() => {
+    app.startBackgroundProcessing();
+  });
 }

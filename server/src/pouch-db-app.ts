@@ -12,7 +12,7 @@ import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
 import {Runtime} from 'arcs';
 import {ShellPlanningInterface} from 'arcs';
-import {AppBase} from './app';
+import {AppBase} from './app-base';
 import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
 import url from "url";
 import path from "path";
@@ -30,25 +30,13 @@ class PouchDbApp extends AppBase {
   // ref to Express instance
   express: express.Application;
   runtime: Runtime;
+  private static readonly storageKeyBase: string = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user/';
+  private static readonly userId: string = process.env['ARCS_USER_ID'] || ShellPlanningInterface.USER_ID_CLETUS;
 
-  constructor() {
-    super();
-
-    let userId = process.env['ARCS_USER_ID'];
-
-    // Default to USER_ID_CLETUS for now.
-    // TODO(lindner): make this required, use base64'd public key
-    if (!userId) {
-      userId = ShellPlanningInterface.USER_ID_CLETUS;
-    }
-
-    const storageKeyBase = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user';
-
-    // TODO(plindner): extract this into a separate coroutine instead
-    // of starting it here.
+  startBackgroundProcessing(): void {
     try {
-      console.log("starting shell planning for " + userId + ' with storage Key ' + storageKeyBase);
-      ShellPlanningInterface.start('../', userId, storageKeyBase);
+      console.log("starting shell planning for " + PouchDbApp.userId + ' with storage Key ' + PouchDbApp.storageKeyBase);
+      ShellPlanningInterface.start('../', PouchDbApp.userId, PouchDbApp.storageKeyBase);
     } catch (err) {
       console.warn(err);
     }
@@ -79,7 +67,6 @@ class PouchDbApp extends AppBase {
       }
     };
 
-
     if (process.env[ON_DISK_DB]) {
       const dboptions = {prefix: '/personalcloud/'} as PouchDB.Configuration.RemoteDatabaseConfiguration;
       const onDiskPouchDb = PouchDB.defaults(dboptions);
@@ -89,7 +76,8 @@ class PouchDbApp extends AppBase {
       const inMemPouchDb = PouchDB.plugin(PouchDbAdapterMemory).defaults({adapter: 'memory'});
       this.express.use('/', PouchDbServer(inMemPouchDb, {mode: 'fullCouchDB', inMemoryConfig: true}));
     }
+    console.log('added pouch routes');
   }
 }
 
-export const app = new PouchDbApp().express;
+export const app = new PouchDbApp();
