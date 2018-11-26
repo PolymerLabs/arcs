@@ -11,19 +11,16 @@ defineParticle(({DomParticle, html}) => {
   const template = html`
 <div reservation-form id="{{subId}}">
   <style>
-    [time-picker] {
+    /*[time-picker] {
       padding-bottom: 8px;
     }
+    */
     [time-picker] > div {
       display: flex;
       flex-direction: row;
       border-bottom: 1px solid rgba(0,0,0,0.1);
       height: 56px;
-      align-items: stretch;
-    }
-    /* * {
-      vertical-align: middle;
-    } */
+      align-items: center;
     [select] {
       position: relative;
       display: inline-flex;
@@ -68,7 +65,8 @@ defineParticle(({DomParticle, html}) => {
     }
     [times] {
       display: flex;
-      justify-content: space-around
+      justify-content: space-around;
+      padding: 8px;
     }
     button {
       display: inline-flex;
