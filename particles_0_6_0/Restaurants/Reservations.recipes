@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
+import '../Layout/Layout.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Events/Event.schema'
 import '../Arcs/Description.schema'

@@ -9,7 +9,7 @@ import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 import '../Restaurants/RestaurantFind.recipes'
 import '../Restaurants/RestaurantDisplay.recipes'
-import '../Reservations/Reservations.recipes'
+import '../Restaurants/Reservations.recipes'
 
 recipe RestaurantsDemo
   create as location
@@ -33,4 +33,8 @@ recipe RestaurantsDemo
     list = restaurants
     annotation = event
     hostedParticle = ReservationAnnotation
-  description `find restaurants and make reservations near ${FindRestaurants.location}`
+  DetailSlider
+    selected = selected
+  RestaurantDetail
+    restaurant = selected
+  description `[demo] find restaurants and make reservations near ${FindRestaurants.location}`
