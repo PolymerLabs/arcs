@@ -98,7 +98,7 @@ export class TestHelper {
         assert.lengthOf(this.suggestions, options.expectedNumPlans);
       }
       if (options.expectedSuggestions) {
-        const suggestions = await Promise.all(this.suggestions.map(async p => await p.description.getRecipeSuggestion()));
+        const suggestions = this.suggestions.map(s => s.descriptionText);
         const missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
         const unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
         const errors = [];

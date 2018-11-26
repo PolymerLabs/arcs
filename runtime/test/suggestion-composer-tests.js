@@ -22,14 +22,8 @@ class TestSuggestionComposer extends SuggestionComposer {
     this.updateResolve = null;
   }
 
-  async _updateSuggestions(suggestions) {
-    ++this.updatesCount;
-    return new Promise((resolve, reject) => this.updateResolve = resolve).then(() => this.suggestions = suggestions);
-  }
-
-  async updateDone() {
-    this.updateResolve();
-    return this._updateComplete;
+  setSuggestions(suggestions) {
+    this.suggestions = suggestions;
   }
 }
 
@@ -40,26 +34,13 @@ describe('suggestion composer', function() {
 
     // Sets suggestions
     await suggestionComposer.setSuggestions([1, 2, 3]);
-    assert.equal(1, suggestionComposer.updatesCount);
-    assert.isEmpty(suggestionComposer.suggestions);
-    await suggestionComposer.updateDone();
-    assert.equal(1, suggestionComposer.updatesCount);
     assert.lengthOf(suggestionComposer.suggestions, 3);
 
-    // Sets suggestions several times, only the latest update goes through.
-    await suggestionComposer.setSuggestions([4]);
-    await suggestionComposer.setSuggestions([5, 6]);
-    await suggestionComposer.updateDone();
-    assert.equal(2, suggestionComposer.updatesCount);
+    await suggestionComposer.setSuggestions([4, 5]);
     assert.lengthOf(suggestionComposer.suggestions, 2);
 
-    await suggestionComposer.setSuggestions([7]);
-    await suggestionComposer.setSuggestions([8]);
-    await suggestionComposer.setSuggestions([9, 10, 11]);
+    await suggestionComposer.setSuggestions([6, 7, 8]);
     await suggestionComposer.setSuggestions([]);
-    await suggestionComposer.updateDone();
-    await suggestionComposer.updateDone();
-    assert.equal(4, suggestionComposer.updatesCount);
     assert.isEmpty(suggestionComposer.suggestions);
   });
 
@@ -70,7 +51,7 @@ describe('suggestion composer', function() {
       slotComposer
     });
     const suggestionComposer = new SuggestionComposer(slotComposer);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
@@ -78,7 +59,7 @@ describe('suggestion composer', function() {
     await helper.acceptSuggestion({particles: ['MakeCake']});
     await helper.makePlans();
     assert.lengthOf(helper.suggestions, 1);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
     assert.isEmpty(suggestConsumer._content);
@@ -88,7 +69,7 @@ describe('suggestion composer', function() {
     await helper.acceptSuggestion({particles: ['LightCandles']});
     await helper.makePlans();
     assert.isEmpty(helper.suggestions);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 
@@ -99,14 +80,14 @@ describe('suggestion composer', function() {
       slotComposer
     });
     const suggestionComposer = new SuggestionComposer(slotComposer);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
     await helper.makePlans();
     assert.lengthOf(helper.suggestions, 1);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
     await suggestConsumer._setContentPromise;
@@ -116,7 +97,7 @@ describe('suggestion composer', function() {
 
     await helper.makePlans();
     assert.isEmpty(helper.suggestions);
-    await suggestionComposer._updateSuggestions(helper.suggestions);
+    await suggestionComposer.setSuggestions(helper.suggestions);
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 });

@@ -15,7 +15,7 @@ import {Search} from '../../ts-build/recipe/search.js';
 describe('suggestion', function() {
   function createSuggestion(hash, descriptionText) {
     const suggestion = new Suggestion(/* plan= */ {}, hash, /* rank= */ 1, /* arc= */ {});
-    suggestion.descriptionText = descriptionText;
+    suggestion.descriptionByModality['text'] = descriptionText;
     return suggestion;
   }
   it('adds and merges search', async () => {

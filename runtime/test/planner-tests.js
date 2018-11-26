@@ -557,7 +557,7 @@ describe('Description', async () => {
       }
     );
     assert.lengthOf(plans, 1);
-    assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
+    assert.equal('Make MYTHING.', await plans[0].descriptionText);
     assert.equal(0, arc.storesById.size);
   });
 });

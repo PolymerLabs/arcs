@@ -44,13 +44,13 @@ describe('planning result', function() {
 
     // init results.
     const otherSuggestion = new Suggestion(helper.suggestions[0], 'other-hash', 0, helper.arc);
-    otherSuggestion.descriptionText = 'other description';
+    otherSuggestion.descriptionByModality['text'] = 'other description';
     helper.suggestions.push(otherSuggestion);
     assert.isTrue(result.append({suggestions: helper.suggestions}));
     assert.lengthOf(result.suggestions, 2);
 
     const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, otherSuggestion.arc);
-    suggestionWithSearch.descriptionText = otherSuggestion.descriptionText;
+    suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
     helper.suggestions.push(suggestionWithSearch);
     assert.isTrue(result.append({suggestions: helper.suggestions}));

@@ -15,6 +15,7 @@ import {InitSearch} from '../strategies/init-search.js';
 import {InterfaceType} from '../type.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {Manifest} from '../manifest.js';
+import {Modality} from '../modality';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
@@ -28,10 +29,8 @@ import {StorageProviderBase} from '../storage/storage-provider-base.js';
 export class Suggestion {
   arc: Arc;
   plan: Recipe;
-  // TODO: figure out how to better approach description.
-  description: Description;
-  descriptionText: string;
-  descriptionDom: {};
+  // TODO: update Description class to be serializable.
+  descriptionByModality = {};
   relevance: Relevance;
   readonly hash: string;
   readonly rank: number;
@@ -46,6 +45,24 @@ export class Suggestion {
     this.hash = hash;
     this.rank = rank;
     this.arc = arc;
+  }
+
+  get descriptionText() {
+    return this.getDescription('text') as string;
+  }
+
+  getDescription(modality: string): string|{} {
+    assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
+    return this.descriptionByModality[modality];
+  }
+
+  async setDescription(description: Description) {
+    this.descriptionByModality['text'] = await description.getRecipeSuggestion();
+    const modality = this.arc.pec.slotComposer && this.arc.pec.slotComposer.modality;
+    if (modality && modality !== 'text') {
+      this.descriptionByModality[modality] =
+        await description.getRecipeSuggestion(Modality.forName(modality).descriptionFormatter);
+    }
   }
 
   isEquivalent(other: Suggestion): boolean {
@@ -99,19 +116,17 @@ export class Suggestion {
       plan: this._planToString(this.plan),
       hash: this.hash,
       rank: this.rank,
-      descriptionText: this.descriptionText,
-      descriptionDom: {template: this.descriptionText, model: {}},
-      searchGroups: this.searchGroups
+      searchGroups: this.searchGroups,
+      descriptionByModality: this.descriptionByModality
     };
   }
 
-  static async deserialize({plan, hash, rank, descriptionText, descriptionDom, searchGroups}, arc, recipeResolver): Promise<Suggestion> {
+  static async deserialize({plan, hash, rank, searchGroups, descriptionByModality}, arc, recipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
       const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
-      suggestion.descriptionText = descriptionText;
-      suggestion.descriptionDom = descriptionDom;
       suggestion.searchGroups = searchGroups;
+      suggestion.descriptionByModality = descriptionByModality;
       return suggestion;
     }
     return undefined;
