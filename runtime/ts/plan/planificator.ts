@@ -20,10 +20,10 @@ import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type.js';
 
 export class Planificator {
-  static async create(arc: Arc, {userid, protocol, onlyConsumer}) {
+  static async create(arc: Arc, {userid, protocol, onlyConsumer, debug = false}) {
     const store = await Planificator._initSuggestStore(arc, {userid, protocol, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid});
-    const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer);
+    const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
     // TODO(mmandlis): Switch to always use `contextual: true` once new arc doesn't need
     // to produce a plan in order to instantiate it.
     planificator.requestPlanning({contextual: planificator.isArcPopulated()});
@@ -46,12 +46,12 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc: Arc, userid: string, store: StorageProviderBase, searchStore: StorageProviderBase, onlyConsumer: boolean) {
+  constructor(arc: Arc, userid: string, store: StorageProviderBase, searchStore: StorageProviderBase, onlyConsumer: boolean, debug: boolean) {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(arc, store, searchStore);
+      this.producer = new PlanProducer(arc, store, searchStore, {debug});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
@@ -144,8 +144,13 @@ export class Planificator {
     if (protocol) {
       storageKey.protocol = protocol;
     }
-    storageKey.location = storageKey.location.replace(
-        /\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
+    if (storageKey.location.includes('/arcs/')) {
+      // Backward compatibility for shell older than 0_6_0.
+      storageKey.location = storageKey['location']
+          .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
+    } else {
+      storageKey.location = storageKey.location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/$1`);
+    }
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
     return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
@@ -154,8 +159,13 @@ export class Planificator {
   private static async _initSearchStore(arc: Arc, {userid}): Promise<StorageProviderBase> {
     const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
     const storageKey = storage.parseStringAsKey(arc.storageKey);
-    storageKey.location = storageKey.location.replace(
-        /\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
+    if (storageKey['location'].includes('/arcs/')) {
+      // Backward compatibility for shell older than 0_6_0.
+      storageKey.location = storageKey.location
+          .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
+    } else {
+      storageKey.location = storageKey.location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
+    }
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);

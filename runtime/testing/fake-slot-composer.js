@@ -19,7 +19,7 @@ export class FakeSlotComposer extends SlotComposer {
   constructor(options = {}) {
     super(Object.assign({
       rootContainer: {'root': 'root-context'},
-      affordance: 'mock'
+      modality: 'mock'
     }, options));
   }
 

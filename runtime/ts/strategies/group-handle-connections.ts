@@ -5,23 +5,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Type} from '../type.js';
+import {Walker} from '../recipe/walker.js';
+import {HandleConnection} from '../recipe/handle-connection.js';
+import {Arc} from '../arc.js';
 
 export class GroupHandleConnections extends Strategy {
-  constructor() {
-    super();
+  _walker: Walker;
+
+  constructor(arc: Arc, args?) {
+    super(arc, args);
 
     this._walker = new class extends Walker {
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe, result) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
-          return;
+          return undefined;
         }
         // Find all unique types used in the recipe that have unbound handle connections.
-        const types = new Set();
+        const types: Set<Type> = new Set();
         recipe.handleConnections.forEach(hc => {
           if (!hc.isOptional && !hc.handle && !Array.from(types).find(t => t.equals(hc.type))) {
             types.add(hc.type);
@@ -31,7 +36,7 @@ export class GroupHandleConnections extends Strategy {
         const groupsByType = new Map();
         types.forEach(type => {
           // Find the particle with the largest number of unbound connections of the same type.
-          const countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
+          const countConnectionsByType = (connections: {[index: string]: HandleConnection}) => Object.values(connections).filter(conn => {
             return !conn.isOptional && !conn.handle && type.equals(conn.type);
           }).length;
           const sortedParticles = [...recipe.particles].sort((p1, p2) => {
@@ -44,7 +49,7 @@ export class GroupHandleConnections extends Strategy {
           const particleWithMostConnectionsOfType = sortedParticles[0];
           const groups = new Map();
           let allTypeHandleConnections = recipe.handleConnections.filter(c => {
-            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
+            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle !== particleWithMostConnectionsOfType);
           });
 
           let iteration = 0;
@@ -59,12 +64,12 @@ export class GroupHandleConnections extends Strategy {
               const group = groups.get(handleConnection);
 
               // filter all connections where this particle is already in a group.
-              const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
-              let selectedConn = possibleConnections.find(c => handleConnection.isInput != c.isInput || handleConnection.isOutput != c.isOutput);
+              const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle === c.particle));
+              let selectedConn = possibleConnections.find(c => handleConnection.isInput !== c.isInput || handleConnection.isOutput !== c.isOutput);
               // TODO: consider tags.
               // TODO: Slots handle restrictions should also be accounted for when grouping.
               if (!selectedConn) {
-                if (possibleConnections.length == 0 || iteration == 0) {
+                if (possibleConnections.length === 0 || iteration === 0) {
                   // During first iteration only bind opposite direction connections ("in" with "out" and vice versa)
                   // to ensure each group has both direction connections as much as possible.
                   return;
@@ -72,13 +77,13 @@ export class GroupHandleConnections extends Strategy {
                 selectedConn = possibleConnections[0];
               }
               group.push(selectedConn);
-              allTypeHandleConnections = allTypeHandleConnections.filter(c => c != selectedConn);
+              allTypeHandleConnections = allTypeHandleConnections.filter(c => c !== selectedConn);
             });
             iteration++;
           }
           // Remove groups where no connections were bound together.
           groups.forEach((otherConns, conn) => {
-            if (otherConns.length == 0) {
+            if (otherConns.length === 0) {
               groups.delete(conn);
             } else {
               otherConns.push(conn);
@@ -104,6 +109,7 @@ export class GroupHandleConnections extends Strategy {
             // TODO: score!
           };
         }
+        return undefined;
       }
     }(Walker.Permuted);
   }

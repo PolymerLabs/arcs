@@ -11,27 +11,28 @@
 import {Manifest} from './ts-build/manifest.js';
 import {Arc} from './ts-build/arc.js';
 import {SlotComposer} from './ts-build/slot-composer.js';
-import {Strategizer, Strategy} from '../strategizer/strategizer.js';
+import {Strategizer, Strategy} from './ts-build/strategizer/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
-import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
-import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
-import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {CreateHandleGroup} from './strategies/create-handle-group.js';
-import {AddMissingHandles} from './strategies/add-missing-handles.js';
-import * as Rulesets from './strategies/rulesets.js';
-import {MapSlots} from './strategies/map-slots.js';
+import {ConvertConstraintsToConnections} from './ts-build/strategies/convert-constraints-to-connections.js';
+import {MatchFreeHandlesToConnections} from './ts-build/strategies/match-free-handles-to-connections.js';
+import {ResolveRecipe} from './ts-build/strategies/resolve-recipe.js';
+import {CreateHandleGroup} from './ts-build/strategies/create-handle-group.js';
+import {AddMissingHandles} from './ts-build/strategies/add-missing-handles.js';
+import * as Rulesets from './ts-build/strategies/rulesets.js';
+import {MapSlots} from './ts-build/strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './ts-build/recipe/recipe-util.js';
 import {Handle} from './ts-build/recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
+import {PlanningResult} from './ts-build/plan/planning-result.js';
 
 class RelevantContextRecipes extends Strategy {
-  constructor(context, affordance) {
+  constructor(context, modality) {
     super();
     this._recipes = [];
     for (let recipe of context.allRecipes) {
-      if (affordance && recipe.particles.find(p => p.spec && !p.spec.matchAffordance(affordance)) !== undefined) {
+      if (modality && recipe.particles.find(p => p.spec && !p.spec.matchModality(modality)) !== undefined) {
         continue;
       }
 
@@ -72,20 +73,20 @@ const IndexStrategies = [
 ];
 
 export class RecipeIndex {
-  constructor(context, loader, affordance) {
+  constructor(context, loader, modality) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
       loader,
-      slotComposer: affordance ? new SlotComposer({affordance, noRoot: true}) : null,
+      slotComposer: modality ? new SlotComposer({modality, noRoot: true}) : null,
       recipeIndex: {},
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
       speculative: true
     });
     const strategizer = new Strategizer(
       [
-        new RelevantContextRecipes(context, affordance),
+        new RelevantContextRecipes(context, modality),
         ...IndexStrategies.map(S => new S(arcStub))
       ],
       [],
@@ -101,7 +102,8 @@ export class RecipeIndex {
 
       if (DevtoolsConnection.isConnected) {
         StrategyExplorerAdapter.processGenerations(
-            generations, DevtoolsConnection.get(), {label: 'Index', keep: true});
+            PlanningResult.formatSerializableGenerations(generations), 
+            DevtoolsConnection.get(), {label: 'Index', keep: true});
       }
 
       const population = strategizer.population;

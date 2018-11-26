@@ -16,8 +16,6 @@ import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../ts-build/storage/firebase-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -617,12 +615,7 @@ describe('firebase', function() {
           defineParticle(({Particle}) => class Noop extends Particle {});
         `
       });
-      const pecFactory = function(id) {
-        const channel = new MessageChannel();
-        new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-        return channel.port2;
-      };
-      const arc = new Arc({id: 'test', pecFactory, loader});
+      const arc = new Arc({id: 'test', loader});
       const manifest = await Manifest.load('manifest', loader);
       const storage = createStorage(arc.id);
       const Data = Type.newEntity(manifest.schemas.Data);
@@ -652,7 +645,7 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization, pecFactory});
+      const arc2 = await Arc.deserialize({serialization});
       const varStore2 = arc2.findStoreById(varStore.id);
       const colStore2 = arc2.findStoreById(colStore.id);
       const bigStore2 = arc2.findStoreById(bigStore.id);

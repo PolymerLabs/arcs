@@ -88,21 +88,16 @@ describe('manifest parser', function() {
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
-    const reservedWords = ['inout', 'in', 'out', 'host', '`consume', '`provide',
-                           'provide', 'consume', '?', 'use', 'map', 'create', 'copy',
-                           '`slot'];
-    reservedWords.map(reserved => {
-      try {
-        parse(`
-          particle MyParticle
-            in MyThing ${reserved}
-            out BigCollection<MyThing>? output`);
-        assert.fail('this parse should have failed, identifiers should not be reserved words!');
-      } catch (e) {
-        assert.include(e.message, 'Expected',
-            `bad error: '${e}'`);
-      }
-    });
+    try {
+      parse(`
+        particle MyParticle
+          in MyThing consume
+          out? BigCollection<MyThing> output`);
+      assert.fail('this parse should have failed, identifiers should not be reserved words!');
+    } catch (e) {
+      assert.include(e.message, 'Expected',
+          `bad error: '${e}'`);
+    }
   });
   it('fails to parse a nonsense argument list', () => {
     try {
@@ -141,7 +136,7 @@ describe('manifest parser', function() {
       particle SomeParticle
         in Energy energy
         out Height height
-        affordance dom`);
+        modality dom`);
   });
   it('parses recipe with particle verbs', () => {
     parse(`

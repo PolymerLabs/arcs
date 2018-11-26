@@ -10,7 +10,7 @@
 'use strict';
 
 import {Manifest} from '../../ts-build/manifest.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {ConvertConstraintsToConnections} from '../../ts-build/strategies/convert-constraints-to-connections.js';
 import {assert} from '../chai-web.js';
 
 describe('ConvertConstraintsToConnections', async () => {
@@ -266,16 +266,16 @@ describe('ConvertConstraintsToConnections', async () => {
     d = handle0`);
   });
 
-  it('verifies affordance', async () => {
+  it('verifies modality', async () => {
     const recipes = (await Manifest.parse(`
       schema S
       particle A in 'A.js'
         out S b
-        affordance voice
+        modality voice
         consume root
       particle C in 'C.js'
         in S d
-        affordance voice
+        modality voice
         consume root
       particle E in 'E.js'
         in S f
@@ -287,7 +287,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> E.f
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}});
+    const cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {modality: 'voice'}}});
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);

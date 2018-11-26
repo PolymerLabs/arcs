@@ -5,29 +5,23 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Handle} from '../ts-build/recipe/handle.js';
-import {Type} from '../ts-build/type.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Handle} from '../recipe/handle.js';
+import {VariableType} from '../type.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Arc} from '../arc.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
 // use/? handle and finding a matching create/? handle in another recipe and
 // merging those.
 export class CoalesceRecipes extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
-
-  get arc() { return this._arc; }
-
   getResults(inputParams) {
     // Coalescing for terminal recipes that are either unresolved recipes or have no UI.
-    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length == 0);
+    return inputParams.terminal.filter(result => !result.result.isResolved() || result.result.slots.length === 0);
   }
 
   async generate(inputParams) {
@@ -39,14 +33,14 @@ export class CoalesceRecipes extends Strategy {
       // Find a provided slot for unfulfilled consume connection.
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.isResolved()) {
-          return;
+          return undefined;
         }
         if (!slotConnection.name || !slotConnection.particle) {
-          return;
+          return undefined;
         }
 
         if (slotConnection.targetSlot) {
-          return;
+          return undefined;
         }
 
         // TODO: also support a consume slot connection that is NOT required,
@@ -83,15 +77,16 @@ export class CoalesceRecipes extends Strategy {
         if (results.length > 0) {
           return results;
         }
+        return undefined;
       }
 
       onSlot(recipe, slot) {
         // Find slots that according to their provided-spec must be consumed, but have no consume connection.
         if (slot.consumeConnections.length > 0) {
-          return; // slot has consume connections.
+          return undefined; // slot has consume connections.
         }
         if (!slot.sourceConnection || !slot.sourceConnection.slotSpec.getProvidedSlotSpec(slot.name).isRequired) {
-          return; // either a remote slot (no source connection), or a not required one.
+          return undefined; // either a remote slot (no source connection), or a not required one.
         }
 
         const results = [];
@@ -121,8 +116,8 @@ export class CoalesceRecipes extends Strategy {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
               const mergedMatchingConn = cloneMap.get(matchingConn);
               const disconnectedHandle = mergedMatchingConn.handle;
-              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
-              if (disconnectedHandle == clonedHandle) {
+              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === handle.id).handle;
+              if (disconnectedHandle === clonedHandle) {
                 continue; // this handle was already reconnected
               }
 
@@ -150,13 +145,14 @@ export class CoalesceRecipes extends Strategy {
         if (results.length > 0) {
           return results;
         }
+        return undefined;
       }
 
       onHandle(recipe, handle) {
         if (!index.coalescableFates.includes(handle.fate)
             || handle.id
             || handle.connections.length === 0
-            || handle.name === 'descriptions') return;
+            || handle.name === 'descriptions') return undefined;
         const results = [];
 
         for (const otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {
@@ -172,7 +168,7 @@ export class CoalesceRecipes extends Strategy {
             let resolved = otherHandle.type.resolvedType();
             // TODO: getContainedType returns non-null for references ... is that correct here?
             resolved = resolved.getContainedType() || resolved;
-            if (resolved.isVariable && !resolved.canReadSubset) continue;
+            if (resolved instanceof VariableType && !resolved.canReadSubset) continue;
           }
 
           if (RecipeUtil.matchesRecipe(arc.activeRecipe, otherHandle.recipe)) {
@@ -234,7 +230,7 @@ export class CoalesceRecipes extends Strategy {
 
       // Returns true, if both handles have types that can be coalesced.
       _reverifyHandleTypes(handle, otherHandle) {
-        assert(handle.recipe == otherHandle.recipe);
+        assert(handle.recipe === otherHandle.recipe);
         const cloneMap = new Map();
         const recipeClone = handle.recipe.clone(cloneMap);
         recipeClone.normalize();

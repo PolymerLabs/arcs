@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {AddMissingHandles} from '../../strategies/add-missing-handles.js';
+import {AddMissingHandles} from '../../ts-build/strategies/add-missing-handles.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {

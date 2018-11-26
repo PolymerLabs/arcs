@@ -27,7 +27,7 @@ export class ShellPlanningInterface {
    * @param assetsPath a path (relative or absolute) to locate planning assets.
    * @param userid the User Id to do planning for.
    */
-  static async start(assetsPath, userid) {
+  static async start(assetsPath, userid, debug) {
     if (!assetsPath || !userid) {
       throw new Error('assetsPath and userid required');
     }
@@ -37,12 +37,11 @@ export class ShellPlanningInterface {
       DevtoolsConnection.ensure();
       await DevtoolsConnection.onceConnected;  
     }
-    
     const factory = new ArcFactory(assetsPath);
     const context = await factory.createContext(manifest);
     const user = new UserContext();
     user._setProps({userid, context});
-    const planner = new UserPlanner(factory, context, userid);
+    const planner = new UserPlanner(factory, context, userid, debug);
   }
 }
 

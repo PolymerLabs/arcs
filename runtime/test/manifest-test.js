@@ -81,8 +81,8 @@ schema Person
 `particle TestParticle in 'testParticle.js'
   in [Product {}] list
   out Person {} person
-  affordance dom
-  affordance dom-touch
+  modality dom
+  modality dom-touch
   must consume root #master #main
     formFactor big
     must provide action #large
@@ -99,7 +99,7 @@ schema Person
 
     const particleStr1 =
 `particle NoArgsParticle in 'noArgsParticle.js'
-  affordance dom`;
+  modality dom`;
     const manifest = await Manifest.parse(`
 ${schemaStr}
 ${particleStr0}
@@ -129,14 +129,14 @@ schema Person
   \`consume Slot other
     \`provide [~cell] myProvidedSetCell
   \`consume [~cell] mySetCell
-  affordance dom
-  affordance dom-touch
+  modality dom
+  modality dom-touch
   description \`hello world \${list}\`
     list \`my special list\``;
 
     const particleStr1 =
 `particle NoArgsParticle in 'noArgsParticle.js'
-  affordance dom`;
+  modality dom`;
     const manifest = await Manifest.parse(`
 ${schemaStr}
 ${particleStr0}
@@ -198,7 +198,7 @@ ${particleStr1}
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
-  affordance dom
+  modality dom
   consume thing
     provide otherThing`;
 
@@ -212,7 +212,7 @@ ${particleStr1}
     out [Product {}] output
   \`consume Slot thing
     \`provide Slot otherThing
-  affordance dom`;
+  modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
@@ -735,11 +735,11 @@ ${particleStr1}
       particle SomeParticle in 'some-particle.js'
         consume slotA #aaa
           provide slotB #bbb
-        recipe
-          slot 'slot-id0' #aa #aaa as s0
-          SomeParticle
-            consume slotA #aa #hello as s0
-              provide slotB
+      recipe
+        slot 'slot-id0' #aa #aaa as s0
+        SomeParticle
+          consume slotA #aa #hello as s0
+            provide slotB
     `);
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);
@@ -769,11 +769,11 @@ ${particleStr1}
       particle SomeParticle in 'some-particle.js'
         \`consume Slot slotA #aaa
           \`provide Slot slotB #bbb
-        recipe
-          \`slot 'slot-id0' #aa #aaa as s0
-          SomeParticle
-            slotA consume s0 #aa #hello
-            slotB provide
+      recipe
+        \`slot 'slot-id0' #aa #aaa as s0
+        SomeParticle
+          slotA consume s0 #aa #hello
+          slotB provide
     `);
     // verify particle spec
     assert.lengthOf(manifest.particles, 1);
@@ -1432,11 +1432,11 @@ resource SomeName
       shape Shape
         in Foo foo
       particle ShapeParticle
-        host Shape shape
+        host Shape shape0
       recipe
         create as handle0
         ShapeParticle
-          shape = handle0`);
+          shape0 = handle0`);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
   });
@@ -1446,11 +1446,11 @@ resource SomeName
       shape Shape
         in Foo foo
       particle ShapeParticle
-        host Shape shape
+        host Shape shape0
       recipe
         create as handle0
         ShapeParticle
-          shape = handle0
+          shape0 = handle0
     `);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
@@ -1531,7 +1531,7 @@ resource SomeName
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
-  affordance dom`);
+  modality dom`);
   });
   it('can resolve a particle with an inline schema reference', async () => {
     const manifest = await Manifest.parse(`
@@ -1554,7 +1554,7 @@ resource SomeName
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {Reference<Foo {Text far}> foo} bar
-  affordance dom`);
+  modality dom`);
   });
   it('can resolve a particle with a collection of schema references', async () => {
     const manifest = await Manifest.parse(`
@@ -1578,7 +1578,7 @@ resource SomeName
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {[Reference<Foo {Text far}>] foo} bar
-  affordance dom`);
+  modality dom`);
   });
   it('can resolve a particle with a collection of inline schema references', async () => {
     const manifest = await Manifest.parse(`
@@ -1600,7 +1600,7 @@ resource SomeName
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
   in Bar {[Reference<Foo {Text far}>] foo} bar
-  affordance dom`);
+  modality dom`);
   });
   it('can resolve inline schemas against out of line schemas', async () => {
     const manifest = await Manifest.parse(`
@@ -1887,7 +1887,7 @@ resource SomeName
     out [Product {}] output
   \`consume Slot {formFactor:big} thing #main #tagname
     \`provide Slot {handle:thingy} otherThing #testtag
-  affordance dom`;
+  modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
@@ -1900,7 +1900,7 @@ resource SomeName
     out [Product {}] output
   \`consume Slot {formFactor:big} thing
     \`provide Slot {handle:thingy} otherThing
-  affordance dom`;
+  modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);

@@ -21,9 +21,7 @@ const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
 
 // TODO(sjmiles): requires more info than this module should need
 const PlanificatorFactory = async (config, env, userid, arc) =>
- config.planificator === 'original'
-  ? new env.lib.Planificator(arc, {userid})
-  : await env.lib.PlanificatorNew.create(arc, {userid, protocol: config.planificatorProtocol});
+  await env.lib.Planificator.create(arc, {userid, protocol: config.planificatorProtocol});
 
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {

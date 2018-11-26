@@ -3,10 +3,11 @@ import {Firebase} from './shell/firebase.js';
 import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
 
 class UserPlanner {
-  constructor(factory, context, userid) {
+  constructor(factory, context, userid, debug) {
     this.factory = factory;
     this.context = context;
     this.userid = userid;
+    this.debug = debug;
     this.runners = {};
 
     const fbuser = new FbUser((type, detail) => this.onEvent(type, detail));
@@ -89,8 +90,8 @@ class UserPlanner {
     return await this.factory.deserialize(this.context, serialization);
   }
   async createPlanificator(userid, key, arc) {
-    const planificator = await Planificator.create(arc, {userid}); /*, protocol: 'pouchdb' or 'volatile' */
-    planificator.registerSuggestionsChangedCallback(current => this.showPlansForArc(key, current.plans));
+    const planificator = await Planificator.create(arc, {userid, debug: this.debug}); /*, protocol: 'pouchdb' or 'volatile' */
+    planificator.registerSuggestionsChangedCallback(current => this.showPlansForArc(key, current.suggestions));
     // planificator.registerVisibleSuggestionsChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
     return planificator;
   }

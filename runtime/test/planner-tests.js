@@ -15,8 +15,6 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../ts-build/planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../ts-build/manifest.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 const loader = new Loader();
 
@@ -42,7 +40,7 @@ const assertRecipeResolved = recipe => {
 
 const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
   const registry = {};
-  const loader = new class extends StubLoader {
+  const loader = new class MyLoader extends StubLoader {
     constructor() {
       super({manifest});
     }
@@ -58,16 +56,14 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
       };
       return clazz;
     }
+    clone() {
+      return new MyLoader();
+    }
   };
   const loadedManifest = await Manifest.load('manifest', loader, {registry});
   manifestLoadedCallback(loadedManifest);
 
-  const pecFactory = function(id) {
-    const channel = new MessageChannel();
-    new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-    return channel.port2;
-  };
-  const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, pecFactory, loader});
+  const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, loader});
   const planner = new Planner();
   planner.init(arc);
 
@@ -156,21 +152,21 @@ describe('Planner', function() {
 
 describe('AssignOrCopyRemoteHandles', function() {
   const particlesSpec = `
-  schema Foo
+      schema Foo
 
-  particle A in 'A.js'
-    in [Foo] list
-    consume root
+      particle A in 'A.js'
+        in [Foo] list
+        consume root
 
-  particle B in 'A.js'
-    inout [Foo] list
-    consume root
+      particle B in 'A.js'
+        inout [Foo] list
+        consume root
   `;
   const testManifest = async (recipeManifest, expectedResults) => {
     const manifest = (await Manifest.parse(`
-      ${particlesSpec}
+${particlesSpec}
 
-      ${recipeManifest}
+${recipeManifest}
     `));
 
     const schema = manifest.findSchemaByName('Foo');

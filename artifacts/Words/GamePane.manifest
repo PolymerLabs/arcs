@@ -23,6 +23,6 @@ particle GamePane in 'source/GamePane.js'
   inout [Post] posts
   inout Post post
   in Theme shellTheme
-  affordance dom
+  modality dom
   consume root
   description `play Words`

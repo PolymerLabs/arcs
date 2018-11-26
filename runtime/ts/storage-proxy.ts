@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {Type} from './type.js';
+import {Type, CollectionType, BigCollectionType} from './type.js';
 import {PECInnerPort} from '../api-channel.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
@@ -40,10 +40,10 @@ enum SyncState {none, pending, full}
  */
 export abstract class StorageProxy {
   static newProxy(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
-    if (type.isCollection) {
+    if (type instanceof CollectionType) {
       return new CollectionProxy(id, type, port, pec, scheduler, name);
     }
-    if (type.isBigCollection) {
+    if (type instanceof BigCollectionType) {
       return new BigCollectionProxy(id, type, port, pec, scheduler, name);
     }
     return new VariableProxy(id, type, port, pec, scheduler, name);
@@ -309,14 +309,14 @@ export class CollectionProxy extends StorageProxy {
 
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
-  toList(particleId) {
+  toList() {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model.toList());
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
       return new Promise(resolve =>
-        this.port.HandleToList({callback: resolve, handle: this, particleId}));
+        this.port.HandleToList({callback: resolve, handle: this}));
     }
   }
 
@@ -444,12 +444,12 @@ export class VariableProxy extends StorageProxy {
   // Otherwise, send a request to the backing store.
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
   //       sending a parallel request
-  get(particleId) {
+  get() {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model);
     } else {
       return new Promise(resolve =>
-        this.port.HandleGet({callback: resolve, handle: this, particleId}));
+        this.port.HandleGet({callback: resolve, handle: this}));
     }
   }
 

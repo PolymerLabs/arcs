@@ -82,7 +82,7 @@ store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_s
 
 // the below is required to make the arc aware of these stores
 
-particle Sharing in './source/sharing.js'
+particle Sharing in './source/Sharing.js'
   in [User] systemUsers
   in User systemUser
   in [User] profileFriends

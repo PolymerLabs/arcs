@@ -15,25 +15,25 @@ import {assert} from '../../platform/assert-web.js';
 import {Particle} from './particle.js';
 import {DomParticle} from '../dom-particle.js';
 import {MultiplexerDomParticle} from '../multiplexer-dom-particle.js';
-import {newClientReference} from './reference.js';
+import {Reference} from './reference.js';
 import {TransformationDomParticle} from '../transformation-dom-particle.js';
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
-function schemaLocationFor(name) {
+function schemaLocationFor(name): string {
   return `../entities/${name}.schema`;
 }
 
 export class Loader {
   private pec: ParticleExecutionContext;
-  path(fileName) {
+  path(fileName: string): string {
     const path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 
-  join(prefix, path) {
+  join(prefix:string , path: string): string {
     if (/^https?:\/\//.test(path)) {
       return path;
     }
@@ -47,7 +47,7 @@ export class Loader {
   }
 
   // convert `././foo/bar/../baz` to `./foo/baz`
-  normalizeDots(path) {
+  normalizeDots(path: string) {
     // only unix slashes
     path = path.replace(/\\/g, '/');
     // remove './'
@@ -58,14 +58,14 @@ export class Loader {
     return path;
   }
 
-  loadResource(file) {
+  loadResource(file: string) {
     if (/^https?:\/\//.test(file)) {
       return this._loadURL(file);
     }
     return this._loadFile(file);
   }
 
-  _loadFile(file) {
+  _loadFile(file: string) {
     return new Promise((resolve, reject) => {
       fs.readFile(file, (err, data) => {
         if (err) {
@@ -93,7 +93,7 @@ export class Loader {
     return clazz;
   }
 
-  async requireParticle(fileName) {
+  async requireParticle(fileName: string) {
     if (fileName === null) fileName = '';
     const src = await this.loadResource(fileName);
     // Note. This is not real isolation.
@@ -119,6 +119,6 @@ export class Loader {
 
   unwrapParticle(particleWrapper) {
     assert(this.pec);
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: newClientReference(this.pec), html});
+    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: Reference.newClientReference(this.pec), html});
   }
 }

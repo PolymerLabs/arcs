@@ -9,13 +9,19 @@
 'use strict';
 
 import {ParticleExecutionContext} from './particle-execution-context.js';
-import {MessageChannel} from './message-channel.js';
+import {MessagePort, MessageChannel} from './message-channel.js';
 import {Loader} from './loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
-export function FakePecFactory(id) {
-  const channel = new MessageChannel();
-  const pec = new ParticleExecutionContext(channel.port1, `${id}:inner`, new Loader());
-  return channel.port2;
+export function FakePecFactory(loader: Loader): (id: string) => MessagePort {
+  return (id: string) => {
+    const channel = new MessageChannel();
+    // Each PEC should get its own loader. Only a StubLoader knows how to be cloned,
+    // so its either a clone of a Stub or a new Loader.
+    const loaderToUse = loader instanceof StubLoader ? (loader as StubLoader).clone() : new Loader();
+    const pec = new ParticleExecutionContext(channel.port1, `${id}:inner`, loaderToUse);
+    return channel.port2;
+  };
 }

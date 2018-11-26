@@ -48,7 +48,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   _configure() {
     const params = (new URL(document.location)).searchParams;
     return {
-      //affordance: 'dom',
+      //modality: 'dom',
       //root: params.get('root') || window.arcsPath,
       //manifestPath: params.get('manifest'),
       //solo: params.get('solo'),
@@ -57,7 +57,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       arckey: params.get('arc'),
       search: params.get('search') || '',
-      planificator: params.get('planificator'),
       planificatorProtocol: params.get('planificatorProtocol') || 'volatile',
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),

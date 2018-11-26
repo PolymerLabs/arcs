@@ -10,7 +10,7 @@ import 'Restaurant.schema'
 
 particle RestaurantDetail in 'source/RestaurantDetail.js'
   in Restaurant selected
-  affordance dom
+  modality dom
   consume detail
     provide action
 // removing description for now to clean up suggestions

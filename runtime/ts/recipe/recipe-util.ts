@@ -32,9 +32,10 @@ class Shape {
     }
   }
 }
+type DirectionCounts = {in: number; out: number; inout: number; unknown: number;};
 
 export class RecipeUtil {
-  static makeShape(particles, handles, map, recipe) {
+  static makeShape(particles, handles, map, recipe?: Recipe) {
     recipe = recipe || new Recipe();
     const pMap = {};
     const hMap = new Map();
@@ -80,9 +81,9 @@ export class RecipeUtil {
     return new Shape(recipe, particles, handles, hcs);
   }
 
-  static find(recipe, shape) {
+  static find(recipe: Recipe, shape: Shape) {
 
-    function _buildNewHCMatches(recipe, shapeHC, match, outputList) {
+    function _buildNewHCMatches(recipe: Recipe, shapeHC: HandleConnection, match, outputList) {
       const {forward, reverse, score} = match;
       let matchFound = false;
       for (const recipeHC of recipe.handleConnections) {
@@ -197,7 +198,7 @@ export class RecipeUtil {
       }
     }
 
-    function _buildNewParticleMatches(recipe, shapeParticle, match, newMatches) {
+    function _buildNewParticleMatches(recipe: Recipe, shapeParticle: Particle, match, newMatches) {
       const {forward, reverse, score} = match;
       let matchFound = false;
       for (const recipeParticle of recipe.particles) {
@@ -342,8 +343,9 @@ export class RecipeUtil {
     });
   }
 
-  static directionCounts(handle) {
-    const counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0};
+
+  static directionCounts(handle): DirectionCounts {
+    const counts: DirectionCounts = {in: 0, out: 0, inout: 0, unknown: 0};
     for (const connection of handle.connections) {
       let direction = connection.direction;
       if (counts[direction] === undefined) {

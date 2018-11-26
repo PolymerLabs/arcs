@@ -7,13 +7,15 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {digest} from '../../../platform/digest-web.js';
-import {Strategizer} from '../../../strategizer/strategizer.js';
+import {Strategizer} from '../strategizer/strategizer.js';
 import {ConnectionConstraint} from './connection-constraint.js';
 import {Particle} from './particle.js';
 import {Search} from './search.js';
 import {Slot} from './slot.js';
 import {Handle} from './handle.js';
+import {HandleConnection} from './handle-connection.js';
 import {compareComparables} from './util.js';
+import {InterfaceType} from '../type.js';
 
 export class Recipe {
   private _particles = <Particle[]>[];
@@ -193,7 +195,7 @@ export class Recipe {
     return slotConnections;
   }
 
-  get handleConnections() {
+  get handleConnections(): HandleConnection[] {
     const handleConnections = [];
     this._particles.forEach(particle => {
       handleConnections.push(...Object.values(particle.connections));
@@ -247,7 +249,7 @@ export class Recipe {
     return digest(this.toString());
   }
 
-  normalize(options) {
+  normalize(options?) {
     if (Object.isFrozen(this)) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');
@@ -313,7 +315,9 @@ export class Recipe {
     const slots = [];
     // Reorder connections so that interfaces come last.
     // TODO: update handle-connection comparison method instead?
-    for (const connection of connections.filter(c => !c.type || !c.type.isInterface).concat(connections.filter(c => !!c.type && !!c.type.isInterface))) {
+    let ordered = connections.filter(c => !c.type || !(c.type instanceof InterfaceType));
+    ordered = ordered.concat(connections.filter(c => !!c.type && !!(c.type instanceof InterfaceType)));
+    for (const connection of ordered) {
       if (!seenParticles.has(connection.particle)) {
         particles.push(connection.particle);
         seenParticles.add(connection.particle);

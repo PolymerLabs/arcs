@@ -11,7 +11,7 @@
 
 import {Arc} from '../../ts-build/arc.js';
 import {Manifest} from '../../ts-build/manifest.js';
-import {InitPopulation} from '../../strategies/init-population.js';
+import {InitPopulation} from '../../ts-build/strategies/init-population.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';
 

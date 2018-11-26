@@ -11,6 +11,7 @@
  'use strict';
 
 import {assert} from '../test/chai-web.js';
+import {CollectionType} from '../ts-build/type.js';
 
 // Helper class for testing a Collection-based store that collects messages from a particle.
 // This detects when too few or too many messages are sent in addition to matching the message
@@ -50,7 +51,7 @@ export class ResultInspector {
   // store: a Collection-based store that should be connected as an output for the particle
   // field: the field within store's contained Entity type that this inspector should observe
   constructor(arc, store, field) {
-    assert(store.type.isCollection, `ResultInspector given non-Collection store: ${store}`);
+    assert(store.type instanceof CollectionType, `ResultInspector given non-Collection store: ${store}`);
     this._arc = arc;
     this._store = store;
     this._field = field;

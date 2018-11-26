@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
+import {SearchTokensToHandles} from '../../ts-build/strategies/search-tokens-to-handles.js';
 import {assert} from '../chai-web.js';
 import {Loader} from '../../ts-build/loader.js';
 

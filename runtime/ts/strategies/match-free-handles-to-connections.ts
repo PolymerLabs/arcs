@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
 
 /*
  * Match free handles (i.e. handles that aren't connected to any connections)
@@ -15,8 +15,6 @@ import {Recipe} from '../ts-build/recipe/recipe.js';
  */
 export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
-    const self = this;
-
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.connections.length > 0) {

@@ -175,9 +175,9 @@ Shape
   }
 
 ShapeItem
-  = ShapeInterface
+  = ShapeSlot
   / ShapeArgumentItem
-  / ShapeSlot
+  / ShapeInterface
 
 
 ShapeInterface
@@ -261,7 +261,7 @@ ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = [];
-    let affordance = [];
+    let modality = [];
     let slots = [];
     let description = null;
     let hasParticleArgument = false;
@@ -286,17 +286,17 @@ ParticleDefinition
           location: 'FIXME',
         };
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.affordance) {
-        affordance.push(item.affordance)
+      } else if (item.modality) {
+        modality.push(item.modality)
       } else {
         error(`Particle ${name} contains an unknown element: ${item.name}`);
       }
     });
-    if (affordance.length == 0) {
-      // Add default affordance
-      affordance.push('dom');
+    if (modality.length == 0) {
+      // Add default modality
+      modality.push('dom');
     }
-    affordance.push('mock');
+    modality.push('mock');
 
     return {
       kind: 'particle',
@@ -305,7 +305,7 @@ ParticleDefinition
       implFile: optional(implFile, implFile => implFile[3], null),
       verbs,
       args,
-      affordance,
+      modality,
       slots,
       description,
       hasParticleArgument
@@ -313,11 +313,11 @@ ParticleDefinition
   }
 
 ParticleItem
-  = ParticleInterface
-  / ParticleHandle
-  / ParticleAffordance
+  = ParticleModality
   / ParticleSlot
   / Description
+  / ParticleHandle
+  / ParticleInterface
 
 ParticleInterface
   = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
@@ -457,13 +457,14 @@ VariableTypeList
     return [head, ...tail.map(a => a[2])];
   }
 
-ParticleAffordance
-  = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
+// TODO: remove 'affordance' when all particle manifests updated.
+ParticleModality
+  = ('affordance' / 'modality') whiteSpace modality:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
   {
     return {
-      kind: 'particle-affordance',
+      kind: 'particle-modality',
       location: location(),
-      affordance,
+      modality,
     };
   }
 
@@ -606,8 +607,8 @@ RecipeItem
   = RecipeParticle
   / RecipeHandle
   / RecipeSlot
-  / RecipeConnection
   / RecipeSearch
+  / RecipeConnection
   / Description
 
 LocalName
@@ -646,7 +647,7 @@ RecipeParticle
     };
   }
 
-RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
+RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
   = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace
@@ -745,7 +746,7 @@ Direction
   = dir:('<-' / '->' / '=' / 'consume' / 'provide')
 
 ConnectionTarget
-  = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
+  = VerbConnectionTarget / TagConnectionTarget / ParticleConnectionTarget / NameConnectionTarget
 
 VerbConnectionTarget
   = verbs:VerbList components:ConnectionTargetHandleComponents?
@@ -1090,15 +1091,25 @@ SameOrMoreIndent = &(i:" "* &{
 TopLevelIdent
   = upperIdent
 
+// Should only be used as a negative match.
 ReservedWord
-  = Direction
+  = (Direction
   / ParticleArgumentDirection
   / RecipeHandleFate
+  / 'particle'
+  / 'recipe'
+  / 'import'
+  / 'shape'
+  / 'schema'
+  ) (whiteSpace / eolWhiteSpace)
+{
+  throw new Error(`Expected identifier but keyword, '${text()}' found.`);
+}
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:(!(ReservedWord (whiteSpace / eolWhiteSpace))[a-z][a-z0-9_]i*) {return text()}
+lowerIdent = ident:((!ReservedWord)([a-z][a-z0-9_]i*)) {return text()}
 whiteSpace
   = " "+
 eolWhiteSpace

@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
-import {InitSearch} from '../../strategies/init-search.js';
+import {InitSearch} from '../strategies/init-search.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {Manifest} from '../manifest.js';
 import {now} from '../../../platform/date-web.js';
@@ -22,6 +22,7 @@ import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
+import {InterfaceType} from '../type.js';
 
 export class Suggestion {
   arc: Arc;
@@ -107,7 +108,7 @@ export class Suggestion {
 
         // Override handle conenctions with particle name as local name.
         Object.values(handle.connections).forEach(conn => {
-          assert(conn['type'].isInterface);
+          assert(conn['type'] instanceof InterfaceType);
           conn['_handle'] = {localName: hostedParticleName};
         });
 

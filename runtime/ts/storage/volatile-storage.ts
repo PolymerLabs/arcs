@@ -12,7 +12,7 @@ import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
-import {Type} from '../type.js';
+import {Type, CollectionType, BigCollectionType, ReferenceType} from '../type.js';
 
 export function resetVolatileStorageForTesting() {
   for (const key of Object.keys(__storageCache)) {
@@ -71,10 +71,10 @@ export class VolatileStorage extends StorageBase {
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<VolatileStorageProvider> {
     const provider = await this._construct(id, type, keyFragment);
-    if (type.isReference || type.isBigCollection) {
+    if (type instanceof ReferenceType || type instanceof BigCollectionType) {
       return provider;
     }
-    if (type.isTypeContainer() && type.getContainedType().isReference) {
+    if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
       return provider;
     }
     provider.enableReferenceMode();
@@ -145,10 +145,10 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
   protected storageEngine: VolatileStorage;
   private pendingBackingStore: Promise<VolatileCollection>|null = null;
   static newProvider(type, storageEngine, name, id, key) {
-    if (type.isCollection) {
+    if (type instanceof CollectionType) {
       return new VolatileCollection(type, storageEngine, name, id, key);
     }
-    if (type.isBigCollection) {
+    if (type instanceof BigCollectionType) {
       return new VolatileBigCollection(type, storageEngine, name, id, key);
     }
     return new VolatileVariable(type, storageEngine, name, id, key);

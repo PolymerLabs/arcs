@@ -5,37 +5,36 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Arc} from '../arc.js';
+import {SlotConnection} from '../recipe/slot-connection.js';
+
+import {assert} from '../../../platform/assert-web.js';
 
 export class MapSlots extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onSlotConnection(recipe, slotConnection) {
+      onSlotConnection(recipe: Recipe, slotConnection: SlotConnection) {
         // don't try to connect verb constraints
         // TODO: is this right? Should constraints be connectible, in order to precompute the
         // recipe side once the verb is substituted?
         if (slotConnection.slotSpec == undefined) {
-          return;
+          return undefined;
         }
 
         if (slotConnection.isConnected()) {
-          return;
+          return undefined;
         }
 
         const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
 
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
-          return;
+          return undefined;
         }
 
         // If there are any local slots, prefer them over remote slots.
@@ -56,7 +55,7 @@ export class MapSlots extends Strategy {
       let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
 
       if (!clonedSlot) {
-        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id == s.id);
+        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id === s.id);
         if (clonedSlot == undefined) {
           clonedSlot = recipe.newSlot(selectedSlot.name);
           clonedSlot.id = selectedSlot.id;
@@ -65,7 +64,7 @@ export class MapSlots extends Strategy {
       slotConnection.connectToSlot(clonedSlot);
     }
 
-    assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id == slotConnection.targetSlot.id),
+    assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id === slotConnection.targetSlot.id),
            `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
     slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
 
@@ -85,7 +84,7 @@ export class MapSlots extends Strategy {
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  static _findSlotCandidates(slotConnection, slots) {
+  static _findSlotCandidates(slotConnection: SlotConnection, slots) {
     const possibleSlots = slots.filter(s => this.slotMatches(slotConnection, s));
     possibleSlots.sort((slot1, slot2) => {
         // TODO: implement.
@@ -95,7 +94,7 @@ export class MapSlots extends Strategy {
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static slotMatches(slotConnection, slot) {
+  static slotMatches(slotConnection: SlotConnection, slot) {
     if (!MapSlots.specMatch(slotConnection, slot)) {
       return false;
     }
@@ -113,7 +112,7 @@ export class MapSlots extends Strategy {
 
   static specMatch(slotConnection, slot) {
     return slotConnection.slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
-          slotConnection.slotSpec.isSet == slot.spec.isSet;
+          slotConnection.slotSpec.isSet === slot.spec.isSet;
   }
 
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
@@ -131,8 +130,8 @@ export class MapSlots extends Strategy {
 
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
   // TODO: should we move some of this logic to the recipe? Or type matching?
-  static handlesMatch(slotConnection, slot) {
-    if (slot.handles.length == 0) {
+  static handlesMatch(slotConnection: SlotConnection, slot) {
+    if (slot.handles.length === 0) {
       return true; // slot is not limited to specific handles
     }
     return Object.values(slotConnection.particle.connections).find(handleConn => {

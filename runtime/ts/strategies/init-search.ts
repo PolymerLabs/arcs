@@ -5,17 +5,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy, Descendant} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {assert} from '../../../platform/assert-web.js';
 
 export class InitSearch extends Strategy {
+  _search;
+  
   constructor(arc, {search}) {
-    super();
+    super(arc, {search});
     this._search = search;
   }
-  async generate({generation}) {
-    if (this._search == null || generation != 0) {
+
+  async generate({generation}): Promise<Descendant[]> {
+    if (this._search == null || generation !== 0) {
       return [];
     }
 
@@ -29,6 +32,7 @@ export class InitSearch extends Strategy {
       score: 0,
       derivation: [{strategy: this, parent: undefined}],
       hash: recipe.digest(),
+      valid: true
     }];
   }
 }

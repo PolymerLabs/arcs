@@ -12,8 +12,6 @@ import {Manifest} from '../ts-build/manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../ts-build/arc.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
@@ -40,7 +38,7 @@ describe('particle-shape-loading', function() {
                 if (handle.name === 'input') {
                   this.inHandle.set(model);
                 }
-                if (handle.name === 'particle') {
+                if (handle.name === 'particle0') {
                   await this.arc.loadRecipe(Particle.buildManifest\`
                     \${model}
 
@@ -61,13 +59,7 @@ describe('particle-shape-loading', function() {
             };
           });`});
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-
-    const arc = new Arc({id: 'test', pecFactory});
+    const arc = new Arc({id: 'test', loader});
 
     const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -82,7 +74,7 @@ describe('particle-shape-loading', function() {
       name: 'outerParticle',
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'host', type: shapeType, name: 'particle', dependentConnections: []},
+        {direction: 'host', type: shapeType, name: 'particle0', dependentConnections: []},
         {direction: 'in', type: fooType, name: 'input', dependentConnections: []},
         {direction: 'out', type: barType, name: 'output', dependentConnections: []}
       ],
@@ -99,7 +91,7 @@ describe('particle-shape-loading', function() {
     particle.spec = outerParticleSpec;
 
     const recipeShapeHandle = recipe.newHandle();
-    particle.connections['particle'].connectToHandle(recipeShapeHandle);
+    particle.connections['particle0'].connectToHandle(recipeShapeHandle);
     recipeShapeHandle.fate = 'use';
     recipeShapeHandle.mapToStorage(shapeStore);
 
@@ -123,13 +115,6 @@ describe('particle-shape-loading', function() {
 
   it('loads shapes into particles declaratively', async () => {
     const loader = new Loader();
-
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-
     const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/test-particles.manifest'
 
@@ -137,12 +122,12 @@ describe('particle-shape-loading', function() {
         create as h0
         create as h1
         OuterParticle
-          particle <- TestParticle
+          particle0 <- TestParticle
           output -> h0
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: 'test', pecFactory, context: manifest});
+    const arc = new Arc({id: 'test', context: manifest});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');

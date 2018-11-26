@@ -12,23 +12,23 @@
 import {Arc} from '../../ts-build/arc.js';
 import {Manifest} from '../../ts-build/manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MapSlots} from '../../strategies/map-slots.js';
-import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+import {MapSlots} from '../../ts-build/strategies/map-slots.js';
+import {ResolveRecipe} from '../../ts-build/strategies/resolve-recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('MapSlots', function() {
   const particlesSpec = `
-    particle A in 'A.js'
-      consume root
+      particle A in 'A.js'
+        consume root
 
-    particle B in 'B.js'
-      consume root`;
+      particle B in 'B.js'
+        consume root`;
 
   const testManifest = async (recipeManifest, expectedSlots) => {
     const manifest = (await Manifest.parse(`
-      ${particlesSpec}
+${particlesSpec}
 
-      ${recipeManifest}
+${recipeManifest}
     `));
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
@@ -151,7 +151,7 @@ describe('MapSlots', function() {
   it('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({id: 'test-plan-arc', slotComposer: {
-      affordance: 'dom',
+      modality: 'dom',
       getAvailableContexts: (() => [
         {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
         {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], spec: {isSet: false}},

@@ -12,7 +12,7 @@
 import {Manifest} from '../../ts-build/manifest.js';
 import {Planner} from '../../ts-build/planner.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
+import {MatchParticleByVerb} from '../../ts-build/strategies/match-particle-by-verb.js';
 import {assert} from '../chai-web.js';
 
 describe('MatchParticleByVerb', function() {
@@ -22,21 +22,21 @@ describe('MatchParticleByVerb', function() {
     particle SimpleJumper &jump in 'A.js'
       in Energy e
       out Height h
-      affordance dom
+      modality dom
       consume root
     particle StarJumper &jump in 'AA.js'
       in Energy e
       inout Height h
-      affordance dom
+      modality dom
       consume root
-    particle VoiceStarJumper &jump in 'AA.js'  // wrong affordance
+    particle VoiceStarJumper &jump in 'AA.js'  // wrong modality
       in Energy e
       out Height h
-      affordance voice
+      modality voice
       consume root
     particle GalaxyJumper &jump in 'AA.js'  // wrong connections
       in Energy e
-      affordance dom
+      modality dom
       consume root
     particle StarFlyer &fly in 'AA.js'  // wrong verb
 

@@ -5,21 +5,25 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
-import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '../ts-build/recipe/connection-constraint.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '../recipe/connection-constraint.js';
+import {Arc} from '../arc';
 
 export class ConvertConstraintsToConnections extends Strategy {
-  constructor(arc) {
-    super();
-    this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
+  modality: string;
+
+  constructor(arc: Arc, args?) {
+    super(arc, args);
+    this.modality = arc.pec.slotComposer ? arc.pec.slotComposer.modality : null;
   }
+
   async generate(inputParams) {
-    const affordance = this.affordance;
+    const modality = this.modality;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe) {
         // The particles & handles Sets are used as input to RecipeUtil's shape functionality
         // (this is the algorithm that "finds" the constraint set in the recipe).
         // They track which particles/handles need to be found/created.
@@ -27,18 +31,24 @@ export class ConvertConstraintsToConnections extends Strategy {
         const handles = new Set();
         // The map object tracks the connections between particles that need to be found/created.
         // It's another input to RecipeUtil.makeShape.
-        const map = {};
+        // tslint:disable-next-line: no-any
+        const map: {[index: string]: any} = {};
         const particlesByName = {};
         let handleCount = 0;
         const obligations = [];
-        if (recipe.connectionConstraints.length == 0) {
-          return;
+        if (recipe.connectionConstraints.length === 0) {
+          return undefined;
         }
 
         for (const constraint of recipe.connectionConstraints) {
-          // Don't process constraints if their listed particles don't match the current affordance.
-          if (affordance && (!constraint.from.particle.matchAffordance(affordance) || !constraint.to.particle.matchAffordance(affordance))) {
-            return;
+          const from = constraint.from;
+          const to = constraint.to;
+          // Don't process constraints if their listed particles don't match the current modality.
+          if (modality
+            && from instanceof ParticleEndPoint
+            && to instanceof ParticleEndPoint
+            && (!from.particle.matchModality(modality) || !to.particle.matchModality(modality))) {
+            return undefined;
           }
 
           const reverse = {'->': '<-', '=': '=', '<-': '->'};
@@ -47,41 +57,42 @@ export class ConvertConstraintsToConnections extends Strategy {
           let handle;
           let handleIsConcrete = false;
           let createObligation = false;
-          if (constraint.from instanceof ParticleEndPoint) {
-            particles.add(constraint.from.particle.name);
-            if (map[constraint.from.particle.name] == undefined) {
-              map[constraint.from.particle.name] = {};
-              particlesByName[constraint.from.particle.name] = constraint.from.particle;
+
+          if (from instanceof ParticleEndPoint) {
+            particles.add(from.particle.name);
+            if (map[from.particle.name] == undefined) {
+              map[from.particle.name] = {};
+              particlesByName[from.particle.name] = from.particle;
             }
-            if (constraint.from.connection) {
+            if (from.connection) {
               handleIsConcrete = true;
-              handle = map[constraint.from.particle.name][constraint.from.connection];
+              handle = map[from.particle.name][from.connection];
             } else {
               createObligation = true;
             }
           }
-          if (constraint.from instanceof HandleEndPoint) {
-            handle = {handle: constraint.from.handle, direction: reverse[constraint.direction]};
+          if (from instanceof HandleEndPoint) {
+            handle = {handle: from.handle, direction: reverse[constraint.direction]};
             handles.add(handle.handle);
           }
-          if (constraint.to instanceof ParticleEndPoint) {
-            particles.add(constraint.to.particle.name);
-            if (map[constraint.to.particle.name] == undefined) {
-              map[constraint.to.particle.name] = {};
-              particlesByName[constraint.to.particle.name] = constraint.to.particle;
+          if (to instanceof ParticleEndPoint) {
+            particles.add(to.particle.name);
+            if (map[to.particle.name] == undefined) {
+              map[to.particle.name] = {};
+              particlesByName[to.particle.name] = to.particle;
             }
-            if (constraint.to.connection) {
+            if (to.connection) {
               handleIsConcrete = true;
               if (!handle) {
                 handle =
-                    map[constraint.to.particle.name][constraint.to.connection];
+                    map[to.particle.name][to.connection];
               }
             } else {
               createObligation = true;
             }
           }
-          if (constraint.to instanceof HandleEndPoint) {
-            handle = {handle: constraint.to.handle, direction: constraint.direction};
+          if (to instanceof HandleEndPoint) {
+            handle = {handle: to.handle, direction: constraint.direction};
             handles.add(handle.handle);
           }
           if (handle == undefined) {
@@ -90,25 +101,25 @@ export class ConvertConstraintsToConnections extends Strategy {
               handles.add(handle.handle);
             }
           }
-          if (constraint.from instanceof TagEndPoint) {
-            handle.tags = constraint.from.tags;
-          } else if (constraint.to instanceof TagEndPoint) {
-            handle.tags = constraint.to.tags;
+          if (from instanceof TagEndPoint) {
+            handle.tags = from.tags;
+          } else if (to instanceof TagEndPoint) {
+            handle.tags = to.tags;
           }
 
           if (createObligation) {
             obligations.push({
-              from: constraint.from._clone(),
-              to: constraint.to._clone(),
+              from: from._clone(),
+              to: to._clone(),
               direction: constraint.direction
             });
           }
 
           const unionDirections = (a, b) => {
-            if (a == '=') {
+            if (a === '=') {
               return '=';
             }
-            if (b == '=') {
+            if (b === '=') {
               return '=';
             }
             if (a !== b) {
@@ -118,45 +129,46 @@ export class ConvertConstraintsToConnections extends Strategy {
           };
 
           let direction = constraint.direction;
-          if (constraint.from instanceof ParticleEndPoint) {
-            const connection = constraint.from.connection;
+          if (from instanceof ParticleEndPoint) {
+            const connection = from.connection;
             if (connection) {
-              const existingHandle = map[constraint.from.particle.name][connection];
+              const existingHandle = map[from.particle.name][connection];
               if (existingHandle) {
                 direction = unionDirections(direction, existingHandle.direction);
                 if (direction == null) {
-                  return;
+                  return undefined;
                 }
               }
-              map[constraint.from.particle.name][connection] = {handle: handle.handle, direction, tags: handle.tags};
+              map[from.particle.name][connection] = {handle: handle.handle, direction, tags: handle.tags};
             }
           }
 
-          direction = reverse[constraint.direction];          
-          if (constraint.to instanceof ParticleEndPoint) {
-            const connection = constraint.to.connection;
+          direction = reverse[constraint.direction];
+          if (to instanceof ParticleEndPoint) {
+            const connection = to.connection;
             if (connection) {
-              const existingHandle = map[constraint.to.particle.name][connection];
+              const existingHandle = map[to.particle.name][connection];
               if (existingHandle) {
                 direction = unionDirections(direction, existingHandle.direction);
                 if (direction == null) {
-                  return;
+                  return undefined;
                 }
               }
-              map[constraint.to.particle.name][connection] = {handle: handle.handle, direction, tags: handle.tags};
+              map[to.particle.name][connection] = {handle: handle.handle, direction, tags: handle.tags};
             }
           }
         }
         const shape = RecipeUtil.makeShape([...particles.values()], [...handles.values()], map);
+        const matches = RecipeUtil.find(recipe, shape);
 
-        let results = RecipeUtil.find(recipe, shape);
+        const results = RecipeUtil.find(recipe, shape);
 
-        results = results.filter(match => {
+        const processedResults = results.filter(match => {
           // Ensure that every handle is either matched, or an input of at least one
           // connected particle in the constraints.
-          const resolvedHandles = {};
-          for (const particle in map) {
-            for (const connection in map[particle]) {
+          const resolvedHandles : {[index: string]: boolean} = {};
+          for (const particle of Object.keys(map)) {
+            for (const connection of Object.keys(map[particle])) {
               const handle = map[particle][connection].handle;
               if (resolvedHandles[handle]) {
                 continue;
@@ -174,8 +186,8 @@ export class ConvertConstraintsToConnections extends Strategy {
           return (recipe) => {
             const score = recipe.connectionConstraints.length + match.score;
             const recipeMap = recipe.updateToClone(match.match);
-            
-            for (const particle in map) {
+
+            for (const particle of Object.keys(map)) {
               let recipeParticle = recipeMap[particle];
               if (!recipeParticle) {
                 recipeParticle = recipe.newParticle(particle);
@@ -183,7 +195,7 @@ export class ConvertConstraintsToConnections extends Strategy {
                 recipeMap[particle] = recipeParticle;
               }
 
-              for (const connection in map[particle]) {
+              for (const connection of Object.keys(map[particle])) {
                 const handle = map[particle][connection];
                 let recipeHandleConnection = recipeParticle.connections[connection];
                 if (recipeHandleConnection == undefined) {
@@ -212,7 +224,7 @@ export class ConvertConstraintsToConnections extends Strategy {
           };
         });
 
-        return results;
+        return processedResults;
       }
     }(Walker.Independent), this);
   }

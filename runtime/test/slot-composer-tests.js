@@ -16,8 +16,6 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../ts-build/hosted-slot-consumer.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {Planner} from '../ts-build/planner.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -28,16 +26,11 @@ async function initSlotComposer(recipeStr) {
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
-  const pecFactory = function(id) {
-    const channel = new MessageChannel();
-    new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-    return channel.port2;
-  };
   const arc = new Arc({
     id: 'test-plan-arc',
     context: manifest,
-    pecFactory,
     slotComposer,
+    loader
   });
   const startRenderParticles = [];
   arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };

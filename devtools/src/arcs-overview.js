@@ -1,8 +1,5 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
-import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {MessengerMixin} from './arcs-shared.js';
-import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
-import './arcs-stores.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsOverview extends MessengerMixin(PolymerElement) {
@@ -87,32 +84,27 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         background-color: var(--light-gray);
       }
     </style>
-    <vaadin-split-layout>
-      <div id="graphContainer" style="flex: .5">
-        <div class="legend">
-          <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
-          <div><span node style="background: var(--light-gray)"></span> Handle</div>
-          <div><span node style="background: var(--dark-green)"></span> Slot</div>
-          <div><span node style="background: var(--darker-green)"></span> Hosted Slot</div>
-          <div><span edge arrow-right style="background: var(--dark-green); border-color: var(--dark-green);"></span> Read</div>
-          <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
-          <div><span edge arrow-left arrow-right style="background: var(--highlight-blue); border-color: var(--highlight-blue);"></span> Read-Write</div>
-          <div><span edge circle style="background: var(--dark-gray)"></span> Hosted</div>
-          <div><span edge circle style="background: var(--dark-green)"></span> Consume</div>
-          <div><span edge circle style="background: var(--dark-red); border-color: var(--dark-red);"></span> Provide</div>
-        </div>
-        <div id="popup">
-          <pre id="popupText"></pre>
-          <div class="nav-list">
-            <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
-          </div>
-        </div>
-        <div id="graph"></div>
+    <div id="graphContainer">
+      <div class="legend">
+        <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
+        <div><span node style="background: var(--light-gray)"></span> Handle</div>
+        <div><span node style="background: var(--dark-green)"></span> Slot</div>
+        <div><span node style="background: var(--darker-green)"></span> Hosted Slot</div>
+        <div><span edge arrow-right style="background: var(--dark-green); border-color: var(--dark-green);"></span> Read</div>
+        <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
+        <div><span edge arrow-left arrow-right style="background: var(--highlight-blue); border-color: var(--highlight-blue);"></span> Read-Write</div>
+        <div><span edge circle style="background: var(--dark-gray)"></span> Hosted</div>
+        <div><span edge circle style="background: var(--dark-green)"></span> Consume</div>
+        <div><span edge circle style="background: var(--dark-red); border-color: var(--dark-red);"></span> Provide</div>
       </div>
-      <aside style="flex: .5">
-        <arcs-stores></arcs-stores>
-      </aside>
-    </vaadin-split-layout>
+      <div id="popup">
+        <pre id="popupText"></pre>
+        <div class="nav-list">
+          <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
+        </div>
+      </div>
+      <div id="graph"></div>
+    </div>
 `;
   }
 
@@ -144,7 +136,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       const {height, width} = rects[0].contentRect;
       this.$.graph.style.width = `${width}px`;
       this.$.graph.style.height = `${height}px`;
-    }).observe(this.$.graphContainer);
+    }).observe(this);
     this.$.popup.addEventListener('mouseleave', e => {
       this.$.popup.style.display = 'none';
     });
@@ -294,83 +286,78 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 },
                 color: {color: this._cssVar('--dark-red')}
               });
+              break;
             }
-          }
-          break;
-        }
-        // TODO: Move handle connections to 'recipe-instantiated' call.
-        // Stop relying on 'InstantiateParticle' as it will get deleted soon.
-        case 'InstantiateParticle': {
-          if (m.speculative || m.arcId.endsWith('-pipes')) continue;
-
-          if (!this._particles.has(m.id)) {
-            this._particles.set(m.id, {
-              id: m.id,
-              label: m.name,
-              color: this._cssVar('--highlight-blue'),
-              font: {color: 'white'},
-              details: {
-                id: m.id,
-                implFile: m.implFile
-              }
-            });
-          }
-
-          for (const name of Object.getOwnPropertyNames(m.connections)) {
-            const con = m.connections[name];
-            this._handles.set(con.id, {
-              id: con.id,
-              label: `${con.name ? ('"' + con.name + '"') : ''} ${con.type}`,
-              color: this._cssVar('--light-gray'),
-              details: {
-                id: con.id,
-                storageKey: con.storageKey,
-                name: con.name,
-                type: con.type
-              }
-            });
-
-            let color;
-            let arrows;
-            switch (con.direction) {
-              case 'in':
-                arrows = 'from';
-                color = this._cssVar('--dark-green');
-                break;
-              case 'out':
-                arrows = 'to';
-                color = this._cssVar('--dark-red');
-                break;
-              case 'inout':
-                arrows = 'to, from';
-                color = this._cssVar('--highlight-blue');
-                break;
-              case 'host':
-                arrows = {
-                  from: {
-                    enabled: true,
-                    type: 'circle'
+            case 'InstantiateParticle': {
+              const particleId = m.pecMsgBody.id;
+              const spec = m.pecMsgBody.spec;
+              if (!this._particles.has(particleId)) {
+                this._particles.set(particleId, {
+                  id: particleId,
+                  label: spec.name,
+                  color: this._cssVar('--highlight-blue'),
+                  font: {color: 'white'},
+                  details: {
+                    id: particleId,
+                    implFile: spec.implFile
                   }
-                };
-                color = this._cssVar('--dark-gray');
-                break;
-            }
-
-            const edgeId = `${m.id}¯\\_(ツ)_/¯${con.id}`;
-            this._operations.set(edgeId, {
-              id: edgeId,
-              from: m.id,
-              to: con.id,
-              arrows,
-              color: {color},
-              details: {
-                direction: con.direction,
-                handleConnection: name
+                });
               }
-            });
-          }
 
-          this._needsRedraw = true;
+              for (const [name, id] of Object.entries(m.pecMsgBody.handles)) {
+                this._handles.set(id, {
+                  id: id,
+                  label: `"${name}"`,
+                  color: this._cssVar('--light-gray'),
+                  details: {id, name}
+                });
+
+                const connSpec = spec.args.find(conn => conn.name === name);
+
+                let color;
+                let arrows;
+                switch (connSpec.direction) {
+                  case 'in':
+                    arrows = 'from';
+                    color = this._cssVar('--dark-green');
+                    break;
+                  case 'out':
+                    arrows = 'to';
+                    color = this._cssVar('--dark-red');
+                    break;
+                  case 'inout':
+                    arrows = 'to, from';
+                    color = this._cssVar('--highlight-blue');
+                    break;
+                  case 'host':
+                    arrows = {
+                      from: {
+                        enabled: true,
+                        type: 'circle'
+                      }
+                    };
+                    color = this._cssVar('--dark-gray');
+                    break;
+                }
+
+                const edgeId = `${particleId}¯\\_(ツ)_/¯${id}`;
+                this._operations.set(edgeId, {
+                  id: edgeId,
+                  from: particleId,
+                  to: id,
+                  arrows,
+                  color: {color},
+                  details: {
+                    direction: connSpec.direction,
+                    handleConnection: name
+                  }
+                });
+              }
+
+              this._needsRedraw = true;
+              break;
+            }
+          }
           break;
         }
         case 'page-refresh':
@@ -439,7 +426,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     this._operations.clear();
     this._innerArcToTransformationParticle.clear();
     this._callbackIdToPecMsg.clear();
-    this._redraw();
+    if (this.active) this._redraw();
   }
 
   _cssVar(name) {

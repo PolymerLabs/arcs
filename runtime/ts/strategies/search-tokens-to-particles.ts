@@ -5,32 +5,42 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../../platform/assert-web.js';
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {assert} from '../../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Arc} from '../arc.js';
 
 export class SearchTokensToParticles extends Strategy {
-  constructor(arc) {
-    super();
+  private readonly _walker;
+
+  constructor(arc: Arc, options) {
+    super(arc, options);
 
     const thingByToken = {};
     const thingByPhrase = {};
-    for (const [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
-                                   ...arc.context.allRecipes.map(r => [r, {innerRecipe: r}])]) {
-      this._addThing(thing.name, packaged, thingByToken, thingByPhrase);
-      thing.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
-    }
+
+    arc.context.particles.forEach(p => {
+      this._addThing(p.name, {spec: p}, thingByToken, thingByPhrase);
+      p.verbs.forEach(verb => this._addThing(verb, {spec: p}, thingByToken, thingByPhrase));
+    });
+
+    arc.context.allRecipes.forEach(r => {
+      const packaged = {innerRecipe: r};
+      this._addThing(r.name, packaged, thingByToken, thingByPhrase);
+      r.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
+    });
 
     class SearchWalker extends Walker {
-      constructor(tactic, arc) {
+      index;
+      constructor(tactic, arc: Arc) {
         super(tactic);
         this.index = arc.recipeIndex;
       }
 
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
-          return;
+          return undefined;
         }
 
         const byToken = {};
@@ -45,7 +55,7 @@ export class SearchTokensToParticles extends Strategy {
 
         for (const [phrase, things] of Object.entries(thingByPhrase)) {
           const tokens = phrase.split(' ');
-          if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
+          if (tokens.every(token => recipe.search.unresolvedTokens.includes(token)) &&
               recipe.search.phrase.includes(phrase)) {
             _addThingsByToken(phrase, things);
           }
@@ -56,11 +66,13 @@ export class SearchTokensToParticles extends Strategy {
             continue;
           }
           const things = thingByToken[token];
-          things && _addThingsByToken(token, things);
+          if (things) {
+            _addThingsByToken(token, things);
+          }
         }
 
-        if (resolvedTokens.size == 0) {
-          return;
+        if (resolvedTokens.size === 0) {
+          return undefined;
         }
 
         const flatten = (arr) => [].concat(...arr);
@@ -103,7 +115,7 @@ export class SearchTokensToParticles extends Strategy {
     return [...generated, ...terminal];
   }
 
-  _addThing(token, thing, thingByToken, thingByPhrase) {
+  private _addThing(token, thing, thingByToken, thingByPhrase): void {
     if (!token) {
       return;
     }
@@ -111,14 +123,14 @@ export class SearchTokensToParticles extends Strategy {
 
     // split DoSomething into "do something" and add the phrase
     const phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
-    if (phrase != token) {
+    if (phrase !== token) {
       this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
     }
   }
-  _addThingByToken(key, thing, thingByKey) {
-    assert(key == key.toLowerCase());
+  private _addThingByToken(key, thing, thingByKey) {
+    assert(key === key.toLowerCase());
     thingByKey[key] = thingByKey[key] || [];
-    if (!thingByKey[key].find(t => t == thing)) {
+    if (!thingByKey[key].find(t => t === thing)) {
       thingByKey[key].push(thing);
     }
   }

@@ -17,8 +17,6 @@ import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 
 const loader = new Loader();
 
@@ -41,7 +39,7 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   };
 }
-function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, affordance: 'mock'}); }
+function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, modality: 'mock'}); }
 
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
@@ -128,7 +126,7 @@ describe('Arc', function() {
 
     const recipe = manifest.recipes[0];
 
-    const slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new SlotComposer({modality: 'mock', rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 
@@ -225,12 +223,7 @@ describe('Arc', function() {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test', pecFactory, loader});
+    const arc = new Arc({id: 'test', loader});
     const manifest = await Manifest.load('manifest', loader);
     const Data = manifest.findSchemaByName('Data').entityClass();
 
@@ -270,7 +263,7 @@ describe('Arc', function() {
     bigStore.clearItemsForTesting();
 
     // Deserialize into a new arc.
-    const arc2 = await Arc.deserialize({serialization, pecFactory});
+    const arc2 = await Arc.deserialize({serialization});
     const varStore2 = arc2.findStoreById(varStore.id);
     const colStore2 = arc2.findStoreById(colStore.id);
     const bigStore2 = arc2.findStoreById(bigStore.id);

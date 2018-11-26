@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-class MessagePort {
+export class MessagePort {
   readonly _channel: MessageChannel;
   readonly _id: number;
   readonly _other: number;

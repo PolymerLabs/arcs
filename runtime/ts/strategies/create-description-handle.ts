@@ -5,19 +5,19 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
 export class CreateDescriptionHandle extends Strategy {
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, handleConnection) {
         if (handleConnection.handle) {
-          return;
+          return undefined;
         }
-        if (handleConnection.name != 'descriptions') {
-          return;
+        if (handleConnection.name !== 'descriptions') {
+          return undefined;
         }
 
         return (recipe, handleConnection) => {

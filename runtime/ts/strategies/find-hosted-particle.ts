@@ -5,31 +5,30 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {TypeChecker} from '../ts-build/recipe/type-checker.js';
-import {assert} from '../../platform/assert-web.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {TypeChecker} from '../recipe/type-checker.js';
+import {Arc} from '../arc.js';
+import {assert} from '../../../platform/assert-web.js';
+import {HandleConnection} from '../recipe/handle-connection.js';
+import {InterfaceType} from '../type.js';
 
 export class FindHostedParticle extends Strategy {
 
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
-
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onHandleConnection(recipe, connection) {
-        if (connection.direction !== 'host' || connection.handle) return;
-        assert(connection.type.isInterface);
+      onHandleConnection(recipe: Recipe, connection: HandleConnection) {
+        if (connection.direction !== 'host' || connection.handle) return undefined;
+        assert(connection.type instanceof InterfaceType);
+        const iface = connection.type as InterfaceType;
 
         const results = [];
         for (const particle of arc.context.particles) {
           // This is what shape.particleMatches() does, but we also do
           // canEnsureResolved at the end:
-          const shapeClone = connection.type.interfaceShape.cloneWithResolutions(new Map());
+          const shapeClone = iface.interfaceShape.cloneWithResolutions(new Map());
           // If particle doesn't match the requested shape.
           if (shapeClone.restrictType(particle) === false) continue;
           // If we still have unresolvable shape after matching a particle.
@@ -59,7 +58,7 @@ export class FindHostedParticle extends Strategy {
               if (handle.id === id && handle.fate === 'copy'
                   && handle._mappedType && handle._mappedType.equals(handleType)) {
                 hc.connectToHandle(handle);
-                return;
+                return undefined;
               }
             }
 

@@ -5,26 +5,24 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {RecipeUtil} from '../ts-build/recipe/recipe-util.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import {MapSlots} from './map-slots.js';
+import {ConnectionConstraint, InstanceEndPoint, ParticleEndPoint} from '../recipe/connection-constraint';
+import {Handle} from '../recipe/handle';
 
 export class ResolveRecipe extends Strategy {
-  constructor(arc) {
-    super();
-    this._arc = arc;
-  }
 
   async generate(inputParams) {
-    const arc = this._arc;
+    const arc = this.arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onHandle(recipe, handle) {
-        if (handle.connections.length == 0 ||
+      onHandle(recipe: Recipe, handle: Handle) {
+        if (handle.connections.length === 0 ||
             (handle.id && handle.storageKey) || (!handle.type) ||
             (!handle.fate)) {
-          return;
+          return undefined;
         }
 
         let mappable;
@@ -34,7 +32,7 @@ export class ResolveRecipe extends Strategy {
           const counts = RecipeUtil.directionCounts(handle);
           switch (handle.fate) {
             case 'use':
-              mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
+              mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out === 0});
               break;
             case 'map':
             case 'copy':
@@ -69,7 +67,7 @@ export class ResolveRecipe extends Strategy {
 
         mappable = mappable.filter(incomingHandle => {
           for (const existingHandle of recipe.handles) {
-            if (incomingHandle.id == existingHandle.id &&
+            if (incomingHandle.id === existingHandle.id &&
                 existingHandle !== handle) {
               return false;
             }
@@ -77,16 +75,17 @@ export class ResolveRecipe extends Strategy {
           return true;
         });
 
-        if (mappable.length == 1) {
+        if (mappable.length === 1) {
           return (recipe, handle) => {
             handle.mapToStorage(mappable[0]);
           };
         }
+        return undefined;
       }
 
-      onSlotConnection(recipe, slotConnection) {
+      onSlotConnection(recipe: Recipe, slotConnection) {
         if (slotConnection.isConnected()) {
-          return;
+          return undefined;
         }
 
         const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
@@ -94,7 +93,7 @@ export class ResolveRecipe extends Strategy {
 
         // MapSlots handles a multi-slot case.
         if (allSlots.length !== 1) {
-          return;
+          return undefined;
         }
 
         const selectedSlot = allSlots[0];
@@ -103,13 +102,14 @@ export class ResolveRecipe extends Strategy {
           return 1;
         };
       }
-
-      onObligation(recipe, obligation) {
+      // TODO(lindner): add typeof checks here and figure out where handle is coming from.
+      onObligation(recipe: Recipe, obligation) {
         const fromParticle = obligation.from.instance;
         const toParticle = obligation.to.instance;
         for (const fromConnection of Object.values(fromParticle.connections)) {
           for (const toConnection of Object.values(toParticle.connections)) {
-            if (fromConnection.handle && fromConnection.handle == toConnection.handle) {
+            // @ts-ignore
+            if (fromConnection.handle && fromConnection.handle === toConnection.handle) {
               return (recipe, obligation) => {
                 recipe.removeObligation(obligation);
                 return 1;
@@ -117,6 +117,7 @@ export class ResolveRecipe extends Strategy {
             }
           }
         }
+        return undefined;
       }
     }(Walker.Permuted), this);
   }

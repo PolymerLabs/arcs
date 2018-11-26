@@ -5,18 +5,18 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../strategizer/strategizer.js';
-import {Recipe} from '../ts-build/recipe/recipe.js';
-import {Walker} from '../ts-build/recipe/walker.js';
-import {Handle} from '../ts-build/recipe/handle.js';
+import {Strategy} from '../strategizer/strategizer.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Handle} from '../recipe/handle.js';
 
 export class CreateHandleGroup extends Strategy {
 
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
-      onRecipe(recipe) {
+      onRecipe(recipe: Recipe, result) {
         // Resolve constraints before assuming connections are free.
-        if (recipe.connectionConstraints.length > 0) return;
+        if (recipe.connectionConstraints.length > 0) return undefined;
 
         const freeConnections = recipe.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
         let maximalGroup = null;
@@ -64,6 +64,7 @@ export class CreateHandleGroup extends Strategy {
             }
           };
         }
+        return undefined;
       }
     }(Walker.Independent), this);
   }
