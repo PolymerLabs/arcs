@@ -283,4 +283,47 @@ describe('Arc', function() {
     assert.deepEqual(colStore2.toLiteral(), colData);
     assert.deepEqual(bigStore2.toLiteral(), bigData);
   });
+
+  it('serializes immediate value handles correctly', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        shape HostedShape
+          in ~a *
+
+        particle A in 'a.js'
+          host HostedShape hosts
+
+        particle B in 'b.js'
+          in Entity {} val
+
+        recipe
+          A
+            hosts = B
+      `,
+      '*': 'defineParticle(({Particle}) => class extends Particle {});',
+    });
+
+    const arc = new Arc({id: 'test', loader});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    const serialization = await Manifest.parse(await arc.serialize());
+    assert.isEmpty(serialization.stores, 'Immediate value store should not be serialized');
+    assert.deepEqual(['A', 'B'], serialization.particles.map(p => p.name),
+        'Spec of a particle referenced in an immediate mode should be serialized');
+    assert.deepEqual(['HostedShape'], serialization.shapes.map(s => s.name),
+        'Hosted connection shape should be serialized');
+
+    const recipeHCs = serialization.recipes[0].handleConnections;
+    assert.lengthOf(recipeHCs, 1);
+    const [connection] = recipeHCs;
+    assert.equal('hosts', connection.name);
+    assert.equal('A', connection.particle.spec.name);
+    assert.equal('B', connection.handle.immediateValue.name);
+  });
 });

@@ -58,44 +58,10 @@ describe('FindHostedParticle', function() {
     assert.lengthOf(recipe.handles, 1);
     const handle = recipe.handles[0];
     assert.equal(handle.fate, 'copy');
-    assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
+    assert.isDefined(handle.id);
     assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
     assert.equal(handle.type.interfaceShape.name, 'HostedShape');
-  });
-  it(`reuses the handle holding particle spec`, async () => {
-    const results = await runStrategy(`
-      schema Thing
-      schema OtherThing
-
-      particle Matches
-        in Thing thingy
-
-      shape HostedShape
-        in Thing *
-
-      particle Host
-        host HostedShape hosted1
-        host HostedShape hosted2
-
-      recipe
-        Host
-    `);
-
-    assert.lengthOf(results, 1);
-    const recipe = results[0];
-    assert.isTrue(recipe.isResolved());
-
-    assert.lengthOf(recipe.handles, 1);
-    const handle = recipe.handles[0];
-    assert.equal(handle.fate, 'copy');
-    assert.isTrue(handle.id.toString().endsWith(':test-arc:particle-literal:Matches'));
-    assert.isTrue(handle.type instanceof InterfaceType);
-    assert.equal(handle.type.interfaceShape.name, 'HostedShape');
-
-    const connections = Object.values(recipe.particles[0].connections);
-    assert.lengthOf(connections, 2);
-    assert.isTrue(connections.every(hc => hc.handle === handle));
   });
   it(`respects type system constraints`, async () => {
     const results = await runStrategy(`
@@ -150,8 +116,7 @@ describe('FindHostedParticle', function() {
 
     assert.lengthOf(results, 3);
     const particleMatches = results.map(recipe => {
-      const particleSpecHandle = recipe.handles.find(h => h.fate === 'copy');
-      return particleSpecHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
+      return recipe.handles.find(h => h.fate === 'copy').immediateValue.name;
     });
     particleMatches.sort();
     assert.deepEqual(particleMatches, [
@@ -201,7 +166,7 @@ describe('FindHostedParticle', function() {
     const outRecipe = results[0].result;
 
     const particleSpecHandle = outRecipe.handles.find(h => h.fate === 'copy');
-    assert(particleSpecHandle.id.endsWith(':test:particle-literal:TestParticle'));
+    assert.equal('TestParticle', particleSpecHandle.immediateValue.name);
     assert(outRecipe.isResolved());
 
     assert.isEmpty(arc._stores);

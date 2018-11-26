@@ -140,42 +140,15 @@ export class Suggestion {
     }
   }
 
-  _planToString(plan): string {
-    // Special handling is only needed for plans (1) with hosted particles or
-    // (2) local slot (ie missing slot IDs).
-    if (!plan.handles.some(h => h.id && h.id.includes('particle-literal')) &&
-        plan.slots.every(slot => Boolean(slot.id))) {
+  _planToString(plan) {
+    if (plan.slots.every(slot => Boolean(slot.id))) {
       return plan.toString();
     }
 
-    // TODO: This is a transformation particle hack for plans resolved by
-    // FindHostedParticle strategy. Find a proper way to do this.
-    // Update hosted particle handles and connections.
+    // Special handling needed for plans with local slot (ie missing slot IDs).
     const planClone = plan.clone();
     planClone.slots.forEach(slot => slot.id = slot.id || `slotid-${this.arc.generateID()}`);
-
-    const hostedParticleSpecs = [];
-    for (let i = 0; i < planClone.handles.length; ++i) {
-      const handle = planClone.handles[i];
-      if (handle.id && handle.id.includes('particle-literal')) {
-        const hostedParticleName = handle.id.substr(handle.id.lastIndexOf(':') + 1);
-        // Add particle spec to the list.
-        const hostedParticleSpec = this.arc.context.findParticleByName(hostedParticleName);
-        assert(hostedParticleSpec, `Cannot find spec for particle '${hostedParticleName}'.`);
-        hostedParticleSpecs.push(hostedParticleSpec.toString());
-
-        // Override handle conenctions with particle name as local name.
-        Object.values(handle.connections).forEach(conn => {
-          assert(conn['type'] instanceof InterfaceType);
-          conn['_handle'] = {localName: hostedParticleName};
-        });
-
-        // Remove the handle.
-        planClone.handles.splice(i, 1);
-        --i;
-      }
-    }
-    return `${hostedParticleSpecs.join('\n')}\n${planClone.toString()}`;
+    return planClone.toString();
   }
 
   static async _planFromString(planString, arc, recipeResolver) {

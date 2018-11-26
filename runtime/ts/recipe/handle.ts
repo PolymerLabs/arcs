@@ -11,6 +11,7 @@ import {TypeChecker} from './type-checker.js';
 import {Type} from '../type.js';
 import {Recipe} from './recipe.js';
 import {HandleConnection} from './handle-connection.js';
+import {ParticleSpec} from '../particle-spec.js';
 
 type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
@@ -29,6 +30,10 @@ export class Handle {
   private _mappedType: Type | undefined = undefined;
   private _storageKey: string | undefined = undefined;
   private _pattern: string | undefined = undefined;
+  // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
+  // Currently only supports ParticleSpec.
+  private _immediateValue: ParticleSpec | undefined = undefined;
+
   constructor(recipe) {
     assert(recipe);
     this._recipe = recipe;
@@ -50,6 +55,7 @@ export class Handle {
       handle._originalId = this._originalId;
       handle._mappedType = this._mappedType;
       handle._storageKey = this._storageKey;
+      handle._immediateValue = this._immediateValue;
 
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
@@ -67,6 +73,7 @@ export class Handle {
       connection.disconnectHandle();
       connection.connectToHandle(handle);
     }
+    handle._immediateValue = this._immediateValue;
     handle.tags = handle.tags.concat(this.tags);
     handle.recipe.removeHandle(this);
     handle.fate = this._mergedFate([this.fate, handle.fate]);
@@ -102,6 +109,9 @@ export class Handle {
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
     // TODO: type?
     if ((cmp = compareStrings(this.fate, other.fate)) !== 0) return cmp;
+    if ((cmp = compareStrings(
+        this._immediateValue && this._immediateValue.toString() || '',
+        other._immediateValue && other._immediateValue.toString() || '')) !== 0) return cmp;
     return 0;
   }
 
@@ -141,6 +151,9 @@ export class Handle {
   get pattern() { return this._pattern; }
   set pattern(pattern) { this._pattern = pattern; }
   get mappedType() { return this._mappedType; }
+  set mappedType(mappedType: Type) { this._mappedType = mappedType; }
+  get immediateValue() { return this._immediateValue; }
+  set immediateValue(value) { this._immediateValue = value; }
 
   static effectiveType(handleType, connections) {
     const variableMap = new Map();
@@ -233,6 +246,11 @@ export class Handle {
   }
 
   toString(nameMap, options) {
+    if (this._immediateValue) {
+      // Immediate Value handles are only rendered inline with particle connections.
+      // E.g. hostedParticle = ShowProduct
+      return undefined;
+    }
     options = options || {};
     // TODO: type? maybe output in a comment
     const result = [];

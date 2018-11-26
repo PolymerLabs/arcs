@@ -719,10 +719,9 @@ describe('Automatic resolution', function() {
     assert.equal(composedRecipes[0].toString(), `recipe
   create #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
-    hostedParticle = handle2
+    hostedParticle = ThingRenderer
     list <- handle0
     consume item as slot0
   SelectableList as particle1
@@ -756,10 +755,9 @@ describe('Automatic resolution', function() {
     assert.equal(recipes[0].toString(), `recipe SelectableUseListRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
   slot 'r0' #root as slot1
   ItemMultiplexer as particle0
-    hostedParticle = handle2
+    hostedParticle = ThingRenderer
     list <- handle0
     consume item as slot0
   SelectableList as particle1

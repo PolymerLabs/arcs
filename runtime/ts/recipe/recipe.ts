@@ -504,9 +504,10 @@ export class Recipe {
       }
       result.push(constraintStr);
     }
-    for (const handle of this.handles) {
-      result.push(handle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
-    }
+    result.push(...this.handles
+        .map(h => h.toString(nameMap, options))
+        .filter(strValue => strValue)
+        .map(strValue => strValue.replace(/^|(\n)/g, '$1  ')));
     for (const slot of this.slots) {
       const slotString = slot.toString(nameMap, options);
       if (slotString) {

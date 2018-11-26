@@ -26,6 +26,7 @@ import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection
 import {Id} from './id.js';
 import {TypeVariable} from './type-variable.js';
 import {SlotInfo} from './slot-info.js';
+import {RecipeUtil} from './recipe/recipe-util.js';
 
 class ManifestError extends Error {
   location: {offset: number, line: number, column: number};
@@ -904,29 +905,15 @@ ${e.message}
                 connectionItem.target.location,
                 `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
-          assert(connection.type instanceof InterfaceType);
-          if (!connection.type.interfaceShape.restrictType(hostedParticle)) {
+
+          targetHandle = RecipeUtil.constructImmediateValueHandle(
+            connection, hostedParticle, manifest.generateID());
+
+          if (!targetHandle) {
             throw new ManifestError(
                 connectionItem.target.location,
                 `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
           }
-          // TODO: loader should not be optional.
-          if (hostedParticle.implFile && loader) {
-            hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
-          }
-          const hostedParticleLiteral = hostedParticle.clone().toLiteral();
-          const particleSpecHash = await digest(JSON.stringify(hostedParticleLiteral));
-          const id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
-          hostedParticleLiteral.id = id;
-          targetHandle = recipe.newHandle();
-          targetHandle.fate = 'copy';
-          const store = await manifest.createStore(connection.type, null, id, []);
-          // TODO(shans): Work out a better way to turn off reference mode for these stores.
-          // Maybe a different function call in the storageEngine? Alternatively another
-          // param to the connect/construct functions?
-          store.referenceMode = false;
-          await store.set(hostedParticleLiteral);
-          targetHandle.mapToStorage(store);
         }
 
         if (targetParticle) {
