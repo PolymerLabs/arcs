@@ -10,12 +10,16 @@
 'use strict';
 
 import {assert} from '../../platform/assert-web.js';
-import {PECOuterPort} from '../api-channel.js';
+import {PECOuterPort} from './api-channel.js';
 import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
+import {Particle} from './recipe/particle.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {ParticleSpec} from './particle-spec.js';
+import { Type } from './type.js';
 
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;
@@ -25,167 +29,179 @@ export class ParticleExecutionHost {
   slotComposer: SlotComposer;
   private idleVersion = 0;
   private idlePromise: Promise<number> | undefined;
-  private idleResolve: ((relevance: number) => void) | undefined;
+  private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
 
   constructor(port, slotComposer: SlotComposer, arc: Arc) {
-    this._apiPort = new PECOuterPort(port, arc);
     this.close = () => {
       port.close();
       this._apiPort.close();
     };
+
     this.arc = arc;
     this.slotComposer = slotComposer;
 
-    this._apiPort.onRender = ({particle, slotName, content}) => {
-      if (this.slotComposer) {
-        this.slotComposer.renderSlot(particle, slotName, content);
-      }
-    };
+    const pec = this;
 
-    this._apiPort.onInitializeProxy = async ({handle, callback}) => {
-      const target = {};
-      handle.on('change', data => this._apiPort.SimpleCallback({callback, data}), target);
-    };
-
-    this._apiPort.onSynchronizeProxy = async ({handle, callback}) => {
-      const data = await handle.modelForSynchronization();
-      this._apiPort.SimpleCallback({callback, data});
-    };
-
-    this._apiPort.onHandleGet = async ({handle, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.get()});
-    };
-
-    this._apiPort.onHandleToList = async ({handle, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.toList()});
-    };
-
-    this._apiPort.onHandleSet = ({handle, data, particleId, barrier}) => handle.set(data, particleId, barrier);
-    this._apiPort.onHandleClear = ({handle, particleId, barrier}) => handle.clear(particleId, barrier);
-
-    this._apiPort.onHandleStore = async ({handle, callback, data: {value, keys}, particleId}) => {
-      await handle.store(value, keys, particleId);
-      this._apiPort.SimpleCallback({callback});
-    };
-
-    this._apiPort.onHandleRemove = async ({handle, callback, data: {id, keys}, particleId}) => {
-      await handle.remove(id, keys, particleId);
-      this._apiPort.SimpleCallback({callback});
-    };
-
-    this._apiPort.onHandleRemoveMultiple = async ({handle, callback, data, particleId}) => {
-      await handle.removeMultiple(data, particleId);
-      this._apiPort.SimpleCallback({callback});
-    };
-
-    this._apiPort.onHandleStream = async ({handle, callback, pageSize, forward}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.stream(pageSize, forward)});
-    };
-
-    this._apiPort.onStreamCursorNext = async ({handle, callback, cursorId}) => {
-      this._apiPort.SimpleCallback({callback, data: await handle.cursorNext(cursorId)});
-    };
-
-    this._apiPort.onStreamCursorClose = ({handle, cursorId}) => handle.cursorClose(cursorId);
-
-    this._apiPort.onIdle = ({version, relevance}) => {
-      if (version === this.idleVersion) {
-        this.idlePromise = undefined;
-        this.idleResolve(relevance);
-      }
-    };
-
-    this._apiPort.onGetBackingStore = async ({callback, type, storageKey}) => {
-      if (!storageKey) {
-        storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey || 'volatile');
-      }
-      const store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
-      // TODO(shans): THIS IS NOT SAFE!
-      //
-      // Without an auditor on the runtime side that inspects what is being fetched from
-      // this store, particles with a reference can access any data of that reference's type.
-      this._apiPort.GetBackingStoreCallback(store, {type: type.collectionOf(), name: type.toString(), callback, id: store.id, storageKey});
-    };
-
-    this._apiPort.onConstructInnerArc = ({callback, particle}) => {
-      const arc = {particle};
-      this._apiPort.ConstructArcCallback({callback, arc});
-    };
-
-    this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
-      // At the moment, inner arcs are not persisted like their containers, but are instead
-      // recreated when an arc is deserialized. As a consequence of this, dynamically 
-      // created handles for inner arcs must always be volatile to prevent storage 
-      // in firebase.
-      const store = await this.arc.createStore(type, name, null, [], 'volatile');
-      this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
-    };
-
-    this._apiPort.onArcMapHandle = async ({callback, arc, handle}) => {
-      assert(this.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
-      // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
-      this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
-    };
-
-    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId}) => {
-      let hostedSlotId;
-      if (this.slotComposer) {
-        hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
-      }
-      this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
-    };
-
-    this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
-      const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
-      let error = undefined;
-      // TODO(wkorman): Consider reporting an error or at least warning if
-      // there's more than one recipe since currently we silently ignore them.
-      let recipe0 = manifest.recipes[0];
-      if (recipe0) {
-        const missingHandles = [];
-        for (const handle of recipe0.handles) {
-          const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
-          if (!fromHandle) {
-            missingHandles.push(handle);
-            continue;
-          }
-          handle.mapToStorage(fromHandle);
+    this._apiPort = new class extends PECOuterPort {
+    
+      onRender(particle: Particle, slotName: string, content: string) {
+        if (pec.slotComposer) {
+          pec.slotComposer.renderSlot(particle, slotName, content);
         }
-        if (missingHandles.length > 0) {
-          const resolvedRecipe = await new RecipeResolver(this.arc).resolve(recipe0);
-          if (!resolvedRecipe) {
-            error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
-          } else {
-            recipe0 = resolvedRecipe;
-          }
+      }
+
+      onInitializeProxy(handle: StorageProviderBase, callback: number) {
+        const target = {};
+        handle.on('change', data => this.SimpleCallback(callback, data), target);
+      }
+
+      async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
+        const data = await handle.modelForSynchronization();
+        this.SimpleCallback(callback, data);
+      }
+
+      async onHandleGet(handle: StorageProviderBase, callback: number) {
+        const data = await (handle as any).get();
+        this.SimpleCallback(callback, data);
+      }
+
+      async onHandleToList(handle: StorageProviderBase, callback: number) {
+        this.SimpleCallback(callback, await (handle as any).toList());
+      }
+
+      onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
+        (handle as any).set(data, particleId, barrier);
+      }
+      onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
+        (handle as any).clear(particleId, barrier);
+      }
+
+      async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
+        await (handle as any).store(data.value, data.keys, particleId);
+        this.SimpleCallback(callback, {});
+      }
+
+      async onHandleRemove(handle: StorageProviderBase, callback: number, data: {id: string, keys: string[]}, particleId) {
+        await (handle as any).remove(data.id, data.keys, particleId);
+        this.SimpleCallback(callback, {});
+      }
+
+      async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string) {
+        await (handle as any).removeMultiple(data, particleId);
+        this.SimpleCallback(callback, {});
+      }
+
+      async onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean) {
+        this.SimpleCallback(callback, await (handle as any).stream(pageSize, forward));
+      }
+
+      async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string) {
+        this.SimpleCallback(callback, await (handle as any).cursorNext(cursorId));
+      }
+
+      onStreamCursorClose(handle: StorageProviderBase, cursorId: string) {
+        (handle as any).cursorClose(cursorId);
+      }
+
+      onIdle(version: number, relevance: Map<Particle, number[]>) {
+        if (version === pec.idleVersion) {
+          pec.idlePromise = undefined;
+          pec.idleResolve(relevance);
         }
-        if (!error) {
-          const options = {errors: new Map()};
-          // If we had missing handles but we made it here, then we ran recipe
-          // resolution which will have already normalized the recipe.
-          if ((missingHandles.length > 0) || recipe0.normalize(options)) {
-            if (recipe0.isResolved()) {
-              // TODO: pass tags through too, and reconcile with similar logic
-              // in Arc.deserialize.
-              manifest.stores.forEach(store => this.arc._registerStore(store, []));
-              this.arc.instantiate(recipe0, arc);
-            } else {
-              error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
+      }
+
+      onGetBackingStore(callback: number, storageKey: string, type: Type) {
+        if (!storageKey) {
+          storageKey = pec.arc.storageProviderFactory.baseStorageKey(type, pec.arc.storageKey || 'volatile');
+        }
+        const store = await pec.arc.storageProviderFactory.baseStorageFor(type, storageKey);
+        // TODO(shans): THIS IS NOT SAFE!
+        //
+        // Without an auditor on the runtime side that inspects what is being fetched from
+        // this store, particles with a reference can access any data of that reference's type.
+        this.GetBackingStoreCallback(store, type: type.collectionOf(), name: type.toString(), callback, id: store.id, storageKey);
+      }
+
+      onConstructInnerArc({callback, particle}) {
+        const arc = {particle};
+        this._apiPort.ConstructArcCallback({callback, arc});
+      }
+
+      onArcCreateHandle({callback, arc, type, name}) {
+        // At the moment, inner arcs are not persisted like their containers, but are instead
+        // recreated when an arc is deserialized. As a consequence of this, dynamically 
+        // created handles for inner arcs must always be volatile to prevent storage 
+        // in firebase.
+        const store = await this.arc.createStore(type, name, null, [], 'volatile');
+        this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
+      }
+
+      onArcMapHandle({callback, arc, handle}) {
+        assert(this.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
+        // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
+        this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
+      }
+
+      onArcCreateSlot({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId}) {
+        let hostedSlotId;
+        if (this.slotComposer) {
+          hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
+        }
+        this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
+      }
+
+      onArcLoadRecipe({arc, recipe, callback}) {
+        const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
+        let error = undefined;
+        // TODO(wkorman): Consider reporting an error or at least warning if
+        // there's more than one recipe since currently we silently ignore them.
+        let recipe0 = manifest.recipes[0];
+        if (recipe0) {
+          const missingHandles = [];
+          for (const handle of recipe0.handles) {
+            const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
+            if (!fromHandle) {
+              missingHandles.push(handle);
+              continue;
             }
-          } else {
-            error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
+            handle.mapToStorage(fromHandle);
           }
+          if (missingHandles.length > 0) {
+            const resolvedRecipe = await new RecipeResolver(this.arc).resolve(recipe0);
+            if (!resolvedRecipe) {
+              error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
+            } else {
+              recipe0 = resolvedRecipe;
+            }
+          }
+          if (!error) {
+            const options = {errors: new Map()};
+            // If we had missing handles but we made it here, then we ran recipe
+            // resolution which will have already normalized the recipe.
+            if ((missingHandles.length > 0) || recipe0.normalize(options)) {
+              if (recipe0.isResolved()) {
+                // TODO: pass tags through too, and reconcile with similar logic
+                // in Arc.deserialize.
+                manifest.stores.forEach(store => this.arc._registerStore(store, []));
+                this.arc.instantiate(recipe0, arc);
+              } else {
+                error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
+              }
+            } else {
+              error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
+            }
+          }
+        } else {
+          error = 'No recipe defined';
         }
-      } else {
-        error = 'No recipe defined';
+        this._apiPort.SimpleCallback({callback, data: error});
       }
-      this._apiPort.SimpleCallback({callback, data: error});
-    };
 
-    this._apiPort.onRaiseSystemException = async ({exception, methodName, particleId}) => {
-     const particle = this.arc.particleHandleMaps.get(particleId).spec.name;
-      reportSystemException(exception, methodName, particle);
-    };
+      onRaiseSystemException({exception, methodName, particleId}) {
+      const particle = this.arc.particleHandleMaps.get(particleId).spec.name;
+        reportSystemException(exception, methodName, particle);
+      }
+    }(port, arc);
   }
 
   stop() {
@@ -194,7 +210,7 @@ export class ParticleExecutionHost {
 
   get idle() {
     if (this.idlePromise == undefined) {
-      this.idlePromise = new Promise((resolve, reject) => {
+      this.idlePromise = new Promise((resolve, reject) {
         this.idleResolve = resolve;
       });
     }
@@ -212,7 +228,7 @@ export class ParticleExecutionHost {
   }
 
   instantiate(particle, spec, handles) {
-    handles.forEach(handle => {
+    handles.forEach(handle {
       this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name});
     });
 

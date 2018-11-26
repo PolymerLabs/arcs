@@ -9,13 +9,99 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './ts-build/particle-spec.js';
-import {Type} from './ts-build/type.js';
-import {OuterPortAttachment} from './ts-build/debug/outer-port-attachment.js';
-import {DevtoolsConnection} from './ts-build/debug/devtools-connection.js';
+import {assert} from '../../platform/assert-web.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Type} from './type.js';
+import {OuterPortAttachment} from './debug/outer-port-attachment.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
+import {Handle} from './handle.js';
+import {Particle} from './particle.js';
+import * as recipe from './recipe/particle.js';
+import {Arc} from './arc.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {StorageProxy} from '../storage-proxy.js';
+
+enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral};
+
+interface MappingInfo {
+  type: MappingType;
+}
+
+interface Literalizer {
+  new(...args:any[]) : {toLiteral: any};
+  fromLiteral: any;
+}
+
+const __targets = new Map<Object, Map<string, MappingInfo[]>>();
+
+function setPropertyKey(target: Object, propertyKey: string) {
+  if (!__targets.has(target)) {
+    __targets.set(target, new Map());
+  }
+  if (!__targets.get(target).has(propertyKey)) {
+    __targets.get(target).set(propertyKey, []);
+  }
+}
+
+function set(target: Object, propertyKey: string, parameterIndex: number, info: MappingInfo) {
+  setPropertyKey(target, propertyKey);
+  __targets.get(target).get(propertyKey)[parameterIndex] = info;
+}
+
+function Direct(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct});
+}
+
+function Mapped(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
+}
+
+function ByLiteral(constructor: Literalizer) {
+  return function(target: Object, propertyKey: string, parameterIndex: number) {
+    const info = {type: MappingType.ByLiteral, converter: constructor};
+    set(target.constructor, propertyKey, parameterIndex, info);
+  }
+}
+
+function ObjectMap(key: MappingType, value: MappingType) {
+  return function(target: Object, propertyKey: string, parameterIndex: number) {
+    const info = {type: MappingType.ObjectMap, key, value};
+    set(target.constructor, propertyKey, parameterIndex, info);
+  }
+}
+
+function List(value: MappingType) {
+  return function(target: Object, propertyKey: string, parameterIndex: number) {
+    const info = {type: MappingType.List, value};
+    set(target.constructor, propertyKey, parameterIndex, info);
+  }  
+}
+
+function LocalMapped(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.LocalMapped})
+}
+
+function RemoteMapped(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.RemoteMapped})
+}
+
+function NoArgs(target: Object, propertyKey: string) {
+  setPropertyKey(target, propertyKey);
+}
+
+function RedundantInitializer(target: Object, propertyKey: string) {
+
+}
+
+function Initializer(target: Object, propertyKey: string) {
+
+}
 
 class ThingMapper {
+  _prefix: string;
+  _nextIdentifier: number;
+  _idMap: Map<any, any>;
+  _reverseIdMap: Map<any, any>;
   constructor(prefix) {
     this._prefix = prefix;
     this._nextIdentifier = 0;
@@ -27,7 +113,7 @@ class ThingMapper {
     return this._prefix + (this._nextIdentifier++);
   }
 
-  createMappingForThing(thing, requestedId) {
+  createMappingForThing(thing, requestedId=undefined) {
     assert(!this._reverseIdMap.has(thing));
     let id;
     if (requestedId) {
@@ -83,6 +169,12 @@ class ThingMapper {
 
 
 export class APIPort {
+  private _port: MessagePort;
+  private _mapper: ThingMapper;
+  private _messageMap: Map<any, any>;
+  protected _debugAttachment: any;
+  protected _attachStack: boolean;
+  private messageCount: number;
   constructor(messagePort, prefix) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
@@ -92,6 +184,7 @@ export class APIPort {
     this._attachStack = false;
     this.messageCount = 0;
 
+    /*
     this.Direct = {
       convert: a => a,
       unconvert: a => a
@@ -138,7 +231,7 @@ export class APIPort {
         unconvert: a => clazz.fromLiteral(a)
       };
     };
-
+    */
     this._testingHook();
   }
 
@@ -184,7 +277,7 @@ export class APIPort {
   }
 
   _processArguments(argumentTypes, args) {
-    const messageBody = {};
+    const messageBody = {identifier: undefined};
     for (const argument in argumentTypes) {
       messageBody[argument] = argumentTypes[argument].convert(args[argument]);
     }
@@ -201,7 +294,7 @@ export class APIPort {
 
   registerCall(name, argumentTypes) {
     this[name] = args => {
-      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args), stack: undefined};
       if (this._attachStack) call.stack = new Error().stack;
       const cnt = this.messageCount++;
       this._port.postMessage(call);
@@ -216,7 +309,7 @@ export class APIPort {
   }
 
   registerInitializerHandler(name, argumentTypes) {
-    argumentTypes.identifier = this.Direct;
+    argumentTypes.identifier = NaN; //this.Direct;
     this._messageMap.set(name, {
       isInitializer: true,
       args: argumentTypes,
@@ -224,16 +317,16 @@ export class APIPort {
   }
 
   registerRedundantInitializer(name, argumentTypes, mappingIdArg) {
-    this.registerInitializer(name, argumentTypes, mappingIdArg, true /* redundant */);
+    this.registerInitializer(name, argumentTypes, mappingIdArg, true); // last arg is redundant
   }
 
   registerInitializer(name, argumentTypes, mappingIdArg = null, redundant = false) {
     this[name] = (thing, args) => {
       if (redundant && this._mapper.hasMappingForThing(thing)) return;
-      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      const call = {messageType: name, messageBody: this._processArguments(argumentTypes, args), stack: undefined};
       if (this._attachStack) call.stack = new Error().stack;
       const requestedId = mappingIdArg && args[mappingIdArg];
-      call.messageBody.identifier = this._mapper.createMappingForThing(thing, requestedId);
+      call.messageBody.identifier = NaN; //this._mapper.createMappingForThing(thing, requestedId);
       const cnt = this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment) {
@@ -243,6 +336,125 @@ export class APIPort {
   }
 }
 
+export abstract class PECOuterPort extends APIPort {
+  constructor(messagePort, arc) {
+    super(messagePort, 'o');
+    DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+      this.DevToolsConnected();
+      this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel);
+    });
+  }
+
+  @NoArgs Stop() {}
+  @RedundantInitializer DefineHandle(@ByLiteral(Type) type: Type, @Direct name: string) {}
+  @Initializer InstantiateParticle(@Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) handles: {[index: string]: Handle}) {}
+  
+  UIEvent(@Mapped particle: ParticleSpec, @Direct slotName: string, @Direct event: {}) {}
+  SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
+  AwaitIdle(@Direct version: number) {}
+  StartRender(@Mapped particle: ParticleSpec, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
+  StopRender(@Mapped particle: ParticleSpec, @Direct slotName: string) {}
+  
+  abstract onRender(particle: recipe.Particle, slotName: string, content: string);
+  abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
+  abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
+  abstract onHandleGet(handle: StorageProviderBase, callback: number, particleId: string);
+  abstract onHandleToList(handle: StorageProviderBase, data: {}, particleId: string, barrier: string);
+  abstract onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string);
+  abstract onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string);
+  abstract onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string);
+  abstract onHandleRemove(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
+  abstract onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
+  abstract onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean);
+  abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string);
+  abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: string);
+
+  abstract onIdle(version: number, relevance: Map<recipe.Particle, number[]>);
+
+  abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
+  @Initializer GetBackingStoreCallback(@RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Direct id: string, @Direct storageKey: string) {}
+  
+  abstract onConstructInnerArc(callback: number, particle: ParticleSpec);
+  ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: Arc) {}
+
+  abstract onArcCreateHandle(callback: number, arc: Arc, type: Type, string);
+  @Initializer CreateHandleCallback(@RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Direct id: string) {}
+  abstract onArcMapHandle(callback: number, arc: Arc, handle: StorageProviderBase);
+  @Initializer MapHandleCallback(@RemoteMapped callback: number, @Direct id: string) {}
+
+  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
+  @Initializer CreateSlotCallback(@RemoteMapped callback: number, @Direct hostedSlotId: string) {}
+  InnerArcRender(@Mapped transformationParticle: ParticleSpec, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: any) {}
+
+  abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
+  abstract onRaiseSystemExcetion(exception: any, methodName: string, particleId: string);
+
+  // We need an API call to tell the context side that DevTools has been connected, so it can start sending
+  // stack traces attached to the API calls made from that side.
+  @NoArgs DevToolsConnected() {}
+}
+
+export abstract class PECInnerPort extends APIPort {
+  constructor(messagePort) {
+    super(messagePort, 'i');
+  }
+   
+  abstract onStop();
+  abstract onDefineHandle(identifier: string, type: Type, name: string);
+  abstract onInstantiateParticle(id: string, spec: ParticleSpec, handles: {[index: string]: Handle});
+
+  abstract onUIEvent(particle: Particle, slotName: string, event: {});
+  abstract onSimpleCallback(callback: (data: {}) => void, data: {});
+  abstract onAwaitIdle(version: number);
+  abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
+  abstract onStopRender(particle: Particle, slotName: string);
+
+  Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: string) {}
+  InitializeProxy(@Mapped handle: Handle, @LocalMapped callback: any) {}
+  SynchronizeProxy(@Mapped handle: Handle, @LocalMapped callback: any) {}
+  HandleGet(@Mapped handle: Handle, @LocalMapped callback: any, @Direct particleId: string) {}
+  HandleToList(@Mapped handle: Handle, @LocalMapped callback: any, @Direct particleId: string) {}
+  HandleSet(@Mapped handle: Handle, @Direct data: {}, @Direct particleId: string, @Direct barrier: string) {}
+  HandleClear(@Mapped handle: Handle, @Direct particleId: string, @Direct barrier: string) {}
+  HandleStore(@Mapped handle: Handle, @LocalMapped callback: any, @Direct data: {}, @Direct particleId: string) {}
+  HandleRemove(@Mapped handle: Handle, @LocalMapped callback: any, @Direct data: {}, @Direct particleId: string) {}
+  HandleRemoveMultiple(@Mapped handle: Handle, @LocalMapped callback: any, @Direct data: {}, @Direct particleId: string) {}
+  HandleStream(@Mapped handle: Handle, @LocalMapped callback: any, @Direct pageSize: number, @Direct forward: boolean) {}
+  StreamCursorNext(@Mapped handle: Handle, @LocalMapped callback: any, @Direct cursorId: string) {}
+  StreamCursorClose(@Mapped handle: Handle, @Direct cursorId: string) {}
+
+  Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
+
+  GetBackingStore(@LocalMapped callback: any, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
+  abstract onGetBackingStoreCallback(callback: (proxy: StorageProxy, value: string) => void, type: Type, name: string, id: string, storageKey: string);
+
+  ConstructInnerArc(@LocalMapped callback: any, @Mapped particle: Particle) {}
+  abstract onConstructArcCallback(callback: (arc: {}) => void, arc: {});
+
+  ArcCreateHandle(@LocalMapped callback: (proxy: StorageProxy) => void, @Direct arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, arc: {}, type: Type, name: string, id: string);
+  ArcMapHandle(@LocalMapped callback: (value: string) => void, @Direct arc: {}, @Mapped handle: Handle) {}
+  abstract onMapHandleCallback(callback: (value: string) => void, id: string);
+
+  ArcCreateSlot(@LocalMapped callback: (value: string) => void, @Direct arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct hostedParticleName: string, @Direct hostedSlotName: string, @Direct handleId: string) {}
+  abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);
+  abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: string);
+
+  ArcLoadRecipe(@Direct arc: {}, @Direct recipe: string, @LocalMapped callback: any) {}
+
+  RaiseSystemException(@Direct exception: {}, @Direct methodName: string, @Direct particleId: string) {}
+
+    // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
+    // send it along with the message. We only want to do this after a DevTools connection has been detected, which
+    // we can't directly detect inside a worker context, so the PECOuterPort will send an API message instead.
+
+  onDevToolsConnected() {
+    this._attachStack = true;
+  }  
+
+}
+
+/*
 export class PECOuterPort extends APIPort {
   constructor(messagePort, arc) {
     super(messagePort, 'o');
@@ -360,3 +572,4 @@ export class PECInnerPort extends APIPort {
     this.onDevToolsConnected = () => this._attachStack = true;
   }
 }
+*/
