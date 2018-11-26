@@ -13,6 +13,7 @@ import {logFactory} from './log-factory.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');
 const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
+const error = logFactory('SingleUserContext', '#f2ce14', 'error');
 
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
@@ -107,7 +108,7 @@ export const SingleUserContext = class {
       info.add.forEach(async add => {
         let handle = add.value;
         if (!handle) {
-          warn('`add` record has no `value`, applying workaround', add);
+          error('`add` record has no `value`, applying workaround', add);
           handle = add;
         }
         if (handle) { //} && handle.tags.length) {

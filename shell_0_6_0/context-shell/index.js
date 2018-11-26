@@ -5,7 +5,7 @@ import {App} from './app.js';
 console.log('\n--- Arc Shell ---\n');
 
 const env = new ArcsEnvNode('../..');
-env.pathMap[`https://$artifacts/`] = `../../artifacts_0_6_0/`;
+env.pathMap[`https://$artifacts/`] = `../../particles_0_6_0/`;
 
 const composer = new RamSlotComposer();
 
