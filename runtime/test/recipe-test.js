@@ -274,6 +274,20 @@ describe('recipe', function() {
     const digestB = await getFirstRecipeHash(manifestContent);
     assert.equal(digestA, digestB);
   });
+  it('generates the same hash on same recipes with and without search', async () => {
+    const digestA = await getFirstRecipeHash(`
+      particle A in 'A.js'
+      recipe
+        A
+    `);
+    const digestB = await getFirstRecipeHash(`
+      particle A in 'A.js'
+      recipe
+        search \`A\`
+        A
+    `);
+    assert.equal(digestA, digestB);
+  });
   it('verifies required consume and provide slot connections', async () => {
     const manifest = await Manifest.parse(`
       particle A

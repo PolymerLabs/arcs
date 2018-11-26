@@ -85,6 +85,7 @@ export class PlanConsumer {
 
     // `showAll`: returns all suggestions that render into slots.
     if (this.suggestFilter['showAll']) {
+      // Should filter out suggestions produced by search phrases?
       return suggestions;
     }
 
@@ -92,8 +93,7 @@ export class PlanConsumer {
     if (this.suggestFilter['search']) {
       return suggestions.filter(suggestion =>
         suggestion.descriptionText.toLowerCase().includes(this.suggestFilter['search']) ||
-        (suggestion.plan.search &&
-         suggestion.plan.search.phrase.includes(this.suggestFilter['search'])));
+        suggestion.hasSearch(this.suggestFilter['search']));
     }
 
     return suggestions.filter(suggestion => {

@@ -12,17 +12,18 @@ import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {InitSearch} from '../strategies/init-search.js';
+import {InterfaceType} from '../type.js';
 import {logFactory} from '../../../platform/log-web.js';
 import {Manifest} from '../manifest.js';
 import {now} from '../../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
-import {Speculator} from '../speculator.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
-import {InterfaceType} from '../type.js';
+import {Search} from '../recipe/search.js';
+import {Speculator} from '../speculator.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 export class Suggestion {
   arc: Arc;
@@ -35,6 +36,8 @@ export class Suggestion {
   readonly hash: string;
   readonly rank: number;
   groupIndex: number; // TODO: only used in tests
+  // List of search resolved token groups, this suggestion corresponds to.
+  searchGroups: string[][] = [];
 
   constructor(plan: Recipe, hash: string, rank: number, arc: Arc) {
     assert(plan, `plan cannot be null`);
@@ -45,12 +48,50 @@ export class Suggestion {
     this.arc = arc;
   }
 
-  isEquivalent(other) {
+  isEquivalent(other: Suggestion): boolean {
     return (this.hash === other.hash) && (this.descriptionText === other.descriptionText);
   }
 
   static compare(s1: Suggestion, s2: Suggestion): number {
     return s2.rank - s1.rank;
+  }
+
+  hasSearch(search: string): boolean {
+    const tokens = search.split(' ');
+    return this.searchGroups.some(group => tokens.every(token => group.includes(token)));
+  }
+
+  setSearch(search: Search) {
+    this.searchGroups = [];
+    if (search) {
+      this._addSearch(search.resolvedTokens);
+    }
+  }
+
+  mergeSearch(suggestion: Suggestion) {
+    let updated = false;
+    for (const other of suggestion.searchGroups) {
+      if (this._addSearch(other)) {
+        if (this.searchGroups.length === 1) {
+          this.searchGroups.push(['']);
+        }
+        updated = true;
+      }
+    }
+    this.searchGroups.sort();
+    return updated;
+  }
+
+  _addSearch(searchGroup: string[]): boolean {
+    const equivalentGroup = (group, otherGroup) => {
+      return group.length === otherGroup.length &&
+             group.every(token => otherGroup.includes(token));
+    };
+    if (!this.searchGroups.find(group => equivalentGroup(group, searchGroup))) {
+      this.searchGroups.push(searchGroup);
+      return true;
+    }
+    return false;
   }
 
   serialize() {
@@ -59,16 +100,18 @@ export class Suggestion {
       hash: this.hash,
       rank: this.rank,
       descriptionText: this.descriptionText,
-      descriptionDom: {template: this.descriptionText, model: {}}
+      descriptionDom: {template: this.descriptionText, model: {}},
+      searchGroups: this.searchGroups
     };
   }
 
-  static async deserialize({plan, hash, rank, descriptionText, descriptionDom}, arc, recipeResolver): Promise<Suggestion> {
+  static async deserialize({plan, hash, rank, descriptionText, descriptionDom, searchGroups}, arc, recipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
       const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
       suggestion.descriptionText = descriptionText;
       suggestion.descriptionDom = descriptionDom;
+      suggestion.searchGroups = searchGroups;
       return suggestion;
     }
     return undefined;

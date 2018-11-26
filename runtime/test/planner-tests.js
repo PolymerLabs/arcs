@@ -857,6 +857,8 @@ describe('Automatic resolution', function() {
 
       recipe
         search \`${searchStr}\`
+        // Description is needed to differentiate this recipe from its equivalent in .recipes file.
+        description \`This is the test recipe\`
     `, () => {});
 
     recipes = recipes.filter(recipe => recipe.search);
