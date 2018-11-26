@@ -7,14 +7,12 @@ import '../deps/@polymer/iron-icons/communication-icons.js';
 import '../deps/@polymer/iron-pages/iron-pages.js';
 import '../deps/@polymer/iron-selector/iron-selector.js';
 import '../deps/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../deps/@polymer/paper-input/paper-input.js';
 import '../deps/@polymer/paper-item/paper-item.js';
 import '../deps/@polymer/paper-listbox/paper-listbox.js';
 import {IronA11yKeysBehavior} from '../deps/@polymer/iron-a11y-keys-behavior/iron-a11y-keys-behavior.js';
 import {mixinBehaviors} from '../deps/@polymer/polymer/lib/legacy/class.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import './arcs-overview.js';
-import './arcs-dataflow.js';
 import './arcs-stores.js';
 import './arcs-communication-channel.js';
 import {MessengerMixin} from './arcs-shared.js';
@@ -132,8 +130,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon><label>Overview</label></a>
           <a name="stores" href="#stores"><iron-icon icon="device:sd-storage"></iron-icon><label>Stores Explorer</label></a>
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
-          <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon><label>Dataflow</label></a>
-          <a name="pecLog" href="#pecLog"><iron-icon icon="group-work"></iron-icon><label>PEC Channel Log</label></a>
+          <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz"></iron-icon><label>PEC Channel Log</label></a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
           <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>
         </iron-selector>
@@ -142,7 +139,6 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         <arcs-overview name="overview"></arcs-overview>
         <arcs-stores name="stores" search-phrase="[[searchPhrase]]"></arcs-stores>
         <arcs-tracing name="traces"></arcs-tracing>
-        <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
         <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>

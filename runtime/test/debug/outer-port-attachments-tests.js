@@ -18,7 +18,7 @@ import {TestHelper} from '../../testing/test-helper.js';
 describe('OuterPortAttachment', function() {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
-  it('produces dataflow messages on devtools channel', async () => {
+  it('produces PEC Log messages on devtools channel', async () => {
     Random.seedForTests();
     const testHelper = await TestHelper.create({
       manifestString: `
@@ -50,46 +50,32 @@ describe('OuterPortAttachment', function() {
     await arc.instantiate(recipe);
 
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
-        m.messageType === 'InstantiateParticle').messageBody;
-    // IDs are stable thanks to Random.seedForTests().
-    assert.deepEqual(instantiateParticleCall, {
-      arcId: '!158405822139616:demo',
-      speculative: false,
+      m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;
+
+    // Type is a complex object to reproduce, let's skip asserting on it.
+    delete instantiateParticleCall.pecMsgBody.spec.args[0].type;
+
+    assert.deepEqual(instantiateParticleCall.pecMsgBody, {
+      // IDs are stable thanks to Random.seedForTests().
       id: '!158405822139616:demo:particle1',
-      name: 'P',
-      connections: {
-        foo: {
+      identifier: '!158405822139616:demo:particle1',
+      handles: {
+        foo: 'fooStore'
+      },
+      spec: {
+        name: 'P',
+        description: {},
+        implFile: 'p.js',
+        modality: ['dom', 'mock'],
+        slots: [],
+        verbs: [],
+        args: [{
+          dependentConnections: [],
           direction: 'inout',
-          id: 'fooStore',
-          storageKey: 'volatile://!158405822139616:demo^^volatile-0',
-          type: 'Foo'
-        },
-      },
-      implFile: 'p.js'
-    });
-
-    await util.assertSingletonWillChangeTo(arc, fooStore, 'value', 'FooBar');
-    const dateflowSetCall = DevtoolsForTests.channel.messages.find(m =>
-        m.messageType === 'dataflow' &&
-        m.messageBody.operation === 'set').messageBody;
-
-    assert.approximately(dateflowSetCall.timestamp, Date.now(), 2000);
-    delete dateflowSetCall.timestamp; // This bit we don't want to assert on.
-
-    assert.deepEqual(dateflowSetCall, {
-      arcId: '!158405822139616:demo',
-      speculative: false,
-      operation: 'set',
-      particle: {
-        id: '!158405822139616:demo:particle1',
-        name: 'P'
-      },
-      handle: {
-        id: 'fooStore',
-        storageKey: 'volatile://!158405822139616:demo^^volatile-0',
-        type: 'Foo'
-      },
-      data: '{"id":"!158405822139616:demo:0:inner:0:0","rawData":{"value":"FooBar"}}',
+          isOptional: false,
+          name: 'foo'
+        }]
+      }
     });
   });
 });
