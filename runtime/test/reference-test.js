@@ -10,8 +10,6 @@
 
 import {assert} from './chai-web.js';
 import {Manifest} from '../ts-build/manifest.js';
-import {MessageChannel} from '../ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../ts-build/particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Type, ReferenceType} from '../ts-build/type.js';
 import {Arc} from '../ts-build/arc.js';
@@ -89,13 +87,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
-
+    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
@@ -154,12 +146,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
+    const arc = new Arc({id: 'test:0', loader});
 
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
@@ -218,13 +205,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
-
+    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
@@ -320,13 +301,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
-
+    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
@@ -403,13 +378,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
-
+    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
@@ -492,13 +461,7 @@ describe('references', function() {
       `
     });
 
-    const pecFactory = function(id) {
-      const channel = new MessageChannel();
-      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    const arc = new Arc({id: 'test:0', pecFactory, loader});
-
+    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
