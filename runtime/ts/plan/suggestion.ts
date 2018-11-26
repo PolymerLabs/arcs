@@ -22,10 +22,7 @@ import {PlanningResult} from './planning-result.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
-<<<<<<< HEAD
 import {Search} from '../recipe/search.js';
-=======
->>>>>>> Suggestion stores 'text description and one for the current modality
 import {Speculator} from '../speculator.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
@@ -54,12 +51,12 @@ export class Suggestion {
     return this.getDescription('text') as string;
   }
 
-  getDescription(modality): string|{} {
+  getDescription(modality: string): string|{} {
     assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
     return this.descriptionByModality[modality];
   }
 
-  async setDescription(description) {
+  async setDescription(description: Description) {
     this.descriptionByModality['text'] = await description.getRecipeSuggestion();
     const modality = this.arc.pec.slotComposer && this.arc.pec.slotComposer.modality;
     if (modality && modality !== 'text') {
