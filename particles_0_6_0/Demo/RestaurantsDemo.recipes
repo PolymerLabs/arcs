@@ -24,8 +24,6 @@ recipe RestaurantsDemo
     location = location
     restaurants = restaurants
   SelectableTiles
-    consume root
-      provide annotation as annotation
     list = restaurants
     selected = selected
   TileMultiplexer
@@ -39,8 +37,11 @@ recipe RestaurantsDemo
     selected = selected
   RestaurantDetail
     restaurant = selected
+    consume content
+      provide action as actionSlot
   ReservationForm
     restaurant = selected
     event = event
     descriptions = descriptions
+    consume action as actionSlot
   description `[demo] find restaurants and make reservations near ${FindRestaurants.location}`
