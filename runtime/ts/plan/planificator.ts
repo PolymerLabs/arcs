@@ -21,6 +21,7 @@ import {Type} from '../type.js';
 
 export class Planificator {
   static async create(arc: Arc, {userid, protocol, onlyConsumer, debug = false}) {
+    debug = debug || (protocol === 'volatile');
     const store = await Planificator._initSuggestStore(arc, {userid, protocol, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid});
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
