@@ -8,10 +8,10 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 import {Xen} from '../../../lib/xen.js';
-import IconStyle from '../../../components/icons.css.js';
-import '../../../components/elements/simple-tabs.js';
-import '../../../components/arc-tools/store-explorer.js';
-import '../../../components/xen/tools/xen-explorer.js';
+import IconStyle from '../../../../modalities/dom/components/icons.css.js';
+import '../../../../modalities/dom/components/elements/simple-tabs.js';
+import '../../../../modalities/dom/components/arc-tools/store-explorer.js';
+import '../../../../modalities/dom/components/xen/tools/xen-explorer.js';
 
 // templates
 const template = Xen.Template.html`

@@ -8,8 +8,8 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {linkJack} from '../../components/link-jack.js';
-import {generateId} from '../../components/generate-id.js';
+import {linkJack} from '../../../modalities/dom/components/link-jack.js';
+import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
 import {ArcsEnvWeb} from '../../lib/web/arcs-env-web.js';
 import {Xen} from '../../lib/xen.js';

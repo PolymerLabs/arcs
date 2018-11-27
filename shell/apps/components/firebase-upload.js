@@ -1,4 +1,4 @@
-import Xen from '../../components/xen/xen.js';
+import Xen from '../../../modalities/dom/components/xen/xen.js';
 import Firebase from '../../lib/firebase.js';
 
 const {firebase, storage} = Firebase;

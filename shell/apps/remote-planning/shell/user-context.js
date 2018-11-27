@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {XenStateMixin} from '../../../components/xen/xen-state.js';
+import {XenStateMixin} from '../../../../modalities/dom/components/xen/xen-state.js';
 import {Stores} from './stores.js';
 import {schemas} from '../../../app-shell/elements/sharing/schemas.js';
 import {SingleUserContext} from './single-user-context.js';

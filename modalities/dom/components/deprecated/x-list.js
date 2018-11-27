@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Xen from './xen/xen.js';
+import Xen from '../xen/xen.js';
 
 let HTMLElement;
 if (typeof window == 'undefined') {
