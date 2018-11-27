@@ -15,6 +15,7 @@ particle RestaurantTile in 'source/RestaurantTile.js'
 particle RestaurantDetail in 'source/RestaurantDetail.js'
   in Restaurant restaurant
   consume content
+    provide action
 
 // import '../List/List.recipes'
 // import '../Places/Places.recipes'

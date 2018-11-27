@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
+import '../Layout/Layout.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Events/Event.schema'
 import '../Arcs/Description.schema'
@@ -21,18 +22,18 @@ particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   inout Event event
   consume annotation
 
-recipe Reservations
-  use as restaurants
-  use #selected as restaurant
-  create #event as event
-  create as descriptions
-  ReservationForm
-    restaurant = restaurant
-    event = event
-    descriptions = descriptions
-  AnnotationMultiplexer
-    list = restaurants
-    annotation = event
-    hostedParticle = ReservationAnnotation
-  description `make reservations`
+//recipe Reservations
+//  use as restaurants
+//  use #selected as restaurant
+//  create #event as event
+//  create as descriptions
+//  ReservationForm
+//    restaurant = restaurant
+//    event = event
+//    descriptions = descriptions
+//  AnnotationMultiplexer
+//    list = restaurants
+//    annotation = event
+//    hostedParticle = ReservationAnnotation
+//  description `make reservations`
 

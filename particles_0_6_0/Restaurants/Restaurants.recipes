@@ -7,23 +7,24 @@
 
 import 'RestaurantFind.recipes'
 import 'RestaurantDisplay.recipes'
+import 'Reservations.recipes'
 
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 
-recipe Restaurants
-  create as location
-  create as restaurants
-  create #selected as selected
-  Geolocate
-    location = location
-  FindRestaurants
-    location = location
-    restaurants = restaurants
-  SelectableTiles
-    list = restaurants
-    selected = selected
-  TileMultiplexer
-    list = restaurants
-    hostedParticle = RestaurantTile
-  description `find restaurants near ${FindRestaurants.location}`
+//recipe Restaurants
+//  create as location
+//  create as restaurants
+//  create #selected as selected
+//  Geolocate
+//    location = location
+//  FindRestaurants
+//    location = location
+//    restaurants = restaurants
+//  SelectableTiles
+//    list = restaurants
+//    selected = selected
+//  TileMultiplexer
+//    list = restaurants
+//    hostedParticle = RestaurantTile
+//  description `find restaurants near ${FindRestaurants.location}`

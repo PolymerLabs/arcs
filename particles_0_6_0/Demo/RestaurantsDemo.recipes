@@ -6,16 +6,18 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
+import '../Layout/Layout.recipes'
 import '../Profile/Geolocate.recipe'
 import '../Restaurants/RestaurantFind.recipes'
 import '../Restaurants/RestaurantDisplay.recipes'
-import '../Reservations/Reservations.recipes'
+import '../Restaurants/Reservations.recipes'
 
 recipe RestaurantsDemo
   create as location
   create as restaurants
   create #restaurant as selected
   create #event as event
+  create as descriptions
   Geolocate
     location = location
   FindRestaurants
@@ -33,4 +35,12 @@ recipe RestaurantsDemo
     list = restaurants
     annotation = event
     hostedParticle = ReservationAnnotation
-  description `find restaurants and make reservations near ${FindRestaurants.location}`
+  DetailSlider
+    selected = selected
+  RestaurantDetail
+    restaurant = selected
+  ReservationForm
+    restaurant = selected
+    event = event
+    descriptions = descriptions
+  description `[demo] find restaurants and make reservations near ${FindRestaurants.location}`
