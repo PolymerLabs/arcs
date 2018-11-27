@@ -9,30 +9,35 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {Arc} from './arc.js';
 import {SlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotConsumer} from './hosted-slot-consumer.js';
 
 export class SlotConsumer {
-  _consumeConn: SlotConnection;
+  _consumeConn?: SlotConnection;
   slotContext: SlotContext;
   providedSlotContexts: SlotContext[] = [];
   startRenderCallback: ({}) => void;
   stopRenderCallback: ({}) => void;
   eventHandler: ({}) => void;
-  readonly containerKind: string;
+  readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string, {container?: {}}> = new Map();
+  private _renderingBySubId: Map<string|undefined, {container?: {}}> = new Map();
   private innerContainerBySlotId: {} = {};
 
-  constructor(consumeConn, containerKind) {
+  constructor(consumeConn?: SlotConnection, containerKind?: string) {
     this._consumeConn = consumeConn;
     this.containerKind = containerKind;
   }
   get consumeConn() { return this._consumeConn; }
+
   getRendering(subId) { return this._renderingBySubId.get(subId); } 
   get renderings() { return [...this._renderingBySubId.entries()]; }
+  addRenderingBySubId(subId: string|undefined, rendering) {
+    this._renderingBySubId.set(subId, rendering);
+  }
 
   onContainerUpdate(newContainer, originalContainer) {
     if (Boolean(newContainer) !== Boolean(originalContainer)) {
@@ -101,7 +106,7 @@ export class SlotConsumer {
     }
   }
 
-  async setContent(content, handler, arc) {
+  async setContent(content, handler, arc?: Arc) {
     if (content && Object.keys(content).length > 0) {
       if (arc) {
         content.descriptions = await this.populateHandleDescriptions(arc);
