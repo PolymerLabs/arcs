@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RecipeIndex} from '../recipe-index.js';
+import {RecipeIndex} from '../ts-build/recipe-index.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';

@@ -8,29 +8,34 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from './ts-build/manifest.js';
-import {Arc} from './ts-build/arc.js';
-import {SlotComposer} from './ts-build/slot-composer.js';
-import {Strategizer, Strategy} from './ts-build/strategizer/strategizer.js';
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
-import {Tracing} from '../tracelib/trace.js';
-import {ConvertConstraintsToConnections} from './ts-build/strategies/convert-constraints-to-connections.js';
-import {MatchFreeHandlesToConnections} from './ts-build/strategies/match-free-handles-to-connections.js';
-import {ResolveRecipe} from './ts-build/strategies/resolve-recipe.js';
-import {CreateHandleGroup} from './ts-build/strategies/create-handle-group.js';
-import {AddMissingHandles} from './ts-build/strategies/add-missing-handles.js';
-import * as Rulesets from './ts-build/strategies/rulesets.js';
-import {MapSlots} from './ts-build/strategies/map-slots.js';
-import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {RecipeUtil} from './ts-build/recipe/recipe-util.js';
-import {Handle} from './ts-build/recipe/handle.js';
-import {assert} from '../platform/assert-web.js';
-import {PlanningResult} from './ts-build/plan/planning-result.js';
+import {Manifest} from './manifest.js';
+import {Arc} from './arc.js';
+import {SlotComposer} from './slot-composer.js';
+import {Descendant, Strategizer, Strategy} from './strategizer/strategizer.js';
+import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
+import {Tracing} from '../../tracelib/trace.js';
+import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
+import {ResolveRecipe} from './strategies/resolve-recipe.js';
+import {CreateHandleGroup} from './strategies/create-handle-group.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
+import * as Rulesets from './strategies/rulesets.js';
+import {MapSlots} from './strategies/map-slots.js';
+import {DevtoolsConnection} from '../debug/devtools-connection.js';
+import {Recipe} from './recipe/recipe.js';
+import {RecipeUtil} from './recipe/recipe-util.js';
+import {Slot} from './recipe/slot.js';
+import {SlotConnection} from './recipe/slot-connection.js';
+import {Handle} from './recipe/handle.js';
+import {assert} from '../../platform/assert-web.js';
+import {PlanningResult} from './plan/planning-result.js';
+import {Loader} from './loader.js';
 
 class RelevantContextRecipes extends Strategy {
-  constructor(context, modality) {
+  private _recipes: Recipe[] = [];
+
+  constructor(context: Manifest, modality: string) {
     super();
-    this._recipes = [];
     for (let recipe of context.allRecipes) {
       if (modality && recipe.particles.find(p => p.spec && !p.spec.matchModality(modality)) !== undefined) {
         continue;
@@ -46,8 +51,8 @@ class RelevantContextRecipes extends Strategy {
     }
   }
 
-  async generate({generation}) {
-    if (generation != 0) {
+  async generate({generation}: {generation: number}): Promise<Descendant[]> {
+    if (generation !== 0) {
       return [];
     }
 
@@ -61,6 +66,7 @@ class RelevantContextRecipes extends Strategy {
   }
 }
 
+// tslint:disable-next-line: variable-name
 const IndexStrategies = [
   ConvertConstraintsToConnections,
   AddMissingHandles,
@@ -73,14 +79,18 @@ const IndexStrategies = [
 ];
 
 export class RecipeIndex {
-  constructor(context, loader, modality) {
+  ready;
+  private _recipes: Recipe[];
+  private _isReady = false;
+
+  constructor(context: Manifest, loader: Loader, modality: string) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
       loader,
       slotComposer: modality ? new SlotComposer({modality, noRoot: true}) : null,
-      recipeIndex: {},
+      recipeIndex: this,
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
       speculative: true
     });
@@ -102,7 +112,7 @@ export class RecipeIndex {
 
       if (DevtoolsConnection.isConnected) {
         StrategyExplorerAdapter.processGenerations(
-            PlanningResult.formatSerializableGenerations(generations), 
+            PlanningResult.formatSerializableGenerations(generations),
             DevtoolsConnection.get(), {label: 'Index', keep: true});
       }
 
@@ -119,23 +129,25 @@ export class RecipeIndex {
     }));
   }
 
-  get recipes() {
+  get recipes(): Recipe[] {
     if (!this._isReady) throw Error('await on recipeIndex.ready before accessing');
     return this._recipes;
   }
 
-  ensureReady() {
+  ensureReady(): void {
     assert(this._isReady, 'await on recipeIndex.ready before accessing');
   }
 
-  // Given provided handle and requested fates, finds handles with
-  // matching type and requested fate.
-  findHandleMatch(handle, requestedFates) {
+  /**
+   * Given provided handle and requested fates, finds handles with
+   * matching type and requested fate.
+   */
+  findHandleMatch(handle: Handle, requestedFates?: string[]): Handle[] {
     this.ensureReady();
 
     const particleNames = handle.connections.map(conn => conn.particle.name);
 
-    const results = [];
+    const results: Handle[] = [];
     for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
@@ -155,8 +167,8 @@ export class RecipeIndex {
         // This is a poor workaround for connecting the exact same recipes together, to be improved.
         const otherParticleNames = otherHandle.connections.map(conn => conn.particle.name);
         const connectedParticles = new Set([...particleNames, ...otherParticleNames]);
-        if (connectedParticles.size == particleNames.length
-            && particleNames.length == otherParticleNames.length) continue;
+        if (connectedParticles.size === particleNames.length
+            && particleNames.length === otherParticleNames.length) continue;
 
         results.push(otherHandle);
       }
@@ -164,12 +176,13 @@ export class RecipeIndex {
     return results;
   }
 
-  doesHandleMatch(handle, otherHandle) {
+  doesHandleMatch(handle: Handle, otherHandle: Handle): boolean {
     if (Boolean(handle.id) && Boolean(otherHandle.id) && handle.id !== otherHandle.id) {
       // Either at most one of the handles has an ID, or they are the same.
       return false;
     }
-    if (otherHandle.connections.length === 0 || otherHandle.name === 'descriptions') {
+    // TODO was otherHandle.name, is localName correct
+    if (otherHandle.connections.length === 0 || otherHandle.localName === 'descriptions') {
       return false;
     }
 
@@ -194,15 +207,17 @@ export class RecipeIndex {
     }
 
     // If types don't match.
-    if (!Handle.effectiveType(handle._mappedType, [...handle.connections, ...otherHandle.connections])) {
+    if (!Handle.effectiveType(handle.mappedType, [...handle.connections, ...otherHandle.connections])) {
       return false;
     }
 
     return true;
   }
 
-  // Given a slot, find consume slot connections that could be connected to it.
-  findConsumeSlotConnectionMatch(slot) {
+  /**
+   * Given a slot, find consume slot connections that could be connected to it.
+   */
+  findConsumeSlotConnectionMatch(slot: Slot) {
     this.ensureReady();
 
     const consumeConns = [];
@@ -220,8 +235,8 @@ export class RecipeIndex {
             slot.handleConnections.forEach(slotHandleConn => {
               const matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
                 return particleConn.direction !== 'host'
-                    && (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id)
-                    && Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
+                    && (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id === slotHandleConn.handle.id)
+                    && Handle.effectiveType(slotHandleConn.handle.mappedType, [particleConn]);
               });
               matchingConns.forEach(matchingConn => {
                 if (this._fatesAndDirectionsMatch(slotHandleConn, matchingConn)) {
@@ -230,7 +245,7 @@ export class RecipeIndex {
               });
             });
 
-            if (matchingHandles.length == 0) {
+            if (matchingHandles.length === 0) {
               continue;
             }
           }
@@ -241,10 +256,10 @@ export class RecipeIndex {
     return consumeConns;
   }
 
-  findProvidedSlot(slotConn) {
+  findProvidedSlot(slotConn: SlotConnection): Slot[] {
     this.ensureReady();
 
-    const providedSlots = [];
+    const providedSlots: Slot[] = [];
     for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
@@ -262,12 +277,15 @@ export class RecipeIndex {
     return providedSlots;
   }
 
-  // Helper function that determines whether handle connections in a provided slot
-  // and a potential consuming slot connection could be match, considering their fates and directions.
-  // `slotHandleConn` is a handle connection restricting the provided slot.
-  // `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
-  // as a potential match to a slot above.
-  _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn) {
+  /**
+   * Helper function that determines whether handle connections in a provided slot
+   * and a potential consuming slot connection could be match, considering their fates and directions.
+   *
+   * - `slotHandleConn` is a handle connection restricting the provided slot.
+   * - `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
+   *    as a potential match to a slot above.
+   */
+  private _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn): boolean {
     const matchingHandle = matchingHandleConn.handle;
     const allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
     const matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
@@ -280,10 +298,10 @@ export class RecipeIndex {
         return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
       case 'copy':
         // Any handle fate, except explicit 'create'.
-        return !matchingHandle || matchingHandle.fate != 'create';
+        return !matchingHandle || matchingHandle.fate !== 'create';
       case 'map':
         // matching connections don't have output direction and matching handle's fate isn't copy.
-        return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate != 'copy');
+        return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate !== 'copy');
       case '?':
         return false;
       default:
@@ -291,14 +309,16 @@ export class RecipeIndex {
     }
   }
 
-  get coalescableFates() { return ['create', 'use', '?']; }
+  get coalescableFates(): string[] {
+    return ['create', 'use', '?'];
+  }
 
-  findCoalescableHandles(recipe, otherRecipe, usedHandles) {
-    assert(recipe != otherRecipe, 'Cannot coalesce handles in the same recipe');
-    const otherToHandle = new Map();
+  findCoalescableHandles(recipe: Recipe, otherRecipe: Recipe, usedHandles?: Set<Handle>): Map<Handle, Handle> {
+    assert(recipe !== otherRecipe, 'Cannot coalesce handles in the same recipe');
+    const otherToHandle: Map<Handle, Handle> = new Map();
     usedHandles = usedHandles || new Set();
     for (const handle of recipe.handles) {
-      if (usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
+      if(usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
         continue;
       }
       for (const otherHandle of otherRecipe.handles) {
