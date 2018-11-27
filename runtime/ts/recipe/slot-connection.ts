@@ -124,7 +124,7 @@ export class SlotConnection {
     return true;
   }
 
-  isResolved(options) {
+  isResolved(options?): boolean {
     assert(Object.isFrozen(this));
 
     if (!this.name) {

@@ -11,22 +11,17 @@ import {Arc} from '../arc';
 export class Strategizer {
   _strategies: Strategy[];
   _evaluators: Strategy[];
-  _generation: number;
-  _internalPopulation: {fitness: number, individual}[];
-  _population;
-  _generated;
+  _generation = 0;
+  _internalPopulation: {fitness: number, individual}[] = [];
+  _population = [];
+  _generated = [];
   _ruleset: Ruleset;
-  _terminal;
+  _terminal = [];
   populationHash;
 
   constructor(strategies: Strategy[], evaluators: Strategy[], ruleset: Ruleset) {
     this._strategies = strategies;
     this._evaluators = evaluators;
-    this._generation = 0;
-    this._internalPopulation = [];
-    this._population = [];
-    this._generated = [];
-    this._terminal = [];
     this._ruleset = ruleset;
     this.populationHash = new Map();
   }
@@ -44,7 +39,7 @@ export class Strategizer {
   }
 
   /**
-   * @return   Individuals from the previous generation that were not descended from in the
+   * @return Individuals from the previous generation that were not descended from in the
    * current generation.
    */
   get terminal() {
@@ -281,14 +276,16 @@ export abstract class StrategizerWalker {
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy {
-  private _arc: Arc;
+  private _arc?: Arc;
   private _args?;
 
-  constructor(arc: Arc, args?) {
+  constructor(arc?: Arc, args?) {
     this._arc = arc;
     this._args = args;
   }
-  get arc(): Arc { return this._arc; }
+  get arc(): Arc | undefined {
+    return this._arc;
+  }
 
   async activate(strategizer) {
     // Returns estimated ability to generate/evaluate.
@@ -296,16 +293,20 @@ export abstract class Strategy {
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
   }
+
   getResults(inputParams) {
     return inputParams.generated;
   }
+
   async generate(inputParams): Promise<Descendant[]> {
     return [];
   }
+
   async evaluate(strategizer, individuals) {
     return individuals.map(() => NaN);
   }
 }
+
 // These types allow us to create lists of StrategyDerived classes and
 // construct them while avoiding TS2511 "Cannot create an instance of an abstract type
 type StrategyClass = typeof Strategy;

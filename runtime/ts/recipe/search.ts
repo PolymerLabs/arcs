@@ -11,7 +11,7 @@ export class Search {
   _phrase: string;
   _unresolvedTokens: string[];
   _resolvedTokens: string[];
-  constructor(phrase, unresolvedTokens = undefined) {
+  constructor(phrase: string, unresolvedTokens = undefined) {
     assert(phrase);
     this._phrase = phrase;
 

@@ -7,11 +7,18 @@
 
 import {Strategy} from '../strategizer/strategizer.js';
 import {Arc} from '../arc.js';
+import {Recipe} from '../recipe/recipe.js';
 import {assert} from '../../../platform/assert-web.js';
+import {Descendant} from '../strategizer/strategizer.js';
+
+type ScoredRecipe = {
+  recipe: Recipe;
+  score?: number
+};
 
 export class InitPopulation extends Strategy {
   _contextual: boolean;
-  _loadedParticles;
+  _loadedParticles: Set<string>;
   
   constructor(arc: Arc, {contextual = false}) {
     super(arc, {contextual});
@@ -19,7 +26,7 @@ export class InitPopulation extends Strategy {
     this._loadedParticles = new Set(this.arc.loadedParticles().map(spec => spec.implFile));
   }
 
-  async generate({generation}) {
+  async generate({generation}: {generation: number}): Promise<Descendant[]> {
     if (generation !== 0) {
       return [];
     }
@@ -38,8 +45,8 @@ export class InitPopulation extends Strategy {
     }));
   }
 
-  private _contextualResults() {
-    const results = [];
+  private _contextualResults(): ScoredRecipe[] {
+    const results: ScoredRecipe[] = [];
     for (const slot of this.arc.activeRecipe.slots.filter(s => s.sourceConnection)) {
       results.push(...this.arc.recipeIndex.findConsumeSlotConnectionMatch(slot).map(
           ({slotConn}) => ({recipe: slotConn.recipe})));
@@ -57,7 +64,7 @@ export class InitPopulation extends Strategy {
     return results;
   }
 
-  private _allResults() {
+  private _allResults(): ScoredRecipe[] {
     return this.arc.recipeIndex.recipes.map(recipe => ({
       recipe,
       score: 1 - recipe.particles.filter(

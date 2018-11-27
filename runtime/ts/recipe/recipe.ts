@@ -7,20 +7,21 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {digest} from '../../../platform/digest-web.js';
-import {Strategizer} from '../strategizer/strategizer.js';
+import {Strategizer, Strategy, Descendant} from '../strategizer/strategizer.js';
 import {ConnectionConstraint} from './connection-constraint.js';
 import {Particle} from './particle.js';
 import {Search} from './search.js';
 import {Slot} from './slot.js';
+import {SlotConnection} from './slot-connection.js';
 import {Handle} from './handle.js';
 import {HandleConnection} from './handle-connection.js';
 import {compareComparables} from './util.js';
 import {InterfaceType} from '../type.js';
 
 export class Recipe {
-  private _particles = <Particle[]>[];
-  private _handles = <Handle[]>[];
-  private _slots = <Slot[]>[];
+  private _particles: Particle[] = [];
+  private _handles: Handle[] = [];
+  private _slots: Slot[] = [];
   private _name: string | undefined;
   private _localName: string | undefined = undefined;
   private _cloneMap: Map<{}, {}>;
@@ -34,17 +35,18 @@ export class Recipe {
   private _connectionConstraints = <ConnectionConstraint[]>[];
 
   // Obligations are like connection constraints in that they describe
+  
   // required connections between particles/verbs. However, where 
   // connection constraints can be acted upon in order to create these
   // connections, obligations can't be. Instead, they describe requirements
   // that must be discharged before a recipe can be considered to be
   // resolved.
-  private _obligations = <ConnectionConstraint[]>[];
-  private _verbs = <string[]>[];
+  private _obligations: ConnectionConstraint[] = [];
+  private _verbs: string[] = [];
 
   // TODO: Change to array, if needed for search strings of merged recipes.
   private _search: Search | null = null;
-  private _patterns = <string[]>[];
+  private _patterns: string[] = [];
   constructor(name = undefined) {
     this._name = name;
   }
@@ -162,33 +164,33 @@ export class Recipe {
         && (!this.search || this.search.isValid());
   }
 
-  get name() { return this._name; }
-  set name(name) { this._name = name; }
+  get name(): string | undefined { return this._name; }
+  set name(name: string | undefined) { this._name = name; }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get particles() { return this._particles; } // Particle*
-  set particles(particles) { this._particles = particles; }
-  get handles() { return this._handles; } // Handle*
-  set handles(handles) { this._handles = handles; }
-  get slots() { return this._slots; } // Slot*
-  set slots(slots) { this._slots = slots; }
+  get particles(): Particle[] { return this._particles; }
+  set particles(particles: Particle[]) { this._particles = particles; }
+  get handles(): Handle[] { return this._handles; }
+  set handles(handles: Handle[]) { this._handles = handles; }
+  get slots(): Slot[] { return this._slots; }
+  set slots(slots: Slot[]) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
   get obligations() { return this._obligations; }
-  get verbs() { return this._verbs; }
-  set verbs(verbs) { this._verbs = verbs; }
-  get search() { return this._search; }
-  set search(search) {
+  get verbs(): string[] { return this._verbs; }
+  set verbs(verbs: string[]) { this._verbs = verbs; }
+  get search(): Search | null { return this._search; }
+  set search(search: Search | null) {
     this._search = search;
   }
-  setSearchPhrase(phrase) {
+  setSearchPhrase(phrase?: string) {
     assert(!this._search, 'Cannot override search phrase');
     if (phrase) {
       this._search = new Search(phrase);
     }
   }
 
-  get slotConnections() { // SlotConnection*
-    const slotConnections = [];
+  get slotConnections(): SlotConnection[] {
+    const slotConnections: SlotConnection[] = [];
     this._particles.forEach(particle => {
       slotConnections.push(...Object.values(particle.consumedSlotConnections));
     });
@@ -229,8 +231,15 @@ export class Recipe {
     return null;
 
   }
-  get patterns() { return this._patterns; }
-  set patterns(patterns) { this._patterns = patterns; }
+
+  get patterns(): string[] {
+    return this._patterns;
+  }
+
+  set patterns(patterns: string[]) {
+    this._patterns = patterns;
+  }
+
   set description(description) {
     const pattern = description.find(desc => desc.name === 'pattern');
     if (pattern) {
@@ -430,7 +439,7 @@ export class Recipe {
     return result;
   }
 
-  static over(results, walker, strategy) {
+  static over(results, walker, strategy: Strategy): Descendant[]  {
     return Strategizer.over(results, walker, strategy);
   }
 
@@ -487,7 +496,7 @@ export class Recipe {
   //       lists into a normal ordering.
   //
   // use { showUnresolved: true } in options to see why a recipe can't resolve.
-  toString(options = undefined) {
+  toString(options = undefined): string {
     const nameMap = this._makeLocalNameMap();
     const result = [];
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';

@@ -20,7 +20,7 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from '../debug/arc-debug-handler.js';
-import {RecipeIndex} from '../recipe-index.js';
+import {RecipeIndex} from './recipe-index.js';
 import {Loader} from './loader.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {ParticleSpec} from './particle-spec.js';
