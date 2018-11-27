@@ -9,7 +9,7 @@
  */
 import {fs} from '../../platform/fs-web.js';
 import {vm} from '../../platform/vm-web.js';
-import {fetch} from '../fetch-web.js';
+import {fetch} from '../../platform/fetch-web.js';
 
 import {assert} from '../../platform/assert-web.js';
 import {Particle} from './particle.js';

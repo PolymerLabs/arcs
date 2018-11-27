@@ -9,7 +9,7 @@
  */
 import {fs} from '../../../../platform/fs-node.js';
 import {vm} from '../../../../platform/vm-node.js';
-import {fetch} from '../../../../runtime/fetch-node.js';
+import {fetch} from '../../../../platform/fetch-node.js';
 
 import {assert} from '../../../../platform/assert-web.js';
 import {Particle} from '../../../../runtime/ts-build/particle.js';
