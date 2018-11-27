@@ -12,13 +12,14 @@ import {assert} from '../../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
 import Template from '../../shell/components/xen/xen-template.js';
 import IconStyles from '../../shell/components/icons.css.js';
+import {SlotConnection} from './recipe/slot-connection.js';
 
 const templateByName = new Map();
 
 export class SlotDomConsumer extends SlotConsumer {
   private readonly _observer: MutationObserver;
 
-  constructor(consumeConn, containerKind) {
+  constructor(consumeConn?: SlotConnection, containerKind?: string) {
     super(consumeConn, containerKind);
 
     this._observer = this._initMutationObserver();

@@ -7,32 +7,40 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './ts-build/slot-dom-consumer.js';
+import {assert} from '../../platform/assert-web.js';
+import {SlotDomConsumer} from './slot-dom-consumer.js';
+import {Suggestion} from './plan/suggestion.js';
 
 export class SuggestDomConsumer extends SlotDomConsumer {
-  constructor(containerKind, suggestion, suggestionContent, eventHandler) {
+  _suggestion: Suggestion;
+  _suggestionContent;
+  _eventHandler;
+
+  constructor(containerKind: string, suggestion: Suggestion, suggestionContent, eventHandler) {
     super(/* consumeConn= */null, containerKind);
     this._suggestion = suggestion;
     this._suggestionContent = suggestionContent;
     this._eventHandler = eventHandler;
   }
 
-  get suggestion() { return this._suggestion; }
+  get suggestion(): Suggestion {
+    return this._suggestion;
+  }
 
-  get templatePrefix() { return 'suggest'; }
+  get templatePrefix(): string {
+    return 'suggest';
+  }
 
   formatContent(content) {
     return {
       template: `<suggestion-element inline key="{{hash}}" on-click="">${content.template}</suggestion-element>`,
       templateName: 'suggestion',
-      model: Object.assign({hash: this.suggestion.hash}, content.model)
+      model: {hash: this.suggestion.hash, ...content.model}
     };
   }
 
-  onContainerUpdate(container, originalContainer) {
+  onContainerUpdate(container, originalContainer): void {
     super.onContainerUpdate(container, originalContainer);
 
     if (container) {
@@ -40,13 +48,13 @@ export class SuggestDomConsumer extends SlotDomConsumer {
     }
   }
 
-  static render(container, plan, content) {
-    const consumer = new SlotDomConsumer();
+  static render(container, plan, content): SlotDomConsumer {
     const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
     container.appendChild(suggestionContainer, container.firstElementChild);
     const rendering = {container: suggestionContainer, model: content.model};
-    consumer._renderingBySubId.set(undefined, rendering);
-    consumer._eventHandler = (() => {});
+    const consumer = new SlotDomConsumer();
+    consumer.addRenderingBySubId(undefined, rendering);
+    consumer.eventHandler = (() => {});
     consumer._stampTemplate(rendering, consumer.createTemplateElement(content.template));
     consumer._onUpdate(rendering);
     return consumer;

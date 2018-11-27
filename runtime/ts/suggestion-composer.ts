@@ -9,8 +9,8 @@
  */
 import {Modality} from './modality.js';
 import {SlotComposer} from './slot-composer.js';
-import {Suggestion} from './plan/suggestion';
-import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
+import {Suggestion} from './plan/suggestion.js';
+import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
 export class SuggestionComposer {
   private _modality: Modality;
@@ -18,7 +18,7 @@ export class SuggestionComposer {
 
   private readonly _slotComposer: SlotComposer;
   private _suggestions: Suggestion[] = []; 
-  private _suggestConsumers: SuggestDomConsumer = [];
+  private _suggestConsumers: SuggestDomConsumer[] = [];
   
   constructor(slotComposer: SlotComposer) {
     this._modality = Modality.forName(slotComposer.modality);
