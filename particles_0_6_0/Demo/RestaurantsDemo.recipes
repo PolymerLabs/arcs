@@ -24,28 +24,20 @@ recipe RestaurantsDemo
     location = location
     restaurants = restaurants
   SelectableTiles
-    consume root #tiles
-      provide tile as tileSlot // must // set
-      provide annotation as annotationSlot // set
-      provide action
     list = restaurants
     selected = selected
   TileMultiplexer
     list = restaurants
     hostedParticle = RestaurantTile
-    consume tile as tileSlot //set
   AnnotationMultiplexer
     list = restaurants
     annotation = event
     hostedParticle = ReservationAnnotation
-    consume annotation as annotationSlot // set of 
   DetailSlider
     selected = selected
-    consume modal
-      provide content as contentSlot
   RestaurantDetail
     restaurant = selected
-    consume content as contentSlot
+    consume content
       provide action as actionSlot
   ReservationForm
     restaurant = selected
