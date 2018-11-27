@@ -1,5 +1,5 @@
 // code
-import Xen from '../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 
 // globals
 /* global shellPath */

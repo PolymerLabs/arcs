@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Xen from '../components/xen/xen.js';
+import Xen from '../../modalities/dom/components/xen/xen.js';
 import Arcs from './arcs.js';
 
 const log = Xen.logFactory('ArcsUtils', '#4a148c');

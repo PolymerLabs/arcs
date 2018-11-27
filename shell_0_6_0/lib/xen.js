@@ -1,6 +1,4 @@
-
-
-import Xen from '../components/xen/xen.js';
+import Xen from '../../modalities/dom/components/xen/xen.js';
 
 Xen.Async = class extends Xen.Base {
   // shorthand for adding state,

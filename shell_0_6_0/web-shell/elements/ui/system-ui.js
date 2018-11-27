@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 import {Xen} from '../../../lib/xen.js';
-import GlowableStyle from '../../../components/glowable.css.js';
+import GlowableStyle from '../../../../modalities/dom/components/glowable.css.js';
 import './panel-ui.js';
 
 // templates

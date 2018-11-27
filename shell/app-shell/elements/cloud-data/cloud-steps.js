@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import Xen from '../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 import Firebase from '../../../lib/firebase.js';
 import Const from '../../../lib/constants.js';
 import WatchGroup from './watch-group.js';

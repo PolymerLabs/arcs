@@ -1,6 +1,6 @@
 // code
-import Xen from '../../../components/xen/xen.js';
-import IconStyle from '../../../components/icons.css.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
+import IconStyle from '../../../../modalities/dom/components/icons.css.js';
 
 const html = Xen.Template.html;
 const template = html`

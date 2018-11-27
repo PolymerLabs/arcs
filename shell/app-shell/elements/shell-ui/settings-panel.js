@@ -1,8 +1,8 @@
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
+import IconStyle from '../../../../modalities/dom/components/icons.css.js';
 import Const from '../../../lib/constants.js';
-import Xen from '../../../components/xen/xen.js';
-import IconStyle from '../../../components/icons.css.js';
-import {arcToRecipe} from './generalizer.js';
 import Firebase from '../../../lib/firebase.js';
+import {arcToRecipe} from './generalizer.js';
 
 const html = Xen.Template.html;
 const template = html`

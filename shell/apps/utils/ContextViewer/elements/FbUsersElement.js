@@ -1,5 +1,5 @@
 import {FbUsers} from '../classes/FbUsers.js';
-import Xen from '../../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 
 export const FbUsersElement = class extends Xen.Base {
   _getInitialState() {

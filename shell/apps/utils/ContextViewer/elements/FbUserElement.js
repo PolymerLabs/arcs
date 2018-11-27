@@ -1,5 +1,5 @@
 import {FbUser} from '../classes/FbUser.js';
-import Xen from '../../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 
 export const FbUserElement = class extends Xen.Base {
   static get observedAttributes() {

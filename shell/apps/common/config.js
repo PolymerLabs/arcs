@@ -3,7 +3,7 @@ const defaultDebugLevel = 0;
 const params = (new URL(document.location)).searchParams;
 
 // must establish Debug level before using logFactory
-import Xen from '../../components/xen/xen.js';
+import Xen from '../../../modalities/dom/components/xen/xen.js';
 Xen.Debug.level = params.has('log') ? 2 : defaultDebugLevel;
 
 // some globals configured here for the convenience of providing in this simple config file.

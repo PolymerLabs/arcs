@@ -7,7 +7,7 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import Xen from '../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 import ArcsUtils from '../../../lib/arcs-utils.js';
 import Firebase from '../../../lib/firebase.js';
 import Const from '../../../lib/constants.js';
