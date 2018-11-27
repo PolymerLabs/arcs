@@ -260,7 +260,7 @@ export class K18sContainerManager implements ContainerManager {
     return this.k8sBetaApi.createNamespacedDeployment(K18S_NAMESPACE, v1Deployment);
   }
 
-  private createContainer(fingerprint: string, volumeName) {
+  private createContainer(fingerprint: string, volumeName: string) {
     const container = new V1Container();
     // TODO: use SHA-1/commit hash based tagging?
     container.image = ARCS_DOCKER_IMAGE;
@@ -282,7 +282,7 @@ export class K18sContainerManager implements ContainerManager {
     return container;
   }
 
-  private createVolumeMount(volumeName) {
+  private createVolumeMount(volumeName: string) {
     const volumeMount = new V1VolumeMount();
     volumeMount.name = volumeName;
     volumeMount.mountPath = DISK_MOUNT_PATH;
@@ -294,7 +294,7 @@ export class K18sContainerManager implements ContainerManager {
    * @param volumeName the name of the volume
    * @param encryptedDisk the existing disk already created by GCE
    */
-  private createGCEVolume(volumeName, encryptedDisk: Disk) {
+  private createGCEVolume(volumeName: string, encryptedDisk: Disk) {
     const gceVolume = new V1Volume();
     gceVolume.name = volumeName;
     gceVolume.gcePersistentDisk = new V1GCEPersistentDiskVolumeSource();
