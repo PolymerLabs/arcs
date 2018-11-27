@@ -9,6 +9,7 @@
  */
 import {assert} from '../chai-web.js';
 import {PlanningResult} from '../../ts-build/plan/planning-result.js';
+import {Relevance} from '../../ts-build/relevance.js';
 import {Search} from '../../ts-build/recipe/search.js';
 import {Suggestion} from '../../ts-build/plan/suggestion.js';
 import {TestHelper} from '../../testing/test-helper.js';
@@ -17,6 +18,10 @@ describe('planning result', function() {
   async function testResultSerialization(manifestFilename) {
     const helper = await TestHelper.createAndPlan({manifestFilename});
     assert.isNotEmpty(helper.suggestions);
+    helper.suggestions.forEach(s => {
+      s.relevance = Relevance.create(helper.arc, s.plan);
+      s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
+    });
     const result = new PlanningResult(helper.arc, {suggestions: helper.suggestions});
 
     const serialization = result.serialize();
@@ -43,13 +48,14 @@ describe('planning result', function() {
     assert.lengthOf(result.suggestions, 1);
 
     // init results.
-    const otherSuggestion = new Suggestion(helper.suggestions[0], 'other-hash', 0, helper.arc);
+    const relevance = Relevance.create(helper.arc, helper.suggestions[0].plan);
+    const otherSuggestion = new Suggestion(helper.suggestions[0].plan, 'other-hash', relevance, helper.arc);
     otherSuggestion.descriptionByModality['text'] = 'other description';
     helper.suggestions.push(otherSuggestion);
     assert.isTrue(result.append({suggestions: helper.suggestions}));
     assert.lengthOf(result.suggestions, 2);
 
-    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, otherSuggestion.arc);
+    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', relevance, otherSuggestion.arc);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
     helper.suggestions.push(suggestionWithSearch);

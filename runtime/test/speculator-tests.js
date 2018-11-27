@@ -21,8 +21,9 @@ describe('speculator', function() {
     const manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
+    const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
     const speculator = new Speculator();
-    const relevance = await speculator.speculate(arc, recipe);
-    assert.equal(relevance.calcRelevanceScore(), 1);
+    const suggestion = await speculator.speculate(arc, recipe, hash);
+    assert.equal(suggestion.rank, 1);
   });
 });

@@ -17,7 +17,7 @@ import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
 import {Speculator} from '../speculator.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
-import {Strategy, StrategyDerived} from '../strategizer/strategizer';
+import {Strategy, StrategyDerived} from '../strategizer/strategizer.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -45,7 +45,7 @@ export class PlanProducer {
     this.arc = arc;
     this.result = new PlanningResult(arc);
     this.store = store;
-    this.speculator = new Speculator();
+    this.speculator = new Speculator(this.result);
     this.searchStore = searchStore;
     if (this.searchStore) {
       this.searchStoreCallback = () => this.onSearchChanged();
@@ -91,7 +91,6 @@ export class PlanProducer {
       strategies?: StrategyDerived[],
       append?: boolean,
       contextual?: boolean} = {
-
         cancelOngoingPlanning: this.result.suggestions.length > 0,
         search: this.search
       };
@@ -175,9 +174,9 @@ export class PlanProducer {
 
   private _cancelPlanning() {
     if (this.planner) {
-      this.planner.dispose();
       this.planner = null;
     }
+    this.speculator.dispose();
     this.needReplan = false;
     this.isPlanning = false; // using the setter method to trigger callbacks.
     log(`Cancel planning`);

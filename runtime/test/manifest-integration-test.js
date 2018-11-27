@@ -45,7 +45,8 @@ describe('manifest integration', () => {
   });
   it('can produce a recipe that can be speculated', async () => {
     const {arc, recipe} = await setup();
-    const relevance = await new Speculator().speculate(arc, recipe);
-    assert.equal(relevance.calcRelevanceScore(), 1);
+    const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
+    const suggestion = await new Speculator().speculate(arc, recipe, hash);
+    assert.equal(suggestion.rank, 1);
   });
 });

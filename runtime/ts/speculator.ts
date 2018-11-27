@@ -9,46 +9,71 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Relevance} from './relevance.js';
 import {Arc} from './arc.js';
+import {PlanningResult} from './plan/planning-result.js';
 import {Recipe} from './recipe/recipe.js';
+import {Relevance} from './relevance.js';
+import {Suggestion} from './plan/suggestion.js';
 
 export class Speculator {
-  _relevanceByHash: Map<string, Relevance>;
+  private suggestionByHash: {} = {};
+  private speculativeArcs: Arc[] = [];
   
-  constructor() {
-    this._relevanceByHash = new Map();
+  constructor(planningResult?: PlanningResult) {
+    if (planningResult) {
+      for (const suggestion of planningResult.suggestions) {
+        this.suggestionByHash[suggestion.hash] = suggestion;
+      }
+    }
   }
 
-  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<Relevance> {
+  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<Suggestion|null> {
     assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
-    if (this._relevanceByHash.has(hash)) {
-      const arcStoreVersionById = arc.getStoresState({includeContext: true});
-      const relevance = this._relevanceByHash.get(hash);
-      const relevanceStoreVersionById = relevance.arcState;
-      if (plan.handles.every(handle => arcStoreVersionById.get(handle.id) === relevanceStoreVersionById.get(handle.id))) {
-        return relevance;
+
+    let suggestion = this.suggestionByHash[hash];
+    if (suggestion) {
+      const arcVersionByStoreId = arc.getVersionByStore({includeArc: true, includeContext: true});      
+      const relevanceVersionByStoreId = suggestion.relevance.versionByStore;
+      if (plan.handles.every(handle => arcVersionByStoreId[handle.id] === relevanceVersionByStoreId[handle.id])) {
+        return suggestion;
       }
     }
 
-    const newArc = await arc.cloneForSpeculativeExecution();
-    const relevance = new Relevance(arc.getStoresState({includeContext: true}));
-    const relevanceByHash = this._relevanceByHash;
+    const speculativeArc = await arc.cloneForSpeculativeExecution();
+    this.speculativeArcs.push(speculativeArc);
+    const relevance = Relevance.create(arc, plan);
+    await speculativeArc.instantiate(plan);
+    await this.awaitCompletion(relevance, speculativeArc);
 
-    async function awaitCompletion() {
-      const messageCount = newArc.pec.messageCount;
-      relevance.apply(await newArc.pec.idle);
-
-      // We expect two messages here, one requesting the idle status, and one answering it.
-      if (newArc.pec.messageCount !== messageCount + 2) {
-        return awaitCompletion();
-      } else {
-        relevance.newArc = newArc;
-        relevanceByHash.set(hash, relevance);
-        return relevance;
-      }
+    if (!relevance.isRelevant(plan)) {
+      return null;
     }
 
-    return newArc.instantiate(plan).then(a => awaitCompletion());
+    speculativeArc.description.relevance = relevance;
+    suggestion = new Suggestion(plan, hash, relevance, arc);
+    suggestion.setSearch(plan.search);
+    await suggestion.setDescription(speculativeArc.description);
+    this.suggestionByHash[hash] = suggestion;
+    return suggestion;
+  }
+
+  async awaitCompletion(relevance, speculativeArc) {
+    const messageCount = speculativeArc.pec.messageCount;
+    relevance.apply(await speculativeArc.pec.idle);
+
+    // We expect two messages here, one requesting the idle status, and one answering it.
+    if (speculativeArc.pec.messageCount !== messageCount + 2) {
+      return this.awaitCompletion(relevance, speculativeArc);
+    } else {
+      speculativeArc.stop();
+      this.speculativeArcs.splice(this.speculativeArcs.indexOf(speculativeArc, 1));
+      return relevance;
+    }
+  }
+
+  dispose(): void {
+    for (const arc of this.speculativeArcs) {
+      arc.dispose();
+    }
   }
 }
