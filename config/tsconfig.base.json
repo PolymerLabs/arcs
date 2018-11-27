@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+    "noImplicitThis": true,
     "module": "es2015",
     "moduleResolution": "Node",
 

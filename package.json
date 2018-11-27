@@ -59,7 +59,7 @@
     "webpack": "^4.25.1"
   },
   "dependencies": {
-    "@types/pouchdb": "^6.3.2",
+    "@types/pouchdb-core": "^7.0.0",
     "@types/node": "^10.12.9",
     "assert": "^1.4.1",
     "atob": "^2.1.2",
