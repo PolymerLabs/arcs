@@ -7,6 +7,8 @@ import path from 'path';
 import typescript from 'rollup-plugin-typescript2';
 import commonjs from 'rollup-plugin-commonjs';
 
+let defaults = { compilerOptions: { declaration: true } };
+
 export default [{
   input: ['runtime/ts-build/runtime.js', 'runtime/ts-build/keymgmt/manager.js', 'shell/apps/remote-planning/interface.js'],
   output: [
@@ -34,7 +36,7 @@ export default [{
   ]
 },
   {
-    input: ['runtime/ts/keymgmt/manager.ts'],
+    input: ['runtime/ts/keymgmt/index.ts'],
     output: [
       {
         file: pkg.browser,
@@ -44,6 +46,7 @@ export default [{
     plugins: [
       typescript(
         {
+          tsConfigDefaults: defaults,
           tsconfig: 'tsconfig.json'
         }),
       ignore(['whatwg-fetch']),
@@ -55,7 +58,7 @@ export default [{
           // if nothing is returned, we fall back to default resolution
         }
       }, 
-      resolve(),
+      resolve({browser: true}),
       commonjs(),
       multiEntry()
     ]
