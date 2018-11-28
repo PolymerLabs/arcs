@@ -65,7 +65,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
   }
 }
 
-async function wait(timeout) {
+async function wait(timeout: number) {
    try {
      await rejectAfter(timeout);
    } catch(e) {

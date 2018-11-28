@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {FbGraph} from '../../../components/FbGraph/FbGraph.js';
+import {FbGraph} from '../../../../modalities/dom/components/FbGraph/FbGraph.js';
 import Firebase from '../../../lib/firebase.js';
 
 const {Field} = FbGraph(Firebase.db);

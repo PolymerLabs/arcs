@@ -6,11 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import express from 'express';
 import PouchDB from 'pouchdb';
 import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
-import {Runtime} from 'arcs';
 import {ShellPlanningInterface} from 'arcs';
 import {AppBase} from './app-base';
 import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
@@ -27,9 +25,6 @@ import path from "path";
  * - `STORAGE_KEY_BASE` default is `pouchdb://localhost:8080/user`
  */
 class PouchDbApp extends AppBase {
-  // ref to Express instance
-  express: express.Application;
-  runtime: Runtime;
   private static readonly storageKeyBase: string = process.env['STORAGE_KEY_BASE'] || 'pouchdb://localhost:8080/user/';
   private static readonly userId: string = process.env['ARCS_USER_ID'] || ShellPlanningInterface.USER_ID_CLETUS;
 

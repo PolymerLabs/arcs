@@ -11,7 +11,7 @@
 // TODO(wkorman): Note the FireBase auth library is loaded earlier in
 // apps/web/index.html and see comment there for more.
 
-import Xen from '../../components/xen/xen.js';
+import Xen from '../../modalities/dom/components/xen/xen.js';
 const firebase = window.firebase;
 
 class ArcAuth extends Xen.Base {

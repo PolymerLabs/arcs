@@ -1,4 +1,4 @@
-import {FbGraph} from '../../../components/FbGraph/FbGraph.js';
+import {FbGraph} from '../../../modalities/dom/components/FbGraph/FbGraph.js';
 
 // arcs runtime
 import '../../../build/ArcsLib.js';

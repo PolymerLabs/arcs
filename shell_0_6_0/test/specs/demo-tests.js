@@ -41,7 +41,7 @@ const receiveEntity = async entity =>
 describe('demo', function() {
   it('restaurants', async function() {
     const search = `restaurants`;
-    const findRestaurants = `[title^="Find restaurants"]`;
+    const findRestaurants = `[title^="[demo] find restaurants"]`;
     const restaurantItem = `#webtest-title`;
     const reservation = `[title*="ou are "]`;
     const calendarAction = `[particle-host="Calendar::action"]`;

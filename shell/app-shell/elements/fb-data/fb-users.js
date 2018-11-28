@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {FbUsers} from './FbUsers.js';
-import Xen from '../../../components/xen/xen.js';
+import Xen from '../../../../modalities/dom/components/xen/xen.js';
 
 const log = Xen.logFactory('fb-users', '#883997');
 

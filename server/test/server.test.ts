@@ -47,7 +47,7 @@ describe('baseRoute', () => {
       .request(app.express)
       .get('/arcs/manifest')
       .then(res => {
-        expect(res.body.id).to.equal('manifest:undefined:');
+        expect(res.body.id).to.equal('!manifest:manifest:');
         expect(res.body.text).to.include('schema Text');
       });
   });

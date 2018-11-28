@@ -86,8 +86,8 @@ export abstract class AppBase {
         text -> handleA`;
 
       try {
-        const manifest = await Runtime.parseManifest(content, {});
-        res.json({ id: manifest.id, text: manifest.toString() });
+        const manifest = await Runtime.parseManifest(content, {fileName: 'manifest'});
+        res.json({ id: manifest.id.toString(), text: manifest.toString() });
       } catch (err) {
         next(err);
       }

@@ -15,12 +15,12 @@ import './shell-ui/user-picker.js';
 import './shell-ui/voice-driver.js';
 
 // components
-import '../../components/simple-tabs.js';
-import '../../components/arc-tools/store-explorer.js';
-import '../../components/xen-tools/xen-explorer.js';
+import '../../../modalities/dom/components/elements/simple-tabs.js';
+import '../../../modalities/dom/components/arc-tools/store-explorer.js';
+import '../../../modalities/dom/components/xen/tools/xen-explorer.js';
 
 // libs
-import Xen from '../../components/xen/xen.js';
+import Xen from '../../../modalities/dom/components/xen/xen.js';
 
 // strings
 import {StyleSheet} from './shell-ui.css.js';

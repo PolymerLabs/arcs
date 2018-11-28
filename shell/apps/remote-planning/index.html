@@ -14,8 +14,6 @@
     import '../../apps/common/config.js';
     import Firebase from '../../apps/common/firebase-config.js';
     import ArcsUtils from '../../lib/arcs-utils.js';
-    // import {FbGraph} from '../../components/FbGraph/FbGraph.js';
-    // import {FbStore} from '../../app-shell/elements/fb-data/FbStore.js';
     import {FbUser} from '../../app-shell/elements/fb-data/FbUser.js';
 ////////////////////////////////////////////////////////////////////
 
@@ -248,7 +246,7 @@
     var fbUser = new FbUser((type, detail) => onEvent(type, detail));
     let field = fbUser.queryUser(userid);
     field.activate();
-    document.arcs = arcs; 
+    document.arcs = arcs;
   </script>
 </body>
 </html>

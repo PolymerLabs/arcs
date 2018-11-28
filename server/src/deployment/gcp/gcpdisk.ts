@@ -26,7 +26,7 @@ class GCPDisk implements Disk {
   diskApi: Compute.Disk;
   private computeApi: Compute;
 
-  constructor(compute: Compute, diskApi) {
+  constructor(compute: Compute, diskApi: Compute.Disk) {
     this.computeApi = compute;
     this.diskApi = diskApi;
   }
@@ -104,7 +104,7 @@ class GCPDisk implements Disk {
 }
 
 class BetaCompute extends Compute {
-  private packageJson: {};
+  private packageJson: {} = {};
   constructor(options?) {
     super(options);
     options = common.util.normalizeArguments(this, options);
@@ -144,7 +144,7 @@ export class GCPDiskManager implements DiskManager {
     };
 
     config['labels'][arcskey] = true;
-    const keyDesc = {};
+    const keyDesc: {[index: string]: string} = {};
     keyDesc[arcskey] = wrappedKey;
     config['description']=JSON.stringify(keyDesc);
     console.log("putting description "+ console.dir(keyDesc) + "\n as " + JSON.stringify(keyDesc));

@@ -9,6 +9,7 @@
 import {AppBase} from "./app-base";
 import {CloudManager} from "./deployment/cloud";
 import {Container, DeploymentStatus} from "./deployment/containers";
+import {NextFunction, Request, Response} from "express";
 import express from "express";
 import cors from "cors";
 import fetch from 'node-fetch';
@@ -54,11 +55,11 @@ class ArcsMasterApp extends AppBase {
    * so we take a base64 fingerprint, remove illegal characters, and then shorten it to 32-characters.
    * @param str a base64 string, usually a fingerprint.
    */
-  gcpSafeIdentifier(str) {
+  gcpSafeIdentifier(str: string): string {
     return str.replace(/[ +\-=]/g, '').toLowerCase().substring(0, 32);
   }
 
-  async lock(req, res, next) {
+  async lock(req: Request, res: Response, next: NextFunction) {
     console.log("fingerprint is " + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
     console.log("gcp safe fingerprint " + fingerprint);
@@ -83,7 +84,7 @@ class ArcsMasterApp extends AppBase {
     }
   }
 
-  async unlock(req, res, next) {
+  async unlock(req: Request, res: Response, next: NextFunction) {
     console.log("fingerprint is " + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
     console.log("gcp safe fingerprint " + fingerprint);
@@ -109,7 +110,7 @@ class ArcsMasterApp extends AppBase {
     }
   }
 
-  async findDeployment(req, res, next) {
+  async findDeployment(req: Request, res: Response, next: NextFunction) {
     console.log("fingerprint is " + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
     console.log("gcp safe fingerprint " + fingerprint);
@@ -153,7 +154,7 @@ class ArcsMasterApp extends AppBase {
     }
   }
 
-  async deploy(req, res, next) {
+  async deploy(req: Request, res: Response, next: NextFunction) {
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
     const wrappedKey = req.params.wrappedKey;
     const rewrappedKey = req.params.rewrappedKey;
@@ -176,7 +177,7 @@ class ArcsMasterApp extends AppBase {
     }
   }
 
-  async mount(req, res, next) {
+  async mount(req: Request, res: Response, next: NextFunction) {
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
     const rewrappedKey = req.params.rewrappedKey;
     try {
