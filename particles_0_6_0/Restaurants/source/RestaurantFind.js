@@ -12,7 +12,8 @@ defineParticle(({DomParticle}) => {
   const placesService =`${service}/places.php`;
   const photoService = `${service}/place-photo.php`;
 
-  const makePlacesUrl = ({loc, radius, type}) => `${placesService}?location=${loc}&radius=${radius}&type=${type}`;
+  const makePlacesUrl = ({loc, radius, type}) =>
+    `${placesService}?location=${loc}&radius=${radius}&type=${type}`;
 
   return class extends DomParticle {
     willReceiveProps({location, restaurants}, {count}) {

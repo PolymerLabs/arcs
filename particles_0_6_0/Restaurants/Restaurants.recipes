@@ -18,7 +18,7 @@ import '../Profile/Geolocate.recipe'
 //  create #selected as selected
 //  Geolocate
 //    location = location
-//  FindRestaurants
+//  RestaurantFind
 //    location = location
 //    restaurants = restaurants
 //  SelectableTiles
@@ -27,4 +27,4 @@ import '../Profile/Geolocate.recipe'
 //  TileMultiplexer
 //    list = restaurants
 //    hostedParticle = RestaurantTile
-//  description `find restaurants near ${FindRestaurants.location}`
+//  description `find restaurants near ${RestaurantFind.location}`

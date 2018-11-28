@@ -46,4 +46,4 @@ particle RestaurantDetail in 'source/RestaurantDetail.js'
 //     selected = selected
 //   RestaurantDetail
 //     restaurant = selected
-//   description `find restaurants near ${FindRestaurants.location}`
+//   description `find restaurants near ${RestaurantFind.location}`

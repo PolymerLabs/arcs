@@ -296,7 +296,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       href: `?arc=${pipesKey}`,
       description: `Pipes!`,
       color: 'silver',
-      touched: Date.now()
+      // pretend to be really old so it sinks to the bottom
+      touched: 0 //Date.now()
     });
   }
   onLauncherClick() {
