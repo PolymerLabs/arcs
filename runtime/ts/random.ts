@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import MersenneTwister from 'mersenne-twister';
+
 abstract class RNG {
   abstract next() : number;
 }
@@ -25,10 +27,9 @@ class MathRandomRNG extends RNG {
  * Provides a deterministic Random Number Generator for Tests
  */
 class SeededRNG extends RNG {
-  private seed = 0;
+  private generator = new MersenneTwister(7);
   next(): number {
-    this.seed = Math.pow(this.seed + Math.E, Math.PI) % 1;
-    return this.seed;
+    return this.generator.random();
   }
 }
 

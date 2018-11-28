@@ -39,6 +39,7 @@
     "eslint-config-google": "^0.11.0",
     "grammkit": "0.6.2",
     "http-server": "^0.11.1",
+    "mersenne-twister": "^1.1.0",
     "minimist": "^1.2.0",
     "mocha": "^5.2.0",
     "mocha-chrome": "^1.1.0",

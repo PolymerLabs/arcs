@@ -18,16 +18,16 @@ describe('Id', function() {
 
     const initialId = Id.newSessionId().fromString('test');
 
-    assert.equal('!158405822139616:test', initialId.toString(),
+    assert.equal('!85915497922560:test', initialId.toString(),
         'Both Session ID and the component should be part of the serialized ID');
-    assert.equal('!158405822139616:test:0', initialId.createId().toString(),
+    assert.equal('!85915497922560:test:0', initialId.createId().toString(),
         'Session ID should remain the same in the newly created sub-ID');
 
     const deserializedInNewSession = Id.newSessionId().fromString(initialId.toString());
     
-    assert.equal('!158405822139616:test', deserializedInNewSession.toString(),
+    assert.equal('!85915497922560:test', deserializedInNewSession.toString(),
         'Original session ID should be present in the serialized form of a deserialized ID');
-    assert.equal('!130690574120708:test:0', deserializedInNewSession.createId().toString(),
+    assert.equal('!255961043304448:test:0', deserializedInNewSession.createId().toString(),
         'Sub-ID created inside a new session should be serialized with a new Session ID');
   });
 });

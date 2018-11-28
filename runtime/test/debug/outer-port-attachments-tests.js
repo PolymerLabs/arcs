@@ -57,8 +57,8 @@ describe('OuterPortAttachment', function() {
 
     assert.deepEqual(instantiateParticleCall.pecMsgBody, {
       // IDs are stable thanks to Random.seedForTests().
-      id: '!158405822139616:demo:particle1',
-      identifier: '!158405822139616:demo:particle1',
+      id: '!85915497922560:demo:particle1',
+      identifier: '!85915497922560:demo:particle1',
       handles: {
         foo: 'fooStore'
       },
