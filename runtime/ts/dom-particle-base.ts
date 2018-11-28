@@ -159,8 +159,9 @@ export class DomParticleBase extends Particle {
     if (handle) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
         Promise.all(entities.map(entity => handle.store(entity)));
-    } else {
-      throw new Error('unimplemented');
+      } else {
+        throw new Error('unimplemented');
+      }
     }
   }
 
