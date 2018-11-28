@@ -127,6 +127,8 @@ export class DomParticleBase extends Particle {
     const handle = this.handles.get(handleName);
     if (handle instanceof Variable || handle instanceof Collection) {
       handle.clear();
+    } else {
+      throw new Error('unimplemented');
     }
   }
 
@@ -144,6 +146,8 @@ export class DomParticleBase extends Particle {
           handle.store(entity);
         }
       }
+    } else {
+      throw new Error('unimplemented');
     }
   }
 
@@ -152,8 +156,11 @@ export class DomParticleBase extends Particle {
    */
   async appendEntitiesToHandle(handleName: string, entities): Promise<void> {
     const handle = this.handles.get(handleName);
-    if (handle && (handle instanceof Collection || handle instanceof BigCollection)) {
-      Promise.all(entities.map(entity => handle.store(entity)));
+    if (handle) {
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        Promise.all(entities.map(entity => handle.store(entity)));
+    } else {
+      throw new Error('unimplemented');
     }
   }
 
@@ -162,11 +169,15 @@ export class DomParticleBase extends Particle {
    */
   async appendRawDataToHandle(handleName, rawDataArray): Promise<void> {
     const handle = this.handles.get(handleName);
-    if (handle && handle.entityClass && (handle instanceof Collection || handle instanceof BigCollection)) {
-      // Typescript can't infer the type here and fails with TS2351
-      // tslint:disable-next-line: no-any
-      const entityClass: any = handle.entityClass;
-      Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+    if (handle && handle.entityClass) {
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        // Typescript can't infer the type here and fails with TS2351
+        // tslint:disable-next-line: no-any
+        const entityClass: any = handle.entityClass;
+        Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+      } else {
+        throw new Error('unimplemented');
+      }
     }
   }
 
@@ -176,13 +187,17 @@ export class DomParticleBase extends Particle {
    */
   updateVariable(handleName: string, rawData) {
     const handle = this.handles.get(handleName);
-    if (handle && handle.entityClass && handle instanceof Variable) {
-      // Typescript can't infer the type here and fails with TS2351
-      // tslint:disable-next-line: no-any
-      const entityClass: any = handle.entityClass;
-      const entity = new entityClass(rawData);
-      handle.set(entity);
-      return entity;
+    if (handle && handle.entityClass) {
+      if (handle instanceof Variable) {
+        // Typescript can't infer the type here and fails with TS2351
+        // tslint:disable-next-line: no-any
+        const entityClass: any = handle.entityClass;
+        const entity = new entityClass(rawData);
+        handle.set(entity);
+        return entity;
+      } else {
+        throw new Error('unimplemented');
+      }
     }
     return undefined;
   }
@@ -196,9 +211,13 @@ export class DomParticleBase extends Particle {
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
-    if (handle && (handle instanceof Collection || handle instanceof BigCollection)) {
-      await handle.remove(entity);
-      await handle.store(entity);
+    if (handle) {
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        await handle.remove(entity);
+        await handle.store(entity);
+      } else {
+        throw new Error('unimplemented');
+      }
     }
   }
 
