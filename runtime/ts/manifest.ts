@@ -115,7 +115,6 @@ export class Manifest {
   private _shapes = <Shape[]>[];
   storeTags: Map<StorageProviderBase, string[]> = new Map();
   private _fileName: string|null = null;
-  private nextLocalID = 0;
   private readonly _id: Id;
   private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
   private _meta = new ManifestMeta();
@@ -123,7 +122,17 @@ export class Manifest {
   private storeManifestUrls: Map<string, string> = new Map();
   private warnings = <ManifestError[]>[];
   constructor({id}) {
-    this._id = id;
+    // TODO: Cleanup usage of strings as Ids.
+    assert(id instanceof Id || typeof id === 'string');
+    if (id instanceof Id) {
+      this._id = id;
+    } else {
+      // We use the first component of an ID as a session ID, for manifests parsed
+      // from the file, this is the 'manifest' phrase.
+      // TODO: Figure out if this is ok.
+      const components = id.split(':');
+      this._id = new Id(components[0], components.slice(1));
+    }
   }
   get id() {
     if (this._meta.name) {
@@ -290,8 +299,9 @@ export class Manifest {
   findRecipesByVerb(verb) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
-  generateID() {
-    return `${this.id}:${this.nextLocalID++}`;
+  // TODO: Unify ID handling to use ID instances, not strings. Change return type here to ID.
+  generateID(): string {
+    return this.id.createId().toString();
   }
   static async load(fileName, loader, options) {
     options = options || {};

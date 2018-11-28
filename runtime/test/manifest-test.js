@@ -1072,7 +1072,7 @@ ${particleStr1}
     assert(store);
     assert.deepEqual(await store.toList(), [
       {
-        id: 'manifest:the.manifest::0',
+        id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -1114,7 +1114,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     assert(store);
     assert.deepEqual(await store.toList(), [
       {
-        id: 'manifest:the.manifest::0',
+        id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -1145,7 +1145,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     };
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
+    assert.deepEqual(recipe.toString(), 'recipe\n  map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
   });
   it('has prettyish syntax errors', async () => {
     try {

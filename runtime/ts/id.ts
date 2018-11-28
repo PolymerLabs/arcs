@@ -11,7 +11,11 @@
 import {Random} from './random.js';
 
 export class Id {
-  private readonly session: string;
+  // Session at which a logical object (e.g. an Arc) got created.
+  // Part of the stable, permanent ID of this object.
+  private session: string;
+  // Current session. E.g. In which an Arc got deserialized and inflated.
+  // This is used to spawn new ids based on this instance.
   private readonly currentSession: string;
   private nextIdComponent = 0;
   private readonly components: string[] = [];
@@ -27,15 +31,23 @@ export class Id {
     return new Id(session);
   }
 
+  /**
+   * When used in the following way:
+   *   const id = Id.newSessionId().fromString(stringId);
+   * 
+   * The resulting id will receive a newly generated session id in the currentSession field,
+   * while maintaining an original session from the string representation in the session field.
+   */
   fromString(str: string): Id {
-    let components = str.split(':');
-    let session = this.currentSession;
+    const newId = new Id(this.currentSession);
 
+    let components = str.split(':');
     if (components[0][0] === '!') {
-      session = components[0].slice(1);
+      newId.session = components[0].slice(1);
       components = components.slice(1);
     }
-    return new Id(session, components);
+    newId.components.push(...components);
+    return newId;
   }
 
   toString(): string {
