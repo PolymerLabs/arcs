@@ -16,6 +16,7 @@ import {PlanProducer} from './plan-producer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
 import {Schema} from '../schema.js';
+import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type.js';
 
@@ -142,51 +143,50 @@ export class Planificator {
     assert(userid, 'Missing user id.');
     assert(storageKeyBase, 'Missing storageKeyBase');
 
-    const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
-    const storageKey = storage.parseStringAsKey(arc.storageKey);
-    let location = storageKey.location;
+    const location = arc.storageProviderFactory.parseStringAsKey(arc.storageKey).location;
 
-    if (!arcKey) {
-      arcKey = arc.id.toString();
-    }
-
-    if (location.includes('/arcs/')) {
-      // Backward compatibility for shell older than 0_6_0.
-      location = storageKey.location
-          .replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`);
-    } else {
-      storageKey.location = storageKey.location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/$1`);
-    }
+    // Construct a new key based on the storageKeyBase
+    // Use '/dummylocation' suffix because Volatile keys require it.
+    const storageKey = arc.storageProviderFactory.parseStringAsKey(storageKeyBase + '/dummylocation');
+ 
+    // Backward compatibility for shell older than 0_6_0.
+    storageKey.location = location.includes('/arcs/')
+      ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`)
+      : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/$1`);
 
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
-    return Planificator._initStore(arc, 'search-id', type, storageKeyBase + location);
+    return Planificator._initStore(arc, 'search-id', type, storageKey);
   }
 
   private static async _initSearchStore(arc: Arc, {userid, storageKeyBase}): Promise<StorageProviderBase> {
-    const storage = arc.storageProviderFactory._storageForKey(arc.storageKey);
-    const storageKey = storage.parseStringAsKey(arc.storageKey);
-    let location = storageKey.location;
- 
-    if (location.includes('/arcs/')) {
-      // Backward compatibility for shell older than 0_6_0.
-      location = location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`);
-    } else {
-      location = location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
-    }
+    assert(userid, 'Missing user id.');
+    assert(storageKeyBase, 'Missing storageKeyBase');
+
+    const location = arc.storageProviderFactory.parseStringAsKey(arc.storageKey).location;
+
+    // Construct a new key based on the storageKeyBase
+    const storageKey = arc.storageProviderFactory.parseStringAsKey(storageKeyBase);
+
+    storageKey.location = location.includes('/arcs/')
+      ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`)
+      : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
 
-    return Planificator._initStore(arc, 'search-id', type, storageKeyBase + location);
+    return Planificator._initStore(arc, 'search-id', type, storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: Type, storageKeyStr: string) : Promise<StorageProviderBase> {
+  private static async _initStore(arc: Arc, id: string, type: Type, storageKey: KeyBase) : Promise<StorageProviderBase> {
+    const providerFactory = arc.storageProviderFactory;
+
     // TODO: unify initialization of suggestions storage.
-    const storage = arc.storageProviderFactory._storageForKey(storageKeyStr);
+    const storageKeyStr = storageKey.toString();
+    const storage = providerFactory._storageForKey(storageKey.toString());
 
     let store: StorageProviderBase = null;
-    
+
     if (storage instanceof FirebaseStorage) {
       // TODO make firebase use the standard construct/connect API
       store = await storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
