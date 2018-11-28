@@ -398,7 +398,8 @@ export class Recipe {
     return recipe;
   }
 
-  mergeInto(recipe) {
+  // tslint:disable-next-line: no-any
+  mergeInto(recipe: Recipe): {handles: Handle[], particles: Particle[], slots: Slot[], cloneMap: Map<any, any>}   {
     const cloneMap = new Map();
     const numHandles = recipe._handles.length;
     const numParticles = recipe._particles.length;

@@ -231,7 +231,7 @@ export class Strategizer {
   }
 }
 
-export interface Descendant {result; score: number; derivation; hash; valid: boolean;}
+export interface Descendant {result; score: number; derivation; hash; valid: boolean; errors?; normalized?;}
 
 export abstract class StrategizerWalker {
   descendants: Descendant[];

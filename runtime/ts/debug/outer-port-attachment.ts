@@ -9,9 +9,13 @@
  */
 'use strict';
 
-import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
+import {mapStackTrace} from '../../../platform/sourcemapped-stacktrace-web.js';
 
 export class OuterPortAttachment {
+  _devtoolsChannel;
+  _arcIdString: string;
+  _speculative: boolean;
+  
   constructor(arc, devtoolsChannel) {
     this._devtoolsChannel = devtoolsChannel;
     this._arcIdString = arc.id.toString();
@@ -70,7 +74,7 @@ export class OuterPortAttachment {
         match = {1: '<unknown>', 2: frameString.replace(/^ *at */, '')};
       }
 
-      const frame = {method: match[1]};
+      const frame: {method, location?, target?, targetClass?} = {method: match[1]};
       const source = match[2].replace(/:[0-9]+$/, '');
       if (source.startsWith('http')) {
         // 'http://<url>/arcs.*/shell/file.js:150'

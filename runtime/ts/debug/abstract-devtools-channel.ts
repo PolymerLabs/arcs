@@ -7,15 +7,15 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../../../platform/assert-web.js';
 
 export class AbstractDevtoolsChannel {
+  debouncedMessages = [];
+  debouncing = false;
+  messageListeners = new Map();
+  
   constructor() {
-    this.debouncedMessages = [];
-    this.debouncing = false;
-    this.messageListeners = new Map();
   }
 
   send(message) {
@@ -50,6 +50,6 @@ export class AbstractDevtoolsChannel {
   }
 
   _flush(messages) {
-    throw 'Not implemented in an abstract class';
+    throw new Error('Not implemented in an abstract class');
   }
 }
