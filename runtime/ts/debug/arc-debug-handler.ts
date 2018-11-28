@@ -9,9 +9,13 @@
  */
 
 import {enableTracingAdapter} from './tracing-adapter.js';
+import {Arc} from '../arc.js';
 import {ArcPlannerInvoker} from './arc-planner-invoker.js';
 import {ArcStoresFetcher} from './arc-stores-fetcher.js';
+import {DevtoolsChannel} from '../../../platform/devtools-channel-web.js';
 import {DevtoolsConnection} from './devtools-connection.js';
+import {Particle} from '../recipe/particle.js';
+import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
 
 // Arc-independent handlers for devtools logic.
 DevtoolsConnection.onceConnected.then(devtoolsChannel => {
@@ -19,8 +23,11 @@ DevtoolsConnection.onceConnected.then(devtoolsChannel => {
 });
 
 export class ArcDebugHandler {
-  constructor(arc) {
-    this._devtoolsChannel = null;
+  _devtoolsChannel: DevtoolsChannel = null;
+  _arcId: string;
+  _isSpeculative: boolean;
+  
+  constructor(arc: Arc) {
     this._arcId = arc.id.toString();
     this._isSpeculative = arc.isSpeculative;
 
@@ -28,11 +35,11 @@ export class ArcDebugHandler {
       this._devtoolsChannel = devtoolsChannel;
       if (!arc.isSpeculative) {
         // Message handles go here.
-        new ArcPlannerInvoker(arc, devtoolsChannel);
-        new ArcStoresFetcher(arc, devtoolsChannel);
+        const arcPlannerInvoker = new ArcPlannerInvoker(arc, devtoolsChannel);
+        const arcStoresFetcher = new ArcStoresFetcher(arc, devtoolsChannel);
       }
 
-      devtoolsChannel.send({
+      this._devtoolsChannel.send({
         messageType: 'arc-available',
         messageBody: {
           id: arc.id.toString(),
@@ -42,7 +49,7 @@ export class ArcDebugHandler {
     });
   }
 
-  recipeInstantiated({particles}) {
+  recipeInstantiated({particles}: {particles: Particle[]}) {
     if (!this._devtoolsChannel || this._isSpeculative) return;
 
     const truncate = ({id, name}) => ({id, name});

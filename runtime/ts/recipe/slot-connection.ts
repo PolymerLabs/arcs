@@ -40,6 +40,8 @@ export class SlotConnection {
   getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get slotSpec() { return this._slotSpec; }
   get targetSlot() { return this._targetSlot; }
+  set targetSlot(targetSlot: Slot | undefined) { this._targetSlot = targetSlot; }
+  
   get providedSlots() { return this._providedSlots; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
