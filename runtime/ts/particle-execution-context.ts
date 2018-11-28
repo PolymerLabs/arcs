@@ -42,7 +42,7 @@ export class ParticleExecutionContext {
         return [proxy, () => callback(proxy, storageKey)];
       }
 
-      onCreateHandleCallback(callback: (StorageProxy) => void, arc: {}, type: Type, id: string, name: string) {
+      onCreateHandleCallback(callback: (StorageProxy) => void, type: Type, id: string, name: string) {
         const proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
         return [proxy, () => callback(proxy)];
       }
@@ -68,7 +68,7 @@ export class ParticleExecutionContext {
       }
   
       onInstantiateParticle(id: string, spec: ParticleSpec, handles: {[index: string]: Handle}) {
-        pec._instantiateParticle(id, spec, handles);
+        return pec._instantiateParticle(id, spec, handles);
       }
 
       onSimpleCallback(callback: ({}) => void, data: {}) {
@@ -332,6 +332,7 @@ export class ParticleExecutionContext {
     });
 
     return [particle, async () => {
+      console.log('particle mapped');
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
       const idx = this.pendingLoads.indexOf(p);

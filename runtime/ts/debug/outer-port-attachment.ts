@@ -26,6 +26,8 @@ export class OuterPortAttachment {
     // Skip speculative and pipes arcs for now.
     if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
 
+    console.log('handlePecMessage', name);
+
     const stack = this._extractStackFrames(stackString);
     this._devtoolsChannel.send({
       messageType: 'PecLog',

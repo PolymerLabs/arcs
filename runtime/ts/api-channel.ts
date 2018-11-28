@@ -16,15 +16,24 @@ import {OuterPortAttachment} from './debug/outer-port-attachment.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import * as recipe from './recipe/particle.js';
+import * as recipeParticle from './recipe/particle.js';
+import * as recipeHandle from './recipe/handle.js';
 import {Arc} from './arc.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProxy} from '../storage-proxy.js';
+import { Slot } from './recipe/slot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral};
 
 interface MappingInfo {
   type: MappingType;
+  initializer?: boolean;
+  redundant?: boolean;
+  value?: MappingInfo;
+  key?: MappingInfo;
+  converter?: Literalizer;
+  identifier?: boolean;
+  ignore?: boolean;
 }
 
 interface Literalizer {
@@ -58,21 +67,21 @@ function Mapped(target: Object, propertyKey: string, parameterIndex: number) {
 
 function ByLiteral(constructor: Literalizer) {
   return function(target: Object, propertyKey: string, parameterIndex: number) {
-    const info = {type: MappingType.ByLiteral, converter: constructor};
+    const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
   }
 }
 
 function ObjectMap(key: MappingType, value: MappingType) {
   return function(target: Object, propertyKey: string, parameterIndex: number) {
-    const info = {type: MappingType.ObjectMap, key, value};
+    const info: MappingInfo = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   }
 }
 
 function List(value: MappingType) {
   return function(target: Object, propertyKey: string, parameterIndex: number) {
-    const info = {type: MappingType.List, value};
+    const info: MappingInfo = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   }  
 }
@@ -86,15 +95,29 @@ function RemoteMapped(target: Object, propertyKey: string, parameterIndex: numbe
 }
 
 function NoArgs(target: Object, propertyKey: string) {
-  setPropertyKey(target, propertyKey);
+  setPropertyKey(target.constructor, propertyKey);
 }
 
-function RedundantInitializer(target: Object, propertyKey: string) {
-
+function RedundantInitializer(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct, initializer: true, redundant: true})
 }
 
-function Initializer(target: Object, propertyKey: string) {
+function Initializer(target: Object, propertyKey: string, parameterIndex: number) {
+  set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Direct, initializer: true})
+}
 
+function Identifier(target: Object, propertyKey: string, parameterIndex: number) {
+  assert(__targets.get(target.constructor));
+  assert(__targets.get(target.constructor).get(propertyKey));
+  assert(__targets.get(target.constructor).get(propertyKey)[parameterIndex]);
+  __targets.get(target.constructor).get(propertyKey)[parameterIndex].identifier = true;
+}
+
+function RemoteIgnore(target: Object, propertyKey: string, parameterIndex: number) {
+  assert(__targets.get(target.constructor));
+  assert(__targets.get(target.constructor).get(propertyKey));
+  assert(__targets.get(target.constructor).get(propertyKey)[parameterIndex]);
+  __targets.get(target.constructor).get(propertyKey)[parameterIndex].ignore = true;
 }
 
 class ThingMapper {
@@ -174,7 +197,7 @@ export class APIPort {
   private _messageMap: Map<any, any>;
   protected _debugAttachment: any;
   protected _attachStack: boolean;
-  private messageCount: number;
+  messageCount: number;
   constructor(messagePort, prefix) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
@@ -244,9 +267,17 @@ export class APIPort {
   }
 
   async _processMessage(e) {
-    assert(this._messageMap.has(e.data.messageType));
+    assert(this['before' + e.data.messageType] !== undefined);
+    this['before' + e.data.messageType](e.data.messageBody);
+    const count = this.messageCount++;
 
-    const cnt = this.messageCount++;
+    if (this._debugAttachment) {
+      this._debugAttachment.handlePecMessage('on' + e.data.messageType, e.data.messageBody, count, e.data.stack);
+    }
+
+    if (1) return;
+
+
 
     const handler = this._messageMap.get(e.data.messageType);
     let args;
@@ -304,6 +335,15 @@ export class APIPort {
     };
   }
 
+  send(name, args) {
+    const call = {messageType: name, messageBody: args, stack: this._attachStack ? new Error().stack : undefined};
+    const count = this.messageCount++;
+    this._port.postMessage(call);
+    if (this._debugAttachment) {
+      this._debugAttachment.handlePecMessage(name, args, count, new Error().stack);
+    }
+  }
+
   registerHandler(name, argumentTypes) {
     this._messageMap.set(name, {args: argumentTypes});
   }
@@ -336,6 +376,177 @@ export class APIPort {
   }
 }
 
+// The horror. From https://davidwalsh.name/javascript-arguments
+function getArgs(func) {
+  // First match everything inside the function argument parens.
+  var args = func.toString().match(/.*?\(([^)]*)\)/)[1];
+ 
+  // Split the arguments string into an array comma delimited.
+  return args.split(',').map(function(arg) {
+    // Ensure no inline comments are parsed and trim the whitespace.
+    return arg.replace(/\/\*.*\*\//, '').trim();
+  }).filter(function(arg) {
+    // Ensure no undefined values are added.
+    return arg;
+  });
+}
+
+function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
+  switch (info.type) {
+    case MappingType.Mapped:
+      return mapper.identifierForThing(value);
+    case MappingType.LocalMapped:
+      return mapper.maybeCreateMappingForThing(value);
+    case MappingType.RemoteMapped:
+      // This is on the local side, so we don't do anything here.
+      return value;
+    case MappingType.Direct:
+      return value;
+    case MappingType.ObjectMap:
+      const r = {};
+      value.forEach((childvalue, key) => r[convert(info.key, key, mapper)] = convert(info.value, childvalue, mapper));
+      return r;
+    case MappingType.List:
+      return value.map(v => convert(info.value, v, mapper));
+    case MappingType.ByLiteral:
+      return value.toLiteral();
+    default:
+      throw new Error(`Can't yet send MappingType ${info.type}`);
+  }
+}
+
+function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
+  switch (info.type) {
+    case MappingType.Mapped:
+      return mapper.thingForIdentifier(value);
+    case MappingType.LocalMapped:
+      // This is on the remote side, so we don't do anything here.
+      return value;
+    case MappingType.RemoteMapped:
+      return mapper.thingForIdentifier(value);
+    case MappingType.Direct:
+      return value;
+    case MappingType.ObjectMap:
+      const r = new Map();
+      for (const key in value) {
+        r.set(unconvert(info.key, key, mapper), unconvert(info.value, value[key], mapper));
+      }
+      return r;
+    case MappingType.List:
+      return value.map(v => unconvert(info.value, v, mapper));
+    case MappingType.ByLiteral:
+      return info.converter.fromLiteral(value);
+    default:
+      throw new Error(`Can't yet recieve MappingType ${info.type}`);
+  }
+}
+
+function AutoConstruct<S extends {prototype: any}>(target: S) {
+  return function<T extends {prototype: any}>(constructor:T) {
+    const doConstruct = function<Q extends {prototype: any}, R extends {prototype: any}>(me: Q, other: R) {
+      let functions = __targets.get(me);
+      for (const f of functions.keys()) {
+        const argNames = getArgs(me.prototype[f]);
+        const descriptor = functions.get(f);
+
+        function impl(...args) {
+          const messageBody = {};
+          let needsInitializer = undefined;
+          let requestedId = undefined;
+          for (let i = 0; i < descriptor.length; i++) {
+            // If this descriptor is for an initializer, record that fact and we'll process it after
+            // the rest of the arguments.
+            if (descriptor[i].initializer) {
+              assert(needsInitializer === undefined, `Error processing ${f}: messages can't have multiple initializers`);
+              needsInitializer = args[i];
+              argNames[i] = 'identifier';
+              continue;
+            }
+
+            // Process this argument.
+            messageBody[argNames[i]] = convert(descriptor[i], args[i], this._mapper);
+            
+            // If this descriptor records that this argument is the identifier, record it
+            // as the requestedId for mapping below.
+            if (descriptor[i].identifier) {
+              requestedId = args[i];
+            }
+          }
+          
+          // If there's a requestedId then the receiving end won't expect to
+          // see the identifier as well.
+          if (requestedId !== undefined) {
+            assert(needsInitializer !== undefined);
+            const idx = argNames.indexOf('identifier');
+            assert(idx > -1);
+            descriptor[idx].ignore = true;
+          }
+
+          // Process the initializer if present.
+          if (needsInitializer !== undefined) {
+            messageBody['identifier'] = this._mapper.createMappingForThing(needsInitializer, requestedId);
+          }
+
+// console.log(f, messageBody);
+          this.send(f, messageBody);
+        };
+
+
+        async function before(messageBody) {
+          const args = [];
+          let isInitializer = false;
+          const promises = [];
+          for (let i = 0; i < descriptor.length; i++) {
+            if (descriptor[i].initializer) {
+              isInitializer = true;
+            }
+            if (descriptor[i].ignore) {
+              continue;
+            }
+            const result = unconvert(descriptor[i], messageBody[argNames[i]], this._mapper);
+            if (result instanceof Promise) {
+              promises.push({promise: result, position: args.length});
+              args.push(() => unconvert(descriptor[i], messageBody[argNames[i]], this._mapper));
+            } else {
+              args.push(result);
+            }
+          }
+
+          if (promises.length > 0) {
+            await Promise.all(promises.map(a => a.promise));
+            promises.forEach(a => args[a.position] = args[a.position]());
+          }
+
+// console.log(f, isInitializer, args);
+          const result = this['on' + f](...args);
+
+          // If this message is an initializer, need to establish a mapping
+          // with the result of processing the message.
+          if (isInitializer) {
+            assert(messageBody['identifier']);
+            await this._mapper.establishThingMapping(messageBody['identifier'], result);
+          }
+        }
+
+        Object.defineProperty(me.prototype, f, {
+          get: function() {
+            return impl;
+          }
+        });
+
+        Object.defineProperty(other.prototype, 'before' + f, {
+          get: function() {
+            return before;
+          }
+        });
+      }
+    }
+    
+    doConstruct(constructor, target);
+    doConstruct(target, constructor);
+  };
+}
+
 export abstract class PECOuterPort extends APIPort {
   constructor(messagePort, arc) {
     super(messagePort, 'o');
@@ -346,8 +557,8 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  @RedundantInitializer DefineHandle(@ByLiteral(Type) type: Type, @Direct name: string) {}
-  @Initializer InstantiateParticle(@Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) handles: {[index: string]: Handle}) {}
+  DefineHandle(@RedundantInitializer handle: Handle, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  InstantiateParticle(@Initializer particle: ParticleSpec, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) handles: {[index: string]: Handle}) {}
   
   UIEvent(@Mapped particle: ParticleSpec, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
@@ -355,7 +566,7 @@ export abstract class PECOuterPort extends APIPort {
   StartRender(@Mapped particle: ParticleSpec, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
   StopRender(@Mapped particle: ParticleSpec, @Direct slotName: string) {}
   
-  abstract onRender(particle: recipe.Particle, slotName: string, content: string);
+  abstract onRender(particle: recipeParticle.Particle, slotName: string, content: string);
   abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
   abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
   abstract onHandleGet(handle: StorageProviderBase, callback: number, particleId: string);
@@ -369,31 +580,32 @@ export abstract class PECOuterPort extends APIPort {
   abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string);
   abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: string);
 
-  abstract onIdle(version: number, relevance: Map<recipe.Particle, number[]>);
+  abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  @Initializer GetBackingStoreCallback(@RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Direct id: string, @Direct storageKey: string) {}
+  GetBackingStoreCallback(@Initializer store: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Direct id: string, @Direct storageKey: string) {}
   
   abstract onConstructInnerArc(callback: number, particle: ParticleSpec);
-  ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: Arc) {}
+  ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
-  abstract onArcCreateHandle(callback: number, arc: Arc, type: Type, string);
-  @Initializer CreateHandleCallback(@RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Direct id: string) {}
-  abstract onArcMapHandle(callback: number, arc: Arc, handle: StorageProviderBase);
-  @Initializer MapHandleCallback(@RemoteMapped callback: number, @Direct id: string) {}
+  abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
+  CreateHandleCallback(@Initializer handle: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
+  MapHandleCallback(@Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
   abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
-  @Initializer CreateSlotCallback(@RemoteMapped callback: number, @Direct hostedSlotId: string) {}
+  CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
   InnerArcRender(@Mapped transformationParticle: ParticleSpec, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: any) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
-  abstract onRaiseSystemExcetion(exception: any, methodName: string, particleId: string);
+  abstract onRaiseSystemException(exception: any, methodName: string, particleId: string);
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
   @NoArgs DevToolsConnected() {}
 }
 
+@AutoConstruct(PECOuterPort)
 export abstract class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
@@ -432,7 +644,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onConstructArcCallback(callback: (arc: {}) => void, arc: {});
 
   ArcCreateHandle(@LocalMapped callback: (proxy: StorageProxy) => void, @Direct arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, arc: {}, type: Type, name: string, id: string);
+  abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: (value: string) => void, @Direct arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
 

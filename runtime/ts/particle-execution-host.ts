@@ -20,6 +20,7 @@ import {Particle} from './recipe/particle.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {ParticleSpec} from './particle-spec.js';
 import { Type } from './type.js';
+import { Handle } from './recipe/handle.js';
 
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;
@@ -28,7 +29,7 @@ export class ParticleExecutionHost {
   private nextIdentifier = 0;
   slotComposer: SlotComposer;
   private idleVersion = 0;
-  private idlePromise: Promise<number> | undefined;
+  private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
 
   constructor(port, slotComposer: SlotComposer, arc: Arc) {
@@ -110,7 +111,7 @@ export class ParticleExecutionHost {
         }
       }
 
-      onGetBackingStore(callback: number, storageKey: string, type: Type) {
+      async onGetBackingStore(callback: number, storageKey: string, type: Type) {
         if (!storageKey) {
           storageKey = pec.arc.storageProviderFactory.baseStorageKey(type, pec.arc.storageKey || 'volatile');
         }
@@ -119,39 +120,39 @@ export class ParticleExecutionHost {
         //
         // Without an auditor on the runtime side that inspects what is being fetched from
         // this store, particles with a reference can access any data of that reference's type.
-        this.GetBackingStoreCallback(store, type: type.collectionOf(), name: type.toString(), callback, id: store.id, storageKey);
+        this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), store.id, storageKey);
       }
 
-      onConstructInnerArc({callback, particle}) {
+      onConstructInnerArc(callback: number, particle: ParticleSpec) {
         const arc = {particle};
-        this._apiPort.ConstructArcCallback({callback, arc});
+        this.ConstructArcCallback(callback, arc);
       }
 
-      onArcCreateHandle({callback, arc, type, name}) {
+      async onArcCreateHandle(callback: number, arc: {}, type: Type, name: string) {
         // At the moment, inner arcs are not persisted like their containers, but are instead
         // recreated when an arc is deserialized. As a consequence of this, dynamically 
         // created handles for inner arcs must always be volatile to prevent storage 
         // in firebase.
-        const store = await this.arc.createStore(type, name, null, [], 'volatile');
-        this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
+        const store = await pec.arc.createStore(type, name, null, [], 'volatile');
+        this.CreateHandleCallback(store, callback, type, name, store.id);
       }
 
-      onArcMapHandle({callback, arc, handle}) {
-        assert(this.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
+      onArcMapHandle(callback: number, arc: {}, handle: Handle) {
+        assert(pec.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
         // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
-        this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
+        this.MapHandleCallback({}, callback, handle.id);
       }
 
-      onArcCreateSlot({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId}) {
+      onArcCreateSlot(callback: number, arc: {}, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
         let hostedSlotId;
-        if (this.slotComposer) {
-          hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
+        if (pec.slotComposer) {
+          hostedSlotId = pec.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
         }
-        this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
+        this.CreateSlotCallback({}, callback, hostedSlotId);
       }
 
-      onArcLoadRecipe({arc, recipe, callback}) {
-        const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
+      async onArcLoadRecipe(arc: {}, recipe: string, callback: number) {
+        const manifest = await Manifest.parse(recipe, {loader: pec.arc.loader, fileName: ''});
         let error = undefined;
         // TODO(wkorman): Consider reporting an error or at least warning if
         // there's more than one recipe since currently we silently ignore them.
@@ -159,7 +160,7 @@ export class ParticleExecutionHost {
         if (recipe0) {
           const missingHandles = [];
           for (const handle of recipe0.handles) {
-            const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
+            const fromHandle = pec.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
             if (!fromHandle) {
               missingHandles.push(handle);
               continue;
@@ -167,7 +168,7 @@ export class ParticleExecutionHost {
             handle.mapToStorage(fromHandle);
           }
           if (missingHandles.length > 0) {
-            const resolvedRecipe = await new RecipeResolver(this.arc).resolve(recipe0);
+            const resolvedRecipe = await new RecipeResolver(pec.arc).resolve(recipe0);
             if (!resolvedRecipe) {
               error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
             } else {
@@ -182,8 +183,8 @@ export class ParticleExecutionHost {
               if (recipe0.isResolved()) {
                 // TODO: pass tags through too, and reconcile with similar logic
                 // in Arc.deserialize.
-                manifest.stores.forEach(store => this.arc._registerStore(store, []));
-                this.arc.instantiate(recipe0, arc);
+                manifest.stores.forEach(store => pec.arc._registerStore(store, []));
+                pec.arc.instantiate(recipe0, arc);
               } else {
                 error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
               }
@@ -194,11 +195,11 @@ export class ParticleExecutionHost {
         } else {
           error = 'No recipe defined';
         }
-        this._apiPort.SimpleCallback({callback, data: error});
+        this.SimpleCallback(callback, error);
       }
 
-      onRaiseSystemException({exception, methodName, particleId}) {
-      const particle = this.arc.particleHandleMaps.get(particleId).spec.name;
+      onRaiseSystemException(exception: {}, methodName: string, particleId: string) {
+      const particle = pec.arc.particleHandleMaps.get(particleId).spec.name;
         reportSystemException(exception, methodName, particle);
       }
     }(port, arc);
@@ -210,12 +211,12 @@ export class ParticleExecutionHost {
 
   get idle() {
     if (this.idlePromise == undefined) {
-      this.idlePromise = new Promise((resolve, reject) {
+      this.idlePromise = new Promise((resolve, reject) => {
         this.idleResolve = resolve;
       });
     }
     this.idleVersion = this.nextIdentifier;
-    this._apiPort.AwaitIdle({version: this.nextIdentifier++});
+    this._apiPort.AwaitIdle(this.nextIdentifier++);
     return this.idlePromise;
   }
 
@@ -224,24 +225,24 @@ export class ParticleExecutionHost {
   }
 
   sendEvent(particle, slotName, event) {
-    this._apiPort.UIEvent({particle, slotName, event});
+    this._apiPort.UIEvent(particle, slotName, event);
   }
 
   instantiate(particle, spec, handles) {
-    handles.forEach(handle {
-      this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name});
+    handles.forEach(handle => {
+      this._apiPort.DefineHandle(handle, handle.type.resolvedType(), handle.name);
     });
 
-    this._apiPort.InstantiateParticle(particle, {id: particle.id, spec, handles});
+    this._apiPort.InstantiateParticle(particle, particle.id, spec, handles);
     return particle;
   }
-  startRender({particle, slotName, providedSlots, contentTypes}) {
-    this._apiPort.StartRender({particle, slotName, providedSlots, contentTypes});
+  startRender({particle, slotName, providedSlots, contentTypes}: {particle: ParticleSpec, slotName: string, providedSlots: {[index: string]: string}, contentTypes: string[]}) {
+    this._apiPort.StartRender(particle, slotName, providedSlots, contentTypes);
   }
-  stopRender({particle, slotName}) {
-    this._apiPort.StopRender({particle, slotName});
+  stopRender({particle, slotName}: {particle: ParticleSpec, slotName: string}) {
+    this._apiPort.StopRender(particle, slotName);
   }
-  innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
-    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content});
+  innerArcRender(transformationParticle: ParticleSpec, transformationSlotName: string, hostedSlotId: string, content) {
+    this._apiPort.InnerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content);
   }
 }
