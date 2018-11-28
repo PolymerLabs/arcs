@@ -10,7 +10,7 @@
 'use strict';
 
 import {XenStateMixin} from '../modalities/dom/components/xen/xen-state.js';
-import {DomParticleBase} from './dom-particle-base.js';
+import {DomParticleBase} from './ts-build/dom-particle-base.js';
 
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system

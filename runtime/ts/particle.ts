@@ -10,6 +10,8 @@
 
 import {Tracing} from '../../tracelib/trace.js';
 import {assert} from '../../platform/assert-web.js';
+import {BigCollection} from './handle.js';
+import {Collection} from './handle.js';
 import {Handle} from './handle.js';
 import {ConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
@@ -35,10 +37,10 @@ export class Particle {
     
     // Only used by a Slotlet class in particle-execution-context
     // tslint:disable-next-line: no-any
-    private _slotByName: Map<string, any> = new Map();
+    protected _slotByName: Map<string, any> = new Map();
     private capabilities: {constructInnerArc?: Function};
     
-  constructor(capabilities) {
+  constructor(capabilities?: {constructInnerArc?: Function}) {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
@@ -184,7 +186,9 @@ export class Particle {
       // Typescript can't infer the type here and fails with TS2351
       // tslint:disable-next-line: no-any
       const entityClass:any = descriptions.entityClass;
-      descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
+      if (descriptions instanceof Collection || descriptions instanceof BigCollection) {
+        descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
+      }
       return true;
     }
     throw new Error('A particle needs a description handle to set a decription pattern');
