@@ -6,8 +6,9 @@
     "port": "8080",
     "host": "localhost"
   },
+  "browser": "dist/webmain.js",
+  "module": "dist/webmain.js",
   "main": "dist/index.es.js",
-  "module": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
     "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
@@ -47,9 +48,11 @@
     "prettier": "^1.14.3",
     "request": "^2.88.0",
     "rollup": "^0.67.1",
+    "rollup-plugin-commonjs": "^9.2.0",
     "rollup-plugin-ignore": "^1.0.4",
     "rollup-plugin-multi-entry": "^2.0.2",
     "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-typescript2": "^0.18.0",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "typedoc": "^0.13.0",
