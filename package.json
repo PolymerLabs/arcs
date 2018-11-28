@@ -6,9 +6,9 @@
     "port": "8080",
     "host": "localhost"
   },
+  "browser": "dist/webmain.js",
+  "module": "dist/webmain.js",
   "main": "dist/index.es.js",
-  "module": "dist/index.esm.js",
-  "browser": "dist/indexweb.esm.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
     "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
@@ -98,6 +98,5 @@
     "ignore": [
       "ws"
     ]
-  },
-  "typings": "dist/index.d.ts"
+  }
 }

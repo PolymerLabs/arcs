@@ -7,13 +7,13 @@ import path from 'path';
 import typescript from 'rollup-plugin-typescript2';
 import commonjs from 'rollup-plugin-commonjs';
 
-let defaults = { compilerOptions: { declaration: true } };
+const defaults = {compilerOptions: {declaration: true}};
 
 export default [{
   input: ['runtime/ts-build/runtime.js', 'runtime/ts-build/keymgmt/manager.js', 'shell/apps/remote-planning/interface.js'],
   output: [
     {
-      file: pkg.module,
+      file: pkg.main,
       format: 'es',
     }
   ],
@@ -36,7 +36,7 @@ export default [{
   ]
 },
   {
-    input: ['runtime/ts/keymgmt/index.ts'],
+    input: ['runtime/ts/webmain.ts'],
     output: [
       {
         file: pkg.browser,
