@@ -33,7 +33,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     this.setUrlParam('user', null);
-    if (userid && userid !== Const.defaultUserId) {
+    if (userid) {
       localStorage.setItem(Const.LOCALSTORAGE.user, userid);
     }
     if (arckey != null) {

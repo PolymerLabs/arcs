@@ -9,81 +9,83 @@
 defineParticle(({DomParticle, html}) => {
 
   const template = html`
+
+<style>
+  :host {
+    padding: 0 16px;
+  }
+  [time-picker] > div {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    height: 56px;
+    align-items: center;
+  }
+  [select] {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    border-right: 1px solid rgba(0,0,0,.1);
+  }
+  [select]::after {
+    content: '▼';
+    display: block;
+    position: absolute;
+    right: 8px;
+    transform: scaleY(0.4) scaleX(0.8);
+    pointer-events: none;
+  }
+  [select] > select {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    border-radius: 0;
+    font-size: 16px;
+    overflow: hidden;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input {
+    padding: 0;
+    vertical-align: top;
+    border: 0;
+    background: transparent;
+    font-family: 'Google Sans';
+    font-size: 16px;
+    line-height: 24px;
+  }
+  input::-webkit-clear-button {
+    display: none;
+  }
+  [times] {
+    display: flex;
+    justify-content: space-between;
+    /* padding: 16px 0; */
+  }
+  [times] > button {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    margin: 16px 0;
+    color: #4fc9ff;
+    background: white;
+    border-radius: 50%;
+    border: 3px solid #4fc9ff;
+    font-size: 16px;
+    font-weight: bold;
+    -webkit-appearance: none;
+    outline: none;
+  }
+  [times] > button:disabled {
+    opacity: 0.8;
+    color: #888;
+    border-color: #888;
+  }
+</style>
+
 <div reservation-form id="{{subId}}">
-  <style>
-    /*[time-picker] {
-      padding-bottom: 8px;
-    }
-    */
-    [time-picker] > div {
-      display: flex;
-      flex-direction: row;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      height: 56px;
-      align-items: center;
-    [select] {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 8px;
-      border-right: 1px solid rgba(0,0,0,.1);
-      /* height: 100%; */
-    }
-    [select]::after {
-      content: '▼';
-      display: block;
-      position: absolute;
-      right: 8px;
-      /* bottom: 2px; */
-      transform: scaleY(0.4) scaleX(0.8);
-      pointer-events: none;
-    }
-    [select] > select {
-      /* position: relative; */
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background-color: transparent;
-      border-radius: 0;
-      font-size: 16px;
-      overflow: hidden;
-      outline: none;
-      -webkit-appearance: none;
-      /* vertical-align: top; */
-    }
-    input {
-      padding: 0;
-      vertical-align: top;
-      border: 0;
-      background: transparent;
-      font-family: 'Google Sans';
-      font-size: 16px;
-      line-height: 24px;
-    }
-    input::-webkit-clear-button {
-      display: none;
-    }
-    [times] {
-      display: flex;
-      justify-content: space-around;
-      padding: 8px;
-    }
-    button {
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      padding: 10px 16px;
-      border-radius: 3px;
-      -webkit-appearance: none;
-      background-color: #4285f4;
-      color: #fff;
-      border: 0;
-      outline: none;
-    }
-    button:disabled {
-      opacity: 0.3;
-    }
-  </style>
   <div time-picker>{{timePicker}}</div>
   <div times>{{availableTimes}}</div>
 </div>
@@ -106,15 +108,15 @@ defineParticle(({DomParticle, html}) => {
 <template available-times>
   <button class="raised" disabled$={{notAvailable}}>{{time}}</button>
 </template>
-    `.trim();
+    `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    update(props, state) {
-      let event;
-      if (!props.event || !props.event.startDate) {
+    update({event, restaurant}, state) {
+      let currentEvent;
+      if (!event || !event.startDate) {
         /* Default time selection:
          *  - if later than 10pm, book evening tomorrow
          *  - if earlier than 5pm, book this evening
@@ -137,19 +139,18 @@ defineParticle(({DomParticle, html}) => {
         when.setSeconds(0);
         when.setMilliseconds(0);
         const whenString = this.toDateInputValue(when);
-        event = {startDate: whenString, endDate: whenString, participants: 2};
+        currentEvent = {startDate: whenString, endDate: whenString, participants: 2};
       } else {
-        event = Object.assign({}, props.event.rawData);
+        currentEvent = Object.assign({}, event.rawData);
       }
-      this.setState({currentEvent: event});
-
+      this.setState({currentEvent});
       this.setParticleDescription(
-        props.restaurant
-          ? this.createDescription(props.restaurant.id, event.participants, event.startDate)
-          : ''); // Default description
-
-      if (!props.event || JSON.stringify(event) !== JSON.stringify(props.event.rawData)) {
-        this.storeNewEvent(event);
+        restaurant
+          ? this.createDescription(restaurant.id, event.participants, event.startDate)
+          : ''
+      ); // Default description
+      if (!event || JSON.stringify(state.currentEvent) !== JSON.stringify(event.rawData)) {
+        this.storeNewEvent(state.currentEvent);
       }
     }
     toDateInputValue(date) {
@@ -210,15 +211,11 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(currentEvent);
     }
     render({restaurant}, {currentEvent}) {
-      // TODO(noelutz): remove code that handles list rendering.
-      // It has moved to ReservationAnnotation.js.
       const partySize = parseInt(currentEvent.participants) || 2;
-      if (restaurant) {
-        return this.renderSingle(restaurant, currentEvent.startDate, partySize);
-      }
+      return this.renderSingle(restaurant, currentEvent.startDate, partySize);
     }
     renderSingle(restaurant, date, partySize) {
-      const restaurantId = restaurant.id || '';
+      const restaurantId = (restaurant && restaurant.id) || '';
       const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       const timePicker = {date};
       for (let i = 1; i <= 21; ++i) {
@@ -232,7 +229,7 @@ defineParticle(({DomParticle, html}) => {
         },
         availableTimes: {
           $template: 'available-times',
-          models: times
+          models: restaurant ? times : []
         }
       };
     }
