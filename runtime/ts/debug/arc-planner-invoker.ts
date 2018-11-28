@@ -8,11 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Planner} from '../ts-build/planner.js';
-import {Manifest} from '../ts-build/manifest.js';
+import {Arc} from '../arc.js';
+import {Planner} from '../planner.js';
+import {Manifest} from '../manifest.js';
 
 export class ArcPlannerInvoker {
-  constructor(arc, devtoolsChannel) {
+  arc: Arc;
+  planner: Planner;
+  
+  constructor(arc: Arc, devtoolsChannel) {
     this.arc = arc;
     this.planner = new Planner();
     this.planner.init(arc);

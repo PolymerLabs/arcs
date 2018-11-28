@@ -9,6 +9,7 @@
  */
 
 export class DevtoolsChannelStub {
+  _messages;
   constructor() {
     this._messages = [];
   }

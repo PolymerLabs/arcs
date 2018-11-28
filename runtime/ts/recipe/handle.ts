@@ -34,12 +34,12 @@ export class Handle {
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
 
-  constructor(recipe) {
+  constructor(recipe: Recipe) {
     assert(recipe);
     this._recipe = recipe;
   }
 
-  _copyInto(recipe) {
+  _copyInto(recipe: Recipe) {
     let handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
@@ -124,13 +124,13 @@ export class Handle {
     this._fate = fate;
   }
   get originalFate() { return this._originalFate || '?'; }
-  get originalId() { return this._originalId; }
-  get recipe() { return this._recipe; }
-  get tags() { return this._tags; } // only tags owned by the handle
-  set tags(tags) { this._tags = tags; }
-  get type() { return this._type; } // nullable
-  get id() { return this._id; }
-  set id(id) {
+  get originalId(): string | null { return this._originalId; }
+  get recipe(): Recipe { return this._recipe; }
+  get tags(): string[] { return this._tags; } // only tags owned by the handle
+  set tags(tags: string[]) { this._tags = tags; }
+  get type(): Type { return this._type; } // nullable
+  get id(): string | null { return this._id; }
+  set id(id: string| null) {
     if (!this._originalId) {
       this._originalId = this._id;
     }

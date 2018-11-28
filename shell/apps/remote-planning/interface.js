@@ -14,7 +14,7 @@
 import {UserPlanner} from './user-planner.js';
 import {UserContext} from './shell/user-context.js';
 import {ArcFactory} from './arc-factory.js';
-import {DevtoolsConnection} from '../../../runtime/debug/devtools-connection.js';
+import {DevtoolsConnection} from '../../../runtime/ts-build/debug/devtools-connection.js';
 
 const manifest = `
   import 'https://$artifacts/canonical.manifest'
