@@ -8,13 +8,13 @@
 import 'Restaurant.schema'
 import '../Profile/Geolocate.recipe'
 
-particle FindRestaurants in 'source/FindRestaurants.js'
+particle RestaurantFind in 'source/RestaurantFind.js'
   in Geolocation location
   inout [Restaurant] restaurants
 
-//recipe FindRestaurants
+//recipe RestaurantFind
 //  create #tiles as restaurants
-//  FindRestaurants
+//  RestaurantFind
 //    restaurants = restaurants
-//  description `find restaurants near ${FindRestaurants.location}`
+//  description `find restaurants near ${RestaurantFind.location}`
 

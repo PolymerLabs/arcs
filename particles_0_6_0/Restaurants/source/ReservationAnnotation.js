@@ -8,103 +8,81 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  const host = `reservation-form`;
-
   const template = html`
 
-<div ${host} id={{subId}}>
-  <style>
-    [reservation-form] {
-      text-align: center;
-    }
-    * {
-      vertical-align: middle;
-    }
-    .x-select {
-      padding-left: 16px;
-      display: flex;
-      position: relative;
-    }
-    .x-select::after {
-      content: '▼';
-      display: block;
-      position: absolute;
-      right: 8px;
-      bottom: 16px;
-      transform: scaleY(0.4) scaleX(0.8);
-      pointer-events: none;
-    }
-    .x-select > select {
-      position: relative;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background-color: transparent;
-      border-radius: 0;
-      font-size: 16px;
-      overflow: hidden;
-      outline: none;
-      -webkit-appearance: none;
-      vertical-align: top;
-    }
-    input {
-      font-family: 'Google Sans';
-      font-size: 16px;
-      vertical-align: top;
-      border: 0;
-      background: transparent;
-      padding-left: 16px;
-    }
-    input::-webkit-clear-button {
-      display: none;
-    }
-    /* [timePicker] {
-      display: flex;
-      flex-direction: row;
-    } */
-    [times] {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
-    }
-    /* @media (min-width:480px) {
-      [times] {
-      }
-    } */
-    [times] > button {
-      position: relative;
-      width: 44px;
-      height: 44px;
-      padding: 0;
-      -webkit-appearance: none;
-      outline: none;
-      border: 2px solid #1A73E8;
-      background: white;
-      color: #1A73E8;
-      border-radius: 50%;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    [times] > button:disabled {
-      opacity: 0.3;
-    }
-  </style>
-  <!-- <div timePicker>{{timePicker}}</div> -->
+<style>
+  [reservation-annotation] {
+    text-align: center;
+  }
+  * {
+    vertical-align: middle;
+  }
+  .x-select {
+    padding-left: 16px;
+    display: flex;
+    position: relative;
+  }
+  .x-select::after {
+    content: '▼';
+    display: block;
+    position: absolute;
+    right: 8px;
+    bottom: 16px;
+    transform: scaleY(0.4) scaleX(0.8);
+    pointer-events: none;
+  }
+  .x-select > select {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    border-radius: 0;
+    font-size: 16px;
+    overflow: hidden;
+    outline: none;
+    -webkit-appearance: none;
+    vertical-align: top;
+  }
+  input {
+    font-family: 'Google Sans';
+    font-size: 16px;
+    vertical-align: top;
+    border: 0;
+    background: transparent;
+    padding-left: 16px;
+  }
+  input::-webkit-clear-button {
+    display: none;
+  }
+  [times] {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+  [times] > button {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    color: #4fc9ff;
+    background: white;
+    border-radius: 50%;
+    border: 3px solid #4fc9ff;
+    font-size: 16px;
+    font-weight: bold;
+    -webkit-appearance: none;
+    outline: none;
+  }
+  [times] > button:disabled {
+    opacity: 0.8;
+    color: #888;
+    border-color: #888;
+  }
+</style>
+
+<div reservation-annotation id={{subId}}>
   <div times>{{availableTimes}}</div>
 </div>
-
-<!-- <template time-picker>
-  <div class="x-select">
-    <select on-change="_onPartySizeChanged">
-      <option value="1" selected$={{selected1}}>1 person</option>
-      <option value="2" selected$={{selected2}}>2 people</option>
-      ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-        .map(i => `<option value="${i}" selected$={{selected${i}}}>${i} people</option>`).join('')}
-      <option value="21" selected$={{selected21}}>Larger party</option>
-    </select>
-  </div>
-  <input type="datetime-local" value="{{date}}" on-change="_onDateChanged">
-</template> -->
 
 <template available-times>
   <button disabled$={{notAvailable}}>{{time}}</button>
