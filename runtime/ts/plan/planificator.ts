@@ -147,7 +147,9 @@ export class Planificator {
 
     // Construct a new key based on the storageKeyBase
     // Use '/dummylocation' suffix because Volatile keys require it.
-    const storageKey = arc.storageProviderFactory.parseStringAsKey(storageKeyBase + '/dummylocation');
+    const storageKey = storageKeyBase
+      ? arc.storageProviderFactory.parseStringAsKey(storageKeyBase + '/dummylocation')
+      : arc.storageProviderFactory.parseStringAsKey(arcKey);
  
     // Backward compatibility for shell older than 0_6_0.
     storageKey.location = location.includes('/arcs/')
@@ -166,7 +168,9 @@ export class Planificator {
     const location = arc.storageProviderFactory.parseStringAsKey(arc.storageKey).location;
 
     // Construct a new key based on the storageKeyBase
-    const storageKey = arc.storageProviderFactory.parseStringAsKey(storageKeyBase);
+    const storageKey = storageKeyBase
+      ? arc.storageProviderFactory.parseStringAsKey(storageKeyBase + '/dummylocation')
+      : arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
 
     storageKey.location = location.includes('/arcs/')
       ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`)
