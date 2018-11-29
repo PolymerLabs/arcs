@@ -10,7 +10,7 @@ class Env extends ArcsEnv {
   get pecFactory() {
     // worker paths are relative to worker location, remap urls from there to here
     const remap = this._expandUrls(this.pathMap);
-    const workerPath = this.loader._resolve(`https://$shell/build/worker-entry.js`);
+    const workerPath = this.loader._resolve(`https://$shell/env/build/worker.js`);
     return id => {
       const worker = new Worker(workerPath);
       const channel = new MessageChannel();

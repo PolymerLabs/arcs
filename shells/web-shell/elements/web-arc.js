@@ -8,9 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
 import {Xen} from '../../lib/xen.js';
 import {ArcHost} from '../../lib/arc-host.js';
+import {SlotComposer} from '../../env/arcs.js';
 
 const log = Xen.logFactory('WebArc', '#cb23a6');
 
