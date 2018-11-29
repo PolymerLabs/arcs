@@ -392,3 +392,4 @@ const c=(e,t,r="log")=>console[r].bind(console,`%c${e} [Particle]`,`background: 
 /*! no exports provided */function(e,t,r){"use strict";r.r(t);var s=r(/*! ../../runtime/ts-build/particle-execution-context.js */"./runtime/ts-build/particle-execution-context.js"),n=r(/*! ./browser-loader.js */"./shell/source/browser-loader.js");
 // @license
 console.log.bind(console,"%cworker-entry","background: #12005e; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;");self.onmessage=function(e){self.onmessage=null;const{id:t,base:r}=e.data;new s.ParticleExecutionContext(e.ports[0],t,new n.BrowserLoader(r))}}})}});
+//# sourceMappingURL=worker.js.map

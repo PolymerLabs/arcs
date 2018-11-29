@@ -1,4 +1,3 @@
-
 import {RecipeResolver} from './arcs.js';
 import {Manifest} from './arcs.js';
 import {Arc} from './arcs.js';
@@ -15,9 +14,6 @@ class ArcsEnv {
     this.rootPath = rootPath;
     this.loaderKind = loaderKind;
     this.pathMap = this.createPathMap(rootPath);
-  }
-  get lib() {
-    return this.constructor;
   }
   createPathMap(root) {
     return {

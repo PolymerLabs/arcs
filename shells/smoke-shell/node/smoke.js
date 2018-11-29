@@ -1,7 +1,7 @@
 // platform specific imports
 import '../../env/node/arcs.js';
 import {Env} from '../../env/node/env.js';
-import {RamSlotComposer} from '../../env/lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
 
 // platform agnostic imports
 import {App} from '../app.js';

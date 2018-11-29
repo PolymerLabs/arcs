@@ -8,7 +8,6 @@
   import {Env} from '../../env/web/env.js';
 
   // platform agnostic imports
-  import {Manifest} from '../../env/arcs.js';
   import {SlotComposer} from '../../env/arcs.js';
   import {App} from '../app.js';
 
@@ -21,7 +20,7 @@
   // create an arcs environment
   const env = new Env('../../../');
   env.pathMap[`https://$artifacts/`] = `../../../particles_0_6_0/`;
-  
+
   // run App
   (async () => {
     try {

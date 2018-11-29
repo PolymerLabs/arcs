@@ -11,6 +11,7 @@
 import {Arc} from '../../../runtime/ts-build/arc.js';
 import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
 import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
+import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
 import {Type} from '../../../runtime/ts-build/type.js';
 import {Manifest} from '../../../runtime/ts-build/manifest.js';
 import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
@@ -26,6 +27,7 @@ const Arcs = {
   Manifest,
   Planificator,
   SlotComposer,
+  SlotDomConsumer,
   Type,
   BrowserLoader,
   StorageProviderFactory,
