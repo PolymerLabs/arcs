@@ -417,7 +417,7 @@ function test(args) {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/ts-build/debug/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);

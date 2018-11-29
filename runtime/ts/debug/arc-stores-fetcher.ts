@@ -8,7 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Arc} from '../arc.js';
+
 export class ArcStoresFetcher {
+  _arc: Arc;
+  
   constructor(arc, devtoolsChannel) {
     this._arc = arc;
 

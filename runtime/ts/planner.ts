@@ -33,8 +33,8 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
 import {Suggestion} from './plan/suggestion';
 import {Tracing} from '../../tracelib/trace.js';
-import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
-import {DevtoolsConnection} from '../debug/devtools-connection.js';
+import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
 
 export class Planner {
   constructor() {
@@ -42,7 +42,8 @@ export class Planner {
   }
   private _arc: Arc;
   private _relevances: Relevance[];
-  private strategizer: Strategizer;
+  // public for debug tools
+  strategizer: Strategizer;
   
   // TODO: Use context.arc instead of arc
   init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}} = {}) {

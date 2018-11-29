@@ -19,7 +19,7 @@ import {compareComparables} from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Id} from './id.js';
-import {ArcDebugHandler} from '../debug/arc-debug-handler.js';
+import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {RecipeIndex} from './recipe-index.js';
 import {Loader} from './loader.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
@@ -51,7 +51,8 @@ export class Arc {
   private nextLocalID = 0;
   private _activeRecipe = new Recipe();
   private _recipes = [];
-  private readonly _loader: Loader;
+  // Public for debug access
+  public readonly _loader: Loader;
   private dataChangeCallbacks = new Map<object, () => void>();
   // All the stores, mapped by store ID
   private storesById = new Map<string, StorageProviderBase>();
@@ -59,8 +60,8 @@ export class Arc {
   private storageKeys: {[index: string]: string} = {};
   readonly storageKey: string;
   storageProviderFactory: StorageProviderFactory;
-  // Map from each store to a set of tags.
-  private storeTags = new Map<StorageProviderBase, Set<string>>();
+  // Map from each store to a set of tags. public for debug access
+  public storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
   private storeDescriptions = new Map<StorageProviderBase, Description>();
   private readonly _description: Description;
@@ -482,7 +483,9 @@ ${this.activeRecipe.toString()}`;
             recipeHandle.tags, recipeHandle.immediateValue ? 'volatile' : null);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
-          assert(recipeHandle.type.interfaceShape.particleMatches(particleSpec));
+          const type = recipeHandle.type;
+          
+          assert(type instanceof InterfaceType && type.interfaceShape.particleMatches(particleSpec));
           const particleClone = particleSpec.clone().toLiteral();
           particleClone.id = newStore.id;
           // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc.
@@ -538,7 +541,7 @@ ${this.activeRecipe.toString()}`;
       this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
 
-    this.debugHandler.recipeInstantiated({handles, particles, slots});
+    this.debugHandler.recipeInstantiated({particles});
   }
 
   _connectParticleToHandle(particle, name, targetHandle) {
