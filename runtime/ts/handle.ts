@@ -130,7 +130,7 @@ export abstract class Handle {
 class Collection extends Handle {
   // Called by StorageProxy.
   _proxy: CollectionProxy;
-  _notify(kind, particle, details) {
+  _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
@@ -237,21 +237,21 @@ class Collection extends Handle {
 class Variable extends Handle {
   _proxy: VariableProxy;
   // Called by StorageProxy.
-  async _notify(kind, particle, details) {
+  async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
         try {
           await particle.onHandleSync(this, this._restore(details));
         } catch (e) {
-          this.raiseSystemException(e, `${particle.name}::onHandleSync`);
+          this.raiseSystemException(e, `${particle.spec.name}::onHandleSync`);
         }
         return;
       case 'update': {
         try {
           await particle.onHandleUpdate(this, {data: this._restore(details.data)});
         } catch (e) {
-          this.raiseSystemException(e, `${particle.name}::onHandleUpdate`);
+          this.raiseSystemException(e, `${particle.spec.name}::onHandleUpdate`);
         }
         return;
       }
@@ -259,7 +259,7 @@ class Variable extends Handle {
         try {
           await particle.onHandleDesync(this);
         } catch (e) {
-          this.raiseSystemException(e, `${particle.name}::onHandleDesync`);
+          this.raiseSystemException(e, `${particle.spec.name}::onHandleDesync`);
         }
         return;
       default:
@@ -374,7 +374,7 @@ class BigCollection extends Handle {
     throw new Error('BigCollections do not support sync/update configuration');
   }
 
-  async _notify(kind, particle, details) {
+  async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     assert(kind === 'sync', 'BigCollection._notify only supports sync events');
     await particle.onHandleSync(this, []);
