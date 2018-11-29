@@ -63,19 +63,25 @@ describe('pouch-db-key', () => {
     assert.equal(pkey.dbCacheKey(), 'localhost:8080/user');
   });
 
-  describe('childKeyForHandle', () => {
+  describe('child keys', () => {
     const remoteKey = new PouchDbKey('pouchdb://localhost:8080/user/prefix/path');
 
-    it('fails for invalid id', () => {
+    it('childKeyForHandle fails for invalid id', () => {
       assert.throws(() => {
         remoteKey.childKeyForHandle('');
       }, Error);
     });
 
-    it('creates a new PouchDbKey with id suffix', () => {
+    it('childKeyForHandle creates a new PouchDbKey with id suffix', () => {
       const childKey = remoteKey.childKeyForHandle('99');
       assert.equal(childKey.toString(),
         'pouchdb://localhost:8080/user/prefix/path/handles/99');
+    });
+
+    it('childKeyForArcInfo creates a new PouchDbKey with fixed suffix', () => {
+      const childKey = remoteKey.childKeyForArcInfo();
+      assert.equal(childKey.toString(),
+        'pouchdb://localhost:8080/user/prefix/path/arc-info');
     });
   });
 });

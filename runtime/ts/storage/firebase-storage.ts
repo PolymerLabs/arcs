@@ -67,11 +67,19 @@ class FirebaseKey extends KeyBase {
   }
 
   childKeyForHandle(id): FirebaseKey {
+    return this.buildChildKey(`handles/${id}`);
+  }
+
+  childKeyForArcInfo(): FirebaseKey {
+    return this.buildChildKey('arc-info');
+  }
+
+  private buildChildKey(leaf) {
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
     }
-    location += `handles/${id}`;
+    location += leaf;
     return new FirebaseKey(`${this.protocol}://${this.databaseUrl}/${this.apiKey}/${location}`);
   }
 
@@ -81,14 +89,6 @@ class FirebaseKey extends KeyBase {
     }
     return `${this.protocol}://`;
   }
-}
-
-// Firebase's 'once' API does not return a Promise; wrap it so we can await the invocation of the
-// callback that returns the snapshot.
-function getSnapshot(reference) : Promise<firebase.database.DataSnapshot> {
-  return new Promise(resolve => {
-    reference.once('value', snapshot => resolve(snapshot));
-  });
 }
 
 let _nextAppNameSuffix = 0;
@@ -186,7 +186,7 @@ export class FirebaseStorage extends StorageBase {
     }
 
     const reference = firebase.database(this.apps[fbKey.projectId].app).ref(fbKey.location);
-    const currentSnapshot = await getSnapshot(reference);
+    const currentSnapshot = await reference.once('value');
     if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
     }
@@ -1163,7 +1163,7 @@ class FirebaseCursor {
     assert(this.state === CursorState.new);
 
     // Retrieve the current last item to establish our streaming version.
-    const lastEntry = await getSnapshot(this.orderByIndex.limitToLast(1));
+    const lastEntry = await this.orderByIndex.limitToLast(1).once('value');
     lastEntry.forEach(entry => this.end = entry.val().index);
 
     // Read one past the page size each time to establish the boundary index for the next page.
@@ -1212,7 +1212,7 @@ class FirebaseCursor {
     const value = [];
     if (this.state === CursorState.stream) {
       this.nextBoundary = null;
-      const queryResults = await getSnapshot(query);
+      const queryResults = await query.once('value');
       if (this.forward) {
         // For non-final pages, the last entry is the start of the next page.
         queryResults.forEach(entry => {
@@ -1315,7 +1315,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id
   async get(id) {
     const encId = FirebaseStorage.encodeKey(id);
-    const snapshot = await getSnapshot(this.reference.child('items/' + encId));
+    const snapshot = await this.reference.child('items/' + encId).once('value');
     return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 

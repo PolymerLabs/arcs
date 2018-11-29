@@ -56,12 +56,19 @@ export class PouchDbKey extends KeyBase {
    */
   childKeyForHandle(id: string): PouchDbKey {
     assert(id && id.length > 0, 'invalid id');
+    return this.buildChildKey(`handles/${id}`);
+  }
 
+  childKeyForArcInfo(): PouchDbKey {
+    return this.buildChildKey('arc-info');
+  }
+
+  private buildChildKey(leaf) {
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
     }
-    location += `handles/${id}`;
+    location += leaf;
 
     const newKey = new PouchDbKey(this.toString());
     newKey.location = location;

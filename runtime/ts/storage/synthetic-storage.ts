@@ -12,21 +12,9 @@ import {StorageProviderFactory} from './storage-provider-factory.js';
 import {KeyBase} from './key-base.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
+import {ArcInfo, ArcHandle} from '../synthetic-types.js';
 import {Manifest} from '../manifest.js';
 import {setDiffCustom} from '../util.js';
-import firebase from 'firebase/app';
-
-export class ArcHandle {
-  public readonly storageKey: string;
-  public readonly type: Type;
-  public readonly tags: string[];
-
-  constructor(storageKey, type, tags) {
-    this.storageKey = storageKey;
-    this.type = type;
-    this.tags = tags;
-  }
-}
 
 enum Scope {
   arc = 1  // target must be a storage key for an ArcInfo Variable
@@ -44,7 +32,7 @@ class SyntheticKey extends KeyBase {
   readonly targetType: Type;
   readonly syntheticType: Type;
 
-  constructor(key: string) {
+  constructor(key: string, storageFactory: StorageProviderFactory) {
     super();
     const match = key.match(/^synthetic:\/\/([^/]+)\/([^/]+)\/(.+)$/);
     if (match === null || match.length !== 4) {
@@ -53,10 +41,11 @@ class SyntheticKey extends KeyBase {
 
     this.scope = Scope[match[1]];
     this.category = Category[match[2]];
-    this.targetKey = match[3];
 
     if (this.scope === Scope.arc) {
       this.targetType = Type.newArcInfo();
+      const key = storageFactory.parseStringAsKey(match[3]).childKeyForArcInfo();
+      this.targetKey = key.toString();
     } else {
       throw new Error(`invalid scope '${match[1]}' for synthetic key: ${key}`);
     }
@@ -75,6 +64,11 @@ class SyntheticKey extends KeyBase {
     assert(false, 'childKeyForHandle not supported for synthetic keys');
     return null;
   }
+  
+  childKeyForArcInfo(): SyntheticKey {
+    assert(false, 'childKeyForArcInfo not supported for synthetic keys');
+    return null;
+  }
 
   toString() {
     return `${this.protocol}://${Scope[this.scope]}/${Category[this.category]}/${this.targetKey}`;
@@ -84,7 +78,7 @@ class SyntheticKey extends KeyBase {
 export class SyntheticStorage extends StorageBase {
   private readonly storageFactory: StorageProviderFactory;
 
-  constructor(arcId: Id, storageFactory) {
+  constructor(arcId: Id, storageFactory: StorageProviderFactory) {
     super(arcId);
     this.storageFactory = storageFactory;
   }
@@ -95,7 +89,7 @@ export class SyntheticStorage extends StorageBase {
 
   async connect(id: string, type: Type, key: string) : Promise<SyntheticCollection> {
     assert(type === null, 'SyntheticStorage does not accept a type parameter');
-    const synthKey = new SyntheticKey(key);
+    const synthKey = new SyntheticKey(key, this.storageFactory);
     const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey);
     if (targetStore === null) {
       return null;
@@ -112,7 +106,7 @@ export class SyntheticStorage extends StorageBase {
   }
 
   parseStringAsKey(s: string) : SyntheticKey {
-    return new SyntheticKey(s);
+    return new SyntheticKey(s, this.storageFactory);
   }
 }
 
@@ -142,9 +136,7 @@ class SyntheticCollection extends StorageProviderBase {
     let handles;
     try {
       if (data) {
-        // TODO: remove the import-removal hack when import statements no longer appear in
-        // serialized manifests, or deal with them correctly if they end up staying
-        const manifest = await Manifest.parse(data.serialized.replace(/\bimport .*\n/g, ''), {});
+        const manifest = await Manifest.parse(ArcInfo.extractSerialization(data), {});
         handles = manifest.activeRecipe && manifest.activeRecipe.handles;
       }
     } catch (e) {
