@@ -1,7 +1,7 @@
 import {BrowserLoader} from '../../source/browser-loader.js';
 import {ArcsEnv} from '../arcs-env.js';
 
-// TODO(sjmiles): some runtime is ONLY accessible via build because of firebase, leading
+// TODO(sjmiles): some runtime is accessible ONLY via build because of firebase, leading
 // to this tortured construction which affords access to that runtime via ArcsEnv namespace.
 import {Arcs} from './runtime.js';
 Object.assign(ArcsEnv, Arcs);

@@ -62,7 +62,8 @@
     "wdio-mocha-framework": "^0.6.4",
     "wdio-spec-reporter": "^0.1.5",
     "webdriverio": "^4.14.0",
-    "webpack": "^4.25.1"
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2"
   },
   "dependencies": {
     "@types/pouchdb-core": "^7.0.0",
