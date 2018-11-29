@@ -22,7 +22,7 @@ import {Type} from '../type.js';
 
 export class Planificator {
   static async create(arc: Arc, {userid, storageKeyBase, onlyConsumer, debug = false}) {
-    debug = debug || storageKeyBase.startsWith('volatile');
+    debug = debug || (storageKeyBase && storageKeyBase.startsWith('volatile'));
     const store = await Planificator._initSuggestStore(arc, {userid, storageKeyBase, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid, storageKeyBase});
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
@@ -141,7 +141,6 @@ export class Planificator {
 
   private static async _initSuggestStore(arc: Arc, {userid, storageKeyBase, arcKey}): Promise<StorageProviderBase> {
     assert(userid, 'Missing user id.');
-    assert(storageKeyBase, 'Missing storageKeyBase');
 
     const location = arc.storageProviderFactory.parseStringAsKey(arc.storageKey).location;
 
@@ -149,8 +148,8 @@ export class Planificator {
     // Use '/dummylocation' suffix because Volatile keys require it.
     const storageKey = storageKeyBase
       ? arc.storageProviderFactory.parseStringAsKey(storageKeyBase + '/dummylocation')
-      : arc.storageProviderFactory.parseStringAsKey(arcKey);
- 
+      : arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
+
     // Backward compatibility for shell older than 0_6_0.
     storageKey.location = location.includes('/arcs/')
       ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/${arcKey || '$1'}`)
@@ -158,12 +157,11 @@ export class Planificator {
 
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
     const type = Type.newEntity(schema);
-    return Planificator._initStore(arc, 'search-id', type, storageKey);
+    return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
   }
 
   private static async _initSearchStore(arc: Arc, {userid, storageKeyBase}): Promise<StorageProviderBase> {
     assert(userid, 'Missing user id.');
-    assert(storageKeyBase, 'Missing storageKeyBase');
 
     const location = arc.storageProviderFactory.parseStringAsKey(arc.storageKey).location;
 
