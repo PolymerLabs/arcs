@@ -12,7 +12,9 @@ I'm still a newb, but I stumbled on these things:
 */
 
 exports.seconds = s => s * 1e3;
+
 exports.defaultTimeout = exports.seconds(60);
+exports.shellUrl = `shells/web-shell`;
 
 function deepQuerySelector(selector) {
   return browser.execute(function(selector) {
@@ -100,7 +102,7 @@ exports.openNewArc = async function(testTitle, useSolo) {
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
-  await browser.url(`shell_0_6_0/web-shell/?${urlParams.join('&')}`);
+  await browser.url(`${exports.shellUrl}/?${urlParams.join('&')}`);
   // only to ensure time for the app to configure itself
   await exports.waitFor('input[search]');
 };
