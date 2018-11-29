@@ -49,7 +49,6 @@ describe('OuterPortAttachment', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    console.log(DevtoolsForTests.channel.messages);
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
       m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;
 
