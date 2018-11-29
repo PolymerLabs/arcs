@@ -14,7 +14,6 @@ runtime/browser-test/browser-test-ified.js
 manifest-railroad.html
 **/*.code-workspace
 shell/build
-shell_0_6_0/build
 shell/test/errorShots
 shells/env/build
 shells/test/errorShots
