@@ -20,8 +20,16 @@ import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type} from '../type.js';
 
+type PlanificatorOptions = {
+  userid: string;
+  storageKeyBase?: string;
+  debug?: boolean;
+  onlyConsumer?: boolean;
+};
+
+
 export class Planificator {
-  static async create(arc: Arc, {userid, storageKeyBase, onlyConsumer, debug = false}) {
+  static async create(arc: Arc, {userid, storageKeyBase, onlyConsumer, debug = false}: PlanificatorOptions) {
     debug = debug || (storageKeyBase && storageKeyBase.startsWith('volatile'));
     const store = await Planificator._initSuggestStore(arc, {userid, storageKeyBase, arcKey: null});
     const searchStore = await Planificator._initSearchStore(arc, {userid, storageKeyBase});
@@ -188,7 +196,7 @@ export class Planificator {
     const storage = providerFactory._storageForKey(storageKey.toString());
 
     let store: StorageProviderBase = null;
-
+    console.warn('STORAGE ' + storageKeyStr);
     if (storage instanceof FirebaseStorage) {
       // TODO make firebase use the standard construct/connect API
       store = await storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
