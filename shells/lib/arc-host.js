@@ -128,16 +128,8 @@ export class ArcHost {
     const {arc, config: {id}, storage} = this;
     if (!storage.includes('volatile')) {
       log(`persisting serialization to [${id}/serialization]`);
-      let serialization = await arc.serialize();
-      // TODO(sjmiles): elide attempt to import ephemeral manifest
-      const pattern = /import .*$/gm;
-      const modified = serialization.replace(pattern, '');
-      if (modified !== pattern) {
-        warn(`removed import statements from serialization before persisting`);
-      }
-      serialization = modified;
-      //log(serialization);
-      Firebase.db.child(`${id}/serialization`).set(serialization);
+      const serialization = await arc.serialize();
+      await arc.persistSerialization(serialization);
     }
   }
 }

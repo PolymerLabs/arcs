@@ -56,6 +56,15 @@ export class StorageProviderFactory {
     return await this._storageForKey(key).connect(id, type, key);
   }
 
+  async connectOrConstruct(id: string, type: Type, key: string) : Promise<StorageProviderBase> {
+    const storage = this._storageForKey(key);
+    let result = await storage.connect(id, type, key);
+    if (result == null) {
+      result = await storage.construct(id, type, key);
+    }
+    return result;
+  }
+
   async baseStorageFor(type: Type, keyString: string) : Promise<StorageProviderBase> {
     return await this._storageForKey(keyString).baseStorageFor(type, keyString);
   }

@@ -9,6 +9,8 @@
  */
 
 import {Arc} from '../ts-build/arc.js';
+import {Id} from '../ts-build/id.js';
+import {Type} from '../ts-build/type.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
 import * as util from '../testing/test-util.js';
@@ -325,5 +327,30 @@ describe('Arc', function() {
     assert.equal('hosts', connection.name);
     assert.equal('A', connection.particle.spec.name);
     assert.equal('B', connection.handle.immediateValue.name);
+  });
+
+  it('persist serialization', async () => {
+    const id = new Id('123', ['test']).toString();
+    const arc = new Arc({id, storageKey: `volatile://${id}`});
+    const manifest = await Manifest.parse(`
+      schema Data
+        Text value
+      recipe
+        description \`abc\``);
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    const serialization = await arc.serialize();
+    await arc.persistSerialization(serialization);
+
+    const key = 'volatile://!123:test^^arc-info';
+    const store = await arc.storageProviderFactory.connect('id', Type.newArcInfo(), key);
+    const data = await store.get();
+
+    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
+    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
+
+    const expected = 'meta name: \'!123:test\' storageKey: \'volatile://!123:test\' @active recipe description `abc`';
+    assert.deepEqual({id: '!123:test', serialization: expected}, data);
   });
 });

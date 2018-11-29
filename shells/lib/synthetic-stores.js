@@ -19,7 +19,7 @@ export class SyntheticStores {
     return `id${Math.random()}`;
   }
   static getSyntheticArcsStorageKey(storage, arcid) {
-    return `synthetic://arc/handles/${storage}/${arcid}/serialization`;
+    return `synthetic://arc/handles/${storage}/${arcid}`;
   }
   static async getHandleStore({type, storageKey}) {
     return stores[storageKey] || (stores[storageKey] = await SyntheticStores.storeConnect(type, storageKey));
