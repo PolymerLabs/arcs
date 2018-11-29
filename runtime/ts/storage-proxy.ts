@@ -12,7 +12,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {Type, CollectionType, BigCollectionType} from './type.js';
-import {PECInnerPort} from '../api-channel.js';
+import {PECInnerPort, CursorNextValue} from './api-channel.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {Handle, HandleOptions} from './handle.js';
@@ -126,7 +126,7 @@ export abstract class StorageProxy {
     }
   }
 
-  _onSynchronize({version, model}) {
+  _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}) {
     if (this.version !== undefined && version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale model version ${version}; ` +
                    `current is ${this.version}`);
@@ -150,7 +150,7 @@ export abstract class StorageProxy {
     this._processUpdates();
   }
 
-  _onUpdate(update) {
+  _onUpdate(update: {version: number}) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (this.observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
       const handleUpdate = this._processUpdate(update, false);
@@ -317,8 +317,8 @@ export class CollectionProxy extends StorageProxy {
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
-      return new Promise(resolve =>
-        this.port.HandleToList(resolve, this));
+      return new Promise<{}[]>(resolve =>
+        this.port.HandleToList(this, resolve));
     }
   }
 
@@ -327,7 +327,7 @@ export class CollectionProxy extends StorageProxy {
       return Promise.resolve(this.model.getValue(id));
     } else {
       return new Promise((resolve, reject) =>
-        this.port.HandleToList(this, r => resolve(r.find(entity => entity.id === id)), this, particleId));
+        this.port.HandleToList(this, r => resolve(r.find(entity => entity.id === id))));
     }
   }
 
@@ -347,7 +347,7 @@ export class CollectionProxy extends StorageProxy {
   }
 
   clear(particleId) {
-    if (this.synchronized != SyncState.full) {
+    if (this.synchronized !== SyncState.full) {
       this.port.HandleRemoveMultiple(this, () => {}, [], particleId);
     }
 
@@ -450,7 +450,7 @@ export class VariableProxy extends StorageProxy {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model);
     } else {
-      return new Promise(resolve =>
+      return new Promise<{id: string}>(resolve =>
         this.port.HandleGet(this, resolve));
     }
   }
@@ -518,12 +518,12 @@ export class BigCollectionProxy extends StorageProxy {
   // TODO: surface get()
 
   async store(value, keys, particleId) {
-    return new Promise(resolve =>
+    return new Promise<void>(resolve =>
       this.port.HandleStore(this, resolve, {value, keys}, particleId));
   }
 
   async remove(id, particleId) {
-    return new Promise(resolve =>
+    return new Promise<void>(resolve =>
       this.port.HandleRemove(this, resolve, {id, keys: []}, particleId));
   }
 
@@ -533,7 +533,7 @@ export class BigCollectionProxy extends StorageProxy {
   }
 
   async cursorNext(cursorId) {
-    return new Promise(resolve =>
+    return new Promise<CursorNextValue>(resolve =>
       this.port.StreamCursorNext(this, resolve, cursorId));
   }
 

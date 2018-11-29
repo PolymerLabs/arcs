@@ -62,45 +62,65 @@ export class ParticleExecutionHost {
       }
 
       async onHandleGet(handle: StorageProviderBase, callback: number) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         const data = await (handle as any).get();
         this.SimpleCallback(callback, data);
       }
 
       async onHandleToList(handle: StorageProviderBase, callback: number) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         this.SimpleCallback(callback, await (handle as any).toList());
       }
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         (handle as any).set(data, particleId, barrier);
       }
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         (handle as any).clear(particleId, barrier);
       }
 
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         await (handle as any).store(data.value, data.keys, particleId);
         this.SimpleCallback(callback, {});
       }
 
       async onHandleRemove(handle: StorageProviderBase, callback: number, data: {id: string, keys: string[]}, particleId) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         await (handle as any).remove(data.id, data.keys, particleId);
         this.SimpleCallback(callback, {});
       }
 
       async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         await (handle as any).removeMultiple(data, particleId);
         this.SimpleCallback(callback, {});
       }
 
       async onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         this.SimpleCallback(callback, await (handle as any).stream(pageSize, forward));
       }
 
       async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         this.SimpleCallback(callback, await (handle as any).cursorNext(cursorId));
       }
 
       onStreamCursorClose(handle: StorageProviderBase, cursorId: string) {
+        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
+        // tslint:disable-next-line: no-any
         (handle as any).cursorClose(cursorId);
       }
 

@@ -21,6 +21,7 @@ class Registrar {
   }
 }
 
+// TODO(shans): Make this test work with the new API channel
 describe('API channel', function() {
   let outer;
   let inner;
@@ -57,7 +58,7 @@ describe('API channel', function() {
 
     // PECOuterPort can call DevToolsConnected during setup, so we need to stub that.
     const outerPort = new class extends PECOuterPort {
-      DevToolsConnected() {};
+      DevToolsConnected() {}
     }(port, arc);
     
 

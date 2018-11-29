@@ -36,28 +36,29 @@ export class ParticleExecutionContext {
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
 
-      onGetBackingStoreCallback(callback: (StorageProxy, string) => void, type: Type, name: string, id: string, storageKey: string) {
+      onGetBackingStoreCallback(callback: (proxy: StorageProxy, key: string) => void, type: Type, name: string, id: string, storageKey: string) {
         const proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
         proxy.storageKey = storageKey;
         return [proxy, () => callback(proxy, storageKey)];
       }
 
-      onCreateHandleCallback(callback: (StorageProxy) => void, type: Type, id: string, name: string) {
+      onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string) {
         const proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
         return [proxy, () => callback(proxy)];
       }
 
-      onMapHandleCallback(callback: (string) => void, id: string) {
+      onMapHandleCallback(callback: (id: string) => void, id: string) {
         return [id, () => callback(id)];
       }
 
-      onCreateSlotCallback(callback: (string) => void, hostedSlotId: string) {
+      onCreateSlotCallback(callback: (id: string) => void, hostedSlotId: string) {
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
       onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: string) {
         // TODO(mmandlis): this dependency on renderHostedSlot means that only TransformationDomParticles can
         // be transformations. 
+        // tslint:disable-next-line: no-any
         (transformationParticle as any).renderHostedSlot(transformationSlotName, hostedSlotId, content);
       }
   
@@ -75,7 +76,7 @@ export class ParticleExecutionContext {
         callback(data);
       } 
 
-      onConstructArcCallback(callback: ({}) => void, arc: {}) {
+      onConstructArcCallback(callback: (arc: string) => void, arc: string) {
         callback(arc);
       }
 
@@ -90,6 +91,7 @@ export class ParticleExecutionContext {
       onUIEvent(particle: Particle, slotName: string, event: {}) {
         // TODO(mmandlis): this dependency on fireEvent means that only DomParticles can
         // be UI particles.
+        // tslint:disable-next-line: no-any
         (particle as any).fireEvent(slotName, event);
       }
 
@@ -214,15 +216,18 @@ export class ParticleExecutionContext {
   
         // TODO(mmandlis): these dependencies on _slotByName and renderSlot mean that only DomParticles can
         // be UI particles.
+        // tslint:disable-next-line: no-any
         (particle as any)._slotByName.set(slotName, new Slotlet(pec, particle, slotName, providedSlots));
+        // tslint:disable-next-line: no-any
         (particle as any).renderSlot(slotName, contentTypes);
       }
   
       onStopRender(particle: Particle, slotName: string) {
         // TODO(mmandlis): this dependency on _slotByName and name means that only DomParticles can
         // be UI particles.
-        assert((particle as any)._slotByName.has(slotName),
-          `Stop render called for particle ${(particle as any).name} slot ${slotName} without start render being called.`);
+        // tslint:disable-next-line: no-any
+        assert((particle as any)._slotByName.has(slotName), `Stop render called for particle ${(particle as any).name} slot ${slotName} without start render being called.`);
+        // tslint:disable-next-line: no-any
         (particle as any)._slotByName.delete(slotName);
       }
     }(port);
@@ -332,7 +337,6 @@ export class ParticleExecutionContext {
     });
 
     return [particle, async () => {
-      console.log('particle mapped');
       await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
       const idx = this.pendingLoads.indexOf(p);
