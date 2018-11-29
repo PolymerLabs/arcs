@@ -196,7 +196,7 @@ export class Planificator {
     const storage = providerFactory._storageForKey(storageKey.toString());
 
     let store: StorageProviderBase = null;
-    console.warn('STORAGE ' + storageKeyStr);
+
     if (storage instanceof FirebaseStorage) {
       // TODO make firebase use the standard construct/connect API
       store = await storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
