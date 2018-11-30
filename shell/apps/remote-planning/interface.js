@@ -26,10 +26,11 @@ export class ShellPlanningInterface {
    *
    * @param assetsPath a path (relative or absolute) to locate planning assets.
    * @param userid the User Id to do planning for.
+   * @param storageKeyBase Plans will be stored in a key that begins with this prefix.
    */
-  static async start(assetsPath, userid, debug) {
-    if (!assetsPath || !userid) {
-      throw new Error('assetsPath and userid required');
+  static async start(assetsPath, userid, storageKeyBase, debug) {
+    if (!assetsPath || !userid || !storageKeyBase) {
+      throw new Error('assetsPath, userid, and storageKeyBase required');
     }
 
     if (process.argv.includes('--explore')) {
@@ -41,7 +42,7 @@ export class ShellPlanningInterface {
     const context = await factory.createContext(manifest);
     const user = new UserContext();
     user._setProps({userid, context});
-    const planner = new UserPlanner(factory, context, userid, debug);
+    const planner = new UserPlanner(factory, context, userid, storageKeyBase, debug);
   }
 }
 

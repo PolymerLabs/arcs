@@ -3,7 +3,7 @@ import {Firebase} from './shell/firebase.js';
 import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
 
 class UserPlanner {
-  constructor(factory, context, userid, debug) {
+  constructor(factory, context, userid, storageKeyBase, debug) {
     this.factory = factory;
     this.context = context;
     this.userid = userid;
@@ -18,7 +18,7 @@ class UserPlanner {
     const launcherArc = this.factory.spawn(this.context);
     const launcherKey = `launcher`;
     launcherArc.storageKey = `${Firebase.storageKey}/arcs/${launcherKey}`;
-    const launcherPlanificator = this.createPlanificator(userid, launcherKey, launcherArc);
+    const launcherPlanificator = this.createPlanificator(userid, storageKeyBase, launcherKey, launcherArc);
     this.runners[launcherKey] = {arc: launcherArc, planificator: launcherPlanificator};
   }
   dispose() {
@@ -89,12 +89,13 @@ class UserPlanner {
     }
     return await this.factory.deserialize(this.context, serialization);
   }
-  async createPlanificator(userid, key, arc) {
-    const planificator = await Planificator.create(arc, {userid, debug: this.debug}); /*, protocol: 'pouchdb' or 'volatile' */
+  async createPlanificator(userid, storageKeyBase, key, arc) {
+    const planificator = await Planificator.create(arc, {userid, storageKeyBase, debug: this.debug});
     planificator.registerSuggestionsChangedCallback(current => this.showPlansForArc(key, current.suggestions));
     // planificator.registerVisibleSuggestionsChangedCallback(suggestions => this.showSuggestionsForArc(key, suggestions));
     return planificator;
   }
+
   showPlansForArc(key, metaplans) {
     console.log(`======= Arc[${key}] ${metaplans.length} plans ======================================`);
     console.log(metaplans.map(plan => `${plan.descriptionText}    [${plan.plan.particles.map(p => p.name).join(', ')}]`));

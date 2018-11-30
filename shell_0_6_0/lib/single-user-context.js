@@ -80,6 +80,10 @@ export const SingleUserContext = class {
     }
   }
   async observeStore(store, key, cb) {
+   if (!store) {
+      console.warn('unitialized store');
+      return;
+    }
     if (!this.observers[key]) {
       //log(`observing [${key}]`);
       // TODO(sjmiles): create synthetic store `change` records from the initial state
@@ -250,6 +254,10 @@ export const SingleUserContext = class {
     await Promise.all(jobs);
   }
   async removeUserStoreEntities(userid, store, isProfile) {
+   if (!store) {
+      console.warn('unitialized store');
+      return;
+    }
     log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'variable'})`);
     //const tags = context.findStoreTags(store);
     if (store.toList) {
