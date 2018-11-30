@@ -29,6 +29,9 @@ Xen.Async = class extends Xen.Base {
   fire(name, detail) {
     this._fire(name, detail);
   }
+  _getInitialState() {
+    return this.getInitialState && this.getInitialState();
+  }
   _update(props, state, oldProps, oldState) {
     return this.update && this.update(props, state, oldProps, oldState);
   }
