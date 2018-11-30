@@ -127,7 +127,7 @@ export const SingleUserContext = class {
         const handle = remove.value;
         if (handle) {
           //log('UNobserving handle', handle);
-          this._unobserve(handle.storageKey);
+          this.unobserve(handle.storageKey);
         }
       });
     }

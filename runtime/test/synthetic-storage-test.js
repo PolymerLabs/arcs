@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../test/chai-web.js';
+import {Id} from '../ts-build/id.js';
 import {StorageProviderFactory} from '../ts-build/storage/storage-provider-factory.js';
 import {Type} from '../ts-build/type.js';
 import {resetVolatileStorageForTesting} from '../ts-build/storage/volatile-storage.js';
@@ -18,8 +19,16 @@ describe('synthetic storage', function() {
     resetVolatileStorageForTesting();
   });
 
-  function synthKey(targetStore) {
-    return `synthetic://arc/handles/${targetStore.storageKey}`;
+  async function setup(serialization) {
+    const id = new Id('123', ['test']);
+    const storage = new StorageProviderFactory(id);
+    const type = Type.newArcInfo();
+    const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
+    const targetStore = await storage.construct('id0', type, key);
+    targetStore.referenceMode = false;
+    await targetStore.set(type.newInstance(id, serialization.trim()));
+    const synth = await storage.connect('id1', null, `synthetic://arc/handles/${key}`);
+    return {id, targetStore, synth};
   }
 
   function flatten(arcHandle) {
@@ -30,56 +39,43 @@ describe('synthetic storage', function() {
     const storage = new StorageProviderFactory('arc-id');
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
-    check('simplistic://arc/handles/target', 'unknown storage protocol');
-    check('synthetic://archandles/target', 'invalid synthetic key');
-    check('synthetic://arc//target', 'invalid synthetic key');
-    check('synthetic://curve/handles/target', 'invalid scope');
-    check('synthetic://arc/cranks/target', 'invalid category');
+    check('simplistic://arc/handles/volatile', 'unknown storage protocol');
+    check('synthetic://arc/handles/not-a-protocol://test', 'unknown storage protocol');
+    check('synthetic://archandles/volatile', 'invalid synthetic key');
+    check('synthetic://arc//volatile', 'invalid synthetic key');
+    check('synthetic://curve/handles/volatile://test', 'invalid scope');
+    check('synthetic://arc/cranks/volatile://test', 'invalid category');
   });
 
   it('non-existent target key', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = {storageKey: 'volatile://non-existent'};
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
+    const storage = new StorageProviderFactory('id');
+    const synth = await storage.connect('id1', null, `synthetic://arc/handles/volatile://nope`);
     assert.isNull(synth);
   });
 
   it('invalid manifest', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: 'bad manifest, no cookie for you'});
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
+    const {synth} = await setup('bad manifest, no cookie for you');
     assert.isEmpty(await synth.toList());
   });
 
   it('manifest with no active recipe', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: `
+    const {synth} = await setup(`
       schema Thing
-        Text value`.trim()});
-
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
+        Text value`);
     assert.isEmpty(await synth.toList());
   });
 
   it('manifest with no handles', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: `
+    const {synth} = await setup(`
       schema Thing
       @active
       recipe
-        description \`empty\``.trim()});
-
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
+        description \`empty\``);
     assert.isEmpty(await synth.toList());
   });
 
   it('manifest with volatile handles', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: `
+    const {synth} = await setup(`
       schema Thing
       resource Store0Resource
         start
@@ -96,16 +92,12 @@ describe('synthetic storage', function() {
       @active
       recipe
         use 'test:0' as handle0 // Data {...}
-        use 'test:1' as handle1 // [Data {...}]`.trim()});
-
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
+        use 'test:1' as handle1 // [Data {...}]`);
     assert.isEmpty(await synth.toList());
   });
 
   it('manifest with persistent handles', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: `
+    const {synth} = await setup(`
       schema Foo
       schema Bar
       store Store0 of [Foo] at 'firebase://xx.firebaseio.com/yy'
@@ -113,9 +105,8 @@ describe('synthetic storage', function() {
       @active
       recipe
         use Store0 #taggy #waggy as handle0
-        use Store1 as handle1`.trim()});
+        use Store1 as handle1`);
 
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
     synth.on('change', () => assert.fail('change event should not fire for initial value'), {});
 
     const list = await synth.toList();
@@ -125,16 +116,13 @@ describe('synthetic storage', function() {
   });
 
   it('updates to the target store are propagated', async () => {
-    const storage = new StorageProviderFactory('arc-id');
-    const targetStore = await storage.construct('id0', Type.newArcInfo(), 'volatile');
-    await targetStore.set({id: 'arc1', serialized: `
+    const {id, targetStore, synth} = await setup(`
       schema Foo
       store Store0 of [Foo] at 'firebase://xx.firebaseio.com/yy'
       @active
       recipe
-        use Store0 as handle0`.trim()});
+        use Store0 as handle0`);
 
-    const synth = await storage.connect('id1', null, synthKey(targetStore));
     let list = await synth.toList();
     assert.deepEqual(list.map(h => flatten(h)), ['firebase://xx.firebaseio.com/yy [Foo {}] <>']);
 
@@ -144,12 +132,12 @@ describe('synthetic storage', function() {
     const eventPromise = new Promise(resolve => resolver = resolve);
     synth.on('change', e => resolver(e), {});
 
-    await targetStore.set({id: 'arc1', serialized: `
+    await targetStore.set(Type.newArcInfo().newInstance(id, `
       schema Bar
       store Store0 of [Bar] at 'pouchdb://aa.pouchdb.org/bb'
       @active
       recipe
-        use Store0 #bars as handle0`.trim()});
+        use Store0 #bars as handle0`.trim()));
 
     const e = await eventPromise;
     assert.deepEqual(e.add.map(x => flatten(x.value)), ['pouchdb://aa.pouchdb.org/bb [Bar {}] <bars>']);

@@ -11,6 +11,8 @@ import {TypeVariable} from './type-variable.js';
 import {Shape} from './shape.js';
 import {SlotInfo} from './slot-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {ArcInfo} from './synthetic-types.js';
+import {Id} from './id.js';
 
 export class Type {
   tag: 'Entity' | 'Variable' | 'Collection' | 'BigCollection' | 'Relation' |
@@ -765,6 +767,10 @@ export class ArcInfoType extends Type {
 
   get isArcInfo() {
     return true;
+  }
+
+  newInstance(arcId: Id, serialization: string) {
+    return new ArcInfo(arcId, serialization);
   }
 }
 
