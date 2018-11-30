@@ -12,22 +12,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import {firebase} from '../env/arcs.js';
 import {Firebase} from '../configuration/firebase-config.js';
 import {logFactory} from './log-factory.js';
+import {SyntheticStores} from './synthetic-stores.js';
+import {Type} from '../env/arcs.js';
 
 const log = logFactory('ArcHost', '#cade57');
 const warn = logFactory('ArcHost', '#cade57', 'warn');
 const error = logFactory('ArcHost', '#cade57', 'error');
-
-const Schemas = {
-  serialization: {
-    tag: 'Entity',
-    data: {
-      names: ['Serialization'],
-      fields: {
-        'serialization': 'Text',
-      }
-    }
-  }
-};
 
 export class ArcHost {
   constructor(env, context, storage, composer) {
@@ -47,7 +37,6 @@ export class ArcHost {
     const context = this.context || await this.env.parse(``);
     const serialization = this.serialization = await this.computeSerialization(config, this.storage);
     this.arc = await this._spawn(this.env, context, this.composer, this.storage, config.id, serialization);
-    //this.computeSerializationStore(serialization);
     if (config.manifest && !serialization) {
       await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
     }
@@ -68,18 +57,6 @@ export class ArcHost {
       this.pendingPlan = plan;
     }
   }
-  async computeSerializationStore(serialization) {
-    const type = this.env.lib.Type.fromLiteral(Schemas.serialization);
-    const stores = await this.arc.findStoresByType(type);
-    let store;
-    if (stores.length) {
-      store = stores[0];
-      log('located serial store', store);
-    } else {
-      store = await this.arc.createStore(type, 'Serialization', 'SYSTEM_Serialization');
-      log('created serial store', store);
-    }
-  }
   async computeSerialization(config, storage) {
     let serialization;
     if (config.serialization != null) {
@@ -88,11 +65,11 @@ export class ArcHost {
     if (serialization == null) {
       if (storage.includes('volatile')) {
         serialization = '';
-      }
-      else {
+      } else {
+        serialization = await this.fetchSerialization(storage, config.id) || '';
         // TODO(sjmiles): stopgap: assumes firebase storage
-        const snap = await Firebase.db.child(`${config.id}/serialization`).once('value');
-        serialization = snap.val() || '';
+        //const snap = await Firebase.db.child(`${config.id}/serialization`).once('value');
+        //serialization = snap.val() || '';
       }
     }
     return serialization;
@@ -121,8 +98,15 @@ export class ArcHost {
       error(x);
       //console.error(plan.toString());
     }
-    this.persistSerialization(); //arc);
-    //this.plan = plan;
+    this.persistSerialization();
+  }
+  async fetchSerialization(storage, arcid) {
+    const key = `${storage}/${arcid}/arc-info`;
+    const store = await SyntheticStores.providerFactory.connect('id', Type.newArcInfo(), key);
+    if (store) {
+      const info = await store.get();
+      return info && info.serialization;
+    }
   }
   async persistSerialization() {
     const {arc, config: {id}, storage} = this;
