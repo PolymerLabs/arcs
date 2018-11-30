@@ -18,6 +18,7 @@ import {Manifest} from '../ts-build/manifest.js';
 import {Planner} from '../ts-build/planner.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {Random} from '../ts-build/random.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new FakeSlotComposer();
@@ -198,6 +199,7 @@ recipe
   });
 
   it('renders inner slots in transformations without intercepting', async () => {
+    Random.seedForTests();
     const {arc, slotComposer} = await TestHelper.create({
       manifestString: `
         particle TransformationParticle in 'TransformationParticle.js'
@@ -290,16 +292,19 @@ recipe
     const detailSlotConsumer = slotComposer._contexts.find(c => c.name === 'detail').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer);
     await detailSlotConsumer.contentAvailable;
     
-    assert.deepEqual({
-      model: {a: 'A content/intercepted-model'},
-      template: `<div>intercepted-template<div><span>{{a}}</span><div slotid="${detailSlotConsumer.slotContext.id}"></div></div></div>`,
+    assert.deepEqual(rootSlotConsumer._content, {
+      model: {
+        a: 'A content/intercepted-model',
+        '$detail': 'slotid-!85915497922560:demo:3'
+      },
+      template: `<div>intercepted-template<div><span>{{a}}</span><div slotid$="{{$detail}}"></div></div></div>`,
       templateName: 'A::content::default/intercepted'
-    }, rootSlotConsumer._content);
+    });
 
-    assert.deepEqual({
+    assert.deepEqual(detailSlotConsumer._content, {
       model: {b: 'B content'},
       template: '<div>{{b}}</div>',
       templateName: 'default',
-    }, detailSlotConsumer._content);
+    });
   });
 });

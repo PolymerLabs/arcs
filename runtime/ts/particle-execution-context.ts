@@ -116,16 +116,24 @@ export class ParticleExecutionContext {
          * renders content to the slot.
          */
         render(content) {
-          if (content.template && this.providedSlots.size > 0) {
+          // TODO: This logic should live in dom-particle and referencing slots by name should be deprecated for the '{{$name}}' syntax.
+          if (this.providedSlots.size > 0) {
             content = {...content};
-            if (typeof content.template === 'string') {
-              content.template = this.substituteSlotNamesForIds(content.template);
-            } else {
-              content.template = Object.entries(content.template).reduce(
-                  (templateDictionary, [templateName, templateValue]) => {
-                    templateDictionary[templateName] = this.substituteSlotNamesForIds(templateValue);
-                    return templateDictionary;
-                  }, {});
+
+            const slotIDs = {};
+            this.providedSlots.forEach((slotId, slotName) => slotIDs[`$${slotName}`] = slotId);
+            content.model = this.enhanceModelWithSlotIDs(content.model, slotIDs);
+
+            if (content.template) {
+              if (typeof content.template === 'string') {
+                content.template = this.substituteSlotNamesForModelReferences(content.template);
+              } else {
+                content.template = Object.entries(content.template).reduce(
+                    (templateDictionary, [templateName, templateValue]) => {
+                      templateDictionary[templateName] = this.substituteSlotNamesForModelReferences(templateValue);
+                      return templateDictionary;
+                    }, {});
+              }
             }
           }
 
@@ -135,13 +143,29 @@ export class ParticleExecutionContext {
           // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
           this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
         }
-        private substituteSlotNamesForIds(template) {
+        private substituteSlotNamesForModelReferences(template) {
           this.providedSlots.forEach((slotId, slotName) => {
             // TODO: This is a simple string replacement right now,
             // ensuring that 'slotid' is an attribute on an HTML element would be an improvement.
-            template = template.replace(new RegExp(`slotid=\"${slotName}\"`, 'gi'), `slotid="${slotId}"`);
+            template = template.replace(new RegExp(`slotid=\"${slotName}\"`, 'gi'), `slotid$="{{$${slotName}}}"`);
           });
           return template;
+        }
+        // We put slot IDs at the top-level of the model as well as in models for sub-templates.
+        // This is temporary and should go away when we move from sub-IDs to [(Entity, Slot)] constructs.
+        private enhanceModelWithSlotIDs(model = {}, slotIDs, topLevel = true) {
+          if (topLevel) {
+            model = {...slotIDs, ...model};
+          }
+          if (model.hasOwnProperty('$template') && model.hasOwnProperty('models') && Array.isArray(model['models'])) {
+            model['models'] = model['models'].map(m => this.enhanceModelWithSlotIDs(m, slotIDs));
+          }
+          for (const [key, value] of Object.entries(model)) {
+            if (!!value && typeof value === 'object') {
+            model[key] = this.enhanceModelWithSlotIDs(value, slotIDs, false);
+            }
+          }
+          return model;
         }
         /**
          * registers a callback to be invoked when 'name' event happens.

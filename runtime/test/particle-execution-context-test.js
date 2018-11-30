@@ -16,7 +16,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 describe('Particle Execution Context', function() {
-  it('substitutes slot names in templates for slot ids', async () => {
+  it('substitutes slot names for model references', async () => {
     const {arc, slotComposer} = await TestHelper.create({
       manifestString: `
         particle A in 'A.js'
@@ -31,7 +31,7 @@ describe('Particle Execution Context', function() {
       loader: new StubLoader({
         'A.js': `defineParticle(({DomParticle}) => {
           return class extends DomParticle {
-            get template() { return '<div><div slotid="detail"></div><div slotid="annotation"></div></div>'; }
+            get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
           };
         });`
       }),
@@ -48,7 +48,11 @@ describe('Particle Execution Context', function() {
 
     await slotConsumer.contentAvailable;
     assert.deepEqual(
-        `<div><div slotid="${detailContext.id}"></div><div slotid="${annotationContext.id}"></div></div>`,
+        `<div><div slotid$="{{$detail}}"></div><div slotid$="{{$annotation}}"></div></div>`,
         slotConsumer._content.template);
+    assert.deepEqual({
+      '$annotation': annotationContext.id,
+      '$detail': detailContext.id
+    }, slotConsumer._content.model);
   });
 });
