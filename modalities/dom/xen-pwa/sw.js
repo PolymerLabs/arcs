@@ -1,6 +1,7 @@
 /*global caches,fetch,Response*/
 
 const version = 'pwa.cache.00';
+
 const artifacts = [
   ['index.html', 0]
 ];
