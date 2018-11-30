@@ -315,7 +315,7 @@ async function _webpack(pack) {
             entry: path.resolve(projectRoot, file),
             mode: 'none',
             optimization: {
-              minimize: true
+              minimize: false
             },
             devtool: 'sourcemap',
             output: {
