@@ -84,17 +84,20 @@ class TestPlanProducer extends PlanProducer {
   }
 }
 
-describe('plan producer', function() {
-  async function createProducer(manifestFilename) {
-    const helper = await TestHelper.createAndPlan({
-      manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
-    });
-    helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-    const store = await Planificator._initSuggestStore(helper.arc, {userid: 'TestUser', protocol: 'volatile'});
-    assert.isNotNull(store);
-    const producer = new TestPlanProducer(helper.arc, store);
-    return {helper, producer};
-  }
+// Run test suite for each storageKeyBase
+['volatile://', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+  describe('plan producer for ' + storageKeyBase, function() {
+    async function createProducer(manifestFilename) {
+      const helper = await TestHelper.createAndPlan({
+        manifestFilename: './runtime/test/artifacts/Products/Products.recipes'
+      });
+      helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
+      const store = await Planificator._initSuggestStore(helper.arc, {userid: 'TestUser', storageKeyBase});
+      assert.isNotNull(store);
+      const producer = new TestPlanProducer(helper.arc, store);
+      return {helper, producer};
+    }
+
   it('produces suggestions', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
@@ -109,7 +112,7 @@ describe('plan producer', function() {
     assert.equal(producer.plannerRunCount, 1);
     assert.equal(producer.cancelCount, 0);
   });
-  
+
   it('throttles requests to produce suggestions', async () => {
     const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
@@ -218,4 +221,6 @@ describe('plan producer - search', function() {
     assert.isTrue(producer.options.append);
     assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));
   });
-});
+  }); // end describe
+}); // end forEach
+

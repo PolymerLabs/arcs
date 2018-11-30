@@ -12,8 +12,8 @@
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './ts-build/particle-spec.js';
 import {Type} from './ts-build/type.js';
-import {OuterPortAttachment} from './debug/outer-port-attachment.js';
-import {DevtoolsConnection} from './debug/devtools-connection.js';
+import {OuterPortAttachment} from './ts-build/debug/outer-port-attachment.js';
+import {DevtoolsConnection} from './ts-build/debug/devtools-connection.js';
 
 class ThingMapper {
   constructor(prefix) {

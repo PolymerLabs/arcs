@@ -27,7 +27,7 @@ export class StorageProviderFactory {
     };
   }
 
-  private getInstance(key) {
+  private getInstance(key: string) {
     const instance = this._storageInstances[key.split(':')[0]];
     if (!instance) {
       throw new Error(`unknown storage protocol: ${key}`);
@@ -35,11 +35,14 @@ export class StorageProviderFactory {
     return instance;
   }
 
-  _storageForKey(key) {
+  _storageForKey(key: string): StorageBase {
+    if (!key) {
+      throw new Error('key is required');
+    }
     return this.getInstance(key).storage;
   }
 
-  isPersistent(key) {
+  isPersistent(key): boolean {
     return this.getInstance(key).isPersistent;
   }
 

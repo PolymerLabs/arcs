@@ -141,6 +141,10 @@ const SingleUserContext = class {
     }
   }
   async _observeStore(store, key, cb) {
+    if (!store) {
+      console.warn('uninitialized store');
+      return;
+    }
     // SyntheticCollection has `toList` but is `!type.isCollection`,
     if (store.toList) {
     //if (store.type.isCollection) {
@@ -284,6 +288,10 @@ const SingleUserContext = class {
     await Promise.all(jobs);
   }
   async _removeUserStoreEntities(userid, store, isProfile) {
+    if (!store) {
+      console.warn('uninitialized store');
+      return;
+    }
     log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'variable'})`);
     //const tags = context.findStoreTags(store);
     if (store.toList) {

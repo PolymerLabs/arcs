@@ -16,6 +16,7 @@ import {PECInnerPort} from '../api-channel.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {Handle, HandleOptions} from './handle.js';
+import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 
 enum SyncState {none, pending, full}
 
@@ -88,7 +89,9 @@ export abstract class StorageProxy {
   abstract _processUpdate(update: {version: number}, apply?: boolean): {};
 
   raiseSystemException(exception, methodName, particleId) {
-    this.port.RaiseSystemException({exception: {message: exception.message, stack: exception.stack, name: exception.name}, methodName, particleId});
+    // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
+    mapStackTrace(exception.stack, mappedStack => this.port.RaiseSystemException(
+        {exception: {message: exception.message, stack: mappedStack.join('\n'), name: exception.name}, methodName, particleId}));
   }
 
   /**

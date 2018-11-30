@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../runtime/ts-build/debug/abstract-devtools-channel.js';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
