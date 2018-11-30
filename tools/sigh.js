@@ -289,7 +289,7 @@ async function lint(args) {
 
 async function webpack() {
   for (const pack of sources.pack) {
-    _webpack(pack);
+    await _webpack(pack);
   }
 }
 
