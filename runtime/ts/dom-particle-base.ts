@@ -128,7 +128,7 @@ export class DomParticleBase extends Particle {
     if (handle instanceof Variable || handle instanceof Collection) {
       handle.clear();
     } else {
-      throw new Error('unimplemented');
+      throw new Error('Variable/Collection required');
     }
   }
 
@@ -147,7 +147,7 @@ export class DomParticleBase extends Particle {
         }
       }
     } else {
-      throw new Error('unimplemented');
+      throw new Error('Collection required');
     }
   }
 
@@ -160,7 +160,7 @@ export class DomParticleBase extends Particle {
       if (handle instanceof Collection || handle instanceof BigCollection) {
         Promise.all(entities.map(entity => handle.store(entity)));
       } else {
-        throw new Error('unimplemented');
+        throw new Error('Collection required');
       }
     }
   }
@@ -177,7 +177,7 @@ export class DomParticleBase extends Particle {
         const entityClass: any = handle.entityClass;
         Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
       } else {
-        throw new Error('unimplemented');
+        throw new Error('Collection required');
       }
     }
   }
@@ -197,7 +197,7 @@ export class DomParticleBase extends Particle {
         handle.set(entity);
         return entity;
       } else {
-        throw new Error('unimplemented');
+        throw new Error('Variable required');
       }
     }
     return undefined;
@@ -217,7 +217,7 @@ export class DomParticleBase extends Particle {
         await handle.remove(entity);
         await handle.store(entity);
       } else {
-        throw new Error('unimplemented');
+        throw new Error('Collection required');
       }
     }
   }
