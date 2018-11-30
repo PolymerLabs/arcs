@@ -102,8 +102,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     if (!state.env && root) {
       this.updateEnv({root}, state);
-      this.spawnContext();
-      //this.handrollSuggestions();
+      this.spawnContext(state.userid);
     }
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
@@ -125,11 +124,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     if (!state.launcherConfig && state.env) {
       // spin up launcher arc
-      this.spawnLauncher();
+      this.spawnLauncher(state.userid);
     }
     if (!state.nullConfig && state.context) {
       // spin up nullArc
-      this.spawnNullArc();
+      this.spawnNullArc(state.userid);
     }
     // if (state.arc && state.pendingSuggestion) {
     //   const plan = state.pendingSuggestion.plan;
@@ -177,82 +176,31 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
-  async spawnContext() {
+  async spawnContext(userid) {
     const precontext = await this.state.env.parse(manifests.context);
     this.state = {
       precontext,
       contextConfig: {
-        id: `${this.state.userid}-context`
+        id: `${userid}-context`
       }
     };
   }
-  spawnLauncher() {
+  spawnLauncher(userid) {
     this.state = {
       launcherConfig: {
-        id: `${this.state.userid}-launcher`,
+        id: `${userid}-launcher`,
         manifest: manifests.launcher
       }
     };
   }
-  spawnNullArc() {
+  spawnNullArc(userid) {
     this.state = {
       nullConfig: {
-        id: `${this.state.userid}-null`,
+        id: `${userid}-null`,
         suggestionContainer: this._dom.$('[slotid="suggestions"]')
       }
     };
   }
-  // handrollSuggestions() {
-  //   const suggestions = [
-  //     //`Arcs/Login.recipe`,
-  //     //`Profile/EchoUser.recipe`
-  //     `Demo/ProductsDemo.recipe`,
-  //     `Demo/RestaurantsDemo.recipes`,
-  //     `Demo/TVMazeDemo.recipes`,
-  //     `Music/Playlist.recipe`,
-  //     `Profile/BasicProfile.recipe`,
-  //     `Restaurants/Restaurants.recipes`,
-  //     `Reservations/Reservations.recipes`
-  //   ];
-  //   const slot = this.host.querySelector(`[suggestions]`);
-  //   if (slot) {
-  //     suggestions.forEach(suggestion => {
-  //       slot.appendChild(Object.assign(document.createElement(`suggestion-element`), {
-  //         suggestion,
-  //         innerText: suggestion.split('/').pop().split('.').shift()
-  //       }))
-  //       .addEventListener('plan-choose', () => this.applyHandrolledSuggestion(suggestion));
-  //     });
-  //   }
-  // }
-  // applyHandrolledSuggestion(suggestion) {
-  //   if (this.state.arckey) {
-  //     this.state = {manifest: `import 'https://$artifacts/${suggestion}'`};
-  //   } else {
-  //     this.spawnHandrolledArc(suggestion);
-  //   }
-  // }
-  // spawnHandrolledArc(recipeName) {
-  //   const luid = generateId();
-  //   //const id = `${this.state.userid}-${luid}`;
-  //   const id = `${this.state.userid}/${luid}`;
-  //   const manifest = `import 'https://$artifacts/${recipeName}'`;
-  //   this.state = {
-  //     arc: null,
-  //     arckey: id,
-  //     // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
-  //     arcConfig: {id, manifest},
-  //     manifest: null
-  //   };
-  //   const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-  //   this.recordArcMeta({
-  //     key: id,
-  //     href: `?arc=${id}`,
-  //     description: `${recipeName.split('/').pop().split('.').shift()}`,
-  //     color,
-  //     touched: Date.now()
-  //   });
-  // }
   applySuggestion(suggestion) {
     if (!this.state.arckey) {
       this.spawnArc(suggestion);
@@ -263,12 +211,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   spawnArc(suggestion) {
     const luid = generateId();
     const key = `${this.state.userid}-${luid}`;
-    //const id = `${this.state.userid}/${luid}`;
-    const manifest = null; //`import 'https://$artifacts/${recipe}'`;
+    const manifest = null;
     this.state = {
       arc: null,
       arckey: key,
-      // TODO(sjmiles): see web-arc.js for explanation of manifest confusion
+      // TODO(sjmiles): see web-arc.js for explanation around manifest confusion
       arcConfig: {id: key, manifest},
       manifest: null,
       plan: suggestion.plan
