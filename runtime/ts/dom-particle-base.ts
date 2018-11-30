@@ -9,62 +9,74 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {Particle} from './ts-build/particle.js';
+import {assert} from '../../platform/assert-web.js';
+import {Particle} from './particle.js';
+import {BigCollection} from './handle.js';
+import {Collection} from './handle.js';
+import {Variable} from './handle.js';
 
-/** @class DomParticleBase
+
+/**
  * Particle that interoperates with DOM.
  */
 export class DomParticleBase extends Particle {
+  private currentSlotName: string | undefined;
+
   constructor() {
     super();
   }
-  /** @method get template()
+  /**
    * Override to return a String defining primary markup.
    */
-  get template() {
+  get template(): string {
     return '';
   }
-  /** @method getTemplate(slotName)
+
+  /**
    * Override to return a String defining primary markup for the given slot name.
    */
-  getTemplate(slotName) {
+  getTemplate(slotName: string): string {
     // TODO: only supports a single template for now. add multiple templates support.
     return this.template;
   }
-  /** @method getTemplateName(slotName)
+
+  /**
    * Override to return a String defining the name of the template for the given slot name.
    */
-  getTemplateName(slotName) {
+  getTemplateName(slotName: string): string {
     // TODO: only supports a single template for now. add multiple templates support.
     return `default`;
   }
-  /** @method shouldRender()
-   * Override to return false if the Particle won't use
-   * it's slot.
+
+  /**
+   * Override to return false if the Particle won't use it's slot.
    */
-  shouldRender() {
+  shouldRender(stateArgs?) {
     return true;
   }
-  /** @method render()
+
+  /**
    * Override to return a dictionary to map into the template.
    */
-  render() {
+  render(stateArgs?) {
     return {};
   }
-  renderSlot(slotName, contentTypes) {
+
+  renderSlot(slotName: string, contentTypes: string[]) {
     const stateArgs = this._getStateArgs();
     const slot = this.getSlot(slotName);
+
     if (!slot) {
       return; // didn't receive StartRender.
     }
+
     // Set this to support multiple slots consumed by a particle, without needing
     // to pass slotName to particle's render method, where it useless in most cases.
     this.currentSlotName = slotName;
     contentTypes.forEach(ct => slot.requestedContentTypes.add(ct));
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
-      const content = {};
+      const content: {templateName?, template?, model?} = {};
       if (slot.requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
       }
@@ -79,21 +91,25 @@ export class DomParticleBase extends Particle {
     }
     this.currentSlotName = undefined;
   }
+
   _getStateArgs() {
     return [];
   }
-  forceRenderTemplate(slotName) {
+
+  forceRenderTemplate(slotName: string) {
     this._slotByName.forEach((slot, name) => {
-      if (!slotName || (name == slotName)) {
+      if (!slotName || (name === slotName)) {
         slot.requestedContentTypes.add('template');
       }
     });
   }
-  fireEvent(slotName, {handler, data}) {
+
+  fireEvent(slotName: string, {handler, data}) {
     if (this[handler]) {
       this[handler]({data});
     }
   }
+
   setParticleDescription(pattern) {
     if (typeof pattern === 'string') {
       return super.setParticleDescription(pattern);
@@ -101,90 +117,112 @@ export class DomParticleBase extends Particle {
     assert(!!pattern.template && !!pattern.model, 'Description pattern must either be string or have template and model');
     super.setDescriptionPattern('_template_', pattern.template);
     super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
+    return undefined;
   }
-  /** @method clearHandle(handleName)
+
+  /**
    * Remove entities from named handle.
    */
-  async clearHandle(handleName) {
-    await this.handles.get(handleName).clear();
-    /*
+  async clearHandle(handleName: string) {
     const handle = this.handles.get(handleName);
-    if (handle.clear) {
+    if (handle instanceof Variable || handle instanceof Collection) {
       handle.clear();
     } else {
-      const entities = await handle.toList();
-      if (entities) {
-        return Promise.all(entities.map(entity => handle.remove(entity)));
-      }
+      throw new Error('Variable/Collection required');
     }
-    */
   }
-  /** @method mergeEntitiesToHandle(handleName, entityArray)
+
+  /**
    * Merge entities from Array into named handle.
    */
-  async mergeEntitiesToHandle(handleName, entities) {
+  async mergeEntitiesToHandle(handleName: string, entities): Promise<void> {
     const idMap = {};
     const handle = this.handles.get(handleName);
-    const handleEntities = await handle.toList();
-    handleEntities.forEach(entity => idMap[entity.id] = entity);
-    for (const entity of entities) {
-      if (!idMap[entity.id]) {
-        handle.store(entity);
+    if (handle instanceof Collection) {
+      const handleEntities = await handle.toList();
+      handleEntities.forEach(entity => idMap[entity.id] = entity);
+      for (const entity of entities) {
+        if (!idMap[entity.id]) {
+          handle.store(entity);
+        }
       }
+    } else {
+      throw new Error('Collection required');
     }
-    //Promise.all(entities.map(entity => !idMap[entity.id] && handle.store(entity)));
-    //Promise.all(entities.map(entity => handle.store(entity)));
   }
-  /** @method appendEntitiesToHandle(handleName, entityArray)
+
+  /**
    * Append entities from Array to named handle.
    */
-  async appendEntitiesToHandle(handleName, entities) {
+  async appendEntitiesToHandle(handleName: string, entities): Promise<void> {
     const handle = this.handles.get(handleName);
     if (handle) {
-      Promise.all(entities.map(entity => handle.store(entity)));
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        Promise.all(entities.map(entity => handle.store(entity)));
+      } else {
+        throw new Error('Collection required');
+      }
     }
   }
-  /** @method appendRawDataToHandle(handleName, rawDataArray)
+
+  /**
    * Create an entity from each rawData, and append to named handle.
    */
-  async appendRawDataToHandle(handleName, rawDataArray) {
+  async appendRawDataToHandle(handleName, rawDataArray): Promise<void> {
     const handle = this.handles.get(handleName);
-    if (handle) {
-      Promise.all(rawDataArray.map(raw => handle.store(new (handle.entityClass)(raw))));
+    if (handle && handle.entityClass) {
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        // Typescript can't infer the type here and fails with TS2351
+        // tslint:disable-next-line: no-any
+        const entityClass: any = handle.entityClass;
+        Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+      } else {
+        throw new Error('Collection required');
+      }
     }
   }
-  /** @method updateVariable(handleName, rawData)
+
+  /**
    * Modify value of named handle. A new entity is created
    * from `rawData` (`new [EntityClass](rawData)`).
    */
-  updateVariable(handleName, rawData) {
+  updateVariable(handleName: string, rawData) {
     const handle = this.handles.get(handleName);
-    if (handle) {
-      const entity = new (handle.entityClass)(rawData);
-      handle.set(entity);
-      return entity;
+    if (handle && handle.entityClass) {
+      if (handle instanceof Variable) {
+        // Typescript can't infer the type here and fails with TS2351
+        // tslint:disable-next-line: no-any
+        const entityClass: any = handle.entityClass;
+        const entity = new entityClass(rawData);
+        handle.set(entity);
+        return entity;
+      } else {
+        throw new Error('Variable required');
+      }
     }
+    return undefined;
   }
-  /** @method updateSet(handleName, entity)
+
+  /**
    * Modify or insert `entity` into named handle.
    * Modification is done by removing the old entity and reinserting the new one.
    */
-  async updateSet(handleName, entity) {
+  async updateSet(handleName: string, entity): Promise<void> {
     // Set the entity into the right place in the set. If we find it
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
     const handle = this.handles.get(handleName);
     if (handle) {
-      // const entities = await handle.toList();
-      // const target = entities.find(r => r.id === entity.id);
-      // if (target) {
-      //   handle.remove(target);
-      // }
-      handle.remove(entity);
-      handle.store(entity);
+      if (handle instanceof Collection || handle instanceof BigCollection) {
+        await handle.remove(entity);
+        await handle.store(entity);
+      } else {
+        throw new Error('Collection required');
+      }
     }
   }
-  /** @method boxQuery(box, userid)
+
+  /**
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`
    */
   boxQuery(box, userid) {

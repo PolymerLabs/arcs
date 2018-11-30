@@ -111,10 +111,6 @@ export abstract class Handle {
     return this._proxy.id;
   }
 
-  async store(entity) {
-    throw new Error('unimplemented');
-  }
-
   toManifestString() {
     return `'${this._id}'`;
   }
@@ -127,7 +123,7 @@ export abstract class Handle {
  * need to be connected to that particle, and the current recipe identifies
  * which handles are connected.
  */
-class Collection extends Handle {
+export class Collection extends Handle {
   // Called by StorageProxy.
   _proxy: CollectionProxy;
   _notify(kind: string, particle: Particle, details) {
@@ -225,7 +221,7 @@ class Collection extends Handle {
     const serialization = this._serialize(entity);
     // Remove the keys that exist at storage/proxy.
     const keys = [];
-    return this._proxy.remove(serialization.id, keys, this._particleId);
+    this._proxy.remove(serialization.id, keys, this._particleId);
   }
 }
 
@@ -234,7 +230,7 @@ class Collection extends Handle {
  * the types of handles that need to be connected to that particle, and
  * the current recipe identifies which handles are connected.
  */
-class Variable extends Handle {
+export class Variable extends Handle {
   _proxy: VariableProxy;
   // Called by StorageProxy.
   async _notify(kind: string, particle: Particle, details) {
@@ -368,7 +364,7 @@ class Cursor {
  * operate on BigCollections should do so in the setHandles() call, since BigCollections do not
  * trigger onHandleSync() or onHandleUpdate().
  */
-class BigCollection extends Handle {
+export class BigCollection extends Handle {
   _proxy: BigCollectionProxy;
   configure(options) {
     throw new Error('BigCollections do not support sync/update configuration');
@@ -404,7 +400,7 @@ class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    return this._proxy.remove(serialization.id, this._particleId);
+    this._proxy.remove(serialization.id, this._particleId);
   }
 
   /**
