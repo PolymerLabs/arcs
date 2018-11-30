@@ -291,6 +291,7 @@ async function webpack() {
   for (const pack of sources.pack) {
     await _webpack(pack);
   }
+  return true;
 }
 
 async function _webpack(pack) {
