@@ -81,26 +81,26 @@ export const SingleUserContext = class {
   }
   async observeStore(store, key, cb) {
    if (!store) {
-      console.warn('unitialized store');
-      return;
-    }
-    if (!this.observers[key]) {
-      //log(`observing [${key}]`);
-      // TODO(sjmiles): create synthetic store `change` records from the initial state
-      // SyntheticCollection has `toList` but is `!type.isCollection`,
-      if (store.toList) {
-        const data = await store.toList();
-        if (data && data.length) {
-          const add = data.map(value => ({value}));
-          cb({add});
+      console.warn(`observeStore: store is null for [${key}]`);
+    } else {
+      if (!this.observers[key]) {
+        //log(`observing [${key}]`);
+        // TODO(sjmiles): create synthetic store `change` records from the initial state
+        // SyntheticCollection has `toList` but is `!type.isCollection`,
+        if (store.toList) {
+          const data = await store.toList();
+          if (data && data.length) {
+            const add = data.map(value => ({value}));
+            cb({add});
+          }
+        } else if (store.type.isEntity) {
+          const data = await store.get();
+          if (data) {
+            cb({data});
+          }
         }
-      } else if (store.type.isEntity) {
-        const data = await store.get();
-        if (data) {
-          cb({data});
-        }
+        this.observers[key] = {key, store, cb: store.on('change', cb, this)};
       }
-      this.observers[key] = {key, store, cb: store.on('change', cb, this)};
     }
   }
    onArcStoreChanged(arcid, info) {
@@ -255,32 +255,32 @@ export const SingleUserContext = class {
   }
   async removeUserStoreEntities(userid, store, isProfile) {
    if (!store) {
-      console.warn('unitialized store');
-      return;
-    }
-    log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'variable'})`);
-    //const tags = context.findStoreTags(store);
-    if (store.toList) {
-      const entities = await store.toList();
-      entities.forEach(entity => {
-        const uid = entity.id.split('uid:').pop().split('|').shift();
+      console.warn(`removeUserStoreEntities: store is null for [${userid}]`);
+    } else {
+      log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'variable'})`);
+      //const tags = context.findStoreTags(store);
+      if (store.toList) {
+        const entities = await store.toList();
+        entities.forEach(entity => {
+          const uid = entity.id.split('uid:').pop().split('|').shift();
+          if (isProfile || uid === userid) {
+            log(`  REMOVE `, entity.id);
+            // TODO(sjmiles): _removeUserStoreEntities is strangely re-entering
+            //  (1) `remove` fires synchronous change events
+            //  (2) looks like there are double `remove` events in the queue. Bug?
+            // In general, to avoid interleaving we'll probably need to
+            // use a stack to process changes async to receiving them.
+            // Parallel processing works as of now ... feature?
+            store.remove(entity.id);
+          }
+        });
+      }
+      else {
+        const uid = store.id.split('|').slice(-2, -1).pop();
         if (isProfile || uid === userid) {
-          log(`  REMOVE `, entity.id);
-          // TODO(sjmiles): _removeUserStoreEntities is strangely re-entering
-          //  (1) `remove` fires synchronous change events
-          //  (2) looks like there are double `remove` events in the queue. Bug?
-          // In general, to avoid interleaving we'll probably need to
-          // use a stack to process changes async to receiving them.
-          // Parallel processing works as of now ... feature?
-          store.remove(entity.id);
+          log(`  CLEAR store`);
+          store.clear();
         }
-      });
-    }
-    else {
-      const uid = store.id.split('|').slice(-2, -1).pop();
-      if (isProfile || uid === userid) {
-        log(`  CLEAR store`);
-        store.clear();
       }
     }
   }
