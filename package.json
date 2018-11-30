@@ -13,19 +13,19 @@
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
     "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
-    "test": "run-s --print-name --continue-on-error test-no-web test-wdio test-wdio-6",
-    "test-6": "run-p --print-name --race start s-test-6",
-    "s-test-6": "run-s --print-name --continue-on-error test-wdio-6",
+    "test": "run-s --print-name --continue-on-error test-no-web test-wdio test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-mocha-words test-extension",
     "test-sigh": "cross-env tools/sigh",
     "test-extension": "mocha-chrome extension/test/index.test.html",
     "test-mocha-words": "mocha-chrome artifacts/Words/test/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js",
-    "test-wdio-6": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell_0_6_0/test/wdio.conf.js",
+    "test-wdio-shells": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shells/test/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "build:typedoc": "typedoc --mode file --target ES5  --downLevelIteration -out dist/apidocs",
     "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install --no-package-lock && npm --prefix server install --package-lock-only && npm --prefix server run test",
-    "server:start": "npm --prefix server start"
+    "server:start": "npm --prefix server start",
+    "test-shells": "run-p --print-name --race start s-test-shells",
+    "s-test-shells": "run-s --print-name --continue-on-error test-wdio-shells"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -62,7 +62,8 @@
     "wdio-mocha-framework": "^0.6.4",
     "wdio-spec-reporter": "^0.1.5",
     "webdriverio": "^4.14.0",
-    "webpack": "^4.25.1"
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2"
   },
   "dependencies": {
     "@types/pouchdb-core": "^7.0.0",

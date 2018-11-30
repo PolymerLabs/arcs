@@ -1,0 +1,53 @@
+<!doctype html>
+
+<title>Recipe Taster</title>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+<style>
+  body {
+    font-family: sans-serif;
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+<link rel="shortcut icon" href="../configuration/logo_64.png">
+
+<script type="module" src="../configuration/whitelisted.js"></script>
+
+<div slotid="toproot"></div>
+<div slotid="root"></div>
+<div slotid="modal"></div>
+
+<script type="module">
+  import '../env/web/arcs.js';
+  import {Env} from '../env/web/env.js';
+  import {SlotComposer} from '../env/arcs.js';
+  import {App} from './app.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  }
+
+  const env = new Env('../../');
+  Object.assign(env.pathMap, {
+    'https://$artifacts/': `../../particles_0_6_0/`,
+    'https://$particles/': `../../particles_0_6_0/`
+  });
+
+  const composer = new SlotComposer({
+    modality: 'dom',
+    rootContainer: document.body
+  });
+
+  const manifest = getUrlParam('manifest') || `Arcs/Login.recipe`;
+
+  (async () => {
+    try {
+      window.arc = await App(env, composer, manifest);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

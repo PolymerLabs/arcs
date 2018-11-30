@@ -24,14 +24,20 @@ const sources = {
     output: 'runtime/build/manifest-parser.js',
     railroad: 'manifest-railroad.html',
   },
-  pack: {
+  pack: [{
     inputs: [
       'shell/source/worker-entry.js',
       'shell/source/ArcsLib.js',
       'shell/source/Tracelib.js'
     ],
     buildDir: 'shell/build',
-  },
+  }, {
+    inputs: [
+      'shells/env/source/worker.js',
+      'shells/env/source/arcs.js',
+    ],
+    buildDir: 'shells/env/build'
+  }],
   ts: {
     inputs: [
       'runtime/ts'
@@ -282,6 +288,13 @@ async function lint(args) {
 }
 
 async function webpack() {
+  for (const pack of sources.pack) {
+    await _webpack(pack);
+  }
+  return true;
+}
+
+async function _webpack(pack) {
   const webpack = require('webpack');
 
   const node = {
@@ -290,23 +303,26 @@ async function webpack() {
     minimist: 'empty',
   };
 
-  const buildDir = path.resolve(projectRoot, sources.pack.buildDir);
+  const buildDir = path.resolve(projectRoot, pack.buildDir);
   if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir);
   }
 
-  for (const file of sources.pack.inputs) {
+  for (const file of pack.inputs) {
     await new Promise((resolve, reject) => {
       webpack(
           {
             entry: path.resolve(projectRoot, file),
-            mode: 'development',
+            mode: 'none',
+            optimization: {
+              minimize: true
+            },
+            devtool: 'sourcemap',
             output: {
               path: process.cwd(),
-              filename: `${sources.pack.buildDir}/${path.basename(file)}`,
+              filename: `${pack.buildDir}/${path.basename(file)}`,
             },
             node,
-            devtool: 'sourcemap',
           },
           (err, stats) => {
             if (err) {
