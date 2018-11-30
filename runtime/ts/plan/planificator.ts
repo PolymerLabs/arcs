@@ -109,7 +109,7 @@ export class Planificator {
     this.consumer.registerVisibleSuggestionsChangedCallback(callback);
   }
 
-  async dispose() {
+  dispose() {
     this.arc.unregisterInstantiatePlanCallback(this.arcCallback);
     if (!this.consumerOnly) {
       this._unlistenToArcStores();
@@ -117,8 +117,6 @@ export class Planificator {
     }
     this.consumer.store.dispose();
     this.consumer.dispose();
-
-    return this.setSearch(null);
   }
 
   getLastActivatedPlan() {

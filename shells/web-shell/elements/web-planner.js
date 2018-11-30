@@ -34,10 +34,10 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       invalid: 0
     };
   }
-  async _update({env, config, userid, arc, search}, state) {
+  _update({env, config, userid, arc, search}, state) {
     const {planificator} = state;
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
-      await planificator.dispose();
+      planificator.dispose();
       state.planificator = null;
       state.search = null;
       log('planificator was disposed');

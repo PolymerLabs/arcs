@@ -42,7 +42,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       if (changed('arc') || changed('userid')) {
         state.pendingSuggestions = [];
         if (planificator) {
-          await planificator.dispose();
+          planificator.dispose();
           planificator = null;
         }
       }
