@@ -1,0 +1,28 @@
+<!doctype html>
+
+<title>Xen PWA</title>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+<!-- PWA reqs -->
+<meta name="theme-color" content="#FFFFFF"/>
+<link rel="manifest" href="./pwa/manifest.json"/>
+<link rel="shortcut icon" href="./pwa/logo_64.png">
+<script type="module" src="./pwa/service-worker.js"></script>
+<service-worker href="./sw.js"></service-worker>
+<h2 nojs>Sorry, application requires JavaScript</h2>
+<script>document.querySelector('[nojs]').remove();</script>
+<!-- -->
+
+<style>
+  body {
+    font-family: sans-serif;
+  }
+</style>
+
+<div console></div>
+
+<script type="module">
+  document.querySelector('[console]').innerHTML = 'Xen PWA is Live';
+</script>
