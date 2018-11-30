@@ -9,7 +9,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/assert-web.js';
 import {now} from '../../../platform/date-web.js';
 import {PlanProducer} from './plan-producer.js';
 

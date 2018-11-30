@@ -8,7 +8,6 @@
 import {Strategy} from '../strategizer/strategizer.js';
 import {Arc} from '../arc.js';
 import {Recipe} from '../recipe/recipe.js';
-import {assert} from '../../../platform/assert-web.js';
 import {Descendant} from '../strategizer/strategizer.js';
 
 type ScoredRecipe = {

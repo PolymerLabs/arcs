@@ -8,8 +8,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Symbols} from './symbols.js';
-import {Type} from './type.js';
-import {Schema} from './schema.js';
 
 export abstract class Entity {
   private userIDComponent?: string;

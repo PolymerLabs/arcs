@@ -15,7 +15,6 @@ import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {DevtoolsChannel} from '../../../platform/devtools-channel-web.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {Particle} from '../recipe/particle.js';
-import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
 
 // Arc-independent handlers for devtools logic.
 DevtoolsConnection.onceConnected.then(devtoolsChannel => {

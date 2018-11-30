@@ -10,7 +10,6 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
-import {now} from '../../../platform/date-web.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Suggestion} from './suggestion.js';
 

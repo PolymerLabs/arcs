@@ -10,7 +10,6 @@
 
 import {assert} from '../../../platform/assert-web.js';
 import {Arc} from '../arc.js';
-import {Recipe} from '../recipe/recipe.js';
 import {PlanningResult} from './planning-result.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';

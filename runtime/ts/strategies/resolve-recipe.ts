@@ -10,7 +10,6 @@ import {Walker} from '../recipe/walker.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {MapSlots} from './map-slots.js';
-import {ConnectionConstraint, InstanceEndPoint, ParticleEndPoint} from '../recipe/connection-constraint';
 import {Handle} from '../recipe/handle';
 
 export class ResolveRecipe extends Strategy {

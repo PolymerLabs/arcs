@@ -7,7 +7,6 @@
 
 import {now} from '../../platform/date-web.js';
 import {Arc} from './arc.js';
-import {Relevance} from './relevance.js';
 import {Strategizer, Strategy, StrategyDerived} from './strategizer/strategizer.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../../platform/deviceinfo-web.js';
@@ -33,7 +32,6 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
 import {Suggestion} from './plan/suggestion';
 import {Tracing} from '../../tracelib/trace.js';
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 
 export class Planner {
