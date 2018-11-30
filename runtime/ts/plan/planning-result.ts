@@ -9,10 +9,10 @@
  */
 
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc';
+import {Arc} from '../arc.js';
 import {now} from '../../../platform/date-web.js';
-import {RecipeResolver} from '../recipe/recipe-resolver';
-import {Suggestion} from './suggestion';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {Suggestion} from './suggestion.js';
 
 export class PlanningResult {
   arc: Arc;
@@ -160,7 +160,7 @@ export class PlanningResult {
     });
   }
 
-  serialize() {
+  serialize(): {} {
     return {
       suggestions: this.suggestions.map(suggestion => suggestion.serialize()),
       generations: JSON.stringify(this.generations),

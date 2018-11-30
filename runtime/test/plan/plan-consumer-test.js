@@ -13,6 +13,7 @@ import {TestHelper} from '../../testing/test-helper.js';
 import {PlanConsumer} from '../../ts-build/plan/plan-consumer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
 import {PlanningResult} from '../../ts-build/plan/planning-result.js';
+import {Relevance} from '../../ts-build/relevance.js';
 
 
 // Run test suite for each storageKeyBase
@@ -56,6 +57,7 @@ recipe
       assert.isEmpty(consumer.getCurrentSuggestions());
 
       const storeResults = async (suggestions) => {
+        suggestions.forEach(s => s.relevance = Relevance.create(helper.arc, s.plan));
         const result = new PlanningResult(helper.arc);
         result.set({suggestions});
         await store.set(result.serialize());

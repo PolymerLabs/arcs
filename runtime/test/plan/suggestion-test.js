@@ -11,10 +11,15 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {Suggestion} from '../../ts-build/plan/suggestion.js';
 import {Search} from '../../ts-build/recipe/search.js';
+import {Relevance} from '../../ts-build/relevance.js';
 
 describe('suggestion', function() {
   function createSuggestion(hash, descriptionText) {
-    const suggestion = new Suggestion(/* plan= */ {}, hash, /* rank= */ 1, /* arc= */ {});
+    const suggestion = new Suggestion(
+      /* plan= */ {},
+      hash,
+      Relevance.deserialize({versionByStore: '{}', relevanceMap: new Map()}),
+      /* arc= */ {});
     suggestion.descriptionByModality['text'] = descriptionText;
     return suggestion;
   }

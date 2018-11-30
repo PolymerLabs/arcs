@@ -12,6 +12,7 @@ import {Recipe} from '../../ts-build/recipe/recipe.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanProducer} from '../../ts-build/plan/plan-producer.js';
 import {Planificator} from '../../ts-build/plan/planificator.js';
+import {Relevance} from '../../ts-build/relevance.js';
 import {Suggestion} from '../../ts-build/plan/suggestion.js';
 
 class TestPlanProducer extends PlanProducer {
@@ -67,7 +68,10 @@ class TestPlanProducer extends PlanProducer {
         plan.newSlot('slot0').id = 'id0';
       }
       plan.normalize();
-      const suggestion = new Suggestion(plan, info.hash, info.rank || 0, this.arc);
+      const relevance = Relevance.create(this.arc, plan);
+      relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
+      const suggestion = new Suggestion(plan, info.hash, relevance, this.arc);
+      suggestion.relevance = Relevance.create(this.arc, plan);
       suggestions.push(suggestion);
     });
     this.plannerReturnResults(suggestions);

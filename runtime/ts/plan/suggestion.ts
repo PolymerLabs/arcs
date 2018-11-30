@@ -38,12 +38,13 @@ export class Suggestion {
   // List of search resolved token groups, this suggestion corresponds to.
   searchGroups: string[][] = [];
 
-  constructor(plan: Recipe, hash: string, rank: number, arc: Arc) {
+  constructor(plan: Recipe, hash: string, relevance: Relevance, arc: Arc) {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
     this.plan = plan;
     this.hash = hash;
-    this.rank = rank;
+    this.rank = relevance.calcRelevanceScore();
+    this.relevance = relevance;
     this.arc = arc;
   }
 
@@ -116,15 +117,16 @@ export class Suggestion {
       plan: this._planToString(this.plan),
       hash: this.hash,
       rank: this.rank,
+      relevance: this.relevance.serialize(),
       searchGroups: this.searchGroups,
       descriptionByModality: this.descriptionByModality
     };
   }
 
-  static async deserialize({plan, hash, rank, searchGroups, descriptionByModality}, arc, recipeResolver): Promise<Suggestion> {
+  static async deserialize({plan, hash, relevance, searchGroups, descriptionByModality}, arc, recipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
-      const suggestion = new Suggestion(deserializedPlan, hash, rank, arc);
+      const suggestion = new Suggestion(deserializedPlan, hash, Relevance.deserialize(relevance, deserializedPlan), arc);
       suggestion.searchGroups = searchGroups;
       suggestion.descriptionByModality = descriptionByModality;
       return suggestion;

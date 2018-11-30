@@ -40,7 +40,7 @@ type ArcOptions = {
   recipeIndex?: RecipeIndex;
 };
 
-type PlanCallback = (recipe: Recipe) => void;
+export type PlanCallback = (recipe: Recipe) => void;
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
@@ -693,11 +693,13 @@ ${this.activeRecipe.toString()}`;
     return this.storeDescriptions.get(store) || store.description;
   }
 
-  getStoresState(options) {
-    const versionById = new Map();
-    this.storesById.forEach((handle, id) => versionById.set(id, handle.version));
-    if ((options || {}).includeContext) {
-      this._context.allStores.forEach(handle => versionById.set(handle.id, handle.version));
+  getVersionByStore({includeArc=true, includeContext=false}) {
+    const versionById = {};
+    if (includeArc) {
+      this.storesById.forEach((handle, id) => versionById[id] = handle.version);
+    }
+    if (includeContext) {
+      this._context.allStores.forEach(handle => versionById[handle.id] = handle.version);
     }
     return versionById;
   }
