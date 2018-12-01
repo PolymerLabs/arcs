@@ -83,7 +83,7 @@ const log = Xen.logFactory('WebShell', '#6660ac');
 
 export class WebShell extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['root', 'storage'];
+    return ['root'];
   }
   get template() {
     return template;
@@ -96,6 +96,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (state.config !== state._config) {
       state._config = state.config;
       if (state.config) {
+        state.storage = state.config.storage;
         state.userid = state.config.userid;
         state.arckey = state.config.arckey;
       }

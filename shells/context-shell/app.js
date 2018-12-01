@@ -3,9 +3,9 @@ import {SingleUserContext} from '../lib/single-user-context.js';
 import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {ArcHost} from '../lib/arc-host.js';
 
+const storage = Const.defaultStorageKey;
 const userid = `gomer`;
-const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
-const launcherKey = `${userid}/launcher`;
+const launcherKey = `${userid}-launcher`;
 
 export const App = async (env, composer) => {
   SyntheticStores.init(env);

@@ -20,11 +20,10 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   _update({userid, arckey}, state, oldProps) {
     if (!state.config) {
       state.config = this._configure();
-      if (state.storage) {
-        localStorage.setItem(Const.LOCALSTORAGE.storage, state.storage);
-      } else {
-        state.storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
+      if (!state.config.storage) {
+        state.config.storage = Const.defaultStorageKey;
       }
+      localStorage.setItem(Const.LOCALSTORAGE.storage, state.config.storage);
       if (!state.config.userid) {
         state.config.userid = Const.defaultUserId;
       }
@@ -62,11 +61,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       //storageKeyBase: params.get('storageKeyBase'),
       //useSerialization: !params.has('legacy')
     };
-  }
-  getUrlParam(name) {
-    // TODO(sjmiles): memoize url
-    const url = new URL(document.location.href);
-    return url.searchParams.get(name);
   }
   setUrlParam(name, value) {
     // TODO(sjmiles): memoize url
