@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {Xen} from '../../../lib/xen.js';
+import {Type} from '../../../env/arcs.js';
 import {schemas} from './schemas.js';
 
 // DeviceClient object supplied externally, otherwise a fake
@@ -158,7 +159,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     this._setState({playRecordStore: store});
   }
   _requireStore(context, options) {
-    const schemaType = this.props.env.lib.Type.fromLiteral(options.schema);
+    const schemaType = Type.fromLiteral(options.schema);
     const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
     const store = (context.findStoresByType(typeOf) || [])[0];
     //const store = await Stores.createContextStore(context, options);
