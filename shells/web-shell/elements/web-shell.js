@@ -118,7 +118,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
           arc: null,
           arckey: state.arckey,
           arcConfig: {
-            id: state.arckey
+            id: state.arckey,
+            suggestionContainer: this.getSuggestionSlot()
           }
         };
       }
@@ -198,9 +199,12 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.state = {
       nullConfig: {
         id: `${userid}-null`,
-        suggestionContainer: this._dom.$('[slotid="suggestions"]')
+        suggestionContainer: this.getSuggestionSlot()
       }
     };
+  }
+  getSuggestionSlot() {
+    return this._dom.$('[slotid="suggestions"]');
   }
   applySuggestion(suggestion) {
     if (!this.state.arckey) {
@@ -217,7 +221,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       arc: null,
       arckey: key,
       // TODO(sjmiles): see web-arc.js for explanation around manifest confusion
-      arcConfig: {id: key, manifest},
+      arcConfig: {
+        id: key,
+        manifest,
+        suggestionContainer: this.getSuggestionSlot()
+      },
       manifest: null,
       plan: suggestion.plan
     };
