@@ -28,19 +28,19 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'config', 'userid', 'arc', 'suggestion', 'search'];
   }
-  _getInitialState() {
+  getInitialState() {
     return {
       pendingPlans: [],
       invalid: 0
     };
   }
-  _update({env, config, userid, arc, search}, state) {
+  update({env, config, userid, arc, search}, state) {
     const {planificator} = state;
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
       planificator.dispose();
       state.planificator = null;
       state.search = null;
-      log('planificator was disposed');
+      log('planificator is disconnected and is disposing');
     }
     if (env && config && arc && !state.planificator) {
       this.awaitState('planificator', () => this._createPlanificator(env, config, arc, userid));
@@ -55,29 +55,15 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
-    // for debugging only
-    window.planificator = planificator;
+    window.planificator = planificator; // for debugging only
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {
     log('plansChanged', metaplans, metaplan);
-  //   this._fire('metaplans', metaplans);
-  //   this._fire('metaplan', metaplan);
   }
   _suggestionsChanged(suggestions) {
     log('suggestionsChanged', suggestions);
-  //   this._fire('suggestions', suggestions);
   }
-  // async _instantiatePlan(arc, plan) {
-  //   log('instantiating plan', plan);
-  //   try {
-  //     await arc.instantiate(plan);
-  //   } catch (x) {
-  //     error('plan instantiation failed', x);
-  //   }
-  //   // need new suggestions
-  //   this._fire('suggestions', null);
-  // }
 }
 
 customElements.define('web-planner', WebPlanner);

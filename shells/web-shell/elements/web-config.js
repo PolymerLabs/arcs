@@ -25,7 +25,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       } else {
         state.storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${Const.version}`;
       }
-      // TODO(sjmiles): default to Gomer for now, but should have a proper 'no user' state
       if (!state.config.userid) {
         state.config.userid = Const.defaultUserId;
       }

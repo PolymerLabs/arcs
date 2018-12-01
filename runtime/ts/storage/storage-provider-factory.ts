@@ -43,7 +43,7 @@ export class StorageProviderFactory {
   }
 
   isPersistent(key): boolean {
-    return this.getInstance(key).isPersistent;
+    return key && this.getInstance(key).isPersistent;
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase> {
