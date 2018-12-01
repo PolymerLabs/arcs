@@ -24,31 +24,31 @@ defineParticle(({DomParticle, html, log}) => {
         background-size: contain;
       }
       :host {
-        --tile-size: var(--tile-width, calc(100vw - 24px));
+        --tile-size: var(--tile-width, calc(100vw - 42px));
       }
       @media (min-width: 440px) {
         :host {
-          --tile-size: var(--tile-width, calc(50vw - 24px));
+          --tile-size: var(--tile-width, calc(50vw - 42px));
         }
       }
       @media (min-width: 560px) {
         :host {
-          --tile-size: var(--tile-width, calc(33vw - 24px));
+          --tile-size: var(--tile-width, calc(33vw - 42px));
         }
       }
       @media (min-width: 800px) {
         :host {
-          --tile-size: var(--tile-width, calc(25vw - 24px));
+          --tile-size: var(--tile-width, calc(25vw - 42px));
         }
       }
       @media (min-width: 1100px) {
         :host {
-          --tile-size: var(--tile-width, calc(20vw - 24px));
+          --tile-size: var(--tile-width, calc(20vw - 42px));
         }
       }
       @media (min-width: 1400px) {
         :host {
-          --tile-size: var(--tile-width, calc(15vw - 24px));
+          --tile-size: var(--tile-width, calc(15vw - 42px));
         }
       }
     </style>
