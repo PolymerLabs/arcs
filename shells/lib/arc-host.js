@@ -8,9 +8,6 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// TODO(sjmiles): note that firebase agents must be instantiated elsewhere
-import {firebase} from '../env/arcs.js';
-import {Firebase} from '../configuration/firebase-config.js';
 import {logFactory} from './log-factory.js';
 import {SyntheticStores} from './synthetic-stores.js';
 import {Type} from '../env/arcs.js';
@@ -21,7 +18,6 @@ const error = logFactory('ArcHost', '#cade57', 'error');
 
 export class ArcHost {
   constructor(env, context, storage, composer) {
-    Firebase.configure(firebase);
     this.env = env;
     this.context = context;
     this.storage = storage;
@@ -67,9 +63,6 @@ export class ArcHost {
         serialization = '';
       } else {
         serialization = await this.fetchSerialization(storage, config.id) || '';
-        // TODO(sjmiles): stopgap: assumes firebase storage
-        //const snap = await Firebase.db.child(`${config.id}/serialization`).once('value');
-        //serialization = snap.val() || '';
       }
     }
     return serialization;
