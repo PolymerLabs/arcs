@@ -62,11 +62,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       //useSerialization: !params.has('legacy')
     };
   }
-  // getUrlParam(name) {
-  //   // TODO(sjmiles): memoize url
-  //   const url = new URL(document.location.href);
-  //   return url.searchParams.get(name);
-  // }
   setUrlParam(name, value) {
     // TODO(sjmiles): memoize url
     const url = new URL(document.location.href);
