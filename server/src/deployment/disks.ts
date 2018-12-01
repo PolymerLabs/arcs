@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Container} from "./containers";
 
 /**
  * Represents a persistent disk volume in the cloud provider's infrastructure that is

@@ -1,3 +1,6 @@
 {
-  "extends": "../config/tslint.base.json"
+  "extends": "../config/tslint.base.json",
+  "rules": {
+    "no-unused-variable": true
+  }
 }
