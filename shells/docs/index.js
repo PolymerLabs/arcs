@@ -1,4 +1,4 @@
-import DocScraper from '../modalities/dom/components/doc-scraper.js';
+import DocScraper from '../../modalities/dom/components/doc-scraper.js';
 import docUrls from './doc-urls.js';
 
 /* global Remarkable, hljs */
