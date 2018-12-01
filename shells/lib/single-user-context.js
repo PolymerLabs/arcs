@@ -67,7 +67,7 @@ export const SingleUserContext = class {
       if (store) {
         await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
       } else {
-        warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]`);
+        warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]\nhttps://github.com/PolymerLabs/arcs/issues/2304`);
       }
     }
   }
