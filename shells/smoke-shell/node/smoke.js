@@ -14,7 +14,7 @@ const composer = new RamSlotComposer();
 
 // create an arcs environment
 const env = new Env('../../..');
-env.pathMap[`https://$artifacts/`] = `../../../particles_0_6_0/`;
+env.pathMap[`https://$artifacts/`] = `../../../particles/`;
 
 // run App
 (async () => {

@@ -36,7 +36,7 @@ defineParticle(({DomParticle, html}) => {
       box-shadow: 1px 1px 3px 1px rgba(0,0,0,0.1);
     }
   </style>
-   <input value="{{userName}}" placeholder="User Name" spellcheck="false" on-change="onNameInputChange">
+  <input value="{{userName}}" placeholder="User Name" spellcheck="false" on-change="onNameInputChange">
 </div>
 
   `;
