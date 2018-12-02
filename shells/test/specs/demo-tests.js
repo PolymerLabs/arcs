@@ -18,41 +18,48 @@ const searchFor = text => keys('input[search]', text);
 const receiveEntity = async entity =>
   browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 
-// describe('pipes', function() {
-//   it.skip('searches', async function() {
-//     const findRestaurants = `[title^="Find restaurants"]`;
-//     await openNewArc(this.test.fullTitle());
-//     // TODO(sjmiles): wait for context to prepare, need a signal instead
-//     await browser.pause(seconds(5));
-//     await receiveEntity({type: 'search', query: 'restaurants'});
-//     await waitFor(findRestaurants);
-//   });
-//   it.skip('receives', async function() {
-//     const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
-//     await openNewArc(this.test.fullTitle());
-//     // TODO(sjmiles): wait for context to prepare, need a signal instead
-//     await browser.pause(seconds(5));
-//     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-//     await searchFor('*');
-//     await waitFor(bodyguardIsOn);
-//   });
-// });
+const findRestaurants = `[title^="[demo] find restaurants"]`;
+
+describe('pipes', function() {
+  it('searches', async function() {
+    await openNewArc(this.test.fullTitle());
+    // TODO(sjmiles): wait for context to prepare, need a signal instead
+    await browser.pause(seconds(5));
+    await receiveEntity({type: 'search', query: 'restaurants'});
+    //await waitFor(findRestaurants);
+  });
+  it('receives', async function() {
+    await openNewArc(this.test.fullTitle());
+    const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
+    // TODO(sjmiles): wait for context to prepare, need a signal instead
+    await browser.pause(seconds(5));
+    await receiveEntity({type: 'tv_show', name: 'bodyguard'});
+    await searchFor('*');
+    await waitFor(bodyguardIsOn);
+  });
+});
 
 describe('demo', function() {
   it('restaurants', async function() {
+    await openNewArc(this.test.fullTitle());
     const search = `restaurants`;
-    const findRestaurants = `[title^="[demo] find restaurants"]`;
     const restaurantItem = `#webtest-title`;
     const reservation = `[title*="ou are "]`;
     const calendarAction = `[particle-host="Calendar::action"]`;
-    await openNewArc(this.test.fullTitle());
     await searchFor(search);
     await click(findRestaurants);
     //await click(restaurantItem);
     //await click(reservation);
     //await waitFor(calendarAction);
   });
-  // it.skip('gifts', async function() {
+  it('gifts', async function() {
+    await openNewArc(this.test.fullTitle());
+    const search = `gifts`;
+    const buyGifts = `[title^="Buy gifts"]`;
+    const item = `[particle-host="ItemMultiplexer::item"]`;
+    await searchFor(search);
+    await click(buyGifts);
+    await waitFor(item);
   //   const search = `products`;
   //   const showProducts = `[title^="Show products"]`;
   //   const items = `[particle-host="ItemMultiplexer::item"]`;
@@ -68,5 +75,5 @@ describe('demo', function() {
   //   await waitFor(annotations);
   //   await click(checkManufacturer);
   //   await click(interests);
-  // });
+  });
 });

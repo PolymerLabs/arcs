@@ -152,8 +152,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // map in 0_6_0 paths
     Object.assign(state.env.pathMap, {
       'https://$shell/': `${root}/shells/`,
-      'https://$artifacts/': `${root}/particles_0_6_0/`,
-      'https://$particles/': `${root}/particles_0_6_0/`
+      'https://$artifacts/': `${root}/particles/`,
+      'https://$particles/': `${root}/particles/`
     });
   }
   routeLink(anchor) {

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "config": {
-    "port": "8080",
+    "port": "8786",
     "host": "localhost"
   },
   "browser": "dist/webmain.js",
@@ -11,15 +11,15 @@
   "main": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
-    "test": "run-s --print-name --continue-on-error test-no-web test-wdio test-wdio-shells",
+    "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-mocha-words test-extension",
     "test-sigh": "cross-env tools/sigh",
     "test-extension": "mocha-chrome extension/test/index.test.html",
     "test-mocha-words": "mocha-chrome artifacts/Words/test/index.test.html",
-    "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js",
-    "test-wdio-shells": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shells/test/wdio.conf.js",
+    "start": "cross-env http-server --silent -a localhost -p 8786",
+    "X-test-wdio-shells": "cross-env wdio -b http://localhost:8786/ shells/test/wdio.conf.js",
+    "test-wdio-shells": "wdio -b http://localhost:8786/ shells/test/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "build:typedoc": "typedoc --mode file --target ES5  --downLevelIteration -out dist/apidocs",
     "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install --no-package-lock && npm --prefix server install --package-lock-only && npm --prefix server run test",
