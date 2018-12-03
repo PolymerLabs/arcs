@@ -15,47 +15,8 @@ const html = Xen.Template.html;
 const template = html`
 
 <style>
-  data-explorer {
+  :host {
     display: block;
-    /*border-bottom: 1px solid hsl(0,0%,75%);*/
-  }
-  data-item {
-    display: flex;
-    /*border-bottom: 1px solid hsl(0,0%,75%);*/
-  }
-  data-item > * {
-    white-space: nowrap;
-    /*
-    overflow: hidden;
-    text-overflow: ellipsis;
-    border: 1px dotted silver;
-    border-left: none;
-    border-top: none;
-    */
-  }
-  data-item > left {
-    display: flex;
-    flex-shrink: 0;
-    padding: 4px 8px 4px 4px;
-    justify-content: flex-end;
-    font-weight: bold;
-    font-size: 0.9em;
-    /*
-    align-items: center;
-    width: 96px;
-    background-color: whitesmoke;
-    */
-  }
-  /*
-  data-item > right {
-    flex: 3;
-  }
-  */
-  data-item > right > div {
-    padding: 4px;
-  }
-  right > data-explorer:not([hidden]) {
-    padding-top: 1em;
   }
 </style>
 
@@ -93,19 +54,7 @@ class DataExplorer extends Xen.Base {
     };
   }
   _formatValues(object, expand) {
-    return Object.keys(object).map(n => {
-      let v = object[n];
-      if (v) {
-        if (typeof v === 'function') {
-          v = '(function)';
-        }
-      }
-      return {
-        name: n,
-        value: v,
-        expand
-      };
-    });
+    return Object.keys(object).map(name => ({name, value: object[name], expand}));
   }
   _onItemChange(e) {
     console.log(e.target.name, e.detail);
