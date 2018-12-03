@@ -78,9 +78,9 @@ describe('Planner', function() {
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
-        map as handle
+        map as h0
         P1
-          text <- handle
+          text <- h0
     `);
     assert.lengthOf(results, 1);
   });
@@ -91,9 +91,9 @@ describe('Planner', function() {
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
-        copy as handle
+        copy as h0
         P1
-          text <- handle
+          text <- h0
     `);
     assert.lengthOf(results, 1);
   });

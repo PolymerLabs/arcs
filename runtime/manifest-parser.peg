@@ -606,6 +606,7 @@ Recipe
 RecipeItem
   = RecipeParticle
   / RecipeHandle
+  / RecipeRequire
   / RecipeSlot
   / RecipeSearch
   / RecipeConnection
@@ -826,6 +827,17 @@ RecipeHandle
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null),
       fate: type
+    }
+  }
+RecipeRequire
+  = 'require' eolWhiteSpace Indent (SameIndent 'handle') name:(whiteSpace LocalName)? id:(whiteSpace (id / upperIdent))? tags:SpaceTagList?
+  {
+    return {
+      kind: 'require',
+      location: location(),
+      name: optional(name, name => name[1], null),
+      id,
+      tags: tags || []
     }
   }
 
@@ -1101,6 +1113,8 @@ ReservedWord
   / 'import'
   / 'shape'
   / 'schema'
+  / 'require'
+  / 'handle'
   ) (whiteSpace / eolWhiteSpace)
 {
   throw new Error(`Expected identifier but keyword, '${text()}' found.`);

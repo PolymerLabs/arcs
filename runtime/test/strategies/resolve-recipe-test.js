@@ -26,9 +26,9 @@ describe('resolve recipe', function() {
         in Tesla param
 
       recipe
-        copy as handle
+        copy as h0
         P
-          param <- handle
+          param <- h0
 
       store TestStore of Car in EmptyListJson
       resource EmptyListJson
@@ -54,9 +54,9 @@ describe('resolve recipe', function() {
         out Tesla param
 
       recipe
-        copy as handle
+        copy as h0
         P
-          param -> handle
+          param -> h0
 
       store TestStore of Car in EmptyListJson
       resource EmptyListJson
@@ -83,9 +83,9 @@ describe('resolve recipe', function() {
         in Car param
 
       recipe
-        copy as handle
+        copy as h0
         P
-          param <- handle
+          param <- h0
 
       store TestStore of Tesla in EmptyListJson
       resource EmptyListJson
@@ -112,9 +112,9 @@ describe('resolve recipe', function() {
         in Tesla param
 
       recipe
-        copy as handle
+        copy as h0
         P
-          param <- handle
+          param <- h0
 
       store TestStore of Tesla in EmptyListJson
       resource EmptyListJson
@@ -194,9 +194,9 @@ describe('resolve recipe', function() {
         in Car param
 
       recipe
-        map 'batmobile' as handle
+        map 'batmobile' as h0
         P
-          param <- handle
+          param <- h0
     `)).recipes[0];
 
     recipe.normalize();
@@ -221,9 +221,9 @@ describe('resolve recipe', function() {
         in Car param
 
       recipe
-        use 'batmobile' as handle
+        use 'batmobile' as h0
         P
-          param <- handle
+          param <- h0
     `);
 
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'mock');

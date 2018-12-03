@@ -19,11 +19,11 @@ particle ShowTwo in 'source/ShowPostTwo.js'
   consume item
 
 recipe
-  map #recipes as handle
+  map #recipes as h0
   List
-    items = handle
+    items = h0
   PostMuxer
-    list = handle
+    list = h0
 
 resource MuxedRecipes
   start
