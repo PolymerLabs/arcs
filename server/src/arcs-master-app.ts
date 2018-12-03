@@ -164,12 +164,14 @@ class ArcsMasterApp extends AppBase {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().create(fingerprint, wrappedKey, rewrappedKey);
       console.log("Disk successfully created with id " + disk.id());
-      const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk).catch(async (e) => {
+      try {
+        const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk);
+        console.log("Container successfully created with fingerprint " + fingerprint + " at url " + container.url());
+        res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/find/' + fingerprint + '"}');
+      } catch (e) {
         console.log("Error deploying new container with new disk, deleting disk with id " + disk.id());
         await disk.delete();
-      });
-      console.log("Container successfully created with fingerprint " + fingerprint);
-      res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/find/' + fingerprint + '"}');
+      }
     } catch (e) {
       console.log("Error");
       console.dir(e);
@@ -186,7 +188,7 @@ class ArcsMasterApp extends AppBase {
       if (disk && !await disk.isAttached()) {
         const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk);
         console.log("Disk successfully mounted with id " + disk.id());
-        console.log("Container successfully created with fingerprint " + fingerprint);
+        console.log("Container successfully created with fingerprint " + fingerprint + " at url " + container.url());
         res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
       }
     } catch (e) {

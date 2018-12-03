@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Tracing} from '../../tracelib/trace.js';
-import {assert} from '../../platform/assert-web.js';
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';

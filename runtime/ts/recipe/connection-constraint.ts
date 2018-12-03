@@ -8,7 +8,6 @@
 import {compareArrays, compareStrings, compareComparables, Comparable} from './util.js';
 import {assert} from '../../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
-import {Recipe} from './recipe.js';
 import {Handle} from './handle.js';
 import {HandleConnection, Direction} from './handle-connection.js';
 

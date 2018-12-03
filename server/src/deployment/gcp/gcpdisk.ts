@@ -16,7 +16,6 @@ import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from "../utils";
 import common from "@google-cloud/common";
 import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from "./gcp-constants";
 import {CloudManager} from "../cloud";
-import {GCPCloud} from "./gcp";
 
 /**
  * Represents disk storage provisioned on a cloud provider.
@@ -50,6 +49,9 @@ class GCPDisk implements Disk {
           if (vm.metadata.metadata.items.find(x => x.key === ARCS_NODE_LABEL) !== undefined) {
             console.log("Trying to detach " + vm.metadata.name + " from " + this.diskApi.name);
             const [operation, apiResponse] = await vm.detachDisk(this.diskApi);
+            if (operation.warnings) {
+              console.log("Warnings: " + operation.warnings.join('\n'));
+            }
             return Promise.resolve(!apiResponse['httpErrorStatusCode'] || apiResponse['httpErrorStatusCode'] !== 200);
           }
         }
@@ -75,6 +77,10 @@ class GCPDisk implements Disk {
                 "rsaEncryptedKey": rewrappedKey
               }
             });
+            if (operation.warnings) {
+              console.log("Warnings: " + operation.warnings.join('\n'));
+            }
+
             return Promise.resolve(!apiResponse['httpErrorStatusCode'] || apiResponse['httpErrorStatusCode'] !== 200);
           }
         }

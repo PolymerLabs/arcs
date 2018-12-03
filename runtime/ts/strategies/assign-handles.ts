@@ -10,7 +10,6 @@ import {Walker} from '../recipe/walker.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {assert} from '../../../platform/assert-web.js';
-import {Arc} from '../arc.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 export class AssignHandles extends Strategy {

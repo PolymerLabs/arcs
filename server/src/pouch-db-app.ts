@@ -11,9 +11,7 @@ import PouchDbAdapterMemory from 'pouchdb-adapter-memory';
 import PouchDbServer from 'express-pouchdb';
 import {ShellPlanningInterface} from 'arcs';
 import {AppBase} from './app-base';
-import {DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
-import url from "url";
-import path from "path";
+import {ON_DISK_DB, VM_URL_PREFIX} from "./deployment/utils";
 
 /**
  * An app server that additionally configures a pouchdb.

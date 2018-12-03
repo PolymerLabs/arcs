@@ -8,7 +8,6 @@
 import {Strategy} from '../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
-import {TypeChecker} from '../recipe/type-checker.js';
 import {Arc} from '../arc.js';
 import {assert} from '../../../platform/assert-web.js';
 import {HandleConnection} from '../recipe/handle-connection.js';
