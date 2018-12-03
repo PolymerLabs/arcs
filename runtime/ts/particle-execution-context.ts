@@ -120,7 +120,7 @@ export class ParticleExecutionContext {
            * renders content to the slot.
            */
           render(content) {
-            // TODO: This logic should live in Particle and referencing slots by name should be deprecated for the '{{$name}}' syntax.
+            // TODO: This logic should live in dom-particle and referencing slots by name should be deprecated for the '{{$name}}' syntax.
             if (this.providedSlots.size > 0) {
               content = {...content};
   
@@ -147,30 +147,6 @@ export class ParticleExecutionContext {
             // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
             this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
           }
-<<<<<<< HEAD
-
-          this.pec.apiPort.Render({particle, slotName, content});
-
-          Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });
-          // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-          this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
-        }
-        private substituteSlotNamesForModelReferences(template) {
-          this.providedSlots.forEach((slotId, slotName) => {
-            // TODO: This is a simple string replacement right now,
-            // ensuring that 'slotid' is an attribute on an HTML element would be an improvement.
-            template = template.replace(new RegExp(`slotid=\"${slotName}\"`, 'gi'), `slotid$="{{$${slotName}}}"`);
-          });
-          return template;
-        }
-
-        
-        /**
-         * registers a callback to be invoked when 'name' event happens.
-         */
-        registerEventHandler(name, f) {
-          if (!this.handlers.has(name)) {
-=======
           private substituteSlotNamesForIds(template) {
             this.providedSlots.forEach((slotId, slotName) => {
               // TODO: This is a simple string replacement right now,
