@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {APIPort, PECOuterPort, PECInnerPort} from '../api-channel.js';
+import {APIPort, PECOuterPort, PECInnerPort} from '../ts-build/api-channel.js';
 
 class Registrar {
   constructor() {
@@ -21,6 +21,7 @@ class Registrar {
   }
 }
 
+// TODO(shans): Make this test work with the new API channel
 describe('API channel', function() {
   let outer;
   let inner;
@@ -56,8 +57,10 @@ describe('API channel', function() {
     const arc = {id: ''}; // OuterPortAttachment constructor needs the id.
 
     // PECOuterPort can call DevToolsConnected during setup, so we need to stub that.
-    const outerPort = new PECOuterPort(port, arc);
-    outerPort.DevToolsConnected = () => {};
+    const outerPort = new class extends PECOuterPort {
+      DevToolsConnected() {}
+    }(port, arc);
+    
 
     outer = outerPort._reg_;
     inner = (new PECInnerPort(port))._reg_;

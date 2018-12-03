@@ -5,7 +5,8 @@
   ],
   "compilerOptions": {
     "outDir": "runtime/ts-build",
-    "declaration": true
+    "declaration": true,
+    "experimentalDecorators": true,
   },
   "exclude": [
     "runtime/ts-build/**/*",

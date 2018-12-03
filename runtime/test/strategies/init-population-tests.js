@@ -13,6 +13,7 @@ import {Arc} from '../../ts-build/arc.js';
 import {Manifest} from '../../ts-build/manifest.js';
 import {InitPopulation} from '../../ts-build/strategies/init-population.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
+import {StubLoader} from '../../testing/stub-loader.js';
 import {assert} from '../chai-web.js';
 
 describe('InitPopulation', async () => {
@@ -27,9 +28,12 @@ describe('InitPopulation', async () => {
         create as handle1
         A
           product <- handle1`);
+    const loader = new StubLoader({
+      'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
+    });
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    const arc = new Arc({id: 'test-plan-arc', context: manifest});
+    const arc = new Arc({id: 'test-plan-arc', context: manifest, loader, fileName: ''});
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});

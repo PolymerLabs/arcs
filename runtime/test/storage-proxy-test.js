@@ -246,14 +246,14 @@ class TestEngine {
     this._events = [];
   }
 
-  InitializeProxy({handle, callback}) {
+  InitializeProxy(handle, callback) {
     const store = this._stores.get(handle.name);
     assert.isDefined(store);
     store.attachListener(callback);
     this._events.push('InitializeProxy:' + handle.name);
   }
 
-  SynchronizeProxy({handle, callback}) {
+  SynchronizeProxy(handle, callback) {
     if (!this._syncCallbacks.has(handle.name)) {
       this._syncCallbacks.set(handle.name, []);
     }
@@ -272,27 +272,27 @@ class TestEngine {
     callbacks.shift()(data);
   }
 
-  HandleGet({handle, callback}) {
+  HandleGet(handle, callback) {
     this._events.push('HandleGet:' + handle.name);
   }
 
-  HandleToList({handle, callback}) {
+  HandleToList(handle, callback) {
     this._events.push('HandleToList:' + handle.name);
   }
 
-  HandleSet({handle, data}) {
+  HandleSet(handle, data) {
     this._events.push('HandleSet:' + handle.name + ':' + data.rawData.value);
   }
 
-  HandleStore({handle, data}) {
+  HandleStore(handle, callback, data) {
     this._events.push('HandleStore:' + handle.name + ':' + data.value.rawData.value);
   }
 
-  HandleClear({handle}) {
+  HandleClear(handle) {
     this._events.push('HandleClear:' + handle.name);
   }
 
-  HandleRemove({handle, data}) {
+  HandleRemove(handle, callback, data) {
     this._events.push('HandleRemove:' + handle.name + ':' + data.id);
   }
 }

@@ -59,7 +59,7 @@ export class Relevance {
     };
   }
 
-  apply(relevance) {
+  apply(relevance: Map<Particle, number[]>) {
     for (const key of relevance.keys()) {
       if (this.relevanceMap.has(key)) {
         this.relevanceMap.set(

@@ -427,7 +427,7 @@ export class BigCollection extends Handle {
   }
 }
 
-export function handleFor(proxy: StorageProxy, name: string = null, particleId = 0, canRead = true, canWrite = true) {
+export function handleFor(proxy: StorageProxy, name: string = null, particleId = '', canRead = true, canWrite = true) {
   let handle;
   if (proxy.type instanceof CollectionType) {
     handle = new Collection(proxy, name, particleId, canRead, canWrite);

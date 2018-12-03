@@ -265,7 +265,7 @@ describe('Arc', function() {
     bigStore.clearItemsForTesting();
 
     // Deserialize into a new arc.
-    const arc2 = await Arc.deserialize({serialization});
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: ''});
     const varStore2 = arc2.findStoreById(varStore.id);
     const colStore2 = arc2.findStoreById(colStore.id);
     const bigStore2 = arc2.findStoreById(bigStore.id);
