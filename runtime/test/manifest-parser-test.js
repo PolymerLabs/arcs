@@ -252,6 +252,6 @@ describe('manifest parser', function() {
     parse(`
       recipe
         require
-          handle as thing Thing #tag1 #tag2`)
-  })
+          handle as thing Thing #tag1 #tag2`);
+  });
 });
