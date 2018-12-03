@@ -315,50 +315,31 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         const argNames = getArgs(me.prototype[f]);
         const descriptor = functions.get(f);
 
+        // If this descriptor is for an initializer, record that fact and we'll process it after
+        // the rest of the arguments.
+        const initializer = descriptor.findIndex(d => d.initializer);
+        // If this descriptor records that this argument is the identifier, record it
+        // as the requestedId for mapping below.
+        const requestedId = descriptor.findIndex(d => d.identifier);
+        
         function impl(this: APIPort, ...args) {
           const messageBody = {};
-          let needsInitializer = undefined;
-          let initializerIsRedundant = false;
-          let requestedId = undefined;
           for (let i = 0; i < descriptor.length; i++) {
-            // If this descriptor is for an initializer, record that fact and we'll process it after
-            // the rest of the arguments.
-            if (descriptor[i].initializer) {
-              assert(needsInitializer === undefined, `Error processing ${f}: messages can't have multiple initializers`);
-              needsInitializer = args[i];
-              if (descriptor[i].redundant) {
-                initializerIsRedundant = true;
-              }
-              argNames[i] = 'identifier';
+            if (i === initializer) {
               continue;
             }
 
             // Process this argument.
             messageBody[argNames[i]] = convert(descriptor[i], args[i], this._mapper);
-            
-            // If this descriptor records that this argument is the identifier, record it
-            // as the requestedId for mapping below.
-            if (descriptor[i].identifier) {
-              requestedId = args[i];
-            }
           }
           
-          // If there's a requestedId then the receiving end won't expect to
-          // see the identifier as well.
-          if (requestedId !== undefined) {
-            assert(needsInitializer !== undefined);
-            const idx = argNames.indexOf('identifier');
-            assert(idx > -1);
-            descriptor[idx].ignore = true;
-          }
-
           // Process the initializer if present.
-          if (needsInitializer !== undefined) {
-            if (initializerIsRedundant) {
-              assert(requestedId === undefined);
-              messageBody['identifier'] = this._mapper.maybeCreateMappingForThing(needsInitializer);
+          if (initializer !== -1) {
+            if (descriptor[initializer].redundant) {
+              assert(requestedId === -1);
+              messageBody['identifier'] = this._mapper.maybeCreateMappingForThing(args[initializer]);
             } else {
-              messageBody['identifier'] = this._mapper.createMappingForThing(needsInitializer, requestedId);
+              messageBody['identifier'] = this._mapper.createMappingForThing(args[initializer], args[requestedId]);
             }
           }
 
@@ -368,19 +349,18 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 
         async function before(this: APIPort, messageBody) {
           const args = [];
-          let isInitializer = false;
           const promises = [];
           for (let i = 0; i < descriptor.length; i++) {
-            if (descriptor[i].initializer) {
-              isInitializer = true;
-            }
-            if (descriptor[i].ignore) {
+            // If there's a requestedId then the receiving end won't expect to
+            // see the identifier as well.
+            if (i === initializer && (requestedId !== -1 || descriptor[i].ignore)) {
               continue;
             }
-            const result = unconvert(descriptor[i], messageBody[argNames[i]], this._mapper);
+            const argName = i === initializer ? 'identifier' : argNames[i];
+            const result = unconvert(descriptor[i], messageBody[argName], this._mapper);
             if (result instanceof Promise) {
               promises.push({promise: result, position: args.length});
-              args.push(() => unconvert(descriptor[i], messageBody[argNames[i]], this._mapper));
+              args.push(() => unconvert(descriptor[i], messageBody[argName], this._mapper));
             } else {
               args.push(result);
             }
@@ -395,7 +375,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 
           // If this message is an initializer, need to establish a mapping
           // with the result of processing the message.
-          if (isInitializer) {
+          if (initializer > -1) {
             assert(messageBody['identifier']);
             await this._mapper.establishThingMapping(messageBody['identifier'], result);
           }
@@ -464,7 +444,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
   CreateHandleCallback(@Initializer handle: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
-  MapHandleCallback(@Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
+  MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
   abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
