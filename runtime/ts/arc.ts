@@ -48,7 +48,6 @@ export class Arc {
   private readonly _context: Manifest;
   private readonly pecFactory: (id: string) => PECInnerPort;
   private readonly speculative: boolean;
-  private nextLocalID = 0;
   private _activeRecipe = new Recipe();
   private _recipes = [];
   // Public for debug access
@@ -70,8 +69,7 @@ export class Arc {
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
 
-  sessionId = Id.newSessionId();
-  id: Id;
+  readonly id: Id;
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
@@ -82,7 +80,7 @@ export class Arc {
     this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
 
     // for now, every Arc gets its own session
-    this.id = this.sessionId.fromString(id);
+    this.id = Id.newSessionId().fromString(id);
     this.speculative = !!speculative; // undefined => false
     // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
     this._loader = loader;
@@ -384,10 +382,6 @@ ${this.activeRecipe.toString()}`;
 
   generateID(component: string = '') {
     return this.id.createId(component).toString();
-  }
-
-  generateIDComponents() {
-    return {base: this.id, component: () => this.nextLocalID++};
   }
 
   get _stores(): StorageProviderBase[] {

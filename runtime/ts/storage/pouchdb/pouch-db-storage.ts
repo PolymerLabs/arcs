@@ -29,7 +29,6 @@ export class PouchDbStorage extends StorageBase {
   // Used for reference mode
   private readonly baseStores: Map<Type, PouchDbCollection> = new Map();
   private readonly baseStorePromises: Map<Type, Promise<PouchDbCollection>> = new Map();
-  private localIDBase: number;
 
   /** Global map of database types/name to Pouch Database Instances */
   private static dbLocationToInstance: Map<string, PouchDB.Database> = new Map();
@@ -39,7 +38,6 @@ export class PouchDbStorage extends StorageBase {
 
   constructor(arcId: Id) {
     super(arcId);
-    this.localIDBase = 0;
   }
 
   /**

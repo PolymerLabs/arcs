@@ -15,12 +15,12 @@ import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Loader} from './loader.js';
 import {Particle} from './particle.js';
+import {Id} from './id.js';
 
 export class ParticleExecutionContext {
   private apiPort : PECInnerPort;
   private particles = <Particle[]>[];
-  private idBase: string;
-  private _nextLocalID = 0;
+  private idBase: Id;
   private loader: Loader;
   private pendingLoads = <Promise<void>[]>[]; 
   private scheduler: StorageProxyScheduler = new StorageProxyScheduler();
@@ -28,7 +28,7 @@ export class ParticleExecutionContext {
 
   constructor(port, idBase: string, loader: Loader) {
     this.apiPort = new PECInnerPort(port);
-    this.idBase = idBase;
+    this.idBase = Id.newSessionId().fromString(idBase);
     this.loader = loader;
     loader.setParticleExecutionContext(this);
 
@@ -197,12 +197,8 @@ export class ParticleExecutionContext {
     };
   }
 
-  generateIDComponents() {
-    return {base: this.idBase, component: () => this._nextLocalID++};
-  }
-
   generateID() {
-    return `${this.idBase}:${this._nextLocalID++}`;
+    return this.idBase.createId().toString();
   }
 
   innerArcHandle(arcId, particleId) {
