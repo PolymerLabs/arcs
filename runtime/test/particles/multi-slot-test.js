@@ -58,7 +58,7 @@ describe('multi-slot test', function() {
 
     helper.slotComposer
       .newExpectations()
-      .expectRenderSlot('ShowHints', 'root', {verify: (content) => content.template.length > 0 && !content.model})
+      .expectRenderSlot('ShowHints', 'root', {verify: (content) => content.template.length > 0})
       .expectRenderSlot('ShowHints', 'root', {isOptional: true, verify: (content) => Object.keys(content).length == 0})
       .expectRenderSlot('AskAndAnswer', 'question', {contentTypes: ['template', 'model']})
       .expectRenderSlot('AskAndAnswer', 'hints', {contentTypes: ['template', 'model'], verify: (content) => {
