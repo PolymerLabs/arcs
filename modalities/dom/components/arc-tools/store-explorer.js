@@ -20,28 +20,32 @@ const html = Xen.Template.html;
 const template = html`
   <style>
     button {
-      margin: 8px;
+      margin: 8px 16px;
     }
     [banner] {
-      padding: 6px 4px;
+      padding: 8px 0 8px 16px;
       background-color: whitesmoke;
-      margin-bottom: 8px;
-      border-top: 1px dotted silver;
+    }
+    [store] {
+      padding: 8px 0 8px 16px;
+      border-bottom: 1px dashed silver;
     }
   </style>
 
-  <div><button on-click="_onUpdate">Update</button></div>
+  <div>
+    <button on-click="_onUpdate">Update</button>
+  </div>
 
   <div banner>Arc Stores</div>
-  <div style="padding: 8px;">{{arcStores}}</div>
+  <div>{{arcStores}}</div>
 
   <div banner>Context Stores</div>
-  <div style="padding: 8px;">{{contextStores}}</div>
+  <div>{{contextStores}}</div>
 `;
 
 const storeTemplate = html`
-  <div style="border-bottom: 1px dashed silver; padding-bottom: 8px; margin-bottom: 8px;">
-    <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
+  <div store>
+    <data-explorer object="{{data}}"></data-explorer>
   </div>
 `;
 

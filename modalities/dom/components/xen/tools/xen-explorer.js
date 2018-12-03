@@ -32,8 +32,8 @@ const template = Xen.html`
   </style>
   <div><button on-click="_onUpdate">Update</button></div>
   <div style="display: flex;">
-    <div style="flex-shrink: 0;" on-click="_onTreeClick" unsafe-html="{{tree}}"></div>
-    <data-explorer style="flex: 1; font-size: 0.8em;" object="{{data}}" expand></data-explorer>
+    <div style="flex-shrink: 0; margin-left: -1px;" on-click="_onTreeClick" unsafe-html="{{tree}}"></div>
+    <data-explorer style="flex: 1;" object="{{data}}" expand></data-explorer>
   </div>
 `;
 
