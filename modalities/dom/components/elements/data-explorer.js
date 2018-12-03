@@ -54,25 +54,7 @@ class DataExplorer extends Xen.Base {
     };
   }
   _formatValues(object, expand) {
-    return Object.keys(object).map(n => {
-      return this._calcValueInfo(n, object[n], expand);
-    });
-  }
-  _calcValueInfo(name, value, expand) {
-    const type = typeof value;
-    if (type === 'function') {
-      value = '(function)';
-    }
-    const isnull = (value === null);
-    return {
-      name: name,
-      value: value,
-      isnull,
-      isobject: (type === 'object' && !isnull),
-      isstring: (type === 'string' || type === 'number' || isnull),
-      isbool: (type === 'boolean'),
-      expand
-    };
+    return Object.keys(object).map(name => ({name, value: object[name], expand}));
   }
   _onItemChange(e) {
     console.log(e.target.name, e.detail);

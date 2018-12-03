@@ -81,30 +81,32 @@ class DataItem extends Xen.Base {
   _willReceiveProps(props, state) {
     state.expanded = Boolean(props.expand);
   }
-  _render(props, state) {
-    let type = typeof props.value;
-    if (type === 'string' && !isNaN(Number(props.value))) {
+  _render({name, value}, state) {
+    // always expand array indices
+    if (!isNaN(Number(name))) {
+      state.expanded = true;
+    }
+    let type = typeof value;
+    if (type === 'function') {
+      value = '(function)';
+    } else if (type === 'string' && !isNaN(Number(value))) {
       type = 'number';
     }
-    const isnull = props.value === null;
+    const isnull = value === null;
     const isobject = (type === 'object' && !isnull);
     const isstring = (type === 'string' || type === 'number' || isnull);
     const isbool = (type==='boolean');
-    // always expand array indices
-    if (!isNaN(Number(props.name))) {
-      state.expanded = true;
-    }
     return {
-      name: props.name,
-      value: isnull || isobject ? '(null)' : isbool ? props.value : String(props.value),
       type,
+      name,
+      value: isnull || isobject ? '(null)' : isbool ? value : String(value),
       isobject: isobject && state.expanded,
       notstring: !isstring,
       notbool: !isbool,
       notobject: !isobject || !state.expanded,
-      object: isobject && state.expanded ? props.value : null,
+      object: isobject && state.expanded ? value : null,
       hideexpand: state.expanded || !isobject,
-      title: isstring ? props.value : props.name
+      title: isstring ? value : name
     };
   }
   _onExpandClick(e) {
