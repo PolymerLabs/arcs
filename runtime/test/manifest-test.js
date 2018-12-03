@@ -1504,9 +1504,9 @@ resource SomeName
       particle P
         in * {Text value} foo
       recipe
-        create as handle
+        create as h0
         P
-          foo = handle
+          foo = h0
     `);
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
@@ -1519,9 +1519,9 @@ resource SomeName
       particle P
         in Bar {Reference<Foo> foo} bar
       recipe
-        create as handle
+        create as h0
         P
-          bar = handle
+          bar = h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1542,9 +1542,9 @@ resource SomeName
       particle P
         in Bar {Reference<Foo {Text far}> foo} bar
       recipe
-        create as handle
+        create as h0
         P
-          bar = handle
+          bar = h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1566,9 +1566,9 @@ resource SomeName
       particle P
         in Bar {[Reference<Foo>] foo} bar
       recipe
-        create as handle
+        create as h0
         P
-          bar = handle
+          bar = h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1588,9 +1588,9 @@ resource SomeName
       particle P
         in Bar {[Reference<Foo {Text far}>] foo} bar
       recipe
-        create as handle
+        create as h0
         P
-          bar = handle
+          bar = h0
     `);
 
     const [recipe] = manifest.recipes;
@@ -1615,11 +1615,11 @@ resource SomeName
         out T foo
 
       recipe
-        create as handle
+        create as h0
         P
-          foo = handle
+          foo = h0
         P2
-          foo = handle
+          foo = h0
     `);
     const [validRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1637,25 +1637,25 @@ resource SomeName
         in * {Text value, Number value2} foo
 
       recipe
-        create as handle
+        create as h0
         P
-          foo = handle
+          foo = h0
         P2
-          foo = handle
+          foo = h0
 
       recipe
-        create as handle
+        create as h0
         P2
-          foo = handle
+          foo = h0
         P3
-          foo = handle
+          foo = h0
 
       recipe
-        create as handle
+        create as h0
         P2
-          foo = handle
+          foo = h0
         P4
-          foo = handle
+          foo = h0
     `);
     const [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1680,11 +1680,11 @@ resource SomeName
         in * {Text value} foo
 
       recipe
-        create as handle
+        create as h0
         P
-          foo = handle
+          foo = h0
         P2
-          foo = handle
+          foo = h0
     `);
     const [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1703,11 +1703,11 @@ resource SomeName
         in * {Text value1, Number value2} foo
 
       recipe
-        create as handle
+        create as h0
         P
-          foo = handle
+          foo = h0
         P2
-          foo = handle
+          foo = h0
     `);
     const [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());

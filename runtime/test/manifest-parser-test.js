@@ -224,4 +224,34 @@ describe('manifest parser', function() {
         out Reference<Bar> outRef
     `);
   });
+  it('parses require section using local name', () => {
+    parse(`
+      recipe
+        require
+          handle as thing`);
+  });
+  it('parses require section using id', () => {
+    parse(`
+      recipe
+        require
+          handle 'an-id'`);
+  });
+  it('parses require section using local name and id', () => {
+    parse(`
+      recipe
+        require
+          handle as thing 'an-id'`);
+  });
+  it('parses require section using upperIdent', () => {
+    parse(`
+      recipe
+        require
+          handle Thing`);
+  });
+  it('parses require section with tags', () => {
+    parse(`
+      recipe
+        require
+          handle as thing Thing #tag1 #tag2`);
+  });
 });
