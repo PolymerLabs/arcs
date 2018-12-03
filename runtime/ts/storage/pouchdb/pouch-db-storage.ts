@@ -84,7 +84,7 @@ export class PouchDbStorage extends StorageBase {
       await this.dbForKey(pouchKey).get(pouchKey.location);
       return this.construct(id, type, key);
     } catch (err) {
-      if (err === 'not_found') {
+      if (err.name && err.name === 'not_found') {
         return null;
       }
       throw err;
