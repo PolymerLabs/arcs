@@ -14,16 +14,17 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {ArcInfo} from './synthetic-types.js';
 import {Id} from './id.js';
 
-export class Type {
+// TODO: rename Schema to EntityInfo, TypeVariable to VariableInfo, etc.
+
+// tslint:disable-next-line: no-any
+export type TypeLiteral = {tag: string, data?: any};
+
+export abstract class Type {
   tag: 'Entity' | 'Variable' | 'Collection' | 'BigCollection' | 'Relation' |
        'Interface' | 'Slot' | 'Reference' | 'ArcInfo' | 'HandleInfo';
-  // TODO: remove the base-level data member
-  // TODO: rename Schema to EntityInfo, TypeVariable to VariableInfo, etc.
-  data: Schema | TypeVariable | Type | [Type] | Shape | SlotInfo;
 
-  protected constructor(tag, data) {
+  protected constructor(tag) {
     this.tag = tag;
-    this.data = data;
   }
 
   // TODO: remove these; callers can directly construct the classes now
@@ -67,7 +68,7 @@ export class Type {
     return new HandleInfoType();
   }
 
-  static fromLiteral(literal) : Type {
+  static fromLiteral(literal: TypeLiteral) : Type {
     switch (literal.tag) {
       case 'Entity':
         return new EntityType(Schema.fromLiteral(literal.data));
@@ -78,11 +79,11 @@ export class Type {
       case 'BigCollection':
         return new BigCollectionType(Type.fromLiteral(literal.data));
       case 'Relation':
-        return new RelationType(literal.data);
+        return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
       case 'Interface':
         return new InterfaceType(Shape.fromLiteral(literal.data));
       case 'Slot':
-        return new SlotType(literal.data);
+        return new SlotType(SlotInfo.fromLiteral(literal.data));
       case 'Reference':
         return new ReferenceType(Type.fromLiteral(literal.data));
       case 'ArcInfo':
@@ -93,6 +94,8 @@ export class Type {
         throw new Error(`fromLiteral: unknown type ${literal}`);
     }
   }
+
+  abstract toLiteral() : TypeLiteral;
 
   static unwrapPair(type1: Type, type2: Type) {
     if (type1.tag === type2.tag) {
@@ -220,21 +223,11 @@ export class Type {
    * property, create a Map() and pass it into all clone calls in the group.
    */
   clone(variableMap) {
-    // TODO: clean this up
-    const type = this.resolvedType();
-    if (type instanceof VariableType) {
-      if (variableMap.has(type.variable)) {
-        return new VariableType(variableMap.get(type.variable));
-      } else {
-        const newTypeVariable = TypeVariable.fromLiteral(type.variable.toLiteral());
-        variableMap.set(type.variable, newTypeVariable);
-        return new VariableType(newTypeVariable);
-      }
-    }
-    if (type.data['clone']) {
-      return Type.fromLiteral({tag: type.tag, data: type.data['clone'](variableMap)});
-    }
-    return Type.fromLiteral(type.toLiteral());
+    return this.resolvedType()._clone(variableMap);
+  }
+
+  protected _clone(variableMap) {
+    return Type.fromLiteral(this.toLiteral());
   }
 
   /**
@@ -245,11 +238,6 @@ export class Type {
    */
   _cloneWithResolutions(variableMap) {
     return Type.fromLiteral(this.toLiteral());
-  }
-
-  // tslint:disable-next-line: no-any
-  toLiteral() : any {
-    return this;
   }
 
   // TODO: is this the same as _applyExistenceTypeTest
@@ -276,11 +264,11 @@ export class Type {
 
 
 export class EntityType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get entitySchema() : Schema  { return this.data as Schema; }
+  readonly entitySchema: Schema;
 
   constructor(schema: Schema) {
-    super('Entity', schema);
+    super('Entity');
+    this.entitySchema = schema;
   }
 
   // These type identifier methods are being left in place for non-runtime code.
@@ -331,17 +319,18 @@ export class EntityType extends Type {
 
 // Yes, these names need fixing.
 export class VariableType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get variable() : TypeVariable  { return this.data as TypeVariable; }
+  readonly variable: TypeVariable;
 
   constructor(variable: TypeVariable) {
-    super('Variable', variable);
+    super('Variable');
+    this.variable = variable;
   }
 
   get isVariable() {
     return true;
   }
 
+  // TODO: should variableMap be Map<string, TypeVariable>?
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     const name = this.variable.name;
     let variable = variableMap.get(name);
@@ -378,10 +367,22 @@ export class VariableType extends Type {
   get canReadSubset() {
     return this.variable.canReadSubset;
   }
+
+  _clone(variableMap) {
+    const name = this.variable.name;
+    if (variableMap.has(name)) {
+      return new VariableType(variableMap.get(name));
+    } else {
+      const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteral());
+      variableMap.set(name, newTypeVariable);
+      return new VariableType(newTypeVariable);
+    }
+  }
   
   _cloneWithResolutions(variableMap) {
-    if (variableMap.has(this.variable)) {
-      return new VariableType(variableMap.get(this.variable));
+    const name = this.variable.name;
+    if (variableMap.has(name)) {
+      return new VariableType(variableMap.get(name));
     } else {
       const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
       if (this.variable.resolution) {
@@ -393,7 +394,7 @@ export class VariableType extends Type {
       if (this.variable._canWriteSuperset) {
         newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
       }
-      variableMap.set(this.variable, newTypeVariable);
+      variableMap.set(name, newTypeVariable);
       return new VariableType(newTypeVariable);
     }
   }
@@ -418,11 +419,11 @@ export class VariableType extends Type {
 
 
 export class CollectionType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get collectionType() : Type  { return this.data as Type; }
+  readonly collectionType: Type;
 
   constructor(collectionType: Type) {
-    super('Collection', collectionType);
+    super('Collection');
+    this.collectionType = collectionType;
   }
 
   get isCollection() {
@@ -466,6 +467,11 @@ export class CollectionType extends Type {
     return this.collectionType.maybeEnsureResolved();
   }
 
+  _clone(variableMap) {
+    const data = this.collectionType.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
   _cloneWithResolutions(variableMap) {
     return new CollectionType(this.collectionType._cloneWithResolutions(variableMap));
   }
@@ -497,11 +503,11 @@ export class CollectionType extends Type {
 
 
 export class BigCollectionType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get bigCollectionType() : Type  { return this.data as Type; }
+  readonly bigCollectionType: Type;
 
   constructor(bigCollectionType: Type) {
-    super('BigCollection', bigCollectionType);
+    super('BigCollection');
+    this.bigCollectionType = bigCollectionType;
   }
 
   get isBigCollection() {
@@ -540,6 +546,11 @@ export class BigCollectionType extends Type {
     return this.bigCollectionType.maybeEnsureResolved();
   }
 
+  _clone(variableMap) {
+    const data = this.bigCollectionType.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
   _cloneWithResolutions(variableMap) {
     return new BigCollectionType(this.bigCollectionType._cloneWithResolutions(variableMap));
   }
@@ -571,15 +582,19 @@ export class BigCollectionType extends Type {
 
 
 export class RelationType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get relationEntities() : [Type]  { return this.data as [Type]; }
+  readonly relationEntities: [Type];
 
   constructor(relation: [Type]) {
-    super('Relation', relation);
+    super('Relation');
+    this.relationEntities = relation;
   }
 
   get isRelation() {
     return true;
+  }
+
+  toLiteral() {
+    return {tag: this.tag, data: this.relationEntities.map(t => t.toLiteral())};
   }
 
   toPrettyString() {
@@ -589,11 +604,11 @@ export class RelationType extends Type {
 
 
 export class InterfaceType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get interfaceShape() : Shape  { return this.data as Shape; }
+  readonly interfaceShape: Shape;
 
   constructor(iface: Shape) {
-    super('Interface', iface);
+    super('Interface');
+    this.interfaceShape = iface;
   }
 
   get isInterface() {
@@ -635,6 +650,11 @@ export class InterfaceType extends Type {
     return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
   }
 
+  _clone(variableMap) {
+    const data = this.interfaceShape.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
   _cloneWithResolutions(variableMap) {
     return new InterfaceType(this.interfaceShape._cloneWithResolutions(variableMap));
   }
@@ -654,11 +674,11 @@ export class InterfaceType extends Type {
 
 
 export class SlotType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get slot() : SlotInfo  { return this.data as SlotInfo; }
+  readonly slot: SlotInfo;
 
   constructor(slot: SlotInfo) {
-    super('Slot', slot);
+    super('Slot');
+    this.slot = slot;
   }
 
   get isSlot() {
@@ -676,6 +696,10 @@ export class SlotType extends Type {
   _isMoreSpecificThan(type) {
     // TODO: formFactor checking, etc.
     return true;
+  }
+
+  toLiteral() {
+    return {tag: this.tag, data: this.slot.toLiteral()};
   }
 
   toString(options = undefined) {
@@ -709,11 +733,11 @@ export class SlotType extends Type {
 
 
 export class ReferenceType extends Type {
-  // TODO: replace with a member var once data has been removed
-  get referredType() : Type  { return this.data as Type; }
+  readonly referredType: Type;
 
   constructor(reference: Type) {
-    super('Reference', reference);
+    super('Reference');
+    this.referredType = reference;
   }
 
   get isReference() {
@@ -746,6 +770,11 @@ export class ReferenceType extends Type {
     return this.referredType.canReadSubset;
   }
 
+  _clone(variableMap) {
+    const data = this.referredType.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
   _cloneWithResolutions(variableMap) {
     return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
   }
@@ -762,7 +791,7 @@ export class ReferenceType extends Type {
 
 export class ArcInfoType extends Type {
   constructor() {
-    super('ArcInfo', null);
+    super('ArcInfo');
   }
 
   get isArcInfo() {
@@ -772,15 +801,23 @@ export class ArcInfoType extends Type {
   newInstance(arcId: Id, serialization: string) {
     return new ArcInfo(arcId, serialization);
   }
+
+  toLiteral() {
+    return {tag: this.tag};
+  }
 }
 
 
 export class HandleInfoType extends Type {
   constructor() {
-    super('HandleInfo', null);
+    super('HandleInfo');
   }
 
   get isHandleInfo() {
     return true;
+  }
+
+  toLiteral() {
+    return {tag: this.tag};
   }
 }

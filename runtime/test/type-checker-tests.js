@@ -347,9 +347,9 @@ describe('TypeChecker', () => {
 
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     const a = Type.newVariable(new TypeVariable('a'));
-    assert.isNull(a.data._resolution);
+    assert.isNull(a.variable._resolution);
     Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
-    assert.isNull(a.data._resolution);
+    assert.isNull(a.variable._resolution);
   });
 
   it('resolves a single Slot type', () => {

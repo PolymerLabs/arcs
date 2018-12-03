@@ -9,13 +9,11 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {VariableType} from './type.js';
-
-// ShapeHandle {name, direction, type}
-// Slot {name, direction, isRequired, isSet}
+import {Type, VariableType} from './type.js';
+import {TypeChecker} from './recipe/type-checker.js';
 
 function _fromLiteral(member) {
-  if (!!member && typeof member === 'object') {
+  if (!!member && !(member instanceof Type) && typeof member === 'object') {
     return Type.fromLiteral(member);
   }
   return member;
@@ -421,6 +419,3 @@ ${this._slotsToManifestString()}
     return this;
   }
 }
-
-import {Type} from './type.js';
-import {TypeChecker} from './recipe/type-checker.js';
