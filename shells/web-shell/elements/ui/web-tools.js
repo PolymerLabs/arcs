@@ -50,8 +50,11 @@ const template = Xen.Template.html`
   <icon on-click="onToolsClick">assessment</icon>
   <div tools open$="{{open}}" on-click="onToolsPanelClick">
     <simple-tabs>
-      <div tab="Store Explorer">
+      <div tab="Arc Explorer">
         <store-explorer arc="{{arc}}" context="{{context}}"></store-explorer>
+      </div>
+      <div tab="Launcher Explorer">
+        <store-explorer arc="{{launcherarc}}"></store-explorer>
       </div>
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
@@ -64,7 +67,7 @@ const log = Xen.logFactory('WebTools', '#cc9096');
 
 export class WebTools extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['arc', 'context', 'open'];
+    return ['arc', 'launcherarc', 'context', 'open'];
   }
   get template() {
     return template;

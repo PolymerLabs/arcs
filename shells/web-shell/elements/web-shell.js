@@ -63,7 +63,7 @@ const template = Xen.Template.html`
   <!-- web planner -->
   <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}"></web-planner>
   <!-- ui chrome -->
-  <web-shell-ui arc="{{arc}}" context="{{context}}" on-search="onState">
+  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" on-search="onState">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
@@ -124,11 +124,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         };
       }
     }
-    if (!state.launcherConfig && state.env) {
+    if (!state.launcherConfig && state.env && state.userid) {
       // spin up launcher arc
       this.spawnLauncher(state.userid);
     }
-    if (!state.nullConfig && state.context) {
+    if (!state.nullConfig && state.context && state.userid) {
       // spin up nullArc
       this.spawnNullArc(state.userid);
     }
