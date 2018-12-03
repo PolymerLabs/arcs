@@ -27,9 +27,10 @@ export class ShellPlanningInterface {
    * @param assetsPath a path (relative or absolute) to locate planning assets.
    * @param userid the User Id to do planning for.
    * @param storageKeyBase Plans will be stored in a key that begins with this prefix.
+   *   If not specified use a key based on the Launcher Arc.
    */
   static async start(assetsPath, userid, storageKeyBase, debug) {
-    if (!assetsPath || !userid || !storageKeyBase) {
+    if (!assetsPath || !userid) {
       throw new Error('assetsPath, userid, and storageKeyBase required');
     }
 
