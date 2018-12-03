@@ -211,6 +211,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   }
   _onArc(e, arc) {
     log('got background arc', arc);
+    this.fire('arc', arc);
     // this._setState({arc});
     // const {key} = this._state;
     // // TODO(sjmiles): mark this arc as shared

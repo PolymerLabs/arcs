@@ -76,7 +76,7 @@ const template = Xen.Template.html`
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}"></device-client-pipe>
+  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -264,6 +264,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   onNullArc(e, nullArc) {
     this.state = {nullArc};
+  }
+  onPipesArc(e, pipesArc) {
+    this.state = {pipesArc};
   }
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
