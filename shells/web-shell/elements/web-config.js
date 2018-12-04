@@ -30,7 +30,8 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       this._fire('config', state.config);
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
-    this.setUrlParam('user', null);
+    // ... but not having it makes it hard to test multi-user scenarios
+    //this.setUrlParam('user', null);
     if (userid) {
       localStorage.setItem(Const.LOCALSTORAGE.user, userid);
     }
