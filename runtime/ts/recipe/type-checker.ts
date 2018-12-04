@@ -94,16 +94,20 @@ export class TypeChecker {
         if (result === false) {
           return null;
         }
-        // Here onto grows, one level at a time,
-        // as we assign new resolution to primitiveOnto, which is a leaf.
         primitiveOnto.variable.resolution = primitiveBase;
       } else {
         // base variable, onto not.
+        if (!primitiveBase.variable.isValidResolutionCandidate(primitiveOnto).result) {
+          return null;
+        }
         primitiveBase.variable.resolution = primitiveOnto;
       }
       return base;
     } else if (primitiveOnto instanceof VariableType) {
       // onto variable, base not.
+      if (!primitiveOnto.variable.isValidResolutionCandidate(primitiveBase).result) {
+        return null;
+      }
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
     } else if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
