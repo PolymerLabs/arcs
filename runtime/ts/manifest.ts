@@ -16,7 +16,7 @@ import {Handle} from './recipe/handle.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
 import {Search} from './recipe/search.js';
-import {Shape} from './shape.js';
+import {InterfaceInfo} from './interface-info.js';
 import {Type, EntityType, CollectionType, BigCollectionType, InterfaceType} from './type.js';
 import {compareComparables} from './recipe/util.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
@@ -108,11 +108,12 @@ type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) 
 export class Manifest {
   private _recipes = <Recipe[]>[];
   private _imports = <Manifest[]>[];
-    // TODO: These should be lists, possibly with a separate flattened map.
+  // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: {[index: string]: ParticleSpec} = {};
   private _schemas: {[index: string]: Schema} = {};
   private _stores = <StorageProviderBase[]>[];
-  private _shapes = <Shape[]>[];
+  // TODO: rename _shapes when 'shape' isn't used as a keyword in manifests
+  private _shapes = <InterfaceInfo[]>[];
   storeTags: Map<StorageProviderBase, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
@@ -668,7 +669,7 @@ ${e.message}
       });
     }
     // TODO: move shape to recipe/ and add shape builder?
-    const shape = new Shape(shapeItem.name, handles, slots);
+    const shape = new InterfaceInfo(shapeItem.name, handles, slots);
     manifest._shapes.push(shape);
   }
   static async _processRecipe(manifest, recipeItem, loader) {

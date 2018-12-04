@@ -9,30 +9,30 @@
  */
 
 import {assert} from './chai-web.js';
-import {Shape} from '../ts-build/shape.js';
+import {InterfaceInfo} from '../ts-build/interface-info.js';
 import {Type, EntityType, TypeVariable} from '../ts-build/type.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {Schema} from '../ts-build/schema.js';
 import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
 
-describe('shape', function() {
+describe('interface', function() {
   it('finds type variable references in handles', function() {
-    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
-    assert.lengthOf(shape.typeVars, 1);
-    assert.equal(shape.typeVars[0].field, 'type');
-    assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
+    const iface = new InterfaceInfo('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
+    assert.lengthOf(iface.typeVars, 1);
+    assert.equal(iface.typeVars[0].field, 'type');
+    assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
-    const shape = new Shape('Test', [], [{name: Type.newVariable(new TypeVariableInfo('a'))}]);
-    assert.lengthOf(shape.typeVars, 1);
-    assert.equal(shape.typeVars[0].field, 'name');
-    assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
+    const iface = new InterfaceInfo('Test', [], [{name: Type.newVariable(new TypeVariableInfo('a'))}]);
+    assert.lengthOf(iface.typeVars, 1);
+    assert.equal(iface.typeVars[0].field, 'name');
+    assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
   it('upgrades type variable references', function() {
-    let shape = new Shape('Test',
+    let iface = new InterfaceInfo('Test',
       [
         {name: Type.newVariable(new TypeVariableInfo('a'))},
         {type: Type.newVariable(new TypeVariableInfo('b')), name: 'singleton'},
@@ -41,15 +41,15 @@ describe('shape', function() {
       [
         {name: Type.newVariable(new TypeVariableInfo('a'))},
       ]);
-    assert.lengthOf(shape.typeVars, 4);
-    let type = Type.newInterface(shape);
+    assert.lengthOf(iface.typeVars, 4);
+    let type = Type.newInterface(iface);
     const map = new Map();
     type = type.mergeTypeVariablesByName(map);
     assert(map.has('a'));
     assert(map.has('b'));
-    shape = type.interfaceShape;
-    assert.strictEqual(shape.handles[0].name.variable, shape.slots[0].name.variable);
-    assert.strictEqual(shape.handles[1].type, shape.handles[2].type.collectionType);
+    iface = type.interfaceInfo;
+    assert.strictEqual(iface.handles[0].name.variable, iface.slots[0].name.variable);
+    assert.strictEqual(iface.handles[1].type, iface.handles[2].type.collectionType);
   });
 
   it('matches particleSpecs', async () => {
@@ -76,11 +76,11 @@ describe('shape', function() {
           out NotTest foo
       `);
       const type = Type.newEntity(manifest.schemas.Test);
-      const shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
-      assert(!shape.particleMatches(manifest.particles[0]));
-      assert(shape.particleMatches(manifest.particles[1]));
-      assert(shape.particleMatches(manifest.particles[2]));
-      assert(shape.particleMatches(manifest.particles[3]));
+      const iface = new InterfaceInfo('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+      assert(!iface.particleMatches(manifest.particles[0]));
+      assert(iface.particleMatches(manifest.particles[1]));
+      assert(iface.particleMatches(manifest.particles[2]));
+      assert(iface.particleMatches(manifest.particles[3]));
   });
 
   it('matches particleSpecs with slots', async () => {
@@ -106,24 +106,26 @@ describe('shape', function() {
             provide set of randomSlot
       `);
       const type = Type.newEntity(manifest.schemas.Test);
-      const shape = new Shape('Test', [{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
+      const iface = new InterfaceInfo('Test',
+        [{direction: 'in', type}],
+        [{name: 'one'}, {direction: 'provide', isSet: true}]);
 
-      assert(!shape.particleMatches(manifest.particles[0]));
-      assert(!shape.particleMatches(manifest.particles[1]));
-      assert(shape.particleMatches(manifest.particles[2]));
-      assert(shape.particleMatches(manifest.particles[3]));
+      assert(!iface.particleMatches(manifest.particles[0]));
+      assert(!iface.particleMatches(manifest.particles[1]));
+      assert(iface.particleMatches(manifest.particles[2]));
+      assert(iface.particleMatches(manifest.particles[3]));
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
-    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
-    assert.isFalse(shape.canEnsureResolved());
+    const iface = new InterfaceInfo('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
+    assert.isFalse(iface.canEnsureResolved());
   });
 
   it('Can ensure resolved a schema type', () => {
     const type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    const shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
-    assert.isTrue(shape.canEnsureResolved());
-    assert.isTrue(shape.maybeEnsureResolved());
+    const iface = new InterfaceInfo('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    assert.isTrue(iface.canEnsureResolved());
+    assert.isTrue(iface.maybeEnsureResolved());
   });
 
   it('Maybe ensure resolved does not mutate on failure', () => {
@@ -144,26 +146,21 @@ describe('shape', function() {
     const unconstrainedType = Type.newVariable(new TypeVariableInfo('c'));
     const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
-    const allTypesShape = new Shape('Test', [
-      {type: constrainedType1},
-      {type: unconstrainedType},
-      {type: constrainedType2},
-    ], []);
+    const allTypesIface = new InterfaceInfo('Test',
+      [{type: constrainedType1}, {type: unconstrainedType}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isFalse(allTypesShape.canEnsureResolved());
+    assert.isFalse(allTypesIface.canEnsureResolved());
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isFalse(allTypesShape.maybeEnsureResolved());
+    assert.isFalse(allTypesIface.maybeEnsureResolved());
     assert.isTrue(allTypes.every(t => !t.isResolved()),
         'Types should not have been modified by a failed maybeEnsureResolved()');
 
-    const constrainedOnlyShape = new Shape('Test', [
-      {type: constrainedType1},
-      {type: constrainedType2},
-    ], []);
+    const constrainedOnlyIface = new InterfaceInfo('Test',
+      [{type: constrainedType1}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isTrue(constrainedOnlyShape.canEnsureResolved());
+    assert.isTrue(constrainedOnlyIface.canEnsureResolved());
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isTrue(constrainedOnlyShape.maybeEnsureResolved());
+    assert.isTrue(constrainedOnlyIface.maybeEnsureResolved());
     assert.isTrue(constrainedType1.isResolved());
     assert.isTrue(constrainedType2.isResolved());
   });
@@ -212,9 +209,9 @@ describe('shape', function() {
     }
 
     const hostedParticleType = multiplexer.connections['hostedParticle'].type;
-    assert.isTrue(!!hostedParticleType.interfaceShape.restrictType(burritoDisplayer));
+    assert.isTrue(!!hostedParticleType.interfaceInfo.restrictType(burritoDisplayer));
 
-    // After restricting the shape, handle types are constrainted to a Burrito.
+    // After restricting the interface, handle types are constrainted to a Burrito.
     assert.lengthOf(recipe.handles, 2);
     for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
@@ -227,7 +224,7 @@ describe('shape', function() {
     }
   });
 
-  it('allows checking whether particle matches a shape', async () => {
+  it('allows checking whether particle matches an interface', async () => {
     const manifest = await Manifest.parse(`
       schema Thing
       schema Instrument extends Thing
@@ -272,9 +269,9 @@ describe('shape', function() {
     recipe.normalize();
 
     const hostParticle = recipe.particles.find(p => p.name === 'Host');
-    const hostedShape = hostParticle.connections['hosted'].type.interfaceShape;
+    const hostedInterface = hostParticle.connections['hosted'].type.interfaceInfo;
 
-    const check = name => hostedShape.particleMatches(manifest.findParticleByName(name));
+    const check = name => hostedInterface.particleMatches(manifest.findParticleByName(name));
 
     // inout Thing is not be compatible with in Instrument input
     // inout LesPaul is not be compatible with out Gibson output
@@ -285,8 +282,7 @@ describe('shape', function() {
     assert.isTrue(check('GibsonCandidate'));
     assert.isFalse(check('LesPaulCandidate'));
 
-    assert.isTrue(!!hostedShape.restrictType(
-        manifest.findParticleByName('GuitarCandidate')));
+    assert.isTrue(!!hostedInterface.restrictType(manifest.findParticleByName('GuitarCandidate')));
 
     // After restricting the type with inout Guitar,
     // inout Instrument and inout Gibson are no longer viable matches.

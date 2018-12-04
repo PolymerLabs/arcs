@@ -111,7 +111,7 @@ export class TypeChecker {
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
     } else if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
-      const result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
+      const result = primitiveBase.interfaceInfo.tryMergeTypeVariablesWith(primitiveOnto.interfaceInfo);
       if (result == null) {
         return null;
       }
@@ -257,7 +257,7 @@ export class TypeChecker {
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc
     if (leftType instanceof InterfaceType && rightType instanceof InterfaceType) {
-      if (leftType.interfaceShape.equals(rightType.interfaceShape)) {
+      if (leftType.interfaceInfo.equals(rightType.interfaceInfo)) {
         return true;
       }
     }

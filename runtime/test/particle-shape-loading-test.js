@@ -16,10 +16,10 @@ import {Loader} from '../ts-build/loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../ts-build/recipe/recipe.js';
 import {Type} from '../ts-build/type.js';
-import {Shape} from '../ts-build/shape.js';
+import {InterfaceInfo} from '../ts-build/interface-info.js';
 import {ParticleSpec} from '../ts-build/particle-spec.js';
 
-describe('particle-shape-loading', function() {
+describe('particle-interface-loading', function() {
 
   it('loads interfaces into particles', async () => {
     const loader = new StubLoader({
@@ -66,22 +66,22 @@ describe('particle-shape-loading', function() {
     const fooType = Type.newEntity(manifest.schemas.Foo);
     const barType = Type.newEntity(manifest.schemas.Bar);
 
-    const shape = new Shape('Test', [{type: fooType}, {type: barType}], []);
+    const iface = new InterfaceInfo('Test', [{type: fooType}, {type: barType}], []);
 
-    const shapeType = Type.newInterface(shape);
+    const ifaceType = Type.newInterface(iface);
 
     const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'host', type: shapeType, name: 'particle0', dependentConnections: []},
+        {direction: 'host', type: ifaceType, name: 'particle0', dependentConnections: []},
         {direction: 'in', type: fooType, name: 'input', dependentConnections: []},
         {direction: 'out', type: barType, name: 'output', dependentConnections: []}
       ],
     });
 
-    const shapeStore = await arc.createStore(shapeType);
-    await shapeStore.set(manifest.particles[0].toLiteral());
+    const ifaceStore = await arc.createStore(ifaceType);
+    await ifaceStore.set(manifest.particles[0].toLiteral());
     const outStore = await arc.createStore(barType);
     const inStore = await arc.createStore(fooType);
     await inStore.set({id: 'id', rawData: {value: 'a foo'}});
@@ -90,10 +90,10 @@ describe('particle-shape-loading', function() {
     const particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 
-    const recipeShapeHandle = recipe.newHandle();
-    particle.connections['particle0'].connectToHandle(recipeShapeHandle);
-    recipeShapeHandle.fate = 'use';
-    recipeShapeHandle.mapToStorage(shapeStore);
+    const recipeInterfaceHandle = recipe.newHandle();
+    particle.connections['particle0'].connectToHandle(recipeInterfaceHandle);
+    recipeInterfaceHandle.fate = 'use';
+    recipeInterfaceHandle.mapToStorage(ifaceStore);
 
     const recipeOutHandle = recipe.newHandle();
     particle.connections['output'].connectToHandle(recipeOutHandle);
@@ -113,7 +113,7 @@ describe('particle-shape-loading', function() {
     await util.assertSingletonWillChangeTo(arc, outStore, 'value', 'a foo1');
   });
 
-  it('loads shapes into particles declaratively', async () => {
+  it('loads interfaces into particles declaratively', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       import './runtime/test/artifacts/test-particles.manifest'

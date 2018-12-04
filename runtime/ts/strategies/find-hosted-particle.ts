@@ -28,7 +28,7 @@ export class FindHostedParticle extends Strategy {
         for (const particle of arc.context.particles) {
           // This is what shape.particleMatches() does, but we also do
           // canEnsureResolved at the end:
-          const shapeClone = iface.interfaceShape.cloneWithResolutions(new Map());
+          const shapeClone = iface.interfaceInfo.cloneWithResolutions(new Map());
           // If particle doesn't match the requested shape.
           if (shapeClone.restrictType(particle) === false) continue;
           // If we still have unresolvable shape after matching a particle.

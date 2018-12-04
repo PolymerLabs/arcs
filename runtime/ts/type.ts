@@ -8,7 +8,7 @@
 
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {Shape} from './shape.js';
+import {InterfaceInfo} from './interface-info.js';
 import {SlotInfo} from './slot-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ArcInfo} from './synthetic-types.js';
@@ -46,7 +46,7 @@ export abstract class Type {
     return new RelationType(relation);
   }
 
-  static newInterface(iface : Shape) {
+  static newInterface(iface : InterfaceInfo) {
     return new InterfaceType(iface);
   }
 
@@ -79,7 +79,7 @@ export abstract class Type {
       case 'Relation':
         return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
       case 'Interface':
-        return new InterfaceType(Shape.fromLiteral(literal.data));
+        return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
       case 'Slot':
         return new SlotType(SlotInfo.fromLiteral(literal.data));
       case 'Reference':
@@ -600,11 +600,11 @@ export class RelationType extends Type {
 
 
 export class InterfaceType extends Type {
-  readonly interfaceShape: Shape;
+  readonly interfaceInfo: InterfaceInfo;
 
-  constructor(iface: Shape) {
+  constructor(iface: InterfaceInfo) {
     super('Interface');
-    this.interfaceShape = iface;
+    this.interfaceInfo = iface;
   }
 
   get isInterface() {
@@ -612,59 +612,59 @@ export class InterfaceType extends Type {
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
-    const shape = this.interfaceShape.clone(new Map());
-    shape.mergeTypeVariablesByName(variableMap);
+    const interfaceInfo = this.interfaceInfo.clone(new Map());
+    interfaceInfo.mergeTypeVariablesByName(variableMap);
     // TODO: only build a new type when a variable is modified
-    return new InterfaceType(shape);
+    return new InterfaceType(interfaceInfo);
   }
 
   _applyExistenceTypeTest(test) {
-    return this.interfaceShape._applyExistenceTypeTest(test);
+    return this.interfaceInfo._applyExistenceTypeTest(test);
   }
 
   resolvedType() {
-    return new InterfaceType(this.interfaceShape.resolvedType());
+    return new InterfaceType(this.interfaceInfo.resolvedType());
   }
 
   _canEnsureResolved() {
-    return this.interfaceShape.canEnsureResolved();
+    return this.interfaceInfo.canEnsureResolved();
   }
 
   maybeEnsureResolved() {
-    return this.interfaceShape.maybeEnsureResolved();
+    return this.interfaceInfo.maybeEnsureResolved();
   }
 
   get canWriteSuperset() {
-    return new InterfaceType(this.interfaceShape.canWriteSuperset);
+    return new InterfaceType(this.interfaceInfo.canWriteSuperset);
   }
 
   get canReadSubset() {
-    return new InterfaceType(this.interfaceShape.canReadSubset);
+    return new InterfaceType(this.interfaceInfo.canReadSubset);
   }
 
   _isMoreSpecificThan(type) {
-    return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
+    return this.interfaceInfo.isMoreSpecificThan(type.interfaceInfo);
   }
 
   _clone(variableMap) {
-    const data = this.interfaceShape.clone(variableMap).toLiteral();
+    const data = this.interfaceInfo.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
   _cloneWithResolutions(variableMap) {
-    return new InterfaceType(this.interfaceShape._cloneWithResolutions(variableMap));
+    return new InterfaceType(this.interfaceInfo._cloneWithResolutions(variableMap));
   }
 
   toLiteral() {
-    return {tag: this.tag, data: this.interfaceShape.toLiteral()};
+    return {tag: this.tag, data: this.interfaceInfo.toLiteral()};
   }
 
   toString(options = undefined) {
-    return this.interfaceShape.name;
+    return this.interfaceInfo.name;
   }
 
   toPrettyString() {
-    return this.interfaceShape.toPrettyString();
+    return this.interfaceInfo.toPrettyString();
   }
 }
 
