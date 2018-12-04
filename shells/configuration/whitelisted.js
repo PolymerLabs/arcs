@@ -6,5 +6,7 @@ import '../../modalities/dom/components/elements/video-controller.js';
 import '../../modalities/dom/components/elements/mic-input.js';
 import '../../modalities/dom/components/elements/good-map.js';
 import '../../modalities/dom/components/elements/geo-location.js';
+import '../../modalities/dom/components/elements/model-input.js';
+
 // requires app-level firebase configuration
-import '../lib/firebase-upload.js';
+import '../lib/firebase/firebase-upload.js';

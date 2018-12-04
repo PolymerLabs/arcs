@@ -7,7 +7,8 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import {Const} from './constants.js';
+
+import {firebase} from '../../env/arcs.js';
 
 const config = {
   server: 'arcs-storage.firebaseio.com',
@@ -19,27 +20,21 @@ const config = {
   messagingSenderId: '779656349412'
 };
 
-const configure = firebase => {
-  // api
-  Firebase.firebase = firebase;
-  // firebase app
-  Firebase.app = firebase.initializeApp(config);
-  // firebase database
-  Firebase.database = Firebase.app.database();
-  // version node
-  Firebase.db = Firebase.database.ref(Const.version);
-  // firebase storage (for file upload, e.g.)
-  Firebase.storage = Firebase.app.storage();
-  // no more configuring
-  Firebase.configure = () => null;
-};
+// firebase app
+const app = firebase.initializeApp(config, 'images');
+// firebase database
+const database = app.database();
+// contextual root node
+const db = database.ref('images');
+// firebase storage (for file upload, e.g.)
+const storage = app.storage();
 
-export const Firebase = {
-  config,
-  configure,
-  app: null,
-  database: null,
-  db: null
+export {
+  firebase,
+  app,
+  database,
+  db,
+  storage
 };
 
 
