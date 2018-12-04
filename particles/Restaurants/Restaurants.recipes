@@ -12,19 +12,25 @@ import 'Reservations.recipes'
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 
-//recipe Restaurants
-//  create as location
-//  create as restaurants
-//  create #selected as selected
-//  Geolocate
-//    location = location
-//  RestaurantFind
-//    location = location
-//    restaurants = restaurants
-//  SelectableTiles
-//    list = restaurants
-//    selected = selected
-//  TileMultiplexer
-//    list = restaurants
-//    hostedParticle = RestaurantTile
-//  description `find restaurants near ${RestaurantFind.location}`
+recipe Restaurants
+  create as location
+  create as restaurants
+  create #selected as selected
+  Geolocate
+    location = location
+  RestaurantFind
+    location = location
+    restaurants = restaurants
+  SelectableTiles
+    list = restaurants
+    selected = selected
+  TileMultiplexer
+    list = restaurants
+    hostedParticle = RestaurantTile
+  DetailSlider
+    selected = selected
+  RestaurantDetail
+    restaurant = selected
+    consume content
+      provide action as actionSlot
+  description `find restaurants near ${RestaurantFind.location}`
