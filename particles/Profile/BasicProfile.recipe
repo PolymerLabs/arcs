@@ -22,9 +22,9 @@ import 'User.schema'
 
 particle FriendsPicker in 'source/FriendsPicker.js'
   in User user
-  in [User] users
-  in [Avatar] avatars
   inout [User] friends
+  in [Avatar] avatars
+  in [UserName] userNames
   consume friends
   description `select friends`
 
@@ -35,9 +35,9 @@ particle BasicProfile in 'source/BasicProfile.js'
     provide friends
 
 recipe BasicProfile
-  map 'SYSTEM_users' as users
   map 'SYSTEM_user' as user
   map 'BOXED_avatar' as avatars
+  map 'BOXED_userName' as userNames
   create #avatar as avatar
   create #userName as userName
   create #friends as friends
@@ -47,7 +47,7 @@ recipe BasicProfile
     userName = userName
   FriendsPicker
     user = user
-    users = users
-    avatars = avatars
     friends = friends
+    avatars = avatars
+    userNames = userNames
   description `Edit user profile (name, avatar, and friends)`
