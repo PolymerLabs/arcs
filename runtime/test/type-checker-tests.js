@@ -32,6 +32,13 @@ describe('TypeChecker', () => {
     assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
   });
 
+  it(`doesn't resolve a pair of inout [~a], inout ~a`, async () => {
+    const variable = Type.newVariable(new TypeVariable('a'));
+    const collection = variable.collectionOf();
+    const result = TypeChecker.processTypeList(undefined, [{type: variable, direction: 'inout'}, {type: collection, direction: 'inout'}]);
+    assert.isNull(result);
+  });
+
   it('resolves a trio of in BigCollection<~a>, out BigCollection<~b>, in BigCollection<Product>', async () => {
     const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
     const b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
