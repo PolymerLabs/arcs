@@ -16,15 +16,15 @@ import {Schema} from '../ts-build/schema.js';
 import {Type, SlotType} from '../ts-build/type.js';
 import {SlotInfo} from '../ts-build/slot-info.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
-import {TypeVariable} from '../ts-build/type-variable.js';
+import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {Handle} from '../ts-build/recipe/handle.js';
 
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).collectionOf();
     const c = Type.newEntity(new Schema({names: ['Product'], fields: {}})).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.resolvedType().collectionType.canWriteSuperset.entitySchema.name, 'Product');
@@ -33,15 +33,15 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve a pair of inout [~a], inout ~a`, async () => {
-    const variable = Type.newVariable(new TypeVariable('a'));
+    const variable = Type.newVariable(new TypeVariableInfo('a'));
     const collection = variable.collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: variable, direction: 'inout'}, {type: collection, direction: 'inout'}]);
     assert.isNull(result);
   });
 
   it('resolves a trio of in BigCollection<~a>, out BigCollection<~b>, in BigCollection<Product>', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).bigCollectionOf();
     const c = Type.newEntity(new Schema({names: ['Product'], fields: {}})).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.resolvedType().bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
@@ -86,8 +86,8 @@ describe('TypeChecker', () => {
   });
 
   it('resolves a trio of in [~a] (is Thing), in [~b] (is Thing), out [Product]', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).collectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.collectionType.variable.resolution = resolution;
     b.collectionType.variable.resolution = resolution;
@@ -98,8 +98,8 @@ describe('TypeChecker', () => {
   });
 
   it('resolves a trio of in BigCollection<~a> (is Thing), in BigCollection<~b> (is Thing), out BigCollection<Product>', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).bigCollectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.bigCollectionType.variable.resolution = resolution;
     b.bigCollectionType.variable.resolution = resolution;
@@ -110,7 +110,7 @@ describe('TypeChecker', () => {
   });
 
   it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.collectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
@@ -121,7 +121,7 @@ describe('TypeChecker', () => {
   });
 
   it('resolves a pair of in BigCollection<~a> (is Thing), out BigCollection<Product>', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.bigCollectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
@@ -132,7 +132,7 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve a pair of out [~a (is Thing)], in [Product]`, async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.collectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
@@ -141,7 +141,7 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve a pair of out BigCollection<~a (is Thing)>, in BigCollection<Product>`, async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.bigCollectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
@@ -150,7 +150,7 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve a pair of out [~a (is Thing)], inout [Product]`, async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.collectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
@@ -159,7 +159,7 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't resolve a pair of out BigCollection<~a (is Thing)>, inout BigCollection<Product>]`, async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
     const resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.bigCollectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
@@ -168,14 +168,14 @@ describe('TypeChecker', () => {
   });
 
   it('resolves inout [~a] (is Thing), in [~b] (is Thing), in [Product], in [~c], in [~d] (is Product)', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).collectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).collectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).collectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.collectionType.variable.resolution = resolution;
     b.collectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
-    const d = Type.newVariable(new TypeVariable('c')).collectionOf();
-    const e = Type.newVariable(new TypeVariable('d')).collectionOf();
+    const d = Type.newVariable(new TypeVariableInfo('c')).collectionOf();
+    const e = Type.newVariable(new TypeVariableInfo('d')).collectionOf();
     resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     e.collectionType.variable.resolution = resolution;
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
@@ -183,14 +183,14 @@ describe('TypeChecker', () => {
   });
 
   it('resolves inout BigCollection<~a> (is Thing), in BC<~b> (is Thing), in BC<Product>, in BC<~c>, in BC<~d> (is Product)', async () => {
-    const a = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
-    const b = Type.newVariable(new TypeVariable('b')).bigCollectionOf();
+    const a = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('b')).bigCollectionOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.bigCollectionType.variable.resolution = resolution;
     b.bigCollectionType.variable.resolution = resolution;
     const c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).bigCollectionOf();
-    const d = Type.newVariable(new TypeVariable('c')).bigCollectionOf();
-    const e = Type.newVariable(new TypeVariable('d')).bigCollectionOf();
+    const d = Type.newVariable(new TypeVariableInfo('c')).bigCollectionOf();
+    const e = Type.newVariable(new TypeVariableInfo('d')).bigCollectionOf();
     resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     e.bigCollectionType.variable.resolution = resolution;
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
@@ -198,14 +198,14 @@ describe('TypeChecker', () => {
   });
 
   it(`doesn't depend on ordering in assigning a resolution to a type variable`, async () => {
-    let a = Type.newVariable(new TypeVariable('a'));
+    let a = Type.newVariable(new TypeVariableInfo('a'));
     const b = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     const c = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
 
-    a = Type.newVariable(new TypeVariable('a'));
+    a = Type.newVariable(new TypeVariableInfo('a'));
     result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'in'}, {type: b, direction: 'out'}]);
     assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
@@ -293,24 +293,24 @@ describe('TypeChecker', () => {
 
   it(`doesn't resolve Entity and Collection of type variable`, () => {
     const a = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    const b = Type.newVariable(new TypeVariable('a')).collectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
   });
 
   it(`doesn't resolve Entity and BigCollection of type variable`, () => {
     const a = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    const b = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
   });
 
   it(`doesn't resolve Collection and BigCollection of type variable`, () => {
     const a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).collectionOf();
-    const b = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
+    const b = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
     assert.isNull(TypeChecker.processTypeList(a, [{type: b, direction: 'inout'}]));
   });
 
   it(`doesn't modify an input baseType if invoked through Handle.effectiveType`, async () => {
-    const baseType = Type.newVariable(new TypeVariable('a'));
+    const baseType = Type.newVariable(new TypeVariableInfo('a'));
     const connection = {
       type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
       direction: 'inout'
@@ -323,37 +323,37 @@ describe('TypeChecker', () => {
   });
 
   it('can compare a type variable with a Collection handle', async () => {
-    const leftType = Type.newVariable(new TypeVariable('a')).collectionOf();
-    const rightType = Type.newVariable(new TypeVariable('b'));
+    const leftType = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
+    const rightType = Type.newVariable(new TypeVariableInfo('b'));
     assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
   it('can compare a type variable with a BigCollection handle', async () => {
-    const leftType = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
-    const rightType = Type.newVariable(new TypeVariable('b'));
+    const leftType = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
+    const rightType = Type.newVariable(new TypeVariableInfo('b'));
     assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
   it('can compare a type variable with a Collection handle (with constraints)', async () => {
     const canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
-    const leftType = Type.newVariable(new TypeVariable('a')).collectionOf();
-    const rightType = Type.newVariable(new TypeVariable('b', canWrite));
+    const leftType = Type.newVariable(new TypeVariableInfo('a')).collectionOf();
+    const rightType = Type.newVariable(new TypeVariableInfo('b', canWrite));
     assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
   it('can compare a type variable with a Collection handle (with constraints)', async () => {
     const canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
-    const leftType = Type.newVariable(new TypeVariable('a')).bigCollectionOf();
-    const rightType = Type.newVariable(new TypeVariable('b', canWrite));
+    const leftType = Type.newVariable(new TypeVariableInfo('a')).bigCollectionOf();
+    const rightType = Type.newVariable(new TypeVariableInfo('b', canWrite));
     assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
   it(`doesn't mutate types provided to effectiveType calls`, () => {
-    const a = Type.newVariable(new TypeVariable('a'));
+    const a = Type.newVariable(new TypeVariableInfo('a'));
     assert.isNull(a.variable._resolution);
     Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
     assert.isNull(a.variable._resolution);

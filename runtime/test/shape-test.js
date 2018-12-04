@@ -10,22 +10,22 @@
 
 import {assert} from './chai-web.js';
 import {Shape} from '../ts-build/shape.js';
-import {Type, EntityType, VariableType} from '../ts-build/type.js';
+import {Type, EntityType, TypeVariable} from '../ts-build/type.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {TypeChecker} from '../ts-build/recipe/type-checker.js';
 import {Schema} from '../ts-build/schema.js';
-import {TypeVariable} from '../ts-build/type-variable.js';
+import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
 
 describe('shape', function() {
   it('finds type variable references in handles', function() {
-    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariable('a'))}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'type');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
-    const shape = new Shape('Test', [], [{name: Type.newVariable(new TypeVariable('a'))}]);
+    const shape = new Shape('Test', [], [{name: Type.newVariable(new TypeVariableInfo('a'))}]);
     assert.lengthOf(shape.typeVars, 1);
     assert.equal(shape.typeVars[0].field, 'name');
     assert.equal(shape.typeVars[0].object[shape.typeVars[0].field].variable.name, 'a');
@@ -34,12 +34,12 @@ describe('shape', function() {
   it('upgrades type variable references', function() {
     let shape = new Shape('Test',
       [
-        {name: Type.newVariable(new TypeVariable('a'))},
-        {type: Type.newVariable(new TypeVariable('b')), name: 'singleton'},
-        {type: Type.newVariable(new TypeVariable('b')).collectionOf(), name: 'set'}
+        {name: Type.newVariable(new TypeVariableInfo('a'))},
+        {type: Type.newVariable(new TypeVariableInfo('b')), name: 'singleton'},
+        {type: Type.newVariable(new TypeVariableInfo('b')).collectionOf(), name: 'set'}
       ],
       [
-        {name: Type.newVariable(new TypeVariable('a'))},
+        {name: Type.newVariable(new TypeVariableInfo('a'))},
       ]);
     assert.lengthOf(shape.typeVars, 4);
     let type = Type.newInterface(shape);
@@ -115,7 +115,7 @@ describe('shape', function() {
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
-    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariable('a'))}], []);
+    const shape = new Shape('Test', [{type: Type.newVariable(new TypeVariableInfo('a'))}], []);
     assert.isFalse(shape.canEnsureResolved());
   });
 
@@ -128,20 +128,20 @@ describe('shape', function() {
 
   it('Maybe ensure resolved does not mutate on failure', () => {
     const constrainedType1 = TypeChecker.processTypeList(
-      Type.newVariable(new TypeVariable('a')),
+      Type.newVariable(new TypeVariableInfo('a')),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'in'
       }]
     );
     const constrainedType2 = TypeChecker.processTypeList(
-      Type.newVariable(new TypeVariable('b')),
+      Type.newVariable(new TypeVariableInfo('b')),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'out'
       }]
     );
-    const unconstrainedType = Type.newVariable(new TypeVariable('c'));
+    const unconstrainedType = Type.newVariable(new TypeVariableInfo('c'));
     const allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
     const allTypesShape = new Shape('Test', [
@@ -207,7 +207,7 @@ describe('shape', function() {
     for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
-      assert.isTrue(resolved instanceof VariableType);
+      assert.isTrue(resolved instanceof TypeVariable);
       assert.isFalse(resolved.canEnsureResolved());
     }
 
@@ -219,7 +219,7 @@ describe('shape', function() {
     for (const handle of recipe.handles) {
       const collectionType = handle.type.collectionType;
       const resolved = collectionType.resolvedType();
-      assert.isTrue(collectionType instanceof VariableType);
+      assert.isTrue(collectionType instanceof TypeVariable);
       assert.isTrue(resolved.canEnsureResolved());
       const canWriteSuperset = resolved.canWriteSuperset;
       assert.isTrue(canWriteSuperset instanceof EntityType);

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Type, VariableType} from './type.js';
+import {Type, TypeVariable} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 
 function _fromLiteral(member) {
@@ -299,7 +299,7 @@ ${this._slotsToManifestString()}
   }
 
   static isTypeVar(reference) {
-    return (reference instanceof Type) && reference.hasProperty(r => r instanceof VariableType);
+    return (reference instanceof Type) && reference.hasProperty(r => r instanceof TypeVariable);
   }
 
   static mustMatch(reference) {
@@ -320,7 +320,7 @@ ${this._slotsToManifestString()}
       return true;
     }
     const [left, right] = Type.unwrapPair(shapeHandle.type, particleHandle.type);
-    if (left instanceof VariableType) {
+    if (left instanceof TypeVariable) {
       return [{var: left, value: right, direction: shapeHandle.direction}];
     } else {
       return left.equals(right);
@@ -406,7 +406,7 @@ ${this._slotsToManifestString()}
     for (const constraint of handleOptions) {
       if (!constraint.var.variable.resolution) {
         constraint.var.variable.resolution = constraint.value;
-      } else if (constraint.var.variable.resolution instanceof VariableType) {
+      } else if (constraint.var.variable.resolution instanceof TypeVariable) {
         // TODO(shans): revisit how this should be done,
         // consider reusing tryMergeTypeVariablesWith(other).
         if (!TypeChecker.processTypeList(constraint.var, [{

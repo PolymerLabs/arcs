@@ -24,7 +24,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Id} from './id.js';
-import {TypeVariable} from './type-variable.js';
+import {TypeVariableInfo} from './type-variable-info.js';
 import {SlotInfo} from './slot-info.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 
@@ -501,7 +501,7 @@ ${e.message}
         }
         case 'variable-type': {
           const constraint = node.constraint && node.constraint.model;
-          node.model = Type.newVariable(new TypeVariable(node.name, constraint, null));
+          node.model = Type.newVariable(new TypeVariableInfo(node.name, constraint, null));
           return;
         }
         case 'slot-type': {
