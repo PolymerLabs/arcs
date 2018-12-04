@@ -8,15 +8,17 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+import {Const} from '../../configuration/constants.js';
 import {Xen} from '../../lib/xen.js';
 import {SyntheticStores} from '../../lib/synthetic-stores.js';
 import {SingleUserContext} from '../../lib/single-user-context.js';
 
 const log = Xen.logFactory('UserContext', '#4f0433');
+const warn = Xen.logFactory('UserContext', '#4f0433', 'warn');
 
 customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'storage', 'context', 'userid', 'arcstore', 'coords', 'users'];
+    return ['env', 'storage', 'context', 'userid', 'users'];
   }
   _getInitialState() {
     return {
@@ -24,8 +26,8 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       contextWait: 800,
       // maps userid to SingleUserContext for friends
       friends: {},
-      // maps entityid's to userid's for friends to workaround missing data
-      // in `remove` records
+      // TODO(sjmiles): workaround for missing data in `remove` records
+      // maps entityids to userids for friends
       friendEntityIds: {},
       // snapshot of BOXED_avatar for use by shell
       avatars: {},
@@ -36,36 +38,42 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       state.env = props.env;
       SyntheticStores.init(props.env);
     }
-    // if (props.context && state.systemUserId !== props.userid) {
-    //   state.systemUserId = props.userid;
-    //   if (props.userid) {
-    //     this.updateSystemUser(props);
-    //   }
-    // }
-    if (props.storage && props.context && props.arcstore && props.userid !== state.userid) {
-      state.userid = props.userid;
-      this.updateSystemUser(props);
-      this.updateUserContext(props, state);
-      setTimeout(() => this.fire('context', props.context), state.contextWait);
+    if (props.context && state.context !== props.context) {
+      state.context = props.context;
+      this.updateFriends(props, state);
     }
-    //const {context, userid, coords, users} = props;
-    //const {user, userStore, usersStore} = state;
-    // if (users && usersStore && state.users !== users) {
-    //   state.users = users;
-    //   // TODO(sjmiles): clear usersStore first, or modify _updateSystemStores to avoid
-    //   // duplication ... as of now this never happens since `users` is only generated
-    //   // once.
-    //   this._updateSystemUsers(users, usersStore);
-    // }
-    // if (user && userStore && userid !== state.userid) {
-    //   state.userid = userid;
-    //   this._updateSystemUser(props, state);
-    // }
-    // if (user && userStore && coords && coords !== user.rawData.location) {
-    //   user.rawData.location = coords;
-    //   log('updating user coords:', user);
-    //   userStore.set(user);
-    // }
+    if (props.storage && props.context && props.userid !== state.userid) {
+      state.userid = props.userid;
+      this.awaitState('arcStore', () => this.updateArcStore(props, state));
+    }
+  }
+  async updateArcStore(props, state) {
+    const {storage, userid} = props;
+    const arcStore = await this.fetchArcStore(storage, userid);
+    if (arcStore) {
+      // TODO(sjmiles): plop arcStore into state early for updateUserContext, usage is weird
+      state.arcStore = arcStore;
+      // TODO(sjmiles): props and state are suspect after await
+      await this.updateUserContext(props, state);
+    } else {
+      // retry after a bit
+      setTimeout(() => this.state = {userid: null}, state.contextWait);
+    }
+    setTimeout(() => this.fire('context', props.context), state.contextWait);
+    return arcStore;
+  }
+  async fetchArcStore(storage, userid) {
+    const handleStore = await SyntheticStores.getStore(storage, `${userid}${Const.launcherSuffix}`);
+    if (handleStore) {
+      const handles = await handleStore.toList();
+      const handle = handles[0];
+      if (handle) {
+        const store = await SyntheticStores.getHandleStore(handle);
+        log(`marshalled arcStore for [${userid}][${storage}]`, store);
+        return store;
+      }
+    }
+    warn(`failed to marshal arcStore for [${userid}][${storage}]`);
   }
   async updateSystemUser({userid, context}) {
     const store = await context.findStoreById('SYSTEM_user');
@@ -80,7 +88,17 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       log('installed SYSTEM_user');
     }
   }
-  async updateUserContext({storage, userid, context, arcstore}, {userContext}) {
+  async updateUserContext({storage, userid, context}, {userContext, arcStore}) {
+    await this.disposeUserContext(userContext);
+    // do not operate on stale userid
+    if (!this.state.userContext && userid === this.state.userid) {
+      const isProfile = true;
+      this.state = {
+        userContext: new SingleUserContext(storage, context, userid, arcStore, isProfile)
+      };
+    }
+  }
+  async disposeUserContext(userContext) {
     if (userContext) {
       this.state = {userContext: null};
       try {
@@ -89,72 +107,71 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
         //
       }
     }
-    // do not operate on stale userid
-    if (!this.state.userContext && userid === this.state.userid) {
-      const isProfile = true;
-      this.state = {
-        userContext: new SingleUserContext(storage, context, userid, arcstore, isProfile)
-      };
+  }
+  async updateFriends({storage, userid, context}, state) {
+    if (state.friendsStore) {
+      log('discarding old PROFILE_friends');
+      state.friendsStore.off('change', state.friendsStoreCb);
+      state.friendsStore = null;
+    }
+    const friendsStore = await context.findStoreById('PROFILE_friends');
+    if (friendsStore) {
+      log('found PROFILE_friends');
+      const friendsStoreCb = info => this.onFriendsChange(storage, context, info);
+      // get current data
+      const friends = await friendsStore.toList();
+      // listen for changes
+      friendsStore.on('change', friendsStoreCb, this);
+      // process friends already in store
+      this.onFriendsChange(storage, context, {add: friends.map(f => ({value: f}))});
+      this.state = {friendsStore, friendsStoreCb};
+    } else {
+      warn('PROFILE_friends missing');
     }
   }
-  // _updateSystemUsers(users, usersStore) {
-  //   log('updateSystemUsers');
-  //   Object.values(users).forEach(user => usersStore.store({
-  //     id: usersStore.generateID(),
-  //     rawData: {
-  //       id: user.id,
-  //       name: user.name
-  //     }
-  //   }, ['users-stores-keys']));
-  // }
-  // async _updateSystemUser(props, state) {
-  //   if (!state.disposingUser) {
-  //     const {user, userStore, userContext} = state;
-  //     if (userContext) {
-  //       state.disposingUser = true;
-  //       state.userContext = null;
-  //       try {
-  //         await userContext.dispose();
-  //       } catch (x) {
-  //         //
-  //       }
-  //       state.disposingUser = false;
-  //     }
-  //     const {context, coords, userid} = props;
-  //     if (userid) {
-  //       state.userContext = new SingleUserContext(context, userid, true);
-  //     }
-  //     user.rawData.id = userid;
-  //     user.rawData.location = coords;
-  //     log('updating user', user);
-  //     userStore.set(user);
-  //   }
-  // }
-  // _onFriendChange(context, info) {
-  //   const {friends, friendEntityIds} = this._state;
-  //   if (info.add) {
-  //     info.add.forEach(add => {
-  //       const friendid = add.value.rawData.id;
-  //       friendEntityIds[add.value.id] = friendid;
-  //       log('onFriendChange', 'adding', friendid);
-  //       if (!friends[friendid]) {
-  //         friends[friendid] = new SingleUserContext(context, friendid, false);
-  //       }
-  //     });
-  //   }
-  //   if (info.remove) {
-  //     info.remove.forEach(remove => {
-  //       const friendid = friendEntityIds[remove.value.id];
-  //       log('onFriendChange', 'removing', friendid);
-  //       const friend = friends[friendid];
-  //       if (friend) {
-  //         friend.dispose();
-  //         friends[friendid] = null;
-  //       }
-  //     });
-  //   }
-  // }
-  // async _boxedAvatarChanged(store) {
+  onFriendsChange(storage, context, info) {
+    const {friends, friendEntityIds} = this._state;
+    if (info.add) {
+      info.add.forEach(({value}) => {
+        const entityId = value.id;
+        const friendId = value.rawData.id;
+        // TODO(sjmiles): friendEntityIds is a hack to workaround missing rawData in removal records
+        friendEntityIds[entityId] = friendId;
+        this.addFriend(storage, context, friends, friendId);
+      });
+    }
+    if (info.remove) {
+      info.remove.forEach(remove => this.removeFriend(friends, friendEntityIds[remove.value.id]));
+    }
+  }
+  async addFriend(storage, context, friends, friendId, attempts) {
+    log('trying to addFriend', friendId);
+    if (!friends[friendId]) {
+      friends[friendId] = true;
+      const arcStore = await this.fetchArcStore(storage, friendId);
+      if (arcStore) {
+        friends[friendId] = new SingleUserContext(storage, context, friendId, arcStore, false);
+      } else {
+        friends[friendId] = null;
+        // retry a bit
+        attempts = (attempts || 0) + 1;
+        if (attempts < 11) {
+          const timeout = 1000*Math.pow(2.9076, attempts);
+          console.warn(`retry [${attempts}/10] to addFriend [${friendId}] in ${(timeout/1000/60).toFixed(2)}m`);
+          setTimeout(() => this.addFriend(storage, context, friends, friendId, attempts), timeout);
+        }
+      }
+    }
+  }
+  removeFriend(friends, friendId) {
+    log('removeFriend', friendId);
+    const friend = friends[friendId];
+    if (friend) {
+      friend.dispose && friend.dispose();
+      friends[friendId] = null;
+    }
+  }
+  //async _boxedAvatarChanged(store) {
   //   const avatars = await store.toList();
   //   this._fire('avatars', avatars);
   //   avatars.get = id => {
