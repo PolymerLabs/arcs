@@ -1,7 +1,7 @@
-import Xen from '../../modalities/dom/components/xen/xen.js';
-import {Firebase} from '../configuration/firebase-config.js';
+import {firebase, storage} from './firebase.js';
+import Xen from '../../../modalities/dom/components/xen/xen.js';
 
-const template = Xen.html`
+const template = `
   <style>
     ::slotted(*) {
       cursor: pointer;
@@ -17,7 +17,6 @@ const template = Xen.html`
 `;
 
 const preamble = ['FirebaseUpload', '#ff69b4'];
-
 const log = Xen.logFactory(...preamble);
 const logError = Xen.logFactory(...preamble, 'error');
 
@@ -42,7 +41,7 @@ class FirebaseUpload extends Xen.Base {
     this._uploadFile(file, path);
   }
   _uploadFile(file, uploadPath) {
-    const imageRef = Firebase.storage.ref().child(uploadPath);
+    const imageRef = storage.ref().child(uploadPath);
     const next = snapshot => {
       const percent =
           Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100.0);
@@ -57,7 +56,7 @@ class FirebaseUpload extends Xen.Base {
     };
     const complete = () => this._uploadComplete(file, imageRef);
     imageRef.put(file).on(
-        Firebase.firebase.storage.TaskEvent.STATE_CHANGED, {next, error, complete});
+        firebase.storage.TaskEvent.STATE_CHANGED, {next, error, complete});
   }
   async _getImageDimensions(file) {
     return new Promise((resolve, reject) => {

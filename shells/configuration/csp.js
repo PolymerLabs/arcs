@@ -53,6 +53,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         blob:
         data:
         https://firebasestorage.googleapis.com
+        https://*.googleusercontent.com
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
