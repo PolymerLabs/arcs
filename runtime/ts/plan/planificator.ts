@@ -188,25 +188,8 @@ export class Planificator {
   }
 
   private static async _initStore(arc: Arc, id: string, type: Type, storageKey: KeyBase) : Promise<StorageProviderBase> {
-    const providerFactory = arc.storageProviderFactory;
-
-    // TODO: unify initialization of suggestions storage.
-    const storageKeyStr = storageKey.toString();
-    const storage = providerFactory._storageForKey(storageKey.toString());
-
-    let store: StorageProviderBase = null;
-
-    if (storage instanceof FirebaseStorage) {
-      // TODO make firebase use the standard construct/connect API
-      store = await storage._join(id, type, storageKeyStr, /* shoudExist= */ 'unknown', /* referenceMode= */ false);
-    } else {
-      try {
-        store = await storage.construct(id, type, storageKeyStr);
-      } catch(e) {
-        store = await storage.connect(id, type, storageKeyStr);
-      }
-    }
-    assert(store, `Failed initializing '${storageKeyStr}' store.`);
+    const store = await arc.storageProviderFactory.connectOrConstruct(id, type, storageKey.toString());
+    assert(store, `Failed initializing '${storageKey.toString()}' store.`);
     store.referenceMode = false;
     return store;
   }
