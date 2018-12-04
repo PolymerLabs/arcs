@@ -6,7 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, ReferenceType, InterfaceType, SlotType} from '../type.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 
 export class TypeChecker {
 
@@ -21,11 +20,10 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    const newBaseTypeVariable = new TypeVariableInfo('', null, null);
+    const newBaseType = TypeVariable.make('', null, null);
     if (baseType) {
-      newBaseTypeVariable.resolution = baseType;
+      newBaseType.variable.resolution = baseType;
     }
-    const newBaseType = new TypeVariable(newBaseTypeVariable);
     baseType = newBaseType;
 
     const concreteTypes = [];
@@ -137,7 +135,7 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        const newVar = new TypeVariable(new TypeVariableInfo('a', null, null));
+        const newVar = TypeVariable.make('a', null, null);
         if (primitiveConnectionType instanceof CollectionType) {
           primitiveHandleType.variable.resolution = new CollectionType(newVar);
         } else if (primitiveConnectionType instanceof BigCollectionType) {

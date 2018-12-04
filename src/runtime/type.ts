@@ -228,6 +228,10 @@ export class EntityType extends Type {
     this.entitySchema = schema;
   }
 
+  static make(names: string[], fields: {}, description?) {
+    return new EntityType(new Schema(names, fields, description));
+  }
+
   // These type identifier methods are being left in place for non-runtime code.
   get isEntity() {
     return true;
@@ -280,6 +284,10 @@ export class TypeVariable extends Type {
   constructor(variable: TypeVariableInfo) {
     super('TypeVariable');
     this.variable = variable;
+  }
+
+  static make(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
+    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
   }
 
   get isVariable() {
@@ -566,6 +574,11 @@ export class InterfaceType extends Type {
     this.interfaceInfo = iface;
   }
 
+  // TODO: export InterfaceInfo's Handle and Slot interfaces to type check here?
+  static make(name: string, handles, slots) {
+    return new InterfaceType(new InterfaceInfo(name, handles, slots));
+  }
+
   get isInterface() {
     return true;
   }
@@ -634,6 +647,10 @@ export class SlotType extends Type {
   constructor(slot: SlotInfo) {
     super('Slot');
     this.slot = slot;
+  }
+
+  static make(formFactor: string, handle: string) {
+    return new SlotType(new SlotInfo(formFactor, handle));
   }
 
   get isSlot() {

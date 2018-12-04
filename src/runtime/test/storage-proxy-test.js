@@ -170,7 +170,7 @@ class TestParticle {
 
 class TestEngine {
   constructor(arcId) {
-    this.schema = new Schema({names: ['Thing'], fields: {value: 'Text'}});
+    this.schema = new Schema(['Thing'], {value: 'Text'});
     this.type = new EntityType(this.schema);
     this._idCounters = [1, 1, 1]; // particle, proxy, entity
     this._stores = new Map();

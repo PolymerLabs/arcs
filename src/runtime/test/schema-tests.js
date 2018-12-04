@@ -236,8 +236,8 @@ describe('schema', function() {
     `);
 
     const Collections = manifest.findSchemaByName('Collections').entityClass();
-    const FooType = new EntityType(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
-    const BarType = new EntityType(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
+    const FooType = EntityType.make(['Foo'], {value: 'Text'});
+    const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
     new Collections({
       collection: new Set([new Reference({id: 'test', storageKey: 'test'}, new ReferenceType(FooType), null)])
@@ -309,10 +309,8 @@ describe('schema', function() {
     const Person = manifest.findSchemaByName('Person');
     const Animal = manifest.findSchemaByName('Animal');
 
-    assert.deepEqual(Schema.union(Person, Animal), new Schema({
-      names: ['Person', 'Animal', 'Thing'],
-      fields: Object.assign({}, Person.fields, Animal.fields)
-    }));
+    const fields = Object.assign({}, Person.fields, Animal.fields);
+    assert.deepEqual(Schema.union(Person, Animal), new Schema(['Person', 'Animal', 'Thing'], fields));
   });
 
   it('handles field type conflict in schema unions', async function() {
@@ -328,7 +326,6 @@ describe('schema', function() {
     const manifest = await Manifest.load('Product.schema', loader);
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
-    delete Thing._model.description;
 
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
     assert.deepEqual(Schema.intersect(Thing, Product), Thing);
@@ -340,12 +337,8 @@ describe('schema', function() {
     const Product = manifest.findSchemaByName('Product');
     const Animal = manifest.findSchemaByName('Animal');
 
-    assert.deepEqual(Schema.intersect(Animal, Product), new Schema({
-      names: ['Thing'],
-      fields: Object.assign({}, Thing.fields, {
-        isReal: 'Boolean'
-      })
-    }));
+    const fields = Object.assign({}, Thing.fields, {isReal: 'Boolean'});
+    assert.deepEqual(Schema.intersect(Animal, Product), new Schema(['Thing'], fields));
   });
 
   it('handles schema intersection if no shared supertype and a conflicting field', async function() {
@@ -359,22 +352,14 @@ describe('schema', function() {
     assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
     assert.isUndefined(intersection.fields.price);
 
-    assert.deepEqual(Schema.intersect(Person, Product), new Schema({
-      names: [],
-      fields: {
-        name: 'Text'
-      }
-    }));
+    assert.deepEqual(Schema.intersect(Person, Product), new Schema([], {name: 'Text'}));
   });
 
   it('handles empty schema intersection as empty object', async function() {
     const manifest = await Manifest.load('Product.schema', loader);
     const Person = manifest.findSchemaByName('Person');
     const AlienLife = manifest.findSchemaByName('AlienLife');
-    assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema({
-      names: [],
-      fields: {}
-    }));
+    assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema([], {}));
   });
 
   // Firebase doesn't store empty lists or objects, so we need to
