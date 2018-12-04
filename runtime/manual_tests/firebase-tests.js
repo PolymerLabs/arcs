@@ -645,7 +645,7 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization});
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: ''});
       const varStore2 = arc2.findStoreById(varStore.id);
       const colStore2 = arc2.findStoreById(colStore.id);
       const bigStore2 = arc2.findStoreById(bigStore.id);
