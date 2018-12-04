@@ -151,7 +151,7 @@ Import
   }
 
 Shape
-  = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? VariableTypeList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
+  = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
   {
     var iface = optional(items, extractIndented, []).find(item => item.kind == 'shape-interface');
     if (iface) {
@@ -366,7 +366,7 @@ ParticleArgumentDirection
   }
 
 ParticleArgumentType
-  = VariableType
+  = TypeVariable
   / CollectionType
   / BigCollectionType
   / ReferenceType
@@ -404,7 +404,7 @@ ReferenceType
     };
   }
 
-VariableType
+TypeVariable
   = '~' name:lowerIdent constraint:(whiteSpace 'with' whiteSpace type:ParticleArgumentType)?
   {
     return {
@@ -451,8 +451,8 @@ TypeName
     };
   }
 
-VariableTypeList
-  = head:VariableType tail:(',' whiteSpace VariableType)*
+TypeVariableList
+  = head:TypeVariable tail:(',' whiteSpace TypeVariable)*
   {
     return [head, ...tail.map(a => a[2])];
   }

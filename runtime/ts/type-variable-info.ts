@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type, EntityType, VariableType, SlotType} from './type.js';
+import {Type, EntityType, TypeVariable, SlotType} from './type.js';
 import {assert} from '../../platform/assert-web.js';
 import {Schema} from './schema.js';
 
-export class TypeVariable {
+export class TypeVariableInfo {
   name: string;
   _canWriteSuperset: Type|null;
   _canReadSubset: Type|null;
@@ -28,7 +28,7 @@ export class TypeVariable {
    * of two variables together. Use this when two separate type variables need to resolve
    * to the same value.
    */
-  maybeMergeConstraints(variable: TypeVariable) {
+  maybeMergeConstraints(variable: TypeVariableInfo) {
     if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
@@ -111,7 +111,7 @@ export class TypeVariable {
 
   isValidResolutionCandidate(value: Type): {result: boolean, detail?: string} {
     const elementType = value.resolvedType().getContainedType();
-    if (elementType instanceof VariableType && elementType.variable === this) {
+    if (elementType instanceof TypeVariable && elementType.variable === this) {
       return {result: false, detail: 'variable cannot resolve to collection of itself'};
     }
     return {result: true};
@@ -125,7 +125,7 @@ export class TypeVariable {
 
     let probe = value;
     while (probe) {
-      if (!(probe instanceof VariableType)) {
+      if (!(probe instanceof TypeVariable)) {
         break;
       }
       if (probe.variable === this) {
@@ -142,7 +142,7 @@ export class TypeVariable {
   get canWriteSuperset() {
     if (this._resolution) {
       assert(!this._canWriteSuperset);
-      if (this._resolution instanceof VariableType) {
+      if (this._resolution instanceof TypeVariable) {
         return this._resolution.variable.canWriteSuperset;
       }
       return null;
@@ -158,7 +158,7 @@ export class TypeVariable {
   get canReadSubset() {
     if (this._resolution) {
       assert(!this._canReadSubset);
-      if (this._resolution instanceof VariableType) {
+      if (this._resolution instanceof TypeVariable) {
         return this._resolution.variable.canReadSubset;
       }
       return null;
@@ -214,7 +214,7 @@ export class TypeVariable {
   }
 
   static fromLiteral(data) {
-    return new TypeVariable(
+    return new TypeVariableInfo(
         data.name,
         data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
         data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);

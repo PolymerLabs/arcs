@@ -7,21 +7,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Schema} from './schema.js';
-import {TypeVariable} from './type-variable.js';
+import {TypeVariableInfo} from './type-variable-info.js';
 import {Shape} from './shape.js';
 import {SlotInfo} from './slot-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ArcInfo} from './synthetic-types.js';
 import {Id} from './id.js';
 
-// TODO: rename Schema to EntityInfo, TypeVariable to VariableInfo, etc.
-
 // tslint:disable-next-line: no-any
 export type TypeLiteral = {tag: string, data?: any};
 
 export abstract class Type {
-  tag: 'Entity' | 'Variable' | 'Collection' | 'BigCollection' | 'Relation' |
-       'Interface' | 'Slot' | 'Reference' | 'ArcInfo' | 'HandleInfo';
+  tag: 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
+       'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
 
   protected constructor(tag) {
     this.tag = tag;
@@ -32,8 +30,8 @@ export abstract class Type {
     return new EntityType(entity);
   }
 
-  static newVariable(variable : TypeVariable) {
-    return new VariableType(variable);
+  static newVariable(variable : TypeVariableInfo) {
+    return new TypeVariable(variable);
   }
 
   static newCollection(collection : Type) {
@@ -61,19 +59,19 @@ export abstract class Type {
   }
 
   static newArcInfo() {
-    return new ArcInfoType();
+    return new ArcType();
   }
 
   static newHandleInfo() {
-    return new HandleInfoType();
+    return new HandleType();
   }
 
   static fromLiteral(literal: TypeLiteral) : Type {
     switch (literal.tag) {
       case 'Entity':
         return new EntityType(Schema.fromLiteral(literal.data));
-      case 'Variable':
-        return new VariableType(TypeVariable.fromLiteral(literal.data));
+      case 'TypeVariable':
+        return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
       case 'Collection':
         return new CollectionType(Type.fromLiteral(literal.data));
       case 'BigCollection':
@@ -86,10 +84,10 @@ export abstract class Type {
         return new SlotType(SlotInfo.fromLiteral(literal.data));
       case 'Reference':
         return new ReferenceType(Type.fromLiteral(literal.data));
-      case 'ArcInfo':
-        return new ArcInfoType();
-      case 'HandleInfo':
-        return new HandleInfoType();
+      case 'Arc':
+        return new ArcType();
+      case 'Handle':
+        return new HandleType();
       default:
         throw new Error(`fromLiteral: unknown type ${literal}`);
     }
@@ -157,11 +155,11 @@ export abstract class Type {
   }
 
   get hasVariable() {
-    return this._applyExistenceTypeTest(type => type instanceof VariableType);
+    return this._applyExistenceTypeTest(type => type instanceof TypeVariable);
   }
 
   get hasUnresolvedVariable() {
-    return this._applyExistenceTypeTest(type => type instanceof VariableType && !type.variable.isResolved());
+    return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
   primitiveType() {
@@ -317,12 +315,11 @@ export class EntityType extends Type {
 }
 
 
-// Yes, these names need fixing.
-export class VariableType extends Type {
-  readonly variable: TypeVariable;
+export class TypeVariable extends Type {
+  readonly variable: TypeVariableInfo;
 
-  constructor(variable: TypeVariable) {
-    super('Variable');
+  constructor(variable: TypeVariableInfo) {
+    super('TypeVariable');
     this.variable = variable;
   }
 
@@ -330,14 +327,13 @@ export class VariableType extends Type {
     return true;
   }
 
-  // TODO: should variableMap be Map<string, TypeVariable>?
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     const name = this.variable.name;
     let variable = variableMap.get(name);
     if (!variable) {
       variable = this;
       variableMap.set(name, this);
-    } else if (variable instanceof VariableType) {
+    } else if (variable instanceof TypeVariable) {
       if (variable.variable.hasConstraint || this.variable.hasConstraint) {
         const mergedConstraint = variable.variable.maybeMergeConstraints(this.variable);
         if (!mergedConstraint) {
@@ -371,20 +367,20 @@ export class VariableType extends Type {
   _clone(variableMap) {
     const name = this.variable.name;
     if (variableMap.has(name)) {
-      return new VariableType(variableMap.get(name));
+      return new TypeVariable(variableMap.get(name));
     } else {
-      const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteral());
+      const newTypeVariable = TypeVariableInfo.fromLiteral(this.variable.toLiteral());
       variableMap.set(name, newTypeVariable);
-      return new VariableType(newTypeVariable);
+      return new TypeVariable(newTypeVariable);
     }
   }
   
   _cloneWithResolutions(variableMap) {
     const name = this.variable.name;
     if (variableMap.has(name)) {
-      return new VariableType(variableMap.get(name));
+      return new TypeVariable(variableMap.get(name));
     } else {
-      const newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
+      const newTypeVariable = TypeVariableInfo.fromLiteral(this.variable.toLiteralIgnoringResolutions());
       if (this.variable.resolution) {
         newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
       }
@@ -395,7 +391,7 @@ export class VariableType extends Type {
         newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
       }
       variableMap.set(name, newTypeVariable);
-      return new VariableType(newTypeVariable);
+      return new TypeVariable(newTypeVariable);
     }
   }
 
@@ -789,12 +785,12 @@ export class ReferenceType extends Type {
 }
 
 
-export class ArcInfoType extends Type {
+export class ArcType extends Type {
   constructor() {
-    super('ArcInfo');
+    super('Arc');
   }
 
-  get isArcInfo() {
+  get isArc() {
     return true;
   }
 
@@ -808,12 +804,12 @@ export class ArcInfoType extends Type {
 }
 
 
-export class HandleInfoType extends Type {
+export class HandleType extends Type {
   constructor() {
-    super('HandleInfo');
+    super('Handle');
   }
 
-  get isHandleInfo() {
+  get isHandle() {
     return true;
   }
 

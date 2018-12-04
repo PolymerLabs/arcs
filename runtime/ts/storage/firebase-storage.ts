@@ -19,7 +19,7 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
-import {Type, VariableType, CollectionType, BigCollectionType, ReferenceType} from '../type.js';
+import {Type, TypeVariable, CollectionType, BigCollectionType, ReferenceType} from '../type.js';
 import {setDiff} from '../util.js';
 
 export async function resetStorageForTesting(key) {
@@ -158,8 +158,8 @@ export class FirebaseStorage extends StorageBase {
   // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
   // but this _join creates the storage location.
   async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
-    assert(!(type instanceof VariableType));
-    assert(!type.isTypeContainer() || !(type.getContainedType() instanceof VariableType));
+    assert(!(type instanceof TypeVariable));
+    assert(!type.isTypeContainer() || !(type.getContainedType() instanceof TypeVariable));
     const fbKey = new FirebaseKey(keyString);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (fbKey.databaseUrl == undefined || fbKey.apiKey == undefined) {

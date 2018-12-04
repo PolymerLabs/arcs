@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type, EntityType, VariableType, CollectionType, BigCollectionType, InterfaceType, SlotType} from '../type.js';
-import {TypeVariable} from '../type-variable.js';
+import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, InterfaceType, SlotType} from '../type.js';
+import {TypeVariableInfo} from '../type-variable-info.js';
 
 export class TypeChecker {
 
@@ -21,7 +21,7 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    const newBaseTypeVariable = new TypeVariable('', null, null);
+    const newBaseTypeVariable = new TypeVariableInfo('', null, null);
     if (baseType) {
       newBaseTypeVariable.resolution = baseType;
     }
@@ -55,7 +55,7 @@ export class TypeChecker {
     }
 
     const getResolution = candidate => {
-      if (!(candidate instanceof VariableType)) {
+      if (!(candidate instanceof TypeVariable)) {
         return candidate;
       }
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
@@ -87,8 +87,8 @@ export class TypeChecker {
   static _tryMergeTypeVariable(base, onto) {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
-    if (primitiveBase instanceof VariableType) {
-      if (primitiveOnto instanceof VariableType) {
+    if (primitiveBase instanceof TypeVariable) {
+      if (primitiveOnto instanceof TypeVariable) {
         // base, onto both variables.
         const result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
         if (result === false) {
@@ -103,7 +103,7 @@ export class TypeChecker {
         primitiveBase.variable.resolution = primitiveOnto;
       }
       return base;
-    } else if (primitiveOnto instanceof VariableType) {
+    } else if (primitiveOnto instanceof TypeVariable) {
       // onto variable, base not.
       if (!primitiveOnto.variable.isValidResolutionCandidate(primitiveBase).result) {
         return null;
@@ -126,7 +126,7 @@ export class TypeChecker {
 
   static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
-    if (primitiveHandleType instanceof VariableType) {
+    if (primitiveHandleType instanceof TypeVariable) {
       while (primitiveConnectionType.isTypeContainer()) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
@@ -137,7 +137,7 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        const newVar = Type.newVariable(new TypeVariable('a', null, null));
+        const newVar = Type.newVariable(new TypeVariableInfo('a', null, null));
         if (primitiveConnectionType instanceof CollectionType) {
           primitiveHandleType.variable.resolution = Type.newCollection(newVar);
         } else if (primitiveConnectionType instanceof BigCollectionType) {
@@ -226,14 +226,14 @@ export class TypeChecker {
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType instanceof VariableType && rightType.isTypeContainer()) {
+    if (leftType instanceof TypeVariable && rightType.isTypeContainer()) {
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
     }
-    if (rightType instanceof VariableType && leftType.isTypeContainer()) {
+    if (rightType instanceof TypeVariable && leftType.isTypeContainer()) {
       return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
     }
 
-    if (leftType instanceof VariableType || rightType instanceof VariableType) {
+    if (leftType instanceof TypeVariable || rightType instanceof TypeVariable) {
       // TODO: everything should use this, eventually. Need to implement the
       // right functionality in Shapes first, though.
       return Type.canMergeConstraints(leftType, rightType);
