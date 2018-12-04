@@ -20,10 +20,6 @@ const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
 // suggestions -> filtered array of (simple-)plans
 // suggestion -> (simple-)plan
 
-// TODO(sjmiles): requires more info than this module should need
-const PlanificatorFactory = async (config, env, userid, arc) =>
-  await Planificator.create(arc, {userid, protocol: config.planificatorProtocol});
-
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'config', 'userid', 'arc', 'suggestion', 'search'];
@@ -51,7 +47,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     }
   }
   async _createPlanificator(env, config, arc, userid) {
-    const planificator = await PlanificatorFactory(config, env, userid, arc);
+    const planificator = await Planificator.create(arc, {userid, protocol: config.planificatorProtocol});
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
