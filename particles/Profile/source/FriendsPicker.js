@@ -23,10 +23,17 @@ defineParticle(({DomParticle, html, resolver}) => {
     text-decoration: none;
     text-align: center;
   }
+  [item] span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   [item] img {
     box-sizing: border-box;
     border-radius: 100%;
     width: 80px;
+    height: 80px;
+    background-color: #eeeeee;
   }
   [item] [selected] {
     border: 3px solid blue;
@@ -71,7 +78,9 @@ defineParticle(({DomParticle, html, resolver}) => {
 
 <template friend-avatars>
   <div item>
-    <img selected$="{{selected}}" src="{{url}}" key="{{key}}" value="{{value}}" on-click="onSelectAvatar">
+    <model-img src="{{url}}">
+      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-click="onSelectAvatar">
+    </model-img>
     <br>
     <span>{{name}}</span>
   </div>
@@ -80,7 +89,9 @@ defineParticle(({DomParticle, html, resolver}) => {
 <div friends-picker>
   <div fab><icon on-click="onAddFriend">add</icon></div>
   <div popup xen:style="{{popupStyle}}">
-    <input autofocus="{{showPopup}}" value="{{newFriendName}}" placeholder="Enter New Friend Id" spellcheck="false" on-change="onNameInputChange">
+    <model-input focus="{{showPopup}}" on-cancel="onCancelInput">
+      <input value="{{newFriendName}}" placeholder="Enter New Friend Id" spellcheck="false" on-change="onNameInputChange">
+    </model-input>
   </div>
   <div grid>{{avatars}}</div>
 </div>
@@ -94,18 +105,19 @@ defineParticle(({DomParticle, html, resolver}) => {
     render(props, state) {
       const user = props.user || {};
       const friends = props.friends || [];
-      //const people = (props.users || []).filter(p => p.id !== user.id);
-      const others = (props.friends || []).filter(p => p.id !== user.id);
+      const others = friends.filter(p => p.id !== user.id);
+      const names = props.userNames || [];
       const avatars = props.avatars || [];
       const avatarModels = others.map((p, i) => {
         const avatar = this.boxQuery(avatars, p.id)[0];
+        const name = this.boxQuery(names, p.id)[0];
         const url = (avatar && avatar.url) || `https://$shell/assets/avatars/user%20(0).png`;
         return {
           key: i,
           value: p.id,
-          name: p.name || p.id,
+          name: name ? name.userName : p.id,
           url: resolver && resolver(url),
-          selected: true //Boolean(friends.find(f => f.id === p.id))
+          selected: true
         };
       });
       return {
@@ -121,26 +133,25 @@ defineParticle(({DomParticle, html, resolver}) => {
     onAddFriend(e) {
       this.setState({showPopup: true});
     }
+    onCancelInput() {
+      this.setState({showPopup: false});
+    }
     onNameInputChange({data: {value}}) {
       this.setState({showPopup: false});
       if (value) {
         const friend = this.props.friends.find(f => f.id === value);
         if (!friend) {
           this.appendRawDataToHandle('friends', [{id: value}]);
-          //const friendsHandle = this.handles.get('friends');
-          //friendsHandle.store(new friendsHandle.entityClass({id: value}));
         }
       }
     }
     onSelectAvatar(e, state) {
-      // const selectedId = e.data.value;
-      // const friend = this._props.friends.find(f => f.id === selectedId);
-      // const friendsHandle = this.handles.get('friends');
-      // if (friend) {
-      //   friendsHandle.remove(friend);
-      // } else {
-      //   friendsHandle.store(new friendsHandle.entityClass({id: selectedId}));
-      // }
+      const selectedId = e.data.value;
+      const friend = this._props.friends.find(f => f.id === selectedId);
+      const friendsHandle = this.handles.get('friends');
+      if (friend) {
+        friendsHandle.remove(friend);
+      }
     }
   };
 
