@@ -51,6 +51,7 @@ const steps = {
   railroad: [railroad],
   test: [peg, railroad, tsc, test],
   webpack: [peg, railroad, tsc, webpack],
+  tsc: [tsc],
   watch: [watch],
   lint: [lint, tslint],
   tslint: [tslint],
@@ -60,19 +61,7 @@ const steps = {
   default: [check, peg, railroad, tsc, test, webpack, lint, tslint],
 };
 
-// Paths to `watch` for the `watch` step.
-const watchPaths = [
-  './platform',
-  './runtime',
-  './strategizer',
-  './tracelib',
-];
-
-const watchDefault = 'webpack';
-
 const eslintCache = '.eslint_sigh_cache';
-
-const output = console;
 
 function* findProjectFiles(dir, predicate) {
   const tests = [];
@@ -496,9 +485,9 @@ async function importSpotify(args) {
   ], {stdio: 'inherit'});
 }
 
-// Watches `watchPaths` for changes, then runs the `arg` steps.
+// Watches for file changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
-  const funs = steps[arg || watchDefault];
+  const funs = steps[arg || 'webpack'];
   const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   const watcher = chokidar.watch('.', {
     ignored: /(node_modules|\/build\/|ts-build|\.git)/,
