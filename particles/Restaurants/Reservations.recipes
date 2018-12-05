@@ -16,6 +16,7 @@ particle ReservationForm in 'source/ReservationForm.js'
   inout Event event
   out [Description] descriptions
   consume action
+    provide annotation
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   in Restaurant restaurant
@@ -43,5 +44,10 @@ recipe Reservations
     event = event
     descriptions = descriptions
     consume action as detailAction
+      provide annotation as detailAnnotation
+  ReservationAnnotation
+    restaurant = restaurant
+    event = event
+    consume annotation as detailAnnotation
   description `make reservations`
 

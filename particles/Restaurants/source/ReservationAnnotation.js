@@ -11,50 +11,6 @@ defineParticle(({DomParticle, html}) => {
   const template = html`
 
 <style>
-  [reservation-annotation] {
-    text-align: center;
-  }
-  * {
-    vertical-align: middle;
-  }
-  .x-select {
-    padding-left: 16px;
-    display: flex;
-    position: relative;
-  }
-  .x-select::after {
-    content: '▼';
-    display: block;
-    position: absolute;
-    right: 8px;
-    bottom: 16px;
-    transform: scaleY(0.4) scaleX(0.8);
-    pointer-events: none;
-  }
-  .x-select > select {
-    position: relative;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background-color: transparent;
-    border-radius: 0;
-    font-size: 16px;
-    overflow: hidden;
-    outline: none;
-    -webkit-appearance: none;
-    vertical-align: top;
-  }
-  input {
-    font-family: 'Google Sans';
-    font-size: 16px;
-    vertical-align: top;
-    border: 0;
-    background: transparent;
-    padding-left: 16px;
-  }
-  input::-webkit-clear-button {
-    display: none;
-  }
   [times] {
     display: flex;
     justify-content: space-between;
@@ -74,7 +30,7 @@ defineParticle(({DomParticle, html}) => {
     outline: none;
   }
   [times] > button:disabled {
-    opacity: 0.8;
+    opacity: 0.7;
     color: #888;
     border-color: #888;
   }
@@ -137,7 +93,7 @@ defineParticle(({DomParticle, html}) => {
       const result = [];
       while (n--) {
         // This seems somewhat balanced
-        const notAvailable = (seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
+        const notAvailable = Math.random() < 0.3; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
         result.push({
           time: `${hour}:${minute}`,
           notAvailable
