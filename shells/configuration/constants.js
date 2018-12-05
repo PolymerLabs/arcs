@@ -4,6 +4,7 @@ export const Const = {
   version,
   defaultUserId: 'user',
   defaultStorageKey: `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${version}`,
+  launcherSuffix: `-launcher`,
   LOCALSTORAGE: {
     user: `${version}-user`,
     storage: `${version}-storage`
