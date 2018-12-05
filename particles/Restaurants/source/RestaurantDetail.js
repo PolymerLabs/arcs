@@ -138,6 +138,8 @@ defineParticle(({DomParticle, html}) => {
       <div detail-content>{{phone}}</div>
       <div detail-caption>Website</div>
       <div detail-content><a href="{{link}}" target="_blank">{{website}}</a></div>
+      <div detail-caption>Reviews</div>
+      <div reviews unsafe-html="{{reviews}}"></div>
     </div>
     <div row1>
       <div rating>{{rating}}</div>
@@ -189,13 +191,14 @@ defineParticle(({DomParticle, html}) => {
         reviews: ''
       };
       if (detail) {
+        const reviews = (detail.reviews ? detail.reviews.map(review => this.reviewToHtml(review)) : []).join('<br><br>');
         const url =
             detail.website &&
             detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
         Object.assign(model, {
           rating: detail.rating,
           starStyle: `width: ${Math.round( (detail.rating || 0) / 5 * 100)}%`,
-          reviews: detail.reviews ? detail.reviews.length : 0,
+          reviews,
           kind: detail.types ? detail.types.slice(0, 3).join(' - ').replace(/_/g, ' ') : '',
           addr: detail.vicinity,
           website: url || 'n/a',
@@ -204,6 +207,11 @@ defineParticle(({DomParticle, html}) => {
         });
       }
       return model;
+    }
+    reviewToHtml(review) {
+      const photo = review.profile_photo_url || '';
+      const html = `<img style="width: 56px; margin: 8px 8px 8px 0; vertical-align: middle;" src="${photo}"> ${review.relative_time_description}<br>${review.text}`;
+      return html;
     }
   };
 
