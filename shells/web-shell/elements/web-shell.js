@@ -13,6 +13,7 @@ import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {SlotDomConsumer} from '../../env/arcs.js';
 import {Env} from '../../env/web/env.js';
 import {Xen} from '../../lib/xen.js';
+import {Const} from '../../configuration/constants.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';
@@ -88,11 +89,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   get template() {
     return template;
   }
-  async update({root}, state) {
+  async _update(props, state) {
     // globals stored for easy console access
     window.shell = this;
     window.arc = state.arc;
-    //
+    super._update(props, state);
+  }
+  async update({root}, state) {
     if (state.config !== state._config) {
       state._config = state.config;
       if (state.config) {
@@ -112,18 +115,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       state.pipesInit = true;
       this.recordPipesArc(state.userid);
     }
-    if (state.env && state.arckey && state.context) {
-      if (!state.arcConfig || state.arcConfig.id !== state.arckey) {
-        this.state = {
-          arc: null,
-          arckey: state.arckey,
-          arcConfig: {
-            id: state.arckey,
-            suggestionContainer: this.getSuggestionSlot()
-          }
-        };
-      }
-    }
     if (!state.launcherConfig && state.env && state.userid) {
       // spin up launcher arc
       this.spawnLauncher(state.userid);
@@ -132,11 +123,28 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       // spin up nullArc
       this.spawnNullArc(state.userid);
     }
-    // if (state.arc && state.pendingSuggestion) {
-    //   const plan = state.pendingSuggestion.plan;
-    //   state.pendingSuggestion = null;
-    //   state.arc.instantiate(plan);
-    // }
+    if (state.suggestion) {
+      if (!this.state.arckey) {
+        // spin up new arc
+        this.spawnSuggestion(state.suggestion);
+      } else {
+        // add plan to existing arc
+        this.state = {plan: state.suggestion.plan};
+      }
+      state.suggestion = null;
+    }
+    if (state.env && state.arckey && state.context) {
+      if (!state.arcConfig || state.arcConfig.id !== state.arckey) {
+        // spin up arc from key
+        this.spawnSerialization(state.arckey);
+      }
+    }
+    if (state.arc && state.arcMeta) {
+      if (state.writtenArcMeta !== state.arcMeta) {
+        state.writtenArcMeta = state.arcMeta;
+        this.recordArcMeta(state.arcMeta);
+      }
+    }
     this.state = {hideLauncher: Boolean(state.arckey)};
   }
   render(props, state) {
@@ -178,6 +186,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
+  applySuggestion(suggestion) {
+    if (!this.state.arckey) {
+      this.spawnSuggestion(suggestion);
+    } else {
+      this.state = {plan: suggestion.plan};
+    }
+  }
   async spawnContext(userid) {
     const precontext = await this.state.env.parse(manifests.context);
     this.state = {
@@ -190,7 +205,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   spawnLauncher(userid) {
     this.state = {
       launcherConfig: {
-        id: `${userid}-launcher`,
+        id: `${userid}${Const.launcherSuffix}`,
         manifest: manifests.launcher
       }
     };
@@ -203,24 +218,34 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
     };
   }
-  getSuggestionSlot() {
-    return this._dom.$('[slotid="suggestions"]');
-  }
-  applySuggestion(suggestion) {
-    if (!this.state.arckey) {
-      this.spawnArc(suggestion);
-    } else {
-      this.state = {plan: suggestion.plan};
-    }
-  }
-  spawnArc(suggestion) {
-    const luid = generateId();
-    const key = `${this.state.userid}-${luid}`;
-    const manifest = null;
+  spawnSerialization(key) {
     this.state = {
       arc: null,
       arckey: key,
-      // TODO(sjmiles): see web-arc.js for explanation around manifest confusion
+      arcConfig: {
+        id: key,
+        suggestionContainer: this.getSuggestionSlot()
+      }
+    };
+  }
+  spawnSuggestion(suggestion) {
+    const luid = generateId();
+    const key = `${this.state.userid}-${luid}`;
+    const manifest = null;
+    const description = suggestion.descriptionText;
+    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+    const arcMeta = {
+      key,
+      href: `?arc=${key}`,
+      description,
+      color,
+      touched: Date.now()
+    };
+    this.state = {
+      arc: null,
+      arckey: key,
+      arcMeta,
+      // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
       arcConfig: {
         id: key,
         manifest,
@@ -229,15 +254,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       manifest: null,
       plan: suggestion.plan
     };
-    const description = suggestion.descriptionText;
-    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-    this.recordArcMeta({
-      key,
-      href: `?arc=${key}`,
-      description,
-      color,
-      touched: Date.now()
-    });
+  }
+  getSuggestionSlot() {
+    return this._dom.$('[slotid="suggestions"]');
   }
   async recordArcMeta(meta) {
     const {store} = this._state;
@@ -252,7 +271,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       href: `?arc=${pipesKey}`,
       description: `Pipes!`,
       color: 'silver',
-      // pretend to be really old so it sinks to the bottom
+      // pretend to be really old
       touched: 0 //Date.now()
     });
   }
@@ -270,7 +289,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
-    this.applySuggestion(suggestion);
+    this.state = {suggestion};
   }
 }
 
