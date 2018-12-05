@@ -144,11 +144,12 @@ defineParticle(({DomParticle, html}) => {
         currentEvent = Object.assign({}, event.rawData);
       }
       this.setState({currentEvent});
+      // Default description
       this.setParticleDescription(
         restaurant
-          ? this.createDescription(restaurant.id, event.participants, event.startDate)
+          ? this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate)
           : ''
-      ); // Default description
+      );
       if (!event || JSON.stringify(state.currentEvent) !== JSON.stringify(event.rawData)) {
         this.storeNewEvent(state.currentEvent);
       }
