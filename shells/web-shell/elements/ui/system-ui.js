@@ -64,6 +64,7 @@ const template = Xen.Template.html`
       background-color: transparent;
     }
     [contents] {
+      display: flex;
       flex: 1;
       width: 100%;
       white-space: nowrap;
