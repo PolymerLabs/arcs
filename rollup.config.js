@@ -31,7 +31,8 @@ export default [{
         // if nothing is returned, we fall back to default resolution
       }
     },
-    resolve({jsnext: true, modulesOnly: true}),
+    resolve({jsnext: true, module: false, modulesOnly: true}),
+    commonjs(),
     multiEntry()
   ]
 },
