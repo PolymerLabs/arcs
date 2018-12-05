@@ -13,7 +13,7 @@ import {Arc} from '../ts-build/arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../ts-build/slot-composer.js';
 import {handleFor} from '../ts-build/handle.js';
-import {Shape} from '../ts-build/shape.js';
+import {InterfaceInfo} from '../ts-build/interface-info.js';
 import {Type} from '../ts-build/type.js';
 import {Manifest} from '../ts-build/manifest.js';
 import {Loader} from '../ts-build/loader.js';
@@ -131,18 +131,20 @@ describe('Handle', function() {
     assert.isEmpty((await barStore.toList()));
   });
 
-  it('can store a particle in a shape store', async () => {
+  it('can store a particle in an interface store', async () => {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
     const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    const shape = new Shape('Test', [{type: Type.newEntity(manifest.schemas.Foo)},
-                           {type: Type.newEntity(manifest.schemas.Bar)}], []);
-    assert(shape.particleMatches(manifest.particles[0]));
+    const iface = new InterfaceInfo('Test', [
+      {type: Type.newEntity(manifest.schemas.Foo)},
+      {type: Type.newEntity(manifest.schemas.Bar)}
+    ], []);
+    assert(iface.particleMatches(manifest.particles[0]));
 
-    const shapeStore = await arc.createStore(Type.newInterface(shape));
-    await shapeStore.set(manifest.particles[0]);
-    assert.equal(await shapeStore.get(), manifest.particles[0]);
+    const ifaceStore = await arc.createStore(Type.newInterface(iface));
+    await ifaceStore.set(manifest.particles[0]);
+    assert.equal(await ifaceStore.get(), manifest.particles[0]);
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {

@@ -10,7 +10,7 @@ import {assert} from './chai-web.js';
 import {Type} from '../ts-build/type.js';
 import {Schema} from '../ts-build/schema.js';
 import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
-import {Shape} from '../ts-build/shape.js';
+import {InterfaceInfo} from '../ts-build/interface-info.js';
 import {SlotInfo} from '../ts-build/slot-info.js';
 import {Manifest} from '../ts-build/manifest.js';
 
@@ -20,7 +20,7 @@ import {Manifest} from '../ts-build/manifest.js';
 //   CollectionType    : Type
 //   BigCollectionType : Type
 //   RelationType      : [Type]
-//   InterfaceType     : Shape
+//   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
 //   ArcType           : none
@@ -127,11 +127,11 @@ describe('types', () => {
       const variable = Type.newVariable(new TypeVariableInfo('a', null, null));
       const col      = Type.newCollection(entity);
       const iface    = Type.newInterface(
-          new Shape('s', [{type: entity}, {type: variable}, {type: col}], [{name: 'x'}]));
+          new InterfaceInfo('i', [{type: entity}, {type: variable}, {type: col}], [{name: 'x'}]));
       deepEqual(iface.toLiteral(), {
         tag: 'Interface',
         data: {
-          name: 's',
+          name: 'i',
           handles: [{type: entity.toLiteral()}, {type: variable.toLiteral()}, {type: col.toLiteral()}],
           slots: [{name: 'x'}]
         }
@@ -197,7 +197,8 @@ describe('types', () => {
       const entity     = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
       const variable   = Type.newVariable(new TypeVariableInfo('a', null, null));
       const arcInfo    = Type.newArcInfo();
-      const iface      = Type.newInterface(new Shape('s', [{type: entity}, {type: variable}, {type: arcInfo}], []));
+      const iface      = Type.newInterface(
+          new InterfaceInfo('i', [{type: entity}, {type: variable}, {type: arcInfo}], []));
 
       const handleInfo = Type.newHandleInfo();
 

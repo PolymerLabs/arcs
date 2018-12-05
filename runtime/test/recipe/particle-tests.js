@@ -32,7 +32,7 @@ describe('Recipe Particle', function() {
       const [recipeParticle] = recipe.particles;
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const shapeVariable = hostedParticleConn.type.interfaceShape.handles[0].type;
+      const shapeVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
       const listUnpackedVariable = listConn.type.collectionType;
       assert.strictEqual(shapeVariable.variable, listUnpackedVariable.variable);
     }
@@ -42,7 +42,7 @@ describe('Recipe Particle', function() {
       const recipeParticle = recipe.particles[0];
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const shapeVariable = hostedParticleConn.type.interfaceShape.handles[0].type;
+      const shapeVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
       const listUnpackedVariable = listConn.type.collectionType;
       assert.strictEqual(shapeVariable.variable, listUnpackedVariable.variable);
     }
