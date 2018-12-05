@@ -8,11 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+const runtime = '../build/runtime';
+ 
 import fs from 'fs';
-import {Manifest} from '../runtime/manifest.js';
-import {Type} from '../runtime/ts-build/type.js';
-import {StorageProviderFactory} from '../runtime/ts-build/storage/storage-provider-factory.js';
-import {resetStorageForTesting} from '../runtime/ts-build/storage/firebase-storage.js';
+import {Manifest} from '${runtime}/manifest.js';
+import {Type} from '.${runtime}/type.js';
+import {StorageProviderFactory} from '${runtime}/storage/storage-provider-factory.js';
+import {resetStorageForTesting} from '${runtime}/storage/firebase-storage.js';
 
 // Imports Spotify playlists from JSON files, formatted as per the API
 // described on https://developer.spotify.com/console/get-playlist

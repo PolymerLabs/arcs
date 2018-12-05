@@ -35,7 +35,7 @@ before_deploy:
   # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^shells\/env\/build$/d' .gitignore
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^shell\/build$/d' .gitignore
-  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^runtime\/ts-build$/d' .gitignore
+  - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^build$/d' .gitignore
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e '/^\*\*\/dist$/d' .gitignore
   - cd ${TRAVIS_BUILD_DIR} && git log -n 1 > VERSION
   # remove an inaccurate README from arcs-live

@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {firebase} from '../../../../runtime/firebase.js';
+import {firebase} from '../../../../build/runtime/firebase.js';
 
 const config = {
   // arc data is under this child node on database root

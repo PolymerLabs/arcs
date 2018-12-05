@@ -11,7 +11,7 @@ enclave/sdk
 enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
-runtime/ts-build
+build
 .vscode
 devtools/build
 server/log.txt

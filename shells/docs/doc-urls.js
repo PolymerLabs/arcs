@@ -1,11 +1,11 @@
 const arcs = `../..`;
-const runtime = `${arcs}/runtime`;
+const runtime = `${arcs}/build/runtime`;
 const design = `${arcs}/design`;
 
 export default [
-  `${runtime}/ts-build/particle-execution-context.js`,
-  `${runtime}/ts-build/particle.js`,
-  `${runtime}/ts-build/dom-particle-base.js`,
+  `${runtime}/particle-execution-context.js`,
+  `${runtime}/particle.js`,
+  `${runtime}/dom-particle-base.js`,
   `${runtime}/dom-particle.js`,
   `${design}/schemas.md`,
   `${runtime}/manifest.md`,

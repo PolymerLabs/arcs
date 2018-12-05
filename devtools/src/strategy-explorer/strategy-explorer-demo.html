@@ -13,12 +13,12 @@ http://polymer.github.io/PATENTS.txt
 <strategy-explorer></strategy-explorer>
 
 <script type="module">
-import {Arc} from '../../../runtime/ts-build/arc.js';
-import {BrowserLoader} from '../../../runtime/ts-build/browser-loader.js';
-import {Manifest} from '../../../runtime/ts-build/manifest.js';
-import {Planner} from '../../../runtime/ts-build/planner.js';
-import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
-import StrategyExplorerAdapter from '../../../runtime/ts-build/debug/strategy-explorer-adapter.js';
+import {Arc} from '../../../build/runtime/arc.js';
+import {BrowserLoader} from '../../../build/runtime/browser-loader.js';
+import {Manifest} from '../../../build/runtime/manifest.js';
+import {Planner} from '../../../build/runtime/planner.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
+import StrategyExplorerAdapter from '../../../build/runtime/debug/strategy-explorer-adapter.js';
 
 (async () => {
   let loader = new BrowserLoader();

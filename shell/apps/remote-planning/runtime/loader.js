@@ -12,12 +12,12 @@ import {vm} from '../../../../platform/vm-node.js';
 import {fetch} from '../../../../platform/fetch-node.js';
 
 import {assert} from '../../../../platform/assert-web.js';
-import {Particle} from '../../../../runtime/ts-build/particle.js';
-import {DomParticle} from '../../../../runtime/dom-particle.js';
-import {MultiplexerDomParticle} from '../../../../runtime/multiplexer-dom-particle.js';
-import {Reference} from '../../../../runtime/ts-build/reference.js';
-import {TransformationDomParticle} from '../../../../runtime/transformation-dom-particle.js';
-import {JsonldToManifest} from '../../../../runtime/ts-build/converters/jsonldToManifest.js';
+import {Particle} from '../../../../build/runtime/particle.js';
+import {DomParticle} from '../../../../build/runtime/dom-particle.js';
+import {MultiplexerDomParticle} from '../../../../build//runtime/multiplexer-dom-particle.js';
+import {Reference} from '../../../../build/runtime/reference.js';
+import {TransformationDomParticle} from '../../../../build/runtime/transformation-dom-particle.js';
+import {JsonldToManifest} from '../../../../build/runtime/converters/jsonldToManifest.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 

@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../../../runtime/ts-build/loader.js';
-import {Particle} from '../../../runtime/ts-build/particle.js';
-import {DomParticle} from '../../../runtime/dom-particle.js';
-import {MultiplexerDomParticle} from '../../../runtime/multiplexer-dom-particle.js';
-import {TransformationDomParticle} from '../../../runtime/transformation-dom-particle.js';
+import {Loader} from '../../../build/runtime/loader.js';
+import {Particle} from '../../../build/runtime/particle.js';
+import {DomParticle} from '../../../build/runtime/dom-particle.js';
+import {MultiplexerDomParticle} from '../../../build/runtime/multiplexer-dom-particle.js';
+import {TransformationDomParticle} from '../../../build/runtime/transformation-dom-particle.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 

@@ -8,7 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+<<<<<<< HEAD:runtime/ts/debug/arc-planner-invoker.ts
 import {Arc} from '../arc.js';
+=======
+>>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/debug/arc-planner-invoker.js
 import {Planner} from '../planner.js';
 import {Manifest} from '../manifest.js';
 
