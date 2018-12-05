@@ -209,11 +209,11 @@ export class ParticleExecutionContext {
       },
       loadRecipe(recipe) {
         // TODO: do we want to return a promise on completion?
-        return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, a => {
-          if (a == undefined) {
-            resolve();
+        return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, response => {
+          if (response.error) {
+            reject(response.error);
           } else {
-            reject(a);
+            resolve(response);            
           }
         }));
       }
