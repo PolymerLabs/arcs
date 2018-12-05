@@ -4,15 +4,18 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#ffffff"/>
+
+<link rel="manifest" href="../configuration/manifest.json"/>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+<link rel="shortcut icon" href="../configuration/logo_64.png">
 
 <style>
   body {
     font-family: sans-serif;
   }
 </style>
-
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
-<link rel="shortcut icon" href="../configuration/logo_64.png">
 
 <script type="module" src="../configuration/whitelisted.js"></script>
 
@@ -32,6 +35,7 @@
 
   const env = new Env('../../');
   Object.assign(env.pathMap, {
+    'https://$shell/': `../../shells/`,
     'https://$artifacts/': `../../particles/`,
     'https://$particles/': `../../particles/`
   });
