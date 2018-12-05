@@ -111,8 +111,8 @@ defineParticle(({DomParticle, html}) => {
     margin-bottom: 18px;
   }
   [control-panel] {
-    box-shadow: 0 0 8px 0px rgba(0,0,0,.15);
-    border-radius: 8px;
+    margin: -16px;
+    margin-bottom: -8px;
   }
 </style>
 

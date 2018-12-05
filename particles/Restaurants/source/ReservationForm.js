@@ -12,8 +12,15 @@ defineParticle(({DomParticle, html}) => {
 
 <style>
   :host {
-    padding: 0 16px;
-    margin-bottom: 16px;
+    padding: 16px;
+  }
+  [caption] {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 14px;
+    letter-spacing: .25px;
+    opacity: .54;
+    margin-bottom: 8px;
   }
   [time-picker] > div {
     display: flex;
@@ -62,6 +69,7 @@ defineParticle(({DomParticle, html}) => {
 </style>
 
 <div reservation-form id="{{subId}}">
+  <div caption>Reservation Details</div>
   <div time-picker>{{timePicker}}</div>
   <div slotid="annotation"></div>
 </div>
