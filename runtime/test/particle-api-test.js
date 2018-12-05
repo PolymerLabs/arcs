@@ -12,6 +12,8 @@ import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {Random} from '../ts-build/random.js';
 
 async function loadFilesIntoNewArc(fileMap) {
   const testHelper = await TestHelper.create({
@@ -757,5 +759,78 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
     await inspector.verify('v1,v2,v3', 'v4,v5', 'done');
+  });
+
+  it('loadRecipe returns ids of provided slots', async function() {
+    Random.seedForTests();
+    const {arc} = await TestHelper.create({
+      manifestString: `
+        particle TransformationParticle in 'TransformationParticle.js'
+          consume root
+    
+        recipe
+          slot 'rootslotid-root' as slot0
+          TransformationParticle
+            consume root as slot0`,
+      loader: new StubLoader({
+        'TransformationParticle.js': `defineParticle(({DomParticle}) => {
+          return class extends DomParticle {
+            async setHandles(handles) {
+              super.setHandles(handles);
+  
+              const innerArc = await this.constructInnerArc();
+              const hostedSlotId = await innerArc.createSlot(this, 'root', 'A', 'content');
+        
+              const {providedSlotIds} = await innerArc.loadRecipe(\`
+                particle A in 'A.js'
+                  consume content
+                    provide detail
+   
+                recipe
+                  slot '\` + hostedSlotId + \`' as hosted
+                  A as a
+                    consume content as hosted
+              \`);
+
+              await innerArc.loadRecipe(\`
+                particle B in 'B.js'
+                  consume detail
+                
+                recipe
+                  slot '\` + providedSlotIds['a.detail'] + \`' as detail
+                  B
+                    consume detail as detail
+              \`);
+            }
+        
+            renderHostedSlot(slotName, hostedSlotId, content) {}
+          };
+        });`,
+        '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      }),
+      slotComposer: new FakeSlotComposer()
+    });
+
+    const [recipe] = arc.context.recipes;
+    recipe.normalize();
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    assert.lengthOf(arc.activeRecipe.particles, 1);
+    const [transformationParticle] = arc.activeRecipe.particles;
+
+    assert.lengthOf(arc.recipes, 1);
+    const innerArc = arc.recipes[0].innerArcs.get(transformationParticle);
+
+    assert.equal(innerArc.activeRecipe.toString(), `recipe
+  slot '!85915497922560:demo:2' as slot0
+  slot 'slotid-!85915497922560:demo:3' as slot1
+  A as particle0
+    consume content as slot0
+      provide detail as slot1
+  B as particle1
+    consume detail as slot1`,
+    'Particle B should consume the detail slot provided by particle A');
   });
 });
