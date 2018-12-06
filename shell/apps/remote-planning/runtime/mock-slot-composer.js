@@ -9,11 +9,8 @@
  */
 'use strict';
 
-const arcs = '../../../..';
-const runtime = '${arcs}/build/runtime';
-
-import {SlotComposer} from '${runtime}/slot-composer.js';
-import {SlotDomConsumer} from '${runtime}/slot-dom-consumer.js';
+import {SlotComposer} from '../../../../build/runtime/slot-composer.js';
+import {SlotDomConsumer} from '../../../../build/runtime/slot-dom-consumer.js';
 
 const logging = false;
 const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
