@@ -104,7 +104,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
         state.arckey = state.config.arckey;
       }
     }
-    if (!state.env && root) {
+    if (!state.env && root && state.userid) {
       this.updateEnv({root}, state);
       this.spawnContext(state.userid);
     }
