@@ -39,7 +39,7 @@ export class ArcHost {
     if (this.pendingPlan) {
       const plan = this.pendingPlan;
       this.pendingPlan = null;
-      this.instantiatePlan(this.arc, plan);
+      await this.instantiatePlan(this.arc, plan);
     }
     return this.arc;
   }
@@ -91,7 +91,7 @@ export class ArcHost {
       error(x);
       //console.error(plan.toString());
     }
-    this.persistSerialization();
+    await this.persistSerialization();
   }
   async fetchSerialization(storage, arcid) {
     const key = `${storage}/${arcid}/arc-info`;

@@ -7,15 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'User.schema'
-resource SYSTEM_usersResource
-  start
-  [
-    {"id": "alphonse"},
-    {"id": "barney"},
-    {"id": "cletus"},
-    {"id": "gomer"}
-  ]
-store SYSTEM_users of [User] 'SYSTEM_users' @0 #system in SYSTEM_usersResource
 
 resource SYSTEM_userResource
   start
@@ -83,7 +74,6 @@ store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_s
 // the below is required to make the arc aware of these stores
 
 particle Sharing in './source/Sharing.js'
-  in [User] systemUsers
   in User systemUser
   in [User] profileFriends
   in [User] boxedFriends
@@ -98,7 +88,6 @@ particle Sharing in './source/Sharing.js'
   in [TVMazeShow] boxedShowsTiles
 
 recipe Sharing
-  use 'SYSTEM_users' as systemUsers
   use 'SYSTEM_user' as systemUser
   use 'PROFILE_friends' as profileFriends
   use 'BOXED_friends' as boxedFriends
@@ -112,7 +101,6 @@ recipe Sharing
   use 'PROFILE_shows-tiles' as profileShowsTiles
   use 'BOXED_shows-tiles' as boxedShowsTiles
   Sharing
-    systemUsers = systemUsers
     systemUser = systemUser
     profileFriends = profileFriends
     boxedFriends = boxedFriends

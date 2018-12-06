@@ -5,16 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'FavoriteFood.schema'
+schema FavoriteFood
+  Text food
 
 particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
-  inout FavoriteFood food
+  inout [FavoriteFood] foods
   consume root
   description `select favorite foods`
-    food `favorite food`
+    foods `favorite foods`
 
 recipe FavoriteFood
-  create #favorite as food
+  create #favoriteFoods as foods
   FavoriteFoodPicker
-    food = food
+    foods = foods
 

@@ -23,6 +23,15 @@ particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   inout Event event
   consume annotation
 
+//recipe ReservationsInline
+//  use as restaurants
+//  create #event as event
+//  AnnotationMultiplexer
+//    list = restaurants
+//    annotation = event
+//    hostedParticle = ReservationAnnotation
+//  description `[inline] make reservations`
+
 recipe Reservations
   use as restaurants
   use #selected as restaurant
@@ -30,15 +39,18 @@ recipe Reservations
   create as descriptions
   slot 'rootslotid-toproot' as toproot
   slot #detailAction as detailAction
+  // top-of-frame event editor
   ReservationForm
     restaurant = restaurant
     event = event
     descriptions = descriptions
     consume action as toproot
+  // per-restaurant tile scheduler
   AnnotationMultiplexer
     list = restaurants
     annotation = event
     hostedParticle = ReservationAnnotation
+  // event editor (+scheduler) on restaurant detail
   ReservationForm
     restaurant = restaurant
     event = event

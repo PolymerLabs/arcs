@@ -25,15 +25,17 @@ const app = firebase.initializeApp(config, 'images');
 // firebase database
 const database = app.database();
 // contextual root node
-const db = database.ref('images');
+//const db = database.ref('images');
 // firebase storage (for file upload, e.g.)
 const storage = app.storage();
+
+window.firebase = database;
 
 export {
   firebase,
   app,
   database,
-  db,
+  //db,
   storage
 };
 

@@ -12,7 +12,7 @@ import {Xen} from '../../lib/xen.js';
 import {Planificator} from '../../env/arcs.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
-const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
+//const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
 
 // proposed:
 // metaplans -> map of plans, generations
@@ -30,7 +30,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       invalid: 0
     };
   }
-  update({env, config, userid, arc, search}, state) {
+  update({config, userid, arc, search}, state) {
     const {planificator} = state;
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
       planificator.dispose();
@@ -38,17 +38,22 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       state.search = null;
       log('planificator is disconnected and is disposing');
     }
-    if (env && config && arc && !state.planificator) {
-      this.awaitState('planificator', () => this._createPlanificator(env, config, arc, userid));
+    if (config && arc && !state.planificator) {
+      this.awaitState('planificator', () => this._createPlanificator(config, arc, userid));
     }
     if (state.planificator && search !== state.search) {
       state.search = search;
       state.planificator.setSearch(state.search);
     }
   }
-  async _createPlanificator(env, config, arc, userid) {
-    const planificator = await Planificator.create(
-        arc, {userid, storageKeyBase: config.storageKeyBase, onlyConsumer: config.onlyConsumer, debug: config.debug});
+  async _createPlanificator(config, arc, userid) {
+    const options = {
+      userid,
+      storageKeyBase: config.plannerStorage,
+      onlyConsumer: config.plannerOnlyConsumer,
+      debug: config.plannerDebug
+    };
+    const planificator = await Planificator.create(arc, options);
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();

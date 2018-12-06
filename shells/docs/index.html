@@ -39,7 +39,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     [toc] a {
       color: #fff;
       text-decoration: none;
-      opacity: .5
+      opacity: .5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
     }
     [toc] a.selected {
       opacity: 1;
@@ -47,7 +51,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     a {
       color: #1A73E8;
     }
-
     [docs] {
       overflow-y: scroll;
       flex: 1;
@@ -59,8 +62,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       font-size: 56px;
       margin-bottom: 24px;
       text-indent: -2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
     }
-
     [dclass] > [desc] {
       margin: 0 32px;
     }

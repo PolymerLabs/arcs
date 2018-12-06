@@ -8,9 +8,8 @@
 
 defineParticle(({DomParticle, html, resolver}) => {
 
-  const host = `favorite-food-picker`;
-
-  const foods = {
+  const notoPath = `/../assets/noto-emoji-128/emoji_u`;
+  const allFoods = {
     Hotdogs: '1f32d',
     Tacos: '1f32e',
     Burritos: '1f32f',
@@ -43,14 +42,14 @@ defineParticle(({DomParticle, html, resolver}) => {
   const template = html`
 
 <style>
-  [${host}] {
+  [favorite-food-picker] {
     padding: 24px;
     text-align: center;
   }
-  [${host}] > [foods] {
+  [foods] {
     display: inline-block;
   }
-  [${host}] > [foods] > div {
+  [foods] > div {
     display: inline-block;
     width: 88px;
     height: 88px;
@@ -58,25 +57,24 @@ defineParticle(({DomParticle, html, resolver}) => {
     color: silver;
     border-radius: 16px;
     text-align: center;
+    transition: all 100ms ease-in;
   }
-  [${host}] > [foods] > div[selected] {
+  [foods] > div[selected] {
     background: #eeeeee;
     color: gray;
   }
-  [${host}] > [foods] > div > * {
+  [foods] > div > * {
     display: block;
   }
-  [${host}] > [foods] > div img {
+  [foods] > div img {
     display: block;
     width: 64px;
     margin: 0 auto 16px;
   }
 </style>
 
-<div ${host}>
-  <div selector>
-    My favorite Food
-  </div>
+<div favorite-food-picker>
+  <div selector>My Favorite Foods</div>
   <div foods>{{foods}}</div>
   <template foodTemplate>
     <div value="{{name}}" selected$="{{selected}}" on-click="onSelectFood">
@@ -88,33 +86,37 @@ defineParticle(({DomParticle, html, resolver}) => {
 
     `.trim();
 
+  const nar = [];
+
   return class extends DomParticle {
     get template() {
       return template;
     }
-    render(props, state) {
-      const favorite = props.food && props.food.food;
-      const path = resolver('FavoriteFoodPicker');
-      const models = Object.keys(foods).map(name => {
+    render({foods}) {
+      const root = resolver('FavoriteFoodPicker');
+      const models = Object.keys(allFoods).map(name => {
         return {
-          name: name,
-          src: `${path}/../assets/noto-emoji-128/emoji_u${foods[name]}.png`,
-          selected: name === favorite
+          name,
+          src: `${root}${notoPath}${allFoods[name]}.png`,
+          selected: Boolean(this.likesFood(foods, name))
         };
       });
       return {
         foods: {$template: 'foodTemplate', models}
       };
     }
-    setFavoriteFood(food) {
-      const foodHandle = this.handles.get('food');
-      foodHandle.set(new foodHandle.entityClass({food}));
-    }
-    _onFavoriteFoodChanged(e, state) {
-      this.setFavoriteFood(e.data.value);
-    }
     onSelectFood(e) {
-      this.setFavoriteFood(e.data.value);
+      const name = e.data.value;
+      const food = this.likesFood(this.props.foods, name);
+      const foodsHandle = this.handles.get('foods');
+      if (food) {
+        foodsHandle.remove(food);
+      } else {
+        foodsHandle.store(new foodsHandle.entityClass({food: name}));
+      }
+    }
+    likesFood(foods, name) {
+      return (foods || nar).find(({food}) => food === name);
     }
   };
 

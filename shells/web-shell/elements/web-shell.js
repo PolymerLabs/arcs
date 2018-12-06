@@ -64,7 +64,7 @@ const template = Xen.Template.html`
   <!-- web planner -->
   <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}"></web-planner>
   <!-- ui chrome -->
-  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" on-search="onState">
+  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" on-search="onState">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
@@ -89,6 +89,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   get template() {
     return template;
   }
+  // TODO(sjmiles): only dev-time stuff in this override
   async _update(props, state) {
     // globals stored for easy console access
     window.shell = this;
@@ -96,21 +97,27 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     super._update(props, state);
   }
   async update({root}, state) {
+    // new config?
     if (state.config !== state._config) {
-      state._config = state.config;
-      if (state.config) {
-        state.storage = state.config.storage;
-        state.userid = state.config.userid;
-        state.arckey = state.config.arckey;
+      const {config} = state;
+      // memoize config data
+      state._config = config;
+      if (config) {
+        state.storage = config.storage;
+        state.userid = config.userid;
+        state.arckey = config.arckey;
       }
     }
+    // setup environment once we have a root and a user
     if (!state.env && root && state.userid) {
       this.updateEnv({root}, state);
       this.spawnContext(state.userid);
     }
+    // poll for arcs-store
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
     }
+    // initialize pipes once we have arcs-store
     if (state.store && !state.pipesInit) {
       state.pipesInit = true;
       this.recordPipesArc(state.userid);
@@ -123,7 +130,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       // spin up nullArc
       this.spawnNullArc(state.userid);
     }
-    if (state.suggestion) {
+    // consume a suggestion
+    if (state.suggestion && state.context) {
       if (!this.state.arckey) {
         // spin up new arc
         this.spawnSuggestion(state.suggestion);
@@ -133,12 +141,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       }
       state.suggestion = null;
     }
+    // consume an arckey
     if (state.env && state.arckey && state.context) {
       if (!state.arcConfig || state.arcConfig.id !== state.arckey) {
         // spin up arc from key
         this.spawnSerialization(state.arckey);
       }
     }
+    // flush arc metadata to storage
     if (state.arc && state.arcMeta) {
       if (state.writtenArcMeta !== state.arcMeta) {
         state.writtenArcMeta = state.arcMeta;
@@ -174,6 +184,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.state = {arckey: key};
     }
   }
+  // TODO(sjmiles): use SyntheticStore instead, see user-context.js
   waitForStore(pollInterval) {
     const {launcherArc, store} = this.state;
     if (launcherArc && !store) {

@@ -47,11 +47,13 @@ const template = Xen.Template.html`
     }
     ${IconStyle}
   </style>
+
   <icon on-click="onToolsClick">assessment</icon>
+
   <div tools open$="{{open}}" on-click="onToolsPanelClick">
     <simple-tabs>
       <div tab="Store Explorer">
-        <simple-tabs>
+        <simple-tabs on-change="onTabChange">
           <div tab="User Arc">
             <store-explorer arc="{{arc}}" context="{{context}}"></store-explorer>
           </div>
@@ -74,7 +76,7 @@ const log = Xen.logFactory('WebTools', '#cc9096');
 
 export class WebTools extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['arc', 'context', 'launcherarc', 'pipesarc', 'open'];
+    return ['arc', 'context', 'nullarc', 'launcherarc', 'pipesarc', 'open'];
   }
   get template() {
     return template;
@@ -90,6 +92,14 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
   }
   onToolsPanelClick(e) {
     e.stopPropagation();
+  }
+  onTabChange(e, tab) {
+    // const name = ['arc', 'launcherarc', 'pipesarc'][tab];
+    // const arc = this.props[name];
+    // if (arc && arc.debugHandler && arc.debugHandler.identifyArc) {
+    //   log('debugHandler.identifyArc', String(arc.id));
+    //   arc.debugHandler.identifyArc(arc);
+    // }
   }
 }
 

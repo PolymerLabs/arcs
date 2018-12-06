@@ -6,8 +6,20 @@ export class SyntheticStores {
   static init(env) {
     SyntheticStores.providerFactory = new StorageProviderFactory('shell');
   }
+  static async getArcsStore(storage, name) {
+    const handleStore = await SyntheticStores.getStore(storage, name);
+    if (handleStore) {
+      const handles = await handleStore.toList();
+      const handle = handles[0];
+      if (handle) {
+        return await SyntheticStores.getHandleStore(handle);
+      }
+    }
+  }
   static async getStore(storage, id) {
-    return stores[id] || (stores[id] = await SyntheticStores.syntheticConnectKind('handles', storage, id));
+    // cached stores can be incorrect?
+    //return stores[id] || (stores[id] = await SyntheticStores.syntheticConnectKind('handles', storage, id));
+    return await SyntheticStores.syntheticConnectKind('handles', storage, id);
   }
   static async syntheticConnectKind(kind, storage, arcid) {
     return SyntheticStores.storeConnect(null, `synthetic://arc/${kind}/${storage}/${arcid}`);
