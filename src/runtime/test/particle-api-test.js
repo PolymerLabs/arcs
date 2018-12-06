@@ -13,7 +13,7 @@ import * as util from '../testing/test-util.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {Random} from '../ts-build/random.js';
+import {Random} from '../random.js';
 
 async function loadFilesIntoNewArc(fileMap) {
   const testHelper = await TestHelper.create({

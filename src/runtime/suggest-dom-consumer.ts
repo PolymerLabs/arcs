@@ -8,13 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-<<<<<<< HEAD:runtime/ts/suggest-dom-consumer.ts
 import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {Suggestion} from './plan/suggestion.js';
-=======
-import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/suggest-dom-consumer.js
 
 export class SuggestDomConsumer extends SlotDomConsumer {
   _suggestion: Suggestion;

@@ -11,15 +11,9 @@
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
-<<<<<<< HEAD:runtime/ts/recipe-index.ts
-import {Descendant, Strategizer, Strategy} from './strategizer/strategizer.js';
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
-import {Tracing} from '../../tracelib/trace.js';
-=======
-import {Strategizer, Strategy} from '../planning/strategizer.js';
+import {Descendant, Strategizer, Strategy} from '../planning/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/recipe-index.js
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
@@ -28,20 +22,14 @@ import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
-<<<<<<< HEAD:runtime/ts/recipe-index.ts
 import {Recipe} from './recipe/recipe.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Slot} from './recipe/slot.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {Handle} from './recipe/handle.js';
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Loader} from './loader.js';
-=======
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {Handle} from './recipe/handle.js';
-import {assert} from '../platform/assert-web.js';
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/recipe-index.js
 
 class RelevantContextRecipes extends Strategy {
   private _recipes: Recipe[] = [];

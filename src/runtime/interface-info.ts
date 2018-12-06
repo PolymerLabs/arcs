@@ -8,16 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-<<<<<<< HEAD:runtime/ts/interface-info.ts
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {Type, TypeVariable} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
-=======
-import {assert} from '../platform/assert-web.js';
-
-// ShapeHandle {name, direction, type}
-// Slot {name, direction, isRequired, isSet}
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/shape.ts
 
 function _fromLiteral(member) {
   if (!!member && !(member instanceof Type) && typeof member === 'object') {

@@ -6,13 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-<<<<<<< HEAD:runtime/ts/type-variable-info.ts
 import {Type, EntityType, TypeVariable, SlotType} from './type.js';
-import {assert} from '../../platform/assert-web.js';
-=======
-import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/type-variable.ts
 import {Schema} from './schema.js';
 
 export class TypeVariableInfo {

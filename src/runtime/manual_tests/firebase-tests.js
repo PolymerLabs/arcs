@@ -615,12 +615,7 @@ describe('firebase', function() {
           defineParticle(({Particle}) => class Noop extends Particle {});
         `
       });
-      const pecFactory = function(id) {
-        const channel = new MessageChannel();
-        new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
-        return channel.port2;
-      };
-      const arc = new Arc({id: 'test', pecFactory, loader});
+      const arc = new Arc({id: 'test', loader});
       const manifest = await Manifest.load('manifest', loader);
       const storage = createStorage(arc.id);
       const Data = Type.newEntity(manifest.schemas.Data);
@@ -650,7 +645,7 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization, pecFactory});
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: ''});
       const varStore2 = arc2.findStoreById(varStore.id);
       const colStore2 = arc2.findStoreById(colStore.id);
       const bigStore2 = arc2.findStoreById(bigStore.id);

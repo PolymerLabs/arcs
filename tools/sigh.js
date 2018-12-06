@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -336,6 +337,7 @@ async function tsc() {
 }
 
 async function link(filecontents) {
+  let success = true; 
   for (const line of filecontents.split('\n')) {
     const src = line.trim();
     // skip blank lines and lines that begin with a #. Note that only full-line
@@ -345,13 +347,13 @@ async function link(filecontents) {
     }
     if (!src.startsWith('src')) {
       console.error(`Invalid source file: ${src} source files must begin with "src"`);
-      return false;
+      success = false;
     }
     try {
       srcStats = fs.statSync(src);
     } catch (err) {
       console.error(`Error stating src file ${src} ${err.message} Perhaps you need to update tools/reducethislist?`);
-      return false;
+      success = false;
     }
     const dest = src.replace('src', 'build');
     try {
@@ -361,8 +363,7 @@ async function link(filecontents) {
         assert.deepStrictEqual(srcStats, destStats);
       } catch (asserr) {
         // They aren't the same. Hard links should give the same stats.
-        console.error(`destination ${dest} already exists but is not a hard link to ${src}`);
-        return false;
+        success = false;
       }
     } catch (err) {
       // if the error was that the dest does not exist, we make the link
@@ -378,16 +379,16 @@ async function link(filecontents) {
           fs.linkSync(src, dest);
         } catch (lerr) {
           console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
-          return false;
+          success = false;
         }
       } else {
         // Unexpected error when checking for existence of dest
         console.error(`Error stating ${dest} ${err.message}`);
-        return false;
+        success = false;
       }
     }
   }
-  return true;
+  return success;
 }
 
 async function tslint(args) {

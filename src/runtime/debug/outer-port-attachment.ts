@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {mapStackTrace} from '../../../platform/sourcemapped-stacktrace-web.js';
+import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 
 export class OuterPortAttachment {
   _devtoolsChannel;

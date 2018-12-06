@@ -103,7 +103,7 @@ class TestPlanProducer extends PlanProducer {
     }
 
   it('produces suggestions', async () => {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./src/runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     await producer.produceSuggestions();
@@ -118,7 +118,7 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('throttles requests to produce suggestions', async () => {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./src/runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     for (let i = 0; i < 10; ++i) {
@@ -136,7 +136,7 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('cancels planning', async () => {
-    const {helper, producer} = await createProducer('./runtime/test/artifacts/Products/Products.recipes');
+    const {helper, producer} = await createProducer('./src/runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
     producer.produceSuggestions();

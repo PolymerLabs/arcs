@@ -22,13 +22,13 @@ import {Relevance} from '../../relevance.js';
       const helper = await TestHelper.createAndPlan({
         slotComposer: new FakeSlotComposer(),
         manifestString: `
-import './runtime/test/artifacts/Products/Products.recipes'
+import './src/runtime/test/artifacts/Products/Products.recipes'
 
-particle Test1 in './runtime/test/artifacts/consumer-particle.js'
+particle Test1 in './src/runtime/test/artifacts/consumer-particle.js'
   in [Product] products
   consume root
     provide other
-particle Test2 in './runtime/test/artifacts/consumer-particle.js'
+particle Test2 in './src/runtime/test/artifacts/consumer-particle.js'
   consume other
 
 recipe

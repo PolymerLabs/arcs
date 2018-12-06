@@ -9,6 +9,8 @@
  */
 
 import {Arc} from '../arc.js';
+import {Id} from '../id.js';
+import {Type} from '../type.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';

@@ -9,9 +9,9 @@
  */
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
-import {Suggestion} from '../../ts-build/plan/suggestion.js';
-import {Search} from '../../ts-build/recipe/search.js';
-import {Relevance} from '../../ts-build/relevance.js';
+import {Suggestion} from '../../plan/suggestion.js';
+import {Search} from '../../recipe/search.js';
+import {Relevance} from '../../relevance.js';
 
 describe('suggestion', function() {
   function createSuggestion(hash, descriptionText) {

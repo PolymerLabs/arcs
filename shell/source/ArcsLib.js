@@ -12,7 +12,7 @@ import {Runtime} from '../../build/runtime/runtime.js';
 
 // The following will be pulled into Runtime.
 import {Arc} from '../../build/runtime/arc.js';
-import {Planificator} from '../../build/runtime/planificator.js';
+import {Planificator} from '../../build/runtime/plan/planificator.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {Type} from '../../build/runtime/type.js';
 import {Manifest} from '../../build/runtime/manifest.js';

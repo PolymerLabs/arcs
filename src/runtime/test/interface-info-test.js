@@ -9,20 +9,12 @@
  */
 
 import {assert} from './chai-web.js';
-<<<<<<< HEAD:runtime/test/interface-info-test.js
-import {InterfaceInfo} from '../ts-build/interface-info.js';
-import {Type, EntityType, TypeVariable} from '../ts-build/type.js';
-import {Manifest} from '../ts-build/manifest.js';
-import {TypeChecker} from '../ts-build/recipe/type-checker.js';
-import {Schema} from '../ts-build/schema.js';
-import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
-=======
-import {Shape} from '../shape.js';
-import {Type} from '../type.js';
+import {InterfaceInfo} from '../interface-info.js';
+import {Type, EntityType, TypeVariable} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
->>>>>>> Move non-shell source under src and build into build, allowing multiple:src/runtime/test/shape-test.js
+import {TypeVariableInfo} from '../type-variable-info.js';
 
 describe('interface', function() {
   it('finds type variable references in handles', function() {

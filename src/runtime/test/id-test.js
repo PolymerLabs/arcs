@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Id} from '../ts-build/id.js';
-import {Random} from '../ts-build/random.js';
+import {Id} from '../id.js';
+import {Random} from '../random.js';
 import {assert} from '../../platform/assert-web.js';
 
 describe('Id', function() {

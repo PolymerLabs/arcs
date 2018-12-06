@@ -27,6 +27,8 @@ src/platform/devtools-channel-node.js
 src/platform/devtools-channel-web.js
 src/platform/digest-node.js
 src/platform/digest-web.js
+src/platform/fetch-node.js
+src/platform/fetch-web.js
 src/platform/fs-node.js
 src/platform/fs-web.js
 src/platform/log-node.js
@@ -42,32 +44,16 @@ src/tracelib/options.js
 src/tracelib/trace.js
 src/tracelib/test/trace-tests.js
 
-src/runtime/api-channel.js
-src/runtime/debug.js
-src/runtime/dom-particle-base.js
 src/runtime/dom-particle.js
 src/runtime/fetch-node.js
 src/runtime/fetch-web.js
 src/runtime/firebase.js
 src/runtime/multiplexer-dom-particle.js
-src/runtime/planificator.js
-src/runtime/recipe-index.js
-src/runtime/suggest-dom-consumer.js
-src/runtime/suggestion-storage.js
 src/runtime/transformation-dom-particle.js
 src/runtime/manifest.md
 
 src/runtime/build/manifest-parser.js
 
-src/runtime/debug/abstract-devtools-channel.js
-src/runtime/debug/arc-debug-handler.js
-src/runtime/debug/arc-planner-invoker.js
-src/runtime/debug/arc-stores-fetcher.js
-src/runtime/debug/devtools-connection.js
-src/runtime/debug/outer-port-attachment.js
-src/runtime/debug/strategy-explorer-adapter.js
-src/runtime/debug/tracing-adapter.js
-src/runtime/debug/testing/devtools-channel-stub.js
 
 src/runtime/manual_tests/firebase-tests.js
 src/runtime/manual_tests/loader-tests.js
@@ -100,7 +86,6 @@ src/runtime/test/particle-api-test.js
 src/runtime/test/particle-execution-context-test.js
 src/runtime/test/particle-shape-loading-test.js
 src/runtime/test/particle-shape-loading-with-slots-test.js
-src/runtime/test/planificator-test.js
 src/runtime/test/planner-tests.js
 src/runtime/test/recipe-descriptions-test.js
 src/runtime/test/recipe-index-test.js
@@ -110,7 +95,6 @@ src/runtime/test/recipe-util-tests.js
 src/runtime/test/reference-test.js
 src/runtime/test/runtime-tests.js
 src/runtime/test/schema-tests.js
-src/runtime/test/shape-test.js
 src/runtime/test/slot-composer-tests.js
 src/runtime/test/slot-consumer-tests.js
 src/runtime/test/speculator-tests.js
@@ -120,8 +104,6 @@ src/runtime/test/synthetic-storage-test.js
 src/runtime/test/test-environment-test.js
 src/runtime/test/test-util-test.js
 src/runtime/test/type-checker-tests.js
-src/runtime/test/type-integration-test.js
-src/runtime/test/type-variable-tests.js
 src/runtime/test/volatile-storage-test.js
 
 src/runtime/test/artifacts/consumer-particle.js

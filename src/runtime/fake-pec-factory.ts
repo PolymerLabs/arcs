@@ -11,7 +11,7 @@
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {MessagePort, MessageChannel} from './message-channel.js';
 import {Loader} from './loader.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {StubLoader} from './testing/stub-loader.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.

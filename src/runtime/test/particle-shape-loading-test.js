@@ -61,7 +61,7 @@ describe('particle-interface-loading', function() {
 
     const arc = new Arc({id: 'test', loader});
 
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
     const fooType = Type.newEntity(manifest.schemas.Foo);
     const barType = Type.newEntity(manifest.schemas.Bar);

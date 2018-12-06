@@ -74,7 +74,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 describe('Planner', function() {
   it('can map remote handles structurally', async () => {
     const results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './src/runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -87,7 +87,7 @@ describe('Planner', function() {
 
   it('can copy remote handles structurally', async () => {
     const results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './runtime/test/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './src/runtime/test/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -698,7 +698,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
-      import './runtime/test/artifacts/Common/List.recipes'
+      import './src/runtime/test/artifacts/Common/List.recipes'
       schema Thing
 
       particle ThingProducer
@@ -739,7 +739,7 @@ describe('Automatic resolution', function() {
   it('composes recipe rendering a list of items from the current arc', async () => {
     let arc = null;
     const recipes = await verifyResolvedPlans(`
-        import './runtime/test/artifacts/Common/List.recipes'
+        import './src/runtime/test/artifacts/Common/List.recipes'
         schema Thing
 
         particle ThingRenderer
@@ -816,7 +816,7 @@ describe('Automatic resolution', function() {
           account = account
           transactions = transactions
           accountTransactions = accountTransactions
-      store TransationList of [Transaction] 'myTransactions' in './runtime/test/artifacts/Things/empty.json'
+      store TransationList of [Transaction] 'myTransactions' in './src/runtime/test/artifacts/Things/empty.json'
 
       shape HostedShape
         in ~a *
@@ -848,10 +848,10 @@ describe('Automatic resolution', function() {
 
   const verifyRestaurantsPlanSearch = async (searchStr) => {
     let recipes = await verifyResolvedPlans(`
-      import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
-      import './runtime/test/artifacts/People/Person.schema'
+      import './src/runtime/test/artifacts/Restaurants/Restaurants.recipes'
+      import './src/runtime/test/artifacts/People/Person.schema'
 
-      store User of Person 'User' in './runtime/test/artifacts/Things/empty.json'
+      store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
 
       recipe
         search \`${searchStr}\`
@@ -927,10 +927,10 @@ describe('Automatic resolution', function() {
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
     const recipes = await verifyResolvedPlans(`
-      import './runtime/test/artifacts/Restaurants/Restaurants.recipes'
-      import './runtime/test/artifacts/People/Person.schema'
+      import './src/runtime/test/artifacts/Restaurants/Restaurants.recipes'
+      import './src/runtime/test/artifacts/People/Person.schema'
 
-      store User of Person 'User' in './runtime/test/artifacts/Things/empty.json'
+      store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
 
       recipe
         search \`find restaurants\`

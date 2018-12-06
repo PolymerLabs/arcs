@@ -83,7 +83,7 @@ describe('Handle', function() {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
 
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
@@ -97,7 +97,7 @@ describe('Handle', function() {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
 
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
@@ -111,7 +111,7 @@ describe('Handle', function() {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
 
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type));
 
@@ -134,7 +134,7 @@ describe('Handle', function() {
   it('can store a particle in an interface store', async () => {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
     const iface = new InterfaceInfo('Test', [
       {type: Type.newEntity(manifest.schemas.Foo)},
@@ -150,7 +150,7 @@ describe('Handle', function() {
   it('createHandle only allows valid tags & types in stores', async () => {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, id: 'test'});
-    const manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
     await assertThrowsAsync(async () => await arc.createStore('not a type'), /isn't a Type/);
 

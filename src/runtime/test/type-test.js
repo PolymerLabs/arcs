@@ -7,12 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from './chai-web.js';
-import {Type} from '../ts-build/type.js';
-import {Schema} from '../ts-build/schema.js';
-import {TypeVariableInfo} from '../ts-build/type-variable-info.js';
-import {InterfaceInfo} from '../ts-build/interface-info.js';
-import {SlotInfo} from '../ts-build/slot-info.js';
-import {Manifest} from '../ts-build/manifest.js';
+import {Type} from '../type.js';
+import {Schema} from '../schema.js';
+import {TypeVariableInfo} from '../type-variable-info.js';
+import {InterfaceInfo} from '../interface-info.js';
+import {SlotInfo} from '../slot-info.js';
+import {Manifest} from '../manifest.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema

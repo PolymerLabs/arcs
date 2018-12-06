@@ -32,7 +32,7 @@ describe('planning result', function() {
     assert.isTrue(resultNew.isEquivalent(helper.suggestions));
   }
   it('serializes and deserializes Products recipes', async () => {
-    await testResultSerialization('./runtime/test/artifacts/Products/Products.recipes');
+    await testResultSerialization('./src/runtime/test/artifacts/Products/Products.recipes');
   });
 
   it('appends search suggestions', async () => {

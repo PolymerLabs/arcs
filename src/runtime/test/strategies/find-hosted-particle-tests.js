@@ -145,7 +145,7 @@ describe('FindHostedParticle', function() {
   it(`produces recipes that can be instantiated with particle spec`, async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
-      import 'runtime/test/artifacts/test-particles.manifest'
+      import 'src/runtime/test/artifacts/test-particles.manifest'
 
       recipe
         create as h0

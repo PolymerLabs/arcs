@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Debug} from '../modalities/dom/components/xen/xen-debug.js';
+import {Debug} from '../../modalities/dom/components/xen/xen-debug.js';
 
 // TODO(wkorman): Incorporate debug levels. Consider outputting
 // preamble in the specified color via ANSI escape codes. Consider

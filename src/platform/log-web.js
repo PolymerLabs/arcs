@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Debug} from '../modalities/dom/components/xen/xen-debug.js';
+import {Debug} from '../../modalities/dom/components/xen/xen-debug.js';
 
 const _nopFactory = () => () => {};
 const _logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`,

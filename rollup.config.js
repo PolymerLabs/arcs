@@ -11,8 +11,8 @@ const defaults = {compilerOptions: {declaration: true}};
 
 export default [{
   input: ['build/runtime/runtime.js', 
-	  'build/runtime/keymgmt/manager.js', 
-	  'shell/apps/remote-planning/interface.js'],
+    'build/runtime/keymgmt/manager.js', 
+    'shell/apps/remote-planning/interface.js'],
   output: [
     {
       file: pkg.main,
@@ -39,7 +39,7 @@ export default [{
   ]
 },
   {
-    input: ['runtime/ts/webmain.ts'],
+    input: ['src/runtime/webmain.ts'],
     output: [
       {
         file: pkg.browser,

@@ -16,7 +16,7 @@ import {PECInnerPort, CursorNextValue} from './api-channel.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {Handle, HandleOptions} from './handle.js';
-import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
+import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 
 enum SyncState {none, pending, full}
 

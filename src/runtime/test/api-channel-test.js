@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {APIPort, PECOuterPort, PECInnerPort} from '../ts-build/api-channel.js';
+import {APIPort, PECOuterPort, PECInnerPort} from '../api-channel.js';
 
 class Registrar {
   constructor() {
