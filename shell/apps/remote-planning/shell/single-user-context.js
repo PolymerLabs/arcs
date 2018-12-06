@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Firebase} from './firebase.js';
 import {Field} from './Field.js';
-import {StorageProviderFactory} from '../../../../runtime/ts-build/storage/storage-provider-factory.js';
+import {StorageProviderFactory} from '../../../../build/runtime/storage/storage-provider-factory.js';
 
 //const log = Xen.logFactory('SingleUserContext', '#6f2453');
 const log = () => {}; //console.log.bind(console);

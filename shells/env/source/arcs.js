@@ -8,17 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../../../runtime/ts-build/arc.js';
-import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
-import {SlotComposer} from '../../../runtime/ts-build/slot-composer.js';
-import {SlotDomConsumer} from '../../../runtime/ts-build/slot-dom-consumer.js';
-import {Type} from '../../../runtime/ts-build/type.js';
-import {Manifest} from '../../../runtime/ts-build/manifest.js';
-import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
-import {StorageProviderFactory} from '../../../runtime/ts-build/storage/storage-provider-factory.js';
-import {KeyManager} from '../../../runtime/ts-build/keymgmt/manager.js';
-import {RecipeResolver} from '../../../runtime/ts-build/recipe/recipe-resolver.js';
-import {firebase} from '../../../runtime/firebase.js';
+import {Arc} from '../../../build/runtime/arc.js';
+import {Planificator} from '../../../build/runtime/plan/planificator.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
+import {SlotDomConsumer} from '../../../build/runtime/slot-dom-consumer.js';
+import {Type} from '../../../build/runtime/type.js';
+import {Manifest} from '../../../build/runtime/manifest.js';
+import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
+import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
+import {KeyManager} from '../../../build/runtime/keymgmt/manager.js';
+import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
+import {firebase} from '../../../build/runtime/firebase.js';
 import {BrowserLoader} from './browser-loader.js';
 
 const Arcs = {

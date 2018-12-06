@@ -1,6 +1,6 @@
 import {FbUser} from './shell/FbUser.js';
 import {Firebase} from './shell/firebase.js';
-import {Planificator} from '../../../runtime/ts-build/plan/planificator.js';
+import {Planificator} from '../../../build/runtime/plan/planificator.js';
 
 class UserPlanner {
   constructor(factory, context, userid, storageKeyBase, debug) {

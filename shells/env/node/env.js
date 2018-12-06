@@ -1,7 +1,7 @@
 import {NodeLoader} from './node-loader.js';
 import {ArcsEnv} from '../env.js';
-import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
+import {MessageChannel} from '../../../build/runtime/message-channel.js';
+import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
 
 class Env extends ArcsEnv {
   constructor(rootPath) {

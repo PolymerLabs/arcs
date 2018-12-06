@@ -9,8 +9,8 @@
  */
 'use strict';
 
-import {SlotComposer} from '../../../../runtime/ts-build/slot-composer.js';
-import {SlotDomConsumer} from '../../../../runtime/ts-build/slot-dom-consumer.js';
+import {SlotComposer} from '../../../../build/runtime/slot-composer.js';
+import {SlotDomConsumer} from '../../../../build/runtime/slot-dom-consumer.js';
 
 const logging = false;
 const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');

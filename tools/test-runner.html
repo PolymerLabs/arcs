@@ -50,7 +50,7 @@ directoryInput.onchange = function(e) {
   window.location.reload();
 }
 
-testInput.value = localStorage.getItem('test-runner-tests') || './runtime/tests/recipe-util-tests.js';
+testInput.value = localStorage.getItem('test-runner-tests') || './src/runtime/tests/recipe-util-tests.js';
 testInput.onchange = function(e) {
   localStorage.setItem('test-runner-tests', testInput.value);
 };

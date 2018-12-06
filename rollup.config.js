@@ -10,7 +10,9 @@ import commonjs from 'rollup-plugin-commonjs';
 const defaults = {compilerOptions: {declaration: true}};
 
 export default [{
-  input: ['runtime/ts-build/runtime.js', 'runtime/ts-build/keymgmt/manager.js', 'shell/apps/remote-planning/interface.js'],
+  input: ['build/runtime/runtime.js', 
+    'build/runtime/keymgmt/manager.js', 
+    'shell/apps/remote-planning/interface.js'],
   output: [
     {
       file: pkg.main,
@@ -37,7 +39,7 @@ export default [{
   ]
 },
   {
-    input: ['runtime/ts/webmain.ts'],
+    input: ['src/runtime/webmain.ts'],
     output: [
       {
         file: pkg.browser,

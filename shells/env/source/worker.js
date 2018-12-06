@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
+import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
 import {BrowserLoader} from './browser-loader.js';
 
 self.onmessage = function(e) {

@@ -6,13 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Arc} from '../../../runtime/ts-build/arc.js';
+import {Arc} from '../../../build/runtime/arc.js';
 import {BrowserLoader} from './shell/browser-loader.js';
 import {MockSlotComposer} from './runtime/mock-slot-composer.js';
-import {MessageChannel} from '../../../runtime/ts-build/message-channel.js';
-import {ParticleExecutionContext} from '../../../runtime/ts-build/particle-execution-context.js';
-import {fetch} from '../../../platform/fetch-node.js';
-import {Runtime} from '../../../runtime/ts-build/runtime.js';
+import {MessageChannel} from '../../../build/runtime/message-channel.js';
+import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
+import {fetch} from '../../../build/platform/fetch-node.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 
 //const LoaderKind = Loader;
 const LoaderKind = BrowserLoader;

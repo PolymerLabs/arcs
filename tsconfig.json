@@ -1,15 +1,16 @@
 {
   "extends": "./config/tsconfig.base.json",
   "include": [
-    "runtime/ts/**/*",
+    "src/runtime/**/*",
+    "src/planning/**/*",
   ],
   "compilerOptions": {
-    "outDir": "runtime/ts-build",
+    "outDir": "build",
     "declaration": true,
     "experimentalDecorators": true,
   },
   "exclude": [
-    "runtime/ts-build/**/*",
+    "build/**/*",
     "server/**/*"
   ]
 }

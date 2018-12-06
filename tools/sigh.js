@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -20,8 +21,8 @@ process.chdir(projectRoot);
 
 const sources = {
   peg: {
-    grammar: 'runtime/manifest-parser.peg',
-    output: 'runtime/build/manifest-parser.js',
+    grammar: 'src/runtime/manifest-parser.peg',
+    output: 'src/runtime/build/manifest-parser.js',
     railroad: 'manifest-railroad.html',
   },
   pack: [{
@@ -40,33 +41,42 @@ const sources = {
   }],
   ts: {
     inputs: [
-      'runtime/ts'
+      'src/runtime',
+      'src/planning',
     ],
-    buildDir: 'runtime/ts-build'
+    buildDir: 'build'
   }
 };
 
 const steps = {
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, tsc, test],
-  webpack: [peg, railroad, tsc, webpack],
-  tsc: [tsc],
+  test: [peg, railroad, build, test],
+  webpack: [peg, railroad, build, webpack],
+  build: [build],
   watch: [watch],
   lint: [lint, tslint],
   tslint: [tslint],
   check: [check],
   clean: [clean],
-  importSpotify: [tsc, importSpotify],
-  default: [check, peg, railroad, tsc, test, webpack, lint, tslint],
+  importSpotify: [build, importSpotify],
+  unit: [unit],
+  default: [check, peg, railroad, build, test, webpack, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
 
-function* findProjectFiles(dir, predicate) {
+const linklist = './tools/reducethislist';
+
+// RE pattern to exclude when finding within project source files.
+const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
+// RE pattern to exclude when finding within project built files.
+const buildExclude = /\b(node_modules|deps|src|third_party)\b/;
+
+function* findProjectFiles(exclude, dir, predicate) {
   const tests = [];
   for (const entry of fs.readdirSync(dir)) {
-    if (/\b(node_modules|deps|build|third_party)\b/.test(entry) ||
+    if (exclude.test(entry) ||
         entry.startsWith('.')) {
       continue;
     }
@@ -74,7 +84,7 @@ function* findProjectFiles(dir, predicate) {
     const fullPath = path.join(dir, entry);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
-      yield* findProjectFiles(fullPath, predicate);
+      yield* findProjectFiles(exclude, fullPath, predicate);
     } else if (predicate(fullPath)) {
       yield fullPath;
     }
@@ -100,7 +110,7 @@ function targetIsUpToDate(relativeTarget, relativeDeps) {
 
   const targetTime = fs.statSync(target).mtimeMs;
   for (const relativePath of relativeDeps) {
-    if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs >= targetTime) {
+    if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs > targetTime) {
       return false;
     }
   }
@@ -152,6 +162,97 @@ function clean() {
       console.log('Removed', buildDir);
     }
   }
+}
+
+// Run unit tests on the parts of this tool itself.
+function unit() {
+  // Add more tests here.
+  return linkUnit();
+}
+
+function linkUnit() {
+  if (link(
+`
+# Just a comment; should be ok
+`
+    ) == false) {
+      console.error('Link file with just a comment did not succeed.');
+  }
+
+  if (link(
+`
+     
+`
+    ) == false) {
+      console.error('Empty link file did not succeed.');
+  }
+
+  if (link(
+`
+bad/foo.js
+`
+    ) == true) {
+      console.error('File not beginning with src did succeed.');
+  }
+
+  const dummySrc = 'src/foo.js';
+  const dummyDest = 'build/foo.js';
+
+  if (link(
+`
+${dummySrc}
+`
+    ) == true) {
+      console.error('Non-existent file did succeed.');
+  }
+
+  fs.writeFileSync(dummySrc, 'Just some nonsense');
+  
+  if (link(
+`
+${dummySrc}
+`
+    ) == false) {
+      console.error('Dummy link failed when it should have succeeded.');
+      fs.unlinkSync(dummySrc);
+      return false;
+  }
+
+  if (!fs.existsSync(dummyDest)) {
+    console.error('Dummy link succeeded, but new hard link does not exist.');
+    fs.unlinkSync(dummySrc);
+    return false;
+  }
+
+  if (link(
+`
+${dummySrc}
+`
+    ) == false) {
+      console.error('Attempted idempotent Dummy link failed when it should have succeeded.');
+      fs.unlinkSync(dummySrc);
+      return false;
+  }
+
+
+  fs.unlinkSync(dummyDest);
+  fs.writeFileSync(dummyDest, 'Some different nonsense, a bit longer this time');
+
+  if (link(
+`
+${dummySrc}
+`
+    ) == true) {
+    console.error('Differing destination exists, but link succeeded');
+    fs.unlinkSync(dummySrc);
+    fs.unlinkSync(dummyDest);
+    return false;
+  }
+
+  fs.unlinkSync(dummySrc);
+  fs.unlinkSync(dummyDest);
+  console.log('Above errors are expected! Link unit test passes!');
+  return true;
 }
 
 function peg() {
@@ -215,6 +316,18 @@ function railroad() {
   return true;
 }
 
+async function build() {
+  if (await tsc() == false) {
+    return false;
+  }
+
+  if (await link(fs.readFileSync(linklist, 'utf8')) == false) {
+    return false;
+  }
+
+  return true;
+}
+
 async function tsc() {
   const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
   if (result.status) {
@@ -223,9 +336,64 @@ async function tsc() {
   return result;
 }
 
+async function link(filecontents) {
+  let success = true; 
+  for (const line of filecontents.split('\n')) {
+    const src = line.trim();
+    // skip blank lines and lines that begin with a #. Note that only full-line
+    // comments are supported.
+    if (src.length == 0 || src.startsWith('#')) {
+      continue;
+    }
+    if (!src.startsWith('src')) {
+      console.error(`Invalid source file: ${src} source files must begin with "src"`);
+      success = false;
+    }
+    try {
+      srcStats = fs.statSync(src);
+    } catch (err) {
+      console.error(`Error stating src file ${src} ${err.message} Perhaps you need to update tools/reducethislist?`);
+      success = false;
+    }
+    const dest = src.replace('src', 'build');
+    try {
+      destStats = fs.statSync(dest);
+      // This would have thrown if dest didn't exist, so it does.
+      try {      
+        assert.deepStrictEqual(srcStats, destStats);
+      } catch (asserr) {
+        // They aren't the same. Hard links should give the same stats.
+        success = false;
+      }
+    } catch (err) {
+      // if the error was that the dest does not exist, we make the link
+      if (err.code === 'ENOENT') {
+        console.log(`Making a new hard link from ${src} to ${dest}`);
+        try {
+          // First we have to ensure the entire path is there.
+          const dir = path.dirname(dest);
+          if (!fs.existsSync(dir)) {
+            console.log(`Making directory ${dir}`);
+            fs.mkdirSync(dir, {recursive: true});
+          }
+          fs.linkSync(src, dest);
+        } catch (lerr) {
+          console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
+          success = false;
+        }
+      } else {
+        // Unexpected error when checking for existence of dest
+        console.error(`Error stating ${dest} ${err.message}`);
+        success = false;
+      }
+    }
+  }
+  return success;
+}
+
 async function tslint(args) {
-  const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+  const jsSources = [...findProjectFiles(srcExclude, process.cwd(), fullPath => {
+    if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.ts$/.test(fullPath);
@@ -251,8 +419,8 @@ async function lint(args) {
     boolean: ['fix'],
   });
 
-  const jsSources = [...findProjectFiles(process.cwd(), fullPath => {
-    if (/ts-build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+  const jsSources = [...findProjectFiles(srcExclude, process.cwd(), fullPath => {
+    if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
     return /\.js$/.test(fullPath);
@@ -381,7 +549,7 @@ function test(args) {
     alias: {g: 'grep'},
   });
 
-  const testsInDir = dir => findProjectFiles(dir, fullPath => {
+  const testsInDir = dir => findProjectFiles(buildExclude, dir, fullPath => {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
@@ -400,7 +568,7 @@ function test(args) {
   function buildTestRunner() {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     const chain = [];
-    const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
+    const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../src/platform/mocha-node.js'));
     for (const test of testsInDir(process.cwd())) {
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
@@ -422,7 +590,7 @@ function test(args) {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/ts-build/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../src/runtime/debug/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
@@ -490,7 +658,7 @@ async function watch([arg, ...moreArgs]) {
   const funs = steps[arg || 'webpack'];
   const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   const watcher = chokidar.watch('.', {
-    ignored: /(node_modules|\/build\/|ts-build|\.git)/,
+    ignored: /(node_modules|\/build\/|\.git)/,
     persistent: true
   });
   let timerId = 0;

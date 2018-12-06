@@ -8,6 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Tracing} from '../../tracelib/trace.js';
+import {Tracing} from '../../build/tracelib/trace.js';
 
 window.Tracing = Tracing;
