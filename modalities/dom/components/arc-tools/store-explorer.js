@@ -110,7 +110,14 @@ class StoreExplorer extends Xen.Base {
         let malformed = false;
         let values = `(don't know how to dereference)`;
         if (store.toList) {
-          const list = await store.toList();
+          // TODO(sjmiles): pouchdb storage layer can throw, firebase layer never does
+          let list;
+          try {
+            list = await store.toList();
+          } catch (x) {
+            list = [];
+          }
+          //const list = await store.toList();
           values = {};
           list.forEach(item => {
             if (item) {
