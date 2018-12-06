@@ -179,7 +179,6 @@ ShapeItem
   / ShapeArgumentItem
   / ShapeInterface
 
-
 ShapeInterface
   = verb:(upperIdent / lowerIdent) '(' args:ShapeArgumentList? ')' eolWhiteSpace
   {
@@ -431,7 +430,7 @@ SlotType
 }
 
 SlotField
-  = name:lowerIdent whiteSpace? ':' whiteSpace? value:lowerIdent
+  = name:fieldName whiteSpace? ':' whiteSpace? value:lowerIdent
 {
   return {
     kind: 'slot-field',
@@ -469,7 +468,7 @@ ParticleModality
   }
 
 ParticleSlot
-  = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace
+  = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
     let formFactor = null;
@@ -513,7 +512,7 @@ SlotFormFactor
   }
 
 ParticleProvidedSlot
-  = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
     let handles = [];
@@ -829,6 +828,7 @@ RecipeHandle
       fate: type
     }
   }
+
 RecipeRequire
   = 'require' eolWhiteSpace Indent (SameIndent 'handle') name:(whiteSpace LocalName)? id:(whiteSpace (id / upperIdent))? tags:SpaceTagList?
   {
@@ -956,7 +956,7 @@ SchemaInline
   }
 
 SchemaInlineField
-  = type:(SchemaType whiteSpace)? name:lowerIdent
+  = type:(SchemaType whiteSpace)? name:fieldName
   {
     return {
       kind: 'schema-inline-field',
@@ -1011,7 +1011,7 @@ SchemaItem
   / Description
 
 SchemaField
-  = type:SchemaType whiteSpace name:lowerIdent eolWhiteSpace
+  = type:SchemaType whiteSpace name:fieldName eolWhiteSpace
   {
     return {
       kind: 'schema-field',
@@ -1105,7 +1105,7 @@ TopLevelIdent
 
 // Should only be used as a negative match.
 ReservedWord
-  = (Direction
+  = keyword:(Direction
   / ParticleArgumentDirection
   / RecipeHandleFate
   / 'particle'
@@ -1115,15 +1115,16 @@ ReservedWord
   / 'schema'
   / 'require'
   / 'handle'
-  ) (whiteSpace / eolWhiteSpace)
+  ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
-  throw new Error(`Expected identifier but keyword, '${text()}' found.`);
+  throw new Error(`Expected identifier but keyword, '${keyword}' found.`);
 }
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
-id = "'" id:[^']+ "'" {return id.join('')}
-upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
-lowerIdent = ident:((!ReservedWord)([a-z][a-z0-9_]i*)) {return text()}
+id = "'" id:[^']+ "'" { return id.join(''); }
+upperIdent = [A-Z][a-z0-9_]i* { return text(); }
+lowerIdent = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
+fieldName = [a-z][a-z0-9_]i* { return text(); }
 whiteSpace
   = " "+
 eolWhiteSpace

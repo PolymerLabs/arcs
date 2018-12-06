@@ -95,9 +95,30 @@ describe('manifest parser', function() {
           out? BigCollection<MyThing> output`);
       assert.fail('this parse should have failed, identifiers should not be reserved words!');
     } catch (e) {
-      assert.include(e.message, 'Expected',
-          `bad error: '${e}'`);
+      assert.include(e.message, 'Expected', `bad error: '${e}'`);
     }
+  });
+  it('allows identifiers to start with reserved words', () => {
+    parse(`
+      particle MyParticle
+        in MyThing mapped
+        out? BigCollection<MyThing> import_export`);
+  });
+  it('allows reserved words for schema field names', () => {
+    // Test with a non-word char following the token
+    parse(`
+      schema Reserved
+        Text schema  // comment`);
+    // Test with end-of-input following the token
+    parse(`
+      schema Reserved
+        URL map`);
+  });
+  it('allows reserved words for inline schema field names', () => {
+    parse(`
+      particle Foo
+        in A {Text handle} a
+        out B {Boolean import, Number particle} b`);
   });
   it('fails to parse a nonsense argument list', () => {
     try {
@@ -106,8 +127,7 @@ describe('manifest parser', function() {
           Nonsense()`);
       assert.fail('this parse should have failed, no nonsense!');
     } catch (e) {
-      assert.include(e.message, 'Nonsense',
-          'bad error: '+e);
+      assert.include(e.message, 'Nonsense', 'bad error: '+e);
     }
   });
   it('parses particles with optional handles', () => {
