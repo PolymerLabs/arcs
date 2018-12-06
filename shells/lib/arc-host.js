@@ -95,7 +95,7 @@ export class ArcHost {
   }
   async fetchSerialization(storage, arcid) {
     const key = `${storage}/${arcid}/arc-info`;
-    const store = await SyntheticStores.providerFactory.connect('id', new ArcType(), key);
+    const store = await SyntheticStores.providerFactory.connect('id', Type.newArcInfo(), key);
     if (store) {
       const info = await store.get();
       return info && info.serialization;
