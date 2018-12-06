@@ -11,7 +11,7 @@ import {BrowserLoader} from './shell/browser-loader.js';
 import {MockSlotComposer} from './runtime/mock-slot-composer.js';
 import {MessageChannel} from '../../../build/runtime/message-channel.js';
 import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
-import {fetch} from '../../../platform/fetch-node.js';
+import {fetch} from '../../../build/platform/fetch-node.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
 
 //const LoaderKind = Loader;
