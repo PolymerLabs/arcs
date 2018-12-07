@@ -242,8 +242,8 @@ ${dummySrc}
 `
 ${dummySrc}
 `
-    ) == true) {
-    console.error('Differing destination exists, but link succeeded');
+    ) == false) {
+    console.error('Differing destination exists, but link failed');
     fs.unlinkSync(dummySrc);
     fs.unlinkSync(dummyDest);
     return false;
@@ -336,6 +336,21 @@ async function tsc() {
   return result;
 }
 
+function makeLink(src, dest) {
+  try {
+    // First we have to ensure the entire path is there.
+    const dir = path.dirname(dest);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, {recursive: true});
+    }
+    fs.linkSync(src, dest);
+  } catch (lerr) {
+    console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
+    return false;
+  }
+  return true;
+}
+
 async function link(filecontents) {
   let success = true; 
   for (const line of filecontents.split('\n')) {
@@ -359,26 +374,18 @@ async function link(filecontents) {
     try {
       destStats = fs.statSync(dest);
       // This would have thrown if dest didn't exist, so it does.
-      try {      
-        assert.deepStrictEqual(srcStats, destStats);
-      } catch (asserr) {
-        // They aren't the same. Hard links should give the same stats.
-        success = false;
+      if (JSON.stringify(srcStats) !== JSON.stringify(destStats)) {
+        // They aren't the same. This is likely due to switching branches. Just
+        // Remove the destination and make the link.
+        fs.unlinkSync(dest);
+        if (!makeLink(src, dest)) {
+          success = false;
+        }
       }
     } catch (err) {
       // if the error was that the dest does not exist, we make the link
       if (err.code === 'ENOENT') {
-        console.log(`Making a new hard link from ${src} to ${dest}`);
-        try {
-          // First we have to ensure the entire path is there.
-          const dir = path.dirname(dest);
-          if (!fs.existsSync(dir)) {
-            console.log(`Making directory ${dir}`);
-            fs.mkdirSync(dir, {recursive: true});
-          }
-          fs.linkSync(src, dest);
-        } catch (lerr) {
-          console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
+        if (!makeLink(src, dest)) {
           success = false;
         }
       } else {
