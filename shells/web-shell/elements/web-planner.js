@@ -47,7 +47,8 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     }
   }
   async _createPlanificator(env, config, arc, userid) {
-    const planificator = await Planificator.create(arc, {userid, protocol: config.planificatorProtocol});
+    const planificator = await Planificator.create(
+        arc, {userid, storageKeyBase: config.storageKeyBase, onlyConsumer: config.onlyConsumer, debug: config.debug});
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
