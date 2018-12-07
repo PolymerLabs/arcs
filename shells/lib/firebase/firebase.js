@@ -24,8 +24,6 @@ const config = {
 const app = firebase.initializeApp(config, 'images');
 // firebase database
 const database = app.database();
-// contextual root node
-//const db = database.ref('images');
 // firebase storage (for file upload, e.g.)
 const storage = app.storage();
 
@@ -35,7 +33,6 @@ export {
   firebase,
   app,
   database,
-  //db,
   storage
 };
 
