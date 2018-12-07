@@ -129,12 +129,11 @@ class SyntheticCollection extends StorageProviderBase {
       resolveInitialized();
       targetStore.on('change', details => this.process(details.data, true), this);
     };
-    // TODO(sjmiles): pouchdb storage layer can throw, firebase layer never does
-    try {
-      targetStore.get().then(data => process(data));
-    } catch (x) {
-      process(null);
-    }
+    targetStore.get()
+      .then(data => process(data))
+      // TODO(sjmiles): pouchdb storage layer can throw, firebase layer never does
+      .catch(error => process(null))
+      ;
   }
 
   private async process(data, fireEvent) {

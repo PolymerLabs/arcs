@@ -4,7 +4,9 @@ const stores = {};
 
 export class SyntheticStores {
   static init(env) {
-    SyntheticStores.providerFactory = new StorageProviderFactory('shell');
+    if (!SyntheticStores.providerFactory) {
+      SyntheticStores.providerFactory = new StorageProviderFactory('shell');
+    }
   }
   static async getArcsStore(storage, name) {
     const handleStore = await SyntheticStores.getStore(storage, name);

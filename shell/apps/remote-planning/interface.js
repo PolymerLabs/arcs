@@ -37,7 +37,7 @@ export class ShellPlanningInterface {
     if (process.argv.includes('--explore')) {
       console.log('Waiting for Arcs Explorer');
       DevtoolsConnection.ensure();
-      await DevtoolsConnection.onceConnected;  
+      await DevtoolsConnection.onceConnected;
     }
     const factory = new ArcFactory(assetsPath);
     const context = await factory.createContext(manifest);

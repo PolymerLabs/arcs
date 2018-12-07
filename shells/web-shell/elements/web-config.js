@@ -61,7 +61,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       plannerOnlyConsumer: params.get('plannerOnlyConsumer') || params.get('onlyConsumer') === 'true',
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),
-      //storageKeyBase: params.get('storageKeyBase'),
       //useSerialization: !params.has('legacy')
     };
   }

@@ -27,6 +27,7 @@ export class ArcHost {
     this.arc && this.arc.dispose();
     this.arc = null;
   }
+  // config = {id, [serialization], [manifest]}
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;

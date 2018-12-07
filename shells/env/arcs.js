@@ -15,6 +15,7 @@ const {
   RecipeResolver,
   KeyManager,
   firebase,
+  Xen
 } = g.__ArcsLib__;
 
 export {
@@ -31,5 +32,6 @@ export {
   ParticleExecutionContext,
   RecipeResolver,
   KeyManager,
-  firebase
+  firebase,
+  Xen
 };

@@ -387,7 +387,7 @@ const createTemplate = innerHTML => {
   return Object.assign(document.createElement('template'), {innerHTML});
 };
 
-export default {
+export const Template = {
   createTemplate,
   setBoolAttribute,
   stamp
