@@ -44,16 +44,8 @@ export class UserArcs {
   }
   async foundArcsStore(store, cb) {
     log('foundArcsStore', Boolean(store));
-    //
-    let values;
-    try {
-      values = await store.toList();
-    } catch (x) {
-      values = [];
-    }
-    //
+    const values = await store.toList();
     store.on('change', info => this.arcsStoreChange(info, cb), this);
-    //
     const info = {add: []};
     values.forEach(value => info.add.push({value}));
     this.arcsStoreChange(info, cb);
