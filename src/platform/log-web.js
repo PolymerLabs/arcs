@@ -12,4 +12,4 @@ const _logFactory = (preamble, color, log='log') => console[log].bind(console, `
       `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 
 //export const logFactory = (...args) => Debug.level < 1 ? _nopFactory() : _logFactory(...args);
-export const logFactory = (...args) => false ? _nopFactory() : _logFactory(...args);
+export const logFactory = _logFactory;
