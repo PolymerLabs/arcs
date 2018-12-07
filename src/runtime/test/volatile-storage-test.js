@@ -11,7 +11,7 @@
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {Type} from '../type.js';
+import {EntityType, ReferenceType} from '../type.js';
 import {assert} from '../test/chai-web.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 
@@ -43,7 +43,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
       const variable = await storage.construct('test0', BarType, storeKey);
       await variable.set({id: 'test0:test', value});
@@ -58,7 +58,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const var1 = await storage.construct('test0', BarType, storeKey);
       const var2 = await storage.connect('test0', BarType, var1.storageKey);
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
@@ -73,7 +73,7 @@ describe('volatile', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
 
       const var1 = await storage.construct('test0', BarType, storeKey);
       await var1.set({id: 'id1', value: 'underlying'});
@@ -95,9 +95,9 @@ describe('volatile', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
 
-      const var1 = await storage.construct('test0', Type.newReference(BarType), storeKey);
+      const var1 = await storage.construct('test0', new ReferenceType(BarType), storeKey);
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
       const result = await var1.get();
@@ -117,7 +117,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
       const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
@@ -135,7 +135,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
@@ -150,7 +150,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
@@ -168,7 +168,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
@@ -185,7 +185,7 @@ describe('volatile', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
   
       const collection1 = await storage.construct('test0', BarType.collectionOf(), storeKey);
   
@@ -209,7 +209,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
@@ -226,9 +226,9 @@ describe('volatile', function() {
   
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
   
-      const collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), storeKey);
+      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), storeKey);
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -251,7 +251,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
       const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
 
@@ -300,7 +300,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
       const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
@@ -343,7 +343,7 @@ describe('volatile', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
 
       const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];

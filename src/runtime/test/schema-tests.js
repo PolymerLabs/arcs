@@ -13,7 +13,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {Reference} from '../reference.js';
 import {Schema} from '../schema.js';
-import {Type} from '../type.js';
+import {EntityType, ReferenceType} from '../type.js';
 
 describe('schema', function() {
   const loader = new StubLoader({
@@ -211,11 +211,22 @@ describe('schema', function() {
     const References = manifest.findSchemaByName('References').entityClass();
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
-    assert.doesNotThrow(() => {new References({one: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null), two: null}); });
-    assert.throws(() => {new References({one: null, two: new Reference({id: 'test', storageKey: 'test'}, Type.newReference(Type.newEntity(ReferencedOneSchema)), null)}); }, TypeError,
-                  `Cannot set reference two with value '[object Object]' of mismatched type`);
-    assert.throws(() => {new References({one: 42, two: null}); }, TypeError,
-                  `Cannot set reference one with non-reference '42'`);
+    assert.doesNotThrow(() => {
+      new References({
+        one: new Reference({id: 'test', storageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
+        two: null
+      });
+    });
+
+    assert.throws(() => {
+      new References({
+        one: null,
+        two: new Reference({id: 'test', storageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
+      });
+    }, TypeError, `Cannot set reference two with value '[object Object]' of mismatched type`);
+    assert.throws(() => {
+      new References({one: 42, two: null});
+    }, TypeError, `Cannot set reference one with non-reference '42'`);
   });
 
   it('enforces rules when storing collection types', async function() {
@@ -225,12 +236,17 @@ describe('schema', function() {
     `);
 
     const Collections = manifest.findSchemaByName('Collections').entityClass();
-    const FooType = Type.newEntity(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
-    const BarType = Type.newEntity(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
+    const FooType = new EntityType(new Schema({names: ['Foo'], fields: {value: 'Text'}}));
+    const BarType = new EntityType(new Schema({names: ['Bar'], fields: {value: 'Text'}}));
     new Collections({collection: new Set()});
-    new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(FooType), null)])});
-    assert.throws(() => {new Collections({collection: new Set([new Reference({id: 'test', storageKey: 'test'}, Type.newReference(BarType), null)])}); }, TypeError,
-                  `Cannot set reference collection with value '[object Object]' of mismatched type`);
+    new Collections({
+      collection: new Set([new Reference({id: 'test', storageKey: 'test'}, new ReferenceType(FooType), null)])
+    });
+    assert.throws(() => {
+      new Collections({collection:
+        new Set([new Reference({id: 'test', storageKey: 'test'}, new ReferenceType(BarType), null)])
+      });
+    }, TypeError, `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });
 
   it('enforces rules when storing tuple types', async function() {

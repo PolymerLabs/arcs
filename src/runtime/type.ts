@@ -25,47 +25,6 @@ export abstract class Type {
     this.tag = tag;
   }
 
-  // TODO: remove these; callers can directly construct the classes now
-  static newEntity(entity : Schema) {
-    return new EntityType(entity);
-  }
-
-  static newVariable(variable : TypeVariableInfo) {
-    return new TypeVariable(variable);
-  }
-
-  static newCollection(collection : Type) {
-    return new CollectionType(collection);
-  }
-
-  static newBigCollection(bigCollection : Type) {
-    return new BigCollectionType(bigCollection);
-  }
-
-  static newRelation(relation : [Type]) {
-    return new RelationType(relation);
-  }
-
-  static newInterface(iface : InterfaceInfo) {
-    return new InterfaceType(iface);
-  }
-
-  static newSlot(slot : SlotInfo) {
-    return new SlotType(slot);
-  }
-
-  static newReference(reference : Type) {
-    return new ReferenceType(reference);
-  }
-
-  static newArcInfo() {
-    return new ArcType();
-  }
-
-  static newHandleInfo() {
-    return new HandleType();
-  }
-
   static fromLiteral(literal: TypeLiteral) : Type {
     switch (literal.tag) {
       case 'Entity':

@@ -18,7 +18,7 @@ import {ReplanQueue} from './replan-queue.js';
 import {Schema} from '../schema.js';
 import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase} from "../storage/storage-provider-base.js";
-import {Type} from '../type.js';
+import {Type, EntityType} from '../type.js';
 
 export type PlanificatorOptions = {
   userid: string;
@@ -163,7 +163,7 @@ export class Planificator {
       : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/$1`);
 
     const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
-    const type = Type.newEntity(schema);
+    const type = new EntityType(schema);
     return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
   }
 
@@ -182,7 +182,7 @@ export class Planificator {
       : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
 
     const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
-    const type = Type.newEntity(schema);
+    const type = new EntityType(schema);
 
     return Planificator._initStore(arc, 'search-id', type, storageKey);
   }

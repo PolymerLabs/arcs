@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, InterfaceType, SlotType} from '../type.js';
+import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, ReferenceType, InterfaceType, SlotType} from '../type.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 
 export class TypeChecker {
@@ -25,7 +25,7 @@ export class TypeChecker {
     if (baseType) {
       newBaseTypeVariable.resolution = baseType;
     }
-    const newBaseType = Type.newVariable(newBaseTypeVariable);
+    const newBaseType = new TypeVariable(newBaseTypeVariable);
     baseType = newBaseType;
 
     const concreteTypes = [];
@@ -115,7 +115,7 @@ export class TypeChecker {
       if (result == null) {
         return null;
       }
-      return Type.newInterface(result);
+      return new InterfaceType(result);
     } else if ((primitiveBase.isTypeContainer() && primitiveBase.hasVariable)
                || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
       // Cannot merge [~a] with a type that is not a variable and not a collection.
@@ -137,13 +137,13 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        const newVar = Type.newVariable(new TypeVariableInfo('a', null, null));
+        const newVar = new TypeVariable(new TypeVariableInfo('a', null, null));
         if (primitiveConnectionType instanceof CollectionType) {
-          primitiveHandleType.variable.resolution = Type.newCollection(newVar);
+          primitiveHandleType.variable.resolution = new CollectionType(newVar);
         } else if (primitiveConnectionType instanceof BigCollectionType) {
-          primitiveHandleType.variable.resolution = Type.newBigCollection(newVar);
+          primitiveHandleType.variable.resolution = new BigCollectionType(newVar);
         } else {
-          primitiveHandleType.variable.resolution = Type.newReference(newVar);
+          primitiveHandleType.variable.resolution = new ReferenceType(newVar);
         }
 
         const unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);

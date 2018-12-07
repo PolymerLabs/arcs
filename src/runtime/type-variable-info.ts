@@ -59,7 +59,7 @@ export class TypeVariableInfo {
       return false;
     }
 
-    this.canReadSubset = Type.newEntity(mergedSchema);
+    this.canReadSubset = new EntityType(mergedSchema);
     return true;
   }
 
@@ -87,7 +87,7 @@ export class TypeVariableInfo {
       return false;
     }
 
-    this.canWriteSuperset = Type.newEntity(mergedSchema);
+    this.canWriteSuperset = new EntityType(mergedSchema);
     return true;
   }
 

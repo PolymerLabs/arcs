@@ -11,7 +11,7 @@
 
 import {assert} from './chai-web.js';
 import {Schema} from '../schema.js';
-import {Type} from '../type.js';
+import {EntityType} from '../type.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {handleFor} from '../handle.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
@@ -171,7 +171,7 @@ class TestParticle {
 class TestEngine {
   constructor(arcId) {
     this.schema = new Schema({names: ['Thing'], fields: {value: 'Text'}});
-    this.type = Type.newEntity(this.schema);
+    this.type = new EntityType(this.schema);
     this._idCounters = [1, 1, 1]; // particle, proxy, entity
     this._stores = new Map();
     this._syncCallbacks = new Map();
