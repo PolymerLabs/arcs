@@ -45,8 +45,6 @@ src/tracelib/trace.js
 src/tracelib/test/trace-tests.js
 
 src/runtime/dom-particle.js
-src/runtime/fetch-node.js
-src/runtime/fetch-web.js
 src/runtime/firebase.js
 src/runtime/multiplexer-dom-particle.js
 src/runtime/transformation-dom-particle.js
