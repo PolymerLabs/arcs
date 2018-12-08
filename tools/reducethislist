@@ -114,9 +114,11 @@ src/runtime/test/particles/multi-slot-test.js
 src/runtime/test/particles/products-test.js
 src/runtime/test/particles/transformation-slots-test.js
 src/runtime/test/plan/plan-consumer-test.js
+src/runtime/test/plan/planificator-test.js
 src/runtime/test/plan/planning-result-test.js
 src/runtime/test/plan/plan-producer-test.js
 src/runtime/test/plan/replan-queue-test.js
+src/runtime/test/plan/suggestion-test.js
 src/runtime/test/recipe/particle-tests.js
 src/runtime/test/recipe/search-test.js
 src/runtime/test/strategies/add-missing-handles-test.js
