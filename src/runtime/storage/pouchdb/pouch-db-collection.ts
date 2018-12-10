@@ -88,26 +88,31 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   }
 
   async _toList() {
-    if (this.referenceMode) {
-      const items = (await this.getModel()).toLiteral();
-      if (items.length === 0) {
-        return [];
+    try {
+      if (this.referenceMode) {
+        const items = (await this.getModel()).toLiteral();
+        if (items.length === 0) {
+          return [];
+        }
+        const refSet = new Set();
+        items.forEach(item => refSet.add(item.value.storageKey));
+        assert(refSet.size === 1, `multiple storageKeys in reference set of collection not yet supported.`);
+        const ref = refSet.values().next().value;
+
+        await this.ensureBackingStore();
+
+        const retrieveItem = async item => {
+          const ref = item.value;
+          return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
+        };
+
+        return await Promise.all(items.map(retrieveItem));
       }
-      const refSet = new Set();
-      items.forEach(item => refSet.add(item.value.storageKey));
-      assert(refSet.size === 1, `multiple storageKeys in reference set of collection not yet supported.`);
-      const ref = refSet.values().next().value;
-
-      await this.ensureBackingStore();
-
-      const retrieveItem = async item => {
-        const ref = item.value;
-        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
-      };
-
-      return await Promise.all(items.map(retrieveItem));
+      return (await this.getModel()).toLiteral();
+    } catch (x) {
+      // TODO(sjmiles): caught for compatibility: pouchdb layer can throw, firebase layer never does
+      return [];
     }
-    return (await this.getModel()).toLiteral();
   }
 
   async toList() {
@@ -200,7 +205,6 @@ export class PouchDbCollection extends PouchDbStorageProvider {
 
   async removeMultiple(items, originatorId=null) {
     await this.getModelAndUpdate(crdtmodel => {
-      
       if (items.length === 0) {
         items = crdtmodel.toList().map(item => ({id: item.id, keys: []}));
       }
@@ -275,7 +279,6 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   private async getModel(): Promise<CrdtCollectionModel> {
     try {
       const result = await this.db.get(this.pouchDbKey.location);
-
       // compare revisions
       if (this._rev !== result._rev) {
         // remote revision is different, update local copy.
@@ -290,7 +293,8 @@ export class PouchDbCollection extends PouchDbStorageProvider {
         this._rev = undefined;
       }
       // Unexpected error
-      console.warn('PouchDbCollection.getModel err=', err);
+      // TODO(sjmiles): situation occurs frequently so squelching the log for now
+      //console.warn('PouchDbCollection.getModel err=', err);
       throw err;
     }
     return this._model;
