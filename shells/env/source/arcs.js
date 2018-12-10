@@ -12,7 +12,7 @@ import {Arc} from '../../../build/runtime/arc.js';
 import {Planificator} from '../../../build/runtime/plan/planificator.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {SlotDomConsumer} from '../../../build/runtime/slot-dom-consumer.js';
-import {Type} from '../../../build/runtime/type.js';
+import {Type, ArcType} from '../../../build/runtime/type.js';
 import {Manifest} from '../../../build/runtime/manifest.js';
 import {ParticleExecutionContext} from '../../../build/runtime/particle-execution-context.js';
 import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
@@ -32,6 +32,7 @@ const Arcs = {
   SlotComposer,
   SlotDomConsumer,
   Type,
+  ArcType,
   BrowserLoader,
   StorageProviderFactory,
   ParticleExecutionContext,

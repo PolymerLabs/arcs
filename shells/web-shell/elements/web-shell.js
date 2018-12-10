@@ -286,7 +286,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.recordArcMeta({
       key: nullKey,
       href: `?arc=${nullKey}`,
-      description: `Null Arc`,
+      description: `Planning!`,
       color: 'silver',
       // pretend to be really old
       touched: 0 //Date.now()
