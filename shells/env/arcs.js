@@ -3,6 +3,7 @@ const g = (typeof window === 'undefined') ? global : window;
 const {
   version,
   Arc,
+  ArcType,
   Manifest,
   Planificator,
   SlotComposer,
@@ -19,6 +20,7 @@ const {
 export {
   version,
   Arc,
+  ArcType,
   Manifest,
   Planificator,
   SlotComposer,
