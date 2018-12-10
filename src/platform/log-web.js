@@ -10,5 +10,5 @@ import {Debug, logFactory as _logFactory} from '../../modalities/dom/components/
 const _nopFactory = () => () => {};
 
 // TODO(sjmiles): problem with timing Debug.level or duplicate modules?
-//export const logFactory = (...args) => Debug.level < 1 ? _nopFactory() : _logFactory(...args);
-export const logFactory = _logFactory;
+export const logFactory = (...args) => Debug.level < 1 ? _nopFactory() : _logFactory(...args);
+//export const logFactory = _logFactory;

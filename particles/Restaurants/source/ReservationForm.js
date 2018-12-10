@@ -115,7 +115,6 @@ defineParticle(({DomParticle, html}) => {
     }
     renderSingle(restaurant, date, partySize) {
       const restaurantId = (restaurant && restaurant.id) || '';
-      //const times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       const timePicker = {date};
       for (let i = 1; i <= 21; ++i) {
         timePicker[`selected${i}`] = Boolean(partySize == i);
@@ -125,11 +124,7 @@ defineParticle(({DomParticle, html}) => {
         timePicker: {
           $template: 'time-picker',
           models: [timePicker]
-        },
-        // availableTimes: {
-        //   $template: 'available-times',
-        //   models: restaurant ? times : []
-        // }
+        }
       };
     }
     initializeEvent() {
@@ -167,40 +162,6 @@ defineParticle(({DomParticle, html}) => {
     //     return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
     //   }
     //   return '';
-    // }
-    // makeUpReservationTimes(id, partySize, date, n) {
-    //   // Start at (n-1)/2 half hours before the desired reservation time
-    //   const t = new Date(date);
-    //   t.setMinutes(t.getMinutes() - (n-1)/2*30);
-    //   let hour = (t.getHours()) % 24;
-    //   let minute = t.getMinutes() >= 30 ? '30' : '00';
-
-    //   // Seed per restaurant and day
-    //   //let seed = parseInt(id.substr(0, 8), 16);
-    //   let ts = t.getTime();
-    //   ts = ts - (ts % 86400000); // Round to closest day
-
-    //   const result = [];
-
-    //   while (n--) {
-    //     // This seems somewhat balanced
-    //     const notAvailable = false; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
-
-    //     result.push({
-    //       time: `${hour}:${minute}`,
-    //       notAvailable
-    //     });
-
-    //     // Increment time slot
-    //     if (minute == '30') {
-    //       hour = (hour + 1) % 24;
-    //       minute = '00';
-    //     } else {
-    //       minute = '30';
-    //     }
-    //   }
-
-    //   return result;
     // }
     // createDescription(restaurantId, participants, startDate) {
     //   const times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
