@@ -153,68 +153,31 @@ Import
 Shape
   = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
   {
-    var iface = optional(items, extractIndented, []).find(item => item.kind == 'shape-interface');
-    if (iface) {
-      return {
-        kind: 'shape',
-        location: location(),
-        name,
-        interface: iface,
-        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
-      };
-    } else {
-      return {
-        kind: 'shape',
-        location: location(),
-        name,
-        args: optional(items, extractIndented, []).filter(item => item.kind == 'shape-argument'),
-        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
-      };
-
-    }
+    return {
+      kind: 'shape',
+      location: location(),
+      name,
+      args: optional(items, extractIndented, []).filter(item => item.kind == 'shape-argument'),
+      slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+    };
   }
 
 ShapeItem
   = ShapeSlot
-  / ShapeArgumentItem
-  / ShapeInterface
-
-ShapeInterface
-  = verb:(upperIdent / lowerIdent) '(' args:ShapeArgumentList? ')' eolWhiteSpace
-  {
-    return {
-      kind: 'shape-interface',
-      location: location(),
-      verb,
-      args: args || []
-    };
-  }
-
-ShapeArgumentItem
-  = arg:ShapeArgument eolWhiteSpace
-  {
-    return arg;
-  }
-
-ShapeArgumentList
-  = head:ShapeArgument tail:(',' whiteSpace ShapeArgument)*
-  {
-    return [head].concat(tail.map(a => a[2]));
-  }
+  / ShapeArgument
 
 ShapeArgument
-  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*')
+  = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
-    if(direction) {
+    if (direction) {
       direction = direction[0]
     }
-    if(type) {
+    if (type) {
       type = type[0]
     }
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
     }
-
     return {
       kind: 'shape-argument',
       location: location(),
@@ -234,7 +197,7 @@ ShapeSlot
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       direction,
       isSet: !!isSet,
-    }
+    };
   }
 
 Meta
