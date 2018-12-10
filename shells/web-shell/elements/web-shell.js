@@ -129,6 +129,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (!state.nullConfig && state.context && state.userid) {
       // spin up nullArc
       this.spawnNullArc(state.userid);
+      this.recordNullArc(state.userid);
     }
     // consume a suggestion
     if (state.suggestion && state.context) {
@@ -269,12 +270,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
-  async recordArcMeta(meta) {
-    const {store} = this._state;
-    if (store) {
-      await store.store({id: meta.key, rawData: meta}, [generateId()]);
-    }
-  }
   recordPipesArc(userid) {
     const pipesKey = `${userid}-pipes`;
     this.recordArcMeta({
@@ -285,6 +280,23 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       // pretend to be really old
       touched: 0 //Date.now()
     });
+  }
+  recordNullArc(userid) {
+    const nullKey = `${userid}-null`;
+    this.recordArcMeta({
+      key: nullKey,
+      href: `?arc=${nullKey}`,
+      description: `Null Arc`,
+      color: 'silver',
+      // pretend to be really old
+      touched: 0 //Date.now()
+    });
+  }
+  async recordArcMeta(meta) {
+    const {store} = this._state;
+    if (store) {
+      await store.store({id: meta.key, rawData: meta}, [generateId()]);
+    }
   }
   onLauncherClick() {
     this.state = {arckey: ''};

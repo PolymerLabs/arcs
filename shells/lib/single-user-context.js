@@ -15,6 +15,7 @@ const log = logFactory('SingleUserContext', '#f2ce14');
 const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
 const error = logFactory('SingleUserContext', '#f2ce14', 'error');
 
+// SoloContext (?)
 export const SingleUserContext = class {
   constructor(storage, context, userid, arcstore, isProfile) {
     this.storage = storage;
@@ -29,13 +30,15 @@ export const SingleUserContext = class {
     this.handles = {};
     // promises for async store marshaling
     this.pendingStores = [];
-    this.attachArcStore(storage, arcstore);
+    if (arcstore) {
+      this.attachArcStore(storage, arcstore);
+    }
   }
   async attachArcStore(storage, arcstore) {
     this.observeStore(arcstore, arcstore.id, info => {
       log('arcstore::observer', info);
       if (info.add) {
-        info.add.forEach(({value}) => this.addArc(storage, value.rawData));
+        info.add.forEach(({value}) => this._addArc(storage, value.rawData));
       } else if (info.remove) {
         info.remove.forEach(({value}) => {
           // TODO(sjmiles): value should contain `rawData.key`, but sometimes there is no `rawData`
@@ -60,7 +63,7 @@ export const SingleUserContext = class {
       this.handles[arcid] = null;
     }
   }
-  async addArc(storage, arcmeta) {
+  async _addArc(storage, arcmeta) {
     const {deleted, key} = arcmeta;
     if (!deleted) {
       const store = await SyntheticStores.getStore(storage, key);
@@ -70,6 +73,16 @@ export const SingleUserContext = class {
         warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]\nhttps://github.com/PolymerLabs/arcs/issues/2304`);
       }
     }
+  }
+  async addArc(key) {
+    //if (!deleted) {
+      const store = await SyntheticStores.getStore(this.storage, key);
+      if (store) {
+        await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
+      } else {
+        warn(`failed to get SyntheticStore for arc at [${this.storage}, ${key}]\nhttps://github.com/PolymerLabs/arcs/issues/2304`);
+      }
+    //}
   }
   unobserve(key) {
     const observer = this.observers[key];
@@ -84,7 +97,7 @@ export const SingleUserContext = class {
       console.warn(`observeStore: store is null for [${key}]`);
     } else {
       if (!this.observers[key]) {
-        //log(`observing [${key}]`);
+        log(`observing [${key}]`);
         // TODO(sjmiles): create synthetic store `change` records from the initial state
         // SyntheticCollection has `toList` but is `!type.isCollection`,
         if (store.toList) {
@@ -92,7 +105,7 @@ export const SingleUserContext = class {
           if (data && data.length) {
             const add = data.map(value => ({value}));
             cb({add});
-          }
+          } else log('...store is empty collection');
         } else if (store.type.isEntity) {
           const data = await store.get();
           if (data) {
@@ -117,6 +130,7 @@ export const SingleUserContext = class {
         }
         if (handle) { //} && handle.tags.length) {
           //handle.tags.length && log('observing handle', handle.tags);
+          //log('fetching handle store', handle);
           const store = await SyntheticStores.getHandleStore(handle);
           await this.observeStore(store, handle.storageKey, info => this.updateHandle(arcid, handle, info));
         }

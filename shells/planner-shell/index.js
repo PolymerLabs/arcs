@@ -6,27 +6,24 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// platform specific code assets
-import '../env/node/arcs.js';
-
-import {ShellPlanningInterface} from './interface.js';
+import {PlannerShellInterface} from './planner-shell.js';
 
 /**
- * Simple nodejs launcher for Shell Planning.
+ * Simple nodejs launcher for Planner Shell.
  */
 
 const debug = false; // Set to true to store strategizer `generations`
 
 let storage =  process.env['ARCS_STORAGE'];
 if (!storage) {
-  storage = ShellPlanningInterface.DEFAULT_STORAGE;
+  storage = PlannerShellInterface.DEFAULT_STORAGE;
   console.log(`No ARCS_STORAGE environment variable, using default:\n\t[${storage}]`);
 }
 
-let userId =  process.env['ARCS_USER_ID'];
+let userId =  process.env['ARCS_USER_ID'] || 'planner';
 if (!userId) {
-  userId = ShellPlanningInterface.DEFAULT_USER_ID;
+  userId = PlannerShellInterface.DEFAULT_USER_ID;
   console.log(`No ARCS_USER_ID environment variable, using default:\n\t[${userId}]`);
 }
 
-ShellPlanningInterface.start('../../', storage, userId, debug);
+PlannerShellInterface.start('../../', storage, userId, debug);

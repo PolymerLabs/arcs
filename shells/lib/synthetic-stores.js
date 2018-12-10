@@ -21,9 +21,9 @@ export class SyntheticStores {
   static async getStore(storage, id) {
     // cached stores can be incorrect?
     //return stores[id] || (stores[id] = await SyntheticStores.syntheticConnectKind('handles', storage, id));
-    return await SyntheticStores.syntheticConnectKind('handles', storage, id);
+    return await SyntheticStores.connectToKind('handles', storage, id);
   }
-  static async syntheticConnectKind(kind, storage, arcid) {
+  static async connectToKind(kind, storage, arcid) {
     return SyntheticStores.storeConnect(null, `synthetic://arc/${kind}/${storage}/${arcid}`);
   }
   static async getHandleStore(handle) {
