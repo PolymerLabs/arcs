@@ -9,7 +9,7 @@
 import {assert} from '../test/chai-web.js';
 import {Id} from '../id.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
-import {Type} from '../type.js';
+import {ArcType} from '../type.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 
@@ -22,7 +22,7 @@ describe('synthetic storage', function() {
   async function setup(serialization) {
     const id = new Id('123', ['test']);
     const storage = new StorageProviderFactory(id);
-    const type = Type.newArcInfo();
+    const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
     const targetStore = await storage.construct('id0', type, key);
     targetStore.referenceMode = false;
@@ -132,7 +132,7 @@ describe('synthetic storage', function() {
     const eventPromise = new Promise(resolve => resolver = resolve);
     synth.on('change', e => resolver(e), {});
 
-    await targetStore.set(Type.newArcInfo().newInstance(id, `
+    await targetStore.set(new ArcType().newInstance(id, `
       schema Bar
       store Store0 of [Bar] at 'pouchdb://aa.pouchdb.org/bb'
       @active

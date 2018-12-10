@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type} from './type.js';
+import {Type, EntityType, ReferenceType} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
@@ -177,7 +177,7 @@ export class Schema {
   }
 
   get type(): Type {
-    return Type.newEntity(this);
+    return new EntityType(this);
   }
 
   entityClass(context: ParticleExecutionContext = null): typeof Entity {
@@ -257,7 +257,7 @@ export class Schema {
           if (!(value instanceof Reference)) {
             throw new TypeError(`Cannot ${op} reference ${name} with non-reference '${value}'`);
           }
-          if (!TypeChecker.compareTypes({type: value.type}, {type: Type.newReference(fieldType.schema.model)})) {
+          if (!TypeChecker.compareTypes({type: value.type}, {type: new ReferenceType(fieldType.schema.model)})) {
             throw new TypeError(`Cannot ${op} reference ${name} with value '${value}' of mismatched type`);
           }
           break;
@@ -328,7 +328,7 @@ export class Schema {
             // Setting value from raw data (Channel side).
             // TODO(shans): This can't enforce type safety here as there isn't any type data available.
             // Maybe this is OK because there's type checking on the other side of the channel?
-            return new Reference(value as {id, storageKey}, Type.newReference(type.schema.model), context);
+            return new Reference(value as {id, storageKey}, new ReferenceType(type.schema.model), context);
           } else {
             throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
           }
@@ -367,7 +367,7 @@ export class Schema {
       static get type(): Type {
         // TODO: should the entity's key just be its type?
         // Should it just be called type in that case?
-        return Type.newEntity(this.key.schema);
+        return new EntityType(this.key.schema);
       }
 
       static get key() {

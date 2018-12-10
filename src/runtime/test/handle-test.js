@@ -14,7 +14,7 @@ import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../handle.js';
 import {InterfaceInfo} from '../interface-info.js';
-import {Type} from '../type.js';
+import {EntityType, InterfaceType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
@@ -137,12 +137,12 @@ describe('Handle', function() {
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
     const iface = new InterfaceInfo('Test', [
-      {type: Type.newEntity(manifest.schemas.Foo)},
-      {type: Type.newEntity(manifest.schemas.Bar)}
+      {type: new EntityType(manifest.schemas.Foo)},
+      {type: new EntityType(manifest.schemas.Bar)}
     ], []);
     assert(iface.particleMatches(manifest.particles[0]));
 
-    const ifaceStore = await arc.createStore(Type.newInterface(iface));
+    const ifaceStore = await arc.createStore(new InterfaceType(iface));
     await ifaceStore.set(manifest.particles[0]);
     assert.equal(await ifaceStore.get(), manifest.particles[0]);
   });

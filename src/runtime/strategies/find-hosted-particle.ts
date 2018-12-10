@@ -26,16 +26,16 @@ export class FindHostedParticle extends Strategy {
 
         const results = [];
         for (const particle of arc.context.particles) {
-          // This is what shape.particleMatches() does, but we also do
+          // This is what interfaceInfo.particleMatches() does, but we also do
           // canEnsureResolved at the end:
-          const shapeClone = iface.interfaceInfo.cloneWithResolutions(new Map());
-          // If particle doesn't match the requested shape.
-          if (shapeClone.restrictType(particle) === false) continue;
-          // If we still have unresolvable shape after matching a particle.
-          // This can happen if both shape and particle have type variables.
+          const ifaceClone = iface.interfaceInfo.cloneWithResolutions(new Map());
+          // If particle doesn't match the requested interface.
+          if (ifaceClone.restrictType(particle) === false) continue;
+          // If we still have unresolvable interface after matching a particle.
+          // This can happen if both interface and particle have type variables.
           // TODO: What to do here? We need concrete type for the particle spec
           //       handle, but we don't have one.
-          if (!shapeClone.canEnsureResolved()) continue;
+          if (!ifaceClone.canEnsureResolved()) continue;
 
           results.push((recipe, hc) => {
             const handle = RecipeUtil.constructImmediateValueHandle(

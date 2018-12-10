@@ -11,7 +11,7 @@ import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-
 import {StorageProviderFactory} from './storage-provider-factory.js';
 import {KeyBase} from './key-base.js';
 import {Id} from '../id.js';
-import {Type} from '../type.js';
+import {Type, ArcType, HandleType} from '../type.js';
 import {ArcInfo, ArcHandle} from '../synthetic-types.js';
 import {Manifest} from '../manifest.js';
 import {setDiffCustom} from '../util.js';
@@ -43,14 +43,14 @@ class SyntheticKey extends KeyBase {
     this.category = Category[match[2]];
 
     if (this.scope === Scope.arc) {
-      this.targetType = Type.newArcInfo();
+      this.targetType = new ArcType();
       const key = storageFactory.parseStringAsKey(match[3]).childKeyForArcInfo();
       this.targetKey = key.toString();
     } else {
       throw new Error(`invalid scope '${match[1]}' for synthetic key: ${key}`);
     }
     if (this.category === Category.handles) {
-      this.syntheticType = Type.newHandleInfo();
+      this.syntheticType = new HandleType();
     } else {
       throw new Error(`invalid category '${match[2]}' for synthetic key: ${key}`);
     }

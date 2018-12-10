@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {logFactory} from './log-factory.js';
 import {SyntheticStores} from './synthetic-stores.js';
-import {Type} from '../env/arcs.js';
+import {ArcType} from '../env/arcs.js';
 
 const log = logFactory('ArcHost', '#cade57');
 const warn = logFactory('ArcHost', '#cade57', 'warn');
@@ -95,7 +95,7 @@ export class ArcHost {
   }
   async fetchSerialization(storage, arcid) {
     const key = `${storage}/${arcid}/arc-info`;
-    const store = await SyntheticStores.providerFactory.connect('id', Type.newArcInfo(), key);
+    const store = await SyntheticStores.providerFactory.connect('id', new ArcType(), key);
     if (store) {
       const info = await store.get();
       return info && info.serialization;

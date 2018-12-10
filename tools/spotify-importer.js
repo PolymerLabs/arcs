@@ -7,10 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- 
+
 import fs from 'fs';
 import {Manifest} from '../build/runtime/manifest.js';
-import {Type} from '../build/runtime/type.js';
+import {EntityType} from '../build/runtime/type.js';
 import {StorageProviderFactory} from '../build/runtime/storage/storage-provider-factory.js';
 import {resetStorageForTesting} from '../build/runtime/storage/firebase-storage.js';
 
@@ -98,7 +98,7 @@ import {resetStorageForTesting} from '../build/runtime/storage/firebase-storage.
       return;
     }
 
-    const PlaylistType = Type.newEntity(manifest.schemas.Playlist);
+    const PlaylistType = new EntityType(manifest.schemas.Playlist);
     const storage = new StorageProviderFactory('import');
     const construct = () => storage.construct('import', PlaylistType.bigCollectionOf(), key);
     const connect = () => storage.connect('import', PlaylistType.bigCollectionOf(), key);

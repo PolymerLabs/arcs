@@ -11,7 +11,7 @@
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {Type} from '../type.js';
+import {EntityType, ReferenceType} from '../type.js';
 import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../storage/firebase-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -67,7 +67,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
       const variable = await storage.construct('test0', BarType, newStoreKey('variable'));
       await variable.set({id: 'test0:test', value});
@@ -81,7 +81,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
       const var1 = await storage.construct('test0', BarType, key);
       const var2 = await storage.connect('test0', BarType, key);
@@ -98,7 +98,7 @@ describe('firebase', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
   
       const var1 = await storage.construct('test0', BarType, key1);
@@ -120,10 +120,10 @@ describe('firebase', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', Type.newReference(BarType), key1);
+      const var1 = await storage.construct('test0', new ReferenceType(BarType), key1);
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
@@ -142,7 +142,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
       const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
@@ -160,7 +160,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
       const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
@@ -176,7 +176,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
       const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
@@ -195,7 +195,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
       const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
       const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
@@ -213,7 +213,7 @@ describe('firebase', function() {
 
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
   
       const collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
@@ -240,10 +240,10 @@ describe('firebase', function() {
   
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
   
-      const collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
+      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), key1);
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -263,7 +263,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
       const collection = await storage.construct('test1', BarType.collectionOf(), key);
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
@@ -297,7 +297,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('bigcollection');
       const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
       const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), key);
@@ -372,7 +372,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
       const items = new Map();
 
@@ -449,7 +449,7 @@ describe('firebase', function() {
       `);
       const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = Type.newEntity(manifest.schemas.Bar);
+      const BarType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
       const items = new Map();
 
@@ -578,7 +578,7 @@ describe('firebase', function() {
       const manifest = arc._context;
 
       const storage = createStorage(arc.id);
-      const Data = Type.newEntity(manifest.schemas.Data);
+      const Data = new EntityType(manifest.schemas.Data);
       const bigStore = await storage.construct('test0', Data.bigCollectionOf(), newStoreKey('bigcollection'));
       const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(bigStore);
@@ -618,7 +618,7 @@ describe('firebase', function() {
       const arc = new Arc({id: 'test', loader});
       const manifest = await Manifest.load('manifest', loader);
       const storage = createStorage(arc.id);
-      const Data = Type.newEntity(manifest.schemas.Data);
+      const Data = new EntityType(manifest.schemas.Data);
 
       const varStore = await storage.construct('test0', Data, newStoreKey('variable'));
       const colStore = await storage.construct('test1', Data.collectionOf(), newStoreKey('collection'));

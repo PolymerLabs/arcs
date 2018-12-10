@@ -17,7 +17,7 @@ import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
 import {Search} from './recipe/search.js';
 import {InterfaceInfo} from './interface-info.js';
-import {Type, EntityType, CollectionType, BigCollectionType, InterfaceType} from './type.js';
+import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, ReferenceType, InterfaceType, SlotType} from './type.js';
 import {compareComparables} from './recipe/util.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
@@ -237,11 +237,11 @@ export class Manifest {
   findTypeByName(name) {
     const schema = this.findSchemaByName(name);
     if (schema) {
-      return Type.newEntity(schema);
+      return new EntityType(schema);
     }
     const shape = this.findShapeByName(name);
     if (shape) {
-      return Type.newInterface(shape);
+      return new InterfaceType(shape);
     }
     return null;
   }
@@ -497,12 +497,12 @@ ${e.message}
               throw new ManifestError(node.location, `Could not merge schema aliases`);
             }
           }
-          node.model = Type.newEntity(schema);
+          node.model = new EntityType(schema);
           return;
         }
         case 'variable-type': {
           const constraint = node.constraint && node.constraint.model;
-          node.model = Type.newVariable(new TypeVariableInfo(node.name, constraint, null));
+          node.model = new TypeVariable(new TypeVariableInfo(node.name, constraint, null));
           return;
         }
         case 'slot-type': {
@@ -513,7 +513,7 @@ ${e.message}
           }
           const slotInfo = {formFactor: fields['formFactor'],
                             handle: fields['handle']};
-          node.model = Type.newSlot(new SlotInfo(slotInfo));
+          node.model = new SlotType(new SlotInfo(slotInfo));
           return;
         }
         case 'type-name': {
@@ -524,22 +524,22 @@ ${e.message}
                 `Could not resolve type reference to type name '${node.name}'`);
           }
           if (resolved.schema) {
-            node.model = Type.newEntity(resolved.schema);
+            node.model = new EntityType(resolved.schema);
           } else if (resolved.shape) {
-            node.model = Type.newInterface(resolved.shape);
+            node.model = new InterfaceType(resolved.shape);
           } else {
             throw new Error('Expected {shape} or {schema}');
           }
           return;
         }
         case 'collection-type':
-          node.model = Type.newCollection(node.type.model);
+          node.model = new CollectionType(node.type.model);
           return;
         case 'big-collection-type':
-          node.model = Type.newBigCollection(node.type.model);
+          node.model = new BigCollectionType(node.type.model);
           return;
         case 'reference-type':
-          node.model = Type.newReference(node.type.model);
+          node.model = new ReferenceType(node.type.model);
           return;
         default:
           return;

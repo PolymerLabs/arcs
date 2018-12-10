@@ -15,7 +15,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
-import {Type} from '../type.js';
+import {EntityType, InterfaceType} from '../type.js';
 import {InterfaceInfo} from '../interface-info.js';
 import {ParticleSpec} from '../particle-spec.js';
 
@@ -63,12 +63,12 @@ describe('particle-interface-loading', function() {
 
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
-    const fooType = Type.newEntity(manifest.schemas.Foo);
-    const barType = Type.newEntity(manifest.schemas.Bar);
+    const fooType = new EntityType(manifest.schemas.Foo);
+    const barType = new EntityType(manifest.schemas.Bar);
 
     const iface = new InterfaceInfo('Test', [{type: fooType}, {type: barType}], []);
 
-    const ifaceType = Type.newInterface(iface);
+    const ifaceType = new InterfaceType(iface);
 
     const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',

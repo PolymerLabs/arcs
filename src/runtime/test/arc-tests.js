@@ -10,7 +10,7 @@
 
 import {Arc} from '../arc.js';
 import {Id} from '../id.js';
-import {Type} from '../type.js';
+import {ArcType} from '../type.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';
@@ -344,7 +344,7 @@ describe('Arc', function() {
     await arc.persistSerialization(serialization);
 
     const key = 'volatile://!123:test^^arc-info';
-    const store = await arc.storageProviderFactory.connect('id', Type.newArcInfo(), key);
+    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key);
     const data = await store.get();
 
     // The serialization tends to have lots of whitespace in it; squash it for easier comparison.

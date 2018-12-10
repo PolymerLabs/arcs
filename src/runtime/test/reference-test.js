@@ -11,7 +11,7 @@
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Type, ReferenceType} from '../type.js';
+import {EntityType, ReferenceType} from '../type.js';
 import {Arc} from '../arc.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 
@@ -158,7 +158,7 @@ describe('references', function() {
     await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
 
     const refStore = arc._stores[1];
-    const baseStoreType = Type.newEntity(manifest.schemas.Result);
+    const baseStoreType = new EntityType(manifest.schemas.Result);
     await assertSingletonWillChangeTo(arc, refStore, 'storageKey', 
                                       arc.storageProviderFactory.baseStorageKey(baseStoreType, 'volatile'));
   });
@@ -213,7 +213,7 @@ describe('references', function() {
     await arc.instantiate(recipe);
 
     const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
-    const baseStoreType = Type.newEntity(manifest.schemas.Result);
+    const baseStoreType = new EntityType(manifest.schemas.Result);
     const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     
@@ -386,7 +386,7 @@ describe('references', function() {
     await arc.instantiate(recipe);
 
     const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
-    const baseStoreType = Type.newEntity(manifest.schemas.Result);
+    const baseStoreType = new EntityType(manifest.schemas.Result);
     const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
