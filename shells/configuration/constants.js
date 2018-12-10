@@ -4,7 +4,7 @@ export const Const = {
   version,
   defaultUserId: 'user',
   defaultStorageKey: `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${version}`,
-  defaultManifest: `https://$artifacts/canonical.manifest`,
+  defaultManifest: `https://$particles/canonical.manifest`,
   launcherSuffix: `-launcher`,
   LOCALSTORAGE: {
     user: `${version}-user`,

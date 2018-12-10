@@ -69,7 +69,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     if (userid && !state.config) {
       state.config = {
         id: `${userid}-pipes`,
-        manifest: `import 'https://$artifacts/Pipes/Pipes.recipes'`
+        manifest: `import 'https://$particles/Pipes/Pipes.recipes'`
       };
     }
     if (state.arc && !state.registered) {

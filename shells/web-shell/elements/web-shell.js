@@ -27,11 +27,11 @@ SlotDomConsumer.multitenant = true;
 
 const manifests = {
   context: `
-    import 'https://$artifacts/canonical.manifest'
-    import 'https://$artifacts/Profile/Sharing.recipe'
+    import 'https://$particles/canonical.manifest'
+    import 'https://$particles/Profile/Sharing.recipe'
   `,
   launcher: `
-    import 'https://$artifacts/Arcs/Launcher.recipe'
+    import 'https://$particles/Arcs/Launcher.recipe'
   `
 };
 
