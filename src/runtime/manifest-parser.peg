@@ -74,7 +74,7 @@ ManifestItem
   / SchemaDefinition
   / SchemaAliasDefinition
   / ManifestStorage
-  / Shape
+  / Interface
   / Meta
   / Resource
 
@@ -150,23 +150,23 @@ Import
     };
   }
 
-Shape
-  = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
+Interface
+  = 'interface' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceItem)*)? eolWhiteSpace?
   {
     return {
-      kind: 'shape',
+      kind: 'interface',
       location: location(),
       name,
-      args: optional(items, extractIndented, []).filter(item => item.kind == 'shape-argument'),
-      slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+      args: optional(items, extractIndented, []).filter(item => item.kind == 'interface-argument'),
+      slots: optional(items, extractIndented, []).filter(item => item.kind == 'interface-slot'),
     };
   }
 
-ShapeItem
-  = ShapeSlot
-  / ShapeArgument
+InterfaceItem
+  = InterfaceSlot
+  / InterfaceArgument
 
-ShapeArgument
+InterfaceArgument
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     if (direction) {
@@ -176,10 +176,10 @@ ShapeArgument
       type = type[0]
     }
     if (direction == 'host') {
-      error(`Shape cannot have arguments with a 'host' direction.`);
+      error(`Interface cannot have arguments with a 'host' direction.`);
     }
     return {
-      kind: 'shape-argument',
+      kind: 'interface-argument',
       location: location(),
       direction,
       type,
@@ -187,11 +187,11 @@ ShapeArgument
     };
   }
 
-ShapeSlot
+InterfaceSlot
   = isRequired:('must' whiteSpace)? direction:('consume' / 'provide') isSet:(whiteSpace 'set of')? name:(whiteSpace lowerIdent)? eolWhiteSpace
   {
     return {
-      kind: 'shape-slot',
+      kind: 'interface-slot',
       location: location(),
       name: optional(name, isRequired => name[1], null),
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
@@ -230,7 +230,7 @@ ParticleDefinition
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
-      if (item.kind == 'interface') {
+      if (item.kind == 'particle-interface') {
         if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
@@ -285,7 +285,7 @@ ParticleInterface
   = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
   {
     return {
-      kind: 'interface',
+      kind: 'particle-interface',
       location: location(),
       verb,
       args: args || []
@@ -1074,7 +1074,7 @@ ReservedWord
   / 'particle'
   / 'recipe'
   / 'import'
-  / 'shape'
+  / 'interface'
   / 'schema'
   / 'require'
   / 'handle'

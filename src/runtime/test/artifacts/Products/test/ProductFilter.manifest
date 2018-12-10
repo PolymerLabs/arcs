@@ -8,13 +8,13 @@
 
 import '../Product.schema'
 
-shape HostedParticleShape
+interface HostedParticleInterface
   in Product *
   out Product *
 
 // TODO: This particle should use generic handle type and slot name.
 particle ProductFilter in 'source/ProductFilter.js'
-  host HostedParticleShape hostedParticle
+  host HostedParticleInterface hostedParticle
   in [Product] products
   out [Product] results
   description `show filtered products`

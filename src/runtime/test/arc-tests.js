@@ -289,11 +289,11 @@ describe('Arc', function() {
   it('serializes immediate value handles correctly', async () => {
     const loader = new StubLoader({
       manifest: `
-        shape HostedShape
+        interface HostedInterface
           in ~a *
 
         particle A in 'a.js'
-          host HostedShape hosts
+          host HostedInterface hosts
 
         particle B in 'b.js'
           in Entity {} val
@@ -318,8 +318,8 @@ describe('Arc', function() {
     assert.isEmpty(serialization.stores, 'Immediate value store should not be serialized');
     assert.deepEqual(['A', 'B'], serialization.particles.map(p => p.name),
         'Spec of a particle referenced in an immediate mode should be serialized');
-    assert.deepEqual(['HostedShape'], serialization.shapes.map(s => s.name),
-        'Hosted connection shape should be serialized');
+    assert.deepEqual(['HostedInterface'], serialization.interfaces.map(s => s.name),
+        'Hosted connection interface should be serialized');
 
     const recipeHCs = serialization.recipes[0].handleConnections;
     assert.lengthOf(recipeHCs, 1);

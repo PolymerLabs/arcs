@@ -233,7 +233,7 @@ export class TypeChecker {
 
     if (leftType instanceof TypeVariable || rightType instanceof TypeVariable) {
       // TODO: everything should use this, eventually. Need to implement the
-      // right functionality in Shapes first, though.
+      // right functionality in Interfaces first, though.
       return Type.canMergeConstraints(leftType, rightType);
     }
 
@@ -253,7 +253,7 @@ export class TypeChecker {
     }
 
     // TODO: we need a generic way to evaluate type compatibility
-    //       shapes + entities + etc
+    //       interfaces + entities + etc
     if (leftType instanceof InterfaceType && rightType instanceof InterfaceType) {
       if (leftType.interfaceInfo.equals(rightType.interfaceInfo)) {
         return true;

@@ -132,9 +132,8 @@ export class InterfaceInfo {
       .join('\n');
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  // TODO: Update when 'shape' keyword isn't used in manifests
   toString() {
-    return `shape ${this.name}
+    return `interface ${this.name}
 ${this._handlesToManifestString()}
 ${this._slotsToManifestString()}
 `;

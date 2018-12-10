@@ -72,11 +72,11 @@ describe('AddMissingHandles', function() {
   it(`doesn't add handles to host connections`, async () => {
     const results = await runStrategy(`
       schema Thing
-      shape HostedShape
+      interface HostedInterface
         in ~a *
       particle P1
         in Thing thing
-        host HostedShape hosted
+        host HostedInterface hosted
       recipe
         P1
     `);

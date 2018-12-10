@@ -6,18 +6,18 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-shape HostedItemShape
+interface HostedItemInterface
   in ~any *
   // TODO(sjmiles): using slot-type for form-factor
-  // all Shapes are the same in List/* except for the slot
+  // all Interfaces are the same in List/* except for the slot
   consume item
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
   // TODO(sjmiles): redundancies:
-  // 1. slot is declared in HostedItemShape and as `consume set of` here
-  // 2. ~any is declared in HostedItemShape and as `[~any]` here
+  // 1. slot is declared in HostedItemInterface and as `consume set of` here
+  // 2. ~any is declared in HostedItemInterface and as `[~any]` here
   in [~any] list
-  host HostedItemShape hostedParticle
+  host HostedItemInterface hostedParticle
   consume set of item
 
 // TODO(sjmiles): recipe is the minimum coalescable artifact, which is good because we need to be able specify

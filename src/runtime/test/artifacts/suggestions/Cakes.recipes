@@ -17,13 +17,13 @@ particle List in '../Common/source/List.js'
       handle items
   description `show ${items}`
 
-shape MakeCakeShape
+interface MakeCakeInterface
   in Cake *
   consume item
   provide special
 
 particle CakeMuxer in '../Common/source/Multiplexer.js'
-  host MakeCakeShape hostedParticle
+  host MakeCakeInterface hostedParticle
   in [Cake] list
   consume set of item
     provide set of special
@@ -37,12 +37,12 @@ recipe &makeCakes
     hostedParticle = MakeCake
   description `show ${List.items}`
 
-shape LightCandleShape
+interface LightCandleInterface
   in Cake *
   consume candles
 
 particle CandleMuxer in '../Common/source/Multiplexer.js'
-  host LightCandleShape hostedParticle
+  host LightCandleInterface hostedParticle
   in [Cake] list
   consume set of candles
 

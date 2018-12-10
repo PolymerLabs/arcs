@@ -19,7 +19,7 @@ import {EntityType, InterfaceType} from '../type.js';
 import {InterfaceInfo} from '../interface-info.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-describe('particle-interface-loading', function() {
+describe('particle interface loading', function() {
 
   it('loads interfaces into particles', async () => {
     const loader = new StubLoader({

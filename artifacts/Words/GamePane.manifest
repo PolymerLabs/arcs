@@ -15,7 +15,7 @@ import 'Move.schema'
 import 'Stats.schema'
 
 particle GamePane in 'source/GamePane.js'
-  host HostedParticleShape renderParticle
+  host HostedParticleInterface renderParticle
   in Person person
   inout Board board
   inout Move move

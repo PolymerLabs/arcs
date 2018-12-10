@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-shape HostedChoiceShape
+interface HostedChoiceInterface
   in ~any *
   in [~anyOther] *
   consume choice
@@ -14,5 +14,5 @@ shape HostedChoiceShape
 particle ChoicesMultiplexer in 'source/Multiplexer.js'
   in [~any] list
   in [~anyOther] choices
-  host HostedChoiceShape hostedParticle
+  host HostedChoiceInterface hostedParticle
   consume set of choice

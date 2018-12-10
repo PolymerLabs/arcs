@@ -82,8 +82,8 @@ src/runtime/test/manifest-test.js
 src/runtime/test/multiplexer-test.js
 src/runtime/test/particle-api-test.js
 src/runtime/test/particle-execution-context-test.js
-src/runtime/test/particle-shape-loading-test.js
-src/runtime/test/particle-shape-loading-with-slots-test.js
+src/runtime/test/particle-interface-loading-test.js
+src/runtime/test/particle-interface-loading-with-slots-test.js
 src/runtime/test/planner-tests.js
 src/runtime/test/recipe-descriptions-test.js
 src/runtime/test/recipe-index-test.js
