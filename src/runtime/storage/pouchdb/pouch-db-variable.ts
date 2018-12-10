@@ -148,6 +148,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
           await this.ensureBackingStore();
           return await this.backingStore.get(value.id);
         } catch (err) {
+          // TODO(sjmiles): situation occurs frequently so squelching the log for now
           //console.warn('PouchDbVariable.get err=', err);
           throw err;
         }
