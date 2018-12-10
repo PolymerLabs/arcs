@@ -25,13 +25,13 @@ particle TVMazeShowActions in './source/TVMazeShowActions.js'
   inout [TVMazeShow] shows
   consume action
 
-shape HostedActionParticleShape
+interface HostedActionParticleInterface
   in TVMazeShow show
   inout [TVMazeShow] shows
   consume action
 
 particle ActionMultiplexer in '../Common/source/Multiplexer.js'
-  host HostedActionParticleShape hostedParticle
+  host HostedActionParticleInterface hostedParticle
   in [~a] list
   in [TVMazeShow] shows
   consume set of action

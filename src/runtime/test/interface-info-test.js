@@ -162,11 +162,11 @@ describe('interface', function() {
         in [~a] input
         out [~a] output
 
-      shape HostedShape
+      interface HostedInterface
         in ~a *
 
       particle Multiplexer
-        host HostedShape hostedParticle
+        host HostedInterface hostedParticle
         in [~a] items
 
       recipe
@@ -229,10 +229,10 @@ describe('interface', function() {
       particle Upper
         out Gibson output
 
-      shape HostedShape
+      interface HostedInterface
         inout ~a *
       particle Host
-        host HostedShape hosted
+        host HostedInterface hosted
         inout ~a item
 
       recipe

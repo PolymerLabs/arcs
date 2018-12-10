@@ -1400,62 +1400,62 @@ resource SomeName
 `, {});
     assert.deepEqual(manifest.resources['SomeName'], `{'foo': 'bar'}\nhello\n`);
   });
-  it('can parse a manifest containing incomplete shapes', async () => {
+  it('can parse a manifest containing incomplete interfaces', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-      shape FullShape
+      interface FullInterface
         in Foo foo
         consume root
         provide action
-      shape ShapeNoHandleName
+      interface NoHandleName
         in Foo *
-      shape ShapeNoHandleType
+      interface NoHandleType
         inout foo
-      shape ShapeNoHandleDirection
+      interface NoHandleDirection
         Foo foo
-      shape ShapeOnlyHandleDirection
+      interface OnlyHandleDirection
         out *
-      shape ShapeManyHandles
+      interface ManyHandles
         in Foo *
         out [~a] *
-      shape ShapeConsumeNoName
+      interface ConsumeNoName
         consume
-      shape ShapeConsumeRequiredSetSlot
+      interface ConsumeRequiredSetSlot
         must consume set of
         must provide
-      shape ShapeOnlyProvideSlots
+      interface OnlyProvideSlots
         provide action
     `);
-    assert.lengthOf(manifest.shapes, 9);
-    assert(manifest.findShapeByName('FullShape'));
+    assert.lengthOf(manifest.interfaces, 9);
+    assert(manifest.findInterfaceByName('FullInterface'));
   });
-  it('can parse a manifest containing shapes', async () => {
+  it('can parse a manifest containing interfaces', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-      shape Shape
+      interface Bar
         in Foo foo
-      particle ShapeParticle
-        host Shape shape0
+      particle HostingParticle
+        host Bar iface0
       recipe
         create as handle0
-        ShapeParticle
-          shape0 = handle0`);
-    assert(manifest.findShapeByName('Shape'));
+        HostingParticle
+          iface0 = handle0`);
+    assert(manifest.findInterfaceByName('Bar'));
     assert(manifest.recipes[0].normalize());
   });
-  it('can parse shapes using new-style body syntax', async () => {
+  it('can parse interfaces using new-style body syntax', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
-      shape Shape
+      interface Bar
         in Foo foo
-      particle ShapeParticle
-        host Shape shape0
+      particle HostingParticle
+        host Bar iface0
       recipe
         create as handle0
-        ShapeParticle
-          shape0 = handle0
+        HostingParticle
+          iface0 = handle0
     `);
-    assert(manifest.findShapeByName('Shape'));
+    assert(manifest.findInterfaceByName('Bar'));
     assert(manifest.recipes[0].normalize());
   });
   it('can resolve optional handles', async () => {
@@ -1482,7 +1482,7 @@ resource SomeName
   it('can resolve an immediate handle specified by a particle target', async () => {
     const manifest = await Manifest.parse(`
       schema S
-      shape HostedShape
+      interface HostedInterface
         in S foo
 
       particle Hosted
@@ -1490,7 +1490,7 @@ resource SomeName
         in S bar
 
       particle Transformation &work in '...js'
-        host HostedShape hosted
+        host HostedInterface hosted
 
       recipe
         Transformation

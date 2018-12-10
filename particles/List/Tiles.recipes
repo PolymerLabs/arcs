@@ -6,13 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-shape HostedTileShape
+interface HostedTileInterface
   in ~any *
   consume tile
 
 particle TileMultiplexer in 'source/Multiplexer.js'
   in [~any] list
-  host HostedTileShape hostedParticle
+  host HostedTileInterface hostedParticle
   consume set of tile
 
 //recipe TileMultiplexer

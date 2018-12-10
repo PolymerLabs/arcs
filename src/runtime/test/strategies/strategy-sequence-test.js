@@ -148,12 +148,12 @@ describe('A Strategy Sequence', function() {
         in [Thing] choices
         consume annotation
   
-      shape HostedParticleShape
+      interface HostedParticleInterface
         in ~a *
         consume
   
       particle Multiplexer in 'source/Multiplexer.js'
-        host HostedParticleShape hostedParticle
+        host HostedParticleInterface hostedParticle
         in [~a] list
         consume set of annotation
   
@@ -169,13 +169,13 @@ describe('A Strategy Sequence', function() {
         in [Product] population
         out [Product] recommendations
   
-      shape HostedParticleShape2
+      interface HostedParticleInterface2
         in ~a *
         in [~a] *
         consume
         
       particle Multiplexer2 in 'source/Multiplexer.js'
-        host HostedParticleShape2 hostedParticle
+        host HostedParticleInterface2 hostedParticle
         in [~a] list
         in [~a] others
         consume set of annotation

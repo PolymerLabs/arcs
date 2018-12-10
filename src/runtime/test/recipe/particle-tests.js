@@ -14,11 +14,11 @@ import {assert} from '../chai-web.js';
 describe('Recipe Particle', function() {
   it('cloning maints type variable mapping', async () => {
     const manifest = await Manifest.parse(`
-      shape HostedShape
+      interface HostedInterface
         in ~a *
 
       particle Multiplexer
-        host HostedShape hostedParticle
+        host HostedInterface hostedParticle
         in [~a] list
 
       recipe
@@ -32,9 +32,9 @@ describe('Recipe Particle', function() {
       const [recipeParticle] = recipe.particles;
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const shapeVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
+      const ifaceVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
       const listUnpackedVariable = listConn.type.collectionType;
-      assert.strictEqual(shapeVariable.variable, listUnpackedVariable.variable);
+      assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
 
     recipe = recipe.clone();
@@ -42,9 +42,9 @@ describe('Recipe Particle', function() {
       const recipeParticle = recipe.particles[0];
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const shapeVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
+      const ifaceVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
       const listUnpackedVariable = listConn.type.collectionType;
-      assert.strictEqual(shapeVariable.variable, listUnpackedVariable.variable);
+      assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });
 });

@@ -16,12 +16,12 @@ particle TestParticle in 'test-particle.js'
   out Bar bar
   description `test particle`
 
-shape TestShape
+interface TestInterface
   in Foo foo
   out Bar bar
 
 particle OuterParticle in 'outer-particle.js'
-  host TestShape particle0
+  host TestInterface particle0
   in Foo input
   out Bar output
 

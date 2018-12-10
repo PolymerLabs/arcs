@@ -119,10 +119,10 @@ describe('CoalesceRecipes', function() {
           must provide foo
             handle thing
 
-      shape HostedShape
+      interface HostedInterface
         in ~a *
       particle P2
-        host HostedShape hostedParticle
+        host HostedInterface hostedParticle
         in Thing thing
         consume foo
 

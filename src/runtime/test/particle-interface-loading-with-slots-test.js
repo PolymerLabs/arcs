@@ -16,7 +16,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 
-describe('particle-shape-loading-with-slots', function() {
+describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});

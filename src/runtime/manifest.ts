@@ -112,8 +112,7 @@ export class Manifest {
   private _particles: {[index: string]: ParticleSpec} = {};
   private _schemas: {[index: string]: Schema} = {};
   private _stores = <StorageProviderBase[]>[];
-  // TODO: rename _shapes when 'shape' isn't used as a keyword in manifests
-  private _shapes = <InterfaceInfo[]>[];
+  private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<StorageProviderBase, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
@@ -176,8 +175,8 @@ export class Manifest {
   get allStores() {
     return [...this._findAll(manifest => manifest._stores)];
   }
-  get shapes() {
-    return this._shapes;
+  get interfaces() {
+    return this._interfaces;
   }
   get meta() {
     return this._meta;
@@ -239,9 +238,9 @@ export class Manifest {
     if (schema) {
       return new EntityType(schema);
     }
-    const shape = this.findShapeByName(name);
-    if (shape) {
-      return new InterfaceType(shape);
+    const iface = this.findInterfaceByName(name);
+    if (iface) {
+      return new InterfaceType(iface);
     }
     return null;
   }
@@ -294,8 +293,8 @@ export class Manifest {
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
-  findShapeByName(name) {
-    return this._find(manifest => manifest._shapes.find(shape => shape.name === name));
+  findInterfaceByName(name) {
+    return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
   findRecipesByVerb(verb) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
@@ -431,7 +430,7 @@ ${e.message}
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => this._processResource(manifest, item));
       await processItems('schema', item => this._processSchema(manifest, item));
-      await processItems('shape', item => this._processShape(manifest, item));
+      await processItems('interface', item => this._processInterface(manifest, item));
       await processItems('particle', item => this._processParticle(manifest, item, loader));
       await processItems('store', item => this._processStore(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
@@ -520,10 +519,10 @@ ${e.message}
           }
           if (resolved.schema) {
             node.model = new EntityType(resolved.schema);
-          } else if (resolved.shape) {
-            node.model = new InterfaceType(resolved.shape);
+          } else if (resolved.iface) {
+            node.model = new InterfaceType(resolved.iface);
           } else {
-            throw new Error('Expected {shape} or {schema}');
+            throw new Error('Expected {iface} or {schema}');
           }
           return;
         }
@@ -634,9 +633,9 @@ ${e.message}
     manifest._particles[particleItem.name] = particleSpec;
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
-  static _processShape(manifest, shapeItem) {
+  static _processInterface(manifest, interfaceItem) {
     const handles = [];
-    for (const arg of shapeItem.args) {
+    for (const arg of interfaceItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
       if (arg.name !== '*') {
         handle.name = arg.name;
@@ -647,7 +646,7 @@ ${e.message}
       handles.push(handle);
     }
     const slots = [];
-    for (const slotItem of shapeItem.slots) {
+    for (const slotItem of interfaceItem.slots) {
       slots.push({
         direction: slotItem.direction,
         name: slotItem.name,
@@ -655,9 +654,9 @@ ${e.message}
         isSet: slotItem.isSet
       });
     }
-    // TODO: move shape to recipe/ and add shape builder?
-    const shape = new InterfaceInfo(shapeItem.name, handles, slots);
-    manifest._shapes.push(shape);
+    // TODO: move interface to recipe/ and add interface builder?
+    const ifaceInfo = new InterfaceInfo(interfaceItem.name, handles, slots);
+    manifest._interfaces.push(ifaceInfo);
   }
   static async _processRecipe(manifest, recipeItem, loader) {
     // TODO: annotate other things too
@@ -910,7 +909,7 @@ ${e.message}
           if (!targetHandle) {
             throw new ManifestError(
                 connectionItem.target.location,
-                `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
+                `Hosted particle '${hostedParticle.name}' does not match interface '${connection.name}'`);
           }
         }
 
@@ -991,9 +990,9 @@ ${e.message}
     if (schema) {
       return {schema};
     }
-    const shape = this.findShapeByName(name);
-    if (shape) {
-      return {shape};
+    const iface = this.findInterfaceByName(name);
+    if (iface) {
+      return {iface};
     }
     return null;
   }

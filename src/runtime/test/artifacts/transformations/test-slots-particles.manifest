@@ -14,12 +14,12 @@ particle SingleSlotParticle in 'test-single-slot-particle.js'
   consume annotation
   description `test slot particle0`
 
-shape HostedParticleShape
+interface HostedParticleInterface
   in Foo foo
   consume annotation
 
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
-  host HostedParticleShape particle0
+  host HostedParticleInterface particle0
   in [Foo] foos
   consume set of annotationsSet
   description `outer test slot particle0`

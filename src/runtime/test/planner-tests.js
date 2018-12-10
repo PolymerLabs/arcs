@@ -459,12 +459,12 @@ describe('Type variable resolution', function() {
 
   it('transformation particles type variable resolution', async () => {
     const particleSpecs = `
-shape HostedShape
+interface HostedInterface
   in ~a *
 particle P1
   in Thing1 input
 particle Muxer in 'Muxer.js'
-  host HostedShape hostedParticle
+  host HostedInterface hostedParticle
   in [~a] list
 `;
 
@@ -818,13 +818,13 @@ describe('Automatic resolution', function() {
           accountTransactions = accountTransactions
       store TransationList of [Transaction] 'myTransactions' in './src/runtime/test/artifacts/Things/empty.json'
 
-      shape HostedShape
+      interface HostedInterface
         in ~a *
       particle ShowTransation
         in Transaction transaction
 
       particle ItemMultiplexer
-        host HostedShape hostedParticle
+        host HostedInterface hostedParticle
         in [~a] list
 
       particle List

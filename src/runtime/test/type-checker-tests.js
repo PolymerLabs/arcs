@@ -213,14 +213,14 @@ describe('TypeChecker', () => {
 
   it('correctly applies then resolves a one-sided Entity constraint', async () => {
     const manifest = await Manifest.parse(`
-      shape Shape
+      interface Interface
         in ~a item
 
       particle Concrete
         in Product {} item
 
       particle Transformation
-        host Shape particle0
+        host Interface particle0
         in [~a] collection
 
       recipe

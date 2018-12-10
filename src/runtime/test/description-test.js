@@ -648,10 +648,10 @@ recipe
   tests.forEach((test) => {
     it('capitalizes when some particles do not have descriptions ' + test.name, async () => {
       const manifest = (await Manifest.parse(`
-shape DummyShape
+interface DummyInterface
 particle NoDescription
 particle NoDescMuxer
-  host DummyShape hostedParticle
+  host DummyInterface hostedParticle
   consume root
     provide myslot
   description \`\${hostedParticle} description\`

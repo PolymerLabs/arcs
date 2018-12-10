@@ -6,14 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-shape HostedParticleShape
+interface HostedParticleInterface
   in ~a *
   consume item
 
 // row lists
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
-  host HostedParticleShape hostedParticle
+  host HostedParticleInterface hostedParticle
   in [~a] list
   consume set of item
 
@@ -46,12 +46,12 @@ particle SelectableList in 'source/List.js'
 
 // tile lists
 
-shape HostedTileParticleShape
+interface HostedTileParticleInterface
   in ~a *
   consume tile
 
 particle TileMultiplexer in 'source/Multiplexer.js'
-  host HostedTileParticleShape hostedParticle
+  host HostedTileParticleInterface hostedParticle
   in [~a] list
   consume set of tile
 

@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-shape HostedAnnotationShape
+interface HostedAnnotationInterface
   in ~any *
   inout ~anyOther *
   consume annotation
@@ -14,19 +14,19 @@ shape HostedAnnotationShape
 particle AnnotationMultiplexer in 'source/Multiplexer.js'
   in [~any] list
   inout ~anyOther annotation
-  host HostedAnnotationShape hostedParticle
+  host HostedAnnotationInterface hostedParticle
   consume set of annotation
 
-shape HostedSimpleAnnotationShape
+interface HostedSimpleAnnotationInterface
   in ~any *
   consume annotation
 
 particle SimpleAnnotationMultiplexer in 'source/Multiplexer.js'
   in [~any] list
-  host HostedSimpleAnnotationShape hostedParticle
+  host HostedSimpleAnnotationInterface hostedParticle
   consume set of annotation
 
-shape HostedCombinedAnnotationShape
+interface HostedCombinedAnnotationInterface
   in ~any *
   in [~anyOther] *
   consume annotation
@@ -34,7 +34,7 @@ shape HostedCombinedAnnotationShape
 particle CombinedAnnotationMultiplexer in 'source/Multiplexer.js'
   in [~any] list
   in [~anyOther] choices
-  host HostedCombinedAnnotationShape hostedParticle
+  host HostedCombinedAnnotationInterface hostedParticle
   consume set of annotation
 
 //recipe AnnotationMultiplexer

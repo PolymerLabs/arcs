@@ -47,7 +47,7 @@ particle WritePosts in 'source/WritePosts.js'
   description `write posts`
 
 particle EditPost in 'source/EditPost.js'
-  host HostedParticleShape renderParticle
+  host HostedParticleInterface renderParticle
   inout Post post
   inout [Post] posts
   in Person user

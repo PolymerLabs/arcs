@@ -42,11 +42,11 @@ describe('FindHostedParticle', function() {
       particle AlsoDoesNotMatch
         in OtherThing thingy
 
-      shape HostedShape
+      interface HostedInterface
         in Thing *
 
       particle Host
-        host HostedShape hosted
+        host HostedInterface hosted
 
       recipe
         Host
@@ -61,7 +61,7 @@ describe('FindHostedParticle', function() {
     assert.isDefined(handle.id);
     assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
-    assert.equal(handle.type.interfaceInfo.name, 'HostedShape');
+    assert.equal(handle.type.interfaceInfo.name, 'HostedInterface');
   });
   it(`respects type system constraints`, async () => {
     const results = await runStrategy(`
@@ -77,11 +77,11 @@ describe('FindHostedParticle', function() {
       particle Upper
         out Gibson output
 
-      shape HostedShape
+      interface HostedInterface
         inout ~a *
         consume foo
       particle Host
-        host HostedShape hosted
+        host HostedInterface hosted
         inout ~a item
 
       recipe
@@ -132,11 +132,11 @@ describe('FindHostedParticle', function() {
       particle Matches
         in ~a thingy
 
-      shape HostedShape
+      interface HostedInterface
         in ~a *
 
       particle Host
-        host HostedShape hosted
+        host HostedInterface hosted
 
       recipe
         Host

@@ -212,14 +212,14 @@ describe('recipe', function() {
 
   it('generates the same hash on manifest re-parse for immediates', async () => {
     const manifestContent = `
-      shape HostedParticleShape
+      interface HostedParticleInterface
         in ~a *
         consume
 
       schema Foo
 
       particle A in 'A.js'
-        host HostedParticleShape hostedParticle
+        host HostedParticleInterface hostedParticle
         consume set of annotation
 
       particle B in 'B.js'
