@@ -16,7 +16,7 @@ import {PlanningResult} from '../../plan/planning-result.js';
 import {Relevance} from '../../relevance.js';
 
 // Run test suite for each storageKeyBase
-['volatile://', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, function() {
     it('consumes', async function() {
       const helper = await TestHelper.createAndPlan({

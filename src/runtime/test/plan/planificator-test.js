@@ -29,7 +29,7 @@ describe('planificator', function() {
     verifySuggestion();
     verifySuggestion('volatile://!123:demo^^');
     verifySuggestion('firebase://arcs-test.firebaseio.com/123-456-7890-abcdef/1_2_3');
-    verifySuggestion('pouchdb://local/testdb');
+    verifySuggestion('pouchdb://local/testdb/');
 
     assert.isTrue(Planificator._constructSearchKey(arc, 'testuser').toString().length > 0);
   });
