@@ -10,24 +10,54 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Const} from '../configuration/constants.js';
 import {SyntheticStores} from './synthetic-stores.js';
-// TODO(sjmiles): breaks cross-platform
-import {logFactory} from '../../build/platform/log-node.js';
+import {logFactory} from '../lib/log-factory.js';
 
 const log = logFactory('UserArcs', '#4f0433');
 const warn = logFactory('UserArcs', '#4f0433', 'warn');
 
 export class UserArcs {
-  constructor(env, storage, userid, callback) {
+  constructor(env, storage, userid) {
+    this.values = [];
+    this.listeners = [];
     this.contextWait = 3000;
     SyntheticStores.init(env);
-    this.updateArcsStore(storage, userid, callback);
+    this.updateArcsStore(storage, userid);
   }
-  async updateArcsStore(storage, userid, cb) {
+  async subscribe(listener) {
+    if (this.listeners.indexOf(listener) < 0) {
+      await this.publishInitialChanges([listener]);
+      this.listeners.push(listener);
+      this.publish(this.values, [listener]);
+    }
+  }
+  publish(changes, listeners) {
+    // convert {add:[], remove:[]} to [{add, remove}]
+    if (changes.add) {
+      changes.add.forEach(add => this._publish({add: add.value}, listeners));
+    }
+    if (changes.remove) {
+      changes.remove.forEach(remove => this._publish({remove: remove.value}, listeners));
+    }
+  }
+  async publishInitialChanges(listeners) {
+    const changes = {add: []};
+    if (this.store) {
+      const values = await this.store.toList();
+      values.forEach(value => this._publish({add: value}, listeners));
+    }
+    return changes;
+  }
+  _publish(change, listeners) {
+    if (!change.add || !change.add.rawData.deleted) {
+      listeners.forEach(listener => listener(change));
+    }
+  }
+  async updateArcsStore(storage, userid) {
     // attempt to marshal arcs-store for this user
-    const arcsStore = await this.fetchArcsStore(storage, userid);
-    if (arcsStore) {
+    this.store = await this.fetchArcsStore(storage, userid);
+    if (this.store) {
       // TODO(sjmiles): plop arcsStore into state early for updateUserContext, usage is weird
-      this.foundArcsStore(arcsStore, cb);
+      this.foundArcsStore(this.store);
     } else {
       // retry after a bit
       setTimeout(() => this.updateArcsStore(storage, userid), this.contextWait);
@@ -42,16 +72,12 @@ export class UserArcs {
     }
     warn(`failed to marshal arcsStore for [${userid}][${storage}]`);
   }
-  async foundArcsStore(store, cb) {
+  async foundArcsStore(store) {
     log('foundArcsStore', Boolean(store));
-    const values = await store.toList();
-    store.on('change', info => this.arcsStoreChange(info, cb), this);
-    const info = {add: []};
-    values.forEach(value => info.add.push({value}));
-    this.arcsStoreChange(info, cb);
+    await this.publishInitialChanges(this.listeners);
+    store.on('change', changes => this.arcsStoreChange(changes), this);
   }
-  arcsStoreChange(info, cb) {
-    log('arsStoreChange');
-    cb && cb(info);
+  arcsStoreChange(changes) {
+    this.publish(changes, this.listeners);
   }
 }
