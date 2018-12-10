@@ -15,7 +15,6 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer} from './plan-producer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
-import {Schema} from '../schema.js';
 import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase} from "../storage/storage-provider-base.js";
 import {Type, EntityType} from '../type.js';
@@ -162,8 +161,7 @@ export class Planificator {
       ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/suggestions/$1`)
       : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/$1`);
 
-    const schema = new Schema({names: ['Suggestions'], fields: {current: 'Object'}});
-    const type = new EntityType(schema);
+    const type = EntityType.make(['Suggestions'], {current: 'Object'});
     return Planificator._initStore(arc, 'suggestions-id', type, storageKey);
   }
 
@@ -181,9 +179,7 @@ export class Planificator {
       ? location.replace(/\/arcs\/([a-zA-Z0-9_\-]+)$/, `/users/${userid}/search`)
       : location.replace(/\/([a-zA-Z0-9_\-]+)$/, `/suggestions/${userid}/search`);
 
-    const schema = new Schema({names: ['Search'], fields: {current: 'Object'}});
-    const type = new EntityType(schema);
-
+    const type = EntityType.make(['Search'], {current: 'Object'});
     return Planificator._initStore(arc, 'search-id', type, storageKey);
   }
 

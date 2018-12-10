@@ -16,17 +16,17 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 
 export class Schema {
-  // tslint:disable-next-line: no-any
-  private readonly _model: {names: string[], fields: {[index: string]: any}};
+  readonly names: string[];
+  readonly fields: {};
   description: {[index: string]: string};
   isAlias: boolean;
 
-  constructor(model) {
-    assert(model.fields);
-    this._model = model;
+  constructor(names: string[], fields: {}, description?) {
+    this.names = names;
+    this.fields = fields;
     this.description = {};
-    if (model.description) {
-      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
+    if (description) {
+      description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
   }
 
@@ -42,11 +42,11 @@ export class Schema {
         return field;
       }
     };
-    for (const key of Object.keys(this._model.fields)) {
-      fields[key] = updateField(this._model.fields[key]);
+    for (const key of Object.keys(this.fields)) {
+      fields[key] = updateField(this.fields[key]);
     } 
 
-    return {names: this._model.names, fields, description: this.description};
+    return {names: this.names, fields, description: this.description};
   }
 
   static fromLiteral(data = {fields: {}, names: [], description: {}}) {
@@ -65,17 +65,9 @@ export class Schema {
       fields[key] = updateField(data.fields[key]);
     }
 
-    const result = new Schema({names: data.names, fields});
+    const result = new Schema(data.names, fields);
     result.description = data.description || {};
     return result;
-  }
-
-  get fields() {
-    return this._model.fields;
-  }
-
-  get names() {
-    return this._model.names;
   }
 
   // TODO: This should only be an ident used in manifest parsing.
@@ -124,10 +116,7 @@ export class Schema {
       }
     }
 
-    return new Schema({
-      names,
-      fields,
-    });
+    return new Schema(names, fields);
   }
 
   static intersect(schema1: Schema, schema2: Schema): Schema {
@@ -141,10 +130,7 @@ export class Schema {
       }
     }
 
-    return new Schema({
-      names,
-      fields,
-    });
+    return new Schema(names, fields);
   }
 
   equals(otherSchema: Schema): boolean {
@@ -371,10 +357,7 @@ export class Schema {
       }
 
       static get key() {
-        return {
-          tag: 'entity',
-          schema,
-        };
+        return {tag: 'entity', schema};
       }
     };
 

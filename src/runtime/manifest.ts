@@ -487,10 +487,7 @@ ${e.message}
             }
             fields[name] = type;
           }
-          let schema = new Schema({
-            names,
-            fields,
-          });
+          let schema = new Schema(names, fields);
           for (const alias of aliases) {
             schema = Schema.union(alias, schema);
             if (!schema) {
@@ -502,7 +499,7 @@ ${e.message}
         }
         case 'variable-type': {
           const constraint = node.constraint && node.constraint.model;
-          node.model = new TypeVariable(new TypeVariableInfo(node.name, constraint, null));
+          node.model = TypeVariable.make(node.name, constraint, null);
           return;
         }
         case 'slot-type': {
@@ -511,9 +508,7 @@ ${e.message}
             const field = node.fields[fieldIndex];
             fields[field.name] = field.value;
           }
-          const slotInfo = {formFactor: fields['formFactor'],
-                            handle: fields['handle']};
-          node.model = new SlotType(new SlotInfo(slotInfo));
+          node.model = SlotType.make(fields['formFactor'], fields['handle']);
           return;
         }
         case 'type-name': {
@@ -597,8 +592,7 @@ ${e.message}
           schemaItem.location,
           `Schema defined without name or alias`);
     }
-    const model = {names, fields, description};
-    const schema = new Schema(model);
+    const schema = new Schema(names, fields, description);
     if (schemaItem.alias) {
       schema.isAlias = true;
     }

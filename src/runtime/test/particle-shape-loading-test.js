@@ -66,9 +66,7 @@ describe('particle-interface-loading', function() {
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
 
-    const iface = new InterfaceInfo('Test', [{type: fooType}, {type: barType}], []);
-
-    const ifaceType = new InterfaceType(iface);
+    const ifaceType = InterfaceType.make('Test', [{type: fooType}, {type: barType}], []);
 
     const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',

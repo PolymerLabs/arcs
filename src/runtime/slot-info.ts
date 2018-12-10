@@ -10,7 +10,7 @@ export class SlotInfo {
   formFactor: string;
   handle: string;
 
-  constructor({formFactor, handle}: {formFactor: string, handle: string}) {
+  constructor(formFactor: string, handle: string) {
     this.formFactor = formFactor;
     this.handle = handle;
   }
@@ -20,6 +20,6 @@ export class SlotInfo {
   }
 
   static fromLiteral(data) {
-    return new SlotInfo(data);
+    return new SlotInfo(data.formFactor, data.handle);
   }
 }

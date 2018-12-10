@@ -13,7 +13,6 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../handle.js';
-import {InterfaceInfo} from '../interface-info.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
@@ -21,16 +20,16 @@ import {Schema} from '../schema.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 
-const loader = new Loader();
-
-const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock'});
-
 describe('Handle', function() {
 
   let Bar;
+  let loader;
   before(() => {
-    Bar = new Schema({names: ['Bar'], fields: {id: 'Number', value: 'Text'}}).entityClass();
+    Bar = new Schema(['Bar'], {id: 'Number', value: 'Text'}).entityClass();
+    loader = new Loader();
   });
+
+  const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock'});
 
   it('clear singleton store', async () => {
     const slotComposer = createSlotComposer();
@@ -136,13 +135,13 @@ describe('Handle', function() {
     const arc = new Arc({slotComposer, id: 'test'});
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
-    const iface = new InterfaceInfo('Test', [
+    const iface = InterfaceType.make('Test', [
       {type: new EntityType(manifest.schemas.Foo)},
       {type: new EntityType(manifest.schemas.Bar)}
     ], []);
-    assert(iface.particleMatches(manifest.particles[0]));
+    assert(iface.interfaceInfo.particleMatches(manifest.particles[0]));
 
-    const ifaceStore = await arc.createStore(new InterfaceType(iface));
+    const ifaceStore = await arc.createStore(iface);
     await ifaceStore.set(manifest.particles[0]);
     assert.equal(await ifaceStore.get(), manifest.particles[0]);
   });
