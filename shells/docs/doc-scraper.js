@@ -14,12 +14,13 @@ class DocScraper {
       ;
   }
   scrape(url) {
+    const name = url.split('/').pop().split('.').shift();
     return fetch(url)
       .then(response => response.text())
-      .then(text => this._processText(text))
+      .then(text => this._processText(text, name))
       ;
   }
-  _processText(text) {
+  _processText(text, name) {
     const top = {};
     const classes = [];
     let current = top;
@@ -40,7 +41,7 @@ class DocScraper {
     const html_matches = text.match(/<!--([\s\S]*?)-->/g) || [];
     const matches = html_matches.concat(js_matches);
 
-    matches.forEach(function(m) {
+    const code = matches.map(function(m) {
 
       let lines = m.replace(/\r\n/g, '\n').replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!--|^s*-->/gm, '').split('\n');
 
@@ -96,9 +97,10 @@ class DocScraper {
             break;
         }
       });
+      return code;
     });
     if (classes.length === 0) {
-      classes.push({name: 'no docs', description: '**Undocumented**'});
+      classes.push({name: name || 'no docs', description: `No markup found.<br><br>${code.join('<br><br>')}`});
     }
     return classes;
   }

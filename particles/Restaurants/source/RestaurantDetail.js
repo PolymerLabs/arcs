@@ -58,13 +58,6 @@ defineParticle(({DomParticle, html}) => {
     left: 0;
     background: rgba(255, 255,255, 0) linear-gradient(to bottom, rgba(255,255, 255, 0.4) 0px, rgba(255, 255, 255, 0) 100%) repeat 0 0;
   }
-  .close-button {
-    padding: 16px;
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 10;
-  }
   [rating] {
     font-size: 56px;
     line-height: 56px;
@@ -118,8 +111,8 @@ defineParticle(({DomParticle, html}) => {
     margin-bottom: 18px;
   }
   [control-panel] {
-    box-shadow: 0 0 8px 0px rgba(0,0,0,.15);
-    border-radius: 8px;
+    margin: -16px;
+    margin-bottom: -8px;
   }
 </style>
 
@@ -138,8 +131,6 @@ defineParticle(({DomParticle, html}) => {
       <div detail-content>{{phone}}</div>
       <div detail-caption>Website</div>
       <div detail-content><a href="{{link}}" target="_blank">{{website}}</a></div>
-      <div detail-caption>Reviews</div>
-      <div reviews unsafe-html="{{reviews}}"></div>
     </div>
     <div row1>
       <div rating>{{rating}}</div>
@@ -148,8 +139,9 @@ defineParticle(({DomParticle, html}) => {
       </div>
     </div>
   </div>
-
   <div control-panel slotid="action"></div>
+  <div detail-caption>Reviews</div>
+  <div reviews unsafe-html="{{reviews}}"></div>
 </div>
     `;
 

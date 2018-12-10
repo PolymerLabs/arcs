@@ -64,7 +64,7 @@ class SyntheticKey extends KeyBase {
     assert(false, 'childKeyForHandle not supported for synthetic keys');
     return null;
   }
-  
+
   childKeyForArcInfo(): SyntheticKey {
     assert(false, 'childKeyForArcInfo not supported for synthetic keys');
     return null;
@@ -122,14 +122,14 @@ class SyntheticCollection extends StorageProviderBase {
     super(type, undefined, id, key);
     this.targetStore = targetStore;
     this.storageFactory = storageFactory;
-
     let resolveInitialized;
     this.initialized = new Promise(resolve => resolveInitialized = resolve);
-    targetStore.get().then(async data => {
+    const process = async data => {
       await this.process(data, false);
       resolveInitialized();
       targetStore.on('change', details => this.process(details.data, true), this);
-    });
+    };
+    targetStore.get().then(data => process(data));
   }
 
   private async process(data, fireEvent) {

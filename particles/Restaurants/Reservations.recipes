@@ -16,24 +16,50 @@ particle ReservationForm in 'source/ReservationForm.js'
   inout Event event
   out [Description] descriptions
   consume action
+    provide annotation
 
 particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   in Restaurant restaurant
   inout Event event
   consume annotation
 
-//recipe Reservations
+//recipe ReservationsInline
 //  use as restaurants
-//  use #selected as restaurant
 //  create #event as event
-//  create as descriptions
-//  ReservationForm
-//    restaurant = restaurant
-//    event = event
-//    descriptions = descriptions
 //  AnnotationMultiplexer
 //    list = restaurants
 //    annotation = event
 //    hostedParticle = ReservationAnnotation
-//  description `make reservations`
+//  description `[inline] make reservations`
+
+recipe Reservations
+  use as restaurants
+  use #selected as restaurant
+  create #event as event
+  create as descriptions
+  slot 'rootslotid-toproot' as toproot
+  slot #detailAction as detailAction
+  // top-of-frame event editor
+  ReservationForm
+    restaurant = restaurant
+    event = event
+    descriptions = descriptions
+    consume action as toproot
+  // per-restaurant tile scheduler
+  AnnotationMultiplexer
+    list = restaurants
+    annotation = event
+    hostedParticle = ReservationAnnotation
+  // event editor (+scheduler) on restaurant detail
+  ReservationForm
+    restaurant = restaurant
+    event = event
+    descriptions = descriptions
+    consume action as detailAction
+      provide annotation as detailAnnotation
+  ReservationAnnotation
+    restaurant = restaurant
+    event = event
+    consume annotation as detailAnnotation
+  description `make reservations`
 

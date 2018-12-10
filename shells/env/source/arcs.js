@@ -20,22 +20,31 @@ import {KeyManager} from '../../../build/runtime/keymgmt/manager.js';
 import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {firebase} from '../../../build/runtime/firebase.js';
 import {BrowserLoader} from './browser-loader.js';
+import {XenStateMixin} from '../../../modalities/dom/components/xen/xen-state.js';
+import {Template} from '../../../modalities/dom/components/xen/xen-template.js';
+import {Debug, logFactory} from '../../../modalities/dom/components/xen/xen-debug.js';
 
 const Arcs = {
   version: '0.6',
   Arc,
-  ArcType,
   Manifest,
   Planificator,
   SlotComposer,
   SlotDomConsumer,
   Type,
+  ArcType,
   BrowserLoader,
   StorageProviderFactory,
   ParticleExecutionContext,
   RecipeResolver,
   KeyManager,
-  firebase
+  firebase,
+  Xen: {
+    StateMixin: XenStateMixin,
+    Template,
+    Debug,
+    logFactory
+  }
 };
 
 // WebPack doesn't support `export` so make this object global

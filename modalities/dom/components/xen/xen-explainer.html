@@ -103,12 +103,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script type="module">
-    import Xen from './xen-template.js';
+    import {Template} from './xen-template.js';
 
     // `stamp` produces a dom subtree from the input template and returns
     // an agent whose methods operate on that subtree
     // methods on the agent can be chained (each one returns the agent)
-    const agent = Xen.stamp(template_one)
+    const agent = Template.stamp(template_one)
       // specify an object that contains event handlers
       .events({
         onClick: e => alert('onClick!')

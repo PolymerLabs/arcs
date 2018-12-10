@@ -27,6 +27,7 @@ export class ArcHost {
     this.arc && this.arc.dispose();
     this.arc = null;
   }
+  // config = {id, [serialization], [manifest]}
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;
@@ -39,7 +40,7 @@ export class ArcHost {
     if (this.pendingPlan) {
       const plan = this.pendingPlan;
       this.pendingPlan = null;
-      this.instantiatePlan(this.arc, plan);
+      await this.instantiatePlan(this.arc, plan);
     }
     return this.arc;
   }
@@ -91,7 +92,7 @@ export class ArcHost {
       error(x);
       //console.error(plan.toString());
     }
-    this.persistSerialization();
+    await this.persistSerialization();
   }
   async fetchSerialization(storage, arcid) {
     const key = `${storage}/${arcid}/arc-info`;

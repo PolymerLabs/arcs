@@ -14,6 +14,7 @@ import IconStyle from '../../../../modalities/dom/components/icons.css.js';
 const template = Xen.Template.html`
   <style>
     :host {
+      flex: 1;
       display: flex;
       flex-direction: column;
     }

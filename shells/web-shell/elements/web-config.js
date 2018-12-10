@@ -56,12 +56,11 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       arckey: params.get('arc'),
       search: params.get('search') || '',
-      storageKeyBase: params.get('plannerStorageKeyBase') || params.get('storageKeyBase') || 'volatile://',
-      debug: params.get('planificatorDebug'),
-      onlyConsumer: params.get('onlyConsumer') === 'true',
+      plannerStorage: params.get('plannerStorage') || params.get('plannerStorageKeyBase') || params.get('storageKeyBase') || 'volatile://',
+      plannerDebug: params.get('plannerDebug'),
+      plannerOnlyConsumer: params.get('plannerOnlyConsumer') || params.get('onlyConsumer') === 'true',
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),
-      //storageKeyBase: params.get('storageKeyBase'),
       //useSerialization: !params.has('legacy')
     };
   }

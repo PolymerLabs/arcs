@@ -1,6 +1,6 @@
 import {XenStateMixin} from './xen-state.js';
 import XenElementMixin from './xen-element.js';
-import XenTemplate from './xen-template.js';
+import {Template} from './xen-template.js';
 
 class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
   get template() {
@@ -22,7 +22,7 @@ class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
       // so we can append (props, state) to handler signature. All we are really altering is the delegation,
       // not the listening, maybe there could be another customization point just for that. Perhaps the default
       // listener could invoke a delegator if it exists, then fallback to original behavior.
-      this._dom = XenTemplate.stamp(this.template).events(this._listener.bind(this)).appendTo(this.host);
+      this._dom = Template.stamp(this.template).events(this._listener.bind(this)).appendTo(this.host);
     }
   }
   _listener(node, name, handler) {

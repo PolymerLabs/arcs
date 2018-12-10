@@ -99,9 +99,6 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     log(`arc spawned [${config.id}]`);
     this.fire('arc', arc);
     return arc;
-    //if (state.host.plan) {
-    //  this.fire('recipe', state.host.plan);
-    //}
   }
 }
 customElements.define('web-arc', WebArc);

@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Debug} from '../../modalities/dom/components/xen/xen-debug.js';
+import {Debug, logFactory as _logFactory} from '../../modalities/dom/components/xen/xen-debug.js';
 
 const _nopFactory = () => () => {};
-const _logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`,
-      `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 
-export const logFactory = Debug.level < 1 ? _nopFactory : _logFactory;
+// TODO(sjmiles): problem with timing Debug.level or duplicate modules?
+export const logFactory = (...args) => Debug.level < 1 ? _nopFactory() : _logFactory(...args);
+//export const logFactory = _logFactory;

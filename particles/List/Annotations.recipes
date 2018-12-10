@@ -17,7 +17,6 @@ particle AnnotationMultiplexer in 'source/Multiplexer.js'
   host HostedAnnotationShape hostedParticle
   consume set of annotation
 
-
 shape HostedSimpleAnnotationShape
   in ~any *
   consume annotation
@@ -26,7 +25,6 @@ particle SimpleAnnotationMultiplexer in 'source/Multiplexer.js'
   in [~any] list
   host HostedSimpleAnnotationShape hostedParticle
   consume set of annotation
-
 
 shape HostedCombinedAnnotationShape
   in ~any *
@@ -38,7 +36,6 @@ particle CombinedAnnotationMultiplexer in 'source/Multiplexer.js'
   in [~anyOther] choices
   host HostedCombinedAnnotationShape hostedParticle
   consume set of annotation
-
 
 //recipe AnnotationMultiplexer
 //  use #items as list

@@ -98,6 +98,7 @@ class SimpleTabs extends HTMLElement {
   }
   _onCrumbClick(e) {
     this.tab = e.currentTarget.tab;
+    this.dispatchEvent(new CustomEvent('change', {detail: this.tab, bubbles: false}));
   }
 }
 customElements.define('simple-tabs', SimpleTabs);

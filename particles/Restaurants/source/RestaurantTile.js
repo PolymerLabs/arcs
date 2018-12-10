@@ -37,10 +37,17 @@ defineParticle(({DomParticle, html}) => {
       padding: 12px;
       box-sizing: border-box;
       color: white;
+      font-family: 'Google Sans', sans-serif;
+    }
+    model-img {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
       background-repeat: no-repeat;
       background-size: cover;
       background-position: bottom;
-      font-family: 'Google Sans', sans-serif;
     }
     [fade] {
       position: absolute;
@@ -105,7 +112,8 @@ defineParticle(({DomParticle, html}) => {
     }
   </style>
 
-  <div item xen:style="{{image}}">
+  <div item>
+    <model-img url="{{imgUrl}}"></model-img>
     <div fade></div>
     <div columns>
       <div col0>
@@ -132,8 +140,8 @@ defineParticle(({DomParticle, html}) => {
     }
     render({restaurant}) {
       return Object.assign({
-        starStyle: !restaurant.rating ? `visibility: hidden` : `width: ${Math.round(restaurant.rating / 5 * 100)}%`,
-        image: {backgroundImage: `url("${restaurant.photo}")`}
+        imgUrl: restaurant.photo,
+        starStyle: !restaurant.rating ? `visibility: hidden` : `width: ${Math.round(restaurant.rating / 5 * 100)}%`
       }, restaurant.rawData);
     }
   };

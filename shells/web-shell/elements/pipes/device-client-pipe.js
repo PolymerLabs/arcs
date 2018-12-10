@@ -52,8 +52,8 @@ const ShellApi = window.ShellApi = {
 };
 
 const template = Xen.Template.html`
-  <web-arc id="pipes" env="{{env}}" storage="{{storage}}" config="{{config}}" manifest="{{manifest}}" context="{{context}}" on-arc="onState"></web-arc>
-  <!--<bg-arc userid="{{userid}}" key="{{key}}" context="{{context}}" manifest="{{manifest}}" on-arc="_onArc"></bg-arc>-->
+  <web-arc id="pipes" env="{{env}}" storage="{{storage}}" config="{{config}}" manifest="{{manifest}}" context="{{context}}" on-arc="onArc"></web-arc>
+  <!--<bg-arc userid="{{userid}}" key="{{key}}" context="{{context}}" manifest="{{manifest}}" on-arc="onArc"></bg-arc>-->
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
@@ -69,7 +69,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     if (userid && !state.config) {
       state.config = {
         id: `${userid}-pipes`,
-        manifest: `import 'https://$artifacts/Pipes/Pipes.recipes'`
+        manifest: `import 'https://$particles/Pipes/Pipes.recipes'`
       };
     }
     if (state.arc && !state.registered) {
@@ -209,13 +209,9 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   _openLauncher() {
     // this._fire('key', 'launcher');
   }
-  _onArc(e, arc) {
-    log('got background arc', arc);
+  onArc(e, arc) {
+    this.state = {arc};
     this.fire('arc', arc);
-    // this._setState({arc});
-    // const {key} = this._state;
-    // // TODO(sjmiles): mark this arc as shared
-    // Firebase.db.child(`arcs/${key}/metadata`).update({/*description: 'Piped Data', */share: 2});
   }
 }
 customElements.define('device-client-pipe', DeviceClientPipe);

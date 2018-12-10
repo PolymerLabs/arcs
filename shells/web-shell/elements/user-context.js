@@ -23,7 +23,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
   _getInitialState() {
     return {
       // ms to wait until we think there is probably some context
-      contextWait: 800,
+      contextWait: 3000,
       // maps userid to SingleUserContext for friends
       friends: {},
       // TODO(sjmiles): workaround for missing data in `remove` records
@@ -44,36 +44,33 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     }
     if (props.storage && props.context && props.userid !== state.userid) {
       state.userid = props.userid;
-      this.awaitState('arcStore', () => this.updateArcStore(props, state));
+      this.awaitState('arcsStore', () => this.updateArcsStore(props, state));
     }
   }
-  async updateArcStore(props, state) {
+  async updateArcsStore(props, state) {
     const {storage, userid} = props;
-    const arcStore = await this.fetchArcStore(storage, userid);
-    if (arcStore) {
-      // TODO(sjmiles): plop arcStore into state early for updateUserContext, usage is weird
-      state.arcStore = arcStore;
+    const arcsStore = await this.fetchArcsStore(storage, userid);
+    if (arcsStore) {
+      // TODO(sjmiles): plop arcsStore into state early for updateUserContext, usage is weird
+      state.arcsStore = arcsStore;
       // TODO(sjmiles): props and state are suspect after await
       await this.updateUserContext(props, state);
     } else {
       // retry after a bit
       setTimeout(() => this.state = {userid: null}, state.contextWait);
     }
+    // signal when user-decorated context is `ready`
+    // TODO(sjmiles): ideally we have a better signal than a timeout
     setTimeout(() => this.fire('context', props.context), state.contextWait);
-    return arcStore;
+    return arcsStore;
   }
-  async fetchArcStore(storage, userid) {
-    const handleStore = await SyntheticStores.getStore(storage, `${userid}${Const.launcherSuffix}`);
-    if (handleStore) {
-      const handles = await handleStore.toList();
-      const handle = handles[0];
-      if (handle) {
-        const store = await SyntheticStores.getHandleStore(handle);
-        log(`marshalled arcStore for [${userid}][${storage}]`, store);
-        return store;
-      }
+  async fetchArcsStore(storage, userid) {
+    const store = await SyntheticStores.getArcsStore(storage, `${userid}${Const.launcherSuffix}`);
+    if (store) {
+      log(`marshalled arcsStore for [${userid}]`); //[${storage}]`, store);
+      return store;
     }
-    warn(`failed to marshal arcStore for [${userid}][${storage}]`);
+    warn(`failed to marshal arcsStore for [${userid}][${storage}]`);
   }
   async updateSystemUser({userid, context}) {
     const store = await context.findStoreById('SYSTEM_user');
@@ -88,13 +85,13 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
       log('installed SYSTEM_user');
     }
   }
-  async updateUserContext({storage, userid, context}, {userContext, arcStore}) {
+  async updateUserContext({storage, userid, context}, {userContext, arcsStore}) {
     await this.disposeUserContext(userContext);
     // do not operate on stale userid
     if (!this.state.userContext && userid === this.state.userid) {
       const isProfile = true;
       this.state = {
-        userContext: new SingleUserContext(storage, context, userid, arcStore, isProfile)
+        userContext: new SingleUserContext(storage, context, userid, arcsStore, isProfile)
       };
     }
   }
@@ -145,12 +142,12 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     }
   }
   async addFriend(storage, context, friends, friendId, attempts) {
-    log('trying to addFriend', friendId);
+    log(`trying to addFriend [${friendId}]`);
     if (!friends[friendId]) {
       friends[friendId] = true;
-      const arcStore = await this.fetchArcStore(storage, friendId);
-      if (arcStore) {
-        friends[friendId] = new SingleUserContext(storage, context, friendId, arcStore, false);
+      const arcsStore = await this.fetchArcsStore(storage, friendId);
+      if (arcsStore) {
+        friends[friendId] = new SingleUserContext(storage, context, friendId, arcsStore, false);
       } else {
         friends[friendId] = null;
         // retry a bit

@@ -181,7 +181,7 @@ function linkUnit() {
 
   if (link(
 `
-     
+
 `
     ) == false) {
       console.error('Empty link file did not succeed.');
@@ -207,7 +207,7 @@ ${dummySrc}
   }
 
   fs.writeFileSync(dummySrc, 'Just some nonsense');
-  
+
   if (link(
 `
 ${dummySrc}
@@ -318,10 +318,12 @@ function railroad() {
 
 async function build() {
   if (await tsc() == false) {
+    console.log('build::twsc failed');
     return false;
   }
 
   if (await link(fs.readFileSync(linklist, 'utf8')) == false) {
+    console.log('build::link failed');
     return false;
   }
 
@@ -352,7 +354,9 @@ function makeLink(src, dest) {
 }
 
 async function link(filecontents) {
-  let success = true; 
+  let srcStats;
+  let destStats;
+  let success = true;
   for (const line of filecontents.split('\n')) {
     const src = line.trim();
     // skip blank lines and lines that begin with a #. Note that only full-line

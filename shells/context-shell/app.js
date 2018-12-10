@@ -22,12 +22,12 @@ export const App = async (env, composer) => {
 };
 
 const contextContext = `
-import 'https://$artifacts/canonical.manifest'
+import 'https://$particles/canonical.manifest'
 `;
 
 const createContextArc = async (env, storage, composer, userid) => {
   const id = `${userid}/persist-context`;
-  const storesManifest = `import 'https://$artifacts/Profile/Sharing.stores'`;
+  const storesManifest = `import 'https://$particles/Profile/Sharing.stores'`;
   const storesContext = await env.parse(storesManifest);
   const storesImport = storesContext.imports[0];
   console.log(storesImport._stores.map(({id}) => id));
@@ -55,7 +55,7 @@ const reportShares = context => {
 
 const createContextMapper = async (env, storage, composer, userid) => {
   try {
-    const sharingTemplate = `https://$artifacts/Profile/Sharing.template`;
+    const sharingTemplate = `https://$particles/Profile/Sharing.template`;
     const template = await env.loader.loadResource(sharingTemplate);
     const id = `${userid}/persist-context`;
     const key = `${storage}/${id}/handles`;

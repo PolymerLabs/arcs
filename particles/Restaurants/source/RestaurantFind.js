@@ -11,6 +11,7 @@ defineParticle(({DomParticle}) => {
   const service = `https://xenonjs.com/services/http/php`;
   const placesService =`${service}/places.php`;
   const photoService = `${service}/place-photo.php`;
+  const searchRadius = 5000;
 
   const makePlacesUrl = ({loc, radius, type}) =>
     `${placesService}?location=${loc}&radius=${radius}&type=${type}`;
@@ -25,7 +26,7 @@ defineParticle(({DomParticle}) => {
       this._setState({count: -1});
       const placesUrl = makePlacesUrl({
         loc: `${location.latitude},${location.longitude}`,
-        radius: `1000`,
+        radius: `${searchRadius}`,
         type: `restaurant`
       });
       const response = await fetch(placesUrl);

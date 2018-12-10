@@ -19,7 +19,8 @@ class ArcsEnv {
     return {
       'https://$cdn/': `${root}/`,
       'https://$shell/': `${root}/shell/`,
-      'https://$artifacts/': `${root}/artifacts/`
+      'https://$particles/': `${root}/particles/`,
+      'https://$artifacts/': `${root}/particles/`, // deprecated
     };
   }
   // pecFactory construction is lazy, so loader can be configured prior

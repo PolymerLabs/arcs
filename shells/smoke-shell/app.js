@@ -1,6 +1,6 @@
 export const App = async (env, composer) => {
 
-  const manifest = await env.parse(`import 'https://$artifacts/Arcs/Login.recipe'`);
+  const manifest = await env.parse(`import 'https://$particles/Arcs/Login.recipe'`);
   console.log(`manifest [${manifest.id}]`);
 
   const recipe = manifest.findRecipesByVerb('login')[0];
@@ -11,7 +11,7 @@ export const App = async (env, composer) => {
 
   const plan = await env.resolve(arc, recipe);
   await arc.instantiate(plan);
-  
+
   console.log(`store [${arc._stores[0].id}]`);
   console.log(`\n`);
   console.log(`arc serialization`);

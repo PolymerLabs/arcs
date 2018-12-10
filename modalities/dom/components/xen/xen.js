@@ -1,4 +1,4 @@
-import Template from './xen-template.js';
+import {Template} from './xen-template.js';
 import {XenStateMixin, debounce, nob} from './xen-state.js';
 import Element from './xen-element.js';
 import Base from './xen-base.js';

@@ -14,16 +14,24 @@ const log = Xen.logFactory('ModelImg', 'blue');
 
 class ModelImg extends Xen.Base {
   static get observedAttributes() {
-    return ['src'];
+    return ['src', 'url', 'fadems'];
   }
-  _update({src}, state) {
+  _update({src, url, fadems}, state) {
+    const fade = fadems || 150;
     const img = this.img;
     if (img && !state.listener) {
       state.listener = img.addEventListener('load', e => this.onLoad(img, e));
     }
     if (img && src) {
-      img.style.cssText = `transition: opacity 300ms ease-in; opacity: 0;`;
+      img.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
       img.src = src;
+    }
+    if (url) {
+      this.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
+      Object.assign(new Image(), {src: url}).onload = () => {
+        this.style.backgroundImage = `url(${url})`;
+        this.style.opacity = 1;
+      };
     }
   }
   get img() {

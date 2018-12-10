@@ -6,6 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Restaurant.schema'
+import '../List/List.recipes'
+import '../Profile/Geolocate.recipe'
 
 particle RestaurantTile in 'source/RestaurantTile.js'
   in Restaurant restaurant
@@ -15,5 +17,5 @@ particle RestaurantTile in 'source/RestaurantTile.js'
 particle RestaurantDetail in 'source/RestaurantDetail.js'
   in Restaurant restaurant
   consume content
-    provide action
+    provide action #detailAction
 
