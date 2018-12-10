@@ -64,8 +64,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
 
   async _createPlanificator(arc, userid) {
     const storageKeyBase = ArcsUtils.getUrlParam('plannerStorageKeyBase')
-        || ArcsUtils.getUrlParam('storageKeyBase')
-        || 'volatile://';
+        || ArcsUtils.getUrlParam('storageKeyBase');
     const debug = ArcsUtils.getUrlParam('planificatorDebug');
     const onlyConsumer = ArcsUtils.getUrlParam('onlyConsumer') === 'true';
 

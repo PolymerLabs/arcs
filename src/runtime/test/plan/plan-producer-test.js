@@ -89,14 +89,14 @@ class TestPlanProducer extends PlanProducer {
 }
 
 // Run test suite for each storageKeyBase
-['volatile://', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+['volatile://^^', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan producer for ' + storageKeyBase, function() {
     async function createProducer(manifestFilename) {
       const helper = await TestHelper.createAndPlan({
         manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'
       });
       helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-      const store = await Planificator._initSuggestStore(helper.arc, {userid: 'TestUser', storageKeyBase});
+      const store = await Planificator._initSuggestStore(helper.arc, /* userid= */ 'TestUser', storageKeyBase);
       assert.isNotNull(store);
       const producer = new TestPlanProducer(helper.arc, store);
       return {helper, producer};

@@ -31,7 +31,7 @@ class VolatileKey extends KeyBase {
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
-    assert(this.toString() === key);
+    assert(this.toString() === key, `Expected ${key}, but got ${this.toString()} volatile key base.`);
   }
 
   childKeyForHandle(id): VolatileKey {
