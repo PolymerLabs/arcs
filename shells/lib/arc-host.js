@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {logFactory} from './log-factory.js';
 import {SyntheticStores} from './synthetic-stores.js';
-import {ArcType} from '../env/arcs.js';
+import {Type} from '../env/arcs.js';
 
 const log = logFactory('ArcHost', '#cade57');
 const warn = logFactory('ArcHost', '#cade57', 'warn');
