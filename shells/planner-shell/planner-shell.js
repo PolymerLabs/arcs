@@ -82,7 +82,7 @@ const visualizeContext = context => {
   console.log('stores:');
   console.log(context.allStores.map(store => store.name));
   console.log('======================================');
-}
+};
 
 // TODO(sjmiles): does this really belong to PlannerShellInterface?
 const initDevTools = async () => {
