@@ -635,15 +635,8 @@ ${e.message}
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   static _processShape(manifest, shapeItem) {
-    if (shapeItem.interface) {
-      const warning = new ManifestError(shapeItem.location, `Shape uses deprecated argument body`);
-      warning.key = 'hasShapeArgument';
-      manifest._warnings.push(warning);
-    }
-    const inHandles = shapeItem.interface ? shapeItem.interface.args : shapeItem.args;
     const handles = [];
-
-    for (const arg of inHandles) {
+    for (const arg of shapeItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
       if (arg.name !== '*') {
         handle.name = arg.name;
