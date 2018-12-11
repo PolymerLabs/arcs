@@ -53,10 +53,10 @@ export class PouchDbKey extends KeyBase {
 
   base(): string {
     const str = this.toString();
-    return str.substring(0, str.length - this.arckey().length);
+    return str.substring(0, str.length - this.arcId.length);
   }
 
-  arckey(): string {
+  get arcId(): string {
     return this.location.substring(this.location.lastIndexOf('/') + 1);
   }
 
@@ -72,12 +72,12 @@ export class PouchDbKey extends KeyBase {
     return this.buildChildKey('arc-info');
   }
 
-  childKeyForSuggestions(userid, arckey): KeyBase {
-    return this.buildChildKey(`${userid}/suggestions/${arckey}`);
+  childKeyForSuggestions(userId, arcId): KeyBase {
+    return this.buildChildKey(`${userId}/suggestions/${arcId}`);
   }
 
-  childKeyForSearch(userid): KeyBase {
-    return this.buildChildKey(`${userid}/search`);
+  childKeyForSearch(userId): KeyBase {
+    return this.buildChildKey(`${userId}/search`);
   }
 
   private buildChildKey(leaf) {

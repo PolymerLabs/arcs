@@ -21,7 +21,7 @@ export function resetVolatileStorageForTesting() {
 }
 
 class VolatileKey extends KeyBase {
-  arcId: string;
+  _arcId: string;
 
   constructor(key: string) {
     super();
@@ -35,7 +35,8 @@ class VolatileKey extends KeyBase {
   }
 
   base(): string { return 'volatile'; }
-  arckey(): string { return this.arcId; }
+  get arcId(): string { return this._arcId; }
+  set arcId(arcId: string) { this._arcId = arcId; }
 
   childKeyForHandle(id): VolatileKey {
     return new VolatileKey('volatile');
@@ -45,12 +46,12 @@ class VolatileKey extends KeyBase {
     return new VolatileKey(`${this.protocol}://${this.arcId}^^arc-info`);
   }
 
-  childKeyForSuggestions(userid, arckey): KeyBase {
-    return new VolatileKey(`${this.protocol}://${this.arcId}^^${userid}/suggestions/${arckey}`);
+  childKeyForSuggestions(userId, arcId): KeyBase {
+    return new VolatileKey(`${this.protocol}://${this.arcId}^^${userId}/suggestions/${arcId}`);
   }
 
-  childKeyForSearch(userid): KeyBase {
-    return new VolatileKey(`${this.protocol}://${this.arcId}^^${userid}/search`);
+  childKeyForSearch(userId): KeyBase {
+    return new VolatileKey(`${this.protocol}://${this.arcId}^^${userId}/search`);
   }
 
   toString() {

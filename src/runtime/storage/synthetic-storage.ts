@@ -65,8 +65,8 @@ class SyntheticKey extends KeyBase {
     return null;
   }
 
-  arckey(): string {
-    assert(false, 'arckey not supported for synthetic keys');
+  get arcId(): string {
+    assert(false, 'arcId not supported for synthetic keys');
     return null;
   }
 
@@ -80,12 +80,12 @@ class SyntheticKey extends KeyBase {
     return null;
   }
 
-  childKeyForSuggestions(userid, arckey): KeyBase {
+  childKeyForSuggestions(userId, arcId): KeyBase {
     assert(false, 'childKeyForSuggestions not supported for synthetic keys');
     return null;
   }
 
-  childKeyForSearch(userid): KeyBase {
+  childKeyForSearch(userId): KeyBase {
     assert(false, 'childKeyForSearch not supported for synthetic keys');
     return null;
   }

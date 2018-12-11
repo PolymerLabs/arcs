@@ -147,7 +147,7 @@ export class Planificator {
   private static _constructSuggestionKey(arc: Arc, userid: string, storageKeyBase?: string): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
-    return keybase.childKeyForSuggestions(userid, arcStorageKey.arckey());
+    return keybase.childKeyForSuggestions(userid, arcStorageKey.arcId);
   }
 
   private static _constructSearchKey(arc: Arc, userid: string): KeyBase {
@@ -177,7 +177,7 @@ export class Planificator {
 
   async _storeSearch(): Promise<void> {
     const values = await this.searchStore['get']() || [];
-    const arcKey = this.arc.storageProviderFactory.parseStringAsKey(this.arc.storageKey).arckey;
+    const arcKey = this.arc.storageProviderFactory.parseStringAsKey(this.arc.storageKey).arcId;
     const newValues = [];
     for (const {arc, search} of values) {
       if (arc !== arcKey) {
