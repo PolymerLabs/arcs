@@ -39,7 +39,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       log('planificator is disconnected and is disposing');
     }
     if (config && arc && !state.planificator) {
-      this.awaitState('planificator', () => this._createPlanificator(config, arc, userid));
+      this.awaitState('planificator', async () => this._createPlanificator(config, arc, userid));
     }
     if (state.planificator && search !== state.search) {
       state.search = search;

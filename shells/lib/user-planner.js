@@ -8,9 +8,6 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-//import {Const} from '../configuration/constants.js';
-//import {SyntheticStores} from './synthetic-stores.js';
-import {ArcHost} from '../lib/arc-host.js';
 import {logFactory} from '../lib/log-factory.js';
 import {Planificator} from '../env/arcs.js';
 
@@ -18,15 +15,10 @@ const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
 
 export class UserPlanner {
-  constructor(env, userid, context, storage, composer) {
+  constructor(userid, hostFactory) {
     this.runners = [];
-    this.env = env;
     this.userid = userid;
-    this.createHost(env, context, storage, composer);
-  }
-  createHost(env, context, storage, composer) {
-    this.host = new ArcHost(env, context, storage, composer);
-    log('createHost', Boolean(this.host));
+    this.hostFactory = hostFactory;
   }
   onArc({add, remove}) {
     //log(add, remove);
@@ -46,9 +38,10 @@ export class UserPlanner {
     // TODO(sjmiles): we'll need a queue to handle change notifications that arrive while we are 'await'ing
     log(`marshalArc [${key}]`);
     try {
-      const arc = await this.host.spawn({id: key});
+      const host = await this.hostFactory();
+      const arc = await host.spawn({id: key});
       const planificator = await this.createPlanificator(this.userid, key, arc);
-      this.runners[key] = {arc, planificator};
+      this.runners[key] = {host, arc, planificator};
     } catch (x) {
       warn(`marshalArc [${key}] failed: `, x);
       //

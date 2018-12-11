@@ -18,7 +18,8 @@ class ArcsEnv {
   createPathMap(root) {
     return {
       'https://$cdn/': `${root}/`,
-      'https://$shell/': `${root}/shell/`,
+      'https://$shell/': `${root}/shells/`, // deprecated
+      'https://$shells/': `${root}/shells/`,
       'https://$particles/': `${root}/particles/`,
       'https://$artifacts/': `${root}/particles/`, // deprecated
     };

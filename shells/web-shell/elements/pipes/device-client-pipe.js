@@ -12,6 +12,16 @@ import {Xen} from '../../../lib/xen.js';
 import {Type} from '../../../env/arcs.js';
 import {schemas} from './schemas.js';
 
+/*
+  Examples:
+
+  ShellApi.receiveEntity(`{"type": "search", "query": "restaurants"}`)
+  ShellApi.receiveEntity(`{"type": "tv_show", "name": "bodyguard"}`)
+  ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
+  ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
+
+*/
+
 // DeviceClient object supplied externally, otherwise a fake
 const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
@@ -53,7 +63,6 @@ const ShellApi = window.ShellApi = {
 
 const template = Xen.Template.html`
   <web-arc id="pipes" env="{{env}}" storage="{{storage}}" config="{{config}}" manifest="{{manifest}}" context="{{context}}" on-arc="onArc"></web-arc>
-  <!--<bg-arc userid="{{userid}}" key="{{key}}" context="{{context}}" manifest="{{manifest}}" on-arc="onArc"></bg-arc>-->
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');

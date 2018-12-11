@@ -16,6 +16,7 @@ import '../env/node/arcs.js';
 
 import './config.js';
 import {Env} from '../env/node/env.js';
+import {ArcHost} from '../lib/arc-host.js';
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {UserArcs} from '../lib/user-arcs.js';
 import {UserContext} from '../lib/user-context.js';
@@ -27,6 +28,12 @@ const contextManifest = `
   import 'https://$particles/canonical.manifest'
   import 'https://$particles/Profile/Sharing.recipe'
 `;
+
+const rootContainer = {
+  root: 'root-context',
+  toproot: 'toproot-context',
+  modal: 'modal-context'
+};
 
 export class PlannerShellInterface {
   /**
@@ -59,11 +66,14 @@ export class PlannerShellInterface {
     setTimeout(() => {
       // visualize context
       visualizeContext(context);
-      // create a composer compatible with node
-      const composer = new RamSlotComposer();
+      // define a host factory
+      const hostFactory = () => {
+        const composer = new RamSlotComposer({rootContainer});
+        const host = new ArcHost(env, context, storage, composer);
+        return host;
+      };
       // instantiate planner
-      //const
-      userPlanner = new UserPlanner(env, userid, context, storage, composer);
+      userPlanner = new UserPlanner(userid, hostFactory);
       // subscribe planner to changes in user arcs
       userArcs.subscribe(change => userPlanner.onArc(change));
     }, 4000);

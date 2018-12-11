@@ -28,12 +28,11 @@ defineParticle(({DomParticle, html, log}) => {
         cx-tabs {
           --cx-tab-slider-color: #ccc;
           border-bottom: 1px solid black;
-          margin-bottom: 8px;
         }
         [banner] {
           display: flex;
           align-items: center;
-          padding: 8px 16px;
+          padding-left: 16px;
         }
         [banner] icon {
           margin: -2px 0 0 -2px;
@@ -44,13 +43,6 @@ defineParticle(({DomParticle, html, log}) => {
         [slotid="recommended"] {
           --tile-width: 128px;
         }
-        /* [search] {
-          max-height: 0;
-          overflow: hidden;
-        }
-        [open] {
-          max-height: 4000px;
-        } */
         [search] {
           padding-top: 11px;
         }
