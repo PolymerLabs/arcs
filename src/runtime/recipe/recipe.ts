@@ -19,15 +19,16 @@ import {compareComparables} from './util.js';
 import {InterfaceType} from '../type.js';
 
 export class Recipe {
+  private _requires: Recipe[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
   private _slots: Slot[] = [];
   private _name: string | undefined;
   private _localName: string | undefined = undefined;
   private _cloneMap: Map<{}, {}>;
-  
+
   annotation: string | undefined = undefined;
-  
+
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
   // can handle. ConnectionConstraints should be a different record
@@ -35,8 +36,7 @@ export class Recipe {
   private _connectionConstraints = <ConnectionConstraint[]>[];
 
   // Obligations are like connection constraints in that they describe
-  
-  // required connections between particles/verbs. However, where 
+  // required connections between particles/verbs. However, where
   // connection constraints can be acted upon in order to create these
   // connections, obligations can't be. Instead, they describe requirements
   // that must be discharged before a recipe can be considered to be
@@ -62,7 +62,7 @@ export class Recipe {
     this._obligations.push(result);
     return result;
   }
-  
+
   removeObligation(obligation) {
     const idx = this._obligations.indexOf(obligation);
     assert(idx > -1);
@@ -77,6 +77,12 @@ export class Recipe {
 
   clearConnectionConstraints() {
     this._connectionConstraints = [];
+  }
+
+  newRequireSection() {
+    const require = new Recipe();
+    this._requires.push(require);
+    return require;
   }
 
   newParticle(name) {

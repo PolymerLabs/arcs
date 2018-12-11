@@ -658,12 +658,20 @@ ${e.message}
     const ifaceInfo = new InterfaceInfo(interfaceItem.name, handles, slots);
     manifest._interfaces.push(ifaceInfo);
   }
-  static async _processRecipe(manifest, recipeItem, loader) {
+  static _processRecipe(manifest, recipeItem, loader) {
     // TODO: annotate other things too
     const recipe = manifest._newRecipe(recipeItem.name);
-    recipe.annotation = recipeItem.annotation;
-    recipe.verbs = recipeItem.verbs;
+    this._buildRecipe(manifest, recipe, recipeItem);
+  }
+  static _buildRecipe(manifest, recipe, recipeItem) {
+    if (recipeItem.annotation) {
+      recipe.annotation = recipeItem.annotation;
+    }
+    if (recipeItem.verbs) {
+      recipe.verbs = recipeItem.verbs;
+    }
     const items = {
+      require: recipeItem.items.filter(item => item.kind === 'require'),
       handles: recipeItem.items.filter(item => item.kind === 'handle'),
       byHandle: new Map(),
       particles: recipeItem.items.filter(item => item.kind === 'particle'),
@@ -785,12 +793,15 @@ ${e.message}
       items.byParticle.set(particle, item);
 
       for (const slotConnectionItem of item.slotConnections) {
+        if (slotConnectionItem.direction === 'provide') {
+          throw new ManifestError(item.location, `invalid slot connection`);
+        }
         let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
         if (!slotConn) {
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
         slotConn.tags = slotConnectionItem.tags || [];
-        slotConnectionItem.providedSlots.forEach(ps => {
+        slotConnectionItem.dependentSlotConnections.forEach(ps => {
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
             if (ps.name) {
@@ -950,7 +961,7 @@ ${e.message}
                 slotConnectionItem.location,
                 `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
           }
-          slotConnectionItem.providedSlots.forEach(ps => {
+          slotConnectionItem.dependentSlotConnections.forEach(ps => {
             if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
               throw new ManifestError(
                   ps.location,
@@ -983,6 +994,13 @@ ${e.message}
 
     if (items.description && items.description.description) {
       recipe.description = items.description.description;
+    }
+
+    if (items.require) {
+      for (const item of items.require) {
+        const requireSection = recipe.newRequireSection();
+        this._buildRecipe(manifest, requireSection, item);
+      }
     }
   }
   resolveTypeName(name) {
