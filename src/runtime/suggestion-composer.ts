@@ -17,9 +17,9 @@ export class SuggestionComposer {
   private _container: HTMLElement | undefined; // eg div element.
 
   private readonly _slotComposer: SlotComposer;
-  private _suggestions: Suggestion[] = []; 
+  private _suggestions: Suggestion[] = [];
   private _suggestConsumers: SuggestDomConsumer[] = [];
-  
+
   constructor(slotComposer: SlotComposer) {
     this._modality = Modality.forName(slotComposer.modality);
     this._container = slotComposer.findContainerByName('suggestions');
@@ -39,7 +39,8 @@ export class SuggestionComposer {
 
     const sortedSuggestions = suggestions.sort(Suggestion.compare);
     for (const suggestion of sortedSuggestions) {
-      const suggestionContent = suggestion.getDescription(this._modality.name) || suggestion.descriptionText;
+      // TODO(mmandlis): use modality-appropriate description.
+      const suggestionContent = {template: suggestion.descriptionText};
       if (!suggestionContent) {
         throw new Error('No suggestion content available');
       }
