@@ -11,6 +11,7 @@
 
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
+import {RecipeIndex} from '../../recipe-index.js';
 
 export class StrategyTestHelper {
   static createTestArc(id, context, modality) {
@@ -22,6 +23,9 @@ export class StrategyTestHelper {
         getAvailableContexts: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], spec: {isSet: false}}]; })
       }
     });
+  }
+  static createTestStrategyArgs(arc, args) {
+    return Object.assign({recipeIndex: RecipeIndex.create(arc)}, args);
   }
   static run(arc, clazz, recipe) {
     return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});

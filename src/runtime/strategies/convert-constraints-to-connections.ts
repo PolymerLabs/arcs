@@ -17,7 +17,7 @@ export class ConvertConstraintsToConnections extends Strategy {
 
   constructor(arc: Arc, args?) {
     super(arc, args);
-    this.modality = arc.pec.slotComposer ? arc.pec.slotComposer.modality : null;
+    this.modality = arc.modality;
   }
 
   async generate(inputParams) {

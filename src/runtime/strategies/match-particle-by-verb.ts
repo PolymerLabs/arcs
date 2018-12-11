@@ -21,8 +21,9 @@ export class MatchParticleByVerb extends Strategy {
           return undefined;
         }
 
+        const modality = arc.modality;
         const particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
-            .filter(spec => !arc.pec.slotComposer || spec.matchModality(arc.pec.slotComposer.modality));
+            .filter(spec => !modality || spec.matchModality(modality));
 
         return particleSpecs.map(spec => {
           return (recipe, particle) => {

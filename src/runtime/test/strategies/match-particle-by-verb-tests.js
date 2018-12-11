@@ -53,7 +53,7 @@ describe('MatchParticleByVerb', function() {
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     // Apply MatchParticleByVerb strategy.
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    const mpv = new MatchParticleByVerb(arc);
+    const mpv = new MatchParticleByVerb(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await mpv.generate(inputParams);
     assert.lengthOf(results, 3);
     // Note: handle connections are not resolved yet.
@@ -70,7 +70,7 @@ describe('MatchParticleByVerb', function() {
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     const planner = new Planner();
-    planner.init(arc);
+    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
     const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, 2);

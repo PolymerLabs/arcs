@@ -13,7 +13,7 @@ import {ReplanQueue} from '../../plan/replan-queue.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor() {
-    super({}, {});
+    super({context: {allRecipes: []}}, {});
     this.produceSuggestionsCalled = 0;
   }
   produceSuggestions() {

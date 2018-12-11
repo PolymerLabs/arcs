@@ -11,13 +11,14 @@
 
 import {assert} from '../test/chai-web.js';
 import {Arc} from '../arc.js';
-import {Manifest} from '../manifest.js';
-import {Loader} from '../loader.js';
-import {Planner} from '../planner.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MessageChannel} from '../message-channel.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {InterfaceType} from '../type.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {MessageChannel} from '../message-channel.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {Planner} from '../planner.js';
+import {RecipeIndex} from '../recipe-index.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
@@ -60,6 +61,7 @@ export class TestHelper {
       context: options.context
     });
     helper.slotComposer.pec = helper.arc.pec;
+    helper.recipeIndex = RecipeIndex.create(helper.arc);
     helper.logging = options.logging;
 
     return helper;
@@ -91,7 +93,7 @@ export class TestHelper {
    */
   async makePlans(options) {
     const planner = new Planner();
-    planner.init(this.arc);
+    planner.init(this.arc, {strategyArgs: {recipeIndex: this.recipeIndex}});
     this.suggestions = await planner.suggest();
     if (options) {
       if (options.expectedNumPlans) {

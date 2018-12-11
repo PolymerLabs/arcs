@@ -21,7 +21,7 @@ async function tryCoalesceRecipes(manifestStr) {
   assert.isFalse(recipes.every(recipe => recipe.isResolved()));
   const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
   const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
-  const strategy = new CoalesceRecipes(arc);
+  const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
   return await strategy.generate(inputParams);
 }
 async function doNotCoalesceRecipes(manifestStr) {

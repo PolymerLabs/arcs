@@ -30,7 +30,7 @@ describe('SearchTokensToParticles', function() {
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    const stp = new SearchTokensToParticles(arc);
+    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     assert.deepEqual([['GalaxyFlyer', 'Rester', 'SimpleJumper'],
@@ -57,7 +57,7 @@ describe('SearchTokensToParticles', function() {
       assert(!recipe.isResolved());
     });
     const inputParams = {generated: [], terminal: recipes.map(recipe => { return {result: recipe, score: 1};})};
-    const stp = new SearchTokensToParticles(arc);
+    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
     const result = results[0].result;
@@ -82,7 +82,7 @@ describe('SearchTokensToParticles', function() {
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    const stp = new SearchTokensToParticles(arc);
+    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
     const result = results[0].result;
@@ -113,7 +113,7 @@ describe('SearchTokensToParticles', function() {
       assert.isFalse(recipe.isResolved());
     });
     const inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const stp = new SearchTokensToParticles(arc);
+    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     let result = results[0].result;

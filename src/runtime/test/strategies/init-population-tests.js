@@ -36,7 +36,8 @@ describe('InitPopulation', async () => {
     const arc = new Arc({id: 'test-plan-arc', context: manifest, loader, fileName: ''});
 
     async function scoreOfInitPopulationOutput() {
-      const results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
+      const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
+          arc, {contextual: false})).generate({generation: 0});
       assert.lengthOf(results, 1);
       return results[0].score;
     }
@@ -63,7 +64,8 @@ describe('InitPopulation', async () => {
       }
     });
 
-    const results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
+    const results = await new InitPopulation(arc, {contextual: false,
+        recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});
     assert.lengthOf(results, 1);
     assert.equal(results[0].result.toString(), recipe.toString());
   });
@@ -130,18 +132,21 @@ describe('InitPopulation', async () => {
       restaurant.mergeInto(arc.activeRecipe);
     }
 
-    let results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    let results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
+        arc, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 0, 'Initially nothing is available to eat');
 
     await openRestaurantWith('Burrito');
-    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
+        arc, {contextual: true})).generate({generation: 0});
     assert.deepEqual(results.map(r => r.result.name), [
       'FillsTortilla',
       'EatBurrito'
     ], 'After a Burrito restaurant opened, tortilla wrapped goodness can be consumed');
 
     await openRestaurantWith('Burger');
-    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
+        arc, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 4, );
     assert.deepEqual(results.map(r => r.result.name), [
       'FillsTortilla',
@@ -150,7 +155,8 @@ describe('InitPopulation', async () => {
       'EatBurger'
     ], 'Eventually both a burrito and a burger can be enjoyed');
 
-    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 1});
+    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
+        arc, {contextual: true})).generate({generation: 1});
     assert.lengthOf(results, 0, 'Food is only served once');
   });
 });
