@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   mode: 'none',
   optimization: {
-    minimize: true
+    minimize: false
   },
   devtool: 'source-map',
   entry: {
