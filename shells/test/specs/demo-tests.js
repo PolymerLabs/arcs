@@ -55,7 +55,7 @@ describe('demo', function() {
   it('gifts', async function() {
     await openNewArc(this.test.fullTitle());
     const search = `gifts`;
-    const buyGifts = `[title^="Buy gifts"]`;
+    const buyGifts = `[title^="Find out"]`;
     const item = `[particle-host="ItemMultiplexer::item"]`;
     await searchFor(search);
     await click(buyGifts);
