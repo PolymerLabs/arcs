@@ -17,8 +17,9 @@ defineParticle(({DomParticle, html, log}) => {
     padding: 4px 0;
     font-size: 14px;
   }
-  [favorite-food] * {
-    vertical-align: middle;
+  [row] {
+    display: flex;
+    align-items: center;
   }
   [icon-favorite] {
     color: #1A73E8;
@@ -33,15 +34,14 @@ defineParticle(({DomParticle, html, log}) => {
   }
 </style>
 
-<div favorite-food id="{{subId}}">
-  <div>{{items}}</div>
-  <template have-favorite-food>
-    <div>
-      <icon icon-favorite>favorite</icon>
-      <span label>They have your favorite food <b>{{food}}</b>!</span>
-    </div>
-  </template>
-</div>
+<div favorite-food id="{{subId}}">{{items}}</div>
+
+<template have-favorite-food>
+  <div row>
+    <icon icon-favorite>favorite</icon>
+    <span label>They have your favorite food <b>{{food}}</b>.</span>
+  </div>
+</template>
 
     `;
 
