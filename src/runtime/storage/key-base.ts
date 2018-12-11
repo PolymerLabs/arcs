@@ -9,7 +9,11 @@
 export abstract class KeyBase {
   protocol: string;
   location: string;
+  abstract base(): string;
+  abstract get arcId(): string;
   abstract childKeyForHandle(id): KeyBase;
   abstract childKeyForArcInfo(): KeyBase;
+  abstract childKeyForSuggestions(userId, arcId): KeyBase;
+  abstract childKeyForSearch(userId): KeyBase;
   abstract toString(): string;
 }

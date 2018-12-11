@@ -51,6 +51,15 @@ export class PouchDbKey extends KeyBase {
     }
   }
 
+  base(): string {
+    const str = this.toString();
+    return str.substring(0, str.length - this.arcId.length);
+  }
+
+  get arcId(): string {
+    return this.location.substring(this.location.lastIndexOf('/') + 1);
+  }
+
   /**
    * Creates a new child PouchDbKey relative to the current key, based on the value of id.
    */
@@ -61,6 +70,14 @@ export class PouchDbKey extends KeyBase {
 
   childKeyForArcInfo(): PouchDbKey {
     return this.buildChildKey('arc-info');
+  }
+
+  childKeyForSuggestions(userId, arcId): KeyBase {
+    return this.buildChildKey(`${userId}/suggestions/${arcId}`);
+  }
+
+  childKeyForSearch(userId): KeyBase {
+    return this.buildChildKey(`${userId}/search`);
   }
 
   private buildChildKey(leaf) {
