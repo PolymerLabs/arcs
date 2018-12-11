@@ -53,7 +53,7 @@ const steps = {
   railroad: [railroad],
   test: [peg, railroad, build, test],
   webpack: [peg, railroad, build, webpack],
-  build: [build],
+  build: [peg, build],
   watch: [watch],
   lint: [lint, tslint],
   tslint: [tslint],
@@ -162,6 +162,7 @@ function clean() {
       console.log('Removed', buildDir);
     }
   }
+  return true;
 }
 
 // Run unit tests on the parts of this tool itself.
