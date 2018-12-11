@@ -805,6 +805,9 @@ ${e.message}
           if (ps.direction === 'consume') {
             throw new ManifestError(item.location, `invalid slot connection`);
           }
+          if (ps.dependentSlotConnections.length !== 0) {
+            throw new ManifestError(item.location, `invalid slot connection`);
+          }
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
             if (ps.name) {
