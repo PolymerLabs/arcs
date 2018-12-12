@@ -77,16 +77,16 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({user, boxedShows, recentShows, boxedUserNames, friends}, state) {
-      if (recentShows) {
-        const show = recentShows[0];
-        if (show && (!state.lastShow || show.showid !== state.lastShow.showid)) {
-          this.updateDescription(show, boxedShows, boxedUserNames, friends);
-          state.lastShow = show;
-          log('selecting', show);
-          this.handles.get('selected').set(show);
-        }
-      }
+    update({user, boxedShows, /*recentShows,*/ boxedUserNames, friends}, state) {
+      // if (recentShows) {
+      //   const show = recentShows[0];
+      //   if (show && (!state.lastShow || show.showid !== state.lastShow.showid)) {
+      //     this.updateDescription(show, boxedShows, boxedUserNames, friends);
+      //     state.lastShow = show;
+      //     log('selecting', show);
+      //     this.handles.get('selected').set(show);
+      //   }
+      // }
       if (user === null) {
         user = {id: 'gomer'};
       }
