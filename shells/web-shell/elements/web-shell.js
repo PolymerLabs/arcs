@@ -118,10 +118,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.waitForStore(10);
     }
     // initialize pipes once we have arcs-store
-    if (state.store && !state.pipesInit) {
-      state.pipesInit = true;
-      this.recordPipesArc(state.userid);
-    }
+    // if (state.store && !state.pipesInit) {
+    //   state.pipesInit = true;
+    //   this.recordPipesArc(state.userid);
+    // }
     if (!state.launcherConfig && state.env && state.userid) {
       // spin up launcher arc
       this.spawnLauncher(state.userid);
@@ -270,17 +270,17 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
-  recordPipesArc(userid) {
-    const pipesKey = `${userid}-pipes`;
-    this.recordArcMeta({
-      key: pipesKey,
-      href: `?arc=${pipesKey}`,
-      description: `Pipes!`,
-      color: 'silver',
-      // pretend to be really old
-      touched: 0 //Date.now()
-    });
-  }
+  // recordPipesArc(userid) {
+  //   const pipesKey = `${userid}-pipes`;
+  //   this.recordArcMeta({
+  //     key: pipesKey,
+  //     href: `?arc=${pipesKey}`,
+  //     description: `Pipes!`,
+  //     color: 'silver',
+  //     // pretend to be really old
+  //     touched: 0 //Date.now()
+  //   });
+  // }
   recordNullArc(userid) {
     const nullKey = `${userid}-null`;
     this.recordArcMeta({

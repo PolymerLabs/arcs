@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Xen} from '../../../lib/xen.js';
 import {generateId} from '../../../../modalities/dom/components/generate-id.js';
+import {getEntityManifest} from './pipe-sinks.js';
 
 /*
   Examples:
@@ -19,10 +20,12 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
   [id =] ShellApi.receiveEntity(`{"type": "tv_show", "name": "killing eve"}`)
   ShellApi.chooseSuggestion(`Killing Eve is on BBC America at 20:00 on Sunday.`)
 
+  [id =] ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
+  ShellApi.chooseSuggestion(`Learn more about Stone Sour.`)
+
   not working (yet):
 
   ShellApi.receiveEntity(`{"type": "search", "query": "restaurants"}`)
-  ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
 
 */
@@ -57,7 +60,7 @@ const ShellApi = window.ShellApi = {
       if (ShellApi.pipe) {
         ShellApi.pipe.receiveEntity(entity);
       } else {
-        ShellApi.pendingSuperEntity = entity;
+        ShellApi.pendingEntity = entity;
       }
       return entity.id;
     } catch (x) {
@@ -76,9 +79,9 @@ const ShellApi = window.ShellApi = {
   }
 };
 
-const template = Xen.Template.html`
-  <web-arc id="pipes" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{config}}" manifest="{{manifest}}" on-arc="onArc"></web-arc>
-`;
+// const template = Xen.Template.html`
+//   <web-arc id="pipes" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{config}}" manifest="{{manifest}}" on-arc="onArc"></web-arc>
+// `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
@@ -86,17 +89,17 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'context', 'userid', 'storage', 'suggestions'];
   }
-  get template() {
-    return template;
-  }
+  // get template() {
+  //   return template;
+  // }
   _update({userid, context, suggestions}, state) {
-    if (userid && !state.config) {
-      state.config = {
-        id: `${userid}-pipes`,
-        manifest: `import 'https://$particles/Pipes/Pipes.recipes'`
-      };
-    }
-    if (state.arc && !state.registered) {
+    // if (userid && !state.config) {
+    //   state.config = {
+    //     id: `${userid}-pipes`,
+    //     manifest: `import 'https://$particles/Pipes/Pipes.recipes'`
+    //   };
+    // }
+    if (/*state.arc &&*/ !state.registered) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
@@ -136,29 +139,17 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     }
   }
   receiveEntity(entity) {
-    const manifest = `
-import 'https://$particles/Pipes/TVMazePipe.recipes'
-
-resource FindShowResource
-  start
-  [{"name": "${entity.name}"}]
-
-store FindShow of TVMazeFind 'findShow' in FindShowResource
-
-recipe CustomPipe
-  use 'findShow' as findShow
-  create #piped #tv_show as show
-  TVMazeFindShow
-    find = findShow
-    show = show
-    `;
-    const id = `${this.props.userid}-piped-${entity.id}`;
-    this.fire('spawn', {id, manifest, description: entity.name});
-    this.state = {spawned: true};
+    const manifest = getEntityManifest(entity);
+    if (manifest) {
+      const id = `${this.props.userid}-piped-${entity.id}`;
+      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
+      this.state = {spawned: true};
+    }
   }
   reset() {
     this.fire('reset');
   }
 }
-
 customElements.define('device-client-pipe', DeviceClientPipe);
+
+

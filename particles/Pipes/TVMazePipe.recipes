@@ -1,4 +1,3 @@
-import '../Profile/User.schema'
 import '../TVMaze/TVMazeShow.schema'
 import '../Common/Description.schema'
 
