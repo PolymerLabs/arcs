@@ -28,7 +28,6 @@ const error = logFactory('PlanProducer', '#ff0090', 'error');
 export class PlanProducer {
   arc: Arc;
   result: PlanningResult;
-  store: StorageProviderBase;
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
   speculator: Speculator;
@@ -41,12 +40,11 @@ export class PlanProducer {
   searchStoreCallback: ({}) => void;
   debug = false;
 
-  constructor(arc: Arc, store: StorageProviderBase, searchStore: StorageProviderBase, {debug = false} = {}) {
-    assert(arc, 'arc cannot be null');
-    assert(store, 'store cannot be null');
-    this.arc = arc;
-    this.result = new PlanningResult(arc);
-    this.store = store;
+  constructor(result: PlanningResult, searchStore: StorageProviderBase, {debug = false} = {}) {
+    assert(result, 'result cannot be null');                
+    assert(result.arc, 'arc cannot be null');
+    this.arc = result.arc;
+    this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator(this.result);
     this.searchStore = searchStore;
@@ -149,7 +147,7 @@ export class PlanProducer {
     if (suggestions) {
       log(`Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
-      
+
       await this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions);
     }
   }
@@ -199,12 +197,6 @@ export class PlanProducer {
       }
     }
     // Store suggestions to store.
-    try {
-      assert(this.store['set'], 'Unsupported setter in suggestion storage');
-      await this.store['set'](this.result.serialize());
-    } catch(e) {
-      error('Failed storing suggestions: ', e);
-      throw e;
-    }
+    await this.result.flush();
   }
 }

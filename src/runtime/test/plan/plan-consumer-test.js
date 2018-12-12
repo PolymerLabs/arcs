@@ -45,7 +45,7 @@ recipe
       helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
       const store = await Planificator._initSuggestStore(helper.arc, userid, storageKeyBase);
       assert.isNotNull(store);
-      const consumer = new PlanConsumer(helper.arc, store);
+      const consumer = new PlanConsumer(new PlanningResult(helper.arc, store));
 
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => { ++suggestionsChangeCount; };
@@ -57,9 +57,8 @@ recipe
 
       const storeResults = async (suggestions) => {
         suggestions.forEach(s => s.relevance = Relevance.create(helper.arc, s.plan));
-        const result = new PlanningResult(helper.arc);
-        result.set({suggestions});
-        await store.set(result.serialize());
+        assert.isTrue(consumer.result.set({suggestions}));
+        await consumer.result.flush();
         await new Promise(resolve => setTimeout(resolve, 100));
       };
       // Updates suggestions.

@@ -12,12 +12,13 @@ import {Recipe} from '../../recipe/recipe.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
+import {PlanningResult} from '../../plan/planning-result.js';
 import {Relevance} from '../../relevance.js';
 import {Suggestion} from '../../plan/suggestion.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
-    super(arc, store);
+    super(new PlanningResult(arc, store));
     this.produceCalledCount = 0;
     this.plannerRunOptions = [];
     this.cancelCount = 0;
@@ -63,7 +64,7 @@ class TestPlanProducer extends PlanProducer {
       if (!info.hash) {
         info = {hash: info};
       }
-      const plan = new Recipe(`recipe${info.hash}`);
+      const plan = new Recipe(`Recipe${info.hash}`);
       if (!info.options || !info.options.invisible) {
         plan.newSlot('slot0').id = 'id0';
       }
@@ -72,6 +73,7 @@ class TestPlanProducer extends PlanProducer {
       relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
       const suggestion = new Suggestion(plan, info.hash, relevance, this.arc);
       suggestion.relevance = Relevance.create(this.arc, plan);
+      suggestion.descriptionByModality['text'] = `This is ${plan.name}`;
       suggestions.push(suggestion);
     });
     this.plannerReturnResults(suggestions);
@@ -89,7 +91,7 @@ class TestPlanProducer extends PlanProducer {
 }
 
 // Run test suite for each storageKeyBase
-['volatile://^^', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan producer for ' + storageKeyBase, function() {
     async function createProducer(manifestFilename) {
       const helper = await TestHelper.createAndPlan({
@@ -154,7 +156,7 @@ describe('plan producer - search', function() {
   const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
-      super({context: {allRecipes: []}}, {}, searchStore);
+      super(new PlanningResult({context: {allRecipes: []}}, {on: () => {}}), searchStore);
       this.produceSuggestionsCalled = 0;
     }
     get arcKey() { return arcKey; }

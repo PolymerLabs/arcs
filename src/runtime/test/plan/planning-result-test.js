@@ -22,7 +22,8 @@ describe('planning result', function() {
       s.relevance = Relevance.create(helper.arc, s.plan);
       s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
     });
-    const result = new PlanningResult(helper.arc, {suggestions: helper.suggestions});
+    const result = new PlanningResult(helper.arc);
+    result.set({suggestions: helper.suggestions});
 
     const serialization = result.serialize();
     assert(serialization.suggestions);

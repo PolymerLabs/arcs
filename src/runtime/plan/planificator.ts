@@ -13,6 +13,7 @@ import {Arc} from '../arc.js';
 import {FirebaseStorage} from '../storage/firebase-storage.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer} from './plan-producer.js';
+import {PlanningResult} from './planning-result.js';
 import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
 import {KeyBase} from "../storage/key-base.js";
@@ -43,6 +44,7 @@ export class Planificator {
 
   arc: Arc;
   userid: string;
+  result: PlanningResult;
   consumer: PlanConsumer;
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
@@ -61,13 +63,14 @@ export class Planificator {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
+    this.result = new PlanningResult(arc, store);
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(arc, store, searchStore, {debug});
+      this.producer = new PlanProducer(this.result, searchStore, {debug});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
     }
-    this.consumer = new PlanConsumer(arc, store);
+    this.consumer = new PlanConsumer(this.result);
 
     this.lastActivatedPlan = null;
     this.arc.registerInstantiatePlanCallback(this.arcCallback);
@@ -82,7 +85,7 @@ export class Planificator {
   get consumerOnly() { return !Boolean(this.producer); }
 
   async loadSuggestions() {
-    return this.consumer.loadSuggestions();
+    return this.result.load();
   }
 
   async setSearch(search: string) {
@@ -113,8 +116,8 @@ export class Planificator {
       this._unlistenToArcStores();
       this.producer.dispose();
     }
-    this.consumer.store.dispose();
     this.consumer.dispose();
+    this.result.dispose();
   }
 
   getLastActivatedPlan() {
