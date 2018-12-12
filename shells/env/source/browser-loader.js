@@ -81,8 +81,6 @@ export class BrowserLoader extends Loader {
     //  _resolve method allows particles to request remapping of assets paths
     //  for use in DOM
     const resolver = this._resolve.bind(this);
-    // TODO(sjmiles): hack to plumb `fetch` into Particle space under node
-    const _fetch = BrowserLoader.fetch || fetch;
     return particleWrapper({
       Particle,
       DomParticle,
@@ -91,8 +89,7 @@ export class BrowserLoader extends Loader {
       TransformationDomParticle,
       resolver,
       log,
-      html,
-      _fetch
+      html
     });
   }
 }
