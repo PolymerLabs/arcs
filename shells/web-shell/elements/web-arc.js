@@ -40,6 +40,8 @@ const template = Xen.Template.html`
  * `manifest` is used by WebArc to add a recipe
  */
 
+// config = {id, [serialization], [manifest]}
+
 export class WebArc extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['env', 'context', 'storage', 'composer', 'config', 'manifest', 'plan'];

@@ -75,13 +75,13 @@ export class ArcHost {
     log('instantiateDefaultRecipe');
     try {
       manifest = await env.parse(manifest);
+      const recipe = manifest.allRecipes[0];
+      const plan = await env.resolve(arc, recipe);
+      if (plan) {
+        this.instantiatePlan(arc, plan);
+      }
     } catch (x) {
       error(x);
-    }
-    const recipe = manifest.allRecipes[0];
-    const plan = await env.resolve(arc, recipe);
-    if (plan) {
-      this.instantiatePlan(arc, plan);
     }
   }
   async instantiatePlan(arc, plan) {

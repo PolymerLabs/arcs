@@ -19,6 +19,8 @@ import {schemas} from './schemas.js';
   ShellApi.receiveEntity(`{"type": "tv_show", "name": "bodyguard"}`)
   ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
+
+  ShellApi.receiveSuperEntity(`{"id": "test", "type": "tv_show", "name": "bodyguard"}`)
 */
 
 // TODO(sjmiles): blunt
@@ -44,6 +46,15 @@ const ShellApi = window.ShellApi = {
     ShellApi.pipe = pipe;
     if (ShellApi.pendingEntity) {
       ShellApi.receiveEntity(ShellApi.pendingEntity);
+    }
+  },
+  // receive information from external pipe
+  receiveSuperEntity(entity) {
+    //console.log('ShellApi::receiveEntity:', entity);
+    if (ShellApi.pipe) {
+      ShellApi.pipe._receiveSuperEntity(entity);
+    } else {
+      ShellApi.pendingSuperEntity = entity;
     }
   },
   // receive information from external pipe
@@ -131,16 +142,20 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     this.fire('search', entity.query);
   }
   _updateEntity(entity, state) {
-    const stores = {
-      tv_show: state.findShowStore,
-      artist: state.findShowcaseArtistStore,
-      play_record: state.playRecordStore
-    };
-    const store = stores[entity.type];
+    const store = this._getEntityStore(entity);
     if (store) {
       state.entity = entity;
       this._setPipedEntity(store, entity);
     }
+  }
+  _getEntityStore(entity) {
+    const stores = {
+      tv_show: this.state.findShowStore,
+      artist: this.state.findShowcaseArtistStore,
+      play_record: this.state.playRecordStore
+    };
+    const store = stores[entity.type];
+    return store;
   }
   _setPipedEntity(store, rawData) {
     //const id = store.generateID();
@@ -184,9 +199,15 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   _updateMetaplans(metaplans, context, entity) {
     // find metaplans that use #piped stores
     const piped = metaplans.suggestions.filter(({plan}) => plan._handles.some(handle => {
-      const tags = context.findStoreTags(context.findStoreById(handle._id));
-      // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
-      return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+      if (handle._id) {
+        // locate store for this handle
+        const store = context.findStoreById(handle._id);
+        // get the tags for the store
+        const tags = context.findStoreTags(store);
+        tags && console.log('tags for store: ', handle._id, tags);
+        // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
+        return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+      }
     }));
     //
     if (piped.length) {
@@ -208,6 +229,36 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     log('receiveEntity:', entityJSON);
     const entity = JSON.parse(entityJSON);
     this._setState({entity});
+  }
+  _receiveSuperEntity(entityJSON) {
+    log('receiveSuperEntity:', entityJSON);
+    const entity = JSON.parse(entityJSON);
+    const id = entity.id;
+    //
+    const manifest = `
+import 'https://$particles/Pipes/TVMazePipe.recipes'
+
+resource FindShowResource
+  start
+  [{"name": "${entity.name}"}]
+
+store FindShow of TVMazeFind 'findShow' in FindShowResource
+
+recipe CustomPipe
+  use 'findShow' as findShow
+  create #piped #tv_show as show
+  TVMazeFindShow
+    find = findShow
+    show = show
+    `;
+    //
+    const webArc = this._dom.root.appendChild(document.createElement('web-arc'));
+    webArc.id = id;
+    webArc.env = this.props.env;
+    webArc.storage = this.props.storage;
+    webArc.context = this.props.context;
+    webArc.config = {id, manifest};
+    console.log(webArc);
   }
   _chooseSuggestion(suggestion) {
     // const {metaplans} = this._props;
