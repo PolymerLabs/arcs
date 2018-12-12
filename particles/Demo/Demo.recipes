@@ -1,0 +1,4 @@
+import 'RestaurantsDemo.recipes'
+import 'TVMazeDemo.recipes'
+import 'ProductsDemo.recipe'
+import 'DemoData.manifest'
