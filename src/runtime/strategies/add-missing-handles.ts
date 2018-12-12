@@ -19,8 +19,7 @@ export class AddMissingHandles extends Strategy {
           return undefined;
         }
         // Don't add use handles to a recipe with free handles
-        const freeHandles = recipe.getFreeHandles();
-        if (freeHandles.length > 0) {
+        if (recipe.getFreeHandles().length > 0) {
           return undefined;
         }
 
