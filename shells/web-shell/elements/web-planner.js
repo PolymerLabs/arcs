@@ -61,10 +61,12 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {
-    log('plansChanged', metaplans, metaplan);
+    //log('plansChanged', metaplans, metaplan);
+    this.fire('metaplans', metaplans);
   }
   _suggestionsChanged(suggestions) {
-    log('suggestionsChanged', suggestions);
+    //log('suggestionsChanged', suggestions);
+    this.fire('suggestions', suggestions);
   }
 }
 
