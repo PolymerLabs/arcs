@@ -587,7 +587,7 @@ TopLevelAlias
   }
 
 RecipeParticle
-  = ref:ParticleRef name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
+  = ref:(ParticleRef / '*') name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
     let handleConnections = [];
     let slotConnections = [];
@@ -613,7 +613,7 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace
+  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return {
       kind: 'handle-connection',
@@ -621,6 +621,7 @@ RecipeParticleConnection
       param,
       dir,
       target: optional(target, target => target[1], null),
+      dependentConnections: optional(dependentConnections, extractIndented, []),
     };
   }
 
@@ -647,15 +648,16 @@ ParticleConnectionTargetComponents
   }
 
 RecipeParticleSlotConnection
-  = 'consume' whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
+  = direction:SlotDirection whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
   {
     return {
       kind: 'slot-connection',
       location: location(),
+      direction,
       param: ref.param,
       tags: ref.tags,
       name: optional(name, name=>name[1], null),
-      providedSlots: optional(providedSlots, extractIndented, [])
+      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     };
   }
 
@@ -670,16 +672,8 @@ RecipeSlotConnectionRef
     };
   }
 
-RecipeParticleProvidedSlot
-  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace
-  {
-    return {
-      kind: 'provided-slot',
-      location: location(),
-      param,
-      name: optional(name, name=>name[1], null)
-    };
-  }
+SlotDirection
+  = 'provide' / 'consume'
 
 RecipeConnection
   = from:ConnectionTarget whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
@@ -793,10 +787,20 @@ RecipeHandle
   }
 
 RecipeRequire
-  = 'require' eolWhiteSpace Indent (SameIndent 'handle') name:(whiteSpace LocalName)? id:(whiteSpace (id / upperIdent))? tags:SpaceTagList?
+  = 'require' eolWhiteSpace items:(Indent (SameIndent (RecipeParticle /RequireHandleSection))*)?
   {
     return {
       kind: 'require',
+      location: location(),
+      items: extractIndented(items),
+    }
+  }
+
+RequireHandleSection
+  = 'handle' name:(whiteSpace LocalName)? id:(whiteSpace (id / upperIdent))? tags:SpaceTagList? eolWhiteSpace
+  {
+    return {
+      kind: 'requireHandle',
       location: location(),
       name: optional(name, name => name[1], null),
       id,
