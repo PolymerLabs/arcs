@@ -14,15 +14,9 @@ import {Planificator} from '../../env/arcs.js';
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
 
-// proposed:
-// metaplans -> map of plans, generations
-// metaplan -> map of plans, generations, plan
-// suggestions -> filtered array of (simple-)plans
-// suggestion -> (simple-)plan
-
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'config', 'userid', 'arc', 'suggestion', 'search'];
+    return ['config', 'userid', 'arc', 'search'];
   }
   getInitialState() {
     return {
@@ -57,7 +51,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
-    window.planificator = planificator; // for debugging only
+    window.planificator = window.planificator || planificator; // for debugging only
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {

@@ -9,32 +9,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {Xen} from '../../../lib/xen.js';
-import {Type} from '../../../env/arcs.js';
-import {schemas} from './schemas.js';
+import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 
 /*
   Examples:
 
+  working:
+
+  [id =] ShellApi.receiveEntity(`{"type": "tv_show", "name": "killing eve"}`)
+  ShellApi.chooseSuggestion(`Killing Eve is on BBC America at 20:00 on Sunday.`)
+
+  not working (yet):
+
   ShellApi.receiveEntity(`{"type": "search", "query": "restaurants"}`)
-  ShellApi.receiveEntity(`{"type": "tv_show", "name": "bodyguard"}`)
   ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
 
-  ShellApi.receiveSuperEntity(`{"id": "test", "type": "tv_show", "name": "bodyguard"}`)
 */
-
-// TODO(sjmiles): blunt
-const demoPlans = {
-  tv_show: 'TVMazeDemo',
-  artist: 'ShowcaseArtistDemo',
-  play_record: 'ShowcasePlayRecordDemo'
-};
 
 // DeviceClient object supplied externally, otherwise a fake
 const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
   },
   foundSuggestions(suggestions) {
+  },
+  foundSuperSuggestions(info) {
+    log(`DeviceClient:foundSuperSuggestions: `, info);
   }
 };
 
@@ -49,49 +49,47 @@ const ShellApi = window.ShellApi = {
     }
   },
   // receive information from external pipe
-  receiveSuperEntity(entity) {
-    //console.log('ShellApi::receiveEntity:', entity);
-    if (ShellApi.pipe) {
-      ShellApi.pipe._receiveSuperEntity(entity);
-    } else {
-      ShellApi.pendingSuperEntity = entity;
-    }
-  },
-  // receive information from external pipe
-  receiveEntity(entity) {
-    //console.log('ShellApi::receiveEntity:', entity);
-    if (ShellApi.pipe) {
-      ShellApi.pipe._receiveEntity(entity);
-    } else {
-      ShellApi.pendingEntity = entity;
+  receiveEntity(entityJSON) {
+    try {
+      const entity = JSON.parse(entityJSON);
+      entity.id = generateId();
+      //console.log('ShellApi::receiveEntity:', entity);
+      if (ShellApi.pipe) {
+        ShellApi.pipe.receiveEntity(entity);
+      } else {
+        ShellApi.pendingSuperEntity = entity;
+      }
+      return entity.id;
+    } catch (x) {
+      console.warn(x);
     }
   },
   chooseSuggestion(suggestion) {
     if (ShellApi.pipe) {
-      ShellApi.pipe._chooseSuggestion(suggestion);
+      ShellApi.pipe.chooseSuggestion(suggestion);
     }
   },
-  openLauncher() {
+  reset() {
     if (ShellApi.pipe) {
-      ShellApi.pipe._openLauncher();
+      ShellApi.pipe.reset();
     }
   }
 };
 
 const template = Xen.Template.html`
-  <web-arc id="pipes" env="{{env}}" storage="{{storage}}" config="{{config}}" manifest="{{manifest}}" context="{{context}}" on-arc="onArc"></web-arc>
+  <web-arc id="pipes" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{config}}" manifest="{{manifest}}" on-arc="onArc"></web-arc>
 `;
 
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'userid', 'storage', 'metaplans', 'suggestions'];
+    return ['env', 'context', 'userid', 'storage', 'suggestions'];
   }
   get template() {
     return template;
   }
-  _update({userid, context, metaplans, suggestions}, state) {
+  _update({userid, context, suggestions}, state) {
     if (userid && !state.config) {
       state.config = {
         id: `${userid}-pipes`,
@@ -103,14 +101,11 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (context && state.lastEntity && metaplans && metaplans.suggestions) {
-      if (state.lastEntity.type !== 'search') {
-        this._updateMetaplans(metaplans, context, state.lastEntity);
-      }
-    }
-    if (context && state.lastEntity && suggestions) {
-      if (state.lastEntity.type === 'search') {
-        state.lastEntity.type = 'usedup';
+    if (context && suggestions) {
+      if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
+        if (state.lastEntity) {
+          state.lastEntity.type = null;
+        }
         const texts = suggestions.map(suggestion => suggestion.descriptionText);
         log('piped suggestions', texts);
         DeviceClient.foundSuggestions(JSON.stringify(texts));
@@ -121,19 +116,6 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       state.lastEntity = state.entity;
       state.entity = null;
     }
-    if (state.entity && state.arc && state.entity.type !== 'search') {
-      if (!state.stores) {
-        state.stores = true;
-        this._requireFindShowStore(state.arc);
-        //this._requireFindShowcaseArtistStore(state.arc);
-        //this._requireShowcasePlayRecordStore(state.arc);
-      }
-      if (state.stores) {
-        this._updateEntity(state.entity, state);
-        state.lastEntity = state.entity;
-        state.entity = null;
-      }
-    }
   }
   _render(props, state) {
     return [props, state];
@@ -141,100 +123,19 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   _updateSearch(entity) {
     this.fire('search', entity.query);
   }
-  _updateEntity(entity, state) {
-    const store = this._getEntityStore(entity);
-    if (store) {
-      state.entity = entity;
-      this._setPipedEntity(store, entity);
+  onArc(e, arc) {
+    this.state = {arc};
+    this.fire('arc', arc);
+  }
+  chooseSuggestion(suggestionText) {
+    const {suggestions} = this.props;
+    if (suggestions) {
+      const suggestion = suggestions.find(suggestion => suggestion.descriptionText === suggestionText);
+      log('piped plan', suggestion);
+      this.fire('suggestion', suggestion);
     }
   }
-  _getEntityStore(entity) {
-    const stores = {
-      tv_show: this.state.findShowStore,
-      artist: this.state.findShowcaseArtistStore,
-      play_record: this.state.playRecordStore
-    };
-    const store = stores[entity.type];
-    return store;
-  }
-  _setPipedEntity(store, rawData) {
-    //const id = store.generateID();
-    const id = `${Date.now()}-${Math.floor(Math.random()*1e6)}`;
-    const entity = {id, rawData};
-    log('storing piped entity', entity);
-    store.set(entity);
-    // TODO(sjmiles): appears that modification to Context store isn't triggering planner, so
-    // force replanning here
-    //this._fire('replan');
-  }
-  async _requireFindShowStore(context) {
-    const options = {
-      schema: schemas.TVMazeFind
-    };
-    const store = this._requireStore(context, options);
-    this._setState({findShowStore: store});
-  }
-  async _requireFindShowcaseArtistStore(context) {
-    const options = {
-      schema: schemas.ShowcaseArtistFind
-    };
-    const store = this._requireStore(context, options);
-    this._setState({findShowcaseArtistStore: store});
-  }
-  async _requireShowcasePlayRecordStore(context) {
-    const options = {
-      schema: schemas.ShowcasePlayRecord
-    };
-    const store = this._requireStore(context, options);
-    this._setState({playRecordStore: store});
-  }
-  _requireStore(context, options) {
-    const schemaType = Type.fromLiteral(options.schema);
-    const typeOf = options.isCollection ? schemaType.collectionOf() : schemaType;
-    const store = (context.findStoresByType(typeOf) || [])[0];
-    //const store = await Stores.createContextStore(context, options);
-    log(`${store ? 'found' : 'MISSING'} ${options.schema.data.names[0]}`);
-    return store;
-  }
-  _updateMetaplans(metaplans, context, entity) {
-    // find metaplans that use #piped stores
-    const piped = metaplans.suggestions.filter(({plan}) => plan._handles.some(handle => {
-      if (handle._id) {
-        // locate store for this handle
-        const store = context.findStoreById(handle._id);
-        // get the tags for the store
-        const tags = context.findStoreTags(store);
-        tags && console.log('tags for store: ', handle._id, tags);
-        // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
-        return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
-      }
-    }));
-    //
-    if (piped.length) {
-      log('piped metaplans', piped);
-      const demoPlan = demoPlans[entity.type];
-      if (demoPlan) {
-        const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
-        log(`searching metaplans for [${demoPlan}] found`, metaplan);
-        if (metaplan) {
-          // reduce plans to descriptionText
-          const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
-          log('piped suggestions', suggestions);
-          DeviceClient.foundSuggestions(JSON.stringify(suggestions));
-        }
-      }
-    }
-  }
-  _receiveEntity(entityJSON) {
-    log('receiveEntity:', entityJSON);
-    const entity = JSON.parse(entityJSON);
-    this._setState({entity});
-  }
-  _receiveSuperEntity(entityJSON) {
-    log('receiveSuperEntity:', entityJSON);
-    const entity = JSON.parse(entityJSON);
-    const id = entity.id;
-    //
+  receiveEntity(entity) {
     const manifest = `
 import 'https://$particles/Pipes/TVMazePipe.recipes'
 
@@ -251,31 +152,13 @@ recipe CustomPipe
     find = findShow
     show = show
     `;
-    //
-    const webArc = this._dom.root.appendChild(document.createElement('web-arc'));
-    webArc.id = id;
-    webArc.env = this.props.env;
-    webArc.storage = this.props.storage;
-    webArc.context = this.props.context;
-    webArc.config = {id, manifest};
-    console.log(webArc);
+    const id = `${this.props.userid}-piped-${entity.id}`;
+    this.fire('spawn', {id, manifest, description: entity.name});
+    this.state = {spawned: true};
   }
-  _chooseSuggestion(suggestion) {
-    // const {metaplans} = this._props;
-    // if (metaplans && metaplans.plans) {
-    //   const metaplan = metaplans.plans.find(metaplan => metaplan.descriptionText === suggestion);
-    //   log('piped plan', metaplan);
-    //   this._fire('suggestion', metaplan);
-    // }
-  }
-  _openLauncher() {
-    // this._fire('key', 'launcher');
-  }
-  onArc(e, arc) {
-    this.state = {arc};
-    this.fire('arc', arc);
+  reset() {
+    this.fire('reset');
   }
 }
-customElements.define('device-client-pipe', DeviceClientPipe);
 
-//ShellApi.receiveEntity('{"type": "artist", "name": "alice in chains"}')
+customElements.define('device-client-pipe', DeviceClientPipe);

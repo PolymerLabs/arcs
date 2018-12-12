@@ -77,7 +77,7 @@ const template = Xen.Template.html`
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" metaplans="{{metaplans}}" suggestions="{{suggestions}}" on-search="onState"></device-client-pipe>
+  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -313,6 +313,43 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
     this.state = {suggestion};
+  }
+  onPipeClientArc(e, arc) {
+    // TODO(sjmiles): `arc.key` is ad-hoc data from device-client-pipe
+    const key = arc.key;
+    this.recordArcMeta({
+      key: key,
+      href: `?arc=${key}`,
+      description: `Piped Data Arc`,
+      color: 'purple',
+      touched: Date.now()
+    });
+  }
+  onSpawn(e, {id, manifest, description}) {
+    log(id, manifest);
+    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+    const arcMeta = {
+      key: id,
+      href: `?arc=${id}`,
+      description,
+      color,
+      touched: Date.now()
+    };
+    this.state = {
+      arc: null,
+      arckey: id,
+      arcMeta,
+      // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
+      arcConfig: {
+        id: id,
+        manifest,
+        suggestionContainer: this.getSuggestionSlot()
+      },
+      manifest: null
+    };
+  }
+  onReset() {
+    this.state = {arckey: null};
   }
 }
 
