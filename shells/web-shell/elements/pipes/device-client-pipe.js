@@ -19,8 +19,14 @@ import {schemas} from './schemas.js';
   ShellApi.receiveEntity(`{"type": "tv_show", "name": "bodyguard"}`)
   ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
-
 */
+
+// TODO(sjmiles): blunt
+const demoPlans = {
+  tv_show: 'TVMazeDemo',
+  artist: 'ShowcaseArtistDemo',
+  play_record: 'ShowcasePlayRecordDemo'
+};
 
 // DeviceClient object supplied externally, otherwise a fake
 const DeviceClient = window.DeviceClient || {
@@ -69,12 +75,12 @@ const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'userid', 'storage'];
+    return ['env', 'context', 'userid', 'storage', 'metaplans', 'suggestions'];
   }
   get template() {
     return template;
   }
-  _update({userid, metaplans, suggestions}, state) {
+  _update({userid, context, metaplans, suggestions}, state) {
     if (userid && !state.config) {
       state.config = {
         id: `${userid}-pipes`,
@@ -86,25 +92,25 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    // if (context && state.lastEntity && metaplans && metaplans.plans) {
-    //   if (state.lastEntity.type !== 'search') {
-    //     this._updateMetaplans(metaplans, context, state.lastEntity);
-    //   }
-    // }
-    // if (context && state.lastEntity && suggestions) {
-    //   if (state.lastEntity.type === 'search') {
-    //     state.lastEntity.type = 'usedup';
-    //     const texts = suggestions.map(suggestion => suggestion.descriptionText);
-    //     log('piped suggestions', texts);
-    //     DeviceClient.foundSuggestions(JSON.stringify(texts));
-    //   }
-    // }
-    // if (state.entity && state.entity.type === 'search') {
-    //   this._updateSearch(state.entity);
-    //   state.lastEntity = state.entity;
-    //   state.entity = null;
-    // }
-    if (state.entity && state.arc) {
+    if (context && state.lastEntity && metaplans && metaplans.suggestions) {
+      if (state.lastEntity.type !== 'search') {
+        this._updateMetaplans(metaplans, context, state.lastEntity);
+      }
+    }
+    if (context && state.lastEntity && suggestions) {
+      if (state.lastEntity.type === 'search') {
+        state.lastEntity.type = 'usedup';
+        const texts = suggestions.map(suggestion => suggestion.descriptionText);
+        log('piped suggestions', texts);
+        DeviceClient.foundSuggestions(JSON.stringify(texts));
+      }
+    }
+    if (state.entity && state.entity.type === 'search') {
+      this._updateSearch(state.entity);
+      state.lastEntity = state.entity;
+      state.entity = null;
+    }
+    if (state.entity && state.arc && state.entity.type !== 'search') {
       if (!state.stores) {
         state.stores = true;
         this._requireFindShowStore(state.arc);
@@ -122,7 +128,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     return [props, state];
   }
   _updateSearch(entity) {
-    this._fire('search', entity.query);
+    this.fire('search', entity.query);
   }
   _updateEntity(entity, state) {
     const stores = {
@@ -176,31 +182,27 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     return store;
   }
   _updateMetaplans(metaplans, context, entity) {
-    // // find metaplans that use #piped stores
-    // const piped = metaplans.plans.filter(({plan}) => plan._handles.some(handle => {
-    //   const tags = context.findStoreTags(context.findStoreById(handle._id));
-    //   // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
-    //   return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
-    // }));
-    // //
-    // if (piped.length) {
-    //   log('piped metaplans', piped);
-    //   const demoPlan = {
-    //     tv_show: 'TVMazeDemo',
-    //     artist: 'ShowcaseArtistDemo',
-    //     play_record: 'ShowcasePlayRecordDemo'
-    //   }[entity.type];
-    //   if (demoPlan) {
-    //     const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
-    //     log(`searching metaplans for [${demoPlan}] found`, metaplan);
-    //     if (metaplan) {
-    //       // reduce plans to descriptionText
-    //       const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
-    //       log('piped suggestions', suggestions);
-    //       DeviceClient.foundSuggestions(JSON.stringify(suggestions));
-    //     }
-    //   }
-    // }
+    // find metaplans that use #piped stores
+    const piped = metaplans.suggestions.filter(({plan}) => plan._handles.some(handle => {
+      const tags = context.findStoreTags(context.findStoreById(handle._id));
+      // TODO(sjmiles): return value of `findStoreTags` is sometimes a Set, sometimes an Array
+      return Boolean(tags && (tags.has && tags.has('piped') || tags.includes('piped')));
+    }));
+    //
+    if (piped.length) {
+      log('piped metaplans', piped);
+      const demoPlan = demoPlans[entity.type];
+      if (demoPlan) {
+        const metaplan = piped.find(metaplan => metaplan.plan.name === demoPlan);
+        log(`searching metaplans for [${demoPlan}] found`, metaplan);
+        if (metaplan) {
+          // reduce plans to descriptionText
+          const suggestions = [metaplan].map(metaplan => metaplan.descriptionText);
+          log('piped suggestions', suggestions);
+          DeviceClient.foundSuggestions(JSON.stringify(suggestions));
+        }
+      }
+    }
   }
   _receiveEntity(entityJSON) {
     log('receiveEntity:', entityJSON);

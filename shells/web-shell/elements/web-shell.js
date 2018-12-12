@@ -62,7 +62,7 @@ const template = Xen.Template.html`
   <!-- context feed -->
   <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
   <!-- web planner -->
-  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}"></web-planner>
+  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" on-search="onState">
     <!-- launcher -->
@@ -77,7 +77,7 @@ const template = Xen.Template.html`
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc"></device-client-pipe>
+  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" metaplans="{{metaplans}}" suggestions="{{suggestions}}" on-search="onState"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
