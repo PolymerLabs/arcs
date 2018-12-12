@@ -794,7 +794,7 @@ ${e.message}
 
       for (const slotConnectionItem of item.slotConnections) {
         if (slotConnectionItem.direction === 'provide') {
-          throw new ManifestError(item.location, `invalid slot connection`);
+          throw new ManifestError(item.location, `invalid slot connection: provide slot must be dependent`);
         }
         let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
         if (!slotConn) {
@@ -803,10 +803,10 @@ ${e.message}
         slotConn.tags = slotConnectionItem.tags || [];
         slotConnectionItem.dependentSlotConnections.forEach(ps => {
           if (ps.direction === 'consume') {
-            throw new ManifestError(item.location, `invalid slot connection`);
+            throw new ManifestError(item.location, `invalid slot connection: consume slot must not be dependent`);
           }
           if (ps.dependentSlotConnections.length !== 0) {
-            throw new ManifestError(item.location, `invalid slot connection`);
+            throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
           }
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
