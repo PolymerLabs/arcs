@@ -86,7 +86,7 @@ recipe TVMazeDemo
   // all shows I've looked at on my device
   map 'PROFILE_all_piped-all_tv_shows' as allPipedShows
   // most recent show(s)
-  map 'PROFILE_piped-tv_show' as pipedShows
+  //map 'PROFILE_piped-tv_show' as pipedShows
   // selected show (for detail)
   create #nosync #selected as selected
   // shows that this arc wants to be part of BOXED_shows-tile (if this arc is shared)
@@ -108,7 +108,7 @@ recipe TVMazeDemo
     user = user
     boxedShows = boxedShows
     selected = selected
-    recentShows = pipedShows
+    //recentShows = pipedShows
     foundShows = foundshows
     boxedUserNames = boxedUserNames
     friends = friends

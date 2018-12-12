@@ -77,7 +77,7 @@ const template = Xen.Template.html`
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" metaplans="{{metaplans}}" suggestions="{{suggestions}}" on-search="onState"></device-client-pipe>
+  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -118,10 +118,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.waitForStore(10);
     }
     // initialize pipes once we have arcs-store
-    if (state.store && !state.pipesInit) {
-      state.pipesInit = true;
-      this.recordPipesArc(state.userid);
-    }
+    // if (state.store && !state.pipesInit) {
+    //   state.pipesInit = true;
+    //   this.recordPipesArc(state.userid);
+    // }
     if (!state.launcherConfig && state.env && state.userid) {
       // spin up launcher arc
       this.spawnLauncher(state.userid);
@@ -270,17 +270,17 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
-  recordPipesArc(userid) {
-    const pipesKey = `${userid}-pipes`;
-    this.recordArcMeta({
-      key: pipesKey,
-      href: `?arc=${pipesKey}`,
-      description: `Pipes!`,
-      color: 'silver',
-      // pretend to be really old
-      touched: 0 //Date.now()
-    });
-  }
+  // recordPipesArc(userid) {
+  //   const pipesKey = `${userid}-pipes`;
+  //   this.recordArcMeta({
+  //     key: pipesKey,
+  //     href: `?arc=${pipesKey}`,
+  //     description: `Pipes!`,
+  //     color: 'silver',
+  //     // pretend to be really old
+  //     touched: 0 //Date.now()
+  //   });
+  // }
   recordNullArc(userid) {
     const nullKey = `${userid}-null`;
     this.recordArcMeta({
@@ -313,6 +313,43 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
     this.state = {suggestion};
+  }
+  onPipeClientArc(e, arc) {
+    // TODO(sjmiles): `arc.key` is ad-hoc data from device-client-pipe
+    const key = arc.key;
+    this.recordArcMeta({
+      key: key,
+      href: `?arc=${key}`,
+      description: `Piped Data Arc`,
+      color: 'purple',
+      touched: Date.now()
+    });
+  }
+  onSpawn(e, {id, manifest, description}) {
+    log(id, manifest);
+    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+    const arcMeta = {
+      key: id,
+      href: `?arc=${id}`,
+      description,
+      color,
+      touched: Date.now()
+    };
+    this.state = {
+      arc: null,
+      arckey: id,
+      arcMeta,
+      // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
+      arcConfig: {
+        id: id,
+        manifest,
+        suggestionContainer: this.getSuggestionSlot()
+      },
+      manifest: null
+    };
+  }
+  onReset() {
+    this.state = {arckey: null};
   }
 }
 

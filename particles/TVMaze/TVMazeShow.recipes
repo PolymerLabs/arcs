@@ -6,6 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../Arcs/Description.schema'
 import 'TVMazeShow.schema'
 
 particle TVMazeShowTile in './source/TVMazeShowTile.js'
@@ -15,14 +16,17 @@ particle TVMazeShowTile in './source/TVMazeShowTile.js'
 
 particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
   in TVMazeShow show
+  out [Description] descriptions
   consume content
     provide action
     provide items
-  description `${show} details`
+  description `TV show information from TVMaze`
 
-// TODO(sjmiles): temporarily hide from coalescer
-//recipe TVMazeShowPanel
-  // TODO(sjmiles): force #selected; otherwise, it tries to map to multiplexer items
-  //use #selected as show
-  //TVMazeShowPanel
-  //  show = show
+recipe TVMazeShowPanel
+  use #tv_show as show
+  create #nosync as descriptions
+  slot 'rootslotid-root' as root
+  TVMazeShowPanel
+    consume content as root
+    show = show
+    descriptions = descriptions
