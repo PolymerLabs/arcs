@@ -79,6 +79,7 @@
     "node-fetch": "^2.3.0",
     "pouchdb": "^7.0.0",
     "pouchdb-adapter-memory": "^7.0.0",
+    "pouchdb-debug": "^7.0.0",
     "source-map-support": "^0.5.9",
     "sourcemapped-stacktrace": "^1.1.9",
     "typescript": "^3.1.6",

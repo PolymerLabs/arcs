@@ -88,31 +88,26 @@ export class PouchDbCollection extends PouchDbStorageProvider {
   }
 
   async _toList() {
-    try {
-      if (this.referenceMode) {
-        const items = (await this.getModel()).toLiteral();
-        if (items.length === 0) {
-          return [];
-        }
-        const refSet = new Set();
-        items.forEach(item => refSet.add(item.value.storageKey));
-        assert(refSet.size === 1, `multiple storageKeys in reference set of collection not yet supported.`);
-        const ref = refSet.values().next().value;
-
-        await this.ensureBackingStore();
-
-        const retrieveItem = async item => {
-          const ref = item.value;
-          return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
-        };
-
-        return await Promise.all(items.map(retrieveItem));
+    if (this.referenceMode) {
+      const items = (await this.getModel()).toLiteral();
+      if (items.length === 0) {
+        return [];
       }
-      return (await this.getModel()).toLiteral();
-    } catch (x) {
-      // TODO(sjmiles): caught for compatibility: pouchdb layer can throw, firebase layer never does
-      return [];
+      const refSet = new Set();
+      items.forEach(item => refSet.add(item.value.storageKey));
+      assert(refSet.size === 1, `multiple storageKeys in reference set of collection not yet supported.`);
+      const ref = refSet.values().next().value;
+
+      await this.ensureBackingStore();
+
+      const retrieveItem = async item => {
+        const ref = item.value;
+        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
+      };
+
+      return await Promise.all(items.map(retrieveItem));
     }
+    return (await this.getModel()).toLiteral();
   }
 
   async toList() {
@@ -291,11 +286,10 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       if (err.name === 'not_found') {
         this._model = new CrdtCollectionModel();
         this._rev = undefined;
+      } else {
+        console.warn('PouchDbCollection.getModel err=', err);
+        throw err;
       }
-      // Unexpected error
-      // TODO(sjmiles): situation occurs frequently so squelching the log for now
-      //console.warn('PouchDbCollection.getModel err=', err);
-      throw err;
     }
     return this._model;
   }

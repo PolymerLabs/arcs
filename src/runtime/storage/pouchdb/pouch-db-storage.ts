@@ -18,6 +18,10 @@ import {PouchDbVariable} from './pouch-db-variable.js';
 
 import PouchDB from 'pouchdb';
 import PouchDbMemory from 'pouchdb-adapter-memory';
+import PouchDbDebug from 'pouchdb-debug';
+
+PouchDB.plugin(PouchDbDebug);
+PouchDB.debug.disable();
 
 export class PouchDbStorage extends StorageBase {
   /**
@@ -38,6 +42,15 @@ export class PouchDbStorage extends StorageBase {
 
   constructor(arcId: Id) {
     super(arcId);
+  }
+
+  public set debug(d: boolean) {
+    super.debug = d;
+    if (d) {
+      PouchDB.debug.enable('*');
+    } else {
+      PouchDB.debug.disable();
+    }
   }
 
   /**
@@ -171,7 +184,7 @@ export class PouchDbStorage extends StorageBase {
     if (db) {
       return db;
     }
-
+    
     // New connect to a database
     if (key.dbLocation === 'local') {
       db = new PouchDB(key.dbName);

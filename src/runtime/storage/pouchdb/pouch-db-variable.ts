@@ -149,14 +149,14 @@ export class PouchDbVariable extends PouchDbStorageProvider {
           return await this.backingStore.get(value.id);
         } catch (err) {
           // TODO(sjmiles): situation occurs frequently so squelching the log for now
-          //console.warn('PouchDbVariable.get err=', err);
+          console.warn('PouchDbVariable.get err=', err);
           throw err;
         }
       }
       return value;
     } catch (x) {
       // TODO(sjmiles): caught for compatibility: pouchdb layer can throw, firebase layer never does
-      return null;
+      throw x;
     }
   }
 
