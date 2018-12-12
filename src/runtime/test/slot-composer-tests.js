@@ -12,13 +12,14 @@
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {Manifest} from '../manifest.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {Planner} from '../planner.js';
+import {Random} from '../random.js';
+import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {Random} from '../random.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new FakeSlotComposer();
@@ -36,7 +37,8 @@ async function initSlotComposer(recipeStr) {
   const startRenderParticles = [];
   arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };
   const planner = new Planner();
-  planner.init(arc);
+  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  planner.init(arc, options);
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
   const plan = planner.strategizer.population[0].result;

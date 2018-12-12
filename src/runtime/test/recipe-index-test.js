@@ -25,8 +25,9 @@ describe('RecipeIndex', function() {
       context: manifest,
       slotComposer: new MockSlotComposer()
     });
-    await arc.recipeIndex.ready;
-    return arc.recipeIndex;
+    const recipeIndex = RecipeIndex.create(arc);
+    await recipeIndex.ready;
+    return recipeIndex;
   }
 
   async function extractIndexRecipeStrings(manifestContent) {

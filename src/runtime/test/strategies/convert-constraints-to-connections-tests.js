@@ -287,7 +287,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> E.f
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {modality: 'voice'}}});
+    const cctc = new ConvertConstraintsToConnections({modality: 'voice'});
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);

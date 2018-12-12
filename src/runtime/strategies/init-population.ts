@@ -8,6 +8,7 @@
 import {Strategy, Descendant} from '../../planning/strategizer.js';
 import {Arc} from '../arc.js';
 import {Recipe} from '../recipe/recipe.js';
+import {RecipeIndex} from '../recipe-index.js';
 
 type ScoredRecipe = {
   recipe: Recipe;
@@ -16,11 +17,13 @@ type ScoredRecipe = {
 
 export class InitPopulation extends Strategy {
   _contextual: boolean;
+  _recipeIndex: RecipeIndex;
   _loadedParticles: Set<string>;
   
-  constructor(arc: Arc, {contextual = false}) {
+  constructor(arc: Arc, {contextual = false, recipeIndex}) {
     super(arc, {contextual});
     this._contextual = contextual;
+    this._recipeIndex = recipeIndex;
     this._loadedParticles = new Set(this.arc.loadedParticles().map(spec => spec.implFile));
   }
 
@@ -29,7 +32,7 @@ export class InitPopulation extends Strategy {
       return [];
     }
 
-    await this.arc.recipeIndex.ready;
+    await this._recipeIndex.ready;
     const results = this._contextual
         ? this._contextualResults()
         : this._allResults();
@@ -46,7 +49,7 @@ export class InitPopulation extends Strategy {
   private _contextualResults(): ScoredRecipe[] {
     const results: ScoredRecipe[] = [];
     for (const slot of this.arc.activeRecipe.slots.filter(s => s.sourceConnection)) {
-      results.push(...this.arc.recipeIndex.findConsumeSlotConnectionMatch(slot).map(
+      results.push(...this._recipeIndex.findConsumeSlotConnectionMatch(slot).map(
           ({slotConn}) => ({recipe: slotConn.recipe})));
     }
     let innerArcHandles = [];
@@ -56,14 +59,14 @@ export class InitPopulation extends Strategy {
       }
     }
     for (const handle of this.arc.activeRecipe.handles.concat(innerArcHandles)) {
-      results.push(...this.arc.recipeIndex.findHandleMatch(handle, ['use', '?']).map(
+      results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }
     return results;
   }
 
   private _allResults(): ScoredRecipe[] {
-    return this.arc.recipeIndex.recipes.map(recipe => ({
+    return this._recipeIndex.recipes.map(recipe => ({
       recipe,
       score: 1 - recipe.particles.filter(
           particle => particle.spec && this._loadedParticles.has(particle.spec.implFile)).length

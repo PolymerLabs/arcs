@@ -154,7 +154,7 @@ describe('plan producer - search', function() {
   const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
-      super({}, {}, searchStore);
+      super({context: {allRecipes: []}}, {}, searchStore);
       this.produceSuggestionsCalled = 0;
     }
     get arcKey() { return arcKey; }

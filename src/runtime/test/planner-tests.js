@@ -29,7 +29,8 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
 
   const arc = await arcFactory(manifest);
   const planner = new Planner();
-  planner.init(arc);
+  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  planner.init(arc, options);
   return await testSteps(planner);
 }
 
@@ -65,7 +66,8 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
   const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, loader});
   const planner = new Planner();
-  planner.init(arc);
+  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  planner.init(arc, options);
 
   const plans = await planner.suggest();
   return {plans, arc};
@@ -177,7 +179,8 @@ ${recipeManifest}
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     const planner = new Planner();
-    planner.init(arc);
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+    planner.init(arc, options);
     const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, expectedResults, recipeManifest);
@@ -341,7 +344,8 @@ describe('Type variable resolution', function() {
 
     const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     const planner = new Planner();
-    planner.init(arc);
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+    planner.init(arc, options);
     return planner.plan(Infinity);
   };
   const verifyResolvedPlan = async (manifestStr) => {

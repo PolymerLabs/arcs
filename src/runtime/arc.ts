@@ -20,7 +20,6 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
-import {RecipeIndex} from './recipe-index.js';
 import {Loader} from './loader.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -37,7 +36,6 @@ type ArcOptions = {
   storageKey?: string;
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
-  recipeIndex?: RecipeIndex;
 };
 
 export type PlanCallback = (recipe: Recipe) => void;
@@ -65,7 +63,6 @@ export class Arc {
   private storeDescriptions = new Map<StorageProviderBase, Description>();
   private readonly _description: Description;
   private instantiatePlanCallbacks: PlanCallback[] = [];
-  private readonly _recipeIndex: RecipeIndex;
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
 
@@ -73,7 +70,7 @@ export class Arc {
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, recipeIndex} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -95,7 +92,6 @@ export class Arc {
     }
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this._description = new Description(this);
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, loader, slotComposer && slotComposer.modality);
     this.debugHandler = new ArcDebugHandler(this);
   }
   get loader() {
@@ -106,8 +102,8 @@ export class Arc {
     return this._description;
   }
 
-  get recipeIndex(): RecipeIndex {
-    return this._recipeIndex;
+  get modality() { 
+    return this.pec.slotComposer && this.pec.slotComposer.modality;
   }
 
   registerInstantiatePlanCallback(callback: PlanCallback) {
@@ -390,7 +386,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    const arc = new Arc({id: this.generateID().toString(), pecFactory: this.pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
+    const arc = new Arc({id: this.generateID().toString(), pecFactory: this.pecFactory, context: this.context, loader: this._loader, speculative: true});
     const storeMap = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');

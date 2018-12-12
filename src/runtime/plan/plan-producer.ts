@@ -15,6 +15,7 @@ import {logFactory} from '../../platform/log-web.js';
 import {now} from '../../platform/date-web.js';
 import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
+import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Strategy, StrategyDerived} from '../../planning/strategizer.js';
@@ -29,6 +30,7 @@ export class PlanProducer {
   result: PlanningResult;
   store: StorageProviderBase;
   planner: Planner|null = null;
+  recipeIndex: RecipeIndex;
   speculator: Speculator;
   needReplan: boolean;
   replanOptions: {};
@@ -45,6 +47,7 @@ export class PlanProducer {
     this.arc = arc;
     this.result = new PlanningResult(arc);
     this.store = store;
+    this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator(this.result);
     this.searchStore = searchStore;
     if (this.searchStore) {
@@ -159,7 +162,8 @@ export class PlanProducer {
       strategies: options['strategies'],
       strategyArgs: {
         contextual: options['contextual'],
-        search: options['search']
+        search: options['search'],
+        recipeIndex: this.recipeIndex
       }
     });
 

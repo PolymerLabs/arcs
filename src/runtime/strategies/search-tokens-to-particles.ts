@@ -10,6 +10,7 @@ import {Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 import {Arc} from '../arc.js';
+import {RecipeIndex} from '../recipe-index.js';
 
 export class SearchTokensToParticles extends Strategy {
   private readonly _walker;
@@ -32,10 +33,10 @@ export class SearchTokensToParticles extends Strategy {
     });
 
     class SearchWalker extends Walker {
-      index;
-      constructor(tactic, arc: Arc) {
+      private recipeIndex: RecipeIndex;
+      constructor(tactic, arc: Arc, recipeIndex: RecipeIndex) {
         super(tactic);
-        this.index = arc.recipeIndex;
+        this.recipeIndex = recipeIndex;
       }
 
       onRecipe(recipe: Recipe) {
@@ -90,7 +91,7 @@ export class SearchTokensToParticles extends Strategy {
                 const particle = recipe.newParticle(spec.name);
                 particle.spec = spec;
               } else {
-                const otherToHandle = this.index.findCoalescableHandles(recipe, innerRecipe);
+                const otherToHandle = this.recipeIndex.findCoalescableHandles(recipe, innerRecipe);
                 assert(innerRecipe);
                 const {cloneMap} = innerRecipe.mergeInto(recipe);
                 otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
@@ -101,7 +102,7 @@ export class SearchTokensToParticles extends Strategy {
         });
       }
     }
-    this._walker = new SearchWalker(Walker.Permuted, arc);
+    this._walker = new SearchWalker(Walker.Permuted, arc, options['recipeIndex']);
   }
 
   get walker() {
@@ -136,7 +137,7 @@ export class SearchTokensToParticles extends Strategy {
   }
 
   async generate(inputParams) {
-    await this.walker.index.ready;
+    await this.walker.recipeIndex.ready;
     return Recipe.over(this.getResults(inputParams), this.walker, this);
   }
 }
