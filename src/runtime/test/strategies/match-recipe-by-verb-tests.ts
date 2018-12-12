@@ -15,7 +15,7 @@ import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {assert} from '../chai-web.js';
 
-describe('MatchRecipeByVerb', function() {
+describe('MatchRecipeByVerb', () => {
   it('removes a particle and adds a recipe', async () => {
     const manifest = await Manifest.parse(`
       recipe
@@ -347,7 +347,7 @@ describe('MatchRecipeByVerb', function() {
     results = await mrv.generate(inputParams);
     recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-    const slotFoo = recipe.slots.find(s => s.name == 'foo');
+    const slotFoo = recipe.slots.find(s => s.name === 'foo');
     assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
     assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
@@ -404,7 +404,7 @@ describe('MatchRecipeByVerb', function() {
   results = await mrv.generate(inputParams);
   recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-  const slotFoo = recipe.slots.find(s => s.name == 'foo');
+  const slotFoo = recipe.slots.find(s => s.name === 'foo');
   assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
   assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);

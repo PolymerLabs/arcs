@@ -17,7 +17,7 @@ import {Loader} from '../../loader.js';
 
 const loader = new Loader();
 
-describe('SearchTokensToHandles', function() {
+describe('SearchTokensToHandles', () => {
   it('finds local handle by tags', async () => {
     const manifest = (await Manifest.parse(`
       schema Thing

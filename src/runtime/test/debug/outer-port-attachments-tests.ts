@@ -15,7 +15,7 @@ import {DevtoolsForTests} from '../../debug/devtools-connection.js';
 import {Random} from '../../random.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('OuterPortAttachment', function() {
+describe('OuterPortAttachment', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
   it('produces PEC Log messages on devtools channel', async () => {
@@ -41,6 +41,7 @@ describe('OuterPortAttachment', function() {
     });
     const arc = testHelper.arc;
 
+    // tslint:disable-next-line: variable-name
     const Foo = arc._context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(Foo.type, undefined, 'fooStore');
 

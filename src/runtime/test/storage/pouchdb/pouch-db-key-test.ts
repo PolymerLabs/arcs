@@ -14,12 +14,12 @@
 
 import {PouchDbKey} from '../../../storage/pouchdb/pouch-db-key.js';
 
-import 'chai/register-assert';
+import {assert} from '../../chai-web.js';
 
 describe('pouch-db-key', () => {
   it('fails for non pouchdb: prefixed keys', () => {
     assert.throws(() => {
-      new PouchDbKey('http://www.google.com/');
+      const key = new PouchDbKey('http://www.google.com/');
     }, Error);
   });
 

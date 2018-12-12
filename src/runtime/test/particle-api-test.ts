@@ -26,8 +26,8 @@ async function loadFilesIntoNewArc(fileMap) {
   };
 }
 
-describe('particle-api', function() {
-  it('StorageProxy integration test', async function() {
+describe('particle-api', () => {
+  it('StorageProxy integration test', async () => {
     const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -74,6 +74,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Data = manifest.findSchemaByName('Data').entityClass();
     const fooStore = await arc.createStore(Data.type, 'foo', 'test:0');
     const resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
@@ -135,6 +136,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type.collectionOf(), undefined, 'result-handle');
     const recipe = manifest.recipes[0];
@@ -176,6 +178,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
@@ -254,6 +257,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
@@ -344,6 +348,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
@@ -436,6 +441,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
@@ -533,6 +539,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
@@ -627,6 +634,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Result = manifest.findSchemaByName('Result').entityClass();
     const inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
     inputsStore.store({id: '1', rawData: {value: 'hello'}}, ['key1']);
@@ -653,7 +661,7 @@ describe('particle-api', function() {
     await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
 
-  it('big collection store and remove', async function() {
+  it('big collection store and remove', async () => {
     const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -686,6 +694,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Data = manifest.findSchemaByName('Data').entityClass();
     const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
     const recipe = manifest.recipes[0];
@@ -699,7 +708,7 @@ describe('particle-api', function() {
     assert.deepEqual(data.value.map(item => item.rawData.value), ['finn', 'jake']);
   });
 
-  it('big collection streamed reads', async function() {
+  it('big collection streamed reads', async () => {
     const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -743,6 +752,7 @@ describe('particle-api', function() {
       `
     });
 
+    // tslint:disable-next-line: variable-name
     const Data = manifest.findSchemaByName('Data').entityClass();
     const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
     const promises = [];
@@ -761,7 +771,7 @@ describe('particle-api', function() {
     await inspector.verify('v1,v2,v3', 'v4,v5', 'done');
   });
 
-  it('loadRecipe returns ids of provided slots', async function() {
+  it('loadRecipe returns ids of provided slots', async () => {
     Random.seedForTests();
     const {arc} = await TestHelper.create({
       manifestString: `

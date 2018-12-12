@@ -163,7 +163,7 @@ export class Manifest {
   get imports() {
     return this._imports;
   }
-  get schemas() {
+  get schemas(): {[index: string]: Schema} {
     return this._schemas;
   }
   get fileName() {
@@ -303,7 +303,8 @@ export class Manifest {
   generateID(): string {
     return this.id.createId().toString();
   }
-  static async load(fileName, loader, options) {
+
+  static async load(fileName: string, loader, options?): Promise<Manifest> {
     options = options || {};
     let {registry, id} = options;
     registry = registry || {};
@@ -325,7 +326,7 @@ export class Manifest {
     return await registry[fileName];
   }
 
-  static async parse(content, options) {
+  static async parse(content, options?): Promise<Manifest> {
     options = options || {};
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
     let {id, fileName, position, loader, registry, context} = options;
@@ -1143,7 +1144,7 @@ ${e.message}
     return recipe;
   }
 
-  toString(options) {
+  toString(options?) {
     // TODO: sort?
     options = options || {};
     const results = [];

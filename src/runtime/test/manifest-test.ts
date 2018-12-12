@@ -9,6 +9,7 @@
  */
 
 import {Manifest} from '../manifest.js';
+import {Schema} from '../schema.js';
 import {parser} from '../build/manifest-parser.js';
 import {assert} from './chai-web.js';
 import {fs} from '../../platform/fs-web.js';
@@ -21,7 +22,7 @@ async function assertRecipeParses(input, result) {
   assert.deepEqual((await Manifest.parse(input)).recipes[0].toString(), target);
 }
 
-describe('manifest', function() {
+describe('manifest', () => {
   it('can parse a manifest containing a recipe', async () => {
     const manifest = await Manifest.parse(`
       schema S
@@ -60,7 +61,7 @@ describe('manifest', function() {
       assert.equal(recipe.handles[1].pattern, 'best handle');
       const type = recipe.handleConnections[0].rawType;
       assert.lengthOf(Object.keys(manifest.schemas), 1);
-      const schema = Object.values(manifest.schemas)[0];
+      const schema = Object.values(manifest.schemas)[0] as Schema;
       assert.lengthOf(Object.keys(schema.description), 3);
       assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
     };
@@ -439,7 +440,8 @@ ${particleStr1}
     }
   });
   it('can load a manifest via a loader', async () => {
-    const registry = {};
+    const registry: {[index: string] : Promise<Manifest>} = {};
+
     const loader = {
       loadResource() {
         return 'recipe';
@@ -456,7 +458,8 @@ ${particleStr1}
     assert.equal(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
-    const registry = {};
+    const registry: {[index: string] : Promise<Manifest>} = {};
+
     const loader = {
       loadResource(path) {
         return {
@@ -476,7 +479,7 @@ ${particleStr1}
     assert.equal(manifest.imports[0], await registry.b);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
-    const registry = {};
+    const registry: {[index: string] : Promise<Manifest>} = {};
     const loader = {
       loadResource(path) {
         return {
@@ -522,7 +525,7 @@ ${particleStr1}
       },
     };
     const manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(manifest.schemas.Bar.fields.value, 'Text');
+    assert.equal(manifest.schemas.Bar.fields['value'], 'Text');
   });
   it('can find all imported recipes', async () => {
     const loader = {
@@ -755,7 +758,7 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 2);
-    const recipeSlot = recipe.slots.find(s => s.id == 'slot-id0');
+    const recipeSlot = recipe.slots.find(s => s.id === 'slot-id0');
     assert(recipeSlot);
     assert.deepEqual(recipeSlot.tags, ['aa', 'aaa']);
 
@@ -789,7 +792,7 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handles, 1);
-    const recipeSlot = recipe.handles.find(s => s.id == 'slot-id0');
+    const recipeSlot = recipe.handles.find(s => s.id === 'slot-id0');
     assert(recipeSlot);
     assert.deepEqual(recipeSlot.tags, ['aa', 'aaa']);
 
@@ -816,8 +819,8 @@ ${particleStr1}
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.slots, 2);
-    assert.equal(recipe.particles.find(p => p.name == 'ParticleB').consumedSlotConnections['slotB1'].providedSlots['slotB2'],
-                 recipe.particles.find(p => p.name == 'ParticleA').consumedSlotConnections['slotA'].targetSlot);
+    assert.equal(recipe.particles.find(p => p.name === 'ParticleB').consumedSlotConnections['slotB1'].providedSlots['slotB2'],
+                 recipe.particles.find(p => p.name === 'ParticleA').consumedSlotConnections['slotA'].targetSlot);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
@@ -841,8 +844,8 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.handles, 2);
     assert.equal(
-      recipe.particles.find(p => p.name == 'ParticleA')._connections['slotA'].handle,
-      recipe.particles.find(p => p.name == 'ParticleB')._connections['slotB2'].handle);
+      recipe.particles.find(p => p.name === 'ParticleA').connections['slotA'].handle,
+      recipe.particles.find(p => p.name === 'ParticleB').connections['slotB2'].handle);
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
@@ -913,7 +916,9 @@ ${particleStr1}
 
     assert.lengthOf(recipe.slotConnections, 2);
     const slotConnA = recipe.slotConnections.find(s => s.name === 'slotA');
-    assert.isUndefined(slotConnA.sourceConnection);
+
+    // possible bogus assert?
+    assert.isUndefined(slotConnA['sourceConnection']);
 
     assert.lengthOf(recipe.slots, 1);
     const slotB = recipe.slots[0];
@@ -943,12 +948,12 @@ ${particleStr1}
 
     assert.lengthOf(recipe.handles, 1);
     const slotB = recipe.handles[0];
-    assert.lengthOf(slotB._connections, 2);
+    assert.lengthOf(slotB.connections, 2);
 
-    assert.equal(slotB._connections[0]._name, 'slotB');
-    assert.equal(slotB._connections[1]._name, 'slotB');
+    assert.equal(slotB.connections[0]._name, 'slotB');
+    assert.equal(slotB.connections[1]._name, 'slotB');
 
-    const directions = slotB._connections.map(c => c._direction);
+    const directions = slotB.connections.map(c => c._direction);
     assert.lengthOf(directions, 2);
     assert.include(directions, '`provide');
     assert.include(directions, '`consume');
@@ -1070,7 +1075,8 @@ ${particleStr1}
     const manifest = await Manifest.load('the.manifest', loader);
     const store = manifest.findStoreByName('Store0');
     assert(store);
-    assert.deepEqual(await store.toList(), [
+
+    assert.deepEqual(await store['toList'](), [
       {
         id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
@@ -1112,7 +1118,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     `, {fileName: 'the.manifest'});
     const store = manifest.findStoreByName('Store0');
     assert(store);
-    assert.deepEqual(await store.toList(), [
+    assert.deepEqual(await store['toList'](), [
       {
         id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
@@ -1527,8 +1533,8 @@ resource SomeName
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    const schema = recipe.particles[0].connections.bar.type.entitySchema;
-    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
+    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
     assert.deepEqual(innerSchema.fields, {far: 'Text'});
 
     assert.equal(manifest.particles[0].toString(),
@@ -1550,8 +1556,8 @@ resource SomeName
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    const schema = recipe.particles[0].connections.bar.type.entitySchema;
-    const innerSchema = schema.fields.foo.schema.model.entitySchema;
+    const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
+    const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
     assert.deepEqual(innerSchema.fields, {far: 'Text'});
 
     assert.equal(manifest.particles[0].toString(),
@@ -1574,8 +1580,8 @@ resource SomeName
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    const schema = recipe.particles[0].connections.bar.type.entitySchema;
-    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
+    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
     assert.deepEqual(innerSchema.fields, {far: 'Text'});
 
     assert.equal(manifest.particles[0].toString(),
@@ -1596,8 +1602,8 @@ resource SomeName
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    const schema = recipe.particles[0].connections.bar.type.entitySchema;
-    const innerSchema = schema.fields.foo.schema.schema.model.entitySchema;
+    const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
+    const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
     assert.deepEqual(innerSchema.fields, {far: 'Text'});
 
     assert.equal(manifest.particles[0].toString(),
@@ -1665,7 +1671,7 @@ resource SomeName
     // and {Text value, Text value3}. Hence, the recipe is valid and the type
     // of the handle is * {Text value, Text value2, Text value3};
     assert(suspiciouslyValidRecipe.normalize());
-    const suspiciouslyValidFields = suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.entitySchema.fields;
+    const suspiciouslyValidFields = suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.getEntitySchema().fields;
     assert.deepEqual(suspiciouslyValidFields, {value: 'Text', value2: 'Text', value3: 'Text'});
     assert(!invalidRecipe.normalize());
   });
@@ -1754,7 +1760,7 @@ resource SomeName
       particle P in 'p.js'
         in Thing1 Thing2 Name3 {Text field1, Text field3} param
     `);
-    const paramSchema = manifest.findParticleByName('P').inputs[0].type.entitySchema;
+    const paramSchema = manifest.findParticleByName('P').inputs[0].type.getEntitySchema();
     assert.sameMembers(paramSchema.names, ['Name1', 'Name2', 'Name3']);
     assert.sameMembers(Object.keys(paramSchema.fields), ['field1', 'field2', 'field3']);
   });
@@ -1828,11 +1834,11 @@ resource SomeName
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
 
-    assert.equal(recipe.particles[0]._verbs[0], 'verb');
-    assert.isUndefined(recipe.particles[0]._spec);
+    assert.equal(recipe.particles[0].primaryVerb, 'verb');
+    assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
-    assert(slotConnection._providedSlots.provideSlot);
-    assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
+    assert(slotConnection.providedSlots.provideSlot);
+    assert.equal(slotConnection.providedSlots.provideSlot.sourceConnection, slotConnection);
   });
 
   it('SLANDLES can parse a recipe with slot constraints on verbs', async () => {
@@ -1845,14 +1851,14 @@ resource SomeName
 
     const recipe = manifest.recipes[0];
 
-    assert.equal(recipe.particles[0]._verbs[0], 'verb');
-    assert.isUndefined(recipe.particles[0]._spec);
+    assert.equal(recipe.particles[0].primaryVerb, 'verb');
+    assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0].connections.foo;
     assert.equal(slotConnection._direction, '`consume');
 
     assert.lengthOf(recipe.handles, 1);
-    assert.lengthOf(recipe.handles[0]._connections, 1);
-    assert.equal(recipe.handles[0]._connections[0], slotConnection);
+    assert.lengthOf(recipe.handles[0].connections, 1);
+    assert.equal(recipe.handles[0].connections[0], slotConnection);
   });
 
   it('can parse particle arguments with tags', async () => {

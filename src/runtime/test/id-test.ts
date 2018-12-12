@@ -12,7 +12,7 @@ import {Id} from '../id.js';
 import {Random} from '../random.js';
 import {assert} from '../../platform/assert-web.js';
 
-describe('Id', function() {
+describe('Id', () => {
   it('parses id from string representation', async () => {
     Random.seedForTests();
 

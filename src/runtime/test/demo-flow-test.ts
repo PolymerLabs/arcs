@@ -16,12 +16,12 @@ import {assert} from './chai-web.js';
 import * as testUtil from '../testing/test-util.js';
 import {TestHelper} from '../testing/test-helper.js';
 
-describe('demo flow', function() {
-  it('can load the recipe manifest', async function() {
+describe('demo flow', () => {
+  it('can load the recipe manifest', async () => {
     await Manifest.load('./src/runtime/test/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it.skip('flows like a demo', async function() {
+  it.skip('flows like a demo', async () => {
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
@@ -112,7 +112,7 @@ describe('demo flow', function() {
     const verifyContents = (num, content) => {
       assert(content.model, `Content doesn't have model`);
       assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
-      return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
+      return content.model.items.length === num && content.model.items.every(i => !!i.resolvedImage);
     };
     const verifyElementMove = async (key, num, muxerHostedParticles) => {
         helper.slotComposer
@@ -126,7 +126,7 @@ describe('demo flow', function() {
         for (const hostedParticle of muxerHostedParticles) {
           helper.slotComposer
             .expectRenderSlot(hostedParticle, 'annotation', {contentTypes: ['model']})
-            .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
+            .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
         }
         await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key});
         await helper.verifySetSize('List', 'items', num);

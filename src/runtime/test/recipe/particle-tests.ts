@@ -9,9 +9,11 @@
  */
 
 import {Manifest} from '../../manifest.js';
+import {InterfaceType, CollectionType, TypeVariable} from '../../type.js';
+
 import {assert} from '../chai-web.js';
 
-describe('Recipe Particle', function() {
+describe('Recipe Particle', () => {
   it('cloning maints type variable mapping', async () => {
     const manifest = await Manifest.parse(`
       interface HostedInterface
@@ -32,8 +34,11 @@ describe('Recipe Particle', function() {
       const [recipeParticle] = recipe.particles;
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const ifaceVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
-      const listUnpackedVariable = listConn.type.collectionType;
+      const type = hostedParticleConn.type as InterfaceType;
+      const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
+
+      const listConnType = listConn.type as CollectionType;
+      const listUnpackedVariable = listConnType.collectionType as TypeVariable;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
 
@@ -42,8 +47,10 @@ describe('Recipe Particle', function() {
       const recipeParticle = recipe.particles[0];
       const hostedParticleConn = recipeParticle.connections['hostedParticle'];
       const listConn = recipeParticle.connections['list'];
-      const ifaceVariable = hostedParticleConn.type.interfaceInfo.handles[0].type;
-      const listUnpackedVariable = listConn.type.collectionType;
+      const type = hostedParticleConn.type as InterfaceType;
+      const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
+      const listConnType = listConn.type as CollectionType;
+      const listUnpackedVariable = listConnType.collectionType as TypeVariable;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });

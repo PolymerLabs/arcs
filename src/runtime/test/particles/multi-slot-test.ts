@@ -13,7 +13,7 @@
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('multi-slot test', function() {
+describe('multi-slot test', () => {
   async function init() {
     return await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/particles/artifacts/multi-slot-test.manifest',
@@ -26,7 +26,7 @@ describe('multi-slot test', function() {
     assert.isTrue(expectedSlotNames.includes(slotName), `Unexpected slot ${slotName}`);
 
     assert.isTrue(content.template.includes(`{{${slotName}}}`));
-    const exclude = slotName == 'question' ? 'answer' : 'question';
+    const exclude = slotName === 'question' ? 'answer' : 'question';
     assert.isFalse(content.template.includes(`{{${exclude}}}`));
     assert(content.model[slotName]);
     assert(!content.model[exclude]);
@@ -59,7 +59,7 @@ describe('multi-slot test', function() {
     helper.slotComposer
       .newExpectations()
       .expectRenderSlot('ShowHints', 'root', {verify: (content) => content.template.length > 0})
-      .expectRenderSlot('ShowHints', 'root', {isOptional: true, verify: (content) => Object.keys(content).length == 0})
+      .expectRenderSlot('ShowHints', 'root', {isOptional: true, verify: (content) => Object.keys(content).length === 0})
       .expectRenderSlot('AskAndAnswer', 'question', {contentTypes: ['template', 'model']})
       .expectRenderSlot('AskAndAnswer', 'hints', {contentTypes: ['template', 'model'], verify: (content) => {
         assert.deepEqual(['defaultA', 'defaultB', 'defaultC', 'defaultD', 'defaultE'], Object.keys(content.template));

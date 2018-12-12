@@ -12,7 +12,7 @@ import {Search} from '../../recipe/search.js';
 import {Recipe} from '../../recipe/recipe.js';
 import {assert} from '../chai-web.js';
 
-describe('Recipe Search', function() {
+describe('Recipe Search', () => {
   const createAndVerifyResolved = (search) => {
     assert.isTrue(search.isValid());
     search._normalize();

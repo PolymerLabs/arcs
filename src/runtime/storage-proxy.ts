@@ -20,7 +20,7 @@ import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 
 enum SyncState {none, pending, full}
 
-/** @class StorageProxy
+/**
  * Mediates between one or more Handles and the backing store outside the PEC.
  *
  * This can operate in two modes, based on how observing handles are configured:

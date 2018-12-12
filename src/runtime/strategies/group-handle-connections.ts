@@ -16,7 +16,7 @@ import {Arc} from '../arc.js';
 export class GroupHandleConnections extends Strategy {
   _walker: Walker;
 
-  constructor(arc: Arc, args?) {
+  constructor(arc?: Arc, args?) {
     super(arc, args);
 
     this._walker = new class extends Walker {

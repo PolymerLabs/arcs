@@ -14,8 +14,8 @@ import {Bytes} from '../bytes.js';
 // Small Red Dot from https://en.wikipedia.org/wiki/Data_URI_scheme
 const RED_DOT_DATA_URI = 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==';
 
-describe('bytes', function() {
-  it('creates a Bytes object', function() {
+describe('bytes', () => {
+  it('creates a Bytes object', () => {
     const b = new Bytes(RED_DOT_DATA_URI);
     assert.isNotNull(b);
     const content = b.content();

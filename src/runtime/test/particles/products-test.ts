@@ -13,7 +13,7 @@
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('products test', function() {
+describe('products test', () => {
   const manifestFilename = './src/runtime/test/particles/artifacts/products-test.recipes';
 
   const verifyFilteredBook = async (handle) => {
@@ -22,7 +22,7 @@ describe('products test', function() {
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 
-  it('filters', async function() {
+  it('filters', async () => {
     const helper = await TestHelper.createAndPlan({manifestFilename});
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
@@ -30,7 +30,7 @@ describe('products test', function() {
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });
 
-  it('filters and displays', async function() {
+  it('filters and displays', async () => {
     const helper = await TestHelper.createAndPlan({manifestFilename});
 
     helper.slotComposer
@@ -39,7 +39,7 @@ describe('products test', function() {
           .expectRenderSlot('List', 'root', {contentTypes: ['model'], verify: (content) => {
             const verified = content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
-                && 1 == content.model.items.models.length;
+                && 1 === content.model.items.models.length;
             if (verified) {
               //TODO: reaching directly into data objects like this is super dodgy and we should
               // fix. It's particularly bad here as there's no guarantee that the backingStore
@@ -54,7 +54,7 @@ describe('products test', function() {
           .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
           .expectRenderSlot('ItemMultiplexer', 'item', {hostedParticle: 'ShowProduct', verify: (content) => {
             return content.model
-                && 1 == content.model.items.length
+                && 1 === content.model.items.length
                 && 'Harry Potter' === content.model.items[0].name;
           }});
 

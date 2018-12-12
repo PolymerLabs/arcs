@@ -14,6 +14,7 @@ import {Description} from '../description.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
 import {Search} from '../recipe/search.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
@@ -115,7 +116,7 @@ export class Suggestion {
     };
   }
 
-  static async deserialize({plan, hash, relevance, searchGroups, descriptionByModality}, arc, recipeResolver): Promise<Suggestion> {
+  static async deserialize({plan, hash, relevance, searchGroups, descriptionByModality}, arc: Arc, recipeResolver: RecipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
       const suggestion = new Suggestion(deserializedPlan, hash, Relevance.deserialize(relevance, deserializedPlan), arc);
@@ -134,7 +135,7 @@ export class Suggestion {
     }
   }
 
-  _planToString(plan) {
+  _planToString(plan): string {
     if (plan.slots.every(slot => Boolean(slot.id))) {
       return plan.toString();
     }
@@ -145,7 +146,7 @@ export class Suggestion {
     return planClone.toString();
   }
 
-  static async _planFromString(planString, arc, recipeResolver) {
+  static async _planFromString(planString: string, arc: Arc, recipeResolver: RecipeResolver) {
     try {
       const manifest = await Manifest.parse(
           planString, {loader: arc.loader, context: arc.context, fileName: ''});

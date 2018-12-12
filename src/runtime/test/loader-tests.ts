@@ -14,14 +14,14 @@ import {Manifest} from '../manifest.js';
 
 const loader = new Loader();
 
-describe('loader', function() {
-  it('can extract a path', function() {
+describe('loader', () => {
+  it('can extract a path', () => {
     assert.equal(loader.path('a/foo'), 'a/');
   });
-  it('can join paths', function() {
+  it('can join paths', () => {
     assert.equal(loader.join('a/foo', 'b'), 'a/b');
   });
-  it('can join an absolute path', function() {
+  it('can join an absolute path', () => {
     assert.equal(loader.join('a/foo', 'http://b'), 'http://b');
     assert.equal(loader.join('a/foo', 'https://b'), 'https://b');
   });
@@ -32,7 +32,7 @@ describe('loader', function() {
         files.push(fileName);
         return {};
       }
-    };
+    }();
     const options = {
       fileName: 'somewhere/something',
       loader: testLoader,
