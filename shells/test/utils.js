@@ -12,9 +12,10 @@ I'm still a newb, but I stumbled on these things:
 */
 
 exports.seconds = s => s * 1e3;
-
 exports.defaultTimeout = exports.seconds(60);
 exports.shellUrl = `shells/web-shell`;
+
+const storageKey = `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`;
 
 function deepQuerySelector(selector) {
   return browser.execute(function(selector) {
@@ -86,13 +87,14 @@ exports.openNewArc = async function(testTitle, useSolo) {
     browser.close(tabToClose);
   });
   // setup url params
-  //let firebaseKey = new Date().toISOString() + testTitle;
-  //firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
+  const suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+  const storage = `${storageKey}/${suffix}`;
   //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
-  console.log(`running test "${testTitle}"`);
+  console.log(`running test "${testTitle}" [${storage}]`);
   const urlParams = [
     //`testFirebaseKey=${firebaseKey}`,
     //`log`,
+    `storage=${storage}`,
     'user=selenium'
   ];
   if (useSolo) {
