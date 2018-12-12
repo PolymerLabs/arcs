@@ -20,6 +20,8 @@ enum EventKind {
 type Callback = ({}) => void;
 
 export abstract class StorageBase {
+  protected _debug = false;
+  
   protected constructor(protected readonly arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
   }
@@ -30,7 +32,18 @@ export abstract class StorageBase {
   abstract baseStorageFor(type: Type, key: string) : Promise<StorageProviderBase>;
   abstract parseStringAsKey(s: string) : KeyBase;
 
-  // Provides graceful shutdown for tests.
+
+  /**
+   * Turn on debugginf for this storage provider.  Providers should
+   * subclass this and react to changes in the debug value.
+   */
+  public set debug(d: boolean) {
+    this._debug = d;
+  }
+
+  /**
+   * Provides graceful shutdown for tests.
+   */
   shutdown() {}
 }
 
