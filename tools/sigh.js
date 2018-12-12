@@ -26,17 +26,8 @@ const sources = {
     railroad: 'manifest-railroad.html',
   },
   pack: [{
-    inputs: [
-      'shell/source/worker-entry.js',
-      'shell/source/ArcsLib.js',
-      'shell/source/Tracelib.js'
-    ],
     buildDir: 'shell/build',
   }, {
-    inputs: [
-      'shells/env/source/worker.js',
-      'shells/env/source/arcs.js',
-    ],
     buildDir: 'shells/env/build'
   }],
   ts: {
@@ -457,53 +448,11 @@ async function lint(args) {
 }
 
 async function webpack() {
-  for (const pack of sources.pack) {
-    await _webpack(pack);
+  const result = saneSpawnWithOutput('npm', ['run', 'build:webpack'], {});
+  if (result.status) {
+    console.log(result.stdout);
   }
-  return true;
-}
-
-async function _webpack(pack) {
-  const webpack = require('webpack');
-
-  const node = {
-    fs: 'empty',
-    mkdirp: 'empty',
-    minimist: 'empty',
-  };
-
-  const buildDir = path.resolve(projectRoot, pack.buildDir);
-  if (!fs.existsSync(buildDir)) {
-    fs.mkdirSync(buildDir);
-  }
-
-  for (const file of pack.inputs) {
-    await new Promise((resolve, reject) => {
-      webpack(
-          {
-            entry: path.resolve(projectRoot, file),
-            mode: 'none',
-            optimization: {
-              minimize: false
-            },
-            devtool: 'sourcemap',
-            output: {
-              path: process.cwd(),
-              filename: `${pack.buildDir}/${path.basename(file)}`,
-            },
-            node,
-          },
-          (err, stats) => {
-            if (err) {
-              reject(err);
-            }
-            console.log(
-                stats.toString({colors: true, verbose: false, chunks: false}));
-            resolve();
-          });
-    });
-  }
-  return true;
+  return result;
 }
 
 function spawnWasSuccessful(result) {
