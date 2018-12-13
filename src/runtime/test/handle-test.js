@@ -19,6 +19,7 @@ import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('Handle', function() {
 
@@ -29,7 +30,15 @@ describe('Handle', function() {
     loader = new Loader();
   });
 
-  const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock'});
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
+  const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
 
   it('clear singleton store', async () => {
     const slotComposer = createSlotComposer();

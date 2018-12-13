@@ -16,7 +16,7 @@ import {TestHelper} from '../testing/test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   constructor() {
-    super({modality: 'mock', findContainerByName: () => '<div></div>'});
+    super({modality: 'mock-dom', findContainerByName: () => '<div></div>'});
     this.suggestions = [];
     this.updatesCount = 0;
     this.updateResolve = null;
@@ -28,6 +28,14 @@ class TestSuggestionComposer extends SuggestionComposer {
 }
 
 describe('suggestion composer', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('sets suggestions', async () => {
     const suggestionComposer = new TestSuggestionComposer();
     assert.isEmpty(suggestionComposer.suggestions);

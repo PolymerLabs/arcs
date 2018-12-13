@@ -258,7 +258,6 @@ ParticleDefinition
       // Add default modality
       modality.push('dom');
     }
-    modality.push('mock');
 
     return {
       kind: 'particle',
@@ -421,7 +420,7 @@ TypeVariableList
 
 // TODO: remove 'affordance' when all particle manifests updated.
 ParticleModality
-  = ('affordance' / 'modality') whiteSpace modality:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
+  = ('affordance' / 'modality') whiteSpace modality:Modality eolWhiteSpace
   {
     return {
       kind: 'particle-modality',
@@ -429,6 +428,16 @@ ParticleModality
       modality,
     };
   }
+
+Modality
+  = 'dom-touch'
+  / 'dom'
+  / 'vr'
+  / 'voice'
+  / 'mock-dom-touch'
+  / 'mock-dom'
+  / 'mock-vr'
+  / 'mock-voice'
 
 ParticleSlot
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace

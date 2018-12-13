@@ -24,7 +24,7 @@ import {TestHelper} from '../testing/test-helper.js';
 async function initSlotComposer(recipeStr) {
   const slotComposer = new FakeSlotComposer();
 
-  const manifest = (await Manifest.parse(recipeStr));
+  const manifest = await TestHelper.parseManifest(recipeStr);
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
@@ -46,6 +46,14 @@ async function initSlotComposer(recipeStr) {
 }
 
 describe('slot composer', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'

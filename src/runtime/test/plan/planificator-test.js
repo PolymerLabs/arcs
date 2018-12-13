@@ -12,6 +12,14 @@ import {Planificator} from '../../plan/planificator.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('planificator', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const helper = await TestHelper.create();
     const arc = helper.arc;

@@ -23,6 +23,14 @@ import {TestHelper} from '../testing/test-helper.js';
 const loader = new Loader();
 
 describe('Multiplexer', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('Processes multiple inputs', async () => {
     const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
@@ -42,7 +50,7 @@ describe('Multiplexer', function() {
 
     const barType = manifest.findTypeByName('Bar');
 
-    const slotComposer = new SlotComposer({modality: 'mock', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new SlotComposer({modality: 'mock-dom', rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

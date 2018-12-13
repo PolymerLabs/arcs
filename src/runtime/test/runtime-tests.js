@@ -15,14 +15,23 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 function createTestArc() {
-  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock'});
+  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
   const arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
 
 describe('Runtime', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('gets an arc description for an arc', async () => {
     const arc = createTestArc();
     const description = new Description(arc);

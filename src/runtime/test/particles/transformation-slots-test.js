@@ -13,6 +13,14 @@
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('transformation slots', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/particles/artifacts/provide-hosted-particle-slots.manifest',

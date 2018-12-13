@@ -15,6 +15,14 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('planning result', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   async function testResultSerialization(manifestFilename) {
     const helper = await TestHelper.createAndPlan({manifestFilename});
     assert.isNotEmpty(helper.suggestions);

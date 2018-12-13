@@ -18,6 +18,14 @@ import {Relevance} from '../../relevance.js';
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, function() {
+    beforeEach('creating mock modalities', () => {
+      TestHelper.createMockModalities();
+    });
+  
+    afterEach('removing mock modalities', () => {
+      TestHelper.resetModality();
+    });
+
     it('consumes', async function() {
       const helper = await TestHelper.createAndPlan({
         slotComposer: new FakeSlotComposer(),

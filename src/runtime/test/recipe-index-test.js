@@ -13,10 +13,19 @@ import {Manifest} from '../manifest.js';
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('RecipeIndex', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   async function createIndex(manifestContent) {
-    const manifest = (await Manifest.parse(manifestContent));
+    const manifest = (await TestHelper.parseManifest(manifestContent));
     for (const recipe of manifest.recipes) {
       assert(recipe.normalize());
     }

@@ -16,11 +16,22 @@ import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 
 describe('recipe descriptions test', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
+
   function createManifestString(options) {
     options = options || {};
     return `
@@ -74,14 +85,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const originalFormatter = Modality.forName('mock').descriptionFormatter;
-    Modality.forName('mock').descriptionFormatter = options.formatter;
+    const originalFormatter = Modality.forName('mock-dom').descriptionFormatter;
+    Modality.forName('mock-dom').descriptionFormatter = options.formatter;
     const helper = await TestHelper.createAndPlan({
       manifestString: options.manifestString || createManifestString(options), loader
     });
     assert.lengthOf(helper.suggestions, 1);
-    Modality.forName('mock').descriptionFormatter = originalFormatter;
-    return helper.suggestions[0].getDescription('mock');
+    Modality.forName('mock-dom').descriptionFormatter = originalFormatter;
+    return helper.suggestions[0].getDescription('mock-dom');
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);

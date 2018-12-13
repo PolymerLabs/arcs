@@ -41,9 +41,17 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   };
 }
-function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, modality: 'mock'}); }
+function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, modality: 'mock-dom'}); }
 
 describe('Arc', function() {
+  beforeEach('creating mock modalities', () => {
+    TestHelper.createMockModalities();
+  });
+
+  afterEach('removing mock modalities', () => {
+    TestHelper.resetModality();
+  });
+
   it('idle can safely be called multiple times', async () => {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, loader, id: 'test'});
@@ -128,7 +136,7 @@ describe('Arc', function() {
 
     const recipe = manifest.recipes[0];
 
-    const slotComposer = new SlotComposer({modality: 'mock', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new SlotComposer({modality: 'mock-dom', rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 
