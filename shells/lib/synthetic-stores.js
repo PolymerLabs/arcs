@@ -1,4 +1,4 @@
-import {StorageProviderFactory} from '../env/arcs.js';
+import {StorageProviderFactory} from '../lib/arcs.js';
 
 const stores = {};
 

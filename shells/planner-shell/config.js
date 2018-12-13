@@ -1,2 +1,1 @@
-import {Xen} from '../env/arcs.js';
-Xen.Debug.level = 2;
+global.debugLevel = 2;

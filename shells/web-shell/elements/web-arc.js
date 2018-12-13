@@ -10,7 +10,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Xen} from '../../lib/xen.js';
 import {ArcHost} from '../../lib/arc-host.js';
-import {SlotComposer} from '../../env/arcs.js';
+import {SlotComposer} from '../../lib/arcs.js';
+import {Utils} from '../../lib/utils.js';
 
 const log = Xen.logFactory('WebArc', '#cb23a6');
 
@@ -36,7 +37,7 @@ const template = Xen.Template.html`
 
 /*
  * TODO(sjmiles): this is messed up, fix:
- * `config.manifest` is used by env.spawn to bootstrap a recipe
+ * `config.manifest` is used by Utils.spawn to bootstrap a recipe
  * `manifest` is used by WebArc to add a recipe
  */
 
@@ -44,7 +45,7 @@ const template = Xen.Template.html`
 
 export class WebArc extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'storage', 'composer', 'config', 'manifest', 'plan'];
+    return ['context', 'storage', 'composer', 'config', 'manifest', 'plan'];
   }
   get template() {
     return template;
@@ -57,8 +58,8 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     };
   }
   update(props, state) {
-    const {env, storage, config, manifest, plan} = props;
-    if (!state.host && env && storage && config) {
+    const {storage, config, manifest, plan} = props;
+    if (!state.host && storage && config) {
       this.state = {host: this.createHost()};
     }
     if (state.host && config && config !== state.config) {
@@ -81,14 +82,14 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
   }
   createHost() {
     log('creating host');
-    let {env, context, storage, composer, config} = this.props;
+    let {context, storage, composer, config} = this.props;
     if (config.suggestionContainer) {
       this.containers.suggestions = config.suggestionContainer;
     }
     if (!composer) {
       composer = new SlotComposer({modality: 'dom', containers: this.containers});
     }
-    return new ArcHost(env, context, storage, composer);
+    return new ArcHost(context, storage, composer);
   }
   disposeArc(host) {
     log('disposing arc');

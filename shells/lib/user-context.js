@@ -9,9 +9,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 //import {Const} from '../../configuration/constants.js';
-import {logFactory} from './log-factory.js';
 //import {SyntheticStores} from '../../lib/synthetic-stores.js';
 import {SingleUserContext} from './single-user-context.js';
+import {logFactory} from './arcs.js';
 
 const log = logFactory('UserContext', '#4f0433');
 const warn = logFactory('UserContext', '#4f0433', 'warn');

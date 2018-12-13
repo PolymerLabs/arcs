@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {SlotComposer} from '../env/arcs.js';
+import {SlotComposer} from './arcs.js';
 
 export class RamSlotComposer extends SlotComposer {
   constructor(options) {

@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Const} from '../configuration/constants.js';
 import {SyntheticStores} from './synthetic-stores.js';
-import {logFactory} from '../lib/log-factory.js';
+import {logFactory} from './arcs.js';
 
 const log = logFactory('UserArcs', '#4f0433');
 const warn = logFactory('UserArcs', '#4f0433', 'warn');

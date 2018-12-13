@@ -11,11 +11,12 @@
  * separation/isolation.
  */
 
-// platform specific code asset
-import '../env/node/arcs.js';
-
+// generate platform specific environment
 import './config.js';
-import {Env} from '../env/node/env.js';
+import {Env} from '../lib/env/node/env.js';
+
+// platform agnostic code
+import {Utils} from '../lib/utils.js';
 import {ArcHost} from '../lib/arc-host.js';
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {UserArcs} from '../lib/user-arcs.js';
@@ -54,7 +55,7 @@ export class PlannerShellInterface {
     // observe user's arc list
     const userArcs = new UserArcs(env, storage, userid);
     // base context (particles & recipes) from static manifest
-    const context = await env.parse(contextManifest);
+    const context = await Utils.parse(contextManifest);
     // userContext continually updates context based on user's arcs
     const userContext = new UserContext();
     // wait for context to spin up
@@ -69,7 +70,7 @@ export class PlannerShellInterface {
       // define a host factory
       const hostFactory = () => {
         const composer = new RamSlotComposer({rootContainer});
-        const host = new ArcHost(env, context, storage, composer);
+        const host = new ArcHost(context, storage, composer);
         return host;
       };
       // instantiate planner

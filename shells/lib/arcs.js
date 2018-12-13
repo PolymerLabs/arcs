@@ -15,8 +15,12 @@ const {
   RecipeResolver,
   KeyManager,
   firebase,
-  Xen
+  logFactory,
+  Xen,
 } = g.__ArcsLib__;
+
+// TODO(sjmiles): populated dynamically via env-base.js
+const Env = {};
 
 export {
   version,
@@ -33,5 +37,7 @@ export {
   RecipeResolver,
   KeyManager,
   firebase,
-  Xen
+  logFactory,
+  Xen,
+  Env
 };

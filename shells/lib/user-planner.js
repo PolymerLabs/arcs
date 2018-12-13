@@ -8,11 +8,13 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {logFactory} from '../lib/log-factory.js';
-import {Planificator} from '../env/arcs.js';
+import {logFactory} from '../lib/arcs.js';
+import {Planificator} from '../lib/arcs.js';
 
 const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
+
+log('LOGGING?');
 
 export class UserPlanner {
   constructor(userid, hostFactory) {

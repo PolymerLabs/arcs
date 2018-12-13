@@ -10,10 +10,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {SlotDomConsumer} from '../../env/arcs.js';
-import {Env} from '../../env/web/env.js';
+import {Env} from '../../lib/env/web/env.js';
 import {Xen} from '../../lib/xen.js';
 import {Const} from '../../configuration/constants.js';
+import {SlotDomConsumer} from '../../lib/arcs.js';
+import {Utils} from '../../lib/utils.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';
@@ -170,7 +171,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     state.env = new Env(root);
     // map in 0_6_0 paths
     Object.assign(state.env.pathMap, {
-      'https://$shell/': `${root}/shells/`,
+      'https://$shell/': `${root}/shells.2/`,
       'https://$artifacts/': `${root}/particles/`,
       'https://$particles/': `${root}/particles/`
     });
@@ -206,7 +207,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
   }
   async spawnContext(userid) {
-    const precontext = await this.state.env.parse(manifests.context);
+    const precontext = await Utils.parse(manifests.context);
     this.state = {
       precontext,
       contextConfig: {

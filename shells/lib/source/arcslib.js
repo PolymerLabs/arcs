@@ -21,8 +21,9 @@ import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {firebase} from '../../../build/runtime/firebase.js';
 import {XenStateMixin} from '../../../modalities/dom/components/xen/xen-state.js';
 import {Template} from '../../../modalities/dom/components/xen/xen-template.js';
-import {Debug, logFactory} from '../../../modalities/dom/components/xen/xen-debug.js';
+import {Debug/*, logFactory*/} from '../../../modalities/dom/components/xen/xen-debug.js';
 import {BrowserLoader} from './browser-loader.js';
+import {logFactory} from '../../../build/platform/log-node.js';
 
 const Arcs = {
   version: '0.6',
@@ -39,6 +40,7 @@ const Arcs = {
   RecipeResolver,
   KeyManager,
   firebase,
+  logFactory,
   Xen: {
     StateMixin: XenStateMixin,
     Template,
