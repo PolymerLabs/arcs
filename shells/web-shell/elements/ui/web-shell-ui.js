@@ -64,7 +64,7 @@ const template = Xen.Template.html`
   <!-- -->
   <slot></slot>
   <!-- -->
-  <system-ui open="{{system}}" on-open="onSystemUiOpen" on-search="onForward">
+  <system-ui open="{{system}}" on-open="onSystemUiOpen" search="{{search}}" on-search="onForward">
     <slot name="suggestions"></slot>
   </system-ui>
   <!-- -->
@@ -75,7 +75,7 @@ const log = Xen.logFactory('WebShellUi', '#9690cc');
 
 export class WebShellUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['arc', 'context', 'nullarc', 'launcherarc', 'pipesarc'];
+    return ['arc', 'context', 'nullarc', 'launcherarc', 'pipesarc', 'search'];
   }
   get template() {
     return template;
