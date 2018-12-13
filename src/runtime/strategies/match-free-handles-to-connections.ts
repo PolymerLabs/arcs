@@ -21,7 +21,7 @@ export class MatchFreeHandlesToConnections extends Strategy {
           return;
         }
 
-        const matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'descriptions');
+        const matchingConnections = recipe.getDisconnectedConnections();
 
         return matchingConnections.map(connection => {
           return (recipe, handle) => {
