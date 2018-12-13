@@ -590,7 +590,7 @@ export class Recipe {
     return this.slots.find(s => s.id === id);
   }
 
-  getMachingConnections() {
-    return this.handleConnections.filer(connection => connection.handle == undefined && connection.name !== 'description');
+  getMatchingConnections() {
+    return this.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'description');
   }
 }
