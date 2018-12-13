@@ -41,9 +41,8 @@ describe('OuterPortAttachment', () => {
     });
     const arc = testHelper.arc;
 
-    // tslint:disable-next-line: variable-name
-    const Foo = arc._context.findSchemaByName('Foo').entityClass();
-    const fooStore = await arc.createStore(Foo.type, undefined, 'fooStore');
+    const foo = arc._context.findSchemaByName('Foo').entityClass();
+    const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
 
     const recipe = arc._context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);

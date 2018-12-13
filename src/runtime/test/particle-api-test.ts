@@ -74,10 +74,9 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Data = manifest.findSchemaByName('Data').entityClass();
-    const fooStore = await arc.createStore(Data.type, 'foo', 'test:0');
-    const resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
+    const data = manifest.findSchemaByName('Data').entityClass();
+    const fooStore = await arc.createStore(data.type, 'foo', 'test:0');
+    const resStore = await arc.createStore(data.type.collectionOf(), 'res', 'test:1');
     const inspector = new util.ResultInspector(arc, resStore, 'value');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
@@ -136,9 +135,8 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type.collectionOf(), undefined, 'result-handle');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
     const recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -178,16 +176,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(Result.type)[1];
+    const newStore = arc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'hello');
     await util.assertSingletonIs(newStore, 'value', 'success');
   });
@@ -257,16 +254,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -348,16 +344,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -441,16 +436,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -539,16 +533,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const resultStore = await arc.createStore(Result.type, undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const resultStore = await arc.createStore(result.type, undefined, 'test:1');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(Result.type)[2];
+    const newStore = arc.findStoresByType(result.type)[2];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -634,12 +627,11 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Result = manifest.findSchemaByName('Result').entityClass();
-    const inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
+    const result = manifest.findSchemaByName('Result').entityClass();
+    const inputsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:1');
     inputsStore.store({id: '1', rawData: {value: 'hello'}}, ['key1']);
     inputsStore.store({id: '2', rawData: {value: 'world'}}, ['key2']);
-    const resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
+    const resultsStore = await arc.createStore(result.type.collectionOf(), undefined, 'test:2');
     const inspector = new util.ResultInspector(arc, resultsStore, 'value');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
@@ -652,11 +644,11 @@ describe('particle-api', () => {
     // TODO: how do i listen to inner arc's outStore handle-changes?
     // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
 
-    let newStore = arc.findStoresByType(Result.type)[1];
+    let newStore = arc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'HELLO');
 
-    newStore = arc.findStoresByType(Result.type)[3];
+    newStore = arc.findStoresByType(result.type)[3];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
@@ -694,9 +686,8 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Data = manifest.findSchemaByName('Data').entityClass();
-    const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(bigStore);
     recipe.normalize();
@@ -752,16 +743,15 @@ describe('particle-api', () => {
       `
     });
 
-    // tslint:disable-next-line: variable-name
-    const Data = manifest.findSchemaByName('Data').entityClass();
-    const bigStore = await arc.createStore(Data.type.bigCollectionOf(), 'big', 'test:0');
+    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0');
     const promises = [];
     for (let i = 1; i <= 5; i++) {
       promises.push(bigStore.store({id: 'i' + i, rawData: {value: 'v' + i}}, ['k' + i]));
     }
     await Promise.all(promises);
 
-    const resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
+    const resStore = await arc.createStore(dataClass.type.collectionOf(), 'res', 'test:1');
     const inspector = new util.ResultInspector(arc, resStore, 'value');
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(bigStore);
