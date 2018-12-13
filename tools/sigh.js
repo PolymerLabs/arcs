@@ -401,7 +401,7 @@ async function tslint(args) {
 
   const fixArgs = options.fix ? ['--fix'] : [];
 
-  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...fixArgs, 'src/**/*.ts'], {});
+  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...fixArgs], {});
   if (result.status) {
     console.log(result.stdout);
   }
