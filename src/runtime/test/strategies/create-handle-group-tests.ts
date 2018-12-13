@@ -15,7 +15,7 @@ import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 import {HandleConnection} from '../../recipe/handle-connection.js';
 import {assert} from '../chai-web.js';
 
-describe('CreateHandleGroup', function() {
+describe('CreateHandleGroup', () => {
   it('connects variables and inline schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Human
