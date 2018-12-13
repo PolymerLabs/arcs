@@ -1,5 +1,7 @@
-export const App = async (env, composer, manifestPath) => {
-  const context = await env.parse(`
+import {Utils} from '../lib/utils.js';
+
+export const App = async (composer, manifestPath) => {
+  const context = await Utils.parse(`
 import 'https://$particles/canonical.manifest'
 import 'https://$particles/Profile/Sharing.recipe'
   `);
@@ -8,16 +10,16 @@ import 'https://$particles/Profile/Sharing.recipe'
   await installSystemUser({userid: 'gomer', context});
   console.log('installed SYSTEM_user');
 
-  const manifest = await env.parse(`import 'https://$particles/${manifestPath || 'Arcs/Login.recipe'}'`);
+  const manifest = await Utils.parse(`import 'https://$particles/${manifestPath || 'Arcs/Login.recipe'}'`);
   console.log(`manifest [${manifest.id}]`);
 
   const recipe = manifest.allRecipes[0];
   console.log(`recipe [${recipe.name}]`);
 
-  const arc = await env.spawn({id: 'smoke-arc', composer, context});
+  const arc = await Utils.spawn({id: 'smoke-arc', composer, context});
   console.log(`arc [${arc.id}]`);
 
-  const plan = await env.resolve(arc, recipe);
+  const plan = await Utils.resolve(arc, recipe);
   await arc.instantiate(plan);
 
   console.log(`store [${arc._stores[0].id}]`);
