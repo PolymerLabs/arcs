@@ -24,7 +24,7 @@ async function runStrategy(manifestStr) {
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 
-describe('AddMissingHandles', function() {
+describe('AddMissingHandles', () => {
   it(`doesn't add handles if there are constraints`, async () => {
     assert.isEmpty(await runStrategy(`
       schema Thing

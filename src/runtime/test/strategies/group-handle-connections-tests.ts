@@ -13,7 +13,7 @@ import {Manifest} from '../../manifest.js';
 import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
 import {assert} from '../chai-web.js';
 
-describe('GroupHandleConnections', function() {
+describe('GroupHandleConnections', () => {
   const schemaAndParticlesStr = `
       schema Thing
       schema OtherThing
@@ -54,7 +54,7 @@ ${schemaAndParticlesStr}
     // Verify all connections are bound to handles.
     assert.isUndefined(recipe.handleConnections.find(hc => !hc.handle));
     // Verify all handles have non-empty connections list.
-    assert.isUndefined(recipe.handles.find(v => v.connections.length == 0));
+    assert.isUndefined(recipe.handles.find(v => v.connections.length === 0));
   });
   it('does nothing if no grouping is possible', async () => {
     // TODO: add another Type handle connections to the recipe!

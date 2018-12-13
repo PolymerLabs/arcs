@@ -15,7 +15,7 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
-describe('Particle Execution Context', function() {
+describe('Particle Execution Context', () => {
   it('substitutes slot names for model references', async () => {
     const {arc, slotComposer} = await TestHelper.create({
       manifestString: `

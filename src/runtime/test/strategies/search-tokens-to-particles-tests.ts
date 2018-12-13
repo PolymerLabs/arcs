@@ -14,7 +14,7 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 import {SearchTokensToParticles} from '../../strategies/search-tokens-to-particles.js';
 import {assert} from '../chai-web.js';
 
-describe('SearchTokensToParticles', function() {
+describe('SearchTokensToParticles', () => {
   it('matches particles by verb strategy', async () => {
     const manifest = (await Manifest.parse(`
       particle SimpleJumper &jump in 'A.js'
@@ -56,7 +56,7 @@ describe('SearchTokensToParticles', function() {
       assert(recipe.normalize());
       assert(!recipe.isResolved());
     });
-    const inputParams = {generated: [], terminal: recipes.map(recipe => { return {result: recipe, score: 1};})};
+    const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
     const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);

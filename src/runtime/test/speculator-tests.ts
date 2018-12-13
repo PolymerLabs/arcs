@@ -14,10 +14,10 @@ import {assert} from './chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 
-describe('speculator', function() {
+describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
-    const arc = new Arc({id: 'test'});
+    const arc = new Arc({id: 'test', loader, context: new Manifest({id: 'test'})});
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

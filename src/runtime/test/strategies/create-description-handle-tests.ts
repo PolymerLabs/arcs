@@ -13,7 +13,7 @@ import {Manifest} from '../../manifest.js';
 import {CreateDescriptionHandle} from '../../strategies/create-description-handle.js';
 import {assert} from '../chai-web.js';
 
-describe('CreateDescriptionHandle', function() {
+describe('CreateDescriptionHandle', () => {
   it('descriptions handle created', async () => {
     const manifest = (await Manifest.parse(`
       schema Description

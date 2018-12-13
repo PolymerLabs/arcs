@@ -14,7 +14,7 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {Manifest} from '../../manifest.js';
 
-describe('common particles test', function() {
+describe('common particles test', () => {
   it('resolves after cloning', async () => {
     const manifest = await Manifest.parse(`
   schema Thing

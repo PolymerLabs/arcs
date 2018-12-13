@@ -165,7 +165,7 @@ export abstract class StorageProviderBase {
     trace.end();
   }
 
-  _compareTo(other) : number {
+  _compareTo(other: StorageProviderBase) : number {
     let cmp;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;

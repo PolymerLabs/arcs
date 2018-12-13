@@ -39,7 +39,7 @@ export class Runtime {
    * Parse a textual manifest and return a Manifest object. See the Manifest
    * class for the options accepted.
    */
-  static parseManifest(content, options) : Promise<Manifest> {
+  static parseManifest(content, options?) : Promise<Manifest> {
     return Manifest.parse(content, options);
   }
 

@@ -395,20 +395,13 @@ async function link(filecontents) {
 }
 
 async function tslint(args) {
-  const jsSources = [...findProjectFiles(srcExclude, process.cwd(), fullPath => {
-    if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
-      return false;
-    }
-    return /\.ts$/.test(fullPath);
-  })];
-
   const options = minimist(args, {
     boolean: ['fix'],
   });
 
-  const tslintArgs = options.fix ? ['--fix', ...jsSources] : jsSources;
+  const fixArgs = options.fix ? ['--fix'] : [];
 
-  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...tslintArgs], {});
+  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...fixArgs], {});
   if (result.status) {
     console.log(result.stdout);
   }

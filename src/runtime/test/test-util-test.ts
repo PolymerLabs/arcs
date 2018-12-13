@@ -13,7 +13,7 @@
 import {assert} from './chai-web.js';
 import {setDiff, setDiffCustom} from '../util.js';
 
-describe('util', function() {
+describe('util', () => {
   it('setDiff works for basic value types', () => {
     const check = (from, to, expected) => {
       const result = setDiff(from, to);

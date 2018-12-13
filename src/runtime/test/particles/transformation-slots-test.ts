@@ -12,7 +12,7 @@
 
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('transformation slots', function() {
+describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/particles/artifacts/provide-hosted-particle-slots.manifest',
@@ -26,13 +26,13 @@ describe('transformation slots', function() {
         .expectRenderSlot('ShowFoo', 'item', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('Fooxer', 'item', {contentTypes: ['template']})
         .expectRenderSlot('Fooxer', 'item', {verify: (content) => {
-          return content.model && content.model.items && content.model.items.length == 2;
+          return content.model && content.model.items && content.model.items.length === 2;
         }})
         .expectRenderSlot('ShowFooAnnotation', 'annotation', {contentTypes: ['template']})
         .expectRenderSlot('ShowFooAnnotation', 'annotation', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('FooAnnotationMuxer', 'annotation', {contentTypes: ['template']})
         .expectRenderSlot('FooAnnotationMuxer', 'annotation', {verify: (content) => {
-          return content.model && content.model.items && content.model.items.length == 2;
+          return content.model && content.model.items && content.model.items.length === 2;
         }});
 
     await helper.acceptSuggestion();

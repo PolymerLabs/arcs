@@ -12,9 +12,10 @@
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
+import {HandleConnection} from '../../recipe/handle-connection.js';
 import {assert} from '../chai-web.js';
 
-describe('CreateHandleGroup', function() {
+describe('CreateHandleGroup', () => {
   it('connects variables and inline schemas', async () => {
     const manifest = await Manifest.parse(`
       schema Human
@@ -127,7 +128,7 @@ describe('CreateHandleGroup', function() {
     for (const particle of result.particles) {
       const connections = Object.values(particle.connections);
       assert.lengthOf(connections, 1);
-      const connection = connections[0];
+      const connection = connections[0] as HandleConnection;
 
       if (['ReaderB', 'ReaderC', 'ReaderD', 'WriterBCD'].includes(particle.name)) {
         assert.equal(connection.handle, handle);

@@ -18,7 +18,7 @@ import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 
 const {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 
-describe('A Strategy Sequence', function() {
+describe('A Strategy Sequence', () => {
   it('resolves a verb substitution and slot mapping', async () => {
     const manifest = await Manifest.parse(`  
       particle P in 'A.js'

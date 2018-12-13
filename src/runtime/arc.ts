@@ -94,7 +94,7 @@ export class Arc {
     this._description = new Description(this);
     this.debugHandler = new ArcDebugHandler(this);
   }
-  get loader() {
+  get loader(): Loader {
     return this._loader;
   }
 
@@ -554,7 +554,7 @@ ${this.activeRecipe.toString()}`;
     handleMap.handles.set(name, targetHandle);
   }
 
-  async createStore(type, name, id, tags, storageKey = undefined) {
+  async createStore(type: Type, name, id, tags?, storageKey = undefined) {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {
@@ -586,7 +586,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  _registerStore(store, tags) {
+  _registerStore(store: StorageProviderBase, tags?) {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -600,7 +600,7 @@ ${this.activeRecipe.toString()}`;
     store.on('change', () => this._onDataChange(), this);
   }
 
-  _tagStore(store, tags) {
+  _tagStore(store: StorageProviderBase, tags) {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
     (tags || []).forEach(tag => storeTags.add(tag));
@@ -626,7 +626,7 @@ ${this.activeRecipe.toString()}`;
   // TODO: we should be testing the schemas for compatiblity instead of using just the name.
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
-  static _typeToKey(type) {
+  static _typeToKey(type: Type) {
     const elementType = type.getContainedType();
     if (elementType) {
       const key = this._typeToKey(elementType);
@@ -644,7 +644,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  findStoresByType(type, options) {
+  findStoresByType(type: Type, options?): StorageProviderBase[] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -684,7 +684,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store) {
+  findStoreTags(store: StorageProviderBase) {
     if (this.storeTags.has(store)) {
       return this.storeTags.get(store);
     }
@@ -707,7 +707,7 @@ ${this.activeRecipe.toString()}`;
     return versionById;
   }
 
-  keyForId(id): string {
+  keyForId(id: string): string {
     return this.storageKeys[id];
   }
 

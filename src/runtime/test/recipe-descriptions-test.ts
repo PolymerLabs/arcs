@@ -17,7 +17,7 @@ import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
 
-describe('recipe descriptions test', function() {
+describe('recipe descriptions test', () => {
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
