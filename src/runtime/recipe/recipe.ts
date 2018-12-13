@@ -562,4 +562,25 @@ export class Recipe {
     return this.handleConnections.filter(
         hc => hc.handle == null && !hc.isOptional && hc.name !== 'descriptions' && hc.direction !== 'host');
   }
+
+  getFreeConnections() {
+    return this.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
+  }
+
+  findHandleByID(id): Handle {
+    return this.handles.find(handle => handle.id === id);
+  }
+
+  getUnnamedUntypedConnections() {
+    return this.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional);
+  }
+
+  getTypeHandleConnections(type, p) {
+    // returns the handles of type 'type' that do not belong to particle 'p'
+    return this.handleConnections.filter(c => {
+      return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle !== p);
+    });
+  }
+
+
 }
