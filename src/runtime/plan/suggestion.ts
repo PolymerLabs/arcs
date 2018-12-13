@@ -165,7 +165,7 @@ export class Suggestion {
 
       return plan;
     } catch (e) {
-      console.error(`Failed to parse suggestion ${e}.`);
+      console.error(`Failed to parse suggestion ${e}\n${planString}.`);
     }
     return null;
   }

@@ -9,25 +9,72 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../arc.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
+
+const error = logFactory('PlanningResult', '#ff0090', 'error');
 
 export class PlanningResult {
   arc: Arc;
   _suggestions: Suggestion[];
-  lastUpdated: Date;
-  generations: {}[];
+  lastUpdated: Date = new Date(null);
+  generations: {}[] = [];
   contextual = true;
+  store: StorageProviderBase;
+  private storeCallback: ({}) => void;
+  private changeCallbacks: (() => void)[] = [];
 
-  constructor(arc, result = {}) {
+  constructor(arc, store) {
     assert(arc, 'Arc cannot be null');
     this.arc = arc;
-    this._suggestions = result['suggestions'];
-    this.lastUpdated = result['lastUpdated'] || new Date(null);
-    this.generations = result['generations'] || [];
+    this.store = store;
+    if (this.store) {
+      this.storeCallback = () => this.load();
+      this.store.on('change', this.storeCallback, this);
+    }
   }
 
+  registerChangeCallback(callback) {
+    this.changeCallbacks.push(callback);
+  }
+
+  onChanged() {
+    for (const callback of this.changeCallbacks) {
+      callback();
+    }
+  }
+
+  async load(): Promise<boolean> {
+    assert(this.store['get'], 'Unsupported getter in suggestion storage');
+    const value = await this.store['get']() || {};
+    if (value.suggestions) {
+      if (await this.deserialize(value)) {
+        this.onChanged();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async flush() {
+    try {
+      assert(this.store['set'], 'Unsupported setter in suggestion storage');
+      await this.store['set'](this.serialize());
+    } catch(e) {
+      error('Failed storing suggestions: ', e);
+      throw e;
+    }
+  }
+
+  dispose() {
+    this.changeCallbacks = [];
+    this.store.off('change', this.storeCallback);
+    this.store.dispose();
+  }
+  
   get suggestions(): Suggestion[] { return this._suggestions || []; }
   set suggestions(suggestions) {
     assert(Boolean(suggestions), `Cannot set uninitialized suggestions`);
@@ -103,6 +150,7 @@ export class PlanningResult {
     this.generations = generations;
     this.lastUpdated = lastUpdated;
     this.contextual = contextual;
+    this.onChanged();
     return true;
   }
 
@@ -130,6 +178,7 @@ export class PlanningResult {
     // TODO: filter out generations of other suggestions.
     this.generations.push(...generations);
     this.lastUpdated = lastUpdated;
+    this.onChanged();
     return true;
   }
 
