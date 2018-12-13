@@ -47,6 +47,7 @@ export class Arc {
   private readonly pecFactory: (id: string) => PECInnerPort;
   private readonly speculative: boolean;
   private _activeRecipe = new Recipe();
+  // TODO: rename: these are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
   private _recipes = [];
   // Public for debug access
   public readonly _loader: Loader;
@@ -79,7 +80,6 @@ export class Arc {
     // for now, every Arc gets its own session
     this.id = Id.newSessionId().fromString(id);
     this.speculative = !!speculative; // undefined => false
-    // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
     this._loader = loader;
 
     this.storageKey = storageKey;

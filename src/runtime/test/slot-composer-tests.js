@@ -24,7 +24,7 @@ import {TestHelper} from '../testing/test-helper.js';
 async function initSlotComposer(recipeStr) {
   const slotComposer = new FakeSlotComposer();
 
-  const manifest = (await Manifest.parse(recipeStr));
+  const manifest = await TestHelper.parseManifest(recipeStr);
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });

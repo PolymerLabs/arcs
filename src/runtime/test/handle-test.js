@@ -29,7 +29,7 @@ describe('Handle', function() {
     loader = new Loader();
   });
 
-  const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock'});
+  const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
 
   it('clear singleton store', async () => {
     const slotComposer = createSlotComposer();

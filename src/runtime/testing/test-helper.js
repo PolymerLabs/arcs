@@ -43,11 +43,11 @@ export class TestHelper {
     const loader = options.loader || new Loader();
     if (options.manifestFilename) {
       assert(!options.context, 'context should not be provided if manifestFilename is given');
-      options.context = await Manifest.load(options.manifestFilename, loader);
+      options.context = await TestHelper.loadManifest(options.manifestFilename, loader);
     }
     if (options.manifestString) {
       assert(!options.context, 'context should not be provided if manifestString is given');
-      options.context = await Manifest.parse(options.manifestString, {loader, fileName: ''});
+      options.context = await TestHelper.parseManifest(options.manifestString, loader);
     }
 
     // Explicitly not using a constructor to force using this factory method.
@@ -65,6 +65,32 @@ export class TestHelper {
     helper.logging = options.logging;
 
     return helper;
+  }
+
+  static async loadManifest(manifestFilename, loader) {
+    const manifest = await Manifest.load(manifestFilename, loader);
+    TestHelper._addParticlesMockModality(manifest);
+    return manifest;
+  }
+
+  static async parseManifest(manifestString, loader) {
+    const manifest = await Manifest.parse(manifestString, {loader, fileName: ''});
+    TestHelper._addParticlesMockModality(manifest);
+    return manifest;
+  }
+
+  static _addParticlesMockModality(manifest) {
+    const mockModalities = [];
+    for (const particleSpec of manifest.particles) {
+      for (const modality of particleSpec.modality) {
+        if (!modality.startsWith('mock-')) {
+          mockModalities.push(`mock-${modality}`);
+        }
+      }
+      for (const mockModality of mockModalities) {
+        particleSpec.modality.push(mockModality);
+      }
+    }
   }
 
   /**

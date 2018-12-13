@@ -17,7 +17,7 @@ import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
-  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock'});
+  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
   const arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
