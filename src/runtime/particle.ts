@@ -35,7 +35,7 @@ export class Particle {
     
     // Only used by a Slotlet class in particle-execution-context
     // tslint:disable-next-line: no-any
-    protected _slotByName: Map<string, any> = new Map();
+    slotByName: Map<string, any> = new Map();
     private capabilities: {constructInnerArc?: Function};
     
   constructor(capabilities?: {constructInnerArc?: Function}) {
@@ -150,7 +150,7 @@ export class Particle {
    * Returns the slot with provided name.
    */
   getSlot(name) {
-    return this._slotByName.get(name);
+    return this.slotByName.get(name);
   }
 
   static buildManifest(strings: string[], ...bits): string {
@@ -191,4 +191,9 @@ export class Particle {
     }
     throw new Error('A particle needs a description handle to set a decription pattern');
   }
+
+  // abstract
+  renderSlot(slotName: string, contentTypes: string[]) {}
+  renderHostedSlot(slotName: string, hostedSlotId: string, content: string) {}
+  fireEvent(slotName: string, event: {}) {}
 }

@@ -14,7 +14,7 @@ import {SlotComposer} from './arcs.js';
 export class RamSlotComposer extends SlotComposer {
   constructor(options) {
     options = options || {};
-    super({rootContainer: options.rootContainer || {'root': 'root-context'}, modality: 'mock'});
+    super({rootContainer: options.rootContainer || {'root': 'root-context'}, modality: 'mock-dom'});
   }
 
   sendEvent(particleName, slotName, event, data) {

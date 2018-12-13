@@ -15,18 +15,28 @@ import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 export class Modality {
-
-  static _modalities = {
-    'dom': new Modality('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'dom-touch': new Modality('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'vr': new Modality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter),
-    'mock': new Modality('mock', MockSlotDomConsumer, MockSuggestDomConsumer)
-  };
-  
   private constructor(public readonly name: string,
                       public readonly slotConsumerClass: typeof SlotDomConsumer,
                       public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
                       public readonly descriptionFormatter?: typeof DescriptionDomFormatter) {}
+
+  static _modalities = {};
+  static addModality(name: string,
+                     slotConsumerClass: typeof SlotDomConsumer,
+                     suggestionConsumerClass: typeof SuggestDomConsumer,
+                     descriptionFormatter?: typeof DescriptionDomFormatter) {
+    assert(!Modality._modalities[name], `Modality '${name}' already exists`);
+    Modality._modalities[name] = new Modality(name, slotConsumerClass, suggestionConsumerClass, descriptionFormatter);
+    Modality._modalities[`mock-${name}`] =
+        new Modality(`mock-${name}`, MockSlotDomConsumer, MockSuggestDomConsumer);
+  }
+
+  static init() {
+    Object.keys(Modality._modalities).forEach(key => delete Modality._modalities[key]);
+    Modality.addModality('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
+    Modality.addModality('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
+    Modality.addModality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
+  }
 
   static forName(name: string) {
     assert(Modality._modalities[name], `Unsupported modality ${name}`);
@@ -34,3 +44,4 @@ export class Modality {
   }
 }
 
+Modality.init();

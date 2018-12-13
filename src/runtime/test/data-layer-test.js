@@ -19,7 +19,7 @@ describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
 
-    const arc = new Arc({slotComposer: new SlotComposer({rootContainer: 'test', modality: 'mock'}), id: 'test'});
+    const arc = new Arc({slotComposer: new SlotComposer({rootContainer: 'test', modality: 'mock-dom'}), id: 'test'});
     const entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     const storage = await arc.createStore(new EntityType(schema).collectionOf());
