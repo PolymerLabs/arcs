@@ -157,8 +157,8 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
 
   _typeString(type) {
     switch (type.tag) {
-      case 'Collection': return `[${this._typeString(type.data)}]`;
-      case 'Entity': return type.data._model.names.join(' ');
+      case 'Collection': return `[${this._typeString(type.collectionType)}]`;
+      case 'Entity': return type.entitySchema.names.join(' ');
     }
     return type.tag;
   }
