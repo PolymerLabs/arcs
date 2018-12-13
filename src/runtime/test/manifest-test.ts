@@ -1076,6 +1076,7 @@ ${particleStr1}
     const store = manifest.findStoreByName('Store0');
     assert(store);
 
+    // TODO(shans): address as part of storage refactor
     assert.deepEqual(await store['toList'](), [
       {
         id: '!manifest:the.manifest::0',
@@ -1118,6 +1119,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     `, {fileName: 'the.manifest'});
     const store = manifest.findStoreByName('Store0');
     assert(store);
+
+    // TODO(shans): address as part of storage refactor
     assert.deepEqual(await store['toList'](), [
       {
         id: '!manifest:the.manifest::0',

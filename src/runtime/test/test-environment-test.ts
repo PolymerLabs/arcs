@@ -1,4 +1,4 @@
-import { registerSystemExceptionHandler } from '../arc-exceptions.js';
+import {registerSystemExceptionHandler} from '../arc-exceptions.js';
 
 let exceptions = [];
 
