@@ -14,8 +14,6 @@ import {Planificator} from '../lib/arcs.js';
 const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
 
-log('LOGGING?');
-
 export class UserPlanner {
   constructor(userid, hostFactory) {
     this.runners = [];

@@ -33,10 +33,10 @@ describe('baseRoute', () => {
       });
   });
 
-  it('/shell/apps/web/index.html should be static html', () => {
+  it('/shells/web-shell/index.html should be static html', () => {
     return chai
       .request(app.express)
-      .get('/shell/apps/web/index.html')
+      .get('/shells/web-shell/index.html')
       .then(res => {
         expect(res.type).to.eql('text/html');
       });
