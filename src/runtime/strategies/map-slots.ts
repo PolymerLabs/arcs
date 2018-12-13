@@ -55,7 +55,9 @@ export class MapSlots extends Strategy {
       let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
 
       if (!clonedSlot) {
-        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id === s.id);
+        if (selectedSlot.id) {
+          clonedSlot = recipe.findSlotByID(selectedSlot.id);
+        }
         if (clonedSlot == undefined) {
           clonedSlot = recipe.newSlot(selectedSlot.name);
           clonedSlot.id = selectedSlot.id;

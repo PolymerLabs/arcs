@@ -582,5 +582,15 @@ export class Recipe {
     });
   }
 
+  getParticlesByImplFile(particleSet) {
+    return this.particles.filter(particle => particle.spec && particleSet.has(particle.spec.implFile));
+  }
 
+  findSlotByID(id) {
+    return this.slots.find(s => s.id === id);
+  }
+
+  getMachingConnections() {
+    return this.handleConnections.filer(connection => connection.handle == undefined && connection.name !== 'description');
+  }
 }
