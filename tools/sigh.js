@@ -619,7 +619,7 @@ async function watch([arg, ...moreArgs]) {
   const funs = steps[arg || 'webpack'];
   const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   const watcher = chokidar.watch('.', {
-    ignored: /(node_modules|\/build\/|\.git)/,
+    ignored: /(node_modules|build\/|\.git)/,
     persistent: true
   });
   let timerId = 0;
