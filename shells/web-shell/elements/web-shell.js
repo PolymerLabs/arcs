@@ -65,7 +65,7 @@ const template = Xen.Template.html`
   <!-- web planner -->
   <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
   <!-- ui chrome -->
-  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" on-search="onState">
+  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
@@ -174,10 +174,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     const url = new URL(anchor.href, document.location);
     const params = url.searchParams;
     log('routeLink:', /*url,*/ anchor.href, Array.from(params.keys()));
-    const key = params.get('arc') || '';
+    const arckey = params.get('arc') || '';
     // loopback not supported
-    if (key !== this.state.arckey) {
-      this.state = {arckey: key};
+    if (arckey !== this.state.arckey) {
+      this.state = {arckey, search: ''};
     }
   }
   // TODO(sjmiles): use SyntheticStore instead, see user-context.js
@@ -227,6 +227,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnSerialization(key) {
     this.state = {
+      search: '',
       arc: null,
       arckey: key,
       arcConfig: {
@@ -249,6 +250,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       touched: Date.now()
     };
     this.state = {
+      search: '',
       arc: null,
       arckey: key,
       arcMeta,
@@ -293,8 +295,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       await store.store({id: meta.key, rawData: meta}, [generateId()]);
     }
   }
-  onLauncherClick() {
-    this.state = {arckey: ''};
+  openLauncher() {
+    this.state = {
+      search: '',
+      arckey: ''
+    };
   }
   onLauncherArc(e, launcherArc) {
     this.state = {launcherArc};
@@ -323,17 +328,17 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   onSpawn(e, {id, manifest, description}) {
     log(id, manifest);
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-    const arcMeta = {
-      key: id,
-      href: `?arc=${id}`,
-      description,
-      color,
-      touched: Date.now()
-    };
     this.state = {
+      search: '',
       arc: null,
       arckey: id,
-      arcMeta,
+      arcMeta: {
+        key: id,
+        href: `?arc=${id}`,
+        description,
+        color,
+        touched: Date.now()
+      },
       // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
       arcConfig: {
         id: id,
@@ -344,7 +349,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
   }
   onReset() {
-    this.state = {arckey: null};
+    this.openLauncher();
   }
 }
 

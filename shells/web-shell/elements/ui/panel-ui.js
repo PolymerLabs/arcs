@@ -108,7 +108,7 @@ const log = Xen.logFactory('PanelUi', '#c6c0fc');
 
 export class PanelUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['open'];
+    return ['open', 'search'];
   }
   get template() {
     return template;
@@ -126,8 +126,9 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
     const searchOpen = toolState === 'search';
     const settingsOpen = toolState === 'settings';
     const userOpen = toolState === 'user';
-    const micVsClear = !state.search; //!props.search;
+    const micVsClear = !props.search;
     return [state, {
+      search: props.search || '',
       mainToolbarOpen: mainOpen,
       searchToolbarOpen: searchOpen,
       suggestionsContentOpen: mainOpen || searchOpen,
@@ -139,7 +140,6 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
     }];
   }
   commitSearch(search) {
-    this.state = {search};
     this.fire('search', search || '');
   }
   onToolbarsClick(e) {
@@ -152,8 +152,6 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   }
   onSearchChange(e) {
     const search = e.target.value;
-    // internal search property
-    this.state = {search};
     // don't re-plan until typing has stopped for this length of time
     this._debounce(`searchDebounce`, () => this.commitSearch(search), 300);
   }

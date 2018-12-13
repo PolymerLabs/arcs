@@ -75,7 +75,7 @@ const template = Xen.Template.html`
   <div bar glowing$="{{glows}}" glowable state$="{{barState}}" on-mouseenter="onBarEnter" on-mouseleave="onBarLeave" on-click="onBarClick">
     <div touchbar></div>
     <div contents scrolltop="{{scrollTop:contentsScrollTop}}" on-click="onContentsClick">
-      <panel-ui on-open="onPanelOpen" on-search="onForward">
+      <panel-ui on-open="onPanelOpen" search="{{search}}" on-search="onForward">
         <slot></slot>
       </panel-ui>
     </div>
@@ -86,7 +86,7 @@ const log = Xen.logFactory('SystemUi', '#b6b0ec');
 
 export class SystemUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['open'];
+    return ['open', 'search'];
   }
   get template() {
     return template;
@@ -102,7 +102,7 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
     if (!props.open && state.barState === 'open') {
       this.state = {barState: 'peek'};
     }
-    return state;
+    return [props, state];
   }
   collapseBar() {
     this.setBarState('peek');
