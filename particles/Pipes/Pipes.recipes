@@ -21,15 +21,15 @@ recipe BackgroundPipe
 //    item = playRecord
 //    collection = playRecords
   //
-  create #nosync as findShow
-  create #piped #tv_show as show
-  create #all_piped #all_tv_shows as shows
-  TVMazeFindShow
-    find = findShow
-    show = show
-  AddCollectionItem
-    item = show
-    collection = shows
+//  create #nosync as findShow
+//  create #piped #tv_show as show
+//  create #all_piped #all_tv_shows as shows
+//  TVMazeFindShow
+//    find = findShow
+//    show = show
+//  AddCollectionItem
+//    item = show
+//    collection = shows
   //
 //  create #nosync as findArtist
 //  create #piped #showcase_artist as artist

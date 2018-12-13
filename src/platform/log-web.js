@@ -7,8 +7,6 @@
 
 import {Debug, logFactory as _logFactory} from '../../modalities/dom/components/xen/xen-debug.js';
 
-const _nopFactory = () => () => {};
+const factory = Debug.Level < 1 ? () => () => {} : _logFactory;
 
-// TODO(sjmiles): problems with timing Debug.level and duplicate modules
-//export const logFactory = (...args) => Debug.level < 1 ? _nopFactory() : _logFactory(...args);
-export const logFactory = _logFactory;
+export const logFactory = (...args) => factory(...args);

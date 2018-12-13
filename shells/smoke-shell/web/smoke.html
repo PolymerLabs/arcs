@@ -4,27 +4,23 @@
 
 <script type="module">
   // platform specific imports
-  import "../../env/web/arcs.js";
-  import {Env} from '../../env/web/env.js';
-
+  import {Env} from '../../lib/env/web/env.js';
   // platform agnostic imports
-  import {SlotComposer} from '../../env/arcs.js';
+  import {SlotComposer} from '../../lib/arcs.js';
   import {App} from '../app.js';
 
-  // create a composer configured for web
-  const composer = new SlotComposer({
-    modality: 'dom',
-    rootContainer: document.body
-  });
-
-  // create an arcs environment
-  const env = new Env('../../../');
-  env.pathMap[`https://$artifacts/`] = `../../../particles/`;
+  // configure an arcs environment
+  new Env('../../../').pathMap[`https://$shell/`] = `../../../shells.2/`;
 
   // run App
   (async () => {
     try {
-      window.arc = await App(env, composer);
+      // create a composer configured for web
+      const composer = new SlotComposer({
+        modality: 'dom',
+        rootContainer: document.body
+      });
+      window.arc = await App(composer);
     } catch (x) {
       console.error(x);
     }

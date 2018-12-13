@@ -1,3 +1,0 @@
-particle AddCollectionItem in './source/AddCollectionItem.js'
-  in ~a item
-  inout [~a] collection

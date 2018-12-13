@@ -8,17 +8,17 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {logFactory} from './log-factory.js';
 import {SyntheticStores} from './synthetic-stores.js';
-import {ArcType} from '../env/arcs.js';
+import {ArcType} from './arcs.js';
+import {logFactory} from './arcs.js';
+import {Utils} from './utils.js';
 
 const log = logFactory('ArcHost', '#cade57');
 const warn = logFactory('ArcHost', '#cade57', 'warn');
 const error = logFactory('ArcHost', '#cade57', 'error');
 
 export class ArcHost {
-  constructor(env, context, storage, composer) {
-    this.env = env;
+  constructor(context, storage, composer) {
     this.context = context;
     this.storage = storage;
     this.composer = composer;
@@ -31,11 +31,11 @@ export class ArcHost {
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;
-    const context = this.context || await this.env.parse(``);
+    const context = this.context || await Utils.parse(``);
     const serialization = this.serialization = await this.computeSerialization(config, this.storage);
-    this.arc = await this._spawn(this.env, context, this.composer, this.storage, config.id, serialization);
+    this.arc = await this._spawn(context, this.composer, this.storage, config.id, serialization);
     if (config.manifest && !serialization) {
-      await this.instantiateDefaultRecipe(this.env, this.arc, config.manifest);
+      await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
     if (this.pendingPlan) {
       const plan = this.pendingPlan;
@@ -45,7 +45,7 @@ export class ArcHost {
     return this.arc;
   }
   set manifest(manifest) {
-    this.instantiateDefaultRecipe(this.env, this.arc, manifest);
+    this.instantiateDefaultRecipe(this.arc, manifest);
   }
   set plan(plan) {
     if (this.arc) {
@@ -68,15 +68,15 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(env, context, composer, storage, id, serialization) {
-    return await env.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
+  async _spawn(context, composer, storage, id, serialization) {
+    return await Utils.spawn({id, context, composer, serialization, storage: `${storage}/${id}`});
   }
-  async instantiateDefaultRecipe(env, arc, manifest) {
+  async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
     try {
-      manifest = await env.parse(manifest);
+      manifest = await Utils.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await env.resolve(arc, recipe);
+      const plan = await Utils.resolve(arc, recipe);
       if (plan) {
         this.instantiatePlan(arc, plan);
       }

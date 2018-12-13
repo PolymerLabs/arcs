@@ -1,3 +1,0 @@
-import 'https://$shell/artifacts/Vr/recipes.manifest'
-import 'https://$shell/artifacts/VideoPlayer/Vr/VideoPlayer.recipes'
-import 'https://$shell/artifacts/Messages/Vr/Vr.recipes'
