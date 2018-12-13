@@ -15,10 +15,11 @@ const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
 
 export class UserPlanner {
-  constructor(userid, hostFactory) {
+  constructor(userid, hostFactory, options) {
     this.runners = [];
     this.userid = userid;
     this.hostFactory = hostFactory;
+    this.options = options;
   }
   onArc({add, remove}) {
     //log(add, remove);
@@ -57,9 +58,9 @@ export class UserPlanner {
   async createPlanificator(userid, key, arc) {
     log(`createPlanificator for [${key}]`);
     const options = {
-      //storageKeyBase: config.plannerStorage,
+      storageKeyBase: this.options.plannerStorage,
       //onlyConsumer: config.plannerOnlyConsumer,
-      //debug: config.plannerDebug,
+      debug: this.options.debug,
       userid
     };
     const planificator = await Planificator.create(arc, options);

@@ -56,9 +56,9 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       arckey: params.get('arc'),
       search: params.get('search') || '',
-      plannerStorage: params.get('plannerStorage') || params.get('plannerStorageKeyBase') || params.get('storageKeyBase'),
+      plannerStorage: params.get('plannerStorage'),
       plannerDebug: params.get('plannerDebug'),
-      plannerOnlyConsumer: params.get('plannerOnlyConsumer') || params.get('onlyConsumer') === 'true',
+      plannerOnlyConsumer: params.get('plannerOnlyConsumer'),
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),
       //useSerialization: !params.has('legacy')

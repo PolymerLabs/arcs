@@ -45,7 +45,7 @@ export class PlannerShellInterface {
    * @param storageKeyBase Plans will be stored in a key that begins with this prefix.
    *   If not specified use a key based on the Launcher Arc.
    */
-  static async start(assetsPath, storage, userid, debug) {
+  static async start(assetsPath, storage, userid, options) {
     if (!assetsPath || !userid || !storage) {
       throw new Error('assetsPath, userid, and storage required');
     }
@@ -74,7 +74,7 @@ export class PlannerShellInterface {
         return host;
       };
       // instantiate planner
-      userPlanner = new UserPlanner(userid, hostFactory);
+      userPlanner = new UserPlanner(userid, hostFactory, options);
       // subscribe planner to changes in user arcs
       userArcs.subscribe(change => userPlanner.onArc(change));
     }, 4000);

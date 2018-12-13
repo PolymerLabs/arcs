@@ -26,4 +26,6 @@ if (!userId) {
   console.log(`No ARCS_USER_ID environment variable, using default:\n\t[${userId}]`);
 }
 
-PlannerShellInterface.start('../../', storage, userId, debug);
+const plannerStorage = process.env['ARCS_PLANNER_STORAGE'];
+
+PlannerShellInterface.start('../../', storage, userId, {plannerStorage, debug});
