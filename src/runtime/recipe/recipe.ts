@@ -558,11 +558,6 @@ export class Recipe {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
-  getDisconnectedConnections() {
-    return this.handleConnections.filter(
-        hc => hc.handle == null && !hc.isOptional && hc.name !== 'descriptions' && hc.direction !== 'host');
-  }
-
   getFreeConnections() {
     return this.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
   }
@@ -582,15 +577,16 @@ export class Recipe {
     });
   }
 
-  getParticlesByImplFile(particleSet) {
-    return this.particles.filter(particle => particle.spec && particleSet.has(particle.spec.implFile));
+  getParticlesByImplFile(files: Set<string>) {
+    return this.particles.filter(particle => particle.spec && files.has(particle.spec.implFile));
   }
 
   findSlotByID(id) {
     return this.slots.find(s => s.id === id);
   }
 
-  getMatchingConnections() {
-    return this.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'description');
+  getDisconnectedConnections() {
+    return this.handleConnections.filter(
+        hc => hc.handle == null && !hc.isOptional && hc.name !== 'descriptions' && hc.direction !== 'host');
   }
 }
