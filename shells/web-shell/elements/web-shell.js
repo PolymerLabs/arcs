@@ -169,12 +169,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     linkJack(document, anchor => this.routeLink(anchor));
     // create arcs web-environment
     state.env = new Env(root);
-    // map in 0_6_0 paths
-    Object.assign(state.env.pathMap, {
-      'https://$shell/': `${root}/shells.2/`,
-      'https://$artifacts/': `${root}/particles/`,
-      'https://$particles/': `${root}/particles/`
-    });
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
