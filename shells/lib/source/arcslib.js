@@ -23,7 +23,7 @@ import {XenStateMixin} from '../../../modalities/dom/components/xen/xen-state.js
 import {Template} from '../../../modalities/dom/components/xen/xen-template.js';
 import {Debug/*, logFactory*/} from '../../../modalities/dom/components/xen/xen-debug.js';
 import {BrowserLoader} from './browser-loader.js';
-import {logFactory} from '../../../build/platform/log-node.js';
+import {logFactory} from '../../../build/platform/log-web.js';
 
 const Arcs = {
   version: '0.6',
