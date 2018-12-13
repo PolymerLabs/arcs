@@ -11,7 +11,6 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {PlanningResult} from './planning-result.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 import {DevtoolsConnection} from '../debug/devtools-connection.js';
@@ -22,29 +21,26 @@ type Callback = ({}) => void;
 export class PlanConsumer {
   arc: Arc;
   result: PlanningResult;
-  store: StorageProviderBase;
   suggestFilter: {};
   // Callback is triggered when planning results have changed.
-  suggestionsChangeCallbacks: Callback[] = [];
+  private suggestionsChangeCallbacks: Callback[] = [];
   // Callback is triggered when suggestions visible to the user have changed.
-  visibleSuggestionsChangeCallbacks: Callback[] = [];
-  storeCallback: Callback;
+  private visibleSuggestionsChangeCallbacks: Callback[] = [];
   suggestionComposer: SuggestionComposer|null = null;
+  currentSuggestions: Suggestion[] = [];
 
-  constructor(arc: Arc, store: StorageProviderBase) {
-    assert(arc, 'arc cannot be null');
-    assert(store, 'store cannot be null');
-    this.arc = arc;
-    this.result = new PlanningResult(arc);
-    this.store = store;
+  constructor(result: PlanningResult) {
+    assert(result, 'result cannot be null');
+    assert(result.arc, 'arc cannot be null');
+    this.arc = result.arc;
+    this.result = result;
     this.suggestFilter = {showAll: false};
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
 
-    this.storeCallback = () => this.loadSuggestions();
-    this.store.on('change', this.storeCallback, this);
-
     this._initSuggestionComposer();
+
+    this.result.registerChangeCallback(() => this.onSuggestionsChanged());
   }
 
   registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
@@ -55,26 +51,16 @@ export class PlanConsumer {
     if (this.suggestFilter['showAll'] === showAll && this.suggestFilter['search'] === search) {
       return;
     }
-    const previousSuggestions = this.getCurrentSuggestions();
     this.suggestFilter = {showAll, search};
-    this._onMaybeSuggestionsChanged(previousSuggestions);
+    this._onMaybeSuggestionsChanged();
   }
 
-  async loadSuggestions() {
-    assert(this.store['get'], 'Unsupported getter in suggestion storage');
-    const value = await this.store['get']() || {};
-    if (!value.suggestions) {
-      return;
-    }
+  onSuggestionsChanged() {
+    this._onSuggestionsChanged();
+    this._onMaybeSuggestionsChanged();
 
-    const previousSuggestions = this.getCurrentSuggestions();
-    if (await this.result.deserialize(value)) {
-      this._onSuggestionsChanged();
-      this._onMaybeSuggestionsChanged(previousSuggestions);
-
-      if (this.result.generations.length && DevtoolsConnection.isConnected) {
-        StrategyExplorerAdapter.processGenerations(this.result.generations, DevtoolsConnection.get());
-      }
+    if (this.result.generations.length && DevtoolsConnection.isConnected) {
+      StrategyExplorerAdapter.processGenerations(this.result.generations, DevtoolsConnection.get());
     }
   }
 
@@ -114,7 +100,6 @@ export class PlanConsumer {
   }
 
   dispose() {
-    this.store.off('change', this.storeCallback);
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
     if (this.suggestionComposer) {
@@ -126,10 +111,11 @@ export class PlanConsumer {
     this.suggestionsChangeCallbacks.forEach(callback => callback({suggestions: this.result.suggestions}));
   }
 
-  _onMaybeSuggestionsChanged(previousSuggestions) {
+  _onMaybeSuggestionsChanged() {
     const suggestions = this.getCurrentSuggestions();
-    if (!PlanningResult.isEquivalent(previousSuggestions, suggestions)) {
+    if (!PlanningResult.isEquivalent(this.currentSuggestions, suggestions)) {
       this.visibleSuggestionsChangeCallbacks.forEach(callback => callback(suggestions));
+      this.currentSuggestions = suggestions;
     }
   }
 

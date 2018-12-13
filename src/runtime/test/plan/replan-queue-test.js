@@ -9,11 +9,12 @@
  */
 import {assert} from '../chai-web.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
+import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor() {
-    super({context: {allRecipes: []}}, {});
+    super(new PlanningResult({context: {allRecipes: []}}, {on: () =>{}}));
     this.produceSuggestionsCalled = 0;
   }
   produceSuggestions() {
