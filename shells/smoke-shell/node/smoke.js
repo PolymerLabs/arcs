@@ -1,25 +1,21 @@
 // platform specific imports
-import '../../env/node/arcs.js';
-import {Env} from '../../env/node/env.js';
-import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
-
+import {Env} from '../../lib/env/node/env.js';
 // platform agnostic imports
+import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
 import {App} from '../app.js';
 
 // notify user we are live
 console.log('\n--- Arc Shell ---\n');
 
-// create a composer configured for node
-const composer = new RamSlotComposer();
-
 // create an arcs environment
-const env = new Env('../../..');
-env.pathMap[`https://$artifacts/`] = `../../../particles/`;
+new Env('../../..').pathMap[`https://$shell/`] = `../../../shells.2/`;
 
 // run App
 (async () => {
   try {
-    await App(env, composer);
+    // create a composer configured for node
+    const composer = new RamSlotComposer();
+    await App(composer);
   } catch (x) {
     console.error(x);
   }

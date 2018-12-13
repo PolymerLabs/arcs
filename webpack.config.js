@@ -1,34 +1,19 @@
-const webpack = require('webpack');
 const path = require('path');
-const glob = require('glob');
 
 const config = {
-  mode: 'development',
-  devtool: 'sourcemap',
-
+  mode: 'none',
+  optimization: {
+    minimize: false
+  },
+  devtool: 'source-map',
   entry: {
-    'worker-entry': './shell/source/worker-entry.js',
-    'ArcsLib': './shell/source/ArcsLib.js',
-    'Tracelib': './shell/source/Tracelib.js',
+    arcslib: './shells/lib/source/arcslib.js',
+    worker: './shells/lib/source/worker.js'
   },
   output: {
-    path: path.resolve(__dirname, 'shell/build'),
-    filename: '[name].js'
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'shells/lib/build')
   }
 };
 
-const configShells = {
-  mode: 'development',
-  devtool: 'sourcemap',
-
-  entry: {
-    'worker': './shells/env/source/worker.js',
-    'arcs': './shells/env/source/arcs.js',
-  },
-  output: {
-    path: path.resolve(__dirname, 'shells/env/build'),
-    filename: '[name].js'
-  }
-};
-
-module.exports = [config, configShells];
+module.exports = [config];

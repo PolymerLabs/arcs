@@ -22,7 +22,7 @@ export class GroupHandleConnections extends Strategy {
     this._walker = new class extends Walker {
       onRecipe(recipe: Recipe, result) {
         // Only apply this strategy if ALL handle connections are named and have types.
-        if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
+        if (recipe.getUnnamedUntypedConnections()) {
           return undefined;
         }
         // Find all unique types used in the recipe that have unbound handle connections.
@@ -48,9 +48,7 @@ export class GroupHandleConnections extends Strategy {
           // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
           const particleWithMostConnectionsOfType = sortedParticles[0];
           const groups = new Map();
-          let allTypeHandleConnections = recipe.handleConnections.filter(c => {
-            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle !== particleWithMostConnectionsOfType);
-          });
+          let allTypeHandleConnections = recipe.getTypeHandleConnections(type, particleWithMostConnectionsOfType);
 
           let iteration = 0;
           while (allTypeHandleConnections.length > 0) {

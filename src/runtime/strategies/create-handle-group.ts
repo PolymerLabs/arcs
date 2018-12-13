@@ -18,7 +18,7 @@ export class CreateHandleGroup extends Strategy {
         // Resolve constraints before assuming connections are free.
         if (recipe.connectionConstraints.length > 0) return undefined;
 
-        const freeConnections = recipe.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
+        const freeConnections = recipe.getFreeConnections();
         let maximalGroup = null;
         for (const writer of freeConnections.filter(hc => hc.isOutput)) {
           const compatibleConnections = [writer];

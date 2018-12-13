@@ -12,7 +12,7 @@ const defaults = {compilerOptions: {declaration: true}};
 export default [{
   input: ['build/runtime/runtime.js', 
     'build/runtime/keymgmt/manager.js', 
-    'shell/apps/remote-planning/interface.js'],
+    'shells/planner-shell/planner-shell.js'],
   output: [
     {
       file: pkg.main,

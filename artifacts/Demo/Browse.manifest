@@ -1,5 +1,0 @@
-import '../Products/Product.schema'
-
-store PageProducts of [Product] #shoplist in 'products.json'
-  description `products from your browsing context`
-

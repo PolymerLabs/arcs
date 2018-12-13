@@ -8,8 +8,8 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {logFactory} from '../lib/log-factory.js';
-import {Planificator} from '../env/arcs.js';
+import {logFactory} from '../lib/arcs.js';
+import {Planificator} from '../lib/arcs.js';
 
 const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');
@@ -64,12 +64,16 @@ export class UserPlanner {
     };
     const planificator = await Planificator.create(arc, options);
     planificator.setSearch('*');
-    //planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
-    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this.suggestionsChanged(key, suggestions));
+    planificator.registerSuggestionsChangedCallback(suggestions => this.suggestionsChanged(key, suggestions));
+    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this.visibleSuggestionsChanged(key, suggestions));
     return planificator;
   }
-  suggestionsChanged(key, suggestions) {
-    log(`suggestions [${key}]:`);
+  suggestionsChanged(key, {suggestions}) {
+    log(`${suggestions.length} suggestions [${key}]: ${suggestions.map(({plan}) => `[${plan.name}]`).join(', ')}`);
+  }
+
+  visibleSuggestionsChanged(key, suggestions) {
+    log(`${suggestions.length} visible suggestions [${key}]:`);
     suggestions.forEach(({descriptionByModality, plan: {_name}}) => log(`\t\t[${_name}]: ${descriptionByModality.text}`));
   }
 }

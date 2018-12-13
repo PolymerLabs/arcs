@@ -56,7 +56,7 @@ export class AssignHandles extends Strategy {
         const responses = [...stores.keys()].map(store =>
           ((recipe, clonedHandle) => {
             assert(store.id);
-            if (recipe.handles.find(handle => handle.id === store.id)) {
+            if (recipe.findHandleByID(store.id)) {
               // TODO: Why don't we link the handle connections to the existingHandle?
               return 0;
             }
