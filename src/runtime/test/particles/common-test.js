@@ -15,14 +15,6 @@ import {TestHelper} from '../../testing/test-helper.js';
 import {Manifest} from '../../manifest.js';
 
 describe('common particles test', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('resolves after cloning', async () => {
     const manifest = await Manifest.parse(`
   schema Thing

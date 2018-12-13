@@ -16,9 +16,6 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MockSlotDomConsumer} from './mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './mock-suggest-dom-consumer.js';
-import {Modality} from '../modality.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
@@ -94,17 +91,6 @@ export class TestHelper {
         particleSpec.modality.push(mockModality);
       }
     }
-  }
-
-  static createMockModalities() {
-    Modality.addModality('mock-dom', MockSlotDomConsumer, MockSuggestDomConsumer);
-    Modality.addModality('mock-dom-touch', MockSlotDomConsumer, MockSuggestDomConsumer);
-    Modality.addModality('mock-vr', MockSlotDomConsumer, MockSuggestDomConsumer);
-    Modality.addModality('mock-voice', MockSlotDomConsumer, MockSuggestDomConsumer);
-  }
-
-  static resetModality() {
-    Modality.init();
   }
 
   /**

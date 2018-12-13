@@ -16,14 +16,6 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 describe('Particle Execution Context', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('substitutes slot names for model references', async () => {
     const {arc, slotComposer} = await TestHelper.create({
       manifestString: `

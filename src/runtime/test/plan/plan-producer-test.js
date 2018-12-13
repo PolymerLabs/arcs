@@ -93,14 +93,6 @@ class TestPlanProducer extends PlanProducer {
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan producer for ' + storageKeyBase, function() {
-    beforeEach('creating mock modalities', () => {
-      TestHelper.createMockModalities();
-    });
-  
-    afterEach('removing mock modalities', () => {
-      TestHelper.resetModality();
-    });
-
     async function createProducer(manifestFilename) {
       const helper = await TestHelper.createAndPlan({
         manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'

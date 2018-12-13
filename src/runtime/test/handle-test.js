@@ -19,7 +19,6 @@ import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
-import {TestHelper} from '../testing/test-helper.js';
 
 describe('Handle', function() {
 
@@ -28,14 +27,6 @@ describe('Handle', function() {
   before(() => {
     Bar = new Schema(['Bar'], {id: 'Number', value: 'Text'}).entityClass();
     loader = new Loader();
-  });
-
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
   });
 
   const createSlotComposer = () => new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});

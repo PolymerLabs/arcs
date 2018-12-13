@@ -16,7 +16,6 @@ import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Relevance} from '../relevance.js';
 import {SlotComposer} from '../slot-composer.js';
-import {TestHelper} from '../testing/test-helper.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
@@ -99,14 +98,6 @@ recipe
     arc._activeRecipe = recipe;
     return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
-
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
 
   tests.forEach((test) => {
     it('one particle description ' + test.name, async () => {
@@ -772,14 +763,6 @@ schema GitHubDash`));
 });
 
 describe('Dynamic description', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   async function prepareRecipeAndArc() {
     const manifestStr = `
 schema Foo

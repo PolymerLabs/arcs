@@ -22,14 +22,6 @@ describe('products test', function() {
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('filters', async function() {
     const helper = await TestHelper.createAndPlan({manifestFilename});
 

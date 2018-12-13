@@ -23,14 +23,6 @@ import {TestHelper} from '../testing/test-helper.js';
 const loader = new Loader();
 
 describe('Multiplexer', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('Processes multiple inputs', async () => {
     const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'

@@ -15,17 +15,8 @@ import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
-import {TestHelper} from '../testing/test-helper.js';
 
 describe('particle interface loading with slots', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});

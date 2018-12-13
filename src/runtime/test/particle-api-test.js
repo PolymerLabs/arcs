@@ -27,14 +27,6 @@ async function loadFilesIntoNewArc(fileMap) {
 }
 
 describe('particle-api', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('StorageProxy integration test', async function() {
     const {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `

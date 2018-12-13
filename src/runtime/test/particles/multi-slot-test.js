@@ -14,14 +14,6 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('multi-slot test', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   async function init() {
     return await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/particles/artifacts/multi-slot-test.manifest',

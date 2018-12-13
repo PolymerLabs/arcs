@@ -18,14 +18,6 @@ import {TestHelper} from '../../testing/test-helper.js';
 describe('OuterPortAttachment', function() {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('produces PEC Log messages on devtools channel', async () => {
     Random.seedForTests();
     const testHelper = await TestHelper.create({

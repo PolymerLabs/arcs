@@ -28,14 +28,6 @@ class TestSuggestionComposer extends SuggestionComposer {
 }
 
 describe('suggestion composer', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('sets suggestions', async () => {
     const suggestionComposer = new TestSuggestionComposer();
     assert.isEmpty(suggestionComposer.suggestions);

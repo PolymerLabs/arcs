@@ -14,17 +14,8 @@ import {Schema} from '../schema.js';
 import {SlotComposer} from '../slot-composer.js';
 import {EntityType} from '../type.js';
 import {handleFor} from '../handle.js';
-import {TestHelper} from '../testing/test-helper.js';
 
 describe('entity', async function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
 

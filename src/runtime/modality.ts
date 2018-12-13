@@ -27,13 +27,15 @@ export class Modality {
                      descriptionFormatter?: typeof DescriptionDomFormatter) {
     assert(!Modality._modalities[name], `Modality '${name}' already exists`);
     Modality._modalities[name] = new Modality(name, slotConsumerClass, suggestionConsumerClass, descriptionFormatter);
+    Modality._modalities[`mock-${name}`] =
+        new Modality(`mock-${name}`, MockSlotDomConsumer, MockSuggestDomConsumer);
   }
 
   static init() {
     Object.keys(Modality._modalities).forEach(key => delete Modality._modalities[key]);
     Modality.addModality('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
     Modality.addModality('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
-    Modality.addModality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);    
+    Modality.addModality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
   }
 
   static forName(name: string) {

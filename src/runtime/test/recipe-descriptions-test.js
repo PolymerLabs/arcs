@@ -16,18 +16,8 @@ import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 
 describe('recipe descriptions test', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });

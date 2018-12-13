@@ -44,14 +44,6 @@ async function setup() {
 function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, modality: 'mock-dom'}); }
 
 describe('Arc', function() {
-  beforeEach('creating mock modalities', () => {
-    TestHelper.createMockModalities();
-  });
-
-  afterEach('removing mock modalities', () => {
-    TestHelper.resetModality();
-  });
-
   it('idle can safely be called multiple times', async () => {
     const slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, loader, id: 'test'});
