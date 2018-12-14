@@ -2,7 +2,8 @@ import '../Pipes/PipeEntity.schema'
 
 resource TestPipeEntityRes
   start
-  [{"type": "tv_show", "name": "star trek"}]
+  //[{"type": "tv_show", "name": "star trek"}]
+  [{"type": "artist", "name": "in this moment"}]
 
 store TestPipeEntity of PipeEntity 'TestPipeEntity' @0 in TestPipeEntityRes
 

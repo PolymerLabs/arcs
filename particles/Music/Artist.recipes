@@ -31,6 +31,6 @@ recipe ArtistInfo
   slot 'rootslotid-root' as root
   use #artist as artist
   ArtistShow
-    consume content as root
+    //consume content as root
     artist = artist
   description `${ArtistShow}`
