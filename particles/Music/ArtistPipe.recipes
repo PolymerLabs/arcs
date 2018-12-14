@@ -8,16 +8,14 @@ schema PipeEntity
 particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find
-  consume root
+  consume pipes
     must provide content
 
 recipe ArtistPipe
   use as pipe
   create as find
   create #piped #artist as artist
-  slot 'rootslotid-root' as root
   ArtistPipe
-    consume root as root
     pipe = pipe
     find = find
   ArtistFinder

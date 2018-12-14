@@ -7,9 +7,10 @@ resource TestPipeEntityRes
 
 store TestPipeEntity of PipeEntity 'TestPipeEntity' @0 in TestPipeEntityRes
 
-particle PipeEntityReceiver in '../Arcs/source/Noop.js'
+particle PipeEntityReceiver in '../Pipes/source/PipeEntityReceiver.js'
   in PipeEntity pipe
   consume root
+    provide pipes
 
 recipe PipeDemo
   copy 'TestPipeEntity' as pipe

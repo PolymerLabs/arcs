@@ -5,7 +5,7 @@ import '../Pipes/PipeEntity.schema'
 particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
   out TVMazeFind find
-  consume root
+  consume pipes
 
 particle TVMazeSingleFindShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
