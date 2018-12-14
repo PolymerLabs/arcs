@@ -61,14 +61,16 @@ defineParticle(({DomParticle, log}) => {
       }
     }
     updateDescription(data) {
-      const description = `${
-        data.name} is on ${
-        data.network}${
-        data.time ? ` at ${data.time}` : ''}${
-        data.day ? ` on ${data.day}` : ''
-      }`;
-      console.warn(description);
-      this.setParticleDescription(description);
+      if (this.props.descriptions) {
+        const description = `${
+          data.name} is on ${
+          data.network}${
+          data.time ? ` at ${data.time}` : ''}${
+          data.day ? ` on ${data.day}` : ''
+        }`;
+        console.warn(description);
+        this.setParticleDescription(description);
+      }
     }
   };
 });
