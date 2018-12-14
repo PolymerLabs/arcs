@@ -161,7 +161,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: {id: string}, originatorId = null, barrier = null): Promise<void> {
+  async set(value: {}, originatorId = null, barrier = null): Promise<void> {
     assert(value !== undefined);
 
     if (this.referenceMode && value) {
@@ -185,7 +185,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
       // Store the indirect pointer to the storageKey
       // Do this *after* the write to backing store, otherwise null responses could occur
       await this.getStoredAndUpdate(stored => {
-        return {id: value.id, storageKey};
+        return {id: value['id'], storageKey};
       });
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting
@@ -209,7 +209,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
         }
       } else {
         await this.getStoredAndUpdate(stored => {
-          return value;
+         return value as ValueStorage;
         });
       }
     }

@@ -8,22 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
-import {Arc} from '../arc.js';
-import {Manifest} from '../manifest.js';
-import {EntityType, ReferenceType} from '../type.js';
-import 'chai/register-assert';
+import {StorageProviderFactory} from '../../../storage/storage-provider-factory.js';
+import {PouchDbCollection} from '../../../storage/pouchdb/pouch-db-collection.js';
+import {PouchDbVariable} from '../../../storage/pouchdb/pouch-db-variable.js';
+import {Arc} from '../../../arc.js';
+import {Loader} from '../../../loader.js';
+import {Manifest} from '../../../manifest.js';
+import {EntityType, ReferenceType} from '../../../type.js';
+import {assert} from '../../chai-web.js';
 
-import {PouchDbStorage} from '../storage/pouchdb/pouch-db-storage.js';
+import {PouchDbStorage} from '../../../storage/pouchdb/pouch-db-storage.js';
 
 const testUrl = 'pouchdb://memory/user-test';
 
 // TODO(lindner): run tests for remote and local variants
 const testUrlReplicated = 'pouchdb://memory/user-test';
+const loader = new Loader();
 
-describe('pouchdb', function() {
-  this.timeout(10000); // eslint-disable-line no-invalid-this
-
+describe('pouchdb', () => {
   let lastStoreId = 0;
   function newStoreKey(name) {
     return `${testUrl}/${name}-${lastStoreId++}`;
@@ -32,7 +34,12 @@ describe('pouchdb', function() {
   // TODO(lindner): switch back to before()?
   beforeEach(async () => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
-    await PouchDbStorage.resetPouchDbStorageForTesting(testUrl);
+    await PouchDbStorage.resetPouchDbStorageForTesting();
+  });
+
+  afterEach(async () => {
+    // uncomment to dump the database contents after each test.
+    // await PouchDbStorage.dumpDB();
   });
 
   let storageInstances = [];
@@ -54,14 +61,14 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', BarType, newStoreKey('variable'));
+      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbVariable;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
-      assert.equal(result.value, value);
+      assert.equal(result['value'], value);
     });
 
     it('resolves concurrent set', async () => {
@@ -69,17 +76,17 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
-      const var1 = await storage.construct('test0', BarType, key);
+      const var1 = await storage.construct('test0', barType, key) as PouchDbVariable;
       assert.isNotNull(var1);
       const var2 = await storage.connect(
         'test0',
-        BarType,
+        barType,
         key
-      );
+      ) as PouchDbVariable;
       assert.isNotNull(var2);
 
       await var1.set({id: 'id1', value: 'value1'});
@@ -88,40 +95,42 @@ describe('pouchdb', function() {
       const v2 = await var2.get();
       assert.deepEqual(v1, v2);
     });
+
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', BarType, key1);
+      const var1 = await storage.construct('test0', barType, key1) as PouchDbVariable;
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
-      assert.equal(result.value, 'underlying');
+      assert.equal(result['value'], 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
       assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
     });
+
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test',  context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', new ReferenceType(BarType), key1);
+      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as PouchDbVariable;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
@@ -138,12 +147,12 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
-      const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
+      const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as PouchDbCollection;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -156,16 +165,16 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
-      );
+      ) as PouchDbCollection;
       const c1 = collection1.store({id: 'id1', value: 'value'}, ['key3']);
       await collection2.store({id: 'id1', value: 'value'}, ['key4']);
       await c1;
@@ -177,16 +186,16 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
-      );
+      ) as PouchDbCollection;
       await Promise.all([collection1.store({id: 'id1', value: 'value'}, ['key1']), collection2.store({id: 'id1', value: 'value'}, ['key2'])]);
       await Promise.all([collection1.remove('id1', ['key1']), collection2.remove('id1', ['key2'])]);
       assert.isEmpty(await collection1.toList());
@@ -197,33 +206,34 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
-      );
+      ) as PouchDbCollection;
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
+
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
 
-      const collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+      const collection1 = await storage.construct('test0', barType.collectionOf(), key1) as PouchDbCollection;
 
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -239,18 +249,37 @@ describe('pouchdb', function() {
       assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
       assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
     });
+
+    it('supports removeMultiple', async () => {
+      const manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+      const arc = new Arc({id: 'test', context: manifest, loader});
+      const storage = new StorageProviderFactory(arc.id);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const key = newStoreKey('collectionRemoveMultiple');
+      const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
+      await collection.store({id: 'id1', value: 'value'}, ['key1']);
+      await collection.store({id: 'id2', value: 'value'}, ['key2']);
+      await collection.removeMultiple([
+        {id: 'id1', keys: ['key1']}, {id: 'id2', keys: ['key2']}
+      ]);
+      assert.isEmpty(await collection.toList());
+    });
+
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
 
-      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), key1);
+      const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), key1) as PouchDbCollection;
 
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -268,11 +297,11 @@ describe('pouchdb', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
