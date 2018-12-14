@@ -490,5 +490,8 @@ describe('recipe', function() {
     assert.deepEqual(recipe.getSupportedModalities(), ['vr']);
     assert.isTrue(recipe.isModalityResolved());
     assert.isTrue(isResolved(recipe));
+    assert.isTrue(recipe.isCompatibleWithModality(null));
+    assert.isTrue(recipe.isCompatibleWithModality('vr'));
+    assert.isFalse(recipe.isCompatibleWithModality('dom'));
   });
 });
