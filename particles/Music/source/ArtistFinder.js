@@ -16,7 +16,7 @@ defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
     get template() {
-      return '&nbsp;'; //html`Searching`;
+      return '&nbsp;'; 
     }
     update({find}, state) {
       // If we are asynchronously populating data, wait until this is done before

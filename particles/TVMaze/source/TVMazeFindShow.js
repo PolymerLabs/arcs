@@ -47,7 +47,7 @@ defineParticle(({DomParticle, log}) => {
     async receiveShow({show}) {
       log(`found`, show);
       if (show.image && show.image.medium) {
-        this.updateVariable('show', {
+        const entityData = {
           showid: String(show.id),
           name: show.name,
           description: show.summary,
@@ -55,8 +55,20 @@ defineParticle(({DomParticle, log}) => {
           network: show.network && show.network.name || show.webChannel && show.webChannel.name || '',
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
-        });
+        };
+        this.updateVariable('show', entityData);
+        this.updateDescription(entityData);
       }
+    }
+    updateDescription(data) {
+      const description = `${
+        data.name} is on ${
+        data.network}${
+        data.time ? ` at ${data.time}` : ''}${
+        data.day ? ` on ${data.day}` : ''
+      }`;
+      console.warn(description);
+      this.setParticleDescription(description);
     }
   };
 });

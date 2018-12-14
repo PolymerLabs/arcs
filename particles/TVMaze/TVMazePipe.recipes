@@ -1,26 +1,31 @@
-import 'TVMazeShow.schema'
+import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'
 import '../Pipes/PipeEntity.schema'
+import '../Arcs/Description.schema'
 
 particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
   out TVMazeFind find
   consume pipes
+    must provide content
 
 particle TVMazeSingleFindShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
-  description `find out about "${find.name}" (from TVMaze)`
+  out [Description] descriptions
+  //description `find out about "${find.name}" (from TVMaze)`
 
 recipe TVMazeShowPipe
   use as pipe
   create as find
   create #piped #tv_show as show
+  create as descriptions
   TVMazeShowPipe
     pipe = pipe
     find = find
   TVMazeSingleFindShow
     find = find
     show = show
+    descriptions = descriptions
 
 

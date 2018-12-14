@@ -1,10 +1,6 @@
 import 'Artist.recipes'
 import '../Pipes/PipeEntity.schema'
 
-schema PipeEntity
-  Text type
-  Text name
-
 particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find

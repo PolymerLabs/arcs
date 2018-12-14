@@ -12,7 +12,7 @@ defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
     get template() {
-      return '&nbsp;';
+      return '<div slotid="content"></div>';
     }
     update({pipe, find}, state) {
       if (this.pipeIsValid(pipe)) {
