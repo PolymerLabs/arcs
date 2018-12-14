@@ -57,8 +57,8 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       arckey: params.get('arc'),
       search: params.get('search') || '',
       plannerStorage: params.get('plannerStorage'),
-      plannerDebug: params.get('plannerDebug'),
-      plannerOnlyConsumer: params.get('plannerOnlyConsumer'),
+      plannerDebug: params.has('plannerDebug'),
+      plannerOnlyConsumer: params.has('plannerOnlyConsumer'),
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),
       //useSerialization: !params.has('legacy')
