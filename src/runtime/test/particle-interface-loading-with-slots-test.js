@@ -15,13 +15,14 @@ import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
     slotComposer._contexts[0].spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
-    const manifest = await Manifest.parse(`
+    const manifest = await TestHelper.parseManifest(`
       import './src/runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
@@ -31,7 +32,7 @@ describe('particle interface loading with slots', function() {
           particle0 = SingleSlotParticle
           foos <- handle0
           consume annotationsSet as slot0
-      `, {loader, fileName: './test.manifest'});
+      `, loader);
     const recipe = manifest.recipes[0];
 
     const arc = new Arc({id: 'test', slotComposer, context: manifest});

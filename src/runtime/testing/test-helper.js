@@ -69,27 +69,31 @@ export class TestHelper {
 
   static async loadManifest(manifestFilename, loader) {
     const manifest = await Manifest.load(manifestFilename, loader);
-    TestHelper._addParticlesMockModality(manifest);
+    TestHelper._addMockModalities(manifest);
     return manifest;
   }
 
   static async parseManifest(manifestString, loader) {
     const manifest = await Manifest.parse(manifestString, {loader, fileName: ''});
-    TestHelper._addParticlesMockModality(manifest);
+    TestHelper._addMockModalities(manifest);
     return manifest;
   }
 
-  static _addParticlesMockModality(manifest) {
+  static addParticleMockModality(particleSpec) {
     const mockModalities = [];
+    for (const modality of particleSpec.modality) {
+      if (!modality.startsWith('mock-')) {
+        mockModalities.push(`mock-${modality}`);
+      }
+    }
+    for (const mockModality of mockModalities) {
+      particleSpec.modality.push(mockModality);
+    }
+  }
+
+  static _addMockModalities(manifest) {
     for (const particleSpec of manifest.particles) {
-      for (const modality of particleSpec.modality) {
-        if (!modality.startsWith('mock-')) {
-          mockModalities.push(`mock-${modality}`);
-        }
-      }
-      for (const mockModality of mockModalities) {
-        particleSpec.modality.push(mockModality);
-      }
+      TestHelper.addParticleMockModality(particleSpec);
     }
   }
 

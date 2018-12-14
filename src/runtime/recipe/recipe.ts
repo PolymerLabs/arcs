@@ -144,16 +144,29 @@ export class Recipe {
     // TODO: check recipe level resolution requirements, eg there is no slot loops.
   }
 
+  get uiParticles() {
+    return this.particles.filter(p => Object.keys(p.consumedSlotConnections).length > 0);
+  }
+
   getSupportedModalities(): string[] {
-    const uiParticles = this.particles.filter(p => Object.keys(p.consumedSlotConnections).length > 0);
+    const uiParticles = this.uiParticles;
     return (uiParticles.length === 0 ? [] : uiParticles[0].spec.modality).filter(
       modality => uiParticles.every(particle => particle.spec.modality.indexOf(modality) >= 0));
   }
 
   isModalityResolved(): boolean {
     // Either no particles with consumed slots, or non-empty intersection of modalities.
-    return this.particles.filter(p => Object.keys(p.consumedSlotConnections).length !== 0).length == 0 ||
-           this.getSupportedModalities().length > 0;
+    return this.uiParticles.length === 0 || this.getSupportedModalities().length > 0;
+  }
+
+  isCompatibleWithModality(modality): boolean {
+    if (!modality) { // modality is unknown.
+      return true;
+    }
+    if (this.uiParticles.length === 0) {
+      return true;
+    }
+    return this.getSupportedModalities().indexOf(modality) >= 0;
   }
 
   _findDuplicate(items, options) {

@@ -456,6 +456,8 @@ ${this.activeRecipe.toString()}`;
 
   async instantiate(recipe: Recipe, innerArc = undefined) {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
+    assert(recipe.isCompatibleWithModality(this.modality),
+      `Cannot instantiate recipe ${recipe.toString()} with [${recipe.getSupportedModalities()}] modalities in '${this.modality}' arc`);
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
     if (innerArc) {
