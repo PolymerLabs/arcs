@@ -63,9 +63,9 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', BarType, newStoreKey('variable')) as PouchDbVariable;
+      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbVariable;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
       assert.equal(result['value'], value);
@@ -78,13 +78,13 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
-      const var1 = await storage.construct('test0', BarType, key) as PouchDbVariable;
+      const var1 = await storage.construct('test0', barType, key) as PouchDbVariable;
       assert.isNotNull(var1);
       const var2 = await storage.connect(
         'test0',
-        BarType,
+        barType,
         key
       ) as PouchDbVariable;
       assert.isNotNull(var2);
@@ -104,10 +104,10 @@ describe('pouchdb', () => {
 
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', BarType, key1) as PouchDbVariable;
+      const var1 = await storage.construct('test0', barType, key1) as PouchDbVariable;
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
@@ -127,10 +127,10 @@ describe('pouchdb', () => {
 
       const arc = new Arc({id: 'test',  context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', new ReferenceType(BarType), key1) as PouchDbVariable;
+      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as PouchDbVariable;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
@@ -149,10 +149,10 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
-      const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection')) as PouchDbCollection;
+      const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as PouchDbCollection;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -167,12 +167,12 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key) as PouchDbCollection;
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
       ) as PouchDbCollection;
       const c1 = collection1.store({id: 'id1', value: 'value'}, ['key3']);
@@ -188,12 +188,12 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key) as PouchDbCollection;
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
       ) as PouchDbCollection;
       await Promise.all([collection1.store({id: 'id1', value: 'value'}, ['key1']), collection2.store({id: 'id1', value: 'value'}, ['key2'])]);
@@ -208,12 +208,12 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key) as PouchDbCollection;
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       const collection2 = await storage.connect(
         'test1',
-        BarType.collectionOf(),
+        barType.collectionOf(),
         key
       ) as PouchDbCollection;
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
@@ -230,10 +230,10 @@ describe('pouchdb', () => {
 
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
 
-      const collection1 = await storage.construct('test0', BarType.collectionOf(), key1) as PouchDbCollection;
+      const collection1 = await storage.construct('test0', barType.collectionOf(), key1) as PouchDbCollection;
 
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -257,9 +257,9 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collectionRemoveMultiple');
-      const collection = await storage.construct('test1', BarType.collectionOf(), key) as PouchDbCollection;
+      const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -276,10 +276,10 @@ describe('pouchdb', () => {
 
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
 
-      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), key1) as PouchDbCollection;
+      const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), key1) as PouchDbCollection;
 
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -299,9 +299,9 @@ describe('pouchdb', () => {
       `);
       const arc = new Arc({id: 'test', context: manifest, loader});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection = await storage.construct('test1', BarType.collectionOf(), key) as PouchDbCollection;
+      const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
