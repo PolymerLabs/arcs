@@ -1,11 +1,11 @@
 import '../Pipes/PipeEntity.schema'
 
-resource TestPipeEntityRes
+resource PipeEntityResource
   start
   //[{"type": "tv_show", "name": "star trek"}]
   [{"type": "artist", "name": "in this moment"}]
 
-store TestPipeEntity of PipeEntity 'TestPipeEntity' @0 in TestPipeEntityRes
+store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
 
 particle PipeEntityReceiver in '../Pipes/source/PipeEntityReceiver.js'
   in PipeEntity pipe
@@ -13,6 +13,6 @@ particle PipeEntityReceiver in '../Pipes/source/PipeEntityReceiver.js'
     provide pipes
 
 recipe PipeDemo
-  copy 'TestPipeEntity' as pipe
+  copy 'ExamplePipeEntity' as pipe
   PipeEntityReceiver
   description `[demo] Pipe data test`
