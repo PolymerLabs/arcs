@@ -174,6 +174,16 @@ export class PouchDbStorage extends StorageBase {
     }
   }
 
+  static async dumpDB() {
+    for (const db of PouchDbStorage.dbLocationToInstance.values()) {
+      await db
+        .allDocs({include_docs: true})
+        .then(allDocs => {
+          console.log(allDocs);
+        });
+    }
+  }
+
   /**
    * Returns a database for the specific dbLocation/dbName of PouchDbKey and caches it.
    * @param key the PouchDbKey used to obtain the cache key.
@@ -184,7 +194,7 @@ export class PouchDbStorage extends StorageBase {
     if (db) {
       return db;
     }
-    
+
     // New connect to a database
     if (key.dbLocation === 'local') {
       db = new PouchDB(key.dbName);
@@ -199,7 +209,7 @@ export class PouchDbStorage extends StorageBase {
       const httpScheme = key.dbLocation.startsWith('localhost') ? 'http://' : 'https://';
       const dbUrl = `${httpScheme}${key.dbLocation}/${key.dbName}`;
       console.log('Connecting to ' + dbUrl);
-      
+
       const remoteDb = new PouchDB(dbUrl);
       if (!remoteDb || !db) {
         throw new Error('unable to connect to remote database ' + dbUrl + ' for ' + key.toString());

@@ -55,7 +55,6 @@ src/runtime/build/manifest-parser.js
 
 src/runtime/manual_tests/firebase-tests.js
 src/runtime/manual_tests/loader-tests.js
-src/runtime/manual_tests/pouch-db-tests.js
 
 src/runtime/test/akms-test.js
 src/runtime/test/api-channel-test.js
