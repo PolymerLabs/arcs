@@ -6,6 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../Arcs/Description.schema'
+
 schema ArtistFind
   Text name
 
@@ -21,6 +23,7 @@ schema ArtistMusic
 particle ArtistFinder in 'source/ArtistFinder.js'
   in ArtistFind find
   out ArtistMusic artist
+  out [Description] descriptions
 
 particle ArtistShow in 'source/ArtistShow.js'
   in ArtistMusic artist
@@ -31,6 +34,5 @@ recipe ArtistInfo
   slot 'rootslotid-root' as root
   use #artist as artist
   ArtistShow
-    //consume content as root
     artist = artist
   description `${ArtistShow}`

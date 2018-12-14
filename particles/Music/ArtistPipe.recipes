@@ -15,9 +15,11 @@ recipe ArtistPipe
   use as pipe
   create as find
   create #piped #artist as artist
+  create as descriptions
   ArtistPipe
     pipe = pipe
     find = find
   ArtistFinder
     find = find
     artist = artist
+    descriptions = descriptions

@@ -55,7 +55,7 @@ defineParticle(({DomParticle, log}) => {
           imageUrl: artist.image && artist.image.contentUrl,
           detailedDescription: artist.detailedDescription && artist.detailedDescription.articleBody
         });
-        //this.setParticleDescription(artist.summary);
+        this.setParticleDescription(artist.name);
       }
     }
   };
