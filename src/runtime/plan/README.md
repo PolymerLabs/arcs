@@ -6,19 +6,23 @@ When using [arcs-live](https://polymerlabs.github.io/arcs-live/shells/web-shell)
 ## URL params
 Suggestions storage can be controlled by **plannerStorage** url param. 
 
-To use volatile storage for suggestion go to:  
+* Navigate to the Arcs page and use **volatile** storage for suggestion:  
 https://polymerlabs.github.io/arcs-live/shells/web-shell?plannerStorage=volatile
 
-To use PouchDb storage for suggestion go to:  
+* Navigate to the Arcs page and use **PouchDb** storage for suggestion:  
 https://polymerlabs.github.io/arcs-live/shells/web-shell?plannerStorage=pouchdb://local/random-db-name  
 The suggestion values will be found in Chrome's inspector, under Application > Storage > Local Storage.
+
+Arcs storage can be controlled by **storage** url param. 
+* Navigate to the Arcs page and use **PouchDb** storage for both - arcs and suggestions:  
+https://localhost:8080/shells/web-shell?storage=pouchdb://localhost:8080/user/&plannerStorage=pouchdb://localhost:8080/user/
 
 
 To populate Arcs Extension strategy explorer, add the **plannerDebug** url param:  
 https://polymerlabs.github.io/arcs-live/shells/web-shell?plannerDebug
 
 # Remote Planning 
-To consume plans produced on the server, disable shell planning with an **onlyConsumer** url param, ie:  
+To consume plans produced on the server, disable shell planning with an **plannerOnlyConsumer** url param, ie:  
 https://polymerlabs.github.io/arcs-live/shells/web-shell?plannerOnlyConsumer=true
 
 ## Firebase
@@ -52,8 +56,8 @@ DEBUG=true
 ARCS_USER_ID=xxxxx
 STORAGE_KEY_BASE  (default is pouchdb://localhost:8080/user/)
 ```
-Navigate to the Arcs page and use the storage, **plannerStorage** and **plannerOnlyConsumer** parameters:  
-https://localhost:8080/shells/web-shell?onlyConsumer=true&storage=pouchdb://localhost:8080/user/&plannerStorage=pouchdb://localhost:8080/user/
+
+More information on how to bring up a Pouch server on a Personal Cloud Server: [server/REAMDE.md](../../../server/README.md)
 
 
 # Storage info
