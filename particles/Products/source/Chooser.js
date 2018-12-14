@@ -130,6 +130,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       return data.map((entity, index) =>
         Object.assign(entity.dataClone(), {
           subId: entity.id,
+          id: entity.id,
           image: resolver ? resolver(entity.image) : entity.image,
           index
         })
