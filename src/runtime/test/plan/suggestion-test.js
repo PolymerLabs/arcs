@@ -50,4 +50,13 @@ describe('suggestion', function() {
     s1.mergeSearch(s2);
     assert.deepEqual(s1.searchGroups, [[''], ['five'], ['one', 'three']]);
   });
+
+  it('deserialize empty', async () => {
+    const suggestion1 =
+        await Suggestion.deserialize({plan: 'recipe', hash: '123'}, {}, {});
+    assert.isTrue(suggestion1.plan && Boolean(suggestion1.relevance.relevanceMap));
+    const suggestion2 =
+        await Suggestion.deserialize({plan: 'recipe', hash: '123', relevance: {}, searchGroups: [], descriptionByModality: {}}, {}, {});
+    assert.isTrue(suggestion2.plan && Boolean(suggestion2.relevance.relevanceMap));
+  });
 });
