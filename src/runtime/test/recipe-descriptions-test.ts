@@ -75,14 +75,14 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const originalFormatter = Modality.forName('mock-dom').descriptionFormatter;
-    Modality.forName('mock-dom').descriptionFormatter = options.formatter;
+    const originalFormatter = Modality.forName('dom').descriptionFormatter;
+    Modality.forName('dom').descriptionFormatter = options.formatter;
     const helper = await TestHelper.createAndPlan({
       manifestString: options.manifestString || createManifestString(options), loader
     });
     assert.lengthOf(helper.suggestions, 1);
-    Modality.forName('mock-dom').descriptionFormatter = originalFormatter;
-    return helper.suggestions[0].getDescription('mock-dom');
+    Modality.forName('dom').descriptionFormatter = originalFormatter;
+    return helper.suggestions[0].getDescription('dom');
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);

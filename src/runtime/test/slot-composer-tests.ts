@@ -224,11 +224,9 @@ recipe
                 particle A in 'A.js'
                   consume content
                     provide detail
-                  modality mock-dom
                 
                 particle B in 'B.js'
                   consume detail
-                  modality mock-dom
                 
                 recipe
                   slot '\` + hostedSlotId + \`' as hosted

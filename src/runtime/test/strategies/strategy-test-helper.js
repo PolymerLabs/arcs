@@ -11,6 +11,7 @@
 
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
+import {Modality} from '../../modality.js';
 import {RecipeIndex} from '../../recipe-index.js';
 
 export class StrategyTestHelper {
@@ -19,7 +20,7 @@ export class StrategyTestHelper {
       id,
       context,
       slotComposer: {
-        modality,
+        modality: Modality.forName(modality),
         getAvailableContexts: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], spec: {isSet: false}}]; })
       }
     });

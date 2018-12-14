@@ -59,7 +59,7 @@ export class SlotComposer {
     });
   }
 
-  get modality(): string { return this._modality.name; }
+  get modality(): Modality { return this._modality; }
   get consumers(): SlotConsumer[] { return this._consumers; }
   get containerKind(): string { return this._containerKind; }
 

@@ -182,7 +182,7 @@ describe('resolve recipe', function() {
         start
         []
     `);
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', context, 'mock');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', context, 'mock-dom');
 
     // Separating context from the recipe as otherwise
     // manifest parser maps to storage all by itself itself.
@@ -226,7 +226,7 @@ describe('resolve recipe', function() {
           param <- h0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'mock');
+    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'mock-dom');
 
     const Car = manifest.findSchemaByName('Car').entityClass();
     await arc.createStore(Car.type, /* name= */ null, 'batmobile');
