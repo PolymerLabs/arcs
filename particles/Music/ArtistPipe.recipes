@@ -9,7 +9,7 @@ particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find
   consume root
-    provide content
+    must provide content
 
 recipe ArtistPipe
   use as pipe
