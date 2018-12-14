@@ -1,28 +1,19 @@
 import 'TVMazeShow.schema'
 import 'TVMazeQuery.recipes'
-
-schema PipeEntity
-  Text type
-  Text name
+import '../Pipes/PipeEntity.schema'
 
 particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
   out TVMazeFind find
+  consume root
 
 particle TVMazeSingleFindShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
-  consume root
   description `find out about "${find.name}" (from TVMaze)`
 
-resource TestPipeEntityRes
-  start
-  [{"type": "not_tv_show", "name": "star trek"}]
-
-store TestPipeEntity of PipeEntity 'TestPipeEntity' @0 in TestPipeEntityRes
-
 recipe TVMazeShowPipe
-  copy 'TestPipeEntity' as pipe
+  use as pipe
   create as find
   create #piped #tv_show as show
   TVMazeShowPipe
@@ -31,4 +22,5 @@ recipe TVMazeShowPipe
   TVMazeSingleFindShow
     find = find
     show = show
+
 

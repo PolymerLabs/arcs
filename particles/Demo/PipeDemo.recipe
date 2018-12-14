@@ -1,0 +1,16 @@
+import '../Pipes/PipeEntity.schema'
+
+resource TestPipeEntityRes
+  start
+  [{"type": "tv_show", "name": "star trek"}]
+
+store TestPipeEntity of PipeEntity 'TestPipeEntity' @0 in TestPipeEntityRes
+
+particle PipeDemoDummy in '../Arcs/source/Noop.js'
+  in PipeEntity pipe
+  consume root
+
+recipe PipeDemo
+  copy 'TestPipeEntity' as pipe
+  PipeDemoDummy
+  description `[demo] Pipe data test`

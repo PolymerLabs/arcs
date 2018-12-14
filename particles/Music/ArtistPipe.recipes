@@ -1,0 +1,22 @@
+import 'Artist.recipes'
+import '../Pipes/PipeEntity.schema'
+
+schema PipeEntity
+  Text type
+  Text name
+
+particle ArtistPipe in './source/ArtistPipe.js'
+  in PipeEntity pipe
+  out ArtistFind find
+  consume root
+
+recipe ArtistPipe
+  use as pipe
+  create as find
+  create #piped #tv_show as show
+  ArtistPipe
+    pipe = pipe
+    find = find
+  ArtistFinder
+    find = find
+    show = show
