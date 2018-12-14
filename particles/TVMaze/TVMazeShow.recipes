@@ -20,7 +20,7 @@ particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
   consume content
     provide action
     provide items
-  description `Display TV show information for ${show.name}`
+  description `TV show information for ${show.name}`
 
 recipe TVMazeShowPanel
   use #tv_show as show
@@ -30,5 +30,4 @@ recipe TVMazeShowPanel
     consume content as root
     show = show
     descriptions = descriptions
-  description `Display TV show information for ${TVMazeShowPanel.show.name}`
-//  description `Display TV show information!`
+  description `TV show information for ${TVMazeShowPanel.show.name}`
