@@ -24,7 +24,7 @@ const loader = new Loader();
 
 describe('Multiplexer', function() {
   it('Processes multiple inputs', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await TestHelper.parseManifest(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/test/artifacts/test-particles.manifest'
 
@@ -36,7 +36,7 @@ describe('Multiplexer', function() {
           consume annotation as slot0
           list <- handle0
 
-    `, {loader, fileName: './manifest.manifest'});
+    `, loader);
 
     const recipe = manifest.recipes[0];
 

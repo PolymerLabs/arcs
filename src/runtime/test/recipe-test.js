@@ -426,4 +426,72 @@ describe('recipe', function() {
     assert.equal(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notEqual(hash, hashResolvedClone);
   });
+  it('verifies modalities', async () => {
+    const isResolved = (recipe) => {
+      const recipeClone = recipe.clone();
+      assert.isTrue(recipeClone.normalize());
+      return recipeClone.isResolved();
+    };
+
+    // empty modality for recipe with no particles.
+    let recipe = (await Manifest.parse(`recipe`)).recipes[0];
+    assert.isEmpty(recipe.particles);
+    assert.isEmpty(recipe.getSupportedModalities());
+    assert.isTrue(recipe.isModalityResolved());
+    assert.isTrue(isResolved(recipe));
+
+    // empty modality for recipe with non slot consuming particles.
+    recipe = (await Manifest.parse(`
+      particle P0
+      particle P1
+      particle P2
+      recipe
+        P0
+        P1
+        P2
+    `)).recipes[0];
+    assert.lengthOf(recipe.particles, 3);
+    assert.isEmpty(recipe.getSupportedModalities());
+    assert.isTrue(recipe.isModalityResolved());
+    assert.isTrue(isResolved(recipe));
+
+    // Default 'dom' modality in all particles.
+    recipe = (await Manifest.parse(`
+      particle P0
+        consume root
+      particle P1
+        consume root
+      particle P2
+      particle P3
+        consume root
+      recipe
+        slot 'slot-id' as root
+        P0
+          consume root as root
+        P1
+          consume root as root
+        P2
+        P3
+          consume root as root
+    `)).recipes[0];
+    assert.deepEqual(recipe.getSupportedModalities(), ['dom']);
+    assert.isTrue(recipe.isModalityResolved());
+    assert.isTrue(isResolved(recipe));
+
+    // empty modality intersection, no consumed slots, recipe is resolved.
+    recipe.particles[0].spec.modality = ['dom-touch', 'vr', 'voice'];
+    recipe.particles[1].spec.modality = ['vr'];
+    assert.isEmpty(recipe.getSupportedModalities());
+    assert.isFalse(recipe.isModalityResolved());
+    assert.isFalse(isResolved(recipe));
+
+    // resolved recipe with non empty modalities intersection.
+    recipe.particles[3].spec.modality = ['voice', 'vr'];
+    assert.deepEqual(recipe.getSupportedModalities(), ['vr']);
+    assert.isTrue(recipe.isModalityResolved());
+    assert.isTrue(isResolved(recipe));
+    assert.isTrue(recipe.isCompatibleWithModality(null));
+    assert.isTrue(recipe.isCompatibleWithModality('vr'));
+    assert.isFalse(recipe.isCompatibleWithModality('dom'));
+  });
 });

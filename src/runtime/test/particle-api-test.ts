@@ -785,6 +785,7 @@ describe('particle-api', () => {
                 particle A in 'A.js'
                   consume content
                     provide detail
+                  modality mock-dom
    
                 recipe
                   slot '\` + hostedSlotId + \`' as hosted
@@ -795,6 +796,7 @@ describe('particle-api', () => {
               await innerArc.loadRecipe(\`
                 particle B in 'B.js'
                   consume detail
+                  modality mock-dom
                 
                 recipe
                   slot '\` + providedSlotIds['a.detail'] + \`' as detail
