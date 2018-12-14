@@ -119,7 +119,7 @@ export class Suggestion {
   static async deserialize({plan, hash, relevance, searchGroups, descriptionByModality}, arc: Arc, recipeResolver: RecipeResolver): Promise<Suggestion> {
     const deserializedPlan = await Suggestion._planFromString(plan, arc, recipeResolver);
     if (deserializedPlan) {
-      const suggestion = new Suggestion(deserializedPlan, hash, Relevance.deserialize(relevance, deserializedPlan), arc);
+      const suggestion = new Suggestion(deserializedPlan, hash, Relevance.deserialize(relevance || {}, deserializedPlan), arc);
       suggestion.searchGroups = searchGroups || [];
       suggestion.descriptionByModality = descriptionByModality;
       return suggestion;
