@@ -66,7 +66,7 @@ describe('OuterPortAttachment', () => {
         name: 'P',
         description: {},
         implFile: 'p.js',
-        modality: ['dom', 'mock-dom'],
+        modality: ['dom'],
         slots: [],
         verbs: [],
         args: [{
