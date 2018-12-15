@@ -156,10 +156,10 @@ describe('plan producer - search', function() {
   const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
-      super(new PlanningResult({context: {allRecipes: []}}, {on: () => {}}), searchStore);
+      super(new PlanningResult(
+          {arcId: arcKey, context: {allRecipes: []}}, {on: () => {}}), searchStore);
       this.produceSuggestionsCalled = 0;
     }
-    get arcKey() { return arcKey; }
 
     produceSuggestions(options) {
       this.produceSuggestionsCalled++;

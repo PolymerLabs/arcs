@@ -351,6 +351,10 @@ ${this.activeRecipe.toString()}`;
   get activeRecipe() { return this._activeRecipe; }
   get recipes() { return this._recipes; }
 
+  get arcId() {
+    return this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId;
+  }
+
   loadedParticles() {
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
