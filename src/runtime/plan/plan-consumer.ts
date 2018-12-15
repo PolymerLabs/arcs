@@ -91,12 +91,12 @@ export class PlanConsumer {
                !!this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
       });
       const usesRemoteNonRootSlots = suggestion.plan.slots.find(slot => {
-        return slot.name && !slot.name.includes('root') && !slot.tags.includes('root') &&
+        return !slot.name.includes('root') && !slot.tags.includes('root') &&
                slot.id && !slot.id.includes('root') &&
                Boolean(this.arc.pec.slotComposer.findContextById(slot.id));
       });
       const onlyUsesNonRootSlots =
-          !suggestion.plan.slots.find(s => (s.name && s.name.includes('root')) || s.tags.includes('root'));
+          !suggestion.plan.slots.find(s => (s.name.includes('root')) || s.tags.includes('root'));
       return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
     });
   }

@@ -1,4 +1,3 @@
-
 export const getEntityManifest = entity => {
   switch (entity.type) {
     case 'tv_show':
@@ -9,6 +8,23 @@ export const getEntityManifest = entity => {
 };
 
 const getTVMazeManifest = entity => {
+  return `
+import 'https://$particles/Pipes/Pipes.recipes'
+
+resource PipeEntityResource
+  start
+  [{"type": "${entity.type}", "name": "${entity.name}"}]
+
+store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity in PipeEntityResource
+
+recipe Pipe
+  use 'LivePipeEntity' #pipe_entity as pipe
+  PipeEntityReceiver
+    pipe = pipe
+  `;
+};
+
+const getTVMazeManifest0 = entity => {
   return `
 import 'https://$particles/Pipes/TVMazePipe.recipes'
 
@@ -24,7 +40,7 @@ recipe TVShowFindInfo
   TVMazeFindShow
     find = find
     show = show
-    `;
+  `;
 };
 
 const getArtistManifest = entity => {
@@ -43,5 +59,5 @@ recipe ArtistFindInfo
   ArtistFinder
     find = find
     artist = artist
-    `;
+  `;
 };

@@ -105,14 +105,24 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       log('registerPipe');
     }
     if (context && suggestions) {
-      if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
-        if (state.lastEntity) {
-          state.lastEntity.type = null;
-        }
-        const texts = suggestions.map(suggestion => suggestion.descriptionText);
-        log('piped suggestions', texts);
-        DeviceClient.foundSuggestions(JSON.stringify(texts));
+      if (state.spawned) {
+        log(suggestions[0]);
+        this.state = {spawned: false, staged: true, suggestions};
+        this.fire('suggestion', suggestions[0]);
       }
+      if (state.stage && state.suggestions !== suggestions) {
+         const texts = suggestions.map(suggestion => suggestion.descriptionText);
+         log('piped suggestions', texts);
+         DeviceClient.foundSuggestions(JSON.stringify(texts));
+      }
+      // if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
+      //   if (state.lastEntity) {
+      //     state.lastEntity.type = null;
+      //   }
+      //   const texts = suggestions.map(suggestion => suggestion.descriptionText);
+      //   log('piped suggestions', texts);
+      //   DeviceClient.foundSuggestions(JSON.stringify(texts));
+      // }
     }
     if (state.entity && state.entity.type === 'search') {
       this._updateSearch(state.entity);

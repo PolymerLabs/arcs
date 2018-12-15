@@ -7,9 +7,9 @@ particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
   out TVMazeFind find
   consume pipes
-    must provide content
+    provide content
 
-particle TVMazeSingleFindShow in './source/TVMazeFindShow.js'
+particle TVMazeFindPipeShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
   out [Description] descriptions
@@ -23,9 +23,7 @@ recipe TVMazeShowPipe
   TVMazeShowPipe
     pipe = pipe
     find = find
-  TVMazeSingleFindShow
+  TVMazeFindPipeShow
     find = find
     show = show
     descriptions = descriptions
-
-

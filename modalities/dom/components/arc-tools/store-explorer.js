@@ -104,7 +104,7 @@ class StoreExplorer extends Xen.Base {
     if (stores) {
       for (const [store, tags] of stores) {
         //if (store.name === null) {
-        if (hideNamed && store.name) {
+        if (hideNamed && store.name && tags.length === 0) {
           continue;
         }
         let malformed = false;
