@@ -24,14 +24,15 @@ particle ArtistFinder in 'source/ArtistFinder.js'
   in ArtistFind find
   out ArtistMusic artist
   out [Description] descriptions
+  description `Learn more about ${artist}`
 
 particle ArtistShow in 'source/ArtistShow.js'
   in ArtistMusic artist
   consume content
-  //description `Learn more about ${artist}`
+  description `Learn more about ${artist}`
 
 recipe ArtistInfo
   use #artist as artist
   ArtistShow
     artist = artist
-  //description `${ArtistShow}`
+  description `${ArtistShow}`

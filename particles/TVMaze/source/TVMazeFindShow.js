@@ -57,20 +57,19 @@ defineParticle(({DomParticle, log}) => {
           time: show.schedule && show.schedule.time
         };
         this.updateVariable('show', entityData);
-        this.updateDescription(entityData);
+        if (this.props.descriptions) {
+          this.updateDescription(entityData);
+        }
       }
     }
     updateDescription(data) {
-      if (this.props.descriptions) {
-        const description = `${
-          data.name} is on ${
-          data.network}${
-          data.time ? ` at ${data.time}` : ''}${
-          data.day ? ` on ${data.day}` : ''
-        }`;
-        console.warn(description);
-        this.setParticleDescription(description);
-      }
+      const description = `${
+        data.name} is on ${
+        data.network}${
+        data.time ? ` at ${data.time}` : ''}${
+        data.day ? ` on ${data.day}` : ''
+      }`;
+      console.warn(description);
     }
   };
 });

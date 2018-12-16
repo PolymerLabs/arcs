@@ -5,7 +5,7 @@ particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find
   consume pipes
-    must provide content
+    provide content
 
 recipe ArtistPipe
   use as pipe

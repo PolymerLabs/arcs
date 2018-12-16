@@ -10,7 +10,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Xen} from '../../../lib/xen.js';
 import {generateId} from '../../../../modalities/dom/components/generate-id.js';
-import {getEntityManifest} from './pipe-sinks.js';
 
 /*
   Examples:
@@ -34,10 +33,8 @@ import {getEntityManifest} from './pipe-sinks.js';
 const DeviceClient = window.DeviceClient || {
   entityArcAvailable() {
   },
-  foundSuggestions(suggestions) {
-  },
-  foundSuperSuggestions(info) {
-    log(`DeviceClient:foundSuperSuggestions: `, info);
+  foundSuggestions(suggestionJSON) {
+    log(`> DeviceClient.foundSuggestions(${suggestionJSON})`);
   }
 };
 
@@ -104,16 +101,17 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (context && suggestions) {
+    if (context && suggestions && suggestions.length > 0) {
       if (state.spawned) {
         log(suggestions[0]);
         this.state = {spawned: false, staged: true, suggestions};
         this.fire('suggestion', suggestions[0]);
       }
-      if (state.stage && state.suggestions !== suggestions) {
+      if (state.staged && state.suggestions !== suggestions) {
          const texts = suggestions.map(suggestion => suggestion.descriptionText);
-         log('piped suggestions', texts);
          DeviceClient.foundSuggestions(JSON.stringify(texts));
+         log(`try ShellApi.chooseSuggestion('${texts[0]}')`);
+
       }
       // if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
       //   if (state.lastEntity) {
@@ -160,6 +158,22 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     this.fire('reset');
   }
 }
+
 customElements.define('device-client-pipe', DeviceClientPipe);
 
+const getEntityManifest = entity => {
+  return `
+import 'https://$particles/Pipes/Pipes.recipes'
 
+resource PipeEntityResource
+  start
+  [{"type": "${entity.type}", "name": "${entity.name}"}]
+
+store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity in PipeEntityResource
+
+recipe Pipe
+  use 'LivePipeEntity' #pipe_entity as pipe
+  PipeEntityReceiver
+    pipe = pipe
+  `;
+};
