@@ -110,8 +110,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       if (state.staged && state.suggestions !== suggestions) {
          const texts = suggestions.map(suggestion => suggestion.descriptionText);
          DeviceClient.foundSuggestions(JSON.stringify(texts));
-         log(`try ShellApi.chooseSuggestion('${texts[0]}')`);
-
+         log(`try\n\t> ShellApi.chooseSuggestion('${texts[0]}')`);
       }
       // if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
       //   if (state.lastEntity) {
