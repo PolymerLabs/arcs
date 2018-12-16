@@ -202,7 +202,7 @@ export class Planner {
     MatchFreeHandlesToConnections,
     ResolveRecipe,
     FindHostedParticle,
-    //CoalesceRecipes
+    CoalesceRecipes
   ];
 
   // tslint:disable-next-line: variable-name
