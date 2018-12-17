@@ -220,21 +220,20 @@ export class APIPort {
 
   async _processMessage(e) {
     assert(this['before' + e.data.messageType] !== undefined);
-    this['before' + e.data.messageType](e.data.messageBody);
     const count = this.messageCount++;
-
     if (this._debugAttachment) {
       this._debugAttachment.handlePecMessage('on' + e.data.messageType, e.data.messageBody, count, e.data.stack);
     }
+    this['before' + e.data.messageType](e.data.messageBody);
   }
 
   send(name, args) {
     const call = {messageType: name, messageBody: args, stack: this._attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
-    this._port.postMessage(call);
     if (this._debugAttachment) {
       this._debugAttachment.handlePecMessage(name, args, count, new Error().stack);
     }
+    this._port.postMessage(call);
   }
 }
 
