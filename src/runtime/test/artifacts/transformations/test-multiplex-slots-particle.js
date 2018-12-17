@@ -50,7 +50,6 @@ defineParticle(({TransformationDomParticle}) => {
           particle ${hostedParticle.name} in '${hostedParticle.implFile}'
             in Foo foo
             consume ${hostedSlotName}
-            modality mock-dom
 
           recipe
             use '${fooHandle._id}' as handle1

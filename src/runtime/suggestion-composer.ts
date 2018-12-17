@@ -13,7 +13,6 @@ import {Suggestion} from './plan/suggestion.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
 export class SuggestionComposer {
-  private _modality: Modality;
   private _container: HTMLElement | undefined; // eg div element.
 
   private readonly _slotComposer: SlotComposer;
@@ -21,14 +20,15 @@ export class SuggestionComposer {
   private _suggestConsumers: SuggestDomConsumer[] = [];
 
   constructor(slotComposer: SlotComposer) {
-    this._modality = Modality.forName(slotComposer.modality);
     this._container = slotComposer.findContainerByName('suggestions');
     this._slotComposer = slotComposer;
   }
 
+  get modality() { return this._slotComposer.modality; }
+
   clear(): void {
     if (this._container) {
-      this._modality.slotConsumerClass.clear(this._container);
+      this.modality.slotConsumerClass.clear(this._container);
     }
     this._suggestConsumers.forEach(consumer => consumer.dispose());
     this._suggestConsumers = [];
@@ -46,7 +46,7 @@ export class SuggestionComposer {
       }
 
       if (this._container) {
-        this._modality.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
+        this.modality.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
       }
 
       this._addInlineSuggestion(suggestion, suggestionContent);
@@ -86,7 +86,7 @@ export class SuggestionComposer {
       return;
     }
 
-    const suggestConsumer = new this._modality.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
+    const suggestConsumer = new this.modality.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
       const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {

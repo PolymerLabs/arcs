@@ -43,7 +43,7 @@ export class TestHelper {
     const loader = options.loader || new Loader();
     if (options.manifestFilename) {
       assert(!options.context, 'context should not be provided if manifestFilename is given');
-      options.context = await TestHelper.loadManifest(options.manifestFilename, loader);
+      options.context = await Manifest.load(options.manifestFilename, loader);
     }
     if (options.manifestString) {
       assert(!options.context, 'context should not be provided if manifestString is given');
@@ -67,34 +67,8 @@ export class TestHelper {
     return helper;
   }
 
-  static async loadManifest(manifestFilename, loader) {
-    const manifest = await Manifest.load(manifestFilename, loader);
-    TestHelper._addMockModalities(manifest);
-    return manifest;
-  }
-
   static async parseManifest(manifestString, loader) {
-    const manifest = await Manifest.parse(manifestString, {loader, fileName: ''});
-    TestHelper._addMockModalities(manifest);
-    return manifest;
-  }
-
-  static addParticleMockModality(particleSpec) {
-    const mockModalities = [];
-    for (const modality of particleSpec.modality) {
-      if (!modality.startsWith('mock-')) {
-        mockModalities.push(`mock-${modality}`);
-      }
-    }
-    for (const mockModality of mockModalities) {
-      particleSpec.modality.push(mockModality);
-    }
-  }
-
-  static _addMockModalities(manifest) {
-    for (const particleSpec of manifest.particles) {
-      TestHelper.addParticleMockModality(particleSpec);
-    }
+    return await Manifest.parse(manifestString, {loader, fileName: ''});
   }
 
   /**

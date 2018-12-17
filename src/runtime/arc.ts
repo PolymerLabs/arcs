@@ -103,7 +103,7 @@ export class Arc {
   }
 
   get modality() { 
-    return this.pec.slotComposer && this.pec.slotComposer.modality;
+    return this.pec.slotComposer && this.pec.slotComposer.modality.name;
   }
 
   registerInstantiatePlanCallback(callback: PlanCallback) {
