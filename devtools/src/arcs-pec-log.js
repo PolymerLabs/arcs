@@ -172,10 +172,10 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
           }
           break;
         }
+        case 'arc-selected':
         case 'page-refresh':
-        case 'arc-transition':
           this.reset();
-          return;
+          break;
       }
     }
     if (newFilteredEntries.length) {

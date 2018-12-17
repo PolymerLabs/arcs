@@ -91,8 +91,8 @@ class ArcsStrategyRunner extends MessengerMixin(PolymerElement) {
 
   onMessage(msg) {
     switch (msg.messageType) {
+      case 'arc-selected':
       case 'page-refresh':
-      case 'arc-transition':
         this.arcId = null;
         this.strategies = null;
         break;

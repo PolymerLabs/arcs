@@ -92,8 +92,10 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
         case 'generations':
           this.displayResults(msg.messageBody);
           break;
+        case 'arc-selected':
         case 'page-refresh':
           this.reset();
+          this.$.compare.reset();
           break;
       }
     }

@@ -60,7 +60,7 @@ export class PlanConsumer {
     this._onMaybeSuggestionsChanged();
 
     if (this.result.generations.length && DevtoolsConnection.isConnected) {
-      StrategyExplorerAdapter.processGenerations(this.result.generations, DevtoolsConnection.get());
+      StrategyExplorerAdapter.processGenerations(this.result.generations, DevtoolsConnection.get().forArc(this.arc));
     }
   }
 

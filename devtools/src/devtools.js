@@ -96,6 +96,6 @@
   }
 
   function fire(msg) {
-    windowForEvents.document.dispatchEvent(new CustomEvent('messages', {detail: msg}));
+    windowForEvents.document.dispatchEvent(new CustomEvent('raw-messages', {detail: msg}));
   }
 })();

@@ -81,6 +81,10 @@ class SeComparePopulations extends PolymerElement {
 
   constructor() {
     super();
+    this.reset();
+  }
+
+  reset() {
     this.library = [];
     this.current = {};
   }

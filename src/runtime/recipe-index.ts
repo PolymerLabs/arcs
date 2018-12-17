@@ -83,19 +83,19 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  constructor(context: Manifest, loader: Loader, modality: string) {
+  constructor(arc: Arc) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
       context: new Manifest({id: 'empty-context'}),
-      loader,
-      slotComposer: modality ? new SlotComposer({modality, noRoot: true}) : null,
+      loader: arc.loader,
+      slotComposer: arc.modality ? new SlotComposer({modality: arc.modality, noRoot: true}) : null,
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
       speculative: true
     });
     const strategizer = new Strategizer(
       [
-        new RelevantContextRecipes(context, modality),
+        new RelevantContextRecipes(arc.context, arc.modality),
         ...IndexStrategies.map(S => new S(arcStub, {recipeIndex: this}))
       ],
       [],
@@ -112,7 +112,7 @@ export class RecipeIndex {
       if (DevtoolsConnection.isConnected) {
         StrategyExplorerAdapter.processGenerations(
             PlanningResult.formatSerializableGenerations(generations),
-            DevtoolsConnection.get(), {label: 'Index', keep: true});
+            DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
       }
 
       const population = strategizer.population;
@@ -129,7 +129,7 @@ export class RecipeIndex {
   }
 
   static create(arc: Arc): RecipeIndex {
-    return new RecipeIndex(arc.context, arc.loader, arc.modality);
+    return new RecipeIndex(arc);
   }
 
   get recipes(): Recipe[] {

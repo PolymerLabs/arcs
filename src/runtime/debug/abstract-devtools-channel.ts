@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {Arc} from '../arc.js';
 
 export class AbstractDevtoolsChannel {
   debouncedMessages = [];
@@ -40,6 +41,10 @@ export class AbstractDevtoolsChannel {
     listeners.push(callback);
   }
 
+  forArc(arc) {
+    return new ArcDevtoolsChannel(arc, this);
+  }
+
   _handleMessage(msg) {
     const listeners = this.messageListeners.get(`${msg.arcId}/${msg.messageType}`);
     if (!listeners) {
@@ -51,5 +56,26 @@ export class AbstractDevtoolsChannel {
 
   _flush(messages) {
     throw new Error('Not implemented in an abstract class');
+  }
+}
+
+export class ArcDevtoolsChannel {
+  private channel: AbstractDevtoolsChannel;
+  private arcId: string;
+
+  constructor(arc: Arc, channel: AbstractDevtoolsChannel) {
+    this.channel = channel;
+    this.arcId = arc.id.toString();
+  }
+
+  send(message) {
+    this.channel.send({
+      meta: {arcId: this.arcId},
+      ...message
+    });
+  }
+
+  listen(messageType, callback) {
+    this.channel.listen(this.arcId, messageType, callback);
   }
 }

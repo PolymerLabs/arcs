@@ -360,10 +360,10 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
           }
           break;
         }
+        case 'arc-selected':
         case 'page-refresh':
-        case 'arc-transition':
           this._clear();
-          return; // page-refresh is not bundled with anything else.
+          break;
       }
     }
 
