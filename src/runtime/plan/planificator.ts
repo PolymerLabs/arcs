@@ -36,9 +36,7 @@ export class Planificator {
     const store = await Planificator._initSuggestStore(arc, userid, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc, userid);
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
-    // TODO(mmandlis): Switch to always use `contextual: true` once new arc doesn't need
-    // to produce a plan in order to instantiate it.
-    planificator.requestPlanning({contextual: planificator.isArcPopulated()});
+    planificator.requestPlanning({contextual: true});
     return planificator;
   }
 
@@ -191,18 +189,5 @@ export class Planificator {
       newValues.push({search: this.search, arc: arcKey});
     }
     return this.searchStore['set'](newValues);
-  }
-
-  isArcPopulated(): boolean {
-    if (this.arc.recipes.length === 0) return false;
-    if (this.arc.recipes.length === 1) {
-      const [recipe] = this.arc.recipes;
-      if (recipe.particles.length === 0 ||
-          (recipe.particles.length === 1 && recipe.particles[0].name === 'Launcher')) {
-        // TODO: Check for Launcher is hacky, find a better way.
-        return false;
-      }
-    }
-    return true;
   }
 }
