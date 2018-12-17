@@ -96,7 +96,7 @@ export class PlanConsumer {
                Boolean(this.arc.pec.slotComposer.findContextById(slot.id));
       });
       const onlyUsesNonRootSlots =
-          !suggestion.plan.slots.find(s => (s.name.includes('root')) || s.tags.includes('root'));
+          !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root'));
       return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
     });
   }
