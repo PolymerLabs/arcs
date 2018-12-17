@@ -76,30 +76,21 @@ const ShellApi = window.ShellApi = {
   }
 };
 
-// const template = Xen.Template.html`
-//   <web-arc id="pipes" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{config}}" manifest="{{manifest}}" on-arc="onArc"></web-arc>
-// `;
-
 const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'context', 'userid', 'storage', 'suggestions'];
+    return ['context', 'userid', 'storage', 'suggestions'];
   }
-  // get template() {
-  //   return template;
-  // }
-  _update({userid, context, suggestions}, state) {
-    // if (userid && !state.config) {
-    //   state.config = {
-    //     id: `${userid}-pipes`,
-    //     manifest: `import 'https://$particles/Pipes/Pipes.recipes'`
-    //   };
-    // }
-    if (/*state.arc &&*/ !state.registered) {
+  update({userid, context, suggestions}, state) {
+    if (!state.registered) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
+    }
+    if (userid && state.entity) {
+      this.updateEntity(state.entity);
+      this.state = {entity: null};
     }
     if (context && suggestions && suggestions.length > 0) {
       if (state.spawned) {
@@ -109,29 +100,25 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       }
       if (state.staged && state.suggestions !== suggestions) {
          const texts = suggestions.map(suggestion => suggestion.descriptionText);
-         DeviceClient.foundSuggestions(JSON.stringify(texts));
-         log(`try\n\t> ShellApi.chooseSuggestion('${texts[0]}')`);
+         const unique = [...new Set(texts)];
+         DeviceClient.foundSuggestions(JSON.stringify(unique));
+         log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);
       }
-      // if (state.spawned || (state.lastEntity && state.lastEntity.type)) {
-      //   if (state.lastEntity) {
-      //     state.lastEntity.type = null;
-      //   }
-      //   const texts = suggestions.map(suggestion => suggestion.descriptionText);
-      //   log('piped suggestions', texts);
-      //   DeviceClient.foundSuggestions(JSON.stringify(texts));
-      // }
-    }
-    if (state.entity && state.entity.type === 'search') {
-      this._updateSearch(state.entity);
-      state.lastEntity = state.entity;
-      state.entity = null;
     }
   }
-  _render(props, state) {
+  render(props, state) {
     return [props, state];
   }
-  _updateSearch(entity) {
-    this.fire('search', entity.query);
+  updateEntity(entity) {
+    if (entity.type === 'search') {
+      this.fire('search', entity.query);
+      this.state = {staged: true};
+    } else {
+      const manifest = buildEntityManifest(entity);
+      const id = `${this.props.userid}-piped-${entity.id}`;
+      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
+      this.state = {spawned: true};
+    }
   }
   onArc(e, arc) {
     this.state = {arc};
@@ -146,12 +133,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     }
   }
   receiveEntity(entity) {
-    const manifest = getEntityManifest(entity);
-    if (manifest) {
-      const id = `${this.props.userid}-piped-${entity.id}`;
-      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
-      this.state = {spawned: true};
-    }
+    this.state = {entity};
   }
   reset() {
     this.fire('reset');
@@ -160,7 +142,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
 
 customElements.define('device-client-pipe', DeviceClientPipe);
 
-const getEntityManifest = entity => {
+const buildEntityManifest = entity => {
   return `
 import 'https://$particles/Pipes/Pipes.recipes'
 
