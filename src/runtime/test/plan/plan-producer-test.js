@@ -65,13 +65,14 @@ class TestPlanProducer extends PlanProducer {
         info = {hash: info};
       }
       const plan = new Recipe(`Recipe${info.hash}`);
+      plan.newParticle('TestParticle');
       if (!info.options || !info.options.invisible) {
         plan.newSlot('slot0').id = 'id0';
       }
       plan.normalize();
       const relevance = Relevance.create(this.arc, plan);
       relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
-      const suggestion = new Suggestion(plan, info.hash, relevance, this.arc);
+      const suggestion = Suggestion.create(plan, info.hash, relevance);
       suggestion.relevance = Relevance.create(this.arc, plan);
       suggestion.descriptionByModality['text'] = `This is ${plan.name}`;
       suggestions.push(suggestion);

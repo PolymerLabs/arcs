@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import {SyntheticStores} from './synthetic-stores.js';
 import {ArcType} from './arcs.js';
 import {logFactory} from './arcs.js';
+import {Suggestion} from './arcs.js';
 import {Utils} from './utils.js';
 
 const log = logFactory('ArcHost', '#cade57');
@@ -38,8 +39,13 @@ export class ArcHost {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
     if (this.pendingPlan) {
-      const plan = this.pendingPlan;
+      let plan = this.pendingPlan;
       this.pendingPlan = null;
+      // TODO(sjmiles): pass suggestion all the way from web-shell
+      // and call suggestion.instantiate(arc).
+      if (plan.serialization) {
+        plan = await Suggestion.planFromString(plan.serialization, this.arc);
+      }
       await this.instantiatePlan(this.arc, plan);
     }
     return this.arc;

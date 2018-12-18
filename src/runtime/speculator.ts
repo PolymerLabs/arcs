@@ -33,12 +33,10 @@ export class Speculator {
     let suggestion = this.suggestionByHash[hash];
     if (suggestion) {
       const arcVersionByStoreId = arc.getVersionByStore({includeArc: true, includeContext: true});      
-      const relevanceVersionByStoreId = suggestion.relevance.versionByStore;
-      if (plan.handles.every(handle => arcVersionByStoreId[handle.id] === relevanceVersionByStoreId[handle.id])) {
+      if (plan.handles.every(handle => arcVersionByStoreId[handle.id] === suggestion.versionByStore[handle.id])) {
         return suggestion;
       }
     }
-
     const speculativeArc = await arc.cloneForSpeculativeExecution();
     this.speculativeArcs.push(speculativeArc);
     const relevance = Relevance.create(arc, plan);
@@ -50,8 +48,7 @@ export class Speculator {
     }
 
     speculativeArc.description.relevance = relevance;
-    suggestion = new Suggestion(plan, hash, relevance, arc);
-    suggestion.setSearch(plan.search);
+    suggestion = Suggestion.create(plan, hash, relevance);
     await suggestion.setDescription(speculativeArc.description);
     this.suggestionByHash[hash] = suggestion;
     return suggestion;
