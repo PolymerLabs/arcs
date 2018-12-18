@@ -117,6 +117,12 @@ export class PlanProducer {
   }
 
   async produceSuggestions(options = {}) {
+    if (!this.arc.activeRecipe.isEmpty()) {
+      console.log(`[${this.arc.arcId}]_____________SKIP PLANNING`);
+      return;
+    }
+    console.log(`[${this.arc.arcId}]_____________PLANNING FOR ARC`);
+
     if (options['cancelOngoingPlanning'] && this.isPlanning) {
       this._cancelPlanning();
     }
@@ -141,7 +147,7 @@ export class PlanProducer {
 
     // Suggestions are null, if planning was cancelled.
     if (suggestions) {
-      log(`Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
+      log(`[${this.arc.arcId}]: Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
 
       await this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions);

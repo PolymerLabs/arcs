@@ -87,29 +87,29 @@ particle Sharing in './source/Sharing.js'
   in [TVMazeShow] profileShowsTiles
   in [TVMazeShow] boxedShowsTiles
 
-recipe Sharing
-  use 'SYSTEM_user' as systemUser
-  use 'PROFILE_friends' as profileFriends
-  use 'BOXED_friends' as boxedFriends
-  use 'PROFILE_userName' as profileUserName
-  use 'BOXED_userName' as boxedUserName
-  use 'PROFILE_avatar' as profileAvatar
-  use 'BOXED_avatar' as boxedAvatar
-  use 'PROFILE_piped-tv_show' as profilePipedShow
-  use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
-  use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
-  use 'PROFILE_shows-tiles' as profileShowsTiles
-  use 'BOXED_shows-tiles' as boxedShowsTiles
-  Sharing
-    systemUser = systemUser
-    profileFriends = profileFriends
-    boxedFriends = boxedFriends
-    profileUserName = profileUserName
-    boxedUserName = boxedUserName
-    profileAvatar = profileAvatar
-    boxedAvatar = boxedAvatar
-    profilePipedShow = profilePipedShow
-    profilePipedShows = profilePipedShows
-    boxedPipedShows = boxedPipedShows
-    profileShowsTiles = profileShowsTiles
-    boxedShowsTiles = boxedShowsTiles
+// recipe Sharing
+//   use 'SYSTEM_user' as systemUser
+//   use 'PROFILE_friends' as profileFriends
+//   use 'BOXED_friends' as boxedFriends
+//   use 'PROFILE_userName' as profileUserName
+//   use 'BOXED_userName' as boxedUserName
+//   use 'PROFILE_avatar' as profileAvatar
+//   use 'BOXED_avatar' as boxedAvatar
+//   use 'PROFILE_piped-tv_show' as profilePipedShow
+//   use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
+//   use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
+//   use 'PROFILE_shows-tiles' as profileShowsTiles
+//   use 'BOXED_shows-tiles' as boxedShowsTiles
+//   Sharing
+//     systemUser = systemUser
+//     profileFriends = profileFriends
+//     boxedFriends = boxedFriends
+//     profileUserName = profileUserName
+//     boxedUserName = boxedUserName
+//     profileAvatar = profileAvatar
+//     boxedAvatar = boxedAvatar
+//     profilePipedShow = profilePipedShow
+//     profilePipedShows = profilePipedShows
+//     boxedPipedShows = boxedPipedShows
+//     profileShowsTiles = profileShowsTiles
+//     boxedShowsTiles = boxedShowsTiles

@@ -342,6 +342,7 @@ ${this.activeRecipe.toString()}`;
     const recipe = manifest.activeRecipe.clone();
     const options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
+    console.log(`[${arc.arcId}] DESERIALIZED STORES:  ${arc.storesById.size}`);
     await arc.instantiate(recipe);
     return arc;
   }
@@ -549,6 +550,8 @@ ${this.activeRecipe.toString()}`;
     }
 
     this.debugHandler.recipeInstantiated({particles});
+
+    console.log(`[${this.arcId}]______Instantiated ${recipe.particles.map(p => p.name).join(',')}] stores =${this.storesById.size}`);
   }
 
   _connectParticleToHandle(particle, name, targetHandle) {
@@ -592,6 +595,7 @@ ${this.activeRecipe.toString()}`;
 
   _registerStore(store: StorageProviderBase, tags?) {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
+    console.log(`_______________ REGISTERED STORE: ${store.id}`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 

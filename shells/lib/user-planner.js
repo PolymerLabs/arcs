@@ -35,6 +35,9 @@ export class UserPlanner {
       warn(`marshalArc: already marshaled [${key}]`);
       return;
     }
+    if (key.endsWith('null') || key.endsWith('launcher')) {
+      return;
+    }
     this.runners[key] = true;
     // TODO(sjmiles): we'll need a queue to handle change notifications that arrive while we are 'await'ing
     log(`marshalArc [${key}]`);

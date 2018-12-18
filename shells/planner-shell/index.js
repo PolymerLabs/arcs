@@ -20,7 +20,7 @@ if (!storage) {
   console.log(`No ARCS_STORAGE environment variable, using default:\n\t[${storage}]`);
 }
 
-let userId =  process.env['ARCS_USER_ID'] || 'planner';
+let userId =  process.env['ARCS_USER_ID'] || 'maria'; //'planner';
 if (!userId) {
   userId = PlannerShellInterface.DEFAULT_USER_ID;
   console.log(`No ARCS_USER_ID environment variable, using default:\n\t[${userId}]`);

@@ -35,7 +35,7 @@ defineParticle(({DomParticle}) => {
     }
     async receivePlaces(places) {
       const results = places.results || [];
-      const restaurants = results.map(p => this.placeToEntity(p));
+      const restaurants = results.slice(0, 3).map(p => this.placeToEntity(p));
       await this.clearHandle('restaurants');
       this.appendRawDataToHandle('restaurants', restaurants);
       this.setState({count: results.length});

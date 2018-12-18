@@ -107,6 +107,7 @@ export class SlotComposer {
   }
 
   initializeRecipe(recipeParticles: Particle[]) {
+    console.log(`${this.arc.arcId}___________initializeRecipe:: ${recipeParticles.map(p => p.name).join(',')}`);
     const newConsumers = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
@@ -152,6 +153,9 @@ export class SlotComposer {
   async renderSlot(particle: Particle, slotName: string, content) {
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
+    if (particle.name === 'SelectableTiles') {
+      console.log(`_______[${this.arc.arcId}] ${slotConsumer.consumeConn.getQualifiedName()}::${content.model.items.models.length}::[${content.model.items.models.map(m => m.id).join(',')}]`);
+    }
 
     await slotConsumer.setContent(content, async (eventlet) => {
       this.arc.pec.sendEvent(particle, slotName, eventlet);
