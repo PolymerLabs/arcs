@@ -14,6 +14,21 @@ import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Relevance} from '../../relevance.js';
+import {Suggestion} from '../../plan/suggestion.js';
+
+async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
+  helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
+  const store = await Planificator._initSuggestStore(helper.arc, userid, storageKeyBase);
+  assert.isNotNull(store);
+  return new PlanConsumer(new PlanningResult(helper.arc, store));
+}
+
+async function storeResults(consumer, suggestions) {
+  suggestions.forEach(s => s.relevance = Relevance.create(consumer.arc, s.plan));
+  assert.isTrue(consumer.result.set({suggestions}));
+  await consumer.result.flush();
+  await new Promise(resolve => setTimeout(resolve, 100));
+}
 
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
@@ -41,11 +56,8 @@ recipe
     consume other as other
 `
       });
-      const userid = 'TestUser';
-      helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
-      const store = await Planificator._initSuggestStore(helper.arc, userid, storageKeyBase);
-      assert.isNotNull(store);
-      const consumer = new PlanConsumer(new PlanningResult(helper.arc, store));
+      const consumer = await createPlanConsumer(
+          'TestUser', 'volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
 
       let suggestionsChangeCount = 0;
       const suggestionsCallback = (suggestions) => { ++suggestionsChangeCount; };
@@ -55,14 +67,8 @@ recipe
       consumer.registerVisibleSuggestionsChangedCallback(visibleSuggestionsCallback);
       assert.isEmpty(consumer.getCurrentSuggestions());
 
-      const storeResults = async (suggestions) => {
-        suggestions.forEach(s => s.relevance = Relevance.create(helper.arc, s.plan));
-        assert.isTrue(consumer.result.set({suggestions}));
-        await consumer.result.flush();
-        await new Promise(resolve => setTimeout(resolve, 100));
-      };
       // Updates suggestions.
-      await storeResults(helper.findSuggestionByParticleNames(['ItemMultiplexer', 'List']));
+      await storeResults(consumer, helper.findSuggestionByParticleNames(['ItemMultiplexer', 'List']));
       assert.lengthOf(consumer.result.suggestions, 1);
       assert.lengthOf(consumer.getCurrentSuggestions(), 0);
       assert.equal(suggestionsChangeCount, 1);
@@ -90,7 +96,7 @@ recipe
 
       await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List']});
       await helper.makePlans();
-      await storeResults(helper.suggestions);
+      await storeResults(consumer, helper.suggestions);
       assert.lengthOf(consumer.result.suggestions, 3);
       // The [Test1, Test2] recipe is not contextual, and only suggested for search *.
       assert.lengthOf(consumer.getCurrentSuggestions(), 2);
@@ -100,3 +106,63 @@ recipe
     });
   }); // end describe
 }); // end forEach
+
+describe('plan consumer', function() {
+  it('filters suggestions by modality', async function() {
+    const initConsumer = async (modality) => {
+      const addRecipe = (name, particles) => {
+        return `
+  recipe ${name}
+    slot 'slot0' as rootSlot
+    ${particles.map(p => `
+    ${p}
+      consume root as rootSlot
+    `).join('')}
+        `;
+      };
+      const helper = await TestHelper.create({
+        slotComposer: new FakeSlotComposer({modality}),
+        manifestString: `
+  particle P1 in './src/runtime/test/artifacts/consumer-particle.js'
+    consume root
+  particle P2 in './src/runtime/test/artifacts/consumer-particle.js'
+    consume root
+    affordance dom-touch
+  particle P3 in './src/runtime/test/artifacts/consumer-particle.js'
+    consume root
+    affordance dom
+    affordance dom-touch
+  ${addRecipe('OnlyDom', ['P1'])}
+  ${addRecipe('OnlyTouch', ['P2'])}
+  ${addRecipe('DomAndBoth', ['P1', 'P3'])}
+  ${addRecipe('TouchAndBoth', ['P2', 'P3'])}
+  `});
+      assert.lengthOf(helper.arc.context.allRecipes, 4);
+      const consumer = await createPlanConsumer(
+          'TestUser', 'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
+      assert.isNotNull(consumer);
+      await storeResults(consumer, helper.arc.context.allRecipes.map((plan, index) => {
+        const suggestion = new Suggestion(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan), helper.arc);
+        suggestion.descriptionByModality['text'] = `${plan.name}`;
+        return suggestion;
+      }));
+      assert.lengthOf(consumer.result.suggestions, 4);
+      assert.isEmpty(consumer.getCurrentSuggestions());
+      consumer.suggestFilter.showAll = true;
+      return consumer;
+    };
+
+    const consumerDom = await initConsumer('mock-dom');
+    const domSuggestions = consumerDom.getCurrentSuggestions();
+    assert.lengthOf(domSuggestions, 2);
+    assert.deepEqual(domSuggestions.map(s => s.plan.name), ['OnlyDom', 'DomAndBoth']);
+
+    const consumerVr = await initConsumer('mock-vr');
+    assert.isEmpty(consumerVr.getCurrentSuggestions());
+
+    const consumerTouch = await initConsumer('mock-dom-touch');
+    const touchSuggestions = consumerTouch.getCurrentSuggestions();
+    assert.lengthOf(touchSuggestions, 2);
+    assert.deepEqual(touchSuggestions.map(s => s.plan.name), ['OnlyTouch', 'TouchAndBoth']);
+  });
+});
