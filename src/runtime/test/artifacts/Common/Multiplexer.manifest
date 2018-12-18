@@ -6,13 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-interface HostedParticleInterface
+interface HostedAnnotationParticleInterface
   in ~a *
-  consume
+  consume annotation
 
 // TODO: This particle should use generic slot name.
 particle Multiplexer in 'source/Multiplexer.js'
-  host HostedParticleInterface hostedParticle
+  host HostedAnnotationParticleInterface hostedParticle
   in [~a] list
   consume set of annotation
   description `${hostedParticle} for ${list}`

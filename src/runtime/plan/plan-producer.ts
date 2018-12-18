@@ -70,7 +70,8 @@ export class PlanProducer {
 
   async onSearchChanged() {
     const values = await this.searchStore['get']() || [];
-    const value = values.find(value => value.arc === this.arcKey);
+    const arcId = this.arc.arcId;
+    const value = values.find(value => value.arc === arcId);
     if (!value) {
       return;
     }
@@ -109,11 +110,6 @@ export class PlanProducer {
 
       this.produceSuggestions(options);
     }
-  }
-
-  get arcKey(): string {
-    // TODO: this is a duplicate method of one in planificator.ts, refactor?
-    return this.arc.storageKey.substring(this.arc.storageKey.lastIndexOf('/') + 1);
   }
 
   dispose() {

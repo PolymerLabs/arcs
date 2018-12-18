@@ -60,6 +60,9 @@ export class TestHelper {
       loader: helper.loader,
       context: options.context
     });
+    if (options.storageKey) {
+      helper.arc.storageKey = options.storageKey;
+    }
     helper.slotComposer.pec = helper.arc.pec;
     helper.recipeIndex = RecipeIndex.create(helper.arc);
     helper.logging = options.logging;
