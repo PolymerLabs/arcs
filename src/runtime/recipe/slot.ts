@@ -99,7 +99,8 @@ export class Slot {
   }
 
   findHandleByID(id) {
-    return this.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === id).handle;
+    const connection = this.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === id);
+    return connection && connection.handle;
   }
 
   removeConsumeConnection(slotConnection) {

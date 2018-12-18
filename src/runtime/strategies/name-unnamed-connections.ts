@@ -23,7 +23,7 @@ export class NameUnnamedConnections extends Strategy {
           return;
         }
 
-        const possibleSpecConns = handleConnection.getDisconnectedSpecsByHandleType();
+        const possibleSpecConns = handleConnection.findSpecsForUnnamedHandles();
 
         return possibleSpecConns.map(specConn => {
           return (recipe, handleConnection) => {

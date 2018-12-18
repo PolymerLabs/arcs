@@ -168,7 +168,7 @@ export class CoalesceRecipes extends Strategy {
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
           // This is a poor man's proxy for the other handle being an output of a recipe.
-          if (otherHandle.findInHandleConnection()) continue;
+          if (otherHandle.findConnectionByDirection('in')) continue;
 
           // We ignore type variables not constrained for reading, otherwise
           // generic recipes would apply - which we currently don't want here.
