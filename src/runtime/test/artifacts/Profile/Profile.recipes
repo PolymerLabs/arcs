@@ -7,7 +7,6 @@
 
 import 'AvatarPicker.manifest'
 import 'FriendsPicker.manifest'
-import 'FavoriteFoodPicker.manifest'
 import '../Places/AddressForm.manifest'
 
 recipe BasicUserProfile
@@ -27,10 +26,3 @@ recipe BasicUserProfile
     people <- people
   AddressForm
     address = address
-
-recipe FavoriteFood
-  use #user as person
-  create #favorite as food
-  FavoriteFoodPicker
-    food = food
-    person <- person
