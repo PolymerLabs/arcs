@@ -22,7 +22,8 @@ describe('planificator', function() {
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator._constructSuggestionKey(arc, 'testuser', storageKeyBase);
-      assert(key, `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
+      assert(key && key.protocol && key.location,
+            `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
       assert(key.protocol.length > 0,
             `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
       assert(key.location.length > 0,
@@ -40,22 +41,17 @@ describe('planificator', function() {
   it('consumes remotely produced suggestions', async () => {
     const userid = 'test-user';
     const storageKey = 'volatile://!123:demo^^abcdef';
-    const createArc = async (manifestFilename) => {
-      const arc = (await TestHelper.createAndPlan({
-          manifestFilename, slotComposer: new FakeSlotComposer()})).arc;
-      arc.storageKey = storageKey;
-      return arc;
-    };
-    const deserializeArc = async (serialization, context) => {
-      return await Arc.deserialize({serialization,
-          slotComposer: new FakeSlotComposer(), loader: new Loader(), fileName: '', context
-      });
-    };
     const createConsumePlanificator = async (manifestFilename) => {
-      return Planificator.create(await createArc(manifestFilename), {userid, onlyConsumer: true, debug: false});
+      return Planificator.create(
+        (await TestHelper.createAndPlan({manifestFilename, slotComposer: new FakeSlotComposer(), storageKey})).arc,
+        {userid, onlyConsumer: true, debug: false});
     };
     const createProducePlanificator = async (manifestFilename, store, searchStore) => {
-      return new Planificator(await createArc(manifestFilename), userid, store, searchStore);
+      return new Planificator(
+          (await TestHelper.createAndPlan({manifestFilename,
+                                           slotComposer: new FakeSlotComposer(),
+                                           storageKey})).arc,
+          userid, store, searchStore);
     };
     const instantiateAndReplan = async (consumePlanificator, producePlanificator, suggestionIndex, log) => {
       await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate();
@@ -63,7 +59,9 @@ describe('planificator', function() {
       producePlanificator.arc.dispose();
       producePlanificator.dispose();
       producePlanificator = null;
-      const deserializedArc = await deserializeArc(serialization, consumePlanificator.arc.context);
+      const deserializedArc = await Arc.deserialize({serialization,
+          slotComposer: new FakeSlotComposer(), loader: new Loader(), fileName: '',
+          context: consumePlanificator.arc.context});
       producePlanificator = new Planificator(
         deserializedArc,
         consumePlanificator.userid,
@@ -78,6 +76,7 @@ describe('planificator', function() {
 
     const verifyReplanning = async (producePlanificator, expectedSuggestions, expectedDescriptions = []) => {
       assert.isTrue(producePlanificator.producer.isPlanning);
+      // An (ugly) arbitrary delay to let the planner finish.
       await delay(300);
       assert.isFalse(producePlanificator.producer.isPlanning);
       assert.lengthOf(producePlanificator.producer.result.suggestions, expectedSuggestions);

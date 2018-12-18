@@ -57,6 +57,7 @@ export class Arc {
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
   readonly storageKey: string;
+  readonly arcId: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
   public storeTags = new Map<StorageProviderBase, Set<string>>();
@@ -91,6 +92,7 @@ export class Arc {
       slotComposer.arc = this;
     }
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
+    this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
     this._description = new Description(this);
     this.debugHandler = new ArcDebugHandler(this);
   }
@@ -350,10 +352,6 @@ ${this.activeRecipe.toString()}`;
 
   get activeRecipe() { return this._activeRecipe; }
   get recipes() { return this._recipes; }
-
-  get arcId() {
-    return this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId;
-  }
 
   loadedParticles() {
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
