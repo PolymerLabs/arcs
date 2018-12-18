@@ -115,7 +115,12 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
       switch (msg.messageType) {
         case 'startup-time':
           if (this._timeline) {
-            this._timeline.addCustomTime(msg.messageBody, 'startup');
+            if (this._hasStartupTime) {
+              this._timeline.setCustomTime(msg.messageBody, 'startup');
+            } else {
+              this._timeline.addCustomTime(msg.messageBody, 'startup');
+              this._hasStartupTime = true;
+            }
           } else {
             this._startupTime = msg.messageBody;
           }
@@ -218,9 +223,12 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
           this._groups.clear();
           this._items.clear();
           this._startupTime = null;
-          if (this._timeline) this._timeline.removeCustomTime('startup');
+          if (this._timeline && this._hasStartupTime) {
+            this._timeline.removeCustomTime('startup');
+            this._hasStartupTime = false;
+          }
           this._autoWindowResize = true;
-          return;
+          break;
       }
     }
 
@@ -251,6 +259,7 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
       });
       if (this._startupTime) {
         this._timeline.addCustomTime(this._startupTime, 'startup');
+        this._hasStartupTime = true;
       }
     } else if (this._timeline && this._autoWindowResize) {
       this._fit();
