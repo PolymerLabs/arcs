@@ -16,7 +16,7 @@ import {TestHelper} from '../testing/test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   constructor() {
-    super({modality: 'mock-dom', findContainerByName: () => '<div></div>'});
+    super(new FakeSlotComposer({containers: {suggestions: {}}}));
     this.suggestions = [];
     this.updatesCount = 0;
     this.updateResolve = null;

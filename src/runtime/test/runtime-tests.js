@@ -11,14 +11,13 @@
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
-import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
-  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
-  const arc = new Arc({slotComposer, id: 'test'});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
   return arc;
 }
 

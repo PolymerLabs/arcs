@@ -15,10 +15,10 @@ import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Relevance} from '../relevance.js';
-import {SlotComposer} from '../slot-composer.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
 function createTestArc() {
-  const slotComposer = new SlotComposer({rootContainer: 'test', modality: 'mock-dom'});
+  const slotComposer = new FakeSlotComposer();
   const arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }

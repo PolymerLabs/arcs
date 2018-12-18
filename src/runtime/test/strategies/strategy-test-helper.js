@@ -13,16 +13,14 @@ import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
 import {Modality} from '../../modality.js';
 import {RecipeIndex} from '../../recipe-index.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 
 export class StrategyTestHelper {
-  static createTestArc(id, context, modality) {
+  static createTestArc(context, options = {}) {
     return new Arc({
-      id,
+      id: options.arcId || 'test-arc',
       context,
-      slotComposer: {
-        modality: Modality.forName(modality),
-        getAvailableContexts: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], spec: {isSet: false}}]; })
-      }
+      slotComposer: new FakeSlotComposer(options),
     });
   }
   static createTestStrategyArgs(arc, args) {
