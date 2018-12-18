@@ -5,14 +5,12 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
   <template>
     <style>
       :host {
-        --paper-item-min-height: 24px;
-        --paper-font-subhead_-_font-size: 12px;
-
         --light-gray: #f3f3f3;
         --mid-gray: #ccc;
         --dark-gray: #888;
         --highlight-blue: #3879d9;
         --focus-blue: #03a9f4;
+        --light-focus-blue: #e4f6ff;
         --dark-red: #b71c1c;
         --dark-green: #09ba12;
         --darker-green: #08780e;
@@ -22,6 +20,38 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --devtools-red: rgb(196, 26, 22);
 
         --drop-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      header.header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--light-gray);
+        border-bottom: 1px solid var(--mid-gray);
+        padding: 1px;
+        line-height: 0;
+      }
+      header.header > [section] {
+        display: flex;
+        align-items: center;
+      }
+      header.header iron-icon {
+        display: inline-block;
+        width: 28px;
+        height: 24px;
+        vertical-align: unset;
+        color: rgb(110, 110, 110);
+      }
+      header.header iron-icon:not([disabled]):not([active]):hover {
+        color: rgb(51, 51, 51);
+      }
+      header.header iron-icon[active] {
+        color: var(--highlight-blue);
+      }
+      header.header [divider] {
+        background-color: var(--mid-gray);
+        width: 1px;
+        margin: 4px 5px;
+        height: 16px;
       }
       .devtools-icon {
         display: inline-block;
@@ -41,6 +71,9 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
             url(img/devtools_icons_color_1x.png) 1x,
             url(img/devtools_icons_color_2x.png) 2x);
         background-color: rgb(110, 110, 110);
+      }
+      .devtools-icon:not([disabled]):hover, .devtools-small-icon:not([disabled]):hover {
+        background-color: rgb(51, 51, 51);
       }
       .devtools-icon-color {
         display: inline-block;
@@ -93,6 +126,10 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
       vaadin-split-layout > aside.paddedBlocks > * {
         margin: 5px 5px 5px 2px;
       }
+      .dropdown {
+        box-shadow: var(--drop-shadow);
+        background-color: white;
+      }
     </style>
   </template>
 </dom-module>`;
@@ -110,6 +147,18 @@ export function formatTime(timestamp, digits = 0) {
 export function indentPrint(thing) {
   if (typeof thing === 'string') thing = JSON.parse(thing);
   return JSON.stringify(thing, null, 2);
+}
+
+// Wraps unresolved errors and type comments in spans for styling.
+export function recipeHtmlify(recipe) {
+  return recipe.split(/(?=(?:\/\/ |[\n\r]+))/g).map(entry => {
+    if (entry.startsWith('// unresolved ')) {
+      return `<span unresolved>${entry}</span>`;
+    } else if (entry.startsWith('//')) {
+      return `<span comment>${entry}</span>`;
+    }
+    return entry;
+  }).join('');
 }
 
 /* @polymerMixin */

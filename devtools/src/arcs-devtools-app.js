@@ -6,9 +6,6 @@ import '../deps/@polymer/iron-icons/social-icons.js';
 import '../deps/@polymer/iron-icons/communication-icons.js';
 import '../deps/@polymer/iron-pages/iron-pages.js';
 import '../deps/@polymer/iron-selector/iron-selector.js';
-import '../deps/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../deps/@polymer/paper-item/paper-item.js';
-import '../deps/@polymer/paper-listbox/paper-listbox.js';
 import {IronA11yKeysBehavior} from '../deps/@polymer/iron-a11y-keys-behavior/iron-a11y-keys-behavior.js';
 import {mixinBehaviors} from '../deps/@polymer/polymer/lib/legacy/class.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
@@ -21,7 +18,7 @@ import './arcs-tracing.js';
 import './arcs-pec-log.js';
 import './arcs-selector.js';
 import './strategy-explorer/strategy-explorer.js';
-import './arcs-strategy-runner.js';
+import './arcs-recipe-editor.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMixin(PolymerElement)) {
@@ -45,39 +42,12 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       }
       header {
         grid-area: header;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: var(--light-gray);
-        border-bottom: 1px solid var(--mid-gray);
-        padding: 1px;
-        line-height: 0;
-      }
-      header > div {
-        display: flex;
-        align-items: center;
       }
       .nav-toggle {
         -webkit-mask-position: -112px 192px;
       }
       #container[nav-narrow] .nav-toggle {
         -webkit-mask-position: -167px 120px;
-      }
-      header iron-icon {
-        display: inline-block;
-        width: 28px;
-        height: 24px;
-        vertical-align: unset;
-        color: rgb(110, 110, 110);
-      }
-      header iron-icon[active] {
-        color: var(--highlight-blue);
-      }
-      header [divider] {
-        background-color: #ccc;
-        width: 1px;
-        margin: 4px 5px;
-        height: 16px;
       }
       nav {
         grid-area: sidebar;
@@ -115,8 +85,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       </app-location>
       <app-route route="{{route}}" pattern=":page" data="{{routeData}}" tail="{{tail}}">
       </app-route>
-      <header>
-        <div><!--
+      <header class="header">
+        <div section><!--
           --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
           --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
          --><div divider></div><!--
@@ -124,7 +94,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
          --><div divider></div><!--
          --><input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
         </div>
-        <div>
+        <div section>
           <arcs-notifications id="notifications"></arcs-notifications>
         </div>
       </header>
@@ -135,8 +105,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
           <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz"></iron-icon><label>PEC Channel Log</label></a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
-          <!-- Not working for now. New version coming at some point.
-          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>-->
+          <a name="recipeEditor" href="#recipeEditor"><iron-icon icon="image:edit"></iron-icon><label>Recipe Editor</label></a>
         </iron-selector>
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
@@ -145,8 +114,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
-        <!-- Not working for now. New version coming at some point.
-        <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>-->
+        <arcs-recipe-editor name="recipeEditor"></arcs-recipe-editor>
       </iron-pages>
     </div>
 `;
