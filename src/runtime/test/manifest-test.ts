@@ -10,7 +10,7 @@
 
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
-import {parser} from '../build/manifest-parser.js';
+import {parser} from '../../../build/runtime/manifest-parser.js';
 import {assert} from './chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';

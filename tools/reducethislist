@@ -50,9 +50,6 @@ src/runtime/multiplexer-dom-particle.js
 src/runtime/transformation-dom-particle.js
 src/runtime/manifest.md
 
-src/runtime/build/manifest-parser.js
-
-
 src/runtime/manual_tests/firebase-tests.js
 src/runtime/manual_tests/loader-tests.js
 
