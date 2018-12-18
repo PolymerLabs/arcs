@@ -41,7 +41,7 @@ export class HandleConnection {
     handleConnection._tags = [...this._tags];
     // Note that _rawType will be cloned later by the particle that references this connection.
     // Doing it there allows the particle to maintain variable associations across the particle
-    // scope.    
+    // scope.
     handleConnection._rawType = this._rawType;
     handleConnection._direction = this._direction;
     if (this._handle != undefined) {
@@ -230,5 +230,15 @@ export class HandleConnection {
     }
 
     return result.join(' ');
+  }
+
+  // TODO: the logic is wrong :)
+  findSpecsForUnnamedHandles() {
+    return this.particle.spec.connections.filter(specConn => {
+          // filter specs with matching types that don't have handles bound to the corresponding handle connection.
+          return !specConn.isOptional &&
+                 this.handle.type.equals(specConn.type) &&
+                 !this.particle.getConnectionByName(specConn.name).handle;
+        });
   }
 }

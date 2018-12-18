@@ -124,7 +124,7 @@ export class CoalesceRecipes extends Strategy {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
               const mergedMatchingConn = cloneMap.get(matchingConn);
               const disconnectedHandle = mergedMatchingConn.handle;
-              const clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === handle.id).handle;
+              const clonedHandle = slot.findHandleByID(handle.id);
               if (disconnectedHandle === clonedHandle) {
                 continue; // this handle was already reconnected
               }
@@ -168,7 +168,7 @@ export class CoalesceRecipes extends Strategy {
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
           // This is a poor man's proxy for the other handle being an output of a recipe.
-          if (otherHandle.connections.find(conn => conn.direction === 'in')) continue;
+          if (otherHandle.findConnectionByDirection('in')) continue;
 
           // We ignore type variables not constrained for reading, otherwise
           // generic recipes would apply - which we currently don't want here.
