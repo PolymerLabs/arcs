@@ -22,7 +22,7 @@ process.chdir(projectRoot);
 const sources = {
   peg: {
     grammar: 'src/runtime/manifest-parser.peg',
-    output: 'src/runtime/build/manifest-parser.js',
+    output: 'build/runtime/manifest-parser.js',
     railroad: 'manifest-railroad.html',
   },
   pack: [{
@@ -262,7 +262,7 @@ function peg() {
   const outputFile = path.resolve(projectRoot, sources.peg.output);
   const dir = path.dirname(outputFile);
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
+    fs.mkdirSync(dir, {recursive: true});
   }
   fs.writeFileSync(outputFile, 'export const parser = ' + source);
   return true;

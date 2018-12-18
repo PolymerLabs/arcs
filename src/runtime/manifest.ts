@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
-import {parser} from './build/manifest-parser.js';
+import {parser} from '../../build/runtime/manifest-parser.js';
 import {Recipe} from './recipe/recipe.js';
 import {Handle} from './recipe/handle.js';
 import {ParticleSpec} from './particle-spec.js';
