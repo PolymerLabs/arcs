@@ -254,7 +254,7 @@ describe('Arc', function() {
     await arc.idle;
     const serialization = await arc.serialize();
     arc.stop();
-    
+
     // Grab a snapshot of the current state from each store, then clear them.
     const varData = JSON.parse(JSON.stringify(await varStore.toLiteral()));
     const colData = JSON.parse(JSON.stringify(colStore.toLiteral()));
@@ -329,28 +329,42 @@ describe('Arc', function() {
     assert.equal('B', connection.handle.immediateValue.name);
   });
 
-  it('persist serialization', async () => {
-    const id = new Id('123', ['test']).toString();
-    const arc = new Arc({id, storageKey: `volatile://${id}`});
-    const manifest = await Manifest.parse(`
+
+  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+    it('persist serialization for ' + storageKeyPrefix, async () => {
+      const id = new Id('123', ['test']).toString();
+      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`});
+      const manifest = await Manifest.parse(`
       schema Data
         Text value
       recipe
         description \`abc\``);
-    const recipe = manifest.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    const serialization = await arc.serialize();
-    await arc.persistSerialization(serialization);
+      const recipe = manifest.recipes[0];
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      const serialization = await arc.serialize();
+      await arc.persistSerialization(serialization);
+ 
+      const key = storageKeyPrefix.includes('volatile')
+            ? storageKeyPrefix + '!123:test^^arc-info'
+            : storageKeyPrefix + '!123:test/arc-info';
 
-    const key = 'volatile://!123:test^^arc-info';
-    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key);
-    const data = await store.get();
 
-    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
-    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
+      const store = await arc.storageProviderFactory.connect('id', new ArcType(), key);
 
-    const expected = 'meta name: \'!123:test\' storageKey: \'volatile://!123:test\' @active recipe description `abc`';
-    assert.deepEqual({id: '!123:test', serialization: expected}, data);
-  });
+      assert.isNotNull(store, 'got a valid store');
+      const data = await store.get();
+
+      assert.isNotNull(data, 'got valid data');
+
+      // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
+      data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
+
+      const expected = `meta name: '!123:test' storageKey: '${storageKeyPrefix}!123:test' @active recipe description \`abc\``;
+      assert.deepEqual({id: '!123:test', serialization: expected}, data);
+
+      // TODO Simulate a cold-load to catch reference mode issues.
+      // in the interim you can disable the provider cache in pouch-db-storage.ts
+    });
+  }); // end forEach storageKeyPrefix
 });
