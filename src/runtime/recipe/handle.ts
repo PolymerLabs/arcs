@@ -284,4 +284,8 @@ export class Handle {
 
     return result.join(' ');
   }
+
+  findInHandleConnection() {
+    return this._connections.find(conn => conn.direction === 'in');
+  }
 }

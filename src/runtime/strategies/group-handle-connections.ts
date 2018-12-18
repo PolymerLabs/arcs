@@ -27,8 +27,8 @@ export class GroupHandleConnections extends Strategy {
         }
         // Find all unique types used in the recipe that have unbound handle connections.
         const types: Set<Type> = new Set();
-        recipe.handleConnections.forEach(hc => {
-          if (!hc.isOptional && !hc.handle && !Array.from(types).find(t => t.equals(hc.type))) {
+        recipe.getFreeConnections().forEach(hc => {
+          if (!Array.from(types).find(t => t.equals(hc.type))) {
             types.add(hc.type);
           }
         });

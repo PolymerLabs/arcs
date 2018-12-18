@@ -98,6 +98,10 @@ export class Slot {
     return 0;
   }
 
+  findHandleByID(id) {
+    return this.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == id).handle;
+  }
+
   removeConsumeConnection(slotConnection) {
     const idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);

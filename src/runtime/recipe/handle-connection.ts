@@ -231,4 +231,13 @@ export class HandleConnection {
 
     return result.join(' ');
   }
+
+  getDisconnectedSpecsByHandleType() {
+    return this.particle.spec.connections.filter(specConn => {
+          // filter specs with matching types that don't have handles bound to the corresponding handle connection.
+          return !specConn.isOptional &&
+                 this.handle.type.equals(specConn.type) &&
+                 !this.particle.getConnectionByName(specConn.name).handle;
+        });
+  }
 }
