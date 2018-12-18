@@ -10,6 +10,7 @@
 'use strict';
 
 import {Arc} from '../../arc.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {MapSlots} from '../../strategies/map-slots.js';
@@ -30,7 +31,7 @@ ${particlesSpec}
 
 ${recipeManifest}
     `));
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
@@ -104,7 +105,7 @@ ${recipeManifest}
         A
     `));
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
   });
 
@@ -127,7 +128,7 @@ ${recipeManifest}
         C
     `));
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
 
     const strategy = new MapSlots(arc);
     let results = await strategy.generate(inputParams);
@@ -150,13 +151,10 @@ ${recipeManifest}
 
   it('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
-    const arc = new Arc({id: 'test-plan-arc', slotComposer: {
-      modality: 'dom',
-      getAvailableContexts: (() => [
-        {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
-        {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], spec: {isSet: false}},
-      ])
-    }});
+    const arc = new Arc({
+      id: 'test-plan-arc',
+      slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
+    });
 
     const particles = `
       particle A in 'A.js'
@@ -184,7 +182,7 @@ ${recipeManifest}
     await assertActionSlotTags(`
       recipe
         B`,
-      ['#remote']);
+      ['action']);
 
     // 'action' slot of particle B will bind to the local slot
     // provided by particle A if available.

@@ -24,7 +24,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
     manifest = await Manifest.parse(manifest, {loader, fileName});
   }
 
-  arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc('test', manifest, 'dom'));
+  arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc(manifest));
   testSteps = testSteps || ((planner) => planner.plan(Infinity, []));
 
   const arc = await arcFactory(manifest);
@@ -176,7 +176,7 @@ ${recipeManifest}
     manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-2', ['tag2']);
     manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-3', []);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
 
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -342,7 +342,7 @@ describe('Type variable resolution', function() {
     };
     const manifest = (await Manifest.parse(manifestStr, {loader}));
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
     planner.init(arc, options);
@@ -570,7 +570,7 @@ describe('Automatic resolution', function() {
   const loadAndPlan = async (manifestStr, arcCreatedCallback) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
-        const arc = StrategyTestHelper.createTestArc('test', manifest, 'dom');
+        const arc = StrategyTestHelper.createTestArc(manifest);
         if (arcCreatedCallback) await arcCreatedCallback(arc, manifest);
         return arc;
       }
@@ -723,7 +723,7 @@ describe('Automatic resolution', function() {
     assert.equal(composedRecipes[0].toString(), `recipe
   create #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  slot 'r0' #root as slot1
+  slot 'rootslotid-root' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = ThingRenderer
     list <- handle0
@@ -759,7 +759,7 @@ describe('Automatic resolution', function() {
     assert.equal(recipes[0].toString(), `recipe SelectableUseListRecipe
   use 'test-store' #items as handle0 // [Thing {}]
   create #selected as handle1 // Thing {}
-  slot 'r0' #root as slot1
+  slot 'rootslotid-root' #root as slot1
   ItemMultiplexer as particle0
     hostedParticle = ThingRenderer
     list <- handle0

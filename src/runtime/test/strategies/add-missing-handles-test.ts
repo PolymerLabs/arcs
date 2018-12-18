@@ -18,9 +18,8 @@ async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
   const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
-  const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
   const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-  const strategy = new AddMissingHandles(arc);
+  const strategy = new AddMissingHandles(StrategyTestHelper.createTestArc(manifest));
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 

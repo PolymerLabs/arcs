@@ -21,9 +21,8 @@ async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
   const recipes = manifest.recipes;
   recipes.forEach(recipe => recipe.normalize());
-  const arc = StrategyTestHelper.createTestArc('test-arc', manifest, 'dom');
   const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-  const strategy = new FindHostedParticle(arc);
+  const strategy = new FindHostedParticle(StrategyTestHelper.createTestArc(manifest));
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 

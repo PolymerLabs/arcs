@@ -12,19 +12,18 @@ import {Arc} from '../arc.js';
 import {Id} from '../id.js';
 import {ArcType} from '../type.js';
 import {assert} from './chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
 import * as util from '../testing/test-util.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
 const loader = new Loader();
 
 async function setup() {
-  const slotComposer = createSlotComposer();
-  const arc = new Arc({slotComposer, loader, id: 'test'});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     import 'src/runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
@@ -41,12 +40,10 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   };
 }
-function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, modality: 'mock-dom'}); }
 
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
-    const slotComposer = createSlotComposer();
-    const arc = new Arc({slotComposer, loader, id: 'test'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
@@ -77,7 +74,7 @@ describe('Arc', function() {
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
-    const slotComposer = createSlotComposer();
+    const slotComposer = new FakeSlotComposer();
     const arc = new Arc({slotComposer, loader, id: 'test'});
     const serialization = await arc.serialize();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer});
@@ -102,8 +99,7 @@ describe('Arc', function() {
     const serialization = await arc.serialize();
     arc.stop();
 
-    const slotComposer = createSlotComposer();
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer: new FakeSlotComposer()});
     fooStore = newArc.findStoreById(fooStore.id);
     barStore = newArc.findStoreById(barStore.id);
     assert.equal(fooStore.version, 1);
@@ -128,7 +124,7 @@ describe('Arc', function() {
 
     const recipe = manifest.recipes[0];
 
-    const slotComposer = new SlotComposer({modality: 'mock-dom', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 
@@ -154,6 +150,7 @@ describe('Arc', function() {
     const serialization = await arc.serialize();
     arc.stop();
 
+    slotComposer.dispose();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
     await newArc.idle;
     store = newArc.storesById.get(store.id);

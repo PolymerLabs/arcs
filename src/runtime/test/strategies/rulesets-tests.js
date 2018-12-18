@@ -98,7 +98,7 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', options.context, 'mock-dom');
+    const arc = StrategyTestHelper.createTestArc(options.context);
     const planner = new Planner();
     planner.init(arc, options);
     const generations = [];

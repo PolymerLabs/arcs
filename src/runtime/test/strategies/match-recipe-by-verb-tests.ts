@@ -37,7 +37,7 @@ describe('MatchRecipeByVerb', () => {
         JumpingBoots.e <- NuclearReactor.e
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generate(inputParams);
@@ -61,7 +61,7 @@ describe('MatchRecipeByVerb', () => {
         P
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -124,7 +124,7 @@ describe('MatchRecipeByVerb', () => {
         * -> handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -188,7 +188,7 @@ describe('MatchRecipeByVerb', () => {
             provide bar
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     let inputParams = {generated: [{result: manifest.recipes[3], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -228,7 +228,7 @@ describe('MatchRecipeByVerb', () => {
           b -> handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generate(inputParams);
@@ -258,7 +258,7 @@ describe('MatchRecipeByVerb', () => {
           b -> handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generate(inputParams);
@@ -295,7 +295,7 @@ describe('MatchRecipeByVerb', () => {
           b -> handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     const inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generate(inputParams);
@@ -333,7 +333,7 @@ describe('MatchRecipeByVerb', () => {
             provide foo as s0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -388,7 +388,7 @@ describe('MatchRecipeByVerb', () => {
         consume foo as s0
   `);
 
-  const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+  const arc = StrategyTestHelper.createTestArc(manifest);
   let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
   const mrv = new MatchRecipeByVerb(arc);
   let results = await mrv.generate(inputParams);

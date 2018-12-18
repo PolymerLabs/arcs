@@ -14,8 +14,8 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {SlotConsumer} from '../slot-consumer.js';
-import {SlotComposer} from '../slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
@@ -42,7 +42,7 @@ describe('Multiplexer', function() {
 
     const barType = manifest.findTypeByName('Bar');
 
-    const slotComposer = new SlotComposer({modality: 'mock-dom', rootContainer: {'slotid': 'dummy-container'}});
+    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
     const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

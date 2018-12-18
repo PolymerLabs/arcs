@@ -10,8 +10,8 @@
 
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {Schema} from '../schema.js';
-import {SlotComposer} from '../slot-composer.js';
 import {EntityType} from '../type.js';
 import {handleFor} from '../handle.js';
 
@@ -19,7 +19,7 @@ describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
 
-    const arc = new Arc({slotComposer: new SlotComposer({rootContainer: 'test', modality: 'mock-dom'}), id: 'test'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
     const entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     const storage = await arc.createStore(new EntityType(schema).collectionOf());

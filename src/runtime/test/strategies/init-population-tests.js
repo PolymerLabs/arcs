@@ -121,7 +121,7 @@ describe('InitPopulation', async () => {
           burger -> burger
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    const arc = StrategyTestHelper.createTestArc(manifest);
 
     async function openRestaurantWith(foodType) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);

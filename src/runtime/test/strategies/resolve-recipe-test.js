@@ -36,11 +36,10 @@ describe('resolve recipe', function() {
         []
     `);
 
-    const arc = createTestArc('test-plan-arc', manifest, 'dom');
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    await noResult(arc, ResolveRecipe, recipe);
+    await noResult(createTestArc(manifest), ResolveRecipe, recipe);
   });
 
   it('resolves a mapping of a handle with a less specific entity type', async () => {
@@ -64,11 +63,10 @@ describe('resolve recipe', function() {
         []
     `);
 
-    const arc = createTestArc('test-plan-arc', manifest, 'dom');
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -93,11 +91,10 @@ describe('resolve recipe', function() {
         []
     `);
 
-    const arc = createTestArc('test-plan-arc', manifest, 'dom');
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -122,11 +119,10 @@ describe('resolve recipe', function() {
         []
     `);
 
-    const arc = createTestArc('test-plan-arc', manifest, 'dom');
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -140,11 +136,9 @@ describe('resolve recipe', function() {
         A
     `));
     let [recipe] = manifest.recipes;
-    const arc = createTestArc('test-plan-arc', manifest, 'dom');
     assert.isTrue(recipe.normalize());
 
-
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -160,9 +154,8 @@ describe('resolve recipe', function() {
         B
           consume info #detail
     `));
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
-    const strategy = new ResolveRecipe(arc);
+    const strategy = new ResolveRecipe(createTestArc(manifest));
     const results = await strategy.generate({generated: [{result: manifest.recipes[0], score: 1}]});
     assert.lengthOf(results, 1);
 
@@ -182,7 +175,6 @@ describe('resolve recipe', function() {
         start
         []
     `);
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', context, 'mock-dom');
 
     // Separating context from the recipe as otherwise
     // manifest parser maps to storage all by itself itself.
@@ -202,7 +194,7 @@ describe('resolve recipe', function() {
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe(arc);
+    const strategy = new ResolveRecipe(createTestArc(context));
     const results = await strategy.generate({generated: [{result: recipe, score: 1}]});
     assert.lengthOf(results, 1);
 
@@ -226,7 +218,7 @@ describe('resolve recipe', function() {
           param <- h0
     `);
 
-    const arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'mock-dom');
+    const arc = createTestArc(manifest);
 
     const Car = manifest.findSchemaByName('Car').entityClass();
     await arc.createStore(Car.type, /* name= */ null, 'batmobile');
