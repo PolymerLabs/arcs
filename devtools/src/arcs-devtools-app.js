@@ -19,6 +19,7 @@ import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
 import './arcs-tracing.js';
 import './arcs-pec-log.js';
+import './arcs-selector.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-strategy-runner.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
@@ -119,6 +120,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
           --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
          --><div divider></div><!--
+         --><arcs-selector></arcs-selector><!--
+         --><div divider></div><!--
          --><input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
         </div>
         <div>
@@ -132,7 +135,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
           <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz"></iron-icon><label>PEC Channel Log</label></a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
-          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>
+          <!-- Not working for now. New version coming at some point.
+          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>-->
         </iron-selector>
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
@@ -141,7 +145,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
-        <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>
+        <!-- Not working for now. New version coming at some point.
+        <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>-->
       </iron-pages>
     </div>
 `;
@@ -172,7 +177,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       this.$.illuminateToggle.style.display = 'none';
     }
     if (!this.routeData.page) {
-      this.set('routeData.page', 'strategyExplorer');
+      this.set('routeData.page', 'overview');
     }
   }
 

@@ -20,6 +20,8 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --devtools-purple: rgb(136, 19, 145);
         --devtools-blue: rgb(13, 34, 170);
         --devtools-red: rgb(196, 26, 22);
+
+        --drop-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
       }
       .devtools-icon {
         display: inline-block;
@@ -116,7 +118,7 @@ const MessengerMixin = subclass => class extends subclass {
   constructor() {
     super();
     if (this.onMessageBundle || this.onMessage) {
-      document.addEventListener('messages', ({detail}) => {
+      document.addEventListener('filtered-messages', ({detail}) => {
         if (this.onMessageBundle) {
           this.onMessageBundle(detail);
         } else {
@@ -126,6 +128,15 @@ const MessengerMixin = subclass => class extends subclass {
         }
       });
     }
+    if (this.onRawMessageBundle) {
+      document.addEventListener('raw-messages', ({detail}) => {
+        this.onRawMessageBundle(detail);
+      });
+    }
+  }
+
+  emitFilteredMessages(messages) {
+    document.dispatchEvent(new CustomEvent('filtered-messages', {detail: messages}));
   }
 
   send(message) {

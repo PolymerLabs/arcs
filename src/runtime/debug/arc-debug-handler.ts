@@ -22,46 +22,36 @@ DevtoolsConnection.onceConnected.then(devtoolsChannel => {
 });
 
 export class ArcDebugHandler {
-  _devtoolsChannel: DevtoolsChannel = null;
-  _arcId: string;
-  _isSpeculative: boolean;
+  private arcDevtoolsChannel: DevtoolsChannel = null;
   
   constructor(arc: Arc) {
-    this._arcId = arc.id.toString();
-    this._isSpeculative = arc.isSpeculative;
+    // Currently no support for speculative arcs.
+    if (arc.isSpeculative) return;
 
     DevtoolsConnection.onceConnected.then(devtoolsChannel => {
-      this._devtoolsChannel = devtoolsChannel;
-      if (!arc.isSpeculative) {
-        // Message handles go here.
-        const arcPlannerInvoker = new ArcPlannerInvoker(arc, devtoolsChannel);
-        const arcStoresFetcher = new ArcStoresFetcher(arc, devtoolsChannel);
-      }
+      this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
-      this._devtoolsChannel.send({
-        messageType: 'arc-available',
-        messageBody: {
-          id: arc.id.toString(),
-          isSpeculative: arc.isSpeculative
-        }
-      });
+      // Message handles go here.
+      const arcPlannerInvoker = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
+      const arcStoresFetcher = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
+
+      this.arcDevtoolsChannel.send({messageType: 'arc-available'});
     });
   }
 
   recipeInstantiated({particles}: {particles: Particle[]}) {
-    if (!this._devtoolsChannel || this._isSpeculative) return;
+    if (!this.arcDevtoolsChannel) return;
 
     const truncate = ({id, name}) => ({id, name});
     const slotConnections = [];
     particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
       slotConnections.push({
-        arcId: this._arcId,
         particleId: cs.particle.id,
         consumed: truncate(cs.targetSlot),
         provided: Object.values(cs.providedSlots).map(slot  => truncate(slot)),
       });
     }));
-    this._devtoolsChannel.send({
+    this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
       messageBody: {slotConnections}
     });

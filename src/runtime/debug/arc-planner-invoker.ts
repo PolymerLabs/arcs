@@ -16,17 +16,17 @@ export class ArcPlannerInvoker {
   arc: Arc;
   planner: Planner;
   
-  constructor(arc: Arc, devtoolsChannel) {
+  constructor(arc: Arc, arcDevtoolsChannel) {
     this.arc = arc;
     this.planner = new Planner();
     this.planner.init(arc);
 
-    devtoolsChannel.listen(arc, 'fetch-strategies', () => devtoolsChannel.send({
+    arcDevtoolsChannel.listen('fetch-strategies', () => arcDevtoolsChannel.send({
       messageType: 'fetch-strategies-result',
       messageBody: this.planner.strategizer._strategies.map(a => a.constructor.name)
     }));
 
-    devtoolsChannel.listen(arc, 'invoke-planner', async msg => devtoolsChannel.send({
+    arcDevtoolsChannel.listen('invoke-planner', async msg => arcDevtoolsChannel.send({
       messageType: 'invoke-planner-result',
       messageBody: await this.invokePlanner(msg.messageBody)
     }));

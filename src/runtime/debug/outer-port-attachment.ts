@@ -12,22 +12,20 @@
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 
 export class OuterPortAttachment {
-  _devtoolsChannel;
-  _arcIdString: string;
-  _speculative: boolean;
-  
+  private arcDevtoolsChannel;
+  private speculative: boolean;
+
   constructor(arc, devtoolsChannel) {
-    this._devtoolsChannel = devtoolsChannel;
-    this._arcIdString = arc.id.toString();
-    this._speculative = arc.isSpeculative;
+    this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
+    this.speculative = arc.isSpeculative;
   }
 
   handlePecMessage(name, pecMsgBody, pecMsgCount, stackString) {
-    // Skip speculative and pipes arcs for now.
-    if (this._arcIdString.endsWith('-pipes') || this._speculative) return;
+    // Skip speculative arcs for now.
+    if (this.speculative) return;
 
     const stack = this._extractStackFrames(stackString);
-    this._devtoolsChannel.send({
+    this.arcDevtoolsChannel.send({
       messageType: 'PecLog',
       messageBody: {name, pecMsgBody, pecMsgCount, timestamp: Date.now(), stack},
     });

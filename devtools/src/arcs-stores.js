@@ -95,7 +95,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         type: String,
         value: null,
         observer: '_onSearchPhraseChanged'
-      },
+      }
     };
   }
 
@@ -119,33 +119,35 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
   onMessageBundle(messages) {
     for (const msg of messages) {
       switch (msg.messageType) {
-        case 'arc-available':
-          if (!this.arcId && !msg.messageBody.isSpeculative && !msg.messageBody.id.endsWith('-pipes')) {
-            this.arcId = msg.messageBody.id;
-            this._fetchStores();
-          }
-          break;
         case 'fetch-stores-result':
+          if (this.arcId !== msg.meta.arcId) break;
           this.loading = false;
           this.splice('storeGroups.0.items', 0, this.storeGroups[0].items.length, ...msg.messageBody.arcStores);
           this.splice('storeGroups.1.items', 0, this.storeGroups[1].items.length, ...msg.messageBody.contextStores);
           break;
+        case 'arc-selected':
+          this._reset();
+          this.arcId = msg.messageBody.arcId;
+          this._fetchStores();
+          break;
         case 'page-refresh':
-        case 'arc-transition':
-          this.arcId = null;
-          this.loading = false;
-          this.set('storeGroups.0.items', []);
-          this.set('storeGroups.1.items', []);
+          this._reset();
           break;
       }
     }
   }
 
+  _reset() {
+    this.loading = false;
+    this.set('storeGroups.0.items', []);
+    this.set('storeGroups.1.items', []);
+  }
+
   _fetchStores(e) {
+    if (!this.arcId) return;
     this.loading = true;
     this.send({
       messageType: 'fetch-stores',
-      messageBody: {},
       arcId: this.arcId
     });
     if (e) e.cancelBubble = true;

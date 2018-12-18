@@ -27,4 +27,8 @@ export class DevtoolsChannelStub {
   clear() {
     this._messages.length = 0;
   }
+
+  forArc(arc) {
+    return this;
+  }
 }

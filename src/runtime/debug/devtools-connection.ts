@@ -13,7 +13,7 @@ import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
 import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
 import {DevtoolsBroker} from '../../../devtools/shared/devtools-broker.js';
 
-let channel = null;
+let channel: DevtoolsChannel = null;
 let isConnected = false;
 let onceConnectedResolve = null;
 let onceConnected = new Promise(resolve => onceConnectedResolve = resolve);
@@ -28,7 +28,7 @@ export class DevtoolsConnection {
   static get isConnected() {
     return isConnected;
   }
-  static get onceConnected() {
+  static get onceConnected(): Promise<DevtoolsChannel> {
     return onceConnected;
   }
   static get() {
