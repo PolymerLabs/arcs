@@ -37,85 +37,102 @@ describe('planificator', function() {
 
     assert.isTrue(Planificator._constructSearchKey(arc, 'testuser').toString().length > 0);
   });
+});
 
-  it('consumes remotely produced suggestions', async () => {
-    const userid = 'test-user';
-    const storageKey = 'volatile://!123:demo^^abcdef';
-    const createConsumePlanificator = async (manifestFilename) => {
-      return Planificator.create(
-        (await TestHelper.createAndPlan({manifestFilename, slotComposer: new FakeSlotComposer(), storageKey})).arc,
-        {userid, onlyConsumer: true, debug: false});
-    };
-    const createProducePlanificator = async (manifestFilename, store, searchStore) => {
-      return new Planificator(
-          (await TestHelper.createAndPlan({manifestFilename,
-                                           slotComposer: new FakeSlotComposer(),
-                                           storageKey})).arc,
-          userid, store, searchStore);
-    };
-    const instantiateAndReplan = async (consumePlanificator, producePlanificator, suggestionIndex, log) => {
-      await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate();
-      const serialization = await consumePlanificator.arc.serialize();
-      producePlanificator.arc.dispose();
-      producePlanificator.dispose();
-      producePlanificator = null;
-      const deserializedArc = await Arc.deserialize({serialization,
-          slotComposer: new FakeSlotComposer(), loader: new Loader(), fileName: '',
-          context: consumePlanificator.arc.context});
-      producePlanificator = new Planificator(
-        deserializedArc,
-        consumePlanificator.userid,
-        consumePlanificator.consumer.result.store,
-        consumePlanificator.searchStore,
-        /* onlyConsumer= */ false,
-        /* debug= */ false);
-      producePlanificator.requestPlanning({contextual: true});
-      return producePlanificator;
-    };
-    const delay = async (ms) => await new Promise(resolve => setTimeout(resolve, ms));
+describe('remote planificator', function() {
+  const userid = 'test-user';
+  // TODO: support arc storage key be in PouchDB as well.
+  const storageKey = 'volatile://!123:demo^^abcdef';
 
-    const verifyReplanning = async (producePlanificator, expectedSuggestions, expectedDescriptions = []) => {
-      assert.isTrue(producePlanificator.producer.isPlanning);
-      // Wait for the planner finish.
-      while (producePlanificator.producer.isPlanning) {
-        await delay(100);
-      }
-      assert.isFalse(producePlanificator.producer.isPlanning);
-      assert.lengthOf(producePlanificator.producer.result.suggestions, expectedSuggestions);
+  async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
+    return Planificator.create(
+      (await TestHelper.createAndPlan({manifestFilename, slotComposer: new FakeSlotComposer(), storageKey})).arc,
+      {userid, storageKeyBase: plannerStorageKeyBase, onlyConsumer: true, debug: false});
+  }
 
-      for (const description of expectedDescriptions) {
-        assert.lengthOf(producePlanificator.producer.result.suggestions.filter(
-            s => s.descriptionText.includes(description)), 1, `Suggestion '${description}' is not found.`);
-      }
-    };
+  async function createProducePlanificator(plannerStorageKeyBase, manifestFilename, store, searchStore) {
+    return new Planificator(
+        (await TestHelper.createAndPlan({manifestFilename,
+                                         slotComposer: new FakeSlotComposer(),
+                                         storageKey})).arc,
+        userid, store, searchStore);
+  }
 
-    const manifestFilename = './src/runtime/test/artifacts/Products/Products.recipes';
-    const consumePlanificator = await createConsumePlanificator(manifestFilename);
-    let producePlanificator = await createProducePlanificator(manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
+  async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex, log) {
+    await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate();
+    const serialization = await consumePlanificator.arc.serialize();
+    producePlanificator.arc.dispose();
+    producePlanificator.dispose();
+    producePlanificator = null;
+    const deserializedArc = await Arc.deserialize({serialization,
+        slotComposer: new FakeSlotComposer(), loader: new Loader(), fileName: '',
+        context: consumePlanificator.arc.context});
+    producePlanificator = new Planificator(
+      deserializedArc,
+      consumePlanificator.userid,
+      consumePlanificator.consumer.result.store,
+      consumePlanificator.searchStore,
+      /* onlyConsumer= */ false,
+      /* debug= */ false);
     producePlanificator.requestPlanning({contextual: true});
+    return producePlanificator;
+  }
 
-    // No contextual suggestions for empty arc.
-    await verifyReplanning(producePlanificator, 0);
+  async function delay(ms) {
+    return await new Promise(resolve => setTimeout(resolve, ms));
+  }
 
-    // Replan non-contextual.
-    await consumePlanificator.setSearch('*');
-    await verifyReplanning(producePlanificator, 1);
-    assert.isUndefined(consumePlanificator.producer);
-    assert.lengthOf(consumePlanificator.consumer.result.suggestions, 1, ['Show products from your browsing context']);
+  async function verifyReplanning(producePlanificator, expectedSuggestions, expectedDescriptions = []) {
+    assert.isTrue(producePlanificator.producer.isPlanning);
+    // Wait for the planner finish.
+    while (producePlanificator.producer.isPlanning) {
+      await delay(100);
+    }
+    assert.isFalse(producePlanificator.producer.isPlanning);
+    assert.lengthOf(producePlanificator.producer.result.suggestions, expectedSuggestions);
 
-    // Accept suggestion.
-    producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
-    // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
-    await verifyReplanning(producePlanificator, 3, ['Check shipping', 'Check manufacturer information']);
+    for (const description of expectedDescriptions) {
+      assert.lengthOf(producePlanificator.producer.result.suggestions.filter(
+          s => s.descriptionText.includes(description)), 1, `Suggestion '${description}' is not found.`);
+    }
+  }
 
-    assert.lengthOf(consumePlanificator.consumer.result.suggestions, 3);
-    assert.notEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
-    assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
+  async function init(plannerStorageKeyBase, manifestFilename) {
+    const consumePlanificator =
+    await createConsumePlanificator(plannerStorageKeyBase, manifestFilename);
+    const producePlanificator = await createProducePlanificator(plannerStorageKeyBase,
+      manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
+    producePlanificator.requestPlanning({contextual: true});
+    return {consumePlanificator, producePlanificator};
+  }
 
-    producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
-    // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.
-    await verifyReplanning(producePlanificator, 5);
+  [null, 'pouchdb://memory/user/'].forEach(plannerStorageKeyBase => {
+    it(`consumes remotely produced gifts demo from ${plannerStorageKeyBase}`, async () => {
+      let {consumePlanificator, producePlanificator} = await init(
+          plannerStorageKeyBase,
+          './src/runtime/test/artifacts/Products/Products.recipes');
+
+      // No contextual suggestions for empty arc.
+      await verifyReplanning(producePlanificator, 0);
+
+      // Replan non-contextual.
+      await consumePlanificator.setSearch('*');
+      await verifyReplanning(producePlanificator, 1);
+      assert.isUndefined(consumePlanificator.producer);
+      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 1, ['Show products from your browsing context']);
+
+      // Accept suggestion.
+      producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
+      // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
+      await verifyReplanning(producePlanificator, 3, ['Check shipping', 'Check manufacturer information']);
+
+      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 3);
+      assert.notEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
+      assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
+
+      producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
+      // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.
+      await verifyReplanning(producePlanificator, 5);
+    });
   });
-
-  // TODO: add tests for Pouch and volatile arcs.
 });
