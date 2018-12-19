@@ -49,11 +49,11 @@ describe('suggestion', function() {
   });
 
   it('deserialize empty', async () => {
-    const suggestion1 =
-        await Suggestion.deserialize({plan: 'recipe', hash: '123', rank: 1});
+    const suggestion1 = Suggestion.fromLiteral({plan: 'recipe', hash: '123', rank: 1});
     assert.isTrue(Boolean(suggestion1.plan));
     const suggestion2 =
-        await Suggestion.deserialize({plan: 'recipe', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}}, {}, {});
+        Suggestion.fromLiteral({plan: 'recipe', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}}, {}, {});
     assert.isTrue(Boolean(suggestion2.plan));
+    assert.deepEqual(suggestion2.toLiteral(), Suggestion.fromLiteral(suggestion2.toLiteral()).toLiteral());
   });
 });

@@ -25,11 +25,11 @@ describe('planning result', function() {
     const result = new PlanningResult();
     result.set({suggestions: helper.suggestions});
 
-    const serialization = result.serialize();
+    const serialization = result.toLiteral();
     assert(serialization.suggestions);
     const resultNew = new PlanningResult();
     assert.isEmpty(resultNew.suggestions);
-    await resultNew.deserialize({suggestions: serialization.suggestions});
+    resultNew.fromLiteral({suggestions: serialization.suggestions});
     assert.isTrue(resultNew.isEquivalent(helper.suggestions));
   }
   it('serializes and deserializes Products recipes', async () => {

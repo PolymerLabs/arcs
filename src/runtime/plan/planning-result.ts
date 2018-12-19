@@ -10,7 +10,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
-import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 
@@ -47,7 +46,7 @@ export class PlanningResult {
     assert(this.store['get'], 'Unsupported getter in suggestion storage');
     const value = await this.store['get']() || {};
     if (value.suggestions) {
-      if (await this.deserialize(value)) {
+      if (this.fromLiteral(value)) {
         this.onChanged();
         return true;
       }
@@ -58,7 +57,7 @@ export class PlanningResult {
   async flush() {
     try {
       assert(this.store['set'], 'Unsupported setter in suggestion storage');
-      await this.store['set'](this.serialize());
+      await this.store['set'](this.toLiteral());
     } catch(e) {
       error('Failed storing suggestions: ', e);
       throw e;
@@ -197,19 +196,18 @@ export class PlanningResult {
            oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  async deserialize({suggestions, generations, lastUpdated}) {
+  fromLiteral({suggestions, generations, lastUpdated}) {
     return this.set({
-      suggestions: (await Promise.all(suggestions.map(
-          suggestion => Suggestion.deserialize(suggestion)))).filter(s => s),
+      suggestions: suggestions.map(suggestion => Suggestion.fromLiteral(suggestion)).filter(s => s),
       generations: JSON.parse(generations || '[]'),
       lastUpdated: new Date(lastUpdated),
       contextual: suggestions.contextual
     });
   }
 
-  serialize(): {} {
+  toLiteral(): {} {
     return {
-      suggestions: this.suggestions.map(suggestion => suggestion.serialize()),
+      suggestions: this.suggestions.map(suggestion => suggestion.toLiteral()),
       generations: JSON.stringify(this.generations),
       lastUpdated: this.lastUpdated.toString(),
       contextual: this.contextual

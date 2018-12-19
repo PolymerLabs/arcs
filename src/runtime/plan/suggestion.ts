@@ -140,7 +140,7 @@ export class Suggestion {
     return false;
   }
 
-  serialize() {
+  toLiteral() {
     return {
       plan: this.plan,
       hash: this.hash,
@@ -152,8 +152,8 @@ export class Suggestion {
     };
   }
 
-  static async deserialize({plan, hash, rank, versionByStore = '{}', searchGroups, descriptionByModality}) {
-    const suggestion = new Suggestion(plan, hash, rank, JSON.parse(versionByStore));
+  static fromLiteral({plan, hash, rank, versionByStore, searchGroups, descriptionByModality}) {
+    const suggestion = new Suggestion(plan, hash, rank, JSON.parse(versionByStore || '{}'));
     suggestion.searchGroups = searchGroups || [];
     suggestion.descriptionByModality = descriptionByModality;
     return suggestion;
