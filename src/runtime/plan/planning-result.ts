@@ -10,7 +10,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
-import {Arc} from '../arc.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
@@ -18,7 +17,6 @@ import {Suggestion} from './suggestion.js';
 const error = logFactory('PlanningResult', '#ff0090', 'error');
 
 export class PlanningResult {
-  arc: Arc;
   _suggestions: Suggestion[];
   lastUpdated: Date = new Date(null);
   generations: {}[] = [];
@@ -27,9 +25,7 @@ export class PlanningResult {
   private storeCallback: ({}) => void;
   private changeCallbacks: (() => void)[] = [];
 
-  constructor(arc, store) {
-    assert(arc, 'Arc cannot be null');
-    this.arc = arc;
+  constructor(store) {
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();

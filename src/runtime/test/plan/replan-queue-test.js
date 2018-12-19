@@ -14,7 +14,7 @@ import {ReplanQueue} from '../../plan/replan-queue.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor() {
-    super(new PlanningResult({context: {allRecipes: []}}, {on: () =>{}}));
+    super({context: {allRecipes: []}}, new PlanningResult({on: () =>{}}));
     this.produceSuggestionsCalled = 0;
   }
   produceSuggestions() {

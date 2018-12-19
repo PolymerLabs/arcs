@@ -18,7 +18,7 @@ import {Suggestion} from '../../plan/suggestion.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
-    super(new PlanningResult(arc, store));
+    super(arc, new PlanningResult(store));
     this.produceCalledCount = 0;
     this.plannerRunOptions = [];
     this.cancelCount = 0;
@@ -157,8 +157,8 @@ describe('plan producer - search', function() {
   const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
-      super(new PlanningResult(
-          {arcId: arcKey, context: {allRecipes: []}}, {on: () => {}}), searchStore);
+      super({arcId: arcKey, context: {allRecipes: []}},
+            new PlanningResult({on: () => {}}), searchStore);
       this.produceSuggestionsCalled = 0;
     }
 

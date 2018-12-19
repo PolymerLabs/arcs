@@ -29,10 +29,10 @@ export class PlanConsumer {
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
 
-  constructor(result: PlanningResult) {
+  constructor(arc: Arc, result: PlanningResult) {
+    assert(arc, 'arc cannot be null');
     assert(result, 'result cannot be null');
-    assert(result.arc, 'arc cannot be null');
-    this.arc = result.arc;
+    this.arc = arc;
     this.result = result;
     this.suggestFilter = {showAll: false};
     this.suggestionsChangeCallbacks = [];

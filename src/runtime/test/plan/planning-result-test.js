@@ -22,12 +22,12 @@ describe('planning result', function() {
       s.relevance = Relevance.create(helper.arc, s.plan);
       s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
     });
-    const result = new PlanningResult(helper.arc);
+    const result = new PlanningResult();
     result.set({suggestions: helper.suggestions});
 
     const serialization = result.serialize();
     assert(serialization.suggestions);
-    const resultNew = new PlanningResult(helper.arc);
+    const resultNew = new PlanningResult();
     assert.isEmpty(resultNew.suggestions);
     await resultNew.deserialize({suggestions: serialization.suggestions});
     assert.isTrue(resultNew.isEquivalent(helper.suggestions));
@@ -39,7 +39,7 @@ describe('planning result', function() {
   it('appends search suggestions', async () => {
     const helper = await TestHelper.createAndPlan(
         {manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'});
-    const result = new PlanningResult(helper.arc);
+    const result = new PlanningResult();
     // Appends new suggestion.
     assert.isTrue(result.append({suggestions: helper.suggestions}));
     assert.lengthOf(result.suggestions, 1);
