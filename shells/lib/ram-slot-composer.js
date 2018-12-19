@@ -9,12 +9,14 @@
  */
 'use strict';
 
-import {SlotComposer} from './arcs.js';
+import {SlotComposer, Modality} from './arcs.js';
 
 export class RamSlotComposer extends SlotComposer {
-  constructor(options) {
-    options = options || {};
-    super({rootContainer: options.rootContainer || {'root': 'root-context'}, modality: 'mock-dom'});
+  constructor(options = {}) {
+    super({
+      rootContainer: options.rootContainer || {'root': 'root-context'},
+      modality: Modality.forName('mock-dom')
+    });
   }
 
   sendEvent(particleName, slotName, event, data) {

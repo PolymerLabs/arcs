@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Xen} from '../../lib/xen.js';
 import {ArcHost} from '../../lib/arc-host.js';
+import {Modality} from '../../lib/arcs.js';
 import {SlotComposer} from '../../lib/arcs.js';
 import {Utils} from '../../lib/utils.js';
 
@@ -87,7 +88,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
       this.containers.suggestions = config.suggestionContainer;
     }
     if (!composer) {
-      composer = new SlotComposer({modality: 'dom', containers: this.containers});
+      composer = new SlotComposer({modality: Modality.forName('dom'), containers: this.containers});
     }
     return new ArcHost(context, storage, composer);
   }
