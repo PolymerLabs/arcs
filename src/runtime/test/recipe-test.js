@@ -11,6 +11,7 @@
 import {assert} from './chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
+import {Modality} from '../modality.js';
 
 describe('recipe', function() {
   it('normalize errors', async () => {
@@ -491,7 +492,7 @@ describe('recipe', function() {
     assert.isTrue(recipe.isModalityResolved());
     assert.isTrue(isResolved(recipe));
     assert.isTrue(recipe.isCompatibleWithModality(null));
-    assert.isTrue(recipe.isCompatibleWithModality('vr'));
-    assert.isFalse(recipe.isCompatibleWithModality('dom'));
+    assert.isTrue(recipe.isCompatibleWithModality(Modality.forName('vr')));
+    assert.isFalse(recipe.isCompatibleWithModality(Modality.forName('dom')));
   });
 });

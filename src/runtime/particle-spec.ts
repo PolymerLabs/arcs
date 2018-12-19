@@ -12,7 +12,8 @@ import {Type, TypeLiteral, InterfaceType} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {InterfaceInfo} from './interface-info.js';
 import {assert} from '../platform/assert-web.js';
-import { Direction } from './recipe/handle-connection.js';
+import {Direction} from './recipe/handle-connection.js';
+import {Modality} from './modality.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -224,8 +225,8 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
-  matchModality(modality: string) {
-    return this.slots.size <= 0 || this.modality.includes(modality);
+  matchModality(modality: Modality) {
+    return this.slots.size <= 0 || this.modality.includes(modality.name);
   }
 
   toLiteral() : SerializedParticleSpec {

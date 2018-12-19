@@ -9,12 +9,13 @@
  */
 import {assert} from '../chai-web.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
-import {TestHelper} from '../../testing/test-helper.js';
+import {Modality} from '../../modality.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Relevance} from '../../relevance.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {TestHelper} from '../../testing/test-helper.js';
 
 async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
@@ -121,7 +122,7 @@ describe('plan consumer', function() {
         `;
       };
       const helper = await TestHelper.create({
-        slotComposer: new FakeSlotComposer({modality}),
+        slotComposer: new FakeSlotComposer({modality: Modality.forName(modality)}),
         manifestString: `
   particle P1 in './src/runtime/test/artifacts/consumer-particle.js'
     consume root

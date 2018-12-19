@@ -52,10 +52,9 @@ export class Suggestion {
 
   async setDescription(description: Description) {
     this.descriptionByModality['text'] = await description.getRecipeSuggestion();
-    const modality = this.arc.modality;
-    if (modality && modality !== 'text') {
-      this.descriptionByModality[modality] =
-        await description.getRecipeSuggestion(Modality.forName(modality).descriptionFormatter);
+    if (this.arc.modality && this.arc.modality.name !== 'text') {
+      this.descriptionByModality[this.arc.modality.name] =
+        await description.getRecipeSuggestion(this.arc.modality.descriptionFormatter);
     }
   }
 

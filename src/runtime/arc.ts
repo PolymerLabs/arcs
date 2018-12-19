@@ -26,6 +26,7 @@ import {ParticleSpec} from './particle-spec.js';
 import {PECInnerPort} from './api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {SlotComposer} from './slot-composer.js';
+import {Modality} from './modality.js';
 
 type ArcOptions = {
   id: string;
@@ -104,8 +105,8 @@ export class Arc {
     return this._description;
   }
 
-  get modality() { 
-    return this.pec.slotComposer && this.pec.slotComposer.modality.name;
+  get modality(): Modality {
+    return this.pec.slotComposer && this.pec.slotComposer.modality;
   }
 
   registerInstantiatePlanCallback(callback: PlanCallback) {

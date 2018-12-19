@@ -75,13 +75,13 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const originalFormatter = Modality.forName('dom').descriptionFormatter;
-    Modality.forName('dom').descriptionFormatter = options.formatter;
-    const helper = await TestHelper.createAndPlan({
-      manifestString: options.manifestString || createManifestString(options), loader
-    });
+    const helper = await TestHelper.create({
+        manifestString: options.manifestString || createManifestString(options), loader});
+    const originalFormatter = helper.arc.modality.descriptionFormatter;
+    helper.arc.modality.descriptionFormatter = options.formatter;
+    await helper.makePlans(options);
     assert.lengthOf(helper.suggestions, 1);
-    Modality.forName('dom').descriptionFormatter = originalFormatter;
+    helper.arc.modality.descriptionFormatter = originalFormatter;
     return helper.suggestions[0].getDescription('dom');
   }
   async function testRecipeDescription(options, expectedDescription) {
