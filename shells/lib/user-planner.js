@@ -52,6 +52,10 @@ export class UserPlanner {
     const runner = this.runners[key];
     if (runner) {
       runner.arc && runner.arc.dispose();
+      if (runner.planificator) {
+        runner.planificator.dispose();
+        runner.planificator.deleteAll();
+      }
       this.runners[key] = null;
     }
   }
