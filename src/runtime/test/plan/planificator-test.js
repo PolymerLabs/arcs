@@ -76,8 +76,10 @@ describe('planificator', function() {
 
     const verifyReplanning = async (producePlanificator, expectedSuggestions, expectedDescriptions = []) => {
       assert.isTrue(producePlanificator.producer.isPlanning);
-      // An (ugly) arbitrary delay to let the planner finish.
-      await delay(300);
+      // Wait for the planner finish.
+      while (producePlanificator.producer.isPlanning) {
+        await delay(100);
+      }
       assert.isFalse(producePlanificator.producer.isPlanning);
       assert.lengthOf(producePlanificator.producer.result.suggestions, expectedSuggestions);
 
