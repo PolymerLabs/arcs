@@ -21,7 +21,6 @@ import * as recipeHandle from './recipe/handle.js';
 import {Arc} from './arc.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProxy} from './storage-proxy.js';
-import { Slot } from './recipe/slot.js';
 import { SerializedModelEntry } from './storage/crdt-collection-model.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}

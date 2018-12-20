@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
-import {StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
