@@ -9,25 +9,28 @@
 import {assert} from '../test/chai-web.js';
 import {Id} from '../id.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {StorageProviderBase, ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {ArcType} from '../type.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
+import {PouchDbStorage} from '../storage/pouchdb/pouch-db-storage.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 
-describe('synthetic storage', function() {
+describe('synthetic storage ', () => {
   before(() => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     resetVolatileStorageForTesting();
+    PouchDbStorage.resetPouchDbStorageForTesting();
   });
 
-  async function setup(serialization) {
+  async function setup(serialization): Promise<{id: Id, targetStore: VariableStorageProvider, synth: CollectionStorageProvider}> {
     const id = new Id('123', ['test']);
     const storage = new StorageProviderFactory(id);
     const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
-    const targetStore = await storage.construct('id0', type, key);
+    const targetStore = await storage.construct('id0', type, key) as VariableStorageProvider;
     targetStore.referenceMode = false;
     await targetStore.set(type.newInstance(id, serialization.trim()));
-    const synth = await storage.connect('id1', null, `synthetic://arc/handles/${key}`);
+    const synth = await storage.connect('id1', null, `synthetic://arc/handles/${key}`) as CollectionStorageProvider;
     return {id, targetStore, synth};
   }
 
@@ -36,7 +39,7 @@ describe('synthetic storage', function() {
   }
 
   it('invalid synthetic keys', async () => {
-    const storage = new StorageProviderFactory('arc-id');
+    const storage = new StorageProviderFactory(new Id('123', ['test']));
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
     check('simplistic://arc/handles/volatile', 'unknown storage protocol');
@@ -48,7 +51,7 @@ describe('synthetic storage', function() {
   });
 
   it('non-existent target key', async () => {
-    const storage = new StorageProviderFactory('id');
+    const storage = new StorageProviderFactory(new Id('123', ['test']));
     const synth = await storage.connect('id1', null, `synthetic://arc/handles/volatile://nope`);
     assert.isNull(synth);
   });
@@ -129,7 +132,7 @@ describe('synthetic storage', function() {
     // We need to wait until the update progresses from the target through to being parsed,
     // and the only way to detect this is the change event fired by the synthetic collection.
     let resolver;
-    const eventPromise = new Promise(resolve => resolver = resolve);
+    const eventPromise = new Promise<ChangeEvent>(resolve => resolver = resolve);
     synth.on('change', e => resolver(e), {});
 
     await targetStore.set(new ArcType().newInstance(id, `

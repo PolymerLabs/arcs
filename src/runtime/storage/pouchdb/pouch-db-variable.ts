@@ -2,7 +2,7 @@ import {assert} from '../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider';
 import {PouchDbStorage} from './pouch-db-storage.js';
 import {Type} from '../../type.js';
-import {ChangeEvent} from '../storage-provider-base.js';
+import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
 
 /**
  * Loosely defines the value object stored.
@@ -37,7 +37,7 @@ interface VariableStorage {
 /**
  * The PouchDB-based implementation of a Variable.
  */
-export class PouchDbVariable extends PouchDbStorageProvider {
+export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
   private _stored: ValueStorage | null = null;
   private localKeyId = 0;
 

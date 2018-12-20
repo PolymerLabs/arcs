@@ -8,7 +8,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
-import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base.js';
+import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
@@ -193,7 +193,7 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
   abstract backingType(): Type;
 }
 
-class VolatileCollection extends VolatileStorageProvider {
+class VolatileCollection extends VolatileStorageProvider implements CollectionStorageProvider {
   _model: CrdtCollectionModel;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
@@ -267,18 +267,18 @@ class VolatileCollection extends VolatileStorageProvider {
     return (await this._toList()).map(item => item.value);
   }
 
-  async getMultiple(ids) {
+  async getMultiple(ids: string[]) {
     assert(!this.referenceMode, "getMultiple not implemented for referenceMode stores");
     return ids.map(id => this._model.getValue(id));
   }
 
-  async storeMultiple(values, keys, originatorId=null) {
+  async storeMultiple(values, keys: string[], originatorId: string = null) {
     assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
     values.map(value => this._model.add(value.id, value, keys));
     this.version++;
   }
 
-  async get(id) {
+  async get(id: string) {
     if (this.referenceMode) {
       const ref = this._model.getValue(id);
       if (ref == null) {
@@ -359,7 +359,7 @@ class VolatileCollection extends VolatileStorageProvider {
   }
 }
 
-class VolatileVariable extends VolatileStorageProvider {
+class VolatileVariable extends VolatileStorageProvider implements VariableStorageProvider {
   _stored: {id: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {

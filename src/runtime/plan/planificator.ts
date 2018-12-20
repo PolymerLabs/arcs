@@ -17,7 +17,7 @@ import {PlanningResult} from './planning-result.js';
 import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
 import {KeyBase} from "../storage/key-base.js";
-import {StorageProviderBase} from "../storage/storage-provider-base.js";
+import {StorageProviderBase, VariableStorageProvider} from "../storage/storage-provider-base.js";
 import {Type, EntityType} from '../type.js';
 
 export type PlanificatorOptions = {
@@ -33,7 +33,7 @@ export class Planificator {
     assert(userid, 'User id cannot be null.');
 
     debug = debug || (storageKeyBase && storageKeyBase.startsWith('volatile'));
-    const store = await Planificator._initSuggestStore(arc, userid, storageKeyBase);
+    const store = await Planificator._initSuggestStore(arc, userid, storageKeyBase) as VariableStorageProvider;
     const searchStore = await Planificator._initSearchStore(arc, userid);
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
     planificator.requestPlanning({contextual: true});
@@ -48,7 +48,7 @@ export class Planificator {
   replanQueue?: ReplanQueue;
   dataChangeCallback: () => void;
   search: string|null = null;
-  searchStore: StorageProviderBase;
+  searchStore: VariableStorageProvider;
 
   // In <0.6 shell, this is needed to backward compatibility, in order to (1)
   // (1) trigger replanning with a local producer and (2) notify shell of the
@@ -57,7 +57,7 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc: Arc, userid: string, store: StorageProviderBase, searchStore: StorageProviderBase, onlyConsumer: boolean, debug: boolean) {
+  constructor(arc: Arc, userid: string, store: VariableStorageProvider, searchStore: VariableStorageProvider, onlyConsumer: boolean, debug: boolean) {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
@@ -162,27 +162,27 @@ export class Planificator {
     return keybase.childKeyForSearch(userid);
 }
 
-  private static async _initSuggestStore(arc: Arc, userid: string, storageKeyBase?: string): Promise<StorageProviderBase> {
+  private static async _initSuggestStore(arc: Arc, userid: string, storageKeyBase?: string): Promise<VariableStorageProvider> {
     const storageKey = Planificator._constructSuggestionKey(arc, userid, storageKeyBase);
     return Planificator._initStore(
         arc, 'suggestions-id', EntityType.make(['Suggestions'], {current: 'Object'}), storageKey);
   }
 
-  private static async _initSearchStore(arc: Arc, userid: string): Promise<StorageProviderBase> {
+  private static async _initSearchStore(arc: Arc, userid: string): Promise<VariableStorageProvider> {
     const storageKey = Planificator._constructSearchKey(arc, userid);
     return Planificator._initStore(
         arc, 'search-id', EntityType.make(['Search'], {current: 'Object'}), storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: KeyBase) : Promise<StorageProviderBase> {
+  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: KeyBase) : Promise<VariableStorageProvider> {
     const store = await arc.storageProviderFactory.connectOrConstruct(id, type, storageKey.toString());
     assert(store, `Failed initializing '${storageKey.toString()}' store.`);
     store.referenceMode = false;
-    return store;
+    return store as VariableStorageProvider;
   }
 
   async _storeSearch(): Promise<void> {
-    const values = await this.searchStore['get']() || [];
+    const values = await this.searchStore.get() || [];
     const arcKey = this.arc.arcId;
     const newValues = [];
     for (const {arc, search} of values) {
@@ -193,6 +193,6 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    return this.searchStore['set'](newValues);
+    return this.searchStore.set(newValues);
   }
 }
