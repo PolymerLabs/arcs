@@ -51,7 +51,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
     planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
-    window.planificator = window.planificator || planificator; // for debugging only
+    window.planificator = planificator; // for debugging only
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {
