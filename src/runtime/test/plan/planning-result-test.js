@@ -64,6 +64,126 @@ describe('planning result', function() {
     assert.lengthOf(result.suggestions, 2);
     assert.deepEqual(result.suggestions[1].searchGroups, [[''], ['hello', 'world']]);
   });
+});
 
+describe('planning result merge', function() {
+  const commonManifestStr = `
+schema Thing
+  Text foo
+resource ThingJson
+  start
+  [{"foo": "bar"}]
+store ThingStore of Thing 'thing-id-0' in ThingJson
+particle P1
+  out Thing thing
+particle P2
+  in Thing thing
+    `;
+  const recipeOneStr = `
+recipe R1
+  create as thingHandle
+  P1
+    thing -> thingHandle
+    `;
+  const recipeTwoStr = `
+recipe R2
+  map 'thing-id-0' as thingHandle
+  P2
+    thing <- thingHandle
+      `;
+  const recipeThreeStr = `
+recipe R3
+  copy 'thing-id-0' as thingHandle
+  P1
+    thing -> thingHandle
+  P2
+    thing <- thingHandle
+        `;
+  async function prepareMerge(manifestStr1, manifestStr2) {
+    const helper = await TestHelper.create();
+    const planToSuggestion = async (plan) => {
+      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(helper.arc, plan));
+      suggestion.descriptionByModality['text'] = plan.name;
+      for (const handle of plan.handles) {
+        if (handle.id) {
+          suggestion.versionByStore[handle.id] = 0;
+        }
+      }
+      return suggestion;
+    };
+    const manifestToResult = async (manifestStr) =>  {
+      const manifest = await TestHelper.parseManifest(manifestStr, helper.loader);
+      const result = new PlanningResult();
+      result.set({suggestions: await Promise.all(
+          manifest.recipes.map(async plan => await planToSuggestion(plan)))});
+      return result;
+    };
+    return {
+      helper,
+      result1: await manifestToResult(manifestStr1),
+      result2: await manifestToResult(manifestStr2)
+    };
+  }
+
+  it('merges suggestions unchanged', async () => {
+    // merging equivalent suggestions.
+    const {helper, result1, result2} = await prepareMerge(
+        `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
+        `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`);
+    assert.lengthOf(result1.suggestions, 2);
+    assert.isFalse(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.lengthOf(result1.suggestions, 2);
+    assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
+
+    // merging empty suggestions into existing ones.
+    assert.isFalse(result1.merge({suggestions: []}, helper.arc));
+    assert.lengthOf(result1.suggestions, 2);
+    assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
+  });
+
+  it('merges suggestions union', async () => {
+    const {helper, result1, result2} = await prepareMerge(
+        `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
+        `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
+    assert.lengthOf(result1.suggestions, 2);
+    assert.lengthOf(result2.suggestions, 2);
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.lengthOf(result1.suggestions, 3);
+    assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2', 'R3']);
+  });
+
+  it('merges suggestions union with outdated suggestions', async () => {
+    const recipeFourStr = `
+recipe R4
+  create as thing1Handle
+  create as thing2Handle
+  P1
+    thing -> thing1Handle
+  P1
+    thing -> thing1Handle
+    `;
+    const {helper, result1, result2} = await prepareMerge(
+      `${commonManifestStr}${recipeOneStr}${recipeTwoStr}${recipeThreeStr}`,
+      `${commonManifestStr}${recipeThreeStr}${recipeFourStr}`);
+    assert.lengthOf(result1.suggestions, 3);
+    assert.lengthOf(result2.suggestions, 2);
+    // All recipes using store 'thing-id-0' are outdated
+    helper.arc.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.lengthOf(result1.suggestions, 2);
+    assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R4']);
+  });
+
+  it('merges all outdated suggestions', async () => {
+    const {helper, result1, result2} = await prepareMerge(
+      `${commonManifestStr}${recipeTwoStr}`,
+      `${commonManifestStr}${recipeThreeStr}`);
+    assert.lengthOf(result1.suggestions, 1);
+    assert.lengthOf(result2.suggestions, 1);
+    // All recipes using store 'thing-id-0' are outdated
+    helper.arc.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.isEmpty(result1.suggestions);
+  });
   // TODO: add more tests.
 });

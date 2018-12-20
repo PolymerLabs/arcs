@@ -44,18 +44,19 @@ describe('remote planificator', function() {
   // TODO: support arc storage key be in PouchDB as well.
   const storageKey = 'volatile://!123:demo^^abcdef';
 
+  async function createArc(options, storageKey) {
+    return (await TestHelper.createAndPlan(
+        Object.assign(options, {slotComposer: new FakeSlotComposer(), storageKey}))).arc;
+  }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
     return Planificator.create(
-      (await TestHelper.createAndPlan({manifestFilename, slotComposer: new FakeSlotComposer(), storageKey})).arc,
+      await createArc({manifestFilename}, storageKey),
       {userid, storageKeyBase: plannerStorageKeyBase, onlyConsumer: true, debug: false});
   }
 
   async function createProducePlanificator(plannerStorageKeyBase, manifestFilename, store, searchStore) {
     return new Planificator(
-        (await TestHelper.createAndPlan({manifestFilename,
-                                         slotComposer: new FakeSlotComposer(),
-                                         storageKey})).arc,
-        userid, store, searchStore);
+        await createArc({manifestFilename}, storageKey), userid, store, searchStore);
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex, log) {
@@ -135,5 +136,39 @@ describe('remote planificator', function() {
       // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.
       await verifyReplanning(producePlanificator, 5);
     });
+  });
+  it(`merges remotely produced suggestions`, async () => {
+    const userid = 'test-user';
+    const storageKey = 'volatile://!123:demo^^abcdef';
+
+    // Planning with products manifest.
+    const productsManifestFilename = './src/runtime/test/artifacts/Products/Products.recipes';
+    const showProductsDescription = 'Show products from your browsing context';
+    const productsPlanificator = await Planificator.create(
+        await createArc({manifestFilename: productsManifestFilename}, storageKey), {userid, debug: false});
+    await productsPlanificator.requestPlanning({contextual: false});
+    await verifyReplanning(productsPlanificator, 1, [showProductsDescription]);
+
+    // Planning with restaurants manifest using the same arc - results are merged.
+    const restaurantsManifestString = `
+import './src/runtime/test/artifacts/Restaurants/Restaurants.recipes'
+import './src/runtime/test/artifacts/People/Person.schema'
+store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
+    `;
+    const restaurantsPlanificator = new Planificator(
+        await createArc({manifestString: restaurantsManifestString}),
+        userid, productsPlanificator.result.store, productsPlanificator.searchStore);
+    await restaurantsPlanificator.loadSuggestions();
+    assert.lengthOf(restaurantsPlanificator.result.suggestions, 1);
+    assert.isTrue(restaurantsPlanificator.result.suggestions[0].descriptionText.includes(showProductsDescription));
+
+    // Trigger replanning with restaurants context.
+    await restaurantsPlanificator.setSearch('*');
+    await verifyReplanning(restaurantsPlanificator, 5, [
+      showProductsDescription,
+      'Extract person\'s location.',
+      'Find restaurants near',
+      'Make a reservation and find restaurants',
+      'You are free at ']);
   });
 });
