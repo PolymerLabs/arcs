@@ -41,6 +41,86 @@ async function setup() {
   };
 }
 
+async function setupWithOptional(cProvided, dProvided) {
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
+  const manifest = await Manifest.parse(`
+    schema Thing
+      Text value
+
+    particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+      description \`particle a two required handles and two optional handles\`
+      in Thing a
+        out Thing b
+      in? Thing c
+        out? Thing d
+
+    recipe TestRecipe
+      use as thingA
+      use as thingB
+      use as maybeThingC
+      use as maybeThingD
+      TestParticle
+        a <- thingA
+        b -> thingB
+        ${cProvided ? 'c <- maybeThingC' : ''}
+        ${dProvided ? 'd -> maybeThingD' : ''}
+  `, {loader, fileName: process.cwd() + '/input.manifest'});
+
+  const Thing = manifest.findSchemaByName('Thing').entityClass();
+  const aStore = await arc.createStore(Thing.type, 'aStore', 'test:1');
+  const bStore = await arc.createStore(Thing.type, 'bStore', 'test:2');
+  const cStore = await arc.createStore(Thing.type, 'cStore', 'test:3');
+  const dStore = await arc.createStore(Thing.type, 'dStore', 'test:4');
+
+  const recipe = manifest.recipes[0];
+  recipe.handles[0].mapToStorage(aStore);
+  recipe.handles[1].mapToStorage(bStore);
+  recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+  recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+  recipe.normalize();
+  await arc.instantiate(recipe);
+
+  return {arc, recipe, Thing, aStore, bStore, cStore, dStore};
+}
+
+async function setupSlandlesWithOptional(cProvided, dProvided) {
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
+  const manifest = await Manifest.parse(`
+    particle TestParticle in 'src/runtime/test/artifacts/test-dual-slandle-particle.js'
+      description \`particle a two required slandles and two optional slandles\`
+      \`consume Slot a
+        \`provide Slot b
+      \`consume? Slot c
+        \`provide? Slot d
+
+    recipe TestRecipe
+      use as slotA
+      use as slotB
+      use as maybeSlotC
+      use as maybeSlotD
+      TestParticle
+        a <- slotA
+        b -> slotB
+        ${cProvided ? 'c <- maybeSlotC' : ''}
+        ${dProvided ? 'd -> maybeSlotD' : ''}
+  `, {loader, fileName: process.cwd() + '/input.manifest'});
+
+  const aStore = await arc.createStore(Slot.type, 'aStore', 'test:1');
+  const bStore = await arc.createStore(Slot.type, 'bStore', 'test:2');
+  const cStore = await arc.createStore(Slot.type, 'cStore', 'test:3');
+  const dStore = await arc.createStore(Slot.type, 'dStore', 'test:4');
+
+  const recipe = manifest.recipes[0];
+  recipe.handles[0].mapToStorage(aStore);
+  recipe.handles[1].mapToStorage(bStore);
+  recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+  recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+  recipe.normalize();
+  await arc.instantiate(recipe);
+
+  return {arc, recipe, aStore, bStore, cStore, dStore};
+}
+
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
@@ -71,6 +151,36 @@ describe('Arc', function() {
 
     await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
+  });
+
+  it('optional handles aren\'t required to resolve', async () => {
+    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+      = await setupWithOptional(false, false);
+
+    await handleFor(aStore).set(new Thing({value: 'from_a'}));
+    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
+    await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
+  });
+
+  it('optional provided handles aren\'t required to resolve', async () => {
+    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+      = await setupWithOptional(true, false);
+
+    await handleFor(aStore).set(new Thing({value: 'from_a'}));
+    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
+    await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
+  });
+
+  it('optional provided handles resolve when provided', async () => {
+    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+      = await setupWithOptional(true, true);
+
+    await handleFor(aStore).set(new Thing({value: 'from_a'}));
+    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
+    await util.assertSingletonWillChangeTo(arc, dStore, 'value', 'from_c1');
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
@@ -341,7 +451,7 @@ describe('Arc', function() {
       await arc.instantiate(recipe);
       const serialization = await arc.serialize();
       await arc.persistSerialization(serialization);
- 
+
       const key = storageKeyPrefix.includes('volatile')
             ? storageKeyPrefix + '!123:test^^arc-info'
             : storageKeyPrefix + '!123:test/arc-info';
