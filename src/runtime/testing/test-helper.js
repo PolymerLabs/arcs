@@ -155,7 +155,7 @@ export class TestHelper {
       suggestion = this.suggestions[0];
     }
     this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(suggestion.descriptionText)}'`);
-    await this.instantiatePlan(suggestion.plan);
+    await this.instantiateSuggestion(suggestion);
   }
 
   findSuggestionByParticleNames(particlesNames) {
@@ -165,9 +165,9 @@ export class TestHelper {
     });
   }
 
-  async instantiatePlan(plan) {
-    assert(plan, `Cannot accept suggestion, no plan could be selected.`);
-    await this.arc.instantiate(plan);
+  async instantiateSuggestion(suggestion) {
+    assert(suggestion, `Cannot accept suggestion, no plan could be selected.`);
+    await suggestion.instantiate(this.arc);
     await this.idle();
   }
 

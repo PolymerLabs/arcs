@@ -29,10 +29,10 @@ export class PlanConsumer {
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
 
-  constructor(result: PlanningResult) {
+  constructor(arc: Arc, result: PlanningResult) {
+    assert(arc, 'arc cannot be null');
     assert(result, 'result cannot be null');
-    assert(result.arc, 'arc cannot be null');
-    this.arc = result.arc;
+    this.arc = arc;
     this.result = result;
     this.suggestFilter = {showAll: false};
     this.suggestionsChangeCallbacks = [];
@@ -67,7 +67,7 @@ export class PlanConsumer {
   getCurrentSuggestions(): Suggestion[] {
     const suggestions = this.result.suggestions.filter(
         suggestion => suggestion.plan.slots.length > 0
-                      && suggestion.plan.isCompatibleWithModality(this.arc.modality));
+                      && suggestion.plan.modalities.includes(this.arc.modality.name));
 
     // `showAll`: returns all suggestions that render into slots.
     if (this.suggestFilter['showAll']) {

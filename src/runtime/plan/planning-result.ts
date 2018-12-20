@@ -10,15 +10,12 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
-import {Arc} from '../arc.js';
-import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
 
 export class PlanningResult {
-  arc: Arc;
   _suggestions: Suggestion[];
   lastUpdated: Date = new Date(null);
   generations: {}[] = [];
@@ -27,9 +24,7 @@ export class PlanningResult {
   private storeCallback: ({}) => void;
   private changeCallbacks: (() => void)[] = [];
 
-  constructor(arc, store) {
-    assert(arc, 'Arc cannot be null');
-    this.arc = arc;
+  constructor(store) {
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();
@@ -51,7 +46,7 @@ export class PlanningResult {
     assert(this.store['get'], 'Unsupported getter in suggestion storage');
     const value = await this.store['get']() || {};
     if (value.suggestions) {
-      if (await this.deserialize(value)) {
+      if (this.fromLiteral(value)) {
         this.onChanged();
         return true;
       }
@@ -62,7 +57,7 @@ export class PlanningResult {
   async flush() {
     try {
       assert(this.store['set'], 'Unsupported setter in suggestion storage');
-      await this.store['set'](this.serialize());
+      await this.store['set'](this.toLiteral());
     } catch(e) {
       error('Failed storing suggestions: ', e);
       throw e;
@@ -201,20 +196,18 @@ export class PlanningResult {
            oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  async deserialize({suggestions, generations, lastUpdated}) {
-    const recipeResolver = new RecipeResolver(this.arc);
+  fromLiteral({suggestions, generations, lastUpdated}) {
     return this.set({
-      suggestions: (await Promise.all(suggestions.map(
-          suggestion => Suggestion.deserialize(suggestion, this.arc, recipeResolver)))).filter(s => s),
+      suggestions: suggestions.map(suggestion => Suggestion.fromLiteral(suggestion)).filter(s => s),
       generations: JSON.parse(generations || '[]'),
       lastUpdated: new Date(lastUpdated),
       contextual: suggestions.contextual
     });
   }
 
-  serialize(): {} {
+  toLiteral(): {} {
     return {
-      suggestions: this.suggestions.map(suggestion => suggestion.serialize()),
+      suggestions: this.suggestions.map(suggestion => suggestion.toLiteral()),
       generations: JSON.stringify(this.generations),
       lastUpdated: this.lastUpdated.toString(),
       contextual: this.contextual

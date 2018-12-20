@@ -40,10 +40,10 @@ export class PlanProducer {
   searchStoreCallback: ({}) => void;
   debug = false;
 
-  constructor(result: PlanningResult, searchStore: StorageProviderBase, {debug = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore: StorageProviderBase, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
-    assert(result.arc, 'arc cannot be null');
-    this.arc = result.arc;
+    assert(arc, 'arc cannot be null');
+    this.arc = arc;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator(this.result);

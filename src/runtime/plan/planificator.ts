@@ -61,14 +61,14 @@ export class Planificator {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
-    this.result = new PlanningResult(arc, store);
+    this.result = new PlanningResult(store);
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.result, searchStore, {debug});
+      this.producer = new PlanProducer(this.arc, this.result, searchStore, {debug});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
     }
-    this.consumer = new PlanConsumer(this.result);
+    this.consumer = new PlanConsumer(this.arc, this.result);
 
     this.lastActivatedPlan = null;
     this.arc.registerInstantiatePlanCallback(this.arcCallback);

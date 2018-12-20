@@ -21,7 +21,7 @@ async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
   const store = await Planificator._initSuggestStore(helper.arc, userid, storageKeyBase);
   assert.isNotNull(store);
-  return new PlanConsumer(new PlanningResult(helper.arc, store));
+  return new PlanConsumer(helper.arc, new PlanningResult(store));
 }
 
 async function storeResults(consumer, suggestions) {
@@ -111,9 +111,9 @@ recipe
 describe('plan consumer', function() {
   it('filters suggestions by modality', async function() {
     const initConsumer = async (modality) => {
-      const addRecipe = (name, particles) => {
+      const addRecipe = (particles) => {
         return `
-  recipe ${name}
+  recipe
     slot 'slot0' as rootSlot
     ${particles.map(p => `
     ${p}
@@ -124,26 +124,26 @@ describe('plan consumer', function() {
       const helper = await TestHelper.create({
         slotComposer: new FakeSlotComposer({modality: Modality.forName(modality)}),
         manifestString: `
-  particle P1 in './src/runtime/test/artifacts/consumer-particle.js'
+  particle ParticleDom in './src/runtime/test/artifacts/consumer-particle.js'
     consume root
-  particle P2 in './src/runtime/test/artifacts/consumer-particle.js'
+  particle ParticleTouch in './src/runtime/test/artifacts/consumer-particle.js'
     consume root
     affordance dom-touch
-  particle P3 in './src/runtime/test/artifacts/consumer-particle.js'
+  particle ParticleBoth in './src/runtime/test/artifacts/consumer-particle.js'
     consume root
     affordance dom
     affordance dom-touch
-  ${addRecipe('OnlyDom', ['P1'])}
-  ${addRecipe('OnlyTouch', ['P2'])}
-  ${addRecipe('DomAndBoth', ['P1', 'P3'])}
-  ${addRecipe('TouchAndBoth', ['P2', 'P3'])}
+  ${addRecipe(['ParticleDom'])}
+  ${addRecipe(['ParticleTouch'])}
+  ${addRecipe(['ParticleDom', 'ParticleBoth'])}
+  ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
   `});
       assert.lengthOf(helper.arc.context.allRecipes, 4);
       const consumer = await createPlanConsumer(
           'TestUser', 'volatile://!158405822139616:demo^^volatile-0', 'volatile', helper);
       assert.isNotNull(consumer);
       await storeResults(consumer, helper.arc.context.allRecipes.map((plan, index) => {
-        const suggestion = new Suggestion(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan), helper.arc);
+        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(helper.arc, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));
@@ -156,7 +156,8 @@ describe('plan consumer', function() {
     const consumerDom = await initConsumer('mock-dom');
     const domSuggestions = consumerDom.getCurrentSuggestions();
     assert.lengthOf(domSuggestions, 2);
-    assert.deepEqual(domSuggestions.map(s => s.plan.name), ['OnlyDom', 'DomAndBoth']);
+    assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
+        [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
 
     const consumerVr = await initConsumer('mock-vr');
     assert.isEmpty(consumerVr.getCurrentSuggestions());
@@ -164,6 +165,7 @@ describe('plan consumer', function() {
     const consumerTouch = await initConsumer('mock-dom-touch');
     const touchSuggestions = consumerTouch.getCurrentSuggestions();
     assert.lengthOf(touchSuggestions, 2);
-    assert.deepEqual(touchSuggestions.map(s => s.plan.name), ['OnlyTouch', 'TouchAndBoth']);
+    assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
+        [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);
   });
 });

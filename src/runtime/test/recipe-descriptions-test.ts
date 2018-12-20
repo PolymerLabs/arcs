@@ -16,10 +16,15 @@ import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {Suggestion} from '../plan/suggestion';
 
 describe('recipe descriptions test', () => {
   const loader = new StubLoader({
-    '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
+    'test.js': `defineParticle(({Particle}) => {
+      return class P extends Particle {
+        constructor() { super(); this.relevance = 1; }
+      }
+    });`
   });
 
   function createManifestString(options) {
@@ -42,10 +47,12 @@ particle ProvideBoxes in 'test.js'
   description \`ignore this description too\`
 particle DisplayBox in 'test.js'
   in Box biggest
+  consume root
   description \`ignore this description too\`
 recipe
   ${options.includeAllStore ? `use 'allboxes'` : `create`} as handle0
   ${options.includeStore ? `use 'mybox'` : `create`} as handle1
+  slot 'root-id' as rootSlot
   ProvideBoxes
     boxes -> handle0
   CompareBoxes
@@ -53,6 +60,7 @@ recipe
     biggest -> handle1
   DisplayBox
     biggest <- handle1
+    consume root as rootSlot
   description \`the winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
 
 ${options.includeStore ? `
@@ -76,13 +84,15 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   async function generateRecipeDescription(options) {
     const helper = await TestHelper.create({
-        manifestString: options.manifestString || createManifestString(options), loader});
-    const originalFormatter = helper.arc.modality.descriptionFormatter;
-    helper.arc.modality.descriptionFormatter = options.formatter;
+      manifestString: options.manifestString || createManifestString(options), loader});
+    const modalityName = helper.arc.modality.name;
+
+    const originalFormatter = Modality.forName(modalityName).descriptionFormatter;
+    Modality.forName(modalityName).descriptionFormatter = options.formatter;
     await helper.makePlans(options);
     assert.lengthOf(helper.suggestions, 1);
-    helper.arc.modality.descriptionFormatter = originalFormatter;
-    return helper.suggestions[0].getDescription('dom');
+    Modality.forName(modalityName).descriptionFormatter = originalFormatter;
+    return helper.suggestions[0].getDescription(modalityName);
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
@@ -227,7 +237,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   it('fails generating recipe description with duplicate particles', async () => {
     await TestHelper.createAndPlan({manifestString: `
       schema Foo
-      particle ShowFoo
+      particle ShowFoo in 'test.js'
         out Foo foo
       recipe
         create as fooHandle
@@ -244,14 +254,17 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   it('refers to particle description', async () => {
     const manifestString = `
       schema Foo
-      particle HelloFoo
+      particle HelloFoo in 'test.js'
         in Foo foo
+        consume root
         description \`hello \${foo}\`
 
       recipe
         create as h0
+        slot 'root-id' as rootSlot
         HelloFoo
           foo <- h0
+          consume root as rootSlot
         description \`do "\${HelloFoo}"\`
     `;
     const description = await generateRecipeDescription({manifestString});
@@ -265,9 +278,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   it('generates recipe description with duplicate particles', async () => {
     const helper = await TestHelper.createAndPlan({manifestString: `
       schema Foo
-      particle ShowFoo
+      particle ShowFoo in 'test.js'
         out Foo foo
-      particle Dummy
+      particle Dummy in 'test.js'
 
       recipe
         create as fooHandle
@@ -293,9 +306,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
   it('joins recipe descriptions', async () => {
     const helper = await TestHelper.createAndPlan({manifestString: `
-      particle A
-      particle B
-      particle C
+      particle A in 'test.js'
+      particle B in 'test.js'
+      particle C in 'test.js'
 
       recipe
         A
@@ -309,22 +322,26 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     `, loader});
     assert.lengthOf(helper.suggestions, 3);
     const recipe1 = new Recipe();
-    helper.suggestions[0].plan.mergeInto(recipe1);
+    const plans = [];
+    for (const suggestion of helper.suggestions) {
+      plans.push(await Suggestion.planFromString(suggestion.plan.serialization, helper.arc));
+    }
+    plans[0].mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 1);
     assert.lengthOf(recipe1.patterns, 1);
 
-    helper.suggestions[1].plan.mergeInto(recipe1);
+    plans[1].mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 2);
     assert.lengthOf(recipe1.patterns, 2);
 
-    helper.suggestions[2].plan.mergeInto(recipe1);
+    plans[2].mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 3);
     assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
 
     const recipe2 = new Recipe();
-    helper.suggestions[2].plan.mergeInto(recipe2);
-    helper.suggestions[0].plan.mergeInto(recipe2);
-    helper.suggestions[1].plan.mergeInto(recipe2);
+    plans[2].mergeInto(recipe2);
+    plans[0].mergeInto(recipe2);
+    plans[1].mergeInto(recipe2);
     assert.deepEqual(['do C', 'do A', 'do B'], recipe2.patterns);
     assert.notDeepEqual(recipe1.patterns, recipe2.patterns);
 

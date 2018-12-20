@@ -18,7 +18,7 @@ import {Suggestion} from '../../plan/suggestion.js';
 
 class TestPlanProducer extends PlanProducer {
   constructor(arc, store) {
-    super(new PlanningResult(arc, store));
+    super(arc, new PlanningResult(store));
     this.produceCalledCount = 0;
     this.plannerRunOptions = [];
     this.cancelCount = 0;
@@ -65,13 +65,14 @@ class TestPlanProducer extends PlanProducer {
         info = {hash: info};
       }
       const plan = new Recipe(`Recipe${info.hash}`);
+      plan.newParticle('TestParticle');
       if (!info.options || !info.options.invisible) {
         plan.newSlot('slot0').id = 'id0';
       }
       plan.normalize();
       const relevance = Relevance.create(this.arc, plan);
       relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
-      const suggestion = new Suggestion(plan, info.hash, relevance, this.arc);
+      const suggestion = Suggestion.create(plan, info.hash, relevance);
       suggestion.relevance = Relevance.create(this.arc, plan);
       suggestion.descriptionByModality['text'] = `This is ${plan.name}`;
       suggestions.push(suggestion);
@@ -156,8 +157,8 @@ describe('plan producer - search', function() {
   const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     constructor(searchStore) {
-      super(new PlanningResult(
-          {arcId: arcKey, context: {allRecipes: []}}, {on: () => {}}), searchStore);
+      super({arcId: arcKey, context: {allRecipes: []}},
+            new PlanningResult({on: () => {}}), searchStore);
       this.produceSuggestionsCalled = 0;
     }
 
