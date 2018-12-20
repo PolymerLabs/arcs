@@ -21,10 +21,10 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         padding: 2px 6px;
         border-radius: 20px;
       }
-      [name] {
+      [selector] [name] {
         margin-left: 6px;
       }
-      [name][none] {
+      [selector] [name][none] {
         font-style: italic;
         color: var(--dark-gray);
       }
@@ -47,22 +47,29 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         padding: 4px 12px;
         cursor: pointer;
       }
-      [entry][active] {
+      [entry][active] [name] {
         font-weight: bold;
-      }
-      [entry]:hover {
-        color: #fff;
-        background-color: var(--highlight-blue);
       }
       [annotation] {
         font-style: italic;
+      }
+      [arcId] {
+        font-size: 10px;
+        color: var(--dark-gray);
+      }
+      [entry]:hover, [entry]:hover [arcId] {
+        color: #fff;
+        background-color: var(--highlight-blue);
       }
     </style>
     <div selector on-click="_openDropdown"><span count>[[arcs.length]]</span><span name none$="[[!active]]">[[_activeName(active)]]</span><span class="triangle devtools-small-icon" expanded></span></div>
     <iron-dropdown id="dropdown" horizontal-align="left" horizontal-offset="-6" vertical-align="top" vertical-offset="23">
       <div slot="dropdown-content" list>
         <template is="dom-repeat" items="[[arcs]]">
-          <div entry active$=[[item.active]] on-click="_arcSelected">[[item.name]] <span annotation>[[item.annotation]]</span></div>
+          <div entry active$=[[item.active]] on-click="_arcSelected">
+            <div name>[[item.name]] <span annotation>[[item.annotation]]</span></div>
+            <div arcId>[[item.id]]</div>
+          </div>
         </template>
       </div>
     </iron-dropdown>`;
