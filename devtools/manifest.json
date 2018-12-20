@@ -1,7 +1,7 @@
 {
   "name" : "Arcs Explorer",
   "version" : "0.1",
-  "description" : "Helps debug Arcs particles.",
+  "description" : "Inspection tools for Arcs Runtime.",
   "devtools_page": "src/devtools.html",
   "background" : {
     "scripts": ["src/background.js"]
