@@ -24,8 +24,6 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Id} from './id.js';
-import {TypeVariableInfo} from './type-variable-info.js';
-import {SlotInfo} from './slot-info.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 
 class ManifestError extends Error {

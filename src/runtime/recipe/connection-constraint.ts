@@ -9,7 +9,7 @@ import {compareArrays, compareStrings, compareComparables, Comparable} from './u
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Handle} from './handle.js';
-import {HandleConnection, Direction} from './handle-connection.js';
+import {Direction} from './handle-connection.js';
 
 export abstract class EndPoint implements Comparable {
   abstract _compareTo(other): number;

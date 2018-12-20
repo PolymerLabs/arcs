@@ -13,7 +13,6 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
-import {Manifest} from '../manifest.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {Planner} from '../planner.js';
 import {Random} from '../random.js';

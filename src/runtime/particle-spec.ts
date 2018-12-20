@@ -10,7 +10,6 @@
 
 import {Type, TypeLiteral, InterfaceType} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {InterfaceInfo} from './interface-info.js';
 import {assert} from '../platform/assert-web.js';
 import {Direction} from './recipe/handle-connection.js';
 import {Modality} from './modality.js';

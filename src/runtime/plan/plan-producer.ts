@@ -17,8 +17,8 @@ import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
-import {StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
-import {Strategy, StrategyDerived} from '../../planning/strategizer.js';
+import {VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {StrategyDerived} from '../../planning/strategizer.js';
 
 const defaultTimeoutMs = 5000;
 

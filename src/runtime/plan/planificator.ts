@@ -10,7 +10,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
-import {FirebaseStorage} from '../storage/firebase-storage.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
@@ -18,7 +17,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
 import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase, VariableStorageProvider} from "../storage/storage-provider-base.js";
-import {Type, EntityType} from '../type.js';
+import {EntityType} from '../type.js';
 
 export type PlanificatorOptions = {
   userid: string;

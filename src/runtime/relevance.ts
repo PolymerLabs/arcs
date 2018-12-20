@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {Particle} from './recipe/particle.js';
 import {Recipe} from './recipe/recipe.js';

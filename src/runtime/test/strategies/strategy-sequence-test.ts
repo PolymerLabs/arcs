@@ -10,7 +10,6 @@
 import {assert} from '../chai-web.js';
 import {Manifest} from '../../manifest.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';

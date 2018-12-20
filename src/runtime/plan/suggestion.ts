@@ -17,7 +17,6 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
 import {Search} from '../recipe/search.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 export class Plan {
   serialization: string;

@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
+import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base.js';
 import {StorageProviderFactory} from './storage-provider-factory.js';
 import {KeyBase} from './key-base.js';
 import {Id} from '../id.js';
