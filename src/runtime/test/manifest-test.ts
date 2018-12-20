@@ -9,6 +9,7 @@
  */
 
 import {Manifest} from '../manifest.js';
+import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {Schema} from '../schema.js';
 import {parser} from '../../../build/runtime/manifest-parser.js';
 import {assert} from './chai-web.js';
@@ -1073,11 +1074,10 @@ ${particleStr1}
       },
     };
     const manifest = await Manifest.load('the.manifest', loader);
-    const store = manifest.findStoreByName('Store0');
+    const store = manifest.findStoreByName('Store0') as CollectionStorageProvider;
     assert(store);
 
-    // TODO(shans): address as part of storage refactor
-    assert.deepEqual(await store['toList'](), [
+    assert.deepEqual(await store.toList(), [
       {
         id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
@@ -1117,11 +1117,11 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    const store = manifest.findStoreByName('Store0');
+    const store = manifest.findStoreByName('Store0') as CollectionStorageProvider;
     assert(store);
 
     // TODO(shans): address as part of storage refactor
-    assert.deepEqual(await store['toList'](), [
+    assert.deepEqual(await store.toList(), [
       {
         id: '!manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},

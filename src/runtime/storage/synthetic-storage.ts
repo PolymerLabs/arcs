@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base.js';
+import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
 import {StorageProviderFactory} from './storage-provider-factory.js';
 import {KeyBase} from './key-base.js';
 import {Id} from '../id.js';
@@ -131,7 +131,7 @@ export class SyntheticStorage extends StorageBase {
 }
 
 // Currently hard-wired to parse serialized data in an ArcInfo Variable to provide a list of ArcHandles.
-class SyntheticCollection extends StorageProviderBase {
+class SyntheticCollection extends StorageProviderBase implements CollectionStorageProvider {
   private readonly targetStore: StorageProviderBase;
   private readonly storageFactory: StorageProviderFactory;
   private readonly initialized: Promise<void>;
@@ -191,7 +191,29 @@ class SyntheticCollection extends StorageProviderBase {
     throw new Error('cloneFrom should never be called on SyntheticCollection!');
   }
 
+
   ensureBackingStore() {
     throw new Error('ensureBackingStore should never be called on SyntheticCollection!');
+  }
+
+  // tslint:disable-next-line: no-any
+  async getMultiple(ids: string[]): Promise<any[]> {
+    throw new Error('unimplemented');
+  }
+
+  async storeMultiple(values, keys, originatorId) {
+    throw new Error('unimplemented');
+  }
+
+  removeMultiple(items, originatorId: string) : Promise<void> {
+    throw new Error('unimplemented');
+  }
+  
+  async get(id: string): Promise<{}> {
+    throw new Error('unimplemented');
+  }
+
+  remove(id: string, keys: string[], originatorId: string) {
+    throw new Error('unimplemented');
   }
 }

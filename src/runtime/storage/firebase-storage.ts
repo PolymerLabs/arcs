@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base';
+import {StorageBase, StorageProviderBase, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base';
 
 // keep in sync with shell/source/ArcsLib.js
 import firebase from 'firebase/app';
@@ -358,7 +358,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
  * modifications), but the result will always be
  * monotonically increasing.
  */
-class FirebaseVariable extends FirebaseStorageProvider {
+class FirebaseVariable extends FirebaseStorageProvider implements VariableStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
@@ -542,7 +542,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
 
-  async clear(originatorId=null, barrier=null) {
+  async clear(originatorId:string = null, barrier: string = null) {
     return this.set(null, originatorId, barrier);
   }
 
@@ -636,7 +636,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
  * When we persist our changes to firebase we align it with the remote
  * version.
  */
-class FirebaseCollection extends FirebaseStorageProvider {
+class FirebaseCollection extends FirebaseStorageProvider implements CollectionStorageProvider {
   private localChanges: Map<string, {add: string[], remove: string[]}>;
   private addSuppressions: Map<string, {keys: Set<string>, barrierVersion: number}>;
   private model: CrdtCollectionModel;
@@ -812,7 +812,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this.version;
   }
 
-  async get(id) {
+  async get(id: string) {
     await this.initialized;
     if (this.referenceMode) {
       const ref = this.model.getValue(id);
@@ -866,7 +866,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     await this._persistChanges();
   }
 
-  async remove(id, keys:string[] = [], originatorId=null) {
+  async remove(id: string, keys: string[] = [], originatorId=null) {
     await this.initialized;
 
     // 1. Apply the change to the local model.
@@ -1078,13 +1078,13 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return (await this._toList()).map(item => item.value);
   }
 
-  async getMultiple(ids) {
+  async getMultiple(ids: string[]) {
     assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
     await this.initialized;
     return ids.map(id => this.model.getValue(id));
   }
 
-  async storeMultiple(values, keys, originatorId=null) {
+  async storeMultiple(values, keys: string[], originatorId=null) {
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
     values.map(value => {
       this.model.add(value.id, value, keys);

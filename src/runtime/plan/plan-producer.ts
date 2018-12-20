@@ -17,7 +17,7 @@ import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {Strategy, StrategyDerived} from '../../planning/strategizer.js';
 
 const defaultTimeoutMs = 5000;
@@ -36,11 +36,11 @@ export class PlanProducer {
   _isPlanning: boolean;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
-  searchStore: StorageProviderBase;
+  searchStore: VariableStorageProvider;
   searchStoreCallback: ({}) => void;
   debug = false;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore: StorageProviderBase, {debug = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore: VariableStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -69,7 +69,7 @@ export class PlanProducer {
   }
 
   async onSearchChanged() {
-    const values = await this.searchStore['get']() || [];
+    const values = await this.searchStore.get() || [];
     const arcId = this.arc.arcId;
     const value = values.find(value => value.arc === arcId);
     if (!value) {

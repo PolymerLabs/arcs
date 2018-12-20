@@ -19,6 +19,34 @@ enum EventKind {
 }
 type Callback = ({}) => void;
 
+/**
+ * Methods that must be implemented by a Variable Storage Provider
+ */
+export interface VariableStorageProvider extends StorageProviderBase {
+  // tslint:disable-next-line: no-any
+  get(): Promise<any>;
+  set(value: {}, originatorId?: string, barrier?: string): Promise<void>;
+  clear(originatorId?: string, barrier?: string): Promise<void>;
+}
+
+/**
+ * Methods that must be implemented by a Collection Storage Provider
+ */
+export interface CollectionStorageProvider extends StorageProviderBase {
+  // tslint:disable-next-line: no-any
+  toList(): Promise<any[]>;
+
+  // tslint:disable-next-line: no-any
+  getMultiple(ids: string[]): Promise<any[]>;
+  storeMultiple(values: {}, keys: string[], originatorId: string): Promise<void>;
+  // tslint:disable-next-line: no-any
+  removeMultiple(items: any[], originatorId?: string) : Promise<void>;
+
+  // tslint:disable-next-line: no-any
+  get(id: string): Promise<any>;
+  remove(id: string, keys: string[], originatorId?: string);
+}
+
 export abstract class StorageBase {
   protected _debug = false;
   
@@ -226,4 +254,5 @@ export abstract class StorageProviderBase {
   modelForSynchronization() {
     return this.toLiteral();
   }
+
 }

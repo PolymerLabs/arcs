@@ -1,9 +1,9 @@
 import {CrdtCollectionModel} from '../crdt-collection-model.js';
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
-import {Type} from '../../type.js';
+import {Type, TypeLiteral} from '../../type.js';
 import {PouchDbStorage} from './pouch-db-storage';
-import {ChangeEvent} from '../storage-provider-base.js';
+import {CollectionStorageProvider, ChangeEvent} from '../storage-provider-base.js';
 import PouchDB from 'pouchdb';
 
 /**
@@ -15,7 +15,17 @@ interface CrdtCollectionModelMutator {
   (crdt: CrdtCollectionModel): CrdtCollectionModel;
 }
 
-export class PouchDbCollection extends PouchDbStorageProvider {
+/**
+ * Contains the data that is stored within Pouch
+ */
+interface CollectionStorage {
+  model: CrdtCollectionModel;
+  version: number;
+  referenceMode: boolean;
+  type: TypeLiteral;
+}
+
+export class PouchDbCollection extends PouchDbStorageProvider implements CollectionStorageProvider {
   /** The local synced model */
   private _model: CrdtCollectionModel; // NOTE: Private, but outside code accesses this :(
 
@@ -145,7 +155,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
    * @remarks Note that the id referred to here is not the same as
    * used in the constructor.
    */
-  async get(id) {
+  async get(id: string) {
     if (this.referenceMode) {
       const ref = (await this.getModel()).getValue(id);
       if (ref == null) {
@@ -170,7 +180,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     assert(keys != null && keys.length > 0, 'keys required');
     const id = value.id;
 
-    const item = {value, keys, effective: undefined};
+    const item = {value, keys, effective: false};
 
     if (this.referenceMode) {
       const referredType = this.type.primitiveType();
@@ -224,7 +234,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
    * @param keys the CRDT specific keys to remove.
    * @param originatorId TBD passed to event listeners.
    */
-  async remove(id, keys: string[] = [], originatorId = null) {
+  async remove(id: string, keys: string[] = [], originatorId: string = null) {
     await this.getModelAndUpdate(crdtmodel => {
       if (keys.length === 0) {
         keys = crdtmodel.getKeys(id);
@@ -246,7 +256,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
    * just refetch and trigger listeners.  This is fast since the data
    * is synced locally.
    */
-  public onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<{}>) {
+  public onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<CollectionStorage>) {
     // updates internal state
     const previousRev = this._rev;
     const previousModel = this._model;
@@ -255,7 +265,7 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       return;
     }
     // remote revision is different, update local copy.
-    const model = doc['model'];
+    const model = doc.model;
 
     this._model = new CrdtCollectionModel(model);
     this._rev = doc._rev;
@@ -311,19 +321,17 @@ export class PouchDbCollection extends PouchDbStorageProvider {
     // Keep retrying the operation until it succeeds.
     while (1) {
       // TODO(lindner): add backoff and error out if this goes on for too long
-      let doc;
-      //: PouchDB.Core.IdMeta & PouchDB.Core.GetMeta & Model & {referenceMode: boolean, type: {}};
+      let doc: PouchDB.Core.ExistingDocument<CollectionStorage>;
 
       let notFound = false;
       try {
         doc = await this.db.get(this.pouchDbKey.location);
-        // as PouchDB.Core.IdMeta & PouchDB.Core.GetMeta & Model & {referenceMode: boolean, type: };
 
         // Check remote doc.
         // TODO(lindner): refactor with getModel above.
         if (this._rev !== doc._rev) {
           // remote revision is different, update local copy.
-          this._model = new CrdtCollectionModel(doc['model']);
+          this._model = new CrdtCollectionModel(doc.model);
           this._rev = doc._rev;
           this.version++;
           // TODO(lindner): fire change events here?
@@ -353,8 +361,8 @@ export class PouchDbCollection extends PouchDbStorageProvider {
       }
 
       // Apply changes made by the mutator
-      doc['model'] = newModel.toLiteral();
-      doc['version'] = this.version;
+      doc.model = newModel.toLiteral();
+      doc.version = this.version;
 
       // Update on pouchdb
       try {

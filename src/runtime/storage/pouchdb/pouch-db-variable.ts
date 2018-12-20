@@ -2,7 +2,7 @@ import {assert} from '../../../platform/assert-web.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider';
 import {PouchDbStorage} from './pouch-db-storage.js';
 import {Type} from '../../type.js';
-import {ChangeEvent} from '../storage-provider-base.js';
+import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
 
 /**
  * Loosely defines the value object stored.
@@ -37,7 +37,7 @@ interface VariableStorage {
 /**
  * The PouchDB-based implementation of a Variable.
  */
-export class PouchDbVariable extends PouchDbStorageProvider {
+export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
   private _stored: ValueStorage | null = null;
   private localKeyId = 0;
 
@@ -164,7 +164,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: {}, originatorId = null, barrier = null): Promise<void> {
+  async set(value: {}, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
 
     if (this.referenceMode && value) {
@@ -228,7 +228,7 @@ export class PouchDbVariable extends PouchDbStorageProvider {
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async clear(originatorId = null, barrier = null): Promise<void> {
+  async clear(originatorId: string = null, barrier: string = null): Promise<void> {
     await this.set(null, originatorId, barrier);
   }
 

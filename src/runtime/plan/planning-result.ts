@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {Suggestion} from './suggestion.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
@@ -20,11 +20,11 @@ export class PlanningResult {
   lastUpdated: Date = new Date(null);
   generations: {}[] = [];
   contextual = true;
-  store: StorageProviderBase;
+  store: VariableStorageProvider;
   private storeCallback: ({}) => void;
   private changeCallbacks: (() => void)[] = [];
 
-  constructor(store) {
+  constructor(store: VariableStorageProvider) {
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();
@@ -43,8 +43,7 @@ export class PlanningResult {
   }
 
   async load(): Promise<boolean> {
-    assert(this.store['get'], 'Unsupported getter in suggestion storage');
-    const value = await this.store['get']() || {};
+    const value = await this.store.get() || {};
     if (value.suggestions) {
       if (this.fromLiteral(value)) {
         this.onChanged();
@@ -56,8 +55,7 @@ export class PlanningResult {
 
   async flush() {
     try {
-      assert(this.store['set'], 'Unsupported setter in suggestion storage');
-      await this.store['set'](this.toLiteral());
+      await this.store.set(this.toLiteral());
     } catch(e) {
       error('Failed storing suggestions: ', e);
       throw e;
@@ -65,7 +63,7 @@ export class PlanningResult {
   }
 
   async clear() {
-    return this.store['clear']();
+    return this.store.clear();
   }
 
   dispose() {
