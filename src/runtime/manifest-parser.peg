@@ -85,9 +85,10 @@ ManifestItem
   / Meta
   / Resource
 
-Annotation = '@' annotation:lowerIdent { return annotation; }
+Annotation "an annotation (e.g. @foo)"
+  = '@' annotation:lowerIdent { return annotation; }
 
-Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
+Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
   return {
     kind: 'resource',
     name,
@@ -106,7 +107,7 @@ ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
-  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)? originalId:('!!' id)?
+  = 'store' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)? originalId:('!!' id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
@@ -136,7 +137,7 @@ ManifestStorageFileSource
   = 'in' whiteSpace source:id { return {origin: 'file', source }; }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:TopLevelIdent { return {origin: 'resource', source }; }
+  = 'in' whiteSpace source:upperIdent { return {origin: 'resource', source }; }
 
 ManifestStorageStorageSource
   = 'at' whiteSpace source:id { return {origin: 'storage', source }; }
@@ -157,8 +158,8 @@ Import
     };
   }
 
-Interface
-  = 'interface' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceItem)*)? eolWhiteSpace?
+Interface "an interface"
+  = 'interface' whiteSpace name:upperIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceItem)*)? eolWhiteSpace?
   {
     return {
       kind: 'interface',
@@ -227,7 +228,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 };
 
 ParticleDefinition
-  = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
+  = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = [];
     let modality = [];
@@ -280,7 +281,7 @@ ParticleDefinition
     };
   }
 
-ParticleItem
+ParticleItem "a particle item"
   = ParticleModality
   / ParticleSlot
   / Description
@@ -309,7 +310,7 @@ ParticleArgument
     };
   }
 
-ParticleArgumentDirection
+ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
     return text();
@@ -354,7 +355,7 @@ ReferenceType
     };
   }
 
-TypeVariable
+TypeVariable "a type variable (e.g. ~foo)"
   = '~' name:lowerIdent constraint:(whiteSpace 'with' whiteSpace type:ParticleArgumentType)?
   {
     return {
@@ -551,7 +552,7 @@ ParticleHandleDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace TopLevelIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace upperIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     return {
@@ -813,7 +814,7 @@ TagList
   = head:Tag tail:(whiteSpace TagList)?
   { return [head, ...(tail && tail[1] || [])]; }
 
-Verb
+Verb "a verb (e.g. &Verb)"
   = '&' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
 
 VerbList
@@ -932,7 +933,7 @@ SchemaInlineField
   }
 
 SchemaSpec
-  = 'schema' names:(whiteSpace ('*' / TopLevelIdent))+ parents:SchemaExtends?
+  = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
   {
     return {
       names: names.map(name => name[1]).filter(name => name != '*'),
@@ -1030,13 +1031,13 @@ SchemaTupleType
     return {kind: 'schema-tuple', location: location(), types};
   }
 
-Version
+Version "a version number (e.g. @012)"
   = '@' version:[0-9]+
   {
     return Number(version.join(''));
   }
 
-Indent = &(i:" "+ &{
+Indent "indentation" = &(i:" "+ &{
   i = i.join('');
   if (i.length > indent.length) {
     indents.push(indent);
@@ -1045,7 +1046,7 @@ Indent = &(i:" "+ &{
   }
 })
 
-SameIndent = &(i:" "* &{
+SameIndent "same indentation" = &(i:" "* &{
   i = i.join('');
   if (i.length == indent.length) {
     return true;
@@ -1055,7 +1056,7 @@ SameIndent = &(i:" "* &{
   }
 }) " "*
 
-SameOrMoreIndent = &(i:" "* &{
+SameOrMoreIndent "same or more indentation" = &(i:" "* &{
   i = i.join('');
   if (i.length >= indent.length) {
     return true;
@@ -1064,9 +1065,6 @@ SameOrMoreIndent = &(i:" "* &{
     return false;
   }
 }) " "* { return text(); }
-
-TopLevelIdent
-  = upperIdent
 
 // Should only be used as a negative match.
 ReservedWord
@@ -1085,16 +1083,21 @@ ReservedWord
   throw new ManifestParserError(location(), `Expected identifier but keyword, '${keyword}' found.`);
 }
 
-backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
-id = "'" id:[^']+ "'" { return id.join(''); }
-upperIdent = [A-Z][a-z0-9_]i* { return text(); }
-lowerIdent = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
-fieldName = [a-z][a-z0-9_]i* { return text(); }
-whiteSpace
+backquotedString "a `backquoted string`"
+  = '`' pattern:([^`]+) '`' { return pattern.join(''); }
+id "an identifier (e.g. 'id')"
+  = "'" id:[^']+ "'" { return id.join(''); }
+upperIdent "an uppercase identifier (e.g. Foo)"
+  = [A-Z][a-z0-9_]i* { return text(); }
+lowerIdent "a lowercase identifier (e.g. foo)"
+  = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
+fieldName "a field name (e.g. foo9)"
+  = [a-z][a-z0-9_]i* { return text(); }
+whiteSpace "one or more whitespace characters"
   = " "+
-eolWhiteSpace
+eolWhiteSpace "a new line"
   = [ ]* !.
   / [ ]* '//' [^\n]* eolWhiteSpace
   / [ ]* eol eolWhiteSpace?
-eol
+eol "a new line"
   = "\r"? "\n" "\r"?
