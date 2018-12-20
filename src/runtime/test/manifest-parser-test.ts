@@ -127,7 +127,7 @@ describe('manifest parser', () => {
           Nonsense()`);
       assert.fail('this parse should have failed, no nonsense!');
     } catch (e) {
-      assert.include(e.message, 'Nonsense', 'bad error: '+e);
+      assert.include(e.message, 'N', 'bad error: '+e);
     }
   });
   it('parses particles with optional handles', () => {
