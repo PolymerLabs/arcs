@@ -63,7 +63,7 @@ export class PlanningResult {
   }
 
   async clear() {
-    return this.store['clear']();
+    return this.store.clear();
   }
 
   dispose() {
