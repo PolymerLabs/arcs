@@ -64,6 +64,30 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
+  it('parses manifests with resources with comments#1', () => {
+    parse(`
+    import '../Pipes/PipeEntity.schema'
+
+    resource PipeEntityResource
+      start
+      //[{"type": "tv_show", "name": "star trek"}]
+      [{"type": "artist", "name": "in this moment"}]
+
+    store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+      `);
+  });
+  it('parses manifests with resources with comments#2', () => {
+    parse(`
+    import '../Pipes/PipeEntity.schema'
+
+    resource PipeEntityResource
+      start
+      [{"type": "artist", "name": "in this moment"}]
+      //[{"type": "tv_show", "name": "star trek"}]
+
+    store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+      `);
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
