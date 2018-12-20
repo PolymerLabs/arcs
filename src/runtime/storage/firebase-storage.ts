@@ -542,7 +542,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
 
-  async clear(originatorId=null, barrier=null) {
+  async clear(originatorId:string = null, barrier: string = null) {
     return this.set(null, originatorId, barrier);
   }
 
@@ -866,7 +866,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  async remove(id, keys:string[] = [], originatorId=null) {
+  async remove(id: string, keys: string[] = [], originatorId=null) {
     await this.initialized;
 
     // 1. Apply the change to the local model.

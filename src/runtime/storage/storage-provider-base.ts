@@ -25,7 +25,8 @@ type Callback = ({}) => void;
 export interface VariableStorageProvider extends StorageProviderBase {
   // tslint:disable-next-line: no-any
   get(): Promise<any>;
-  set(val: {}): Promise<void>;
+  set(value: {}, originatorId?: string, barrier?: string): Promise<void>;
+  clear(originatorId?: string, barrier?: string): Promise<void>;
 }
 
 /**
@@ -37,10 +38,13 @@ export interface CollectionStorageProvider extends StorageProviderBase {
 
   // tslint:disable-next-line: no-any
   getMultiple(ids: string[]): Promise<any[]>;
-  storeMultiple(values, keys: string[], originatorId: string): Promise<void>;
+  storeMultiple(values: {}, keys: string[], originatorId: string): Promise<void>;
+  // tslint:disable-next-line: no-any
+  removeMultiple(items: any[], originatorId?: string) : Promise<void>;
 
   // tslint:disable-next-line: no-any
-  get(id: string): any;
+  get(id: string): Promise<any>;
+  remove(id: string, keys: string[], originatorId?: string);
 }
 
 export abstract class StorageBase {

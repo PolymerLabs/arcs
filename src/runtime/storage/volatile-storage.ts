@@ -295,7 +295,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return {items: this._model.size};
   }
 
-  async store(value, keys, originatorId=null) {
+  async store(value, keys, originatorId: string = null) {
     assert(keys != null && keys.length > 0, 'keys required');
     const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::store', args: {name: this.name}});
 
@@ -321,7 +321,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     trace.end({args: {value}});
   }
 
-  async removeMultiple(items, originatorId=null) {
+  async removeMultiple(items, originatorId: string = null): Promise<void> {
     if (items.length === 0) {
       items = this._model.toList().map(item => ({id: item.id, keys: []}));
     }
@@ -446,7 +446,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
     return this._stored;
   }
 
-  async set(value : {id: string}, originatorId=null, barrier=null) {
+  async set(value : {id: string}, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
@@ -483,7 +483,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
     await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
   }
 
-  async clear(originatorId=null, barrier=null) {
+  async clear(originatorId: string = null, barrier: string = null): Promise<void> {
     await this.set(null, originatorId, barrier);
   }
 }
@@ -542,7 +542,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     return (data !== undefined) ? data.value : null;
   }
 
-  async store(value, keys, originatorId) {
+  async store(value, keys, originatorId: string) {
     assert(keys != null && keys.length > 0, 'keys required');
     this.version++;
 
@@ -555,7 +555,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     keys.forEach(k => data.keys[k] = this.version);
   }
 
-  async remove(id, keys, originatorId) {
+  async remove(id: string, keys: string[], originatorId: string) {
     this.version++;
     this.items.delete(id);
   }

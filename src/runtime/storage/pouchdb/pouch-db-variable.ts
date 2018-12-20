@@ -164,7 +164,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: {}, originatorId = null, barrier = null): Promise<void> {
+  async set(value: {}, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
 
     if (this.referenceMode && value) {
@@ -228,7 +228,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async clear(originatorId = null, barrier = null): Promise<void> {
+  async clear(originatorId: string = null, barrier: string = null): Promise<void> {
     await this.set(null, originatorId, barrier);
   }
 

@@ -234,7 +234,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @param keys the CRDT specific keys to remove.
    * @param originatorId TBD passed to event listeners.
    */
-  async remove(id, keys: string[] = [], originatorId = null) {
+  async remove(id: string, keys: string[] = [], originatorId: string = null) {
     await this.getModelAndUpdate(crdtmodel => {
       if (keys.length === 0) {
         keys = crdtmodel.getKeys(id);
