@@ -9,6 +9,13 @@
  */
 
 {
+  class ManifestParserError extends Error {
+    constructor(location, message) {
+      super(message);
+      this.location = location;
+    }
+  }
+
   var indent = '';
   var startIndent = '';
   var indents = [];
@@ -278,18 +285,6 @@ ParticleItem
   / ParticleSlot
   / Description
   / ParticleHandle
-  / ParticleInterface
-
-ParticleInterface
-  = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
-  {
-    return {
-      kind: 'particle-interface',
-      location: location(),
-      verb,
-      args: args || []
-    };
-  }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
@@ -297,12 +292,6 @@ ParticleHandle
     dependentConnections = optional(dependentConnections, extractIndented, []);
     arg.dependentConnections = dependentConnections;
     return arg;
-  }
-
-ParticleArgumentList
-  = head:ParticleArgument tail:(',' whiteSpace ParticleArgument)*
-  {
-    return [head].concat(tail.map(a => a[2]));
   }
 
 ParticleArgument
@@ -1093,7 +1082,7 @@ ReservedWord
   / 'handle'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
-  throw new Error(`Expected identifier but keyword, '${keyword}' found.`);
+  throw new ManifestParserError(location(), `Expected identifier but keyword, '${keyword}' found.`);
 }
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }

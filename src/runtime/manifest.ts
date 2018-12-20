@@ -379,7 +379,7 @@ export class Manifest {
 ${e.message}
   ${line}
   ${highlight}`;
-      const err = new Error(message);
+      const err = new ManifestError(e.location, message);
       if (!parseError) {
         err.stack = e.stack;
       }
@@ -523,7 +523,7 @@ ${e.message}
           } else if (resolved.iface) {
             node.model = new InterfaceType(resolved.iface);
           } else {
-            throw new Error('Expected {iface} or {schema}');
+            throw new ManifestError(node.location, 'Expected {iface} or {schema}');
           }
           return;
         }
@@ -742,7 +742,7 @@ ${e.message}
           return new TagEndPoint(info.tags);
         }
         default:
-          throw new Error(`endpoint ${info.targetType} not supported`);
+          throw new ManifestError(connection.location, `endpoint ${info.targetType} not supported`);
       }
     };
 
@@ -900,7 +900,7 @@ ${e.message}
             items.byName.set(handle.localName, entry);
             items.byHandle.set(handle, handle.item);
           } else if (!entry.item) {
-            throw new Error(`did not expect ${entry} expected handle or particle`);
+            throw new ManifestError(connectionItem.location, `did not expect ${entry} expected handle or particle`);
           }
 
           if (entry.item.kind === 'handle') {
@@ -908,7 +908,7 @@ ${e.message}
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;
           } else {
-            throw new Error(`did not expect ${entry.item.kind}`);
+            throw new ManifestError(connectionItem.location, `did not expect ${entry.item.kind}`);
           }
         }
 
@@ -1052,7 +1052,7 @@ ${e.message}
       source = item.source;
       json = manifest.resources[source];
       if (json == undefined) {
-        throw new Error(`Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
+        throw new ManifestError(item.location, `Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
       }
     }
     let entities;
