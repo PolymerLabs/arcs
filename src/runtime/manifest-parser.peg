@@ -285,18 +285,6 @@ ParticleItem
   / ParticleSlot
   / Description
   / ParticleHandle
-  / ParticleInterface
-
-ParticleInterface
-  = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
-  {
-    return {
-      kind: 'particle-interface',
-      location: location(),
-      verb,
-      args: args || []
-    };
-  }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
@@ -304,12 +292,6 @@ ParticleHandle
     dependentConnections = optional(dependentConnections, extractIndented, []);
     arg.dependentConnections = dependentConnections;
     return arg;
-  }
-
-ParticleArgumentList
-  = head:ParticleArgument tail:(',' whiteSpace ParticleArgument)*
-  {
-    return [head].concat(tail.map(a => a[2]));
   }
 
 ParticleArgument
