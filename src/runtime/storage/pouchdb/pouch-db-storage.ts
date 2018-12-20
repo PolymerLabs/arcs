@@ -22,7 +22,6 @@ import PouchDbDebug from 'pouchdb-debug';
 
 PouchDB.plugin(PouchDbDebug);
 PouchDB.debug.disable();
-      PouchDB.debug.enable('*');
 
 export class PouchDbStorage extends StorageBase {
   /**
