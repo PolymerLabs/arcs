@@ -84,13 +84,15 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   async function generateRecipeDescription(options) {
     const helper = await TestHelper.create({
-        manifestString: options.manifestString || createManifestString(options), loader});
-    const originalFormatter = helper.arc.modality.descriptionFormatter;
-    helper.arc.modality.descriptionFormatter = options.formatter;
+      manifestString: options.manifestString || createManifestString(options), loader});
+    const modalityName = helper.arc.modality.name;
+
+    const originalFormatter = Modality.forName(modalityName).descriptionFormatter;
+    Modality.forName(modalityName).descriptionFormatter = options.formatter;
     await helper.makePlans(options);
     assert.lengthOf(helper.suggestions, 1);
-    helper.arc.modality.descriptionFormatter = originalFormatter;
-    return helper.suggestions[0].getDescription('dom');
+    Modality.forName(modalityName).descriptionFormatter = originalFormatter;
+    return helper.suggestions[0].getDescription(modalityName);
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
