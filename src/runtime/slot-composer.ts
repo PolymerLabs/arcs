@@ -31,7 +31,8 @@ export class SlotComposer {
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
   constructor(options) {
-    assert(options.modality, 'Modality is mandatory');
+    assert(options.modality && options.modality.constructor === Modality,
+           `Missing or invalid modality: ${options.modality}`);
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
     assert((options.rootContainer !== undefined)
@@ -40,7 +41,7 @@ export class SlotComposer {
       'Root container is mandatory unless it is explicitly skipped');
 
     this._containerKind = options.containerKind;
-    this._modality = Modality.forName(options.modality);
+    this._modality = options.modality;
     assert(this._modality.slotConsumerClass);
 
     if (options.noRoot) {

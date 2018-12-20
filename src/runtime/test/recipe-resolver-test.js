@@ -11,6 +11,7 @@
 import {Arc} from '../arc.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
+import {Modality} from '../modality.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 
 import {assert} from './chai-web.js';
@@ -27,7 +28,7 @@ describe('RecipeResolver', function() {
     return new Arc({
       id: 'test',
       slotComposer: {
-        modality: 'dom',
+        modality: Modality.forName('dom'),
         getAvailableContexts: (() => {
           return [{
             name: 'root',

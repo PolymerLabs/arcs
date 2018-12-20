@@ -9,17 +9,17 @@
  */
 'use strict';
 
+import {Modality} from '../modality.js';
 import {SlotComposer} from '../slot-composer.js';
 
 /** @class FakeSlotComposer
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
  */
 export class FakeSlotComposer extends SlotComposer {
-
   constructor(options = {}) {
     super(Object.assign({
       rootContainer: {'root': 'root-context'},
-      modality: 'mock-dom'
+      modality: Modality.forName('mock-dom')
     }, options));
   }
 
