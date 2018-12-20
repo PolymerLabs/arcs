@@ -28,8 +28,8 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         width: 28px;
         height: 24px;
         -webkit-mask-image: -webkit-image-set(
-            url(../img/devtools_icons_1x.png) 1x,
-            url(../img/devtools_icons_2x.png) 2x);
+            url(img/devtools_icons_1x.png) 1x,
+            url(img/devtools_icons_2x.png) 2x);
         background-color: rgb(110, 110, 110);
       }
       .devtools-small-icon {
@@ -38,15 +38,15 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         height: 10px;
         min-width: 10px;
         -webkit-mask-image: -webkit-image-set(
-            url(../img/devtools_icons_color_1x.png) 1x,
-            url(../img/devtools_icons_color_2x.png) 2x);
+            url(img/devtools_icons_color_1x.png) 1x,
+            url(img/devtools_icons_color_2x.png) 2x);
         background-color: rgb(110, 110, 110);
       }
       .devtools-icon-color {
         display: inline-block;
         background-image: -webkit-image-set(
-            url(../img/devtools_icons_color_1x.png) 1x,
-            url(../img/devtools_icons_color_2x.png) 2x);
+            url(img/devtools_icons_color_1x.png) 1x,
+            url(img/devtools_icons_color_2x.png) 2x);
         width: 10px;
         height: 10px;
       }
