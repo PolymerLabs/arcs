@@ -11,17 +11,21 @@ Open up the Chrome and navigate to `chrome://extensions/`.
 Ensure "Developer Mode" is checked and click the "Load unpacked extension..." button.
 Select `arcs/devtools` directory. `Arcs` tab will be now available in Chrome DevTools.
 
-## Using with NodeJS
+## Using with NodeJS (Tests or Planner Shell)
 
 It is possible to use the tool directly against a NodeJS instance.
 To do that, run a test with `--explore` flag:
 ```
 ./tools/sigh test -g "demo flow" --explore
 ```
+or
+```
+cd shells/planner-shell/ && ./serve.sh --explore
+```
 
 You should see a message `Waiting for Arcs Explorer`.
-Navigate to the `devtools/src/index.html` directory in the browser
-(e.g. `localhost:5005/devtools/src/index.html`, assuming port `5005` and the server serving
+Navigate to the `devtools/` directory in the browser
+(e.g. `localhost:5005/devtools/`, assuming port `5005` and the server serving
 files from the repo).
 
 ## Development

@@ -30,11 +30,12 @@ import {Handle} from './recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Loader} from './loader.js';
+import {Modality} from './modality.js';
 
 class RelevantContextRecipes extends Strategy {
   private _recipes: Recipe[] = [];
 
-  constructor(context: Manifest, modality: string) {
+  constructor(context: Manifest, modality: Modality) {
     super();
     for (let recipe of context.allRecipes) {
       if (modality && recipe.particles.find(p => p.spec && !p.spec.matchModality(modality)) !== undefined) {

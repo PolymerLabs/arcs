@@ -15,11 +15,8 @@ import {Relevance} from '../../relevance.js';
 
 describe('suggestion', function() {
   function createSuggestion(hash, descriptionText) {
-    const suggestion = new Suggestion(
-      /* plan= */ {},
-      hash,
-      Relevance.deserialize({versionByStore: '{}', relevanceMap: new Map()}),
-      /* arc= */ {});
+    const suggestion =
+        new Suggestion(/* plan= */ {}, hash, /* rank= */ 1, /* versionByStore= */ {});
     suggestion.descriptionByModality['text'] = descriptionText;
     return suggestion;
   }
@@ -52,11 +49,11 @@ describe('suggestion', function() {
   });
 
   it('deserialize empty', async () => {
-    const suggestion1 =
-        await Suggestion.deserialize({plan: 'recipe', hash: '123'}, {}, {});
-    assert.isTrue(suggestion1.plan && Boolean(suggestion1.relevance.relevanceMap));
+    const suggestion1 = Suggestion.fromLiteral({plan: 'recipe', hash: '123', rank: 1});
+    assert.isTrue(Boolean(suggestion1.plan));
     const suggestion2 =
-        await Suggestion.deserialize({plan: 'recipe', hash: '123', relevance: {}, searchGroups: [], descriptionByModality: {}}, {}, {});
-    assert.isTrue(suggestion2.plan && Boolean(suggestion2.relevance.relevanceMap));
+        Suggestion.fromLiteral({plan: 'recipe', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}}, {}, {});
+    assert.isTrue(Boolean(suggestion2.plan));
+    assert.deepEqual(suggestion2.toLiteral(), Suggestion.fromLiteral(suggestion2.toLiteral()).toLiteral());
   });
 });

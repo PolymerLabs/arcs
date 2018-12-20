@@ -9,6 +9,6 @@
 import '../People/Person.schema'
 
 particle PersonList in 'source/PersonList.js'
-  PersonList(in [Person] people)
+  in [Person] people
   consume root
   description `show ${people}`

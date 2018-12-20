@@ -12,6 +12,7 @@
 import {Manifest} from '../../manifest.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {assert} from '../chai-web.js';
+import {Modality} from '../../modality.js';
 
 describe('ConvertConstraintsToConnections', async () => {
 
@@ -271,11 +272,11 @@ describe('ConvertConstraintsToConnections', async () => {
       schema S
       particle A in 'A.js'
         out S b
-        modality voice
+        modality vr
         consume root
       particle C in 'C.js'
         in S d
-        modality voice
+        modality vr
         consume root
       particle E in 'E.js'
         in S f
@@ -287,7 +288,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> E.f
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({modality: 'voice'});
+    const cctc = new ConvertConstraintsToConnections({modality: Modality.forName('vr')});
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);

@@ -10,10 +10,11 @@ import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint, InstanceEndPoint} from '../recipe/connection-constraint.js';
-import {Arc} from '../arc';
+import {Arc} from '../arc.js';
+import {Modality} from '../modality.js';
 
 export class ConvertConstraintsToConnections extends Strategy {
-  modality: string;
+  modality: Modality;
 
   constructor(arc: Arc, args?) {
     super(arc, args);

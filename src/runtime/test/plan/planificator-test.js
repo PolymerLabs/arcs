@@ -59,7 +59,8 @@ describe('remote planificator', function() {
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex, log) {
-    await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate();
+    await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate(
+        consumePlanificator.arc);
     const serialization = await consumePlanificator.arc.serialize();
     producePlanificator.arc.dispose();
     producePlanificator.dispose();
@@ -117,9 +118,9 @@ describe('remote planificator', function() {
 
       // Replan non-contextual.
       await consumePlanificator.setSearch('*');
-      await verifyReplanning(producePlanificator, 1);
+      await verifyReplanning(producePlanificator, 1, ['Show products from your browsing context']);
       assert.isUndefined(consumePlanificator.producer);
-      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 1, ['Show products from your browsing context']);
+      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 1);
 
       // Accept suggestion.
       producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);

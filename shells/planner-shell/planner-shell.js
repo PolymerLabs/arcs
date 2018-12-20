@@ -49,7 +49,8 @@ export class PlannerShellInterface {
     if (!assetsPath || !userid || !storage) {
       throw new Error('assetsPath, userid, and storage required');
     }
-    //initDevTools();
+    // connect to DevTools if running with --explore
+    await maybeConnectToDevTools();
     // create an arcs environment
     const env = new Env(assetsPath);
     // observe user's arc list
@@ -95,8 +96,7 @@ const visualizeContext = context => {
   console.log('======================================');
 };
 
-// TODO(sjmiles): does this really belong to PlannerShellInterface?
-const initDevTools = async () => {
+const maybeConnectToDevTools = async () => {
   if (process.argv.includes('--explore')) {
     console.log('Waiting for Arcs Explorer');
     DevtoolsConnection.ensure();

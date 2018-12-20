@@ -31,34 +31,6 @@ export class Relevance {
     return relevance;
   }
 
-  static deserialize({versionByStore = '{}', relevanceMap = {}}, recipe: Recipe) {
-    const relevance = new Relevance();
-    Object.assign(relevance.versionByStore, JSON.parse(versionByStore));
-    Object.keys(relevanceMap).forEach(particleName => {
-      const particle = recipe.particles.find(particle => particle.name === particleName);
-      assert(particle, `Cannot find particle ${particleName} in ${recipe.toString()}`);
-      if (relevance.relevanceMap.has(particle)) {
-        console.warn(`Multiple particles with name ${particleName}, relevance may be incorrect.`);
-      }
-      relevance.relevanceMap.set(particle, relevanceMap[particleName]);
-    });
-    return relevance;
-  }
-
-  serialize(): {} {
-    const serializedRelevanceMap = {};
-    this.relevanceMap.forEach((relevances: number[], particle: Particle) => {
-      // TODO(mmandlis): Should use particle ID or some other unique identifier instead,
-      // as recipe may contain multiple particles with the same name.
-      serializedRelevanceMap[particle.name] = relevances;
-    });
-    return {
-      // Needs to JSON.strigify because store IDs may contain invalid FB key symbols.
-      versionByStore: JSON.stringify(this.versionByStore),
-      relevanceMap: serializedRelevanceMap
-    };
-  }
-
   apply(relevance: Map<Particle, number[]>) {
     for (const key of relevance.keys()) {
       if (this.relevanceMap.has(key)) {

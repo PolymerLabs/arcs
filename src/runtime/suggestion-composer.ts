@@ -96,7 +96,7 @@ export class SuggestionComposer {
         }
         this._suggestConsumers.splice(index, 1);
 
-        this._slotComposer.arc.instantiate(suggestion.plan);
+        suggestion.instantiate(this._slotComposer.arc);
       }
     });
     context.addSlotConsumer(suggestConsumer);

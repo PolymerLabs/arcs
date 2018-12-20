@@ -42,7 +42,7 @@ http://polymer.github.io/PATENTS.txt
   const env = new Env('../../');
 
   const composer = new SlotComposer({
-    modality: 'dom',
+    modality: Modality.forName('dom'),
     rootContainer: document.body
   });
 

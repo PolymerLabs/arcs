@@ -17,6 +17,7 @@ import {Handle} from './handle.js';
 import {HandleConnection} from './handle-connection.js';
 import {compareComparables} from './util.js';
 import {InterfaceType} from '../type.js';
+import {Modality} from '../modality.js';
 
 export class Recipe {
   private _requires: Recipe[] = [];
@@ -159,14 +160,14 @@ export class Recipe {
     return this.uiParticles.length === 0 || this.getSupportedModalities().length > 0;
   }
 
-  isCompatibleWithModality(modality): boolean {
+  isCompatibleWithModality(modality: Modality): boolean {
     if (!modality) { // modality is unknown.
       return true;
     }
     if (this.uiParticles.length === 0) {
       return true;
     }
-    return this.getSupportedModalities().indexOf(modality) >= 0;
+    return this.getSupportedModalities().indexOf(modality.name) >= 0;
   }
 
   _findDuplicate(items, options) {
