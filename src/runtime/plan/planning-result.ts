@@ -17,6 +17,13 @@ import {VariableStorageProvider} from '../storage/storage-provider-base.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
 
+export type PlanningResultOptions = {
+  suggestions: Suggestion[];
+  lastUpdated?: Date;
+  generations: {population: {}[], record: {}}[];
+  contextual?: boolean;
+};
+
 export class PlanningResult {
   _suggestions: Suggestion[];
   lastUpdated: Date = new Date(null);
@@ -141,7 +148,7 @@ export class PlanningResult {
     });
   }
 
-  set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}): boolean {
+  set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions): boolean {
     if (this.isEquivalent(suggestions)) {
       return false;
     }
@@ -153,12 +160,12 @@ export class PlanningResult {
     return true;
   }
 
-  merge({suggestions, lastUpdated = new Date(), generations = [], contextual = true}, arc: Arc): boolean {
+  merge({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions, arc: Arc): boolean {
     if (this.isEquivalent(suggestions)) {
       return false;
     }
 
-    const jointSuggestions = [];
+    const jointSuggestions: Suggestion[] = [];
     const arcVersionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
 
      // For all existing suggestions, keep the ones still up to date.
@@ -166,14 +173,14 @@ export class PlanningResult {
       const newSuggestion = suggestions.find(suggestion => suggestion.hash === currentSuggestion.hash);
       if (newSuggestion) {
         // Suggestion with this hash exists in the new suggestions list.
-        const upToDateSuggestion = this.getUpToDate(currentSuggestion, newSuggestion, arcVersionByStore);
+        const upToDateSuggestion = this._getUpToDate(currentSuggestion, newSuggestion, arcVersionByStore);
         if (upToDateSuggestion) {
           jointSuggestions.push(upToDateSuggestion);
         }
       } else {
         // Suggestion with this hash does not exist in the new suggestions list.
         // Add it to the joint suggestions list, iff it's up-to-date and not in the active recipe.
-        if (this.isUpToDate(currentSuggestion, arcVersionByStore) &&
+        if (this._isUpToDate(currentSuggestion, arcVersionByStore) &&
             !RecipeUtil.matchesRecipe(arc.activeRecipe, currentSuggestion.plan))  {
           jointSuggestions.push(currentSuggestion);
         }
@@ -181,7 +188,7 @@ export class PlanningResult {
     }
     for (const newSuggestion of suggestions) {
       if (!this.suggestions.find(suggestion => suggestion.hash === newSuggestion.hash)) {
-        if (this.isUpToDate(newSuggestion, arcVersionByStore)) {
+        if (this._isUpToDate(newSuggestion, arcVersionByStore)) {
           jointSuggestions.push(newSuggestion);
         }
       }
@@ -189,7 +196,7 @@ export class PlanningResult {
     return this.set({suggestions: jointSuggestions, lastUpdated, generations, contextual});
   }
 
-  isUpToDate(suggestion: Suggestion, versionByStore: {}): boolean {
+  private _isUpToDate(suggestion: Suggestion, versionByStore: {}): boolean {
      for (const handle of suggestion.plan.handles) {
       const arcVersion = versionByStore[handle.id] || 0;
       const relevanceVersion = suggestion.versionByStore[handle.id] || 0;
@@ -200,9 +207,9 @@ export class PlanningResult {
     return true;
   }
 
-   getUpToDate(currentSuggestion: Suggestion, newSuggestion: Suggestion, versionByStore: {}): Suggestion {
-    const newUpToDate = this.isUpToDate(newSuggestion, versionByStore);
-    const currentUpToDate = this.isUpToDate(currentSuggestion, versionByStore);
+   private _getUpToDate(currentSuggestion: Suggestion, newSuggestion: Suggestion, versionByStore: {}): Suggestion|null {
+    const newUpToDate = this._isUpToDate(newSuggestion, versionByStore);
+    const currentUpToDate = this._isUpToDate(currentSuggestion, versionByStore);
     if (newUpToDate && currentUpToDate) {
       const newVersions = newSuggestion.versionByStore;
       const currentVersions = currentSuggestion.versionByStore;
@@ -226,7 +233,7 @@ export class PlanningResult {
     return null;
   }
 
-  append({suggestions, lastUpdated = new Date(), generations = []}): boolean {
+  append({suggestions, lastUpdated = new Date(), generations = []}: PlanningResultOptions): boolean {
     const newSuggestions = [];
     let searchUpdated = false;
     for (const newSuggestion of suggestions) {
