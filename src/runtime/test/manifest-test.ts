@@ -1162,7 +1162,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
+Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found.
   recipe ?
          ^`);
     }

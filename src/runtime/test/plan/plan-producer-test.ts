@@ -31,10 +31,10 @@ class TestPlanProducer extends PlanProducer {
   plannerPromise = null;
   
   constructor(arc, store) {
-    super(arc, new PlanningResult());
+    super(arc, new PlanningResult(store));
   }
 
-  async produceSuggestions(options?) {
+  async produceSuggestions(options = {}) {
     ++this.produceCalledCount;
     this.producePromises.push(super.produceSuggestions(options));
   }

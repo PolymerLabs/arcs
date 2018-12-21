@@ -25,7 +25,6 @@ async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
 }
 
 async function storeResults(consumer, suggestions) {
-  suggestions.forEach(s => s.relevance = Relevance.create(consumer.arc, s.plan));
   assert.isTrue(consumer.result.set({suggestions}));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
