@@ -48,7 +48,7 @@ export class Planner {
   }
 
   // Specify a timeout value less than zero to disable timeouts.
-  async plan(timeout: number, generations) {
+  async plan(timeout: number, generations?) {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
     const allResolved = [];

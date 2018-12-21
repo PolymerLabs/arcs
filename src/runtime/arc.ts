@@ -287,7 +287,7 @@ export class Arc {
     return results.join('\n');
   }
 
-  _serializeStorageKey() {
+  _serializeStorageKey(): string {
     if (this.storageKey) {
       return `storageKey: '${this.storageKey}'\n`;
     }

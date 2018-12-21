@@ -9,12 +9,15 @@
  */
 import {Loader} from '../loader.js';
 
-/** @class StubLoader
+/**
  * A Loader initialized with a per-path canned responses.
  * Value for '*' key can be specified for a response if the path did not match.
  * If '*' is not specified and path is not matched, Loader logic is invoked.
  */
 export class StubLoader extends Loader {
+  _fileMap;
+  _cannedResponse;
+ 
   constructor(fileMap) {
     super();
     this._fileMap = fileMap;
@@ -22,22 +25,26 @@ export class StubLoader extends Loader {
       this._cannedResponse = fileMap['*'];
     }
   }
-  loadResource(path) {
+
+  loadResource(path: string) {
     return this._fileMap.hasOwnProperty(path)
         ? this._fileMap[path]
         : (this._cannedResponse || super.loadResource(path));
   }
-  path(fileName) {
+
+  path(fileName: string) {
     return (this._fileMap.hasOwnProperty(fileName) || this._cannedResponse)
         ? fileName
         : super.path(fileName);
   }
-  join(prefix, path) {
+
+  join(prefix: string, path: string) {
     // If referring from stubbed content, don't prepend stubbed filename.
     return (this._fileMap.hasOwnProperty(prefix) || this._cannedResponse)
         ? path
         : super.join(prefix, path);
   }
+
   clone() {
     // Each ParticleExecutionContext should get its own Loader, this facilitates that.
     return new StubLoader(this._fileMap);

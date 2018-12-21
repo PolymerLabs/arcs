@@ -24,7 +24,7 @@ export class PlanningResult {
   private storeCallback: ({}) => void;
   private changeCallbacks: (() => void)[] = [];
 
-  constructor(store: VariableStorageProvider) {
+  constructor(store?: VariableStorageProvider) {
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();
@@ -194,7 +194,7 @@ export class PlanningResult {
            oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  fromLiteral({suggestions, generations, lastUpdated}) {
+  fromLiteral({suggestions, generations, lastUpdated}: {suggestions, generations?, lastUpdated?: Date}) {
     return this.set({
       suggestions: suggestions.map(suggestion => Suggestion.fromLiteral(suggestion)).filter(s => s),
       generations: JSON.parse(generations || '[]'),
@@ -203,7 +203,7 @@ export class PlanningResult {
     });
   }
 
-  toLiteral(): {} {
+  toLiteral(): {suggestions, generations, lastUpdated, contextual} {
     return {
       suggestions: this.suggestions.map(suggestion => suggestion.toLiteral()),
       generations: JSON.stringify(this.generations),

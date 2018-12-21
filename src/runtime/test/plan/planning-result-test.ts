@@ -14,7 +14,7 @@ import {Search} from '../../recipe/search.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('planning result', function() {
+describe('planning result', () => {
   async function testResultSerialization(manifestFilename) {
     const helper = await TestHelper.createAndPlan({manifestFilename});
     assert.isNotEmpty(helper.suggestions);
@@ -49,14 +49,13 @@ describe('planning result', function() {
     assert.lengthOf(result.suggestions, 1);
 
     // init results.
-    const relevance = Relevance.create(helper.arc, helper.suggestions[0].plan);
-    const otherSuggestion = new Suggestion(helper.suggestions[0].plan, 'other-hash', relevance, helper.arc);
+    const otherSuggestion = new Suggestion(helper.suggestions[0].plan, 'other-hash', 0, '{}');
     otherSuggestion.descriptionByModality['text'] = 'other description';
     helper.suggestions.push(otherSuggestion);
     assert.isTrue(result.append({suggestions: helper.suggestions}));
     assert.lengthOf(result.suggestions, 2);
 
-    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', relevance, otherSuggestion.arc);
+    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, '{}');
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
     helper.suggestions.push(suggestionWithSearch);

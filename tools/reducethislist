@@ -65,14 +65,12 @@ src/runtime/testing/fake-slot-composer.js
 src/runtime/testing/mock-slot-composer.js
 src/runtime/testing/mock-slot-dom-consumer.js
 src/runtime/testing/mock-suggest-dom-consumer.js
-src/runtime/testing/stub-loader.js
 src/runtime/testing/test-helper.js
 src/runtime/testing/test-util.js
 src/runtime/test/manifest-integration-test.js
 src/runtime/test/multiplexer-test.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js
-src/runtime/test/planner-tests.js
 src/runtime/test/recipe-index-test.js
 src/runtime/test/recipe-resolver-test.js
 src/runtime/test/recipe-test.js
@@ -90,12 +88,6 @@ src/runtime/test/artifacts/consumer-particle.js
 src/runtime/test/artifacts/hello.js
 src/runtime/test/artifacts/outer-particle.js
 src/runtime/test/artifacts/test-particle.js
-src/runtime/test/plan/plan-consumer-test.js
-src/runtime/test/plan/planificator-test.js
-src/runtime/test/plan/planning-result-test.js
-src/runtime/test/plan/plan-producer-test.js
-src/runtime/test/plan/replan-queue-test.js
-src/runtime/test/plan/suggestion-test.js
 src/runtime/test/strategies/coalesce-recipes-test.js
 src/runtime/test/strategies/convert-constraints-to-connections-tests.js
 src/runtime/test/strategies/find-hosted-particle-tests.js

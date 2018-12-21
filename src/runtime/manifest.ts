@@ -192,7 +192,7 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type, name, id, tags, storageKey) {
+  async createStore(type, name, id, tags, storageKey?) {
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store.version !== null);
     store.name = name;

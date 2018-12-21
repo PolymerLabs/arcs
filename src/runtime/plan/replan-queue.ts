@@ -34,7 +34,7 @@ export class ReplanQueue {
 
   addChange() {
     this.changes.push(now());
-    if (this._isReplanningScheduled()) {
+    if (this.isReplanningScheduled()) {
       this._postponeReplan();
     } else if (!this.planProducer.isPlanning) {
       this._scheduleReplan(this.options.defaultReplanDelayMs);
@@ -54,7 +54,7 @@ export class ReplanQueue {
     }
   }
 
-  private _isReplanningScheduled() {
+  isReplanningScheduled(): boolean {
     return Boolean(this.replanTimer);
   }
 
@@ -66,7 +66,7 @@ export class ReplanQueue {
   }
 
   private _cancelReplanIfScheduled() {
-    if (this._isReplanningScheduled()) {
+    if (this.isReplanningScheduled()) {
       clearTimeout(this.replanTimer);
       this.replanTimer = null;
     }
