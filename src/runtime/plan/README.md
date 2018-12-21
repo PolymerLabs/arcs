@@ -27,10 +27,17 @@ https://polymerlabs.github.io/arcs-live/shells/web-shell?plannerOnlyConsumer=tru
 
 ## Firebase
 To run planning on the server use the following command:
-
 ```
 /shells/planner-shell $ serve.sh
 ```
+
+Or with DevTools:
+```
+/shells/planner-shell $ serve.sh --explore
+```
+Access DevTools for remote planner at: http://localhost:8080/devools/.
+
+
 or debug with:
 ```
 /shells/planner-shell $ debug.sh
