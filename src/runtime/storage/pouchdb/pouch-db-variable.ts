@@ -245,7 +245,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     this._stored = value;
     this._rev = doc._rev;
     this.referenceMode = doc.referenceMode;
-    this.version = Math.max(this.version, doc.version) + 1;
+    this.bumpVersion(doc.version);
 
     // Skip if value == null, which is what happens when docs are deleted..
     if (this.referenceMode && value) {
@@ -283,7 +283,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         this._stored = result.value;
         this._rev = result._rev;
         this.referenceMode = result.referenceMode;
-        this.version = Math.max(this.version, result.version) + 1;
+        this.bumpVersion(result.version);
       }
     } catch (err) {
       if (err.name === 'not_found') {
@@ -327,7 +327,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
           // remote revision is different, update local copy.
           this._stored = doc.value;
           this._rev = doc._rev;
-          this.version = Math.max(this.version, doc.version) + 1;
+          this.bumpVersion(doc.version);
         }
       } catch (err) {
         if (err.name !== 'not_found') {
