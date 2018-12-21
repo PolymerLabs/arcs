@@ -15,6 +15,7 @@ import {Suggestion} from './suggestion.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 import {DevtoolsConnection} from '../debug/devtools-connection.js';
 import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
+import {Modality} from '../modality.js';
 
 type Callback = ({}) => void;
 
@@ -67,7 +68,7 @@ export class PlanConsumer {
   getCurrentSuggestions(): Suggestion[] {
     const suggestions = this.result.suggestions.filter(
         suggestion => suggestion.plan.slots.length > 0
-                      && suggestion.plan.modalities.includes(this.arc.modality.name));
+                      && this.arc.modality.isCompatible(suggestion.plan.modality.map(m => m.name)));
 
     // `showAll`: returns all suggestions that render into slots.
     if (this.suggestFilter['showAll']) {

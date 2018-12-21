@@ -79,6 +79,6 @@ export class UserPlanner {
 
   visibleSuggestionsChanged(key, suggestions) {
     log(`${suggestions.length} visible suggestions [${key}]:`);
-    suggestions.forEach(({descriptionByModality, plan: {_name}}) => log(`\t\t[${_name}]: ${descriptionByModality.text}`));
+    suggestions.forEach(({descriptionByModality, plan: {name}}) => log(`\t\t[${name}]: ${descriptionByModality.text}`));
   }
 }

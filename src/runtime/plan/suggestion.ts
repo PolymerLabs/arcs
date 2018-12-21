@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
-import {Description} from '../description.js';
+import {Description, DescriptionFormatter} from '../description.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
@@ -31,34 +31,22 @@ type FromLiteralOptions = {
 };
 
 export class Plan {
-  serialization: string;
-  particles: {name: string, connections: {}[]}[] = [];
-  handles: {id: string, tags: string[]}[] = [];
-  handleConnections: {name: string, direction: string, particle: {}}[] = [];
-  slots: {id: string, name: string, tags: string[]}[] = [];
-  modalities: string[] = [];
-
-  constructor(serialization: string,
-              particles: {name: string, connections: {}[]}[],
-              handles: {id: string, tags: string[]}[],
-              handleConnections: {name: string, direction: string, particle: {}}[],
-              slots: {id: string, name: string, tags: string[]}[],
-              modalities: string[]) {
-    this.serialization = serialization;
-    this.particles = particles;
-    this.handles = handles;
-    this.handleConnections = handleConnections;
-    this.slots = slots;
-    this.modalities = modalities;
-  }
+  constructor(public readonly serialization: string,
+              public readonly name: string,
+              public readonly particles: {name: string, connections: {}[]}[],
+              public readonly handles: {id: string, tags: string[]}[],
+              public readonly handleConnections: {name: string, direction: string, particle: {}}[],
+              public readonly slots: {id: string, name: string, tags: string[]}[],
+              public readonly modality: {name: string}[]) {}
 
   static create(plan: Recipe): Plan {
     return new Plan(plan.toString(),
+        plan.name,
         plan.particles.map(p => ({name: p.name, connections: Object.keys(p.connections).map(pcName => ({name: pcName}))})),
         plan.handles.map(h => ({id: h.id, tags: h.tags})),
         plan.handleConnections.map(hc => ({name: hc.name, direction: hc.direction, particle: {name: hc.particle.name}})),
         plan.slots.map(s => ({id: s.id, name: s.name, tags: s.tags})),
-        plan.getSupportedModalities());
+        plan.modality.names.map(n => ({name: n})));
   }
 }
 
@@ -101,11 +89,13 @@ export class Suggestion {
     return this.descriptionByModality[modality];
   }
 
-  async setDescription(description: Description) {
+  async setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
     this.descriptionByModality['text'] = await description.getRecipeSuggestion();
-    for (const modality of this.plan.modalities) {
-      this.descriptionByModality[modality] =
-        await description.getRecipeSuggestion(Modality.forName(modality).descriptionFormatter);
+    for (const planModality of this.plan.modality) {
+      if (modality.names.includes(planModality.name)) {
+        this.descriptionByModality[planModality.name] =
+          await description.getRecipeSuggestion(descriptionFormatter);
+      }
     }
   }
 

@@ -49,7 +49,10 @@ export class Speculator {
 
     speculativeArc.description.relevance = relevance;
     suggestion = Suggestion.create(plan, hash, relevance);
-    await suggestion.setDescription(speculativeArc.description);
+    await suggestion.setDescription(
+        speculativeArc.description,
+        arc.modality,
+        arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
     this.suggestionByHash[hash] = suggestion;
     return suggestion;
   }

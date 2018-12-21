@@ -17,7 +17,8 @@
     try {
       // create a composer configured for web
       const composer = new SlotComposer({
-        modality: Modality.forName('dom'),
+        modalityName: Modality.Name.Dom,
+        modalityHandler: ModalityHandler.domHandler,
         rootContainer: document.body
       });
       window.arc = await App(composer);

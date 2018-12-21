@@ -9,13 +9,14 @@
  */
 'use strict';
 
-import {SlotComposer, Modality} from './arcs.js';
+import {SlotComposer, ModalityHandler} from './arcs.js';
 
 export class RamSlotComposer extends SlotComposer {
   constructor(options = {}) {
     super({
       rootContainer: options.rootContainer || {'root': 'root-context'},
-      modality: Modality.forName('mock-dom')
+      modalityName: options.modalityName,
+      modalityHandler: ModalityHandler.createHeadlessHandler()
     });
   }
 
