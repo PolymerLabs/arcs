@@ -20,27 +20,31 @@ import {Search} from '../recipe/search.js';
 
 export class Plan {
   serialization: string;
-  particles: {name: string}[] = [];
+  particles: {name: string, connections: {}[]}[] = [];
   handles: {id: string, tags: string[]}[] = [];
+  handleConnections: {name: string, direction: string, particle: {}}[] = [];
   slots: {id: string, name: string, tags: string[]}[] = [];
   modalities: string[] = [];
 
   constructor(serialization: string,
-              particles: {name: string}[],
+              particles: {name: string, connections: {}[]}[],
               handles: {id: string, tags: string[]}[],
+              handleConnections: {name: string, direction: string, particle: {}}[],
               slots: {id: string, name: string, tags: string[]}[],
               modalities: string[]) {
     this.serialization = serialization;
     this.particles = particles;
     this.handles = handles;
+    this.handleConnections = handleConnections;
     this.slots = slots;
     this.modalities = modalities;
   }
 
   static create(plan: Recipe): Plan {
     return new Plan(plan.toString(),
-        plan.particles.map(p => ({name: p.name})),
+        plan.particles.map(p => ({name: p.name, connections: Object.keys(p.connections).map(pcName => ({name: pcName}))})),
         plan.handles.map(h => ({id: h.id, tags: h.tags})),
+        plan.handleConnections.map(hc => ({name: hc.name, direction: hc.direction, particle: {name: hc.particle.name}})),
         plan.slots.map(s => ({id: s.id, name: s.name, tags: s.tags})),
         plan.getSupportedModalities());
   }

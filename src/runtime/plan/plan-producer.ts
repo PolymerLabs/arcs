@@ -141,7 +141,7 @@ export class PlanProducer {
 
     // Suggestions are null, if planning was cancelled.
     if (suggestions) {
-      log(`Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
+      log(`[${this.arc.arcId}] Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
 
       await this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions);
@@ -188,7 +188,7 @@ export class PlanProducer {
         return;
       }
     } else {
-      if (!this.result.set({suggestions, generations, contextual: options['contextual']})) {
+      if (!this.result.merge({suggestions, generations, contextual: options['contextual']}, this.arc)) {
         return;
       }
     }
