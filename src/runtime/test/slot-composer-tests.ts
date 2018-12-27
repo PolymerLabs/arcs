@@ -295,7 +295,7 @@ recipe
     assert.deepEqual(rootSlotConsumer._content, {
       model: {
         a: 'A content/intercepted-model',
-        '$detail': 'slotid-!85915497922560:demo:3'
+        '$detail': 'slotid-!493604905418752:demo:inner2:2'
       },
       template: `<div>intercepted-template<div><span>{{a}}</span><div slotid$="{{$detail}}"></div></div></div>`,
       templateName: 'A::content::default/intercepted'

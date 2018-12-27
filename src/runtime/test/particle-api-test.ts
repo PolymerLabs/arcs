@@ -184,7 +184,8 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(result.type)[1];
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const newStore = innerArc.findStoresByType(result.type)[0];
     assert.equal(newStore.name, 'hello');
     await util.assertSingletonIs(newStore, 'value', 'success');
   });
@@ -262,7 +263,8 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(result.type)[2];
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const newStore = innerArc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -352,7 +354,8 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(result.type)[2];
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const newStore = innerArc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -444,7 +447,8 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(result.type)[2];
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const newStore = innerArc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -541,7 +545,8 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
-    const newStore = arc.findStoresByType(result.type)[2];
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const newStore = innerArc.findStoresByType(result.type)[1];
     assert.equal(newStore.name, 'the-out');
     await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
@@ -644,11 +649,14 @@ describe('particle-api', () => {
     // TODO: how do i listen to inner arc's outStore handle-changes?
     // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
 
-    let newStore = arc.findStoresByType(result.type)[1];
-    assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
+    const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
+    const innerArcStores = innerArc.findStoresByType(result.type);
+
+    let newStore = innerArcStores[1];
+    assert.equal(innerArcStores[1].name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'HELLO');
 
-    newStore = arc.findStoresByType(result.type)[3];
+    newStore = innerArcStores[3];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
@@ -821,11 +829,11 @@ describe('particle-api', () => {
     const [transformationParticle] = arc.activeRecipe.particles;
 
     assert.lengthOf(arc.recipes, 1);
-    const innerArc = arc.recipes[0].innerArcs.get(transformationParticle);
+    const [innerArc] = arc.findInnerArcs(transformationParticle);
 
     assert.equal(innerArc.activeRecipe.toString(), `recipe
-  slot '!85915497922560:demo:2' as slot0
-  slot 'slotid-!85915497922560:demo:3' as slot1
+  slot '!493604905418752:demo:inner2:1' as slot0
+  slot 'slotid-!493604905418752:demo:inner2:2' as slot1
   A as particle0
     consume content as slot0
       provide detail as slot1

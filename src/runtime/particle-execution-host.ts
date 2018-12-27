@@ -143,35 +143,37 @@ export class ParticleExecutionHost {
       }
 
       onConstructInnerArc(callback: number, particle: Particle) {
-        const arc = {particle};
+        const arc = pec.arc.createInnerArc(particle);
         this.ConstructArcCallback(callback, arc);
       }
 
-      async onArcCreateHandle(callback: number, arc: {}, type: Type, name: string) {
+      async onArcCreateHandle(callback: number, arc: Arc, type: Type, name: string) {
         // At the moment, inner arcs are not persisted like their containers, but are instead
         // recreated when an arc is deserialized. As a consequence of this, dynamically 
         // created handles for inner arcs must always be volatile to prevent storage 
         // in firebase.
-        const store = await pec.arc.createStore(type, name, null, [], 'volatile');
+        const store = await arc.createStore(type, name, null, [], 'volatile');
+        // Store belongs to the inner arc, but the transformation particle,
+        // which itself is in the outer arc gets access to it.
         this.CreateHandleCallback(store, callback, type, name, store.id);
       }
 
-      onArcMapHandle(callback: number, arc: {}, handle: Handle) {
+      onArcMapHandle(callback: number, arc: Arc, handle: Handle) {
         assert(pec.arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
         // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
         this.MapHandleCallback({}, callback, handle.id);
       }
 
-      onArcCreateSlot(callback: number, arc: {}, transformationParticle: Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
+      onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
         let hostedSlotId;
         if (pec.slotComposer) {
-          hostedSlotId = pec.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
+          hostedSlotId = pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
         }
         this.CreateSlotCallback({}, callback, hostedSlotId);
       }
 
-      async onArcLoadRecipe(arc: {}, recipe: string, callback: number) {
-        const manifest = await Manifest.parse(recipe, {loader: pec.arc.loader, fileName: ''});
+      async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {
+        const manifest = await Manifest.parse(recipe, {loader: arc.loader, fileName: ''});
         const successResponse = {
           providedSlotIds: {}
         };
@@ -180,6 +182,15 @@ export class ParticleExecutionHost {
         // there's more than one recipe since currently we silently ignore them.
         let recipe0 = manifest.recipes[0];
         if (recipe0) {
+          for (const slot of recipe0.slots) {
+            slot.id = slot.id || `slotid-${arc.generateID()}`;
+            if (slot.sourceConnection) {
+              const particlelocalName = slot.sourceConnection.particle.localName;
+              if (particlelocalName) {
+                successResponse.providedSlotIds[`${particlelocalName}.${slot.name}`] = slot.id;
+              }  
+            }
+          }
           const missingHandles = [];
           for (const handle of recipe0.handles) {
             const fromHandle = pec.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
@@ -190,20 +201,15 @@ export class ParticleExecutionHost {
             handle.mapToStorage(fromHandle);
           }
           if (missingHandles.length > 0) {
-            const resolvedRecipe = await new RecipeResolver(pec.arc).resolve(recipe0);
-            if (!resolvedRecipe) {
+            let recipeToResolve = recipe0;
+            // We're resolving both against the inner and the outer arc.
+            for (const resolver of [new RecipeResolver(arc /* inner */), new RecipeResolver(pec.arc /* outer */)]) {
+              recipeToResolve = await resolver.resolve(recipeToResolve) || recipeToResolve;
+            }
+            if (recipeToResolve === recipe0) {
               error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
             } else {
-              recipe0 = resolvedRecipe;
-            }
-          }
-          for (const slot of recipe0.slots) {
-            slot.id = slot.id || `slotid-${pec.arc.generateID()}`;
-            if (slot.sourceConnection) {
-              const particlelocalName = slot.sourceConnection.particle.localName;
-              if (particlelocalName) {
-                successResponse.providedSlotIds[`${particlelocalName}.${slot.name}`] = slot.id;
-              }  
+              recipe0 = recipeToResolve;
             }
           }
           if (!error) {
@@ -215,7 +221,7 @@ export class ParticleExecutionHost {
                 // TODO: pass tags through too, and reconcile with similar logic
                 // in Arc.deserialize.
                 manifest.stores.forEach(store => pec.arc._registerStore(store, []));
-                pec.arc.instantiate(recipe0, arc);
+                arc.instantiate(recipe0);
               } else {
                 error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
               }
