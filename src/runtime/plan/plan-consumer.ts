@@ -46,7 +46,7 @@ export class PlanConsumer {
   registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
   registerVisibleSuggestionsChangedCallback(callback) { this.visibleSuggestionsChangeCallbacks.push(callback); }
 
-  setSuggestFilter(showAll?: boolean, search?: string) {
+  setSuggestFilter(showAll: boolean, search?: string) {
     assert(!showAll || !search);
     if (this.suggestFilter['showAll'] === showAll && this.suggestFilter['search'] === search) {
       return;
