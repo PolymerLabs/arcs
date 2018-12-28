@@ -18,8 +18,9 @@ export class ReplanQueue {
   planProducer: PlanProducer;
   options: {[index: string]: number} = {};
   changes: number[];
+  // setTimeout return number on browser and a timer on node...
   // tslint:disable-next-line: no-any
-  replanTimer: any;
+  private replanTimer: any;
 
   constructor(planProducer: PlanProducer, options = {}) {
     this.planProducer = planProducer;
@@ -55,7 +56,7 @@ export class ReplanQueue {
   }
 
   isReplanningScheduled(): boolean {
-    return Boolean(this.replanTimer);
+    return this.replanTimer !== null;
   }
 
   private _scheduleReplan(intervalMs) {

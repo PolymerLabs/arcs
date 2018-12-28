@@ -20,7 +20,7 @@ const error = logFactory('PlanningResult', '#ff0090', 'error');
 export type PlanningResultOptions = {
   suggestions: Suggestion[];
   lastUpdated?: Date;
-  generations: {population: {}[], record: {}}[];
+  generations?: {population: {}[], record: {}}[];
   contextual?: boolean;
 };
 
@@ -285,7 +285,7 @@ export class PlanningResult {
     });
   }
 
-  toLiteral(): {suggestions, generations, lastUpdated, contextual} {
+  toLiteral() {
     return {
       suggestions: this.suggestions.map(suggestion => suggestion.toLiteral()),
       generations: JSON.stringify(this.generations),

@@ -45,7 +45,7 @@ describe('remote planificator', () => {
 
   async function createArc(options, storageKey) {
     return (await TestHelper.createAndPlan(
-        Object.assign(options, {slotComposer: new FakeSlotComposer(), storageKey}))).arc;
+      {...options, slotComposer: new FakeSlotComposer(), storageKey})).arc;
   }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
     return Planificator.create(
@@ -158,7 +158,7 @@ import './src/runtime/test/artifacts/People/Person.schema'
 store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
     `;
     const restaurantsPlanificator = new Planificator(
-        await createArc({manifestString: restaurantsManifestString}),
+        await createArc({manifestString: restaurantsManifestString}, storageKey),
         userid, productsPlanificator.result.store, productsPlanificator.searchStore);
     await restaurantsPlanificator.loadSuggestions();
     assert.lengthOf(restaurantsPlanificator.result.suggestions, 1);

@@ -45,8 +45,9 @@ export class Plan {
               slots: {id: string, name: string, tags: string[]}[],
               modalities: string[]) {
     this.serialization = serialization;
-    this.handles = handles;
     this.particles = particles;
+    this.handles = handles;
+    this.handleConnections = handleConnections;
     this.slots = slots;
     this.modalities = modalities;
   }

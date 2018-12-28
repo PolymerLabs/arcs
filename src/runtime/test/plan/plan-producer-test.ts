@@ -162,12 +162,11 @@ class TestPlanProducer extends PlanProducer {
 });
 
 describe('plan producer - search', () => {
-  const arcKey = '123';
   class TestSearchPlanProducer extends PlanProducer {
     options;
     produceSuggestionsCalled = 0;
     
-    constructor(arc: Arc, searchStore: FakeVariable) {
+    constructor(arc: Arc, searchStore: VariableStorageProvider) {
       super(arc, new PlanningResult(searchStore), searchStore);
     }
 
@@ -176,40 +175,21 @@ describe('plan producer - search', () => {
       this.options = options;
     }
 
-    setNextSearch(search) {
-      const fakeSearchStore = this.searchStore as FakeVariable;
-      
-      fakeSearchStore.values = [{arc: arcKey, search}];
+    setNextSearch(search: string) {
+      this.searchStore.set([{arc: this.arc.arcId, search}]);
       return this.onSearchChanged();
     }
   }
-
-  class FakeVariable extends StorageProviderBase implements VariableStorageProvider {
-    backingStore;
-    values: {};
-    
-    constructor() {
-      super(undefined, 'foo', 'id', 'storageKey');
-    }
-      
-    async get(): Promise<{}> {
-      return this.values;
-    }
-    async set(value: {}, originatorId?: string, barrier?: string): Promise<void> {}
-    async clear(originatorId?: string, barrier?: string): Promise<void> {}
-    toLiteral() {}
-    ensureBackingStore() {}
-    cloneFrom() {}
-  }
   
-  async function init() {
-    const searchStore = new FakeVariable();
+  async function init(): Promise<TestSearchPlanProducer> {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Bar
         Text value
     `);
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test',
+                         storageKey: 'volatile://test^^123'});
+    const searchStore = await Planificator['_initSearchStore'](arc, /* userid= */ 'TestUser');
 
     const producer = new TestSearchPlanProducer(arc, searchStore);
     assert.isUndefined(producer.search);
@@ -222,19 +202,19 @@ describe('plan producer - search', () => {
 
     // Search for non-contextual results.
     await producer.setNextSearch('*');
-    assert.equal('*', producer.search);
+    assert.equal(producer.search, '*');
     assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isFalse(producer.options.contextual);
     assert.isFalse(Boolean(producer.options.append));
 
     // Unchanged search term.
     await producer.setNextSearch('*');
-    assert.equal('*', producer.search);
+    assert.equal(producer.search, '*');
     assert.equal(producer.produceSuggestionsCalled, 1);
 
     // Requires contextual results only, no need to replan.
     await producer.setNextSearch('');
-    assert.equal('', producer.search);
+    assert.equal(producer.search, '');
     assert.equal(producer.produceSuggestionsCalled, 1);
   });
 
