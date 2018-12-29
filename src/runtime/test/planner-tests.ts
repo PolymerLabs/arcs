@@ -18,8 +18,8 @@ import {Manifest} from '../manifest.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 const loader = new Loader();
 
-async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
-  if (typeof manifest == 'string') {
+async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
+  if (typeof manifest === 'string') {
     const fileName = './test.manifest';
     manifest = await Manifest.parse(manifest, {loader, fileName});
   }
@@ -39,28 +39,36 @@ const assertRecipeResolved = recipe => {
   assert.isTrue(recipe.isResolved());
 };
 
+class MyLoader extends StubLoader {
+  private manifest;
+
+  constructor(manifest) {
+    super({manifest});
+    this.manifest = manifest;
+  }
+
+  async requireParticle(fileName: string) {
+    const clazz = class {
+      relevances;
+
+      constructor() {
+        this.relevances = [1];
+      }
+      async setHandles(handles) {
+        const thingHandle = handles.get('thing');
+        thingHandle.set(new thingHandle.entityClass({name: 'MYTHING'}));
+      }
+    };
+    return clazz;
+  }
+  clone() {
+    return new MyLoader({manifest: this.manifest});
+  }
+}
+
 const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
   const registry = {};
-  const loader = new class MyLoader extends StubLoader {
-    constructor() {
-      super({manifest});
-    }
-    async requireParticle(fileName) {
-      const clazz = class {
-        constructor() {
-          this.relevances = [1];
-        }
-        async setHandles(handles) {
-          const thingHandle = handles.get('thing');
-          thingHandle.set(new thingHandle.entityClass({name: 'MYTHING'}));
-        }
-      };
-      return clazz;
-    }
-    clone() {
-      return new MyLoader();
-    }
-  };
+  const loader = new MyLoader(manifest);
   const loadedManifest = await Manifest.load('manifest', loader, {registry});
   manifestLoadedCallback(loadedManifest);
 
@@ -69,11 +77,11 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
 
-  const plans = await planner.suggest();
+  const plans = await planner.suggest(Infinity);
   return {plans, arc};
 };
 
-describe('Planner', function() {
+describe('Planner', () => {
   it('can map remote handles structurally', async () => {
     const results = await planFromManifest(`
       store AStore of * {Text text, Text moreText} in './src/runtime/test/artifacts/Things/empty.json'
@@ -143,7 +151,7 @@ describe('Planner', function() {
         assertRecipeResolved(manifest.recipes[1]);
       }
     );
-    assert.equal(plans.length, 2);
+    assert.lengthOf(plans, 2);
     // Make sure the recipes were processed as separate plan groups.
     // TODO(wkorman): When we move to a thread pool we'll revise this to check
     // the thread index instead.
@@ -152,7 +160,7 @@ describe('Planner', function() {
   });
 });
 
-describe('AssignOrCopyRemoteHandles', function() {
+describe('AssignOrCopyRemoteHandles', () => {
   const particlesSpec = `
       schema Foo
 
@@ -251,7 +259,7 @@ ${recipeManifest}
         A as particle0
           list <- list
     `, 3);
-    assert.isTrue(plansA.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'map')));
+    assert.isTrue(plansA.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'map')));
 
     const plansB = await testManifest(`
       recipe
@@ -259,7 +267,7 @@ ${recipeManifest}
         B as particle0
           list = list
     `, 3);
-    assert.isTrue(plansB.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'copy')));
+    assert.isTrue(plansB.every(plan => plan.handles.length === 1 && plan.handles.every(handle => handle.fate === 'copy')));
   });
   it('finds remote tagged handles with unknown fate', async () => {
     const plansA = await testManifest(`
@@ -334,11 +342,11 @@ ${recipeManifest}
   });
 });
 
-describe('Type variable resolution', function() {
+describe('Type variable resolution', () => {
   const loadAndPlan = async (manifestStr) => {
     const loader = {
-      join: (() => { return ''; }),
-      loadResource: (() => { return '[]'; })
+      join: (() => ''),
+      loadResource: (() => '[]')
     };
     const manifest = (await Manifest.parse(manifestStr, {loader}));
 
@@ -562,12 +570,12 @@ describe('Description', async () => {
     );
     assert.lengthOf(plans, 1);
     assert.equal('Make MYTHING.', await plans[0].descriptionText);
-    assert.equal(0, arc.storesById.size);
+    assert.lengthOf(arc._stores, 0);
   });
 });
 
-describe('Automatic resolution', function() {
-  const loadAndPlan = async (manifestStr, arcCreatedCallback) => {
+describe('Automatic resolution', () => {
+  const loadAndPlan = async (manifestStr: string, arcCreatedCallback?) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
         const arc = StrategyTestHelper.createTestArc(manifest);
@@ -576,7 +584,7 @@ describe('Automatic resolution', function() {
       }
     });
   };
-  const verifyResolvedPlans = async (manifestStr, arcCreatedCallback) => {
+  const verifyResolvedPlans = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
@@ -584,12 +592,12 @@ describe('Automatic resolution', function() {
     }
     return plans;
   };
-  const verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
+  const verifyResolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
     assert.lengthOf(plans, 1);
     return plans[0];
   };
-  const verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
+  const verifyUnresolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     assert.isEmpty(plans);
   };
@@ -688,8 +696,8 @@ describe('Automatic resolution', function() {
         A
       `,
       async (arc, manifest) => {
-        const Thing = manifest.findSchemaByName('Thing').entityClass();
-        await arc.createStore(Thing.type, undefined, 'test:1');
+        const thing = manifest.findSchemaByName('Thing').entityClass();
+        await arc.createStore(thing.type, undefined, 'test:1');
       }
     );
 
@@ -751,8 +759,8 @@ describe('Automatic resolution', function() {
           consume item`,
         async (arcRef, manifest) => {
           arc = arcRef;
-          const Thing = manifest.findSchemaByName('Thing').entityClass();
-          await arc.createStore(Thing.type.collectionOf(), undefined, 'test-store', ['items']);
+          const thing = manifest.findSchemaByName('Thing').entityClass();
+          await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
         });
 
     assert.lengthOf(recipes, 1);
@@ -795,9 +803,9 @@ describe('Automatic resolution', function() {
     `);
     // Both explicit recipes are resolved, and a new coalesced one is produced.
     assert.lengthOf(recipes, 3);
-    assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'A'));
-    assert.isTrue(recipes.some(recipe => recipe.particles.length == 1 && recipe.particles[0].name == 'B'));
-    const recipe = recipes.find(recipe => recipe.particles.length == 2);
+    assert.isTrue(recipes.some(recipe => recipe.particles.length === 1 && recipe.particles[0].name === 'A'));
+    assert.isTrue(recipes.some(recipe => recipe.particles.length === 1 && recipe.particles[0].name === 'B'));
+    const recipe = recipes.find(recipe => recipe.particles.length === 2);
     assert.deepEqual(['A', 'B'], recipe.particles.map(p => p.name).sort());
     // Verify the `thing` handle was coalesced.
     assert.lengthOf(recipe.handles, 1);
@@ -845,9 +853,9 @@ describe('Automatic resolution', function() {
           list = items
     `);
     assert.lengthOf(recipes, 2);
-    const coalesced = recipes.find(r => r.particles.length == 3);
+    const coalesced = recipes.find(r => r.particles.length === 3);
     // Verify the #selected handles weren't coalesced - they are of different types.
-    assert.lengthOf(coalesced.handles.filter(h => h.tags.length == 1 && h.tags[0] == 'selected'), 2);
+    assert.lengthOf(coalesced.handles.filter(h => h.tags.length === 1 && h.tags[0] === 'selected'), 2);
   });
 
   const verifyRestaurantsPlanSearch = async (searchStr) => {
@@ -885,10 +893,10 @@ describe('Automatic resolution', function() {
     // Only descriptions and person handle have one handle connection.
     assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
     // Only person handle has fate other than `create`
-    assert.isTrue(recipe.handles.every(h => h.fate == 'create' || 'person' == h.connections[0].name));
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
     // Naive verification that a specific connection name only binds to the same handle.
     recipe.handles.forEach(handle => handle.connections.every(conn => {
-      assert.isTrue(recipe.handles.every(otherHandle => handle == otherHandle || !otherHandle.connections.some(otherConn => otherConn.name == conn.name)),
+      assert.isTrue(recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
                     `Connection name ${conn.name} is bound to multiple handles.`);
     }));
   });
@@ -902,10 +910,10 @@ describe('Automatic resolution', function() {
     // Only descriptions and person handle have one handle connection.
     assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
     // Only person handle has fate other than `create`
-    assert.isTrue(recipe.handles.every(h => h.fate == 'create' || 'person' == h.connections[0].name));
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
     // Naive verification that a specific connection name only binds to the same handle.
     recipe.handles.forEach(handle => handle.connections.every(conn => {
-      assert.isTrue(recipe.handles.every(otherHandle => handle == otherHandle || !otherHandle.connections.some(otherConn => otherConn.name == conn.name)),
+      assert.isTrue(recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
                     `Connection name ${conn.name} is bound to multiple handles.`);
     }));
   });
@@ -919,11 +927,11 @@ describe('Automatic resolution', function() {
     // Only descriptions and person handle have one handle connection.
     assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
     // Only person handle has fate other than `create`
-    assert.isTrue(recipe.handles.every(h => h.fate == 'create' || 'person' == h.connections[0].name));
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
     // Naive verification that a specific connection name only binds to the same handle.
     recipe.handles.forEach(handle => handle.connections.every(conn => {
-      assert.isTrue(conn.name == 'descriptions' ||
-                    recipe.handles.every(otherHandle => handle == otherHandle || !otherHandle.connections.some(otherConn => otherConn.name == conn.name)),
+      assert.isTrue(conn.name === 'descriptions' ||
+                    recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
                     `Connection name ${conn.name} is bound to multiple handles.`);
     }));
   });

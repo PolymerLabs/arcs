@@ -13,13 +13,14 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {Search} from '../../recipe/search.js';
 import {Relevance} from '../../relevance.js';
 
-describe('suggestion', function() {
+describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {
     const suggestion =
-        new Suggestion(/* plan= */ {}, hash, /* rank= */ 1, /* versionByStore= */ {});
+      new Suggestion(/* plan= */ JSON.parse('{}'), hash, /* rank= */ 1, /* versionByStore= */ {});
     suggestion.descriptionByModality['text'] = descriptionText;
     return suggestion;
   }
+
   it('adds and merges search', async () => {
     const descriptionText = 'hello world';
     const hash1 = 'hash1';
@@ -52,7 +53,7 @@ describe('suggestion', function() {
     const suggestion1 = Suggestion.fromLiteral({plan: '{"serialization" : "recipe"}', hash: '123', rank: 1});
     assert.isTrue(Boolean(suggestion1.plan));
     const suggestion2 =
-        Suggestion.fromLiteral({plan: '{"serialization" : "recipe"}', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}}, {}, {});
+        Suggestion.fromLiteral({plan: '{"serialization" : "recipe"}', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}});
     assert.isTrue(Boolean(suggestion2.plan));
     assert.deepEqual(suggestion2.toLiteral(), Suggestion.fromLiteral(suggestion2.toLiteral()).toLiteral());
   });

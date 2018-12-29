@@ -8,6 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../chai-web.js';
+import {Arc} from '../../arc.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
+import {Loader} from '../../loader.js';
+import {Manifest} from '../../manifest.js';
 import {Recipe} from '../../recipe/recipe.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
@@ -15,19 +19,22 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Relevance} from '../../relevance.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {StorageProviderBase, VariableStorageProvider} from '../../storage/storage-provider-base.js';
 
 class TestPlanProducer extends PlanProducer {
+  options;
+  produceCalledCount = 0;
+  plannerRunOptions = [];
+  cancelCount = 0;
+  producePromises = [];
+  plannerNextResults: Suggestion[][] = [];
+  plannerPromise = null;
+  
   constructor(arc, store) {
     super(arc, new PlanningResult(store));
-    this.produceCalledCount = 0;
-    this.plannerRunOptions = [];
-    this.cancelCount = 0;
-    this.producePromises = [];
-    this.plannerNextResults = [];
-    this.plannerPromise = null;
   }
 
-  async produceSuggestions(options) {
+  async produceSuggestions(options = {}) {
     ++this.produceCalledCount;
     this.producePromises.push(super.produceSuggestions(options));
   }
@@ -43,10 +50,12 @@ class TestPlanProducer extends PlanProducer {
     return Promise.all(this.producePromises).then(() => this.producePromises = []);
   }
 
-  async runPlanner(options) {
+  async runPlanner(options, generations): Promise<Suggestion[]> {
     this.plannerRunOptions.push(options);
-    return new Promise((resolve, reject) => {
-      const suggestions = this.plannerNextResults.shift();
+    
+    return new Promise<Suggestion[]>((resolve, reject) => {
+      const suggestions: Suggestion[] = this.plannerNextResults.shift();
+
       if (suggestions) {
         resolve(suggestions);
       } else {
@@ -58,8 +67,8 @@ class TestPlanProducer extends PlanProducer {
 
   get plannerRunCount() { return this.plannerRunOptions.length; }
 
-  plannerReturnFakeResults(planInfos) {
-    const suggestions = [];
+  plannerReturnFakeResults(planInfos): Suggestion[] {
+    const suggestions: Suggestion[] = [];
     planInfos.forEach(info => {
       if (!info.hash) {
         info = {hash: info};
@@ -73,7 +82,6 @@ class TestPlanProducer extends PlanProducer {
       const relevance = Relevance.create(this.arc, plan);
       relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
       const suggestion = Suggestion.create(plan, info.hash, relevance);
-      suggestion.relevance = Relevance.create(this.arc, plan);
       suggestion.descriptionByModality['text'] = `This is ${plan.name}`;
       suggestions.push(suggestion);
     });
@@ -81,7 +89,7 @@ class TestPlanProducer extends PlanProducer {
     return suggestions;
   }
 
-  plannerReturnResults(suggestions) {
+  plannerReturnResults(suggestions: Suggestion[]) {
     if (this.plannerPromise) {
       this.plannerPromise(suggestions);
       this.plannerPromise = null;
@@ -93,13 +101,13 @@ class TestPlanProducer extends PlanProducer {
 
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
-  describe('plan producer for ' + storageKeyBase, function() {
+  describe('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
       const helper = await TestHelper.createAndPlan({
         manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'
       });
       helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
-      const store = await Planificator._initSuggestStore(helper.arc, /* userid= */ 'TestUser', storageKeyBase);
+      const store = await Planificator['_initSuggestStore'](helper.arc, /* userid= */ 'TestUser', storageKeyBase);
       assert.isNotNull(store);
       const producer = new TestPlanProducer(helper.arc, store);
       return {helper, producer};
@@ -153,57 +161,65 @@ class TestPlanProducer extends PlanProducer {
   });
 });
 
-describe('plan producer - search', function() {
-  const arcKey = '123';
+describe('plan producer - search', () => {
   class TestSearchPlanProducer extends PlanProducer {
-    constructor(searchStore) {
-      super({arcId: arcKey, context: {allRecipes: []}},
-            new PlanningResult({on: () => {}}), searchStore);
-      this.produceSuggestionsCalled = 0;
+    options;
+    produceSuggestionsCalled = 0;
+    
+    constructor(arc: Arc, searchStore: VariableStorageProvider) {
+      super(arc, new PlanningResult(searchStore), searchStore);
     }
 
-    produceSuggestions(options) {
+    async produceSuggestions(options = {}) {
       this.produceSuggestionsCalled++;
       this.options = options;
     }
-    setNextSearch(search) {
-      this.searchStore.values = [{arc: arcKey, search}];
+
+    setNextSearch(search: string) {
+      this.searchStore.set([{arc: this.arc.arcId, search}]);
       return this.onSearchChanged();
     }
   }
+  
+  async function init(): Promise<TestSearchPlanProducer> {
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Bar
+        Text value
+    `);
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test',
+                         storageKey: 'volatile://test^^123'});
+    const searchStore = await Planificator['_initSearchStore'](arc, /* userid= */ 'TestUser');
 
-  function init() {
-    const searchStore = {on: () => {}};
-    searchStore.get = () => searchStore.values;
-    const producer = new TestSearchPlanProducer(searchStore);
+    const producer = new TestSearchPlanProducer(arc, searchStore);
     assert.isUndefined(producer.search);
     assert.equal(producer.produceSuggestionsCalled, 0);
     return producer;
   }
 
   it('searches all', async () => {
-    const producer = init();
+    const producer = await init();
 
     // Search for non-contextual results.
     await producer.setNextSearch('*');
-    assert.equal('*', producer.search);
+    assert.equal(producer.search, '*');
     assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isFalse(producer.options.contextual);
     assert.isFalse(Boolean(producer.options.append));
 
     // Unchanged search term.
     await producer.setNextSearch('*');
-    assert.equal('*', producer.search);
+    assert.equal(producer.search, '*');
     assert.equal(producer.produceSuggestionsCalled, 1);
 
     // Requires contextual results only, no need to replan.
     await producer.setNextSearch('');
-    assert.equal('', producer.search);
+    assert.equal(producer.search, '');
     assert.equal(producer.produceSuggestionsCalled, 1);
   });
 
   it('searches for term given contextual results', async () => {
-    const producer = init();
+    const producer = await init();
 
     // Search for a given string
     const search = 'foo';
@@ -216,7 +232,7 @@ describe('plan producer - search', function() {
   });
 
   it('searches for term given non-contextual results', async () => {
-    const producer = init();
+    const producer = await init();
     producer.result.contextual = false;
 
     // Search for a given string

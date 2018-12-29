@@ -18,8 +18,9 @@ export class ReplanQueue {
   planProducer: PlanProducer;
   options: {[index: string]: number} = {};
   changes: number[];
+  // setTimeout return number on browser and a timer on node...
   // tslint:disable-next-line: no-any
-  replanTimer: any;
+  private replanTimer: any;
 
   constructor(planProducer: PlanProducer, options = {}) {
     this.planProducer = planProducer;
@@ -34,7 +35,7 @@ export class ReplanQueue {
 
   addChange() {
     this.changes.push(now());
-    if (this._isReplanningScheduled()) {
+    if (this.isReplanningScheduled()) {
       this._postponeReplan();
     } else if (!this.planProducer.isPlanning) {
       this._scheduleReplan(this.options.defaultReplanDelayMs);
@@ -54,8 +55,8 @@ export class ReplanQueue {
     }
   }
 
-  private _isReplanningScheduled() {
-    return Boolean(this.replanTimer);
+  isReplanningScheduled(): boolean {
+    return this.replanTimer !== null;
   }
 
   private _scheduleReplan(intervalMs) {
@@ -66,7 +67,7 @@ export class ReplanQueue {
   }
 
   private _cancelReplanIfScheduled() {
-    if (this._isReplanningScheduled()) {
+    if (this.isReplanningScheduled()) {
       clearTimeout(this.replanTimer);
       this.replanTimer = null;
     }

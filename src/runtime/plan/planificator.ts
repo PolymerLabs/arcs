@@ -57,7 +57,7 @@ export class Planificator {
   arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
   lastActivatedPlan: Recipe|null;
 
-  constructor(arc: Arc, userid: string, store: VariableStorageProvider, searchStore: VariableStorageProvider, onlyConsumer: boolean, debug: boolean) {
+  constructor(arc: Arc, userid: string, store: VariableStorageProvider, searchStore: VariableStorageProvider, onlyConsumer: boolean = false, debug: boolean = false) {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
@@ -150,26 +150,26 @@ export class Planificator {
     });
   }
 
-  private static _constructSuggestionKey(arc: Arc, userid: string, storageKeyBase?: string): KeyBase {
+  static constructSuggestionKey(arc: Arc, userid: string, storageKeyBase?: string): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
     return keybase.childKeyForSuggestions(userid, arcStorageKey.arcId);
   }
 
-  private static _constructSearchKey(arc: Arc, userid: string): KeyBase {
+  static constructSearchKey(arc: Arc, userid: string): KeyBase {
     const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
     const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
     return keybase.childKeyForSearch(userid);
 }
 
   private static async _initSuggestStore(arc: Arc, userid: string, storageKeyBase?: string): Promise<VariableStorageProvider> {
-    const storageKey = Planificator._constructSuggestionKey(arc, userid, storageKeyBase);
+    const storageKey = Planificator.constructSuggestionKey(arc, userid, storageKeyBase);
     return Planificator._initStore(
         arc, 'suggestions-id', EntityType.make(['Suggestions'], {current: 'Object'}), storageKey);
   }
 
   private static async _initSearchStore(arc: Arc, userid: string): Promise<VariableStorageProvider> {
-    const storageKey = Planificator._constructSearchKey(arc, userid);
+    const storageKey = Planificator.constructSearchKey(arc, userid);
     return Planificator._initStore(
         arc, 'search-id', EntityType.make(['Search'], {current: 'Object'}), storageKey);
   }

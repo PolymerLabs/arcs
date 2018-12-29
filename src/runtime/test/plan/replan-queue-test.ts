@@ -8,36 +8,50 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../chai-web.js';
+import {Arc} from '../../arc.js';
+import {Loader} from '../../loader.js';
+import {Manifest} from '../../manifest.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 
 class TestPlanProducer extends PlanProducer {
-  constructor() {
-    super({context: {allRecipes: []}}, new PlanningResult({on: () =>{}}));
-    this.produceSuggestionsCalled = 0;
+  produceSuggestionsCalled = 0;
+
+  constructor(arc: Arc) {
+    super(arc, new PlanningResult());
   }
-  produceSuggestions() {
+  
+  async produceSuggestions(options = {}) {
     this.isPlanning = true;
     ++this.produceSuggestionsCalled;
     this.isPlanning = false;
   }
 }
 
-function init(options) {
+async function init(options?) {
   options = options || {};
   options.defaultReplanDelayMs = options.defaultReplanDelayMs || 300;
-  const producer = new TestPlanProducer();
+
+  const loader = new Loader();
+  const manifest = await Manifest.parse(`
+    schema Bar
+      Text value
+  `);
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+  const producer = new TestPlanProducer(arc);
   const queue = new ReplanQueue(producer, options);
   const expectedCalls = 0;
-  assert.isFalse(queue._isReplanningScheduled());
+  assert.isFalse(queue.isReplanningScheduled());
   assert.equal(producer.produceSuggestionsCalled, 0);
   return {producer, queue};
 }
 
-describe('replan queue', function() {
-  it('triggers planning', async function() {
-    const {producer, queue} = init();
+describe('replan queue', async () => {
+  it('triggers planning', async () => {
+    const {producer, queue} = await init();
     queue.addChange();
     assert.lengthOf(queue.changes, 1);
     assert.equal(producer.produceSuggestionsCalled, 0);
@@ -46,8 +60,8 @@ describe('replan queue', function() {
     assert.isEmpty(queue.changes);
   });
 
-  it('triggers one planning for multiple data changes', async function() {
-    const {producer, queue} = init();
+  it('triggers one planning for multiple data changes', async () => {
+    const {producer, queue} = await init();
     queue.addChange();
     queue.addChange();
     queue.addChange();
@@ -58,8 +72,8 @@ describe('replan queue', function() {
     assert.isEmpty(queue.changes);
   });
 
-  it('Postpones replanning due to consequent change', async function() {
-    const {producer, queue} = init();
+  it('Postpones replanning due to consequent change', async () => {
+    const {producer, queue} = await init();
     queue.addChange();
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();
@@ -72,8 +86,8 @@ describe('replan queue', function() {
     assert.isEmpty(queue.changes);
   });
 
-  it('caps replanning delay with max-no-replan value', async function() {
-    const {producer, queue} = init({maxNoReplanMs: 300});
+  it('caps replanning delay with max-no-replan value', async () => {
+    const {producer, queue} = await init({maxNoReplanMs: 300});
     queue.addChange();
     await new Promise(resolve => setTimeout(resolve, 200));
     queue.addChange();

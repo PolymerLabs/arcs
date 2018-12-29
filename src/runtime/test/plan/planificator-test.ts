@@ -14,14 +14,14 @@ import {Loader} from '../../loader.js';
 import {Planificator} from '../../plan/planificator.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
-describe('planificator', function() {
+describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const helper = await TestHelper.create();
     const arc = helper.arc;
     arc.storageKey = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/testuser--LT97ssVNw_ttCZtjlMT';
 
     const verifySuggestion = (storageKeyBase) => {
-      const key = Planificator._constructSuggestionKey(arc, 'testuser', storageKeyBase);
+      const key = Planificator.constructSuggestionKey(arc, 'testuser', storageKeyBase);
       assert(key && key.protocol && key.location,
             `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
       assert(key.protocol.length > 0,
@@ -30,23 +30,22 @@ describe('planificator', function() {
             `Invalid location in key for '${storageKeyBase}' planificator storage key base`);
     };
 
-    verifySuggestion();
     verifySuggestion('volatile://!123:demo^^');
     verifySuggestion('firebase://arcs-test.firebaseio.com/123-456-7890-abcdef/1_2_3');
     verifySuggestion('pouchdb://local/testdb/');
 
-    assert.isTrue(Planificator._constructSearchKey(arc, 'testuser').toString().length > 0);
+    assert.isTrue(Planificator.constructSearchKey(arc, 'testuser').toString().length > 0);
   });
 });
 
-describe('remote planificator', function() {
+describe('remote planificator', () => {
   const userid = 'test-user';
   // TODO: support arc storage key be in PouchDB as well.
   const storageKey = 'volatile://!123:demo^^abcdef';
 
   async function createArc(options, storageKey) {
     return (await TestHelper.createAndPlan(
-        Object.assign(options, {slotComposer: new FakeSlotComposer(), storageKey}))).arc;
+      {...options, slotComposer: new FakeSlotComposer(), storageKey})).arc;
   }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
     return Planificator.create(
@@ -59,7 +58,7 @@ describe('remote planificator', function() {
         await createArc({manifestFilename}, storageKey), userid, store, searchStore);
   }
 
-  async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex, log) {
+  async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
     await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate(
         consumePlanificator.arc);
     const serialization = await consumePlanificator.arc.serialize();
@@ -67,7 +66,10 @@ describe('remote planificator', function() {
     producePlanificator.dispose();
     producePlanificator = null;
     const deserializedArc = await Arc.deserialize({serialization,
-        slotComposer: new FakeSlotComposer(), loader: new Loader(), fileName: '',
+        slotComposer: new FakeSlotComposer(),
+        loader: new Loader(),
+        fileName: '',
+        pecFactory: undefined,
         context: consumePlanificator.arc.context});
     producePlanificator = new Planificator(
       deserializedArc,
@@ -156,7 +158,7 @@ import './src/runtime/test/artifacts/People/Person.schema'
 store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
     `;
     const restaurantsPlanificator = new Planificator(
-        await createArc({manifestString: restaurantsManifestString}),
+        await createArc({manifestString: restaurantsManifestString}, storageKey),
         userid, productsPlanificator.result.store, productsPlanificator.searchStore);
     await restaurantsPlanificator.loadSuggestions();
     assert.lengthOf(restaurantsPlanificator.result.suggestions, 1);

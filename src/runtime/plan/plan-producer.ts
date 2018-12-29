@@ -17,6 +17,7 @@ import {Planner} from '../planner.js';
 import {PlanningResult} from './planning-result.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
+import {Suggestion} from './suggestion.js';
 import {VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StrategyDerived} from '../../planning/strategizer.js';
 
@@ -36,11 +37,11 @@ export class PlanProducer {
   _isPlanning: boolean;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
-  searchStore: VariableStorageProvider;
+  searchStore?: VariableStorageProvider;
   searchStoreCallback: ({}) => void;
   debug = false;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore: VariableStorageProvider, {debug = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore?: VariableStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -148,7 +149,7 @@ export class PlanProducer {
     }
   }
 
-  async runPlanner(options, generations) {
+  async runPlanner(options, generations): Promise<Suggestion[]> {
     let suggestions = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
@@ -170,7 +171,7 @@ export class PlanProducer {
     return null;
   }
 
-  private _cancelPlanning() {
+  protected _cancelPlanning() {
     if (this.planner) {
       this.planner = null;
     }

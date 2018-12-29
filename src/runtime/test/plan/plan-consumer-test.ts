@@ -19,7 +19,7 @@ import {TestHelper} from '../../testing/test-helper.js';
 
 async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
-  const store = await Planificator._initSuggestStore(helper.arc, userid, storageKeyBase);
+  const store = await Planificator['_initSuggestStore'](helper.arc, userid, storageKeyBase);
   assert.isNotNull(store);
   return new PlanConsumer(helper.arc, new PlanningResult(store));
 }
@@ -32,8 +32,8 @@ async function storeResults(consumer, suggestions) {
 
 // Run test suite for each storageKeyBase
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
-  describe('plan consumer for ' + storageKeyBase, function() {
-    it('consumes', async function() {
+  describe('plan consumer for ' + storageKeyBase, () => {
+    it('consumes', async () => {
       const helper = await TestHelper.createAndPlan({
         slotComposer: new FakeSlotComposer(),
         manifestString: `
@@ -107,8 +107,8 @@ recipe
   }); // end describe
 }); // end forEach
 
-describe('plan consumer', function() {
-  it('filters suggestions by modality', async function() {
+describe('plan consumer', () => {
+  it('filters suggestions by modality', async () => {
     const initConsumer = async (modality) => {
       const addRecipe = (particles) => {
         return `

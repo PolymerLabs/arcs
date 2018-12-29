@@ -21,7 +21,7 @@ type Callback = ({}) => void;
 export class PlanConsumer {
   arc: Arc;
   result: PlanningResult;
-  suggestFilter: {};
+  suggestFilter: {showAll: boolean, search?};
   // Callback is triggered when planning results have changed.
   private suggestionsChangeCallbacks: Callback[] = [];
   // Callback is triggered when suggestions visible to the user have changed.
@@ -46,7 +46,7 @@ export class PlanConsumer {
   registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
   registerVisibleSuggestionsChangedCallback(callback) { this.visibleSuggestionsChangeCallbacks.push(callback); }
 
-  setSuggestFilter(showAll, search) {
+  setSuggestFilter(showAll: boolean, search?: string) {
     assert(!showAll || !search);
     if (this.suggestFilter['showAll'] === showAll && this.suggestFilter['search'] === search) {
       return;

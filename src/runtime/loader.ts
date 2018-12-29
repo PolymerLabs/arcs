@@ -27,13 +27,14 @@ function schemaLocationFor(name): string {
 }
 
 export class Loader {
-  private pec: ParticleExecutionContext;
+  public pec?: ParticleExecutionContext;
+
   path(fileName: string): string {
     const path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 
-  join(prefix:string , path: string): string {
+  join(prefix: string , path: string): string {
     if (/^https?:\/\//.test(path)) {
       return path;
     }
@@ -77,7 +78,7 @@ export class Loader {
     });
   }
 
-  _loadURL(url) {
+  _loadURL(url: string) {
     if (/\/\/schema.org\//.test(url)) {
       if (url.endsWith('/Thing')) {
         return fetch('https://schema.org/Product.jsonld').then(res => res.text()).then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
@@ -113,7 +114,7 @@ export class Loader {
     return this.unwrapParticle(result[0]);
   }
 
-  setParticleExecutionContext(pec : ParticleExecutionContext) {
+  setParticleExecutionContext(pec: ParticleExecutionContext) {
     this.pec = pec;
   }
 

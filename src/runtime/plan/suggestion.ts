@@ -18,6 +18,18 @@ import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
 import {Search} from '../recipe/search.js';
 
+/**
+ * options for the fromLiteral() method.
+ */
+type FromLiteralOptions = {
+  plan: string;
+  hash: string;
+  rank: number;
+  versionByStore?: string;
+  searchGroups?: string[][];
+  descriptionByModality?: {};
+};
+
 export class Plan {
   serialization: string;
   particles: {name: string, connections: {}[]}[] = [];
@@ -156,7 +168,7 @@ export class Suggestion {
     };
   }
 
-  static fromLiteral({plan, hash, rank, versionByStore, searchGroups, descriptionByModality}) {
+  static fromLiteral({plan, hash, rank, versionByStore, searchGroups, descriptionByModality}: FromLiteralOptions) {
     const suggestion = new Suggestion(JSON.parse(plan), hash, rank, JSON.parse(versionByStore || '{}'));
     suggestion.searchGroups = searchGroups || [];
     suggestion.descriptionByModality = descriptionByModality;
