@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-'use strict';
-
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {assert} from './chai-web.js';

@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../platform/assert-web.js';
 import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
