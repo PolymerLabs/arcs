@@ -11,13 +11,14 @@
 
 import {Arc} from '../../arc.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
+import {Loader} from '../../loader.js';
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {MapSlots} from '../../strategies/map-slots.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {assert} from '../chai-web.js';
 
-describe('MapSlots', function() {
+describe('MapSlots', () => {
   const particlesSpec = `
       particle A in 'A.js'
         consume root
@@ -42,9 +43,9 @@ ${recipeManifest}
     }
   };
 
-  const runMapSlotsAndResolveRecipe = async (arc, recipe, expectedSlots) => {
+  const runMapSlotsAndResolveRecipe = async (arc, recipe) => {
     let results = await StrategyTestHelper.theResults(arc, MapSlots, recipe);
-    if (results.length == 1) {
+    if (results.length === 1) {
       recipe = results[0];
     }
 
@@ -153,6 +154,8 @@ ${recipeManifest}
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({
       id: 'test-plan-arc',
+      loader: new Loader(),
+      context: new Manifest({id: 'test'}),
       slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
     });
 

@@ -14,7 +14,7 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
-describe('resolve recipe', function() {
+describe('resolve recipe', () => {
   it('does not resolve a mapping of a handle with an invalid type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
@@ -220,8 +220,9 @@ describe('resolve recipe', function() {
 
     const arc = createTestArc(manifest);
 
-    const Car = manifest.findSchemaByName('Car').entityClass();
-    await arc.createStore(Car.type, /* name= */ null, 'batmobile');
+    const car = manifest.findSchemaByName('Car').entityClass();
+    // TODO(plindner) find a better way to find the type
+    await arc.createStore(car['type'], /* name= */ null, 'batmobile');
 
     const recipe = manifest.recipes[0];
 

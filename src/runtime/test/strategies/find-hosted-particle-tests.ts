@@ -16,6 +16,7 @@ import {Arc} from '../../arc.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {InterfaceType} from '../../type.js';
 import {assert} from '../chai-web.js';
+import {VariableStorageProvider} from '../../storage/storage-provider-base';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -26,7 +27,7 @@ async function runStrategy(manifestStr) {
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 
-describe('FindHostedParticle', function() {
+describe('FindHostedParticle', () => {
   it(`can host a matching particle from the context`, async () => {
     const results = await runStrategy(`
       schema Thing
@@ -170,7 +171,7 @@ describe('FindHostedParticle', function() {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType);
+    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType) as VariableStorageProvider;
     const particleSpec = await particleSpecStore.get();
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;

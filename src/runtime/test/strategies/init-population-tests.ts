@@ -33,7 +33,7 @@ describe('InitPopulation', async () => {
     });
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    const arc = new Arc({id: 'test-plan-arc', context: manifest, loader, fileName: ''});
+    const arc = new Arc({id: 'test-plan-arc', context: manifest, loader});
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
@@ -56,12 +56,13 @@ describe('InitPopulation', async () => {
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
 
+    const loader = new StubLoader({
+      'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
+    });
     const arc = new Arc({
       id: 'test-plan-arc',
       context: new Manifest({id: 'test'}),
-      recipeIndex: {
-        recipes: manifest.recipes
-      }
+      loader
     });
 
     const results = await new InitPopulation(arc, {contextual: false,
@@ -125,8 +126,9 @@ describe('InitPopulation', async () => {
 
     async function openRestaurantWith(foodType) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
-      const FoodEntity = manifest.findSchemaByName(foodType).entityClass();
-      const store = await arc.createStore(FoodEntity.type, undefined, `test:${foodType}`);
+      const foodEntity = manifest.findSchemaByName(foodType).entityClass();
+      // TODO(lindner): there has to be a better way...
+      const store = await arc.createStore(foodEntity['type'], undefined, `test:${foodType}`);
       restaurant.handles[0].mapToStorage(store);
       restaurant.normalize();
       restaurant.mergeInto(arc.activeRecipe);

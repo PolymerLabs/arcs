@@ -11,31 +11,37 @@
 
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
+import {Loader} from '../../loader.js';
+import {Manifest} from '../../manifest.js';
+import {Modality} from '../../modality.js';
 import {RecipeIndex} from '../../recipe-index.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context, options = {}) {
+  static createTestArc(context: Manifest, options: {arcId?: string, modalityName?: string} = {}) {
     return new Arc({
       id: options.arcId || 'test-arc',
+      loader: new Loader(),
       context,
       slotComposer: new FakeSlotComposer(options)
     });
   }
-  static createTestStrategyArgs(arc, args) {
-    return Object.assign({recipeIndex: RecipeIndex.create(arc)}, args);
+  static createTestStrategyArgs(arc: Arc, args?) {
+    return {recipeIndex: RecipeIndex.create(arc), ...args};
   }
-  static run(arc, clazz, recipe) {
+
+  static run(arc: Arc, clazz, recipe) {
     return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
-  static onlyResult(arc, clazz, recipe) {
+
+  static onlyResult(arc: Arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
   }
-  static theResults(arc, clazz, recipe) {
+  static theResults(arc: Arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 
-  static noResult(arc, clazz, recipe) {
+  static noResult(arc: Arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.isEmpty(result); });
   }
 }

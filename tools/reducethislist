@@ -76,7 +76,6 @@ src/runtime/test/recipe-resolver-test.js
 src/runtime/test/recipe-test.js
 src/runtime/test/recipe-util-tests.js
 src/runtime/test/reference-test.js
-src/runtime/test/runtime-tests.js
 src/runtime/test/schema-tests.js
 src/runtime/test/slot-consumer-tests.js
 src/runtime/test/storage-proxy-test.js
@@ -88,15 +87,6 @@ src/runtime/test/artifacts/consumer-particle.js
 src/runtime/test/artifacts/hello.js
 src/runtime/test/artifacts/outer-particle.js
 src/runtime/test/artifacts/test-particle.js
-src/runtime/test/strategies/coalesce-recipes-test.js
-src/runtime/test/strategies/convert-constraints-to-connections-tests.js
-src/runtime/test/strategies/find-hosted-particle-tests.js
-src/runtime/test/strategies/init-population-tests.js
-src/runtime/test/strategies/map-slots-tests.js
-src/runtime/test/strategies/match-particle-by-verb-tests.js
-src/runtime/test/strategies/resolve-recipe-test.js
-src/runtime/test/strategies/rulesets-tests.js
-src/runtime/test/strategies/strategy-test-helper.js
 
 src/runtime/test/artifacts/transformations/test-multiplex-slots-particle.js
 src/runtime/test/artifacts/transformations/test-single-slot-particle.js
