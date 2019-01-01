@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {Manifest} from '../../manifest.js';
 import {CreateDescriptionHandle} from '../../strategies/create-description-handle.js';

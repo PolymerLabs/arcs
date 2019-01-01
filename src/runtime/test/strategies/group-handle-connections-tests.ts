@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {Manifest} from '../../manifest.js';
 import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';

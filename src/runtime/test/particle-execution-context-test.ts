@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from './chai-web.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';

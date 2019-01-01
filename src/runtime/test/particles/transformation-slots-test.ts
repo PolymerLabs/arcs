@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-'use strict';
-
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('transformation slots', () => {
