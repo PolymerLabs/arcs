@@ -10,14 +10,15 @@
 
 import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {Suggestion} from './plan/suggestion.js';
+import {Arc} from './arc.js';
 
 export class SuggestDomConsumer extends SlotDomConsumer {
   _suggestion: Suggestion;
   _suggestionContent;
   _eventHandler;
 
-  constructor(containerKind: string, suggestion: Suggestion, suggestionContent, eventHandler) {
-    super(/* consumeConn= */null, containerKind);
+  constructor(arc: Arc, containerKind: string, suggestion: Suggestion, suggestionContent, eventHandler) {
+    super(arc, /* consumeConn= */null, containerKind);
     this._suggestion = suggestion;
     this._suggestionContent = suggestionContent;
     this._eventHandler = eventHandler;
@@ -47,11 +48,11 @@ export class SuggestDomConsumer extends SlotDomConsumer {
     }
   }
 
-  static render(container, plan, content): SlotDomConsumer {
+  static render(arc: Arc, container, plan, content): SlotDomConsumer {
     const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
     container.appendChild(suggestionContainer, container.firstElementChild);
     const rendering = {container: suggestionContainer, model: content.model};
-    const consumer = new SlotDomConsumer();
+    const consumer = new SlotDomConsumer(arc);
     consumer.addRenderingBySubId(undefined, rendering);
     consumer.eventHandler = (() => {});
     consumer._stampTemplate(rendering, consumer.createTemplateElement(content.template));

@@ -19,21 +19,17 @@ export class HostedSlotConsumer extends SlotConsumer {
   readonly hostedSlotName: string;
   readonly hostedSlotId: string;
   readonly storeId: string;
-  readonly _arc: Arc;
   renderCallback: ({}, {}, {}, {}) => void;
 
-  constructor(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, arc) {
-    super(null, null);
+  constructor(arc: Arc, transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId) {
+    super(arc, null, null);
     this.transformationSlotConsumer = transformationSlotConsumer;
     this.hostedParticleName = hostedParticleName;
     this.hostedSlotName = hostedSlotName, 
     this.hostedSlotId = hostedSlotId;
     // TODO: should this be a list?
     this.storeId = storeId;
-    this._arc = arc;
   }
-
-  get arc() { return this._arc; }
 
   get consumeConn() { return this._consumeConn; }
   set consumeConn(consumeConn) {
@@ -47,7 +43,7 @@ export class HostedSlotConsumer extends SlotConsumer {
     this._consumeConn = consumeConn;
   }
 
-  async setContent(content, handler, arc) {
+  async setContent(content, handler) {
     if (this.renderCallback) {
       this.renderCallback(
         this.transformationSlotConsumer.consumeConn.particle,

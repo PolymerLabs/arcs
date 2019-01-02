@@ -26,8 +26,10 @@ export class SlotConsumer {
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
   private _renderingBySubId: Map<string|undefined, {container?: {}}> = new Map();
   private innerContainerBySlotId: {} = {};
+  public readonly arc: Arc;
 
-  constructor(consumeConn?: SlotConnection, containerKind?: string) {
+  constructor(arc: Arc, consumeConn?: SlotConnection, containerKind?: string) {
+    this.arc = arc;
     this._consumeConn = consumeConn;
     this.containerKind = containerKind;
   }
@@ -106,11 +108,9 @@ export class SlotConsumer {
     }
   }
 
-  async setContent(content, handler, arc?: Arc) {
+  async setContent(content, handler) {
     if (content && Object.keys(content).length > 0) {
-      if (arc) {
-        content.descriptions = await this.populateHandleDescriptions(arc);
-      }
+      content.descriptions = await this.populateHandleDescriptions();
     }
     this.eventHandler = handler;
     for (const [subId, rendering] of this.renderings) {
@@ -118,12 +118,13 @@ export class SlotConsumer {
     }
   }
 
-  async populateHandleDescriptions(arc) {
+  async populateHandleDescriptions() {
+    if (!this.arc || !this.consumeConn) return null;
     const descriptions = {};
     await Promise.all(Object.values(this.consumeConn.particle.connections).map(async handleConn => {
       // TODO(mmandlis): convert back to .handle and .name after all recipe files converted to typescript.
       if (handleConn['handle']) {
-        descriptions[`${handleConn['name']}.description`] = (await arc.description.getHandleDescription(handleConn['handle'])).toString();
+        descriptions[`${handleConn['name']}.description`] = (await this.arc.description.getHandleDescription(handleConn['handle'])).toString();
       }
     }));
     return descriptions;

@@ -48,9 +48,9 @@ describe('Multiplexer', function() {
 
     let slotsCreated = 0;
 
-    slotComposer.createHostedSlot = (a, b, c, d) => {
+    slotComposer.createHostedSlot = (...args) => {
       slotsCreated++;
-      return slotComposer_createHostedSlot.apply(slotComposer, [a, b, c, d]);
+      return slotComposer_createHostedSlot.apply(slotComposer, args);
     };
 
     const arc = new Arc({id: 'test', context: manifest, slotComposer});

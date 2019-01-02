@@ -8,13 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 'use strict';
-import {assert} from '../../platform/assert-web.js';
 import {MockSlotDomConsumer} from './mock-slot-dom-consumer.js';
 
 // Should this class instead extend SuggestDomConsumer?
 export class MockSuggestDomConsumer extends MockSlotDomConsumer {
-  constructor(containerKind, suggestion, suggestionContent, eventHandler) {
-    super(/* consumeConn= */null, containerKind);
+  constructor(arc, containerKind, suggestion, suggestionContent, eventHandler) {
+    super(arc, /* consumeConn= */null, containerKind);
     this._suggestion = suggestion;
     this._suggestionContent = suggestionContent.template ? suggestionContent : {
       template: `<dummy-suggestion>${suggestionContent}</dummy-element>`,

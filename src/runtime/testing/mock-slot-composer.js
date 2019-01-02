@@ -172,7 +172,8 @@ export class MockSlotComposer extends FakeSlotComposer {
     return Object.values(particle.connections)
         .filter(conn => conn.type instanceof InterfaceType)
         .map(conn => {
-          const store = this.arc.findStoreById(conn.handle.id);
+          const allArcs = this.consumers.reduce((arcs, consumer) => arcs.add(consumer.arc), new Set());
+          const store = [...allArcs].map(arc => arc.findStoreById(conn.handle.id)).find(store => !!store);
           if (store.referenceMode) {
             return store.backingStore._model.getValue(store._stored.id).name;
           }

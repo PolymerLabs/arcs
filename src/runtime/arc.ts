@@ -27,7 +27,6 @@ import {PECInnerPort} from './api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {SlotComposer} from './slot-composer.js';
 import {Modality} from './modality.js';
-import {ModalityHandler} from './modality-handler.js';
 
 type ArcOptions = {
   id: string;
@@ -90,9 +89,6 @@ export class Arc {
     const pecId = this.generateID();
     const innerPecPort = this.pecFactory(pecId);
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
-    if (slotComposer) {
-      slotComposer.arc = this;
-    }
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
     this._description = new Description(this);
@@ -131,7 +127,7 @@ export class Arc {
     // TODO: disconnect all assocated store event handlers
     this.pec.close();
     if (this.pec.slotComposer) {
-      this.pec.slotComposer.dispose();
+      this.pec.slotComposer.dispose(this);
     }
   }
 
@@ -545,7 +541,7 @@ ${this.activeRecipe.toString()}`;
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
-      this.pec.slotComposer.initializeRecipe(particles);
+      this.pec.slotComposer.initializeRecipe(this, particles);
     }
 
     if (!this.isSpeculative && !innerArc) {

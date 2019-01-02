@@ -240,9 +240,9 @@ describe('Arc', function() {
 
     let slotsCreated = 0;
 
-    slotComposer.createHostedSlot = (a, b, c, d) => {
+    slotComposer.createHostedSlot = (...args) => {
       slotsCreated++;
-      return slotComposer_createHostedSlot.apply(slotComposer, [a, b, c, d]);
+      return slotComposer_createHostedSlot.apply(slotComposer, args);
     };
 
     const arc = new Arc({id: 'test', context: manifest, slotComposer});
@@ -259,8 +259,8 @@ describe('Arc', function() {
 
     const serialization = await arc.serialize();
     arc.stop();
+    arc.dispose();
 
-    slotComposer.dispose();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
     await newArc.idle;
     store = newArc.storesById.get(store.id);
