@@ -27,6 +27,7 @@ import {PECInnerPort} from './api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {SlotComposer} from './slot-composer.js';
 import {Modality} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 
 type ArcOptions = {
   id: string;
@@ -106,7 +107,10 @@ export class Arc {
   }
 
   get modality(): Modality {
-    return this.pec.slotComposer && this.pec.slotComposer.modality;
+    if (this.pec.slotComposer && this.pec.slotComposer.modality) {
+      return this.pec.slotComposer.modality;
+    }
+    return this.activeRecipe.modality;
   }
 
   registerInstantiatePlanCallback(callback: PlanCallback) {
@@ -459,8 +463,8 @@ ${this.activeRecipe.toString()}`;
 
   async instantiate(recipe: Recipe, innerArc = undefined) {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
-    assert(recipe.isCompatibleWithModality(this.modality),
-      `Cannot instantiate recipe ${recipe.toString()} with [${recipe.getSupportedModalities()}] modalities in '${this.modality}' arc`);
+    assert(recipe.isCompatible(this.modality),
+      `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
     if (innerArc) {

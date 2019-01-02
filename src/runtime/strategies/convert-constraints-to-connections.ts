@@ -14,17 +14,11 @@ import {Arc} from '../arc.js';
 import {Modality} from '../modality.js';
 
 export class ConvertConstraintsToConnections extends Strategy {
-  modality: Modality;
-
-  constructor(arc: Arc, args?) {
-    super(arc, args);
-    this.modality = arc.modality;
-  }
-
   async generate(inputParams) {
-    const modality = this.modality;
+    const arcModality = this.arc.modality;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onRecipe(recipe: Recipe) {
+        const modality = arcModality.intersection(recipe.modality);
         // The particles & handles Sets are used as input to RecipeUtil's shape functionality
         // (this is the algorithm that "finds" the constraint set in the recipe).
         // They track which particles/handles need to be found/created.
@@ -45,10 +39,9 @@ export class ConvertConstraintsToConnections extends Strategy {
           const from = constraint.from;
           const to = constraint.to;
           // Don't process constraints if their listed particles don't match the current modality.
-          if (modality
-            && from instanceof ParticleEndPoint
-            && to instanceof ParticleEndPoint
-            && (!from.particle.matchModality(modality) || !to.particle.matchModality(modality))) {
+          if (from instanceof ParticleEndPoint
+              && to instanceof ParticleEndPoint
+              && (!from.particle.isCompatible(modality) || !to.particle.isCompatible(modality))) {
             return undefined;
           }
 

@@ -10,6 +10,7 @@
 
 import {Arc} from '../../../build/runtime/arc.js';
 import {Modality} from '../../../build/runtime/modality.js';
+import {ModalityHandler} from '../../../build/runtime/modality-handler.js';
 import {Planificator} from '../../../build/runtime/plan/planificator.js';
 import {Suggestion} from '../../../build/runtime/plan/suggestion.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
@@ -32,6 +33,7 @@ const Arcs = {
   Arc,
   Manifest,
   Modality,
+  ModalityHandler,
   Planificator,
   Suggestion,
   SlotComposer,

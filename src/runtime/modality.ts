@@ -8,40 +8,37 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
-import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
-export class Modality {
-  private constructor(public readonly name: string,
-                      public readonly slotConsumerClass: typeof SlotDomConsumer,
-                      public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
-                      public readonly descriptionFormatter?: typeof DescriptionDomFormatter) {}
-
-  static _modalities = {};
-  static addModality(name: string,
-                     slotConsumerClass: typeof SlotDomConsumer,
-                     suggestionConsumerClass: typeof SuggestDomConsumer,
-                     descriptionFormatter?: typeof DescriptionDomFormatter) {
-    assert(!Modality._modalities[name], `Modality '${name}' already exists`);
-    Modality._modalities[name] = new Modality(name, slotConsumerClass, suggestionConsumerClass, descriptionFormatter);
-    Modality._modalities[`mock-${name}`] =
-        new Modality(name, MockSlotDomConsumer, MockSuggestDomConsumer);
-  }
-
-  static init() {
-    Object.keys(Modality._modalities).forEach(key => delete Modality._modalities[key]);
-    Modality.addModality('dom', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
-    Modality.addModality('dom-touch', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
-    Modality.addModality('vr', SlotDomConsumer, SuggestDomConsumer, DescriptionDomFormatter);
-  }
-
-  static forName(name: string) {
-    assert(Modality._modalities[name], `Unsupported modality ${name}`);
-    return Modality._modalities[name];
-  }
+enum ModalityName {
+  Dom ='dom', DomTouch='dom-touch', Vr='vr', Voice='voice'
 }
 
-Modality.init();
+export class Modality {
+  private constructor(public readonly names: string[]) {}
+
+  static create(names: string[]) {
+    assert(names.every(name => Modality.all.names.includes(name)), `Unsupported modality in: ${names}`);
+    return new Modality(names);
+  }
+
+  intersection(other: Modality): Modality {
+    return new Modality(this.names.filter(name => other.names.includes(name)));
+  }
+
+  isResolved(): boolean {
+    return this.names.length > 0;
+  }
+
+  isCompatible(names: string[]): boolean {
+    return this.intersection(Modality.create(names)).isResolved();
+  }
+
+  static get Name() { return ModalityName; }
+  static readonly all = new Modality([
+    Modality.Name.Dom, Modality.Name.DomTouch, Modality.Name.Vr, Modality.Name.Voice
+  ]);
+  static readonly dom = new Modality([Modality.Name.Dom]);
+  static readonly domTouch = new Modality([Modality.Name.DomTouch]);
+  static readonly voice = new Modality([Modality.Name.Voice]);
+  static readonly vr = new Modality([Modality.Name.Vr]);
+}

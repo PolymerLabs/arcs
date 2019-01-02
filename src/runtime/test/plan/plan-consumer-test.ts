@@ -10,6 +10,7 @@
 import {assert} from '../chai-web.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 import {Modality} from '../../modality.js';
+import {ModalityHandler} from '../../modality-handler.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -109,7 +110,7 @@ recipe
 
 describe('plan consumer', () => {
   it('filters suggestions by modality', async () => {
-    const initConsumer = async (modality) => {
+    const initConsumer = async (modalityName) => {
       const addRecipe = (particles) => {
         return `
   recipe
@@ -121,7 +122,10 @@ describe('plan consumer', () => {
         `;
       };
       const helper = await TestHelper.create({
-        slotComposer: new FakeSlotComposer({modality: Modality.forName(modality)}),
+        slotComposer: new FakeSlotComposer({
+          modalityName,
+          modalityHandler: ModalityHandler.createHeadlessHandler()
+        }), 
         manifestString: `
   particle ParticleDom in './src/runtime/test/artifacts/consumer-particle.js'
     consume root
@@ -152,16 +156,16 @@ describe('plan consumer', () => {
       return consumer;
     };
 
-    const consumerDom = await initConsumer('mock-dom');
+    const consumerDom = await initConsumer(Modality.Name.Dom);
     const domSuggestions = consumerDom.getCurrentSuggestions();
     assert.lengthOf(domSuggestions, 2);
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
 
-    const consumerVr = await initConsumer('mock-vr');
+    const consumerVr = await initConsumer(Modality.Name.Vr);
     assert.isEmpty(consumerVr.getCurrentSuggestions());
 
-    const consumerTouch = await initConsumer('mock-dom-touch');
+    const consumerTouch = await initConsumer(Modality.Name.DomTouch);
     const touchSuggestions = consumerTouch.getCurrentSuggestions();
     assert.lengthOf(touchSuggestions, 2);
     assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),

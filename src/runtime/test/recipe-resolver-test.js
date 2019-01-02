@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
-import {StubLoader} from '../testing/stub-loader.js';
-import {Manifest} from '../manifest.js';
-import {Modality} from '../modality.js';
-import {RecipeResolver} from '../recipe/recipe-resolver.js';
-
 import {assert} from './chai-web.js';
+import {Arc} from '../arc.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 describe('RecipeResolver', function() {
   const buildRecipe = async (content) => {
@@ -24,24 +24,7 @@ describe('RecipeResolver', function() {
     return manifest.recipes[0];
   };
 
-  const createArc = () => {
-    return new Arc({
-      id: 'test',
-      slotComposer: {
-        modality: Modality.forName('dom'),
-        getAvailableContexts: (() => {
-          return [{
-            name: 'root',
-            id: 'r0',
-            tags: ['#root'],
-            handles: [],
-            handleConnections: [],
-            spec: {isSet: false}
-          }];
-        })
-      }
-    });
-  };
+  const createArc = () => new Arc({id: 'test', slotComposer: new FakeSlotComposer(), loader: new Loader()});
 
   it('resolves a recipe', async () => {
     const arc = createArc();

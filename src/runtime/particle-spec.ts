@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Type, TypeLiteral, InterfaceType} from './type.js';
-import {TypeChecker} from './recipe/type-checker.js';
 import {assert} from '../platform/assert-web.js';
 import {Direction} from './recipe/handle-connection.js';
 import {Modality} from './modality.js';
+import {Type, TypeLiteral, InterfaceType} from './type.js';
+import {TypeChecker} from './recipe/type-checker.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -162,7 +162,7 @@ export class ParticleSpec {
   outputs: ConnectionSpec[];
   pattern: string;
   implFile: string;
-  modality: string[];
+  modality: Modality;
   slots: Map<string, SlotSpec>;
 
   constructor(model : SerializedParticleSpec) {
@@ -186,7 +186,7 @@ export class ParticleSpec {
     });
 
     this.implFile = model.implFile;
-    this.modality = model.modality || [];
+    this.modality = Modality.create(model.modality || []);
     this.slots = new Map();
     if (model.slots) {
       model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
@@ -224,8 +224,8 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
-  matchModality(modality: Modality) {
-    return this.slots.size <= 0 || this.modality.includes(modality.name);
+  isCompatible(modality: Modality): boolean {
+    return this.slots.size === 0 || this.modality.intersection(modality).isResolved();
   }
 
   toLiteral() : SerializedParticleSpec {
@@ -289,7 +289,7 @@ export class ParticleSpec {
       writeConnection(connection, indent);
     }
 
-    this.modality.filter(a => a !== 'mock').forEach(a => results.push(`  modality ${a}`));
+    this.modality.names.forEach(a => results.push(`  modality ${a}`));
     this.slots.forEach(s => {
       // Consume slot.
       const consume = [];

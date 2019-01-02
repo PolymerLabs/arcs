@@ -10,6 +10,7 @@
 'use strict';
 
 import {Modality} from '../modality.js';
+import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer} from '../slot-composer.js';
 
 /** @class FakeSlotComposer
@@ -19,7 +20,8 @@ export class FakeSlotComposer extends SlotComposer {
   constructor(options = {}) {
     super(Object.assign({
       rootContainer: {'root': 'root-context'},
-      modality: Modality.forName('mock-dom')
+      modalityName: options.modalityName,
+      modalityHandler: ModalityHandler.createHeadlessHandler()
     }, options));
   }
 

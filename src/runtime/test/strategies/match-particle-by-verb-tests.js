@@ -9,11 +9,12 @@
  */
 'use strict';
 
+import {assert} from '../chai-web.js';
 import {Manifest} from '../../manifest.js';
+import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
+import {Modality} from '../../modality.js';
 import {Planner} from '../../planner.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
-import {assert} from '../chai-web.js';
 
 describe('MatchParticleByVerb', function() {
   const manifestStr = `
@@ -50,7 +51,7 @@ describe('MatchParticleByVerb', function() {
 
   it('particles by verb strategy', async () => {
     const manifest = (await Manifest.parse(manifestStr));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = StrategyTestHelper.createTestArc(manifest, {modalityName: Modality.Name.Dom});
     // Apply MatchParticleByVerb strategy.
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const mpv = new MatchParticleByVerb(arc, StrategyTestHelper.createTestStrategyArgs(arc));
@@ -66,7 +67,7 @@ describe('MatchParticleByVerb', function() {
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
     recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = StrategyTestHelper.createTestArc(manifest, {modalityName: Modality.Name.Dom});
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     const planner = new Planner();

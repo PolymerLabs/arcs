@@ -11,7 +11,6 @@
 import {assert} from './chai-web.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
-import {Modality} from '../modality.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Suggestion} from '../plan/suggestion';
@@ -81,16 +80,11 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const helper = await TestHelper.create({
-      manifestString: options.manifestString || createManifestString(options), loader});
-    const modalityName = helper.arc.modality.name;
-
-    const originalFormatter = Modality.forName(modalityName).descriptionFormatter;
-    Modality.forName(modalityName).descriptionFormatter = options.formatter;
+    const helper = await TestHelper.create({manifestString: options.manifestString || createManifestString(options), loader});
+    helper.arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
     await helper.makePlans(options);
     assert.lengthOf(helper.suggestions, 1);
-    Modality.forName(modalityName).descriptionFormatter = originalFormatter;
-    return helper.suggestions[0].getDescription(modalityName);
+    return helper.suggestions[0].getDescription(helper.arc.modality.names[0]);
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);

@@ -9,24 +9,37 @@
  */
 'use strict';
 
-import {Manifest} from '../../manifest.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
+import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
+import {Loader} from '../../loader.js';
+import {Manifest} from '../../manifest.js';
 import {Modality} from '../../modality.js';
 
 describe('ConvertConstraintsToConnections', async () => {
+  const loader = new Loader();
+  const slotComposer = new FakeSlotComposer();
+  const newArc = ({manifest, slotComposer}) => {
+    return new Arc({
+      id: 'test-plan-arc',
+      slotComposer: slotComposer || new FakeSlotComposer(),
+      context: manifest,
+      loader
+    });
+  };
 
   it('fills out an empty constraint', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       particle A
         inout S {} b
       particle C
         inout S {} d
 
       recipe
-        A.b -> C.d`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A.b -> C.d`));
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -40,7 +53,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('does not cause an input only handle to be created', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -48,15 +61,15 @@ describe('ConvertConstraintsToConnections', async () => {
         in S d
 
       recipe
-        A.b -> C.d`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A.b -> C.d`));
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.isEmpty(results);
   });
 
   it('can resolve input only handle connection with a mapped handle', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -65,15 +78,15 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         map as handle0
-        A.b = C.d`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A.b = C.d`));
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
   });
 
   it('can create handle for input and output handle', async () => {
-    const createRecipe = async (constraint1, constraint2) => (await Manifest.parse(`
+    const parseManifest = async (constraint1, constraint2) => (await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -84,11 +97,11 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         ${constraint1}
-        ${constraint2}`)).recipes[0];
+        ${constraint2}`));
     const verify = async (constraint1, constraint2) => {
-      const recipe = await createRecipe(constraint1, constraint2);
-      const inputParams = {generated: [{result: recipe, score: 1}]};
-      const cctc = new ConvertConstraintsToConnections({pec: {}});
+      const manifest = await parseManifest(constraint1, constraint2);
+      const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+      const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
       const results = await cctc.generate(inputParams);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
@@ -107,7 +120,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing a single particle', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -116,9 +129,9 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        C`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        C`));
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -132,7 +145,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing a single particle (2)', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = (await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -141,9 +154,9 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        A`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A`));
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -158,7 +171,7 @@ describe('ConvertConstraintsToConnections', async () => {
 
 
   it('fills out a constraint, reusing two particles', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -168,9 +181,9 @@ describe('ConvertConstraintsToConnections', async () => {
       recipe
         A.b -> C.d
         C
-        A`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A`);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -184,7 +197,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing two particles and a handle', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -196,9 +209,9 @@ describe('ConvertConstraintsToConnections', async () => {
         use as handle1
         C
           d = handle1
-        A`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+        A`);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -212,7 +225,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing two particles and a handle (2)', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -224,9 +237,9 @@ describe('ConvertConstraintsToConnections', async () => {
         use as handle1
         C
         A
-          b = handle1`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+          b = handle1`);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -240,7 +253,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('removes an already fulfilled constraint', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -253,9 +266,9 @@ describe('ConvertConstraintsToConnections', async () => {
         C
           d = handle1
         A
-          b = handle1`)).recipes[0];
-    const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+          b = handle1`);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -268,7 +281,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('verifies modality', async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'
         out S b
@@ -286,16 +299,19 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d
       recipe
         A.b -> E.f
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({modality: Modality.forName('vr')});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}, {result: manifest.recipes[1], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({
+      manifest,
+      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr})
+    }));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
   });
 
   it('connects to handles', async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
       particle B
@@ -304,9 +320,9 @@ describe('ConvertConstraintsToConnections', async () => {
         ? as h
         A.o -> h
         h -> B.i
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -318,7 +334,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('connects existing particles to handles', async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
       particle B
@@ -329,9 +345,9 @@ describe('ConvertConstraintsToConnections', async () => {
         h -> B.i
         A
         B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -343,7 +359,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it(`doesn't attempt to duplicate existing handles to particles`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
       particle B
@@ -355,9 +371,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           o -> h
         B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -369,7 +385,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it(`duplicates particles to get handle connections right`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A
         out S {} o
       particle B
@@ -382,9 +398,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           o -> i
         B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -399,7 +415,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('connects to tags', async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
     particle B
@@ -408,9 +424,9 @@ describe('ConvertConstraintsToConnections', async () => {
       ? #hashtag
       A.o -> #hashtag
       #trashbag <- B.i
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -423,7 +439,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('connects existing particles to tags', async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
     particle B
@@ -434,9 +450,9 @@ describe('ConvertConstraintsToConnections', async () => {
       #trashbag <- B.i
       A
       B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -449,7 +465,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it(`doesn't attempt to duplicate existing connections to tags`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
     particle B
@@ -462,9 +478,9 @@ describe('ConvertConstraintsToConnections', async () => {
         o -> handle0
       B
         i -> handle0
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -476,16 +492,16 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it(`connects particles together when there's only one possible connection`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
     particle B
       in S {} i
     recipe
       A -> B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -496,7 +512,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
   
   it(`connects particles together when there's extra things that can't connect`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
       in S {} i
@@ -505,9 +521,9 @@ describe('ConvertConstraintsToConnections', async () => {
       in T {} i2
     recipe
       A -> B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -518,7 +534,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it(`connects particles together with multiple connections`, async () => {
-    const recipes = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
     particle A
       out S {} o
       in T {} i
@@ -527,9 +543,9 @@ describe('ConvertConstraintsToConnections', async () => {
       out T {} o
     recipe
       A = B
-    `)).recipes;
-    const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections({pec: {}});
+    `);
+    const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;

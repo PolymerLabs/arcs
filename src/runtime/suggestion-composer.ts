@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Modality} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 import {SlotComposer} from './slot-composer.js';
 import {Suggestion} from './plan/suggestion.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
@@ -24,11 +24,11 @@ export class SuggestionComposer {
     this._slotComposer = slotComposer;
   }
 
-  get modality() { return this._slotComposer.modality; }
+  get modalityHandler(): ModalityHandler { return this._slotComposer.modalityHandler; }
 
   clear(): void {
     if (this._container) {
-      this.modality.slotConsumerClass.clear(this._container);
+      this.modalityHandler.slotConsumerClass.clear(this._container);
     }
     this._suggestConsumers.forEach(consumer => consumer.dispose());
     this._suggestConsumers = [];
@@ -46,7 +46,7 @@ export class SuggestionComposer {
       }
 
       if (this._container) {
-        this.modality.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
+        this.modalityHandler.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
       }
 
       this._addInlineSuggestion(suggestion, suggestionContent);
@@ -86,7 +86,7 @@ export class SuggestionComposer {
       return;
     }
 
-    const suggestConsumer = new this.modality.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
+    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
       const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {

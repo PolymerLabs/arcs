@@ -11,7 +11,6 @@
 
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
-import {Modality} from '../../modality.js';
 import {RecipeIndex} from '../../recipe-index.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 
@@ -20,7 +19,7 @@ export class StrategyTestHelper {
     return new Arc({
       id: options.arcId || 'test-arc',
       context,
-      slotComposer: new FakeSlotComposer(options),
+      slotComposer: new FakeSlotComposer(options)
     });
   }
   static createTestStrategyArgs(arc, args) {
