@@ -8,12 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
-import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
-import {DescriptionFormatter} from './description.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 enum ModalityName {
   Dom ='dom', DomTouch='dom-touch', Vr='vr', Voice='voice'
@@ -47,19 +41,4 @@ export class Modality {
   static readonly domTouch = new Modality([Modality.Name.DomTouch]);
   static readonly voice = new Modality([Modality.Name.Voice]);
   static readonly vr = new Modality([Modality.Name.Vr]);
-}
-
-export class ModalityHandler {
-  constructor(public readonly slotConsumerClass: typeof SlotDomConsumer,
-              public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
-              public readonly descriptionFormatter?: typeof DescriptionFormatter) {}
-
-  static createHeadlessHandler(): ModalityHandler {
-    return new ModalityHandler(MockSlotDomConsumer, MockSuggestDomConsumer);
-  }
-
-  static readonly domHandler = new ModalityHandler(
-    SlotDomConsumer,
-    SuggestDomConsumer,
-    DescriptionDomFormatter);
 }

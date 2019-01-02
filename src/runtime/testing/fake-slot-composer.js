@@ -9,7 +9,8 @@
  */
 'use strict';
 
-import {Modality, ModalityHandler} from '../modality.js';
+import {Modality} from '../modality.js';
+import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer} from '../slot-composer.js';
 
 /** @class FakeSlotComposer

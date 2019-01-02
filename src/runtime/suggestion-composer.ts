@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ModalityHandler} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 import {SlotComposer} from './slot-composer.js';
 import {Suggestion} from './plan/suggestion.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';

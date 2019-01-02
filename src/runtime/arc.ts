@@ -26,7 +26,8 @@ import {ParticleSpec} from './particle-spec.js';
 import {PECInnerPort} from './api-channel.js';
 import {Particle} from './recipe/particle.js';
 import {SlotComposer} from './slot-composer.js';
-import {Modality, ModalityHandler} from './modality.js';
+import {Modality} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 
 type ArcOptions = {
   id: string;

@@ -29,7 +29,8 @@ import {SlotConnection} from './recipe/slot-connection.js';
 import {Handle} from './recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PlanningResult} from './plan/planning-result.js';
-import {Modality, ModalityHandler} from './modality.js';
+import {Modality} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 
 class RelevantContextRecipes extends Strategy {
   private _recipes: Recipe[] = [];

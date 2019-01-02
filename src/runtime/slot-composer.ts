@@ -9,7 +9,8 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Modality, ModalityHandler} from './modality.js';
+import {Modality} from './modality.js';
+import {ModalityHandler} from './modality-handler.js';
 import {Arc} from './arc.js';
 import {SlotContext} from './slot-context.js';
 import {SlotConsumer} from './slot-consumer.js';

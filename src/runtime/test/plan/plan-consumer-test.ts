@@ -9,7 +9,8 @@
  */
 import {assert} from '../chai-web.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
-import {Modality, ModalityHandler} from '../../modality.js';
+import {Modality} from '../../modality.js';
+import {ModalityHandler} from '../../modality-handler.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
