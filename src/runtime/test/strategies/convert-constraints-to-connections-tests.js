@@ -12,11 +12,29 @@
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
+import {Loader} from '../../loader.js';
 import {Manifest} from '../../manifest.js';
 import {Modality} from '../../modality.js';
-import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 
 describe('ConvertConstraintsToConnections', async () => {
+  const loader = new Loader();
+  const slotComposer = new FakeSlotComposer();
+  const newArc = () => {
+    return new Arc({
+      id: 'test-plan-arc',
+      slotComposer,
+      loader
+    });
+  };
+
+  const newVrArc = () => {
+    return new Arc({
+      id: 'test-plan-arc',
+      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
+      loader,
+    });
+  };
 
   it('fills out an empty constraint', async () => {
     const recipe = (await Manifest.parse(`
@@ -28,7 +46,7 @@ describe('ConvertConstraintsToConnections', async () => {
       recipe
         A.b -> C.d`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -52,7 +70,7 @@ describe('ConvertConstraintsToConnections', async () => {
       recipe
         A.b -> C.d`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.isEmpty(results);
   });
@@ -69,7 +87,7 @@ describe('ConvertConstraintsToConnections', async () => {
         map as handle0
         A.b = C.d`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
   });
@@ -90,7 +108,7 @@ describe('ConvertConstraintsToConnections', async () => {
     const verify = async (constraint1, constraint2) => {
       const recipe = await createRecipe(constraint1, constraint2);
       const inputParams = {generated: [{result: recipe, score: 1}]};
-      const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+      const cctc = new ConvertConstraintsToConnections(newArc());
       const results = await cctc.generate(inputParams);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
@@ -120,7 +138,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d
         C`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -145,7 +163,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d
         A`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -172,7 +190,7 @@ describe('ConvertConstraintsToConnections', async () => {
         C
         A`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -200,7 +218,7 @@ describe('ConvertConstraintsToConnections', async () => {
           d = handle1
         A`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -228,7 +246,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           b = handle1`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -257,7 +275,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           b = handle1`)).recipes[0];
     const inputParams = {generated: [{result: recipe, score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -290,10 +308,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> E.f
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({
-      id: 'test',
-      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr})
-    }));
+    const cctc = new ConvertConstraintsToConnections(newVrArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
@@ -311,7 +326,7 @@ describe('ConvertConstraintsToConnections', async () => {
         h -> B.i
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -336,7 +351,7 @@ describe('ConvertConstraintsToConnections', async () => {
         B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -362,7 +377,7 @@ describe('ConvertConstraintsToConnections', async () => {
         B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -389,7 +404,7 @@ describe('ConvertConstraintsToConnections', async () => {
         B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -415,7 +430,7 @@ describe('ConvertConstraintsToConnections', async () => {
       #trashbag <- B.i
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -441,7 +456,7 @@ describe('ConvertConstraintsToConnections', async () => {
       B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -469,7 +484,7 @@ describe('ConvertConstraintsToConnections', async () => {
         i -> handle0
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -490,7 +505,7 @@ describe('ConvertConstraintsToConnections', async () => {
       A -> B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -512,7 +527,7 @@ describe('ConvertConstraintsToConnections', async () => {
       A -> B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -534,7 +549,7 @@ describe('ConvertConstraintsToConnections', async () => {
       A = B
     `)).recipes;
     const inputParams = {generated: [{result: recipes[0], score: 1}]};
-    const cctc = new ConvertConstraintsToConnections(new Arc({id: 'test'}));
+    const cctc = new ConvertConstraintsToConnections(newArc());
     const results = await cctc.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;

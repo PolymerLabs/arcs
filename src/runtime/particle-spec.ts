@@ -16,7 +16,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
-export type SerializedConnectionSpec = {
+type SerializedConnectionSpec = {
   direction: Direction,
   name: string,
   type: Type | TypeLiteral,
@@ -77,7 +77,7 @@ export class ConnectionSpec {
   }
 }
 
-export type SerializedSlotSpec = {
+type SerializedSlotSpec = {
   name: string,
   isRequired: boolean,
   isSet: boolean,
@@ -114,7 +114,7 @@ export class SlotSpec {
   }
 }
 
-export type SerializedProvidedSlotSpec = {
+type SerializedProvidedSlotSpec = {
   name: string,
   isRequired?: boolean,
   isSet?: boolean,
@@ -141,7 +141,7 @@ export class ProvidedSlotSpec {
   }
 }
 
-export type SerializedParticleSpec = {
+type SerializedParticleSpec = {
   name: string,
   id?: string,
   verbs: string[],

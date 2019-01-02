@@ -11,6 +11,7 @@
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -23,7 +24,7 @@ describe('RecipeResolver', function() {
     return manifest.recipes[0];
   };
 
-  const createArc = () => new Arc({id: 'test', slotComposer: new FakeSlotComposer()});
+  const createArc = () => new Arc({id: 'test', slotComposer: new FakeSlotComposer(), loader: new Loader()});
 
   it('resolves a recipe', async () => {
     const arc = createArc();
