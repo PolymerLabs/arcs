@@ -142,7 +142,7 @@ export class ParticleExecutionHost {
         this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), store.id, storageKey);
       }
 
-      onConstructInnerArc(callback: number, particle: ParticleSpec) {
+      onConstructInnerArc(callback: number, particle: Particle) {
         const arc = {particle};
         this.ConstructArcCallback(callback, arc);
       }
@@ -162,7 +162,7 @@ export class ParticleExecutionHost {
         this.MapHandleCallback({}, callback, handle.id);
       }
 
-      onArcCreateSlot(callback: number, arc: {}, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
+      onArcCreateSlot(callback: number, arc: {}, transformationParticle: Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
         let hostedSlotId;
         if (pec.slotComposer) {
           hostedSlotId = pec.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
@@ -267,13 +267,13 @@ export class ParticleExecutionHost {
     this._apiPort.InstantiateParticle(particle, particle.id, spec, handles);
     return particle;
   }
-  startRender({particle, slotName, providedSlots, contentTypes}: {particle: ParticleSpec, slotName: string, providedSlots: {[index: string]: string}, contentTypes: string[]}) {
+  startRender({particle, slotName, providedSlots, contentTypes}: {particle: Particle, slotName: string, providedSlots: {[index: string]: string}, contentTypes: string[]}) {
     this._apiPort.StartRender(particle, slotName, providedSlots, contentTypes);
   }
-  stopRender({particle, slotName}: {particle: ParticleSpec, slotName: string}) {
+  stopRender({particle, slotName}: {particle: Particle, slotName: string}) {
     this._apiPort.StopRender(particle, slotName);
   }
-  innerArcRender(transformationParticle: ParticleSpec, transformationSlotName: string, hostedSlotId: string, content) {
+  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content) {
     this._apiPort.InnerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content);
   }
 }

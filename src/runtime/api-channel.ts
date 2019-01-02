@@ -410,11 +410,11 @@ export abstract class PECOuterPort extends APIPort {
   DefineHandle(@RedundantInitializer handle: Handle, @ByLiteral(Type) type: Type, @Direct name: string) {}
   InstantiateParticle(@Initializer particle: ParticleSpec, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) handles: {[index: string]: Handle}) {}
   
-  UIEvent(@Mapped particle: ParticleSpec, @Direct slotName: string, @Direct event: {}) {}
+  UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
-  StartRender(@Mapped particle: ParticleSpec, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
-  StopRender(@Mapped particle: ParticleSpec, @Direct slotName: string) {}
+  StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
+  StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
   
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: string);
   abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
@@ -435,7 +435,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
   GetBackingStoreCallback(@Initializer store: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
   
-  abstract onConstructInnerArc(callback: number, particle: ParticleSpec);
+  abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
@@ -443,9 +443,9 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
-  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: ParticleSpec, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
+  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
-  InnerArcRender(@Mapped transformationParticle: ParticleSpec, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: {}) {}
+  InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: {}) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onRaiseSystemException(exception: {}, methodName: string, particleId: string);
