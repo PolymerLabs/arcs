@@ -11,12 +11,11 @@
 import {assert} from './chai-web.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {SlotComposer} from '../slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   constructor() {
-    super(new FakeSlotComposer({containers: {suggestions: {}}}));
+    super(null, new FakeSlotComposer({containers: {suggestions: {}}}));
     this.suggestions = [];
     this.updatesCount = 0;
     this.updateResolve = null;
@@ -50,7 +49,7 @@ describe('suggestion composer', function() {
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
     });
-    const suggestionComposer = new SuggestionComposer(slotComposer);
+    const suggestionComposer = new SuggestionComposer(helper.arc, slotComposer);
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);
@@ -79,7 +78,7 @@ describe('suggestion composer', function() {
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cakes.recipes',
       slotComposer
     });
-    const suggestionComposer = new SuggestionComposer(slotComposer);
+    const suggestionComposer = new SuggestionComposer(helper.arc, slotComposer);
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(helper.suggestions, 1);
     assert.isEmpty(suggestionComposer._suggestConsumers);

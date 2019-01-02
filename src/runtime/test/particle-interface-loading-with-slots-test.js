@@ -74,7 +74,7 @@ describe('particle interface loading with slots', function() {
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
 
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
-    await slotComposer.arc.pec.idle;
+    await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -92,7 +92,7 @@ describe('particle interface loading with slots', function() {
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
-    await slotComposer.arc.pec.idle;
+    await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
@@ -125,7 +125,7 @@ describe('particle interface loading with slots', function() {
     slotComposer._contexts[0].container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'};
     slotComposer.consumers[0].onContainerUpdate({});
 
-    await slotComposer.arc.pec.idle;
+    await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -140,7 +140,7 @@ describe('particle interface loading with slots', function() {
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
-    await slotComposer.arc.pec.idle;
+    await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.

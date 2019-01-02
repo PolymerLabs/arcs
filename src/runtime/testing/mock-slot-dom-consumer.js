@@ -13,8 +13,8 @@ import {assert} from '../../platform/assert-web.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 
 export class MockSlotDomConsumer extends SlotDomConsumer {
-  constructor(consumeConn) {
-    super(consumeConn);
+  constructor(arc, consumeConn) {
+    super(arc, consumeConn);
     this._content = {};
     this.contentAvailable = new Promise(resolve => this._contentAvailableResolve = resolve);
   }

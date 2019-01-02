@@ -9,6 +9,7 @@
  */
 import {ModalityHandler} from './modality-handler.js';
 import {SlotComposer} from './slot-composer.js';
+import {Arc} from './arc.js';
 import {Suggestion} from './plan/suggestion.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
@@ -16,12 +17,14 @@ export class SuggestionComposer {
   private _container: HTMLElement | undefined; // eg div element.
 
   private readonly _slotComposer: SlotComposer;
+  private readonly arc: Arc;
   private _suggestions: Suggestion[] = [];
   private _suggestConsumers: SuggestDomConsumer[] = [];
 
-  constructor(slotComposer: SlotComposer) {
+  constructor(arc: Arc, slotComposer: SlotComposer) {
     this._container = slotComposer.findContainerByName('suggestions');
     this._slotComposer = slotComposer;
+    this.arc = arc;
   }
 
   get modalityHandler(): ModalityHandler { return this._slotComposer.modalityHandler; }
@@ -46,7 +49,7 @@ export class SuggestionComposer {
       }
 
       if (this._container) {
-        this.modalityHandler.suggestionConsumerClass.render(this._container, suggestion, suggestionContent);
+        this.modalityHandler.suggestionConsumerClass.render(this.arc, this._container, suggestion, suggestionContent);
       }
 
       this._addInlineSuggestion(suggestion, suggestionContent);
@@ -86,7 +89,7 @@ export class SuggestionComposer {
       return;
     }
 
-    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
+    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this.arc, this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
       const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {
@@ -96,7 +99,7 @@ export class SuggestionComposer {
         }
         this._suggestConsumers.splice(index, 1);
 
-        suggestion.instantiate(this._slotComposer.arc);
+        suggestion.instantiate(this.arc);
       }
     });
     context.addSlotConsumer(suggestConsumer);

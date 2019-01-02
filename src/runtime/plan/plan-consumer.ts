@@ -124,7 +124,7 @@ export class PlanConsumer {
   _initSuggestionComposer() {
     const composer = this.arc.pec.slotComposer;
     if (composer && composer.findContextById('rootslotid-suggestions')) {
-      this.suggestionComposer = new SuggestionComposer(composer);
+      this.suggestionComposer = new SuggestionComposer(this.arc, composer);
       this.registerVisibleSuggestionsChangedCallback(
           (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
     }

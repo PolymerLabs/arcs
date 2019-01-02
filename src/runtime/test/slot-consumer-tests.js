@@ -15,7 +15,7 @@ import {SlotConsumer} from '../slot-consumer.js';
 describe('slot consumer', function() {
   it('setting container', async () => {
     const spec = {isSet: false};
-    const slot = new SlotConsumer({name: 'dummy-consumeConn', slotSpec: {spec}});
+    const slot = new SlotConsumer(null /* arc */, {name: 'dummy-consumeConn', slotSpec: {spec}});
     slot.slotContext = {spec};
     let startRenderCount = 0;
     let stopRenderCount = 0;
