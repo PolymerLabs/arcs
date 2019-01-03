@@ -55,7 +55,6 @@ export class PlanningResult {
     const value = await this.store.get() || {};
     if (value.suggestions) {
       if (this.fromLiteral(value)) {
-        this.onChanged();
         return true;
       }
     }
@@ -156,6 +155,7 @@ export class PlanningResult {
     this.generations = generations;
     this.lastUpdated = lastUpdated;
     this.contextual = contextual;
+
     this.onChanged();
     return true;
   }
@@ -257,6 +257,7 @@ export class PlanningResult {
     // TODO: filter out generations of other suggestions.
     this.generations.push(...generations);
     this.lastUpdated = lastUpdated;
+
     this.onChanged();
     return true;
   }

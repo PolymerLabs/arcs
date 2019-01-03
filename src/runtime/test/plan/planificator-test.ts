@@ -66,11 +66,11 @@ describe('remote planificator', () => {
     producePlanificator.dispose();
     producePlanificator = null;
     const deserializedArc = await Arc.deserialize({serialization,
-        slotComposer: new FakeSlotComposer(),
-        loader: new Loader(),
-        fileName: '',
-        pecFactory: undefined,
-        context: consumePlanificator.arc.context});
+      slotComposer: new FakeSlotComposer(),
+      loader: new Loader(),
+      fileName: '',
+      pecFactory: undefined,
+      context: consumePlanificator.arc.context});
     producePlanificator = new Planificator(
       deserializedArc,
       consumePlanificator.userid,
@@ -103,9 +103,9 @@ describe('remote planificator', () => {
 
   async function init(plannerStorageKeyBase, manifestFilename) {
     const consumePlanificator =
-    await createConsumePlanificator(plannerStorageKeyBase, manifestFilename);
+        await createConsumePlanificator(plannerStorageKeyBase, manifestFilename);
     const producePlanificator = await createProducePlanificator(plannerStorageKeyBase,
-      manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
+        manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
     producePlanificator.requestPlanning({contextual: true});
     return {consumePlanificator, producePlanificator};
   }
@@ -115,28 +115,47 @@ describe('remote planificator', () => {
       let {consumePlanificator, producePlanificator} = await init(
           plannerStorageKeyBase,
           './src/runtime/test/artifacts/Products/Products.recipes');
+      let consumerUpdateCount = 0;
+      consumePlanificator.consumer.registerSuggestionsChangedCallback(() => {
+        consumerUpdateCount++;
+      });
+
+      let expectedConsumerUpdateCount = 0;
+      const verifyConsumerResults = async (expectedSuggestionsCount) => {
+        ++expectedConsumerUpdateCount;
+        while (consumerUpdateCount < expectedConsumerUpdateCount) {
+          await delay(100);
+        }
+        assert.lengthOf(consumePlanificator.consumer.result.suggestions, expectedSuggestionsCount);
+      };
+
+      const verifyReplanningAndConsuming = async (expectedSuggestionsCount, expectedDescriptions = []) => {
+        // Wait until producer-planificator is done planning and verify resulting suggestions.
+        await verifyReplanning(producePlanificator, expectedSuggestionsCount, expectedDescriptions);
+
+        // Wait until consumer-planificator is updated and verify resulting suggestions.
+        await verifyConsumerResults(expectedSuggestionsCount);
+      };
 
       // No contextual suggestions for empty arc.
-      await verifyReplanning(producePlanificator, 0);
+      await verifyReplanningAndConsuming(0);
 
       // Replan non-contextual.
       await consumePlanificator.setSearch('*');
-      await verifyReplanning(producePlanificator, 1, ['Show products from your browsing context']);
       assert.isUndefined(consumePlanificator.producer);
-      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 1);
+      await verifyReplanningAndConsuming(1, ['Show products from your browsing context']);
 
       // Accept suggestion.
       producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
       // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
-      await verifyReplanning(producePlanificator, 3, ['Check shipping', 'Check manufacturer information']);
+      await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
 
-      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 3);
       assert.notEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
       assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
 
       producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
       // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.
-      await verifyReplanning(producePlanificator, 5);
+      await verifyConsumerResults(5);
     });
   });
   it(`merges remotely produced suggestions`, async () => {
