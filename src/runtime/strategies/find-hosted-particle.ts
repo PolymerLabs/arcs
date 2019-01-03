@@ -25,7 +25,7 @@ export class FindHostedParticle extends Strategy {
         const iface = connection.type as InterfaceType;
 
         const results = [];
-        for (const particle of arc.context.particles) {
+        for (const particle of arc.context.allParticles) {
           // This is what interfaceInfo.particleMatches() does, but we also do
           // canEnsureResolved at the end:
           const ifaceClone = iface.interfaceInfo.cloneWithResolutions(new Map());

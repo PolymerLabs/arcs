@@ -154,8 +154,10 @@ export class Manifest {
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
   }
-
   get particles() {
+    return Object.values(this._particles);
+  }
+  get allParticles() {
     return [...new Set(this._findAll(manifest => Object.values(manifest._particles)))];
   }
   get imports() {
