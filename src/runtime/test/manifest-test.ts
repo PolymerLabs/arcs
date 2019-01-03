@@ -107,7 +107,7 @@ ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.particles, 2);
       assert.equal(particleStr0, manifest.particles[0].toString());
       assert.equal(particleStr1, manifest.particles[1].toString());
@@ -144,7 +144,7 @@ ${schemaStr}
 ${particleStr0}
 ${particleStr1}
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.particles, 2);
       assert.equal(particleStr0, manifest.particles[0].toString());
       assert.equal(particleStr1, manifest.particles[1].toString());
@@ -1477,7 +1477,7 @@ resource SomeName
         create as handle0 // [Something]
         Thing
           inThing <- handle0`);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       assert.isFalse(manifest.particles[0].connections[0].isOptional);
       assert.isTrue(manifest.particles[0].connections[1].isOptional);
 
