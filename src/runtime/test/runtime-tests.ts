@@ -1,12 +1,12 @@
 /**
-* @license
-* Copyright (c) 2018 Google Inc. All rights reserved.
-* This code may only be used under the BSD style license found at
-* http://polymer.github.io/LICENSE.txt
-* Code distributed by Google as part of this project is also
-* subject to an additional IP rights grant found at
-* http://polymer.github.io/PATENTS.txt
-*/
+ * @license
+ * Copyright (c) 2018 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
@@ -17,11 +17,13 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 
 function createTestArc() {
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
+  const loader = new Loader();
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader,
+                       context: new Manifest({id: 'test'})});
   return arc;
 }
 
-describe('Runtime', function() {
+describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
     const arc = createTestArc();
     const description = new Description(arc);

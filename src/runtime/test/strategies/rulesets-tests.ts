@@ -7,9 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {Strategy, Ruleset} from '../../../planning/strategizer.js';
+import {Arc} from '../../arc.js';
 import {Manifest} from '../../manifest.js';
 import {Planner} from '../../planner.js';
 import {Recipe} from '../../recipe/recipe.js';
@@ -18,13 +18,15 @@ import {assert} from '../chai-web.js';
 import {Walker} from '../../recipe/walker.js';
 
 class InitPopulation extends Strategy {
-  constructor(arc) {
+  private readonly _context: Manifest;
+
+  constructor(arc: Arc) {
     super();
     this._context = arc.context;
   }
 
   async generate({generation}) {
-    if (generation != 0) return [];
+    if (generation !== 0) return [];
 
     const recipe = this._context.recipes[0];
     recipe.normalize();
@@ -40,6 +42,7 @@ class InitPopulation extends Strategy {
 }
 
 class FateAssigner extends Strategy {
+  fate;
   constructor(fate) {
     super();
     this.fate = fate;
@@ -55,6 +58,7 @@ class FateAssigner extends Strategy {
             null
           ];
         }
+        return undefined;
       }
     }(Walker.Permuted), this);
   }
@@ -76,6 +80,7 @@ class Resolve extends Strategy {
             }
           ];
         }
+        return undefined;
       }
     }(Walker.Permuted), this);
   }

@@ -16,11 +16,12 @@ import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 import {Loader} from '../../loader.js';
 import {Manifest} from '../../manifest.js';
 import {Modality} from '../../modality.js';
+import {SlotComposer} from '../../slot-composer.js';
 
 describe('ConvertConstraintsToConnections', async () => {
   const loader = new Loader();
   const slotComposer = new FakeSlotComposer();
-  const newArc = ({manifest, slotComposer}) => {
+  const newArc = ({manifest, slotComposer}: {manifest: Manifest, slotComposer?: SlotComposer}) => {
     return new Arc({
       id: 'test-plan-arc',
       slotComposer: slotComposer || new FakeSlotComposer(),
@@ -53,7 +54,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('does not cause an input only handle to be created', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -61,7 +62,7 @@ describe('ConvertConstraintsToConnections', async () => {
         in S d
 
       recipe
-        A.b -> C.d`));
+        A.b -> C.d`);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
@@ -69,7 +70,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('can resolve input only handle connection with a mapped handle', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -78,7 +79,7 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         map as handle0
-        A.b = C.d`));
+        A.b = C.d`);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
@@ -86,7 +87,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('can create handle for input and output handle', async () => {
-    const parseManifest = async (constraint1, constraint2) => (await Manifest.parse(`
+    const parseManifest = async (constraint1, constraint2) => await Manifest.parse(`
       schema S
       particle A
         in S b
@@ -97,7 +98,7 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         ${constraint1}
-        ${constraint2}`));
+        ${constraint2}`);
     const verify = async (constraint1, constraint2) => {
       const manifest = await parseManifest(constraint1, constraint2);
       const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
@@ -109,7 +110,7 @@ describe('ConvertConstraintsToConnections', async () => {
     const constraints = [['A.b = C.d', 'C.d = A.b'], ['A.b -> E.f', 'E.f <- A.b'], ['C.d -> E.f', 'E.f <- C.d']];
     for (let i = 0; i < constraints.length; ++i) {
       for (let j = 0; j < constraints.length; ++j) {
-        if (i == j) continue;
+        if (i === j) continue;
         for (let ii = 0; ii <= 1; ++ii) {
           for (let jj = 0; jj <= 1; ++jj) {
             await verify(constraints[i][ii], constraints[j][jj]);
@@ -120,7 +121,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing a single particle', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -129,7 +130,7 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        C`));
+        C`);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);
@@ -145,7 +146,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 
   it('fills out a constraint, reusing a single particle (2)', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       schema S
       particle A
         inout S b
@@ -154,7 +155,7 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        A`));
+        A`);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const cctc = new ConvertConstraintsToConnections(newArc({manifest}));
     const results = await cctc.generate(inputParams);

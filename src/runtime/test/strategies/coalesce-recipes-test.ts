@@ -14,7 +14,7 @@ import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 import {assert} from '../chai-web.js';
 
-async function tryCoalesceRecipes(manifestStr) {
+async function tryCoalesceRecipes(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);
   const recipes = manifest.recipes;
   assert.isTrue(recipes.every(recipe => recipe.normalize()));
@@ -24,11 +24,13 @@ async function tryCoalesceRecipes(manifestStr) {
   const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
   return await strategy.generate(inputParams);
 }
-async function doNotCoalesceRecipes(manifestStr) {
+
+async function doNotCoalesceRecipes(manifestStr: string) {
   const results = await tryCoalesceRecipes(manifestStr);
   assert.isEmpty(results);
 }
-async function doCoalesceRecipes(manifestStr, options) {
+
+async function doCoalesceRecipes(manifestStr: string, options?) {
   options = options || {};
   const results = await tryCoalesceRecipes(manifestStr);
   // dedup identical coalescing outputs
@@ -42,7 +44,7 @@ async function doCoalesceRecipes(manifestStr, options) {
   return [...resultsMap.values()][0];
 }
 
-describe('CoalesceRecipes', function() {
+describe('CoalesceRecipes', () => {
   it('coalesces required slots', async () => {
     const recipe = await doCoalesceRecipes(`
       particle P1

@@ -228,9 +228,10 @@ export class Manifest {
       yield* importedManifest._findAll(manifestFinder);
     }
   }
-  findSchemaByName(name) {
+  findSchemaByName(name: string): Schema {
     return this._find(manifest => manifest._schemas[name]);
   }
+
   findTypeByName(name) {
     const schema = this.findSchemaByName(name);
     if (schema) {
