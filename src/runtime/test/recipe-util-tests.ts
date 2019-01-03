@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {assert} from './chai-web.js';
 
-describe('recipe-util', function() {
+describe('recipe-util', () => {
   it('can produce a shape match to a simple recipe', async () => {
     const manifest = await Manifest.parse(`
       schema S
@@ -33,9 +33,9 @@ describe('recipe-util', function() {
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, 0);
-    assert.equal(results[0].match.A.name, 'A');
-    assert.equal(results[0].match.B.name, 'B');
-    assert.equal(results[0].match.v.localName, 'handle1');
+    assert.equal(results[0].match['A'].name, 'A');
+    assert.equal(results[0].match['B'].name, 'B');
+    assert.equal(results[0].match['v'].localName, 'handle1');
   });
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
@@ -65,15 +65,15 @@ describe('recipe-util', function() {
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 2);
     assert.equal(results[0].score, -1);
-    assert.equal(results[0].match.A.name, 'A');
-    assert.equal(results[0].match.B.name, 'B');
-    assert.equal(results[0].match.C.name, 'C');
-    assert.equal(results[0].match.v.localName, 'handle1');
+    assert.equal(results[0].match['A'].name, 'A');
+    assert.equal(results[0].match['B'].name, 'B');
+    assert.equal(results[0].match['C'].name, 'C');
+    assert.equal(results[0].match['v'].localName, 'handle1');
     assert.equal(results[1].score, -1);
-    assert.equal(results[1].match.A.name, 'A');
-    assert.equal(results[1].match.B.name, 'B');
-    assert.equal(results[1].match.C.name, 'C');
-    assert.equal(results[1].match.v.localName, 'handle2');
+    assert.equal(results[1].match['A'].name, 'A');
+    assert.equal(results[1].match['B'].name, 'B');
+    assert.equal(results[1].match['C'].name, 'C');
+    assert.equal(results[1].match['v'].localName, 'handle2');
   });
 
   it('can match a free handle', async () => {
@@ -91,7 +91,7 @@ describe('recipe-util', function() {
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, -3);
-    assert.equal(results[0].match.v.localName, 'h1');
+    assert.equal(results[0].match['v'].localName, 'h1');
   });
 
   it('can match dangling handle connections', async () => {
@@ -115,7 +115,7 @@ describe('recipe-util', function() {
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, -1);
-    assert.equal(results[0].match.h.localName, 'h1');
+    assert.equal(results[0].match['h'].localName, 'h1');
     assert.equal(results[0].match['A:a'].name, 'a');
     assert.equal(results[0].match['B:b'].name, 'b');
   });

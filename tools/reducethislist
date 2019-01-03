@@ -71,10 +71,6 @@ src/runtime/test/manifest-integration-test.js
 src/runtime/test/multiplexer-test.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js
-src/runtime/test/recipe-index-test.js
-src/runtime/test/recipe-resolver-test.js
-src/runtime/test/recipe-test.js
-src/runtime/test/recipe-util-tests.js
 src/runtime/test/reference-test.js
 src/runtime/test/schema-tests.js
 src/runtime/test/slot-consumer-tests.js

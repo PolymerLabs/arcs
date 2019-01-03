@@ -9,21 +9,24 @@
  */
 
 import {RecipeIndex} from '../recipe-index.js';
+import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
-describe('RecipeIndex', function() {
+describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
     const manifest = (await TestHelper.parseManifest(manifestContent));
     for (const recipe of manifest.recipes) {
       assert(recipe.normalize());
     }
+    const loader = new Loader();
     const arc = new Arc({
       id: 'test-plan-arc',
       context: manifest,
+      loader,
       slotComposer: new MockSlotComposer()
     });
     const recipeIndex = RecipeIndex.create(arc);
