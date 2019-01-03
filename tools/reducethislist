@@ -65,7 +65,6 @@ src/runtime/testing/fake-slot-composer.js
 src/runtime/testing/mock-slot-composer.js
 src/runtime/testing/mock-slot-dom-consumer.js
 src/runtime/testing/mock-suggest-dom-consumer.js
-src/runtime/test/manifest-integration-test.js
 src/runtime/test/multiplexer-test.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js

@@ -559,7 +559,7 @@ ${this.activeRecipe.toString()}`;
     handleMap.handles.set(name, targetHandle);
   }
 
-  async createStore(type: Type, name, id, tags?, storageKey = undefined) {
+  async createStore(type: Type, name?, id?: string, tags?, storageKey:string = undefined) {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {
