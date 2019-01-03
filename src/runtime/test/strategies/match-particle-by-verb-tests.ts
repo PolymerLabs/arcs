@@ -64,9 +64,8 @@ describe('MatchParticleByVerb', () => {
   it('particles by verb recipe fully resolved', async () => {
     const manifest = (await Manifest.parse(manifestStr));
     const recipe = manifest.recipes[0];
-    // TODO(plindner) find a better way of accessing 'type'
-    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass()['type']});
-    recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass()['type']});
+    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
+    recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
     const arc = StrategyTestHelper.createTestArc(manifest, {modalityName: Modality.Name.Dom});
 
