@@ -41,7 +41,7 @@ describe('manifest integration', () => {
     // TODO(lindner): mismatched type..
     const proxy = store as StorageProxy;
     
-    const handle = handleFor(store);
+    const handle = handleFor(proxy);
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();
