@@ -113,7 +113,7 @@ export async function assertSingletonIs(store, field: string, expectation): Prom
   assert.equal(actual !== null ? actual.rawData[field] : '(null)', expectation);
 }
 
-export async function assertThrowsAsync(fn, message: string): Promise<void> {
+export async function assertThrowsAsync(fn, message: string|RegExp): Promise<void> {
   try {
     await fn();
     assert.throws(() => undefined, message);

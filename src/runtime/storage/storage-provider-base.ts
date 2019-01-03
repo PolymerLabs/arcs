@@ -8,7 +8,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
-import {Type} from '../type';
+import {Type} from '../type.js';
 import {Id} from '../id.js';
 import {KeyBase} from './key-base.js';
 
