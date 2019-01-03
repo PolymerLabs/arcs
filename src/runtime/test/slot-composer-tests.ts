@@ -12,6 +12,7 @@ import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {Loader} from '../loader.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {Planner} from '../planner.js';
 import {Random} from '../random.js';
@@ -22,7 +23,7 @@ import {TestHelper} from '../testing/test-helper.js';
 async function initSlotComposer(recipeStr) {
   const slotComposer = new FakeSlotComposer();
 
-  const manifest = await TestHelper.parseManifest(recipeStr);
+  const manifest = await TestHelper.parseManifest(recipeStr, new Loader());
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });

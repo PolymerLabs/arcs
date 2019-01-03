@@ -40,10 +40,10 @@ describe('OuterPortAttachment', () => {
     });
     const arc = testHelper.arc;
 
-    const foo = arc._context.findSchemaByName('Foo').entityClass();
+    const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
 
-    const recipe = arc._context.recipes[0];
+    const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
     recipe.normalize();
     await arc.instantiate(recipe);

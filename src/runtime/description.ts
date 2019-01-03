@@ -107,7 +107,7 @@ export class DescriptionFormatter {
     return undefined;
   }
 
-  _isSelectedDescription(desc: ParticleDescription) {
+  _isSelectedDescription(desc: ParticleDescription): boolean {
     return !!desc.pattern;
   }
 

@@ -30,7 +30,7 @@ import {FindHostedParticle} from './strategies/find-hosted-particle.js';
 import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
-import {Suggestion} from './plan/suggestion';
+import {Suggestion} from './plan/suggestion.js';
 import {Tracing} from '../tracelib/trace.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 
@@ -48,7 +48,7 @@ export class Planner {
   }
 
   // Specify a timeout value less than zero to disable timeouts.
-  async plan(timeout: number, generations?) {
+  async plan(timeout?: number, generations?) {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
     const allResolved = [];
@@ -117,7 +117,7 @@ export class Planner {
     return groups;
   }
 
-  async suggest(timeout: number, generations: {}[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
+  async suggest(timeout?: number, generations: {}[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
     const plans = await trace.wait(this.plan(timeout, generations));
