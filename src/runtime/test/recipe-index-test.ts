@@ -18,7 +18,7 @@ import {TestHelper} from '../testing/test-helper.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
-    const manifest = (await TestHelper.parseManifest(manifestContent));
+    const manifest = (await TestHelper.parseManifest(manifestContent, new Loader()));
     for (const recipe of manifest.recipes) {
       assert(recipe.normalize());
     }

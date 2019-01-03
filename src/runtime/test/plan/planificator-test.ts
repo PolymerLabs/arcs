@@ -16,9 +16,9 @@ import {TestHelper} from '../../testing/test-helper.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
-    const helper = await TestHelper.create();
+    const helper = await TestHelper.create(
+      {storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/testuser--LT97ssVNw_ttCZtjlMT'});
     const arc = helper.arc;
-    arc.storageKey = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/testuser--LT97ssVNw_ttCZtjlMT';
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, 'testuser', storageKeyBase);

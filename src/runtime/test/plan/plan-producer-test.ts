@@ -104,9 +104,9 @@ class TestPlanProducer extends PlanProducer {
   describe('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
       const helper = await TestHelper.createAndPlan({
-        manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'
+        manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
+        storageKey: 'firebase://xxx.firebaseio.com/yyy/serialization/zzz'
       });
-      helper.arc.storageKey = 'firebase://xxx.firebaseio.com/yyy/serialization/zzz';
       const store = await Planificator['_initSuggestStore'](helper.arc, /* userid= */ 'TestUser', storageKeyBase);
       assert.isNotNull(store);
       const producer = new TestPlanProducer(helper.arc, store);
