@@ -13,7 +13,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 
-describe('recipe', function() {
+describe('recipe', () => {
   it('normalize errors', async () => {
     const manifest = await Manifest.parse(`
         schema S1
@@ -32,7 +32,7 @@ describe('recipe', function() {
             s2 -> handle2
     `);
     const recipe = manifest.recipes[0];
-    recipe.handles[0]._mappedType = recipe.particles[0].connections['s2'].type;
+    recipe.handles[0].mappedType = recipe.particles[0].connections['s2'].type;
     const options = {errors: new Map()};
 
     recipe.normalize(options);
@@ -70,57 +70,57 @@ describe('recipe', function() {
           in BigCollection<MyType> inMys
     `);
 
-    const MyType = manifest.findSchemaByName('MyType').entityClass().type;
-    const MySubType = manifest.findSchemaByName('MySubType').entityClass().type;
-    const OtherType = manifest.findSchemaByName('OtherType').entityClass().type;
+    const myType = manifest.findSchemaByName('MyType').entityClass()['type'];
+    const mySubType = manifest.findSchemaByName('MySubType').entityClass()['type'];
+    const otherType = manifest.findSchemaByName('OtherType').entityClass()['type'];
 
     // MyType and MySubType (sub class of MyType) are valid types for (in MyType)
-    const p1ConnSpec = manifest.particles.find(p => p.name == 'P1').connections[0];
-    assert.isTrue(p1ConnSpec.isCompatibleType(MyType));
-    assert.isTrue(p1ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p1ConnSpec.isCompatibleType(OtherType));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MyType.collectionOf()));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.collectionOf()));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MyType.bigCollectionOf()));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
+    const p1ConnSpec = manifest.particles.find(p => p.name === 'P1').connections[0];
+    assert.isTrue(p1ConnSpec.isCompatibleType(myType));
+    assert.isTrue(p1ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p1ConnSpec.isCompatibleType(otherType));
+    assert.isFalse(p1ConnSpec.isCompatibleType(myType.collectionOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(mySubType.collectionOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(myType.bigCollectionOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(mySubType.bigCollectionOf()));
 
     // Only MyType are valid types for (out MyType)
-    const p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
-    assert.isTrue(p2ConnSpec.isCompatibleType(MyType));
-    assert.isFalse(p2ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p2ConnSpec.isCompatibleType(OtherType));
+    const p2ConnSpec = manifest.particles.find(p => p.name === 'P2').connections[0];
+    assert.isTrue(p2ConnSpec.isCompatibleType(myType));
+    assert.isFalse(p2ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p2ConnSpec.isCompatibleType(otherType));
 
     // Only MySubType is a valid types for (in MySubType)
-    const p3ConnSpec = manifest.particles.find(p => p.name == 'P3').connections[0];
-    assert.isFalse(p3ConnSpec.isCompatibleType(MyType));
-    assert.isTrue(p3ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p3ConnSpec.isCompatibleType(OtherType));
+    const p3ConnSpec = manifest.particles.find(p => p.name === 'P3').connections[0];
+    assert.isFalse(p3ConnSpec.isCompatibleType(myType));
+    assert.isTrue(p3ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p3ConnSpec.isCompatibleType(otherType));
 
     // MyType and MySubType are valid types for (out MySubType)
-    const p4ConnSpec = manifest.particles.find(p => p.name == 'P4').connections[0];
-    assert.isTrue(p4ConnSpec.isCompatibleType(MyType));
-    assert.isTrue(p4ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p4ConnSpec.isCompatibleType(OtherType));
+    const p4ConnSpec = manifest.particles.find(p => p.name === 'P4').connections[0];
+    assert.isTrue(p4ConnSpec.isCompatibleType(myType));
+    assert.isTrue(p4ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p4ConnSpec.isCompatibleType(otherType));
 
     // MyType and MySubType are valid types for (in [MyType])
-    const p5ConnSpec = manifest.particles.find(p => p.name == 'P5').connections[0];
-    assert.isFalse(p5ConnSpec.isCompatibleType(MyType));
-    assert.isFalse(p5ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p5ConnSpec.isCompatibleType(OtherType));
-    assert.isTrue(p5ConnSpec.isCompatibleType(MyType.collectionOf()));
-    assert.isTrue(p5ConnSpec.isCompatibleType(MySubType.collectionOf()));
-    assert.isFalse(p5ConnSpec.isCompatibleType(MyType.bigCollectionOf()));
-    assert.isFalse(p5ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
+    const p5ConnSpec = manifest.particles.find(p => p.name === 'P5').connections[0];
+    assert.isFalse(p5ConnSpec.isCompatibleType(myType));
+    assert.isFalse(p5ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p5ConnSpec.isCompatibleType(otherType));
+    assert.isTrue(p5ConnSpec.isCompatibleType(myType.collectionOf()));
+    assert.isTrue(p5ConnSpec.isCompatibleType(mySubType.collectionOf()));
+    assert.isFalse(p5ConnSpec.isCompatibleType(myType.bigCollectionOf()));
+    assert.isFalse(p5ConnSpec.isCompatibleType(mySubType.bigCollectionOf()));
 
     // MyType and MySubType are valid types for (in BigCollection<MyType>)
-    const p6ConnSpec = manifest.particles.find(p => p.name == 'P6').connections[0];
-    assert.isFalse(p6ConnSpec.isCompatibleType(MyType));
-    assert.isFalse(p6ConnSpec.isCompatibleType(MySubType));
-    assert.isFalse(p6ConnSpec.isCompatibleType(OtherType));
-    assert.isFalse(p6ConnSpec.isCompatibleType(MyType.collectionOf()));
-    assert.isFalse(p6ConnSpec.isCompatibleType(MySubType.collectionOf()));
-    assert.isTrue(p6ConnSpec.isCompatibleType(MyType.bigCollectionOf()));
-    assert.isTrue(p6ConnSpec.isCompatibleType(MySubType.bigCollectionOf()));
+    const p6ConnSpec = manifest.particles.find(p => p.name === 'P6').connections[0];
+    assert.isFalse(p6ConnSpec.isCompatibleType(myType));
+    assert.isFalse(p6ConnSpec.isCompatibleType(mySubType));
+    assert.isFalse(p6ConnSpec.isCompatibleType(otherType));
+    assert.isFalse(p6ConnSpec.isCompatibleType(myType.collectionOf()));
+    assert.isFalse(p6ConnSpec.isCompatibleType(mySubType.collectionOf()));
+    assert.isTrue(p6ConnSpec.isCompatibleType(myType.bigCollectionOf()));
+    assert.isTrue(p6ConnSpec.isCompatibleType(mySubType.bigCollectionOf()));
   });
   it('keeps orphaned slots, handles and particles', async () => {
     const manifest = await Manifest.parse(`
