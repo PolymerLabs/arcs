@@ -35,6 +35,7 @@ type TestHelperOptions = {
 type TestHelperPlanOptions = TestHelperOptions & {
   expectedNumPlans?: number;
   expectedSuggestions?;
+  includeInnerArcs?: boolean;
   verify?;
 };
 
@@ -126,6 +127,13 @@ export class TestHelper {
     const planner = new Planner();
     planner.init(this.arc, {strategyArgs: {recipeIndex: this.recipeIndex}});
     this.suggestions = await planner.suggest();
+    if (options && options.includeInnerArcs) {
+      for (const innerArc of this.arc.innerArcs) {
+        const innerPlanner = new Planner();
+        innerPlanner.init(innerArc, {strategyArgs: {recipeIndex: this.recipeIndex}});
+        this.suggestions = this.suggestions.concat(await innerPlanner.suggest());
+      }
+    }
     if (options) {
       if (options.expectedNumPlans) {
         assert.lengthOf(this.suggestions, options.expectedNumPlans);
