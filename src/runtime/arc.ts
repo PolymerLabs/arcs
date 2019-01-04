@@ -14,7 +14,6 @@ import {ParticleExecutionHost} from './particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Manifest, StorageStub} from './manifest.js';
-import {Description} from './description.js';
 import {compareComparables} from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
@@ -66,8 +65,7 @@ export class Arc {
   // Map from each store to a set of tags. public for debug access
   public storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private storeDescriptions = new Map<StorageProviderBase, Description>();
-  private readonly _description: Description;
+  private storeDescriptions = new Map<StorageProviderBase, string>();
   private instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
@@ -96,15 +94,10 @@ export class Arc {
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
-    this._description = new Description(this);
     this.debugHandler = new ArcDebugHandler(this);
   }
   get loader(): Loader {
     return this._loader;
-  }
-
-  get description(): Description {
-    return this._description;
   }
 
   get modality(): Modality {
@@ -702,7 +695,7 @@ ${this.activeRecipe.toString()}`;
     return this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store) {
+  getStoreDescription(store: StorageProviderBase): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

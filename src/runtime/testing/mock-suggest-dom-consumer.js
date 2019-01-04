@@ -20,7 +20,6 @@ export class MockSuggestDomConsumer extends MockSlotDomConsumer {
       templateName: 'dummy-suggestion',
       model: {}
     };
-    this._setContentPromise = null;
   }
 
   get suggestion() { return this._suggestion; }
@@ -30,7 +29,7 @@ export class MockSuggestDomConsumer extends MockSlotDomConsumer {
     super.onContainerUpdate(container, originalContainer);
 
     if (container) {
-      this._setContentPromise = this.setContent(this._suggestionContent, this._eventHandler);
+      this.setContent(this._suggestionContent, this._eventHandler);
     }
   }
 }

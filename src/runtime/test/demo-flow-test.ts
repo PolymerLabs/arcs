@@ -22,8 +22,8 @@ describe('demo flow', () => {
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
-      verify: async plans => {
-        const descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
+      verify: plans => {
+        const descriptions = plans.map(plan => plan.description.getRecipeSuggestion());
         assert.include(descriptions, `Show products from your browsing context (Minecraft Book plus 2 other items).`);
                     //  'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
                     //  'and choose from products recommended based on products from your browsing context ' +

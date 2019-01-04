@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
+import {Description} from './description.js';
 import {SlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotConsumer} from './hosted-slot-consumer.js';
@@ -108,9 +109,9 @@ export class SlotConsumer {
     }
   }
 
-  async setContent(content, handler) {
-    if (content && Object.keys(content).length > 0) {
-      content.descriptions = await this.populateHandleDescriptions();
+  setContent(content, handler, description?: Description) {
+    if (content && Object.keys(content).length > 0 && description) {
+      content.descriptions = this.populateHandleDescriptions(description);
     }
     this.eventHandler = handler;
     for (const [subId, rendering] of this.renderings) {
@@ -118,15 +119,15 @@ export class SlotConsumer {
     }
   }
 
-  async populateHandleDescriptions() {
-    if (!this.arc || !this.consumeConn) return null;
+  populateHandleDescriptions(description: Description) {
+    if (!this.consumeConn) return null;
     const descriptions = {};
-    await Promise.all(Object.values(this.consumeConn.particle.connections).map(async handleConn => {
-      // TODO(mmandlis): convert back to .handle and .name after all recipe files converted to typescript.
-      if (handleConn['handle']) {
-        descriptions[`${handleConn['name']}.description`] = (await this.arc.description.getHandleDescription(handleConn['handle'])).toString();
+    Object.values(this.consumeConn.particle.connections).map(handleConn => {
+      if (handleConn.handle) {
+        descriptions[`${handleConn.name}.description`] =
+            description.getHandleDescription(handleConn.handle).toString();
       }
-    }));
+    });
     return descriptions;
   }
 
