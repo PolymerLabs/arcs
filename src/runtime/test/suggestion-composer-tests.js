@@ -85,7 +85,7 @@ describe('suggestion composer', function() {
 
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
     await helper.makePlans({includeInnerArcs: true});
-    assert.lengthOf(helper.suggestions, 1);
+    assert.lengthOf(helper.suggestions.filter(s => s.descriptionText === 'Light candles on Tiramisu cake.'), 1);
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
@@ -96,8 +96,6 @@ describe('suggestion composer', function() {
     // Instantiate inner arc's suggestion.
     const innerSuggestion = helper.findSuggestionByParticleNames(['LightCandles'])[0];
     const innerArc = helper.arc.innerArcs[0];
-    // This is a hack: inner arc suggestion's particle spec part of the inner arc context.
-    innerArc._context = helper.arc.context;
     await innerSuggestion.instantiate(innerArc);
     await helper.idle();
 
