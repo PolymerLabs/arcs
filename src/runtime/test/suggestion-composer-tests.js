@@ -72,9 +72,7 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 
-  // #2523: This test is building outer arc suggestions connecting to the inner arc particles.
-  // We don't support this, so this test is skipped for now.
-  it.skip('suggestion set-slots', async () => {
+  it('suggestion set-slots', async () => {
     const slotComposer = new FakeSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cakes.recipes',
@@ -86,7 +84,7 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestionComposer._suggestConsumers);
 
     await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
-    await helper.makePlans();
+    await helper.makePlans({includeInnerArcs: true});
     assert.lengthOf(helper.suggestions, 1);
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
@@ -94,7 +92,14 @@ describe('suggestion composer', function() {
     await suggestConsumer._setContentPromise;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
-    await helper.acceptSuggestion({particles: ['LightCandles']});
+    // TODO(mmandlis): Better support in test-helper for instantiating suggestions in inner arcs.
+    // Instantiate inner arc's suggestion.
+    const innerSuggestion = helper.findSuggestionByParticleNames(['LightCandles'])[0];
+    const innerArc = helper.arc.innerArcs[0];
+    // This is a hack: inner arc suggestion's particle spec part of the inner arc context.
+    innerArc._context = helper.arc.context;
+    await innerSuggestion.instantiate(innerArc);
+    await helper.idle();
 
     await helper.makePlans();
     assert.isEmpty(helper.suggestions);
