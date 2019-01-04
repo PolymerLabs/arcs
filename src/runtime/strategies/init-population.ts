@@ -52,13 +52,7 @@ export class InitPopulation extends Strategy {
       results.push(...this._recipeIndex.findConsumeSlotConnectionMatch(slot).map(
           ({slotConn}) => ({recipe: slotConn.recipe})));
     }
-    let innerArcHandles = [];
-    for (const recipe of this.arc.recipes) {
-      for (const innerArc of [...recipe.innerArcs.values()]) {
-        innerArcHandles = innerArcHandles.concat(innerArc.activeRecipe.handles);
-      }
-    }
-    for (const handle of this.arc.activeRecipe.handles.concat(innerArcHandles)) {
+    for (const handle of [].concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }

@@ -72,7 +72,9 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 
-  it('suggestion set-slots', async () => {
+  // #2523: This test is building outer arc suggestions connecting to the inner arc particles.
+  // We don't support this, so this test is skipped for now.
+  it.skip('suggestion set-slots', async () => {
     const slotComposer = new FakeSlotComposer();
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cakes.recipes',

@@ -40,7 +40,7 @@ export class DescriptionFormatter {
     this.relevance = relevance;
   }
 
-  async getDescription(recipe: Recipe) {
+  async getDescription(recipe: {patterns: string[], particles: Particle[]}) {
     await this._updateDescriptionHandles();
 
     if (recipe.patterns.length > 0) {
@@ -85,23 +85,7 @@ export class DescriptionFormatter {
 
   async _updateDescriptionHandles() {
     this.particleDescriptions = [];
-
-    // Combine all particles from direct and inner arcs.
-    const innerParticlesByName = {};
-    this.arc.recipes.forEach(recipe => {
-      const innerArcs = [...recipe.innerArcs.values()];
-      innerArcs.forEach(innerArc => {
-        innerArc.recipes.forEach(innerRecipe => {
-          innerRecipe.particles.forEach(innerParticle => {
-            if (!innerParticlesByName[innerParticle.name]) {
-              innerParticlesByName[innerParticle.name] = innerParticle;
-            }
-          });
-        });
-      });
-    });
-    const allParticles = this.arc.activeRecipe.particles.concat(Object.values(innerParticlesByName));
-
+    const allParticles = [].concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
     await Promise.all(allParticles.map(async particle => {
       this.particleDescriptions.push(await this._createParticleDescription(particle));
     }));
