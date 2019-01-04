@@ -9,12 +9,12 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {DescriptionFormatter, CombinedDescriptionsOptions, ParticleDescription} from './description.js';
+import {DescriptionFormatter, CombinedDescriptionsOptions, ParticleDescription} from './description-formatter.js';
 
 export class DescriptionDomFormatter extends DescriptionFormatter {
   private nextID = 0;
 
-  _isSelectedDescription(desc) {
+  _isSelectedDescription(desc): boolean {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
   }
 
