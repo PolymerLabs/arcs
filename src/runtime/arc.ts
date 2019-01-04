@@ -191,7 +191,7 @@ export class Arc {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner').toString();
-    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: new Manifest({id}), innerArc: true, speculative: this.isSpeculative});
+    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
