@@ -4,7 +4,7 @@ module.exports = {
     "google",
   ],
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": 2018,
     "sourceType": "module",
   },
   "rules": {

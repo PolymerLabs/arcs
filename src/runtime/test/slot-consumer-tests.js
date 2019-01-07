@@ -11,12 +11,13 @@
 
 import {assert} from './chai-web.js';
 import {SlotConsumer} from '../slot-consumer.js';
+import {ProvidedSlotContext} from '../slot-context.js';
 
 describe('slot consumer', function() {
   it('setting container', async () => {
     const spec = {isSet: false};
     const slot = new SlotConsumer(null /* arc */, {name: 'dummy-consumeConn', slotSpec: {spec}});
-    slot.slotContext = {spec};
+    slot.slotContext = new ProvidedSlotContext('dummy-context', 'dummy', [], null, spec, null);
     let startRenderCount = 0;
     let stopRenderCount = 0;
     slot.startRenderCallback = () => { ++startRenderCount; };

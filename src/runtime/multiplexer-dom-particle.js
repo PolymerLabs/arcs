@@ -124,8 +124,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
       const hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
       const slotName = [...this.spec.slots.values()][0].name;
-      const slotId = await arc.createSlot(
-          this, slotName, resolvedHostedParticle.name, hostedSlotName, itemHandle._id);
+      const slotId = await arc.createSlot(this, slotName, itemHandle._id);
 
       if (!slotId) {
         continue;

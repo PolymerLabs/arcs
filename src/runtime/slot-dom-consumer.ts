@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
+import {ProvidedSlotContext} from './slot-context.js';
 import {Arc} from './arc.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {Template} from '../../modalities/dom/components/xen/xen-template.js';
@@ -26,13 +27,9 @@ export class SlotDomConsumer extends SlotConsumer {
     this._observer = this._initMutationObserver();
   }
 
-  constructRenderRequest(hostedSlotConsumer): string[] {
+  constructRenderRequest(): string[] {
     const request = ['model'];
     const prefixes = [this.templatePrefix];
-    if (hostedSlotConsumer) {
-      prefixes.push(hostedSlotConsumer.consumeConn.particle.name);
-      prefixes.push(hostedSlotConsumer.consumeConn.name);
-    }
     if (!SlotDomConsumer.hasTemplate(prefixes.join('::'))) {
       request.push('template');
     }
@@ -73,6 +70,8 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   formatContent(content, subId): object {
+    assert(this.slotContext instanceof ProvidedSlotContext, 'Content formatting can only be done for provided SlotContext');
+    const contextSpec = (this.slotContext as ProvidedSlotContext).spec;
     const newContent: {model?: string | {}, templateName?: string | {}, template?: string | {}} = {};
 
     // Format model.
@@ -80,9 +79,9 @@ export class SlotDomConsumer extends SlotConsumer {
       if (content.model) {
 
         let formattedModel;
-        if (this.slotContext.spec.isSet && this.consumeConn.slotSpec.isSet) {
+        if (contextSpec.isSet && this.consumeConn.slotSpec.isSet) {
           formattedModel = this._modelForSetSlotConsumedAsSetSlot(content.model, subId);
-        } else if (this.slotContext.spec.isSet && !this.consumeConn.slotSpec.isSet) {
+        } else if (contextSpec.isSet && !this.consumeConn.slotSpec.isSet) {
           formattedModel = this._modelForSetSlotConsumedAsSingletonSlot(content.model, subId);
         } else {
           formattedModel = this._modelForSingletonSlot(content.model, subId);
@@ -244,7 +243,7 @@ export class SlotDomConsumer extends SlotConsumer {
         return;
       }
       const slotId = this.getNodeValue(innerContainer, 'slotid');
-      const providedContext = this.providedSlotContexts.find(ctx => ctx.id === slotId);
+      const providedContext = this.findProvidedContext(ctx => ctx.id === slotId);
       if (!providedContext) {
         console.warn(`Slot ${this.consumeConn.slotSpec.name} has unexpected inner slot ${slotId}`);
         return;
@@ -252,7 +251,7 @@ export class SlotDomConsumer extends SlotConsumer {
       const subId = this.getNodeValue(innerContainer, 'subid');
       assert(Boolean(subId) === providedContext.spec.isSet,
         `Sub-id ${subId} for slot ${providedContext.name} doesn't match set spec: ${providedContext.spec.isSet}`);
-      this._initInnerSlotContainer(slotId, subId, innerContainer);
+      providedContext.sourceSlotConsumer._initInnerSlotContainer(slotId, subId, innerContainer);
     });
   }
 
@@ -330,10 +329,10 @@ export class SlotDomConsumer extends SlotConsumer {
     });
   }
 
-  formatHostedContent(hostedSlot, content): {} {
+  formatHostedContent(content): {} {
     if (content.templateName) {
       if (typeof content.templateName === 'string') {
-        content.templateName = `${hostedSlot.consumeConn.particle.name}::${hostedSlot.consumeConn.name}::${content.templateName}`;
+        content.templateName = `${this.consumeConn.getQualifiedName()}::${content.templateName}`;
       } else {
         // TODO(mmandlis): add support for hosted particle rendering set slot.
         throw new Error('TODO: Implement this!');

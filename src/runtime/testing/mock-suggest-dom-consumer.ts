@@ -72,7 +72,7 @@ export class MockSuggestDomConsumer extends SuggestDomConsumer {
   }
   getInnerContainer(slotId) {
     const model = this.renderings.map(([subId, {model}]) => model)[0];
-    const providedContext = this.providedSlotContexts.find(ctx => ctx.id === slotId);
+    const providedContext = this.findProvidedContext(ctx => ctx.id === slotId);
     if (!providedContext) {
       console.warn(`Cannot find provided spec for ${slotId} in ${this.consumeConn.getQualifiedName()}`);
       return;

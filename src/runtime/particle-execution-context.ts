@@ -186,11 +186,11 @@ export class ParticleExecutionContext {
             resolve(id);
           }, arcId, handle));
       },
-      createSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId) {
+      createSlot(transformationParticle, transformationSlotName, handleId) {
         // handleId: the ID of a handle (returned by `createHandle` above) this slot is rendering; null - if not applicable.
         // TODO: support multiple handle IDs.
         return new Promise((resolve, reject) =>
-          pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId)
+          pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, handleId)
           );
       },
       loadRecipe(recipe) {

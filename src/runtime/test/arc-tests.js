@@ -19,6 +19,7 @@ import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 
 async function setup() {
   const loader = new Loader();
@@ -482,4 +483,81 @@ describe('Arc', () => {
       // in the interim you can disable the provider cache in pouch-db-storage.ts
     });
   }); // end forEach storageKeyPrefix
+
+  // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.
+  // Whatever template is rendered into the hosted slot gets 'A' prepended and is rendered by A.
+  //
+  // B performs the same thing, but puts C in its inner arc. C puts D etc. The whole affair stops
+  // with Z, which just renders 'Z'.
+  // 
+  // As aresult we get 26 arcs in total, the first one is an outer arc and each next is an inner arc
+  // of a preceding one. A ends up rendering 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+  it('handles recursive inner arcs', async () => {
+    const sources = {};
+    // 'A', 'B', 'C', ..., 'Y'
+    for (let current = 'A'; current < 'Z';) {
+      const next = String.fromCharCode(current.charCodeAt(0) + 1);
+      sources[`${current}.js`] = `defineParticle(({DomParticle}) => {
+        return class extends DomParticle {
+          async setHandles(handles) { 
+            super.setHandles(handles);
+
+            const innerArc = await this.constructInnerArc();
+            const hostedSlotId = await innerArc.createSlot(this, 'root');
+      
+            innerArc.loadRecipe(\`
+              particle ${next} in '${next}.js'
+                consume root
+              
+              recipe
+                slot '\` + hostedSlotId + \`' as hosted
+                ${next}
+                  consume root as hosted
+            \`);
+          }
+      
+          renderHostedSlot(slotName, hostedSlotId, content) {
+            this.setState(content);
+          }
+      
+          shouldRender() {
+            return Boolean(this.state.template);
+          }
+      
+          getTemplate() {
+            return '${current}' + this.state.template;
+          }
+        };
+      });`;
+      current = next;
+    }
+
+    const {arc, slotComposer} = await TestHelper.create({
+      manifestString: `
+        particle A in 'A.js'
+          consume root
+    
+        recipe
+          slot 'rootslotid-root' as root
+          A
+            consume root as root`,
+      loader: new StubLoader({        
+        ...sources,
+        'Z.js': `defineParticle(({DomParticle}) => {
+          return class extends DomParticle {
+            getTemplate() { return 'Z'; }
+          };
+        });`,
+      }),
+      slotComposer: new FakeSlotComposer(),
+    });
+
+    const [recipe] = arc.context.recipes;
+    recipe.normalize();
+    await arc.instantiate(recipe);
+
+    const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc);
+    await rootSlotConsumer.contentAvailable;
+    assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  });
 });
