@@ -254,7 +254,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       },
       // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
       arcConfig: {
-        id: id,
+        id,
         manifest,
         suggestionContainer: this.getSuggestionSlot()
       },
