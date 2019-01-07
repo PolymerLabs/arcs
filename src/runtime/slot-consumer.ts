@@ -25,7 +25,7 @@ export class SlotConsumer {
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string|undefined, {container?: {}}> = new Map();
+  private _renderingBySubId: Map<string|undefined, {container?: {}, model?}> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
 
@@ -36,7 +36,7 @@ export class SlotConsumer {
   }
   get consumeConn() { return this._consumeConn; }
 
-  getRendering(subId) { return this._renderingBySubId.get(subId); } 
+  getRendering(subId?) { return this._renderingBySubId.get(subId); }
   get renderings() { return [...this._renderingBySubId.entries()]; }
   addRenderingBySubId(subId: string|undefined, rendering) {
     this._renderingBySubId.set(subId, rendering);

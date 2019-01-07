@@ -9,7 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
@@ -34,14 +34,14 @@ describe('Particle Execution Context', () => {
           };
         });`
       }),
-      slotComposer: new FakeSlotComposer(),
+      slotComposer: new MockSlotComposer({strict:false}).newExpectations('debug'),
     });
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const slotConsumer = slotComposer._contexts.find(c => c.name === 'root').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer);
+    const slotConsumer = slotComposer.contexts.find(c => c.name === 'root').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer) as MockSlotDomConsumer;
     const detailContext = slotConsumer.providedSlotContexts.find(ctx => ctx.name === 'detail');
     const annotationContext = slotConsumer.providedSlotContexts.find(ctx => ctx.name === 'annotation');
 

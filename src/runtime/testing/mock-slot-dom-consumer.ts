@@ -7,12 +7,15 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../../platform/assert-web.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 
 export class MockSlotDomConsumer extends SlotDomConsumer {
+  _content;
+  contentAvailable;
+  _contentAvailableResolve;
+
   constructor(arc, consumeConn) {
     super(arc, consumeConn);
     this._content = {};
@@ -41,7 +44,7 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
   }
 
   isSameContainer(container, contextContainer) {
-    return container == contextContainer;
+    return container === contextContainer;
   }
 
   getInnerContainer(slotId) {
@@ -73,6 +76,6 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
   static clear(container) {}
   _onUpdate(rendering) {}
   _stampTemplate(template) {}
-  _initMutationObserver() {}
+  _initMutationObserver(): MutationObserver { return null; }
   _observe() {}
 }

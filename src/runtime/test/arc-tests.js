@@ -123,9 +123,13 @@ async function setupSlandlesWithOptional(cProvided, dProvided) {
   return {arc, recipe, aStore, bStore, cStore, dStore};
 }
 
-describe('Arc', function() {
+describe('Arc', () => {
   it('idle can safely be called multiple times', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader: new Loader(), id: 'test'});
+    const manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader: new Loader(), id: 'test', context: manifest});
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
