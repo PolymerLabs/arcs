@@ -32,8 +32,6 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         margin-left: 12px;
       }
       iron-dropdown {
-        box-shadow: var(--drop-shadow);
-        background-color: white;
         padding: 8px 0;
         min-width: 160px;
       }
@@ -63,7 +61,7 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
       }
     </style>
     <div selector on-click="_openDropdown"><span count>[[arcs.length]]</span><span name none$="[[!active]]">[[_activeName(active)]]</span><span class="triangle devtools-small-icon" expanded></span></div>
-    <iron-dropdown id="dropdown" horizontal-align="left" horizontal-offset="-6" vertical-align="top" vertical-offset="23">
+    <iron-dropdown class="dropdown" id="dropdown" horizontal-align="left" horizontal-offset="-6" vertical-align="top" vertical-offset="23">
       <div slot="dropdown-content" list>
         <template is="dom-repeat" items="[[arcs]]">
           <div entry active$=[[item.active]] on-click="_arcSelected">
@@ -115,8 +113,10 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         default: {
           if (msg.meta) {
             const id = msg.meta.arcId;
-            if (!this.messages.has(id)) this.messages.set(id, []);
-            this.messages.get(id).push(msg);
+            if (!msg.requestId) { // Don't store request/response messages for replay.
+              if (!this.messages.has(id)) this.messages.set(id, []);
+              this.messages.get(id).push(msg);
+            }
             if (this.active && id === this.active.id) messagesToForward.push(msg);
           } else {
             messagesToForward.push(msg);

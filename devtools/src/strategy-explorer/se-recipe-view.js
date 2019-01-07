@@ -11,6 +11,7 @@ import '../../deps/@polymer/polymer/polymer-legacy.js';
 import '../arcs-shared.js';
 import {Polymer} from '../../deps/@polymer/polymer/lib/legacy/polymer-fn.js';
 import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
+import {recipeHtmlify} from '../arcs-shared.js';
 
 Polymer({
   _template: html`
@@ -28,17 +29,21 @@ Polymer({
         padding: 5px;
       }
 
-      .added {
+      [added] {
         color: green;
       }
 
-      .removed {
+      [removed] {
         color: red;
         text-decoration: line-through;
       }
 
-      .unresolved {
-        color: fuchsia;
+      [unresolved] {
+        color: red;
+      }
+
+      [comment] {
+        color: blue;
       }
 
       .description {
@@ -100,14 +105,7 @@ Polymer({
   },
 
   shownRecipeChanged: function(shownRecipe) {
-    let parts = shownRecipe.result.split(/(?=(?:\/\/ unresolved |[\n\r]+))/g);
-    parts = parts.map(entry => {
-      if (entry.startsWith('// unresolved ')) {
-        return `<span class='unresolved'>${entry}</span>`;
-      }
-      return entry;
-    });
-    this.set('shownRecipe.result', parts.join(''));
+    this.set('shownRecipe.result', recipeHtmlify(shownRecipe.result));
   },
 
   pin: function() {
@@ -139,10 +137,10 @@ Polymer({
         : JsDiff.diffWords(left, right);
     diff = diff.map(entry => {
       if (entry.added) {
-        return `<span class='added'>${entry.value}</span>`;
+        return `<span added>${entry.value}</span>`;
       }
       if (entry.removed) {
-        return `<span class='removed'>${entry.value}</span>`;
+        return `<span removed>${entry.value}</span>`;
       }
       return entry.value;
     });
