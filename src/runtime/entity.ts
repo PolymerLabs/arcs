@@ -8,8 +8,40 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Symbols} from './symbols.js';
+import {Type} from './type.js';
+import {Schema} from './schema.js';
 
-export abstract class Entity {
+/**
+ * Regular interface for Entities.
+ */
+export interface EntityInterface {
+  isIdentified(): boolean;
+  data;
+  id;
+  identify(identifier);
+  createIdentity(components);
+  toLiteral();
+}
+
+/**
+ * A set of static methods used by Entity implementations.  These are
+ * defined dynamically in Schema.  Required because Typescript does
+ * not support abstract statics.
+ * 
+ * @see https://github.com/Microsoft/TypeScript/issues/14600
+ * @see https://stackoverflow.com/a/13955591
+ */
+export interface EntityStaticInterface {
+  readonly type: Type;
+  readonly key: {tag: string, schema: Schema};
+}
+
+/**
+ * The merged interfaces.  Replaces usages of typeof Entity.
+ */
+export type EntityClass = (new (data, userIDComponent?: string) => EntityInterface) & EntityStaticInterface;
+
+export abstract class Entity implements EntityInterface {
   private userIDComponent?: string;
 
   // tslint:disable-next-line: no-any

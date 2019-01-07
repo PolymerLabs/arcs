@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Type, EntityType, ReferenceType} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Entity} from './entity.js';
+import {EntityClass} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 
@@ -166,7 +167,7 @@ export class Schema {
     return new EntityType(this);
   }
 
-  entityClass(context: ParticleExecutionContext = null): typeof Entity {
+  entityClass(context: ParticleExecutionContext = null): EntityClass {
     const schema = this;
     const className = this.name;
     const classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
@@ -288,7 +289,6 @@ export class Schema {
         for (const [name, value] of Object.entries(sanitizedData)) {
           this.rawData[name] = value;
         }
-
       }
 
       private sanitizeData(data) {
@@ -377,7 +377,7 @@ export class Schema {
     return clazz;
   }
 
-  toInlineSchemaString(options): string {
+  toInlineSchemaString(options?: {hideFields?: boolean}): string {
     const names = this.names.join(' ') || '*';
     const fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;

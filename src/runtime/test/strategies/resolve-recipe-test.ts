@@ -221,8 +221,7 @@ describe('resolve recipe', () => {
     const arc = createTestArc(manifest);
 
     const car = manifest.findSchemaByName('Car').entityClass();
-    // TODO(plindner) find a better way to find the type
-    await arc.createStore(car['type'], /* name= */ null, 'batmobile');
+    await arc.createStore(car.type, /* name= */ null, 'batmobile');
 
     const recipe = manifest.recipes[0];
 
