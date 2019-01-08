@@ -64,12 +64,13 @@ describe('pouch-db-key', () => {
   });
 
   describe('child keys', () => {
-    const remoteKey = new PouchDbKey('pouchdb://localhost:8080/user/prefix/path');
+    let remoteKey;
+    before(() => {
+      remoteKey = new PouchDbKey('pouchdb://localhost:8080/user/prefix/path');
+    });
 
     it('childKeyForHandle fails for invalid id', () => {
-      assert.throws(() => {
-        remoteKey.childKeyForHandle('');
-      }, Error);
+      assert.throws(() => remoteKey.childKeyForHandle(''), Error);
     });
 
     it('childKeyForHandle creates a new PouchDbKey with id suffix', () => {

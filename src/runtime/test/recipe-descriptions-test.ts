@@ -16,12 +16,15 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Suggestion} from '../plan/suggestion';
 
 describe('recipe descriptions test', () => {
-  const loader = new StubLoader({
-    'test.js': `defineParticle(({Particle}) => {
-      return class P extends Particle {
-        constructor() { super(); this.relevance = 1; }
-      }
-    });`
+  let loader;
+  before(() => {
+    loader = new StubLoader({
+      'test.js': `defineParticle(({Particle}) => {
+        return class P extends Particle {
+          constructor() { super(); this.relevance = 1; }
+        }
+      });`
+    });
   });
 
   function createManifestString(options) {

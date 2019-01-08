@@ -16,9 +16,9 @@ import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
-const loader = new Loader();
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
+  const loader = new Loader();
   if (typeof manifest === 'string') {
     const fileName = './test.manifest';
     manifest = await Manifest.parse(manifest, {loader, fileName});

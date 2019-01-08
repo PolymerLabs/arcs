@@ -20,8 +20,6 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 
-const loader = new Loader();
-
 describe('Multiplexer', function() {
   it('Processes multiple inputs', async () => {
     const manifest = await TestHelper.parseManifest(`
@@ -35,8 +33,7 @@ describe('Multiplexer', function() {
           hostedParticle = ConsumerParticle
           consume annotation as slot0
           list <- handle0
-
-    `, loader);
+    `, new Loader());
 
     const recipe = manifest.recipes[0];
 

@@ -22,11 +22,11 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
 describe('Handle', function() {
   let Bar;
-  let loader;
   before(() => {
     Bar = new Schema(['Bar'], {id: 'Number', value: 'Text'}).entityClass();
-    loader = new Loader();
   });
+
+  const manifestFile = './src/runtime/test/artifacts/test-particles.manifest';
 
   it('clear singleton store', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
@@ -75,7 +75,7 @@ describe('Handle', function() {
   it('dedupes common user-provided ids', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
 
-    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load(manifestFile, new Loader());
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
@@ -88,7 +88,7 @@ describe('Handle', function() {
   it('allows updates with same user-provided ids but different value (collection)', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
 
-    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load(manifestFile, new Loader());
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
 
@@ -101,7 +101,7 @@ describe('Handle', function() {
   it('allows updates with same user-provided ids but different value (variable)', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
 
-    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load(manifestFile, new Loader());
     const Foo = manifest.schemas.Foo.entityClass();
     const fooHandle = handleFor(await arc.createStore(Foo.type));
 
@@ -122,7 +122,7 @@ describe('Handle', function() {
 
   it('can store a particle in an interface store', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
-    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load(manifestFile, new Loader());
 
     const iface = InterfaceType.make('Test', [
       {type: new EntityType(manifest.schemas.Foo)},
@@ -137,7 +137,7 @@ describe('Handle', function() {
 
   it('createHandle only allows valid tags & types in stores', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test'});
-    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
+    const manifest = await Manifest.load(manifestFile, new Loader());
 
     await assertThrowsAsync(async () => await arc.createStore('not a type'), /isn't a Type/);
 

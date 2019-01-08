@@ -20,9 +20,8 @@ import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
-const loader = new Loader();
-
 async function setup() {
+  const loader = new Loader();
   const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     import 'src/runtime/test/artifacts/test-particles.manifest'
@@ -38,10 +37,12 @@ async function setup() {
     recipe: manifest.recipes[0],
     Foo: manifest.findSchemaByName('Foo').entityClass(),
     Bar: manifest.findSchemaByName('Bar').entityClass(),
+    loader
   };
 }
 
 async function setupWithOptional(cProvided, dProvided) {
+  const loader = new Loader();
   const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     schema Thing
@@ -84,6 +85,7 @@ async function setupWithOptional(cProvided, dProvided) {
 }
 
 async function setupSlandlesWithOptional(cProvided, dProvided) {
+  const loader = new Loader();
   const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     particle TestParticle in 'src/runtime/test/artifacts/test-dual-slandle-particle.js'
@@ -123,7 +125,7 @@ async function setupSlandlesWithOptional(cProvided, dProvided) {
 
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader: new Loader(), id: 'test'});
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
@@ -185,6 +187,7 @@ describe('Arc', function() {
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
     const slotComposer = new FakeSlotComposer();
+    const loader = new Loader();
     const arc = new Arc({slotComposer, loader, id: 'test'});
     const serialization = await arc.serialize();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer});
@@ -194,7 +197,7 @@ describe('Arc', function() {
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
-    const {arc, recipe, Foo, Bar} = await setup();
+    const {arc, recipe, Foo, Bar, loader} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']);
@@ -218,6 +221,7 @@ describe('Arc', function() {
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
+    const loader = new Loader();
     const manifest = await TestHelper.parseManifest(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/test/artifacts/test-particles.manifest'
