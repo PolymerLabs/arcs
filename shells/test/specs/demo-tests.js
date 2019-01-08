@@ -30,14 +30,11 @@ describe('pipes', function() {
   });
   it('receives', async function() {
     await openNewArc(this.test.fullTitle());
-    const tvInfo = `[title^="TV show information"]`;
-    //const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
+    const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
     // TODO(sjmiles): wait for context to prepare, need a signal instead
     await browser.pause(seconds(5));
     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-    await waitFor(tvInfo);
-    //await searchFor('*');
-    //await waitFor(bodyguardIsOn);
+    await waitFor(bodyguardIsOn);
   });
 });
 
