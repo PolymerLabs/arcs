@@ -20,11 +20,11 @@ import {Description} from './description.js';
 
 export type SlotComposerOptions = {
   modalityName?: string;
-  modalityHandler?;
-  noRoot?;
+  modalityHandler?: ModalityHandler;
+  noRoot?: boolean;
   rootContainer?;
   rootContext?;
-  containerKind?;
+  containerKind?: string;
   containers?;
 };
 
@@ -45,7 +45,7 @@ export class SlotComposer {
    */
   constructor(options: SlotComposerOptions) {
     assert(options.modalityHandler && options.modalityHandler.constructor === ModalityHandler,
-           `Missing or invalid modality handler: ${options.modalityHandler.name}`);
+           `Missing or invalid modality handler: ${options.modalityHandler}`);
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;
     assert((options.rootContainer !== undefined)
