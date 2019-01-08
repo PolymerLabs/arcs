@@ -9,7 +9,7 @@
 'use strict';
 
 /* global defineParticle, importScripts */
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, log, html}) => {
 
   /* global service */
   //importScripts(resolver('TVMazeFindShow/TvMaze.js'));

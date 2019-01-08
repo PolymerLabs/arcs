@@ -6,8 +6,6 @@ import '../Arcs/Description.schema'
 particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
   out TVMazeFind find
-  //consume pipes
-  //  provide content
 
 particle TVMazeFindPipeShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
