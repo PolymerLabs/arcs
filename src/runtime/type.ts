@@ -286,7 +286,7 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
+  static make(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
     return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
   }
 
@@ -545,9 +545,9 @@ export class BigCollectionType extends Type {
 
 
 export class RelationType extends Type {
-  readonly relationEntities: [Type];
+  readonly relationEntities: Type[];
 
-  constructor(relation: [Type]) {
+  constructor(relation: Type[]) {
     super('Relation');
     this.relationEntities = relation;
   }

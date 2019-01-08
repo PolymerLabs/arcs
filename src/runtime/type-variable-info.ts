@@ -12,11 +12,11 @@ import {Schema} from './schema.js';
 
 export class TypeVariableInfo {
   name: string;
-  _canWriteSuperset: Type|null;
-  _canReadSubset: Type|null;
-  _resolution: Type|null;
+  _canWriteSuperset?: Type;
+  _canReadSubset?: Type;
+  _resolution?: Type;
 
-  constructor(name: string, canWriteSuperset: Type|null, canReadSubset: Type|null) {
+  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
