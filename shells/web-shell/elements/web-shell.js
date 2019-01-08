@@ -312,7 +312,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     });
   }
   onSpawn(e, {id, manifest, description}) {
-    log(id, manifest);
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.state = {
       search: '',

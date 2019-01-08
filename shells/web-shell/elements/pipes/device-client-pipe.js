@@ -110,16 +110,21 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     return [props, state];
   }
   updateEntity(entity) {
+    let state;
     if (entity.type === 'search') {
       this.fire('search', entity.query);
-      this.state = {staged: true};
+      state = {staged: true};
     } else {
       const manifest = buildEntityManifest(entity);
       log(manifest);
       const id = `${this.props.userid}-piped-${entity.id}`;
       this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
-      this.state = {spawned: true};
+      state = {spawned: true};
     }
+    // TODO(sjmiles): we need to know when suggestions we receive are up to date
+    // relative to the changes we just made
+    // instead, for now, wait 1s for planning to take place before updating state
+    setTimeout(() => this.state = state, 1000);
   }
   onArc(e, arc) {
     this.state = {arc};
