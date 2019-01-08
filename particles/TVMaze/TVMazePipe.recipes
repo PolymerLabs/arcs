@@ -17,7 +17,7 @@ particle TVMazeFindPipeShow in './source/TVMazeFindShow.js'
   //description `find out about "${find.name}" (from TVMaze)`
 
 recipe TVMazeShowPipe
-  use #piped_tv_show as pipe
+  use #pipe_tv_show as pipe
   create as find
   create #piped #tv_show as show
   create as descriptions

@@ -8,7 +8,7 @@ particle ArtistPipe in './source/ArtistPipe.js'
     provide content
 
 recipe ArtistPipe
-  use #piped_artist as pipe
+  use #pipe_artist as pipe
   create as find
   create #piped #artist as artist
   create as descriptions
