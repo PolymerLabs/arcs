@@ -23,7 +23,7 @@ export class Relevance {
     const relevance = new Relevance();
     const versionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
     recipe.handles.forEach(handle => {
-      if (handle.id) {
+      if (handle.id && versionByStore[handle.id] !== undefined) {
         relevance.versionByStore[handle.id] = versionByStore[handle.id];
       }
     });
