@@ -17,7 +17,7 @@ particle TVMazeShowTile in './source/TVMazeShowTile.js'
 particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
   in TVMazeShow show
   out [Description] descriptions
-  consume content
+  consume content #tv_show_panel
     provide action
     provide items
   description `TV show information from TVMaze`

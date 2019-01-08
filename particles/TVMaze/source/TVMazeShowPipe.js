@@ -11,15 +11,12 @@
 defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
-    get template() {
-      return '<div slotid="content"></div>';
-    }
+    // get template() {
+    //   return '<div slotid="content"></div>';
+    // }
     update({pipe, find}, state) {
       if (this.pipeIsValid(pipe)) {
-        this.updateVariable('find', {
-          type: pipe.type,
-          name: pipe.name
-        });
+        this.updateFind(pipe);
       }
     }
     shouldRender({pipe}) {
@@ -28,6 +25,9 @@ defineParticle(({DomParticle, log}) => {
     pipeIsValid(pipe) {
       return (pipe && pipe.type === 'tv_show');
     }
+    updateFind({type, name}) {
+      this.updateVariable('find', {type, name});
+  }
   };
 
 });
