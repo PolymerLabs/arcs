@@ -113,11 +113,12 @@ export class RecipeIndex {
         generations.push({record, generated: strategizer.generated});
       } while (strategizer.generated.length + strategizer.terminal.length > 0);
 
-      if (DevtoolsConnection.isConnected) {
-        StrategyExplorerAdapter.processGenerations(
-            PlanningResult.formatSerializableGenerations(generations),
-            DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
-      }
+      // TODO: This is workaround for #2546. Uncomment, when properly fixed.
+      // if (DevtoolsConnection.isConnected) {
+      //   StrategyExplorerAdapter.processGenerations(
+      //       PlanningResult.formatSerializableGenerations(generations),
+      //       DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
+      // }
 
       const population = strategizer.population;
       const candidates = new Set(population);
