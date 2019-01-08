@@ -39,13 +39,8 @@ export class ArcHost {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
     if (this.pendingPlan) {
-      let plan = this.pendingPlan;
+      const plan = this.pendingPlan;
       this.pendingPlan = null;
-      // TODO(sjmiles): pass suggestion all the way from web-shell
-      // and call suggestion.instantiate(arc).
-      if (plan.serialization) {
-        plan = await Suggestion.planFromString(plan.serialization, this.arc);
-      }
       await this.instantiatePlan(this.arc, plan);
     }
     return this.arc;
@@ -92,6 +87,11 @@ export class ArcHost {
   }
   async instantiatePlan(arc, plan) {
     log('instantiatePlan');
+    // TODO(sjmiles): pass suggestion all the way from web-shell
+    // and call suggestion.instantiate(arc).
+    if (plan.serialization) {
+      plan = await Suggestion.planFromString(plan.serialization, this.arc);
+    }
     try {
       await arc.instantiate(plan);
     } catch (x) {
