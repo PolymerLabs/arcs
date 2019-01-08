@@ -289,7 +289,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return false;
   }
 
-  _initMutationObserver() {
+  _initMutationObserver(): MutationObserver|null {
     if (this.consumeConn) {
       return new MutationObserver(async (records) => {
         this._observer.disconnect();

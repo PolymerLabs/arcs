@@ -61,10 +61,6 @@ src/runtime/test/chai-web.js
 src/runtime/test/data-layer-test.js
 src/runtime/test/description-test.js
 src/runtime/test/handle-test.js
-src/runtime/testing/fake-slot-composer.js
-src/runtime/testing/mock-slot-composer.js
-src/runtime/testing/mock-slot-dom-consumer.js
-src/runtime/testing/mock-suggest-dom-consumer.js
 src/runtime/test/multiplexer-test.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js

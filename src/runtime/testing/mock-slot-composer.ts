@@ -7,17 +7,23 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../test/chai-web.js';
+import {Particle} from '../recipe/particle.js';
+import {SlotComposerOptions} from '../slot-composer.js';
 import {FakeSlotComposer} from './fake-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {InterfaceType} from '../type.js';
 
 const logging = false;
-const log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
+const log = !logging ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
-/** @class MockSlotComposer
+type MockSlotComposerOptions = {
+  strict?: boolean;
+  logging?: boolean;
+};
+
+/**
  * A helper SlotComposer allowing expressing and asserting expectations on slot rendering.
  * Usage example:
  *   mockSlotComposer
@@ -30,11 +36,18 @@ const log = (!logging || global.logging === false) ? () => {} : console.log.bind
  *   await mockSlotComposer.expectationsCompleted();
  */
 export class MockSlotComposer extends FakeSlotComposer {
+  private expectQueue;
+  onExpectationsComplete;
+  strict: boolean;
+  logging: boolean;
+  debugMessages;
+  pec;
+
   /**
    * |options| may contain:
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
-  constructor(options = {}) {
+  constructor(options: SlotComposerOptions & MockSlotComposerOptions = {}) {
     super(options);
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
@@ -57,10 +70,10 @@ export class MockSlotComposer extends FakeSlotComposer {
     };
   }
 
-  /** @method newExpectations()
+  /**
    * Reinitializes expectations queue.
    */
-  newExpectations(name) {
+  newExpectations(name?: string): MockSlotComposer {
     assert(this.expectQueue.every(e => e.isOptional));
     this.expectQueue = [];
 
@@ -71,7 +84,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     return this;
   }
 
-  /** @method ignoreUnexpectedRender
+  /**
    * Allows ignoring unexpected render slot requests.
    */
   ignoreUnexpectedRender() {
@@ -80,17 +93,17 @@ export class MockSlotComposer extends FakeSlotComposer {
     return this;
   }
 
-  /** @method expectContentItemsNumber(num, content)
+  /**
    * Returns true, if the number of items in content's model is equal to the given number.
    */
-  expectContentItemsNumber(num, content) {
+  expectContentItemsNumber(num: number, content) {
     assert(content.model, `Content doesn't have model`);
     assert(content.model.items, `Content model doesn't have items (${num} expected}`);
     assert(content.model.items.length <= num, `Too many items (${content.model.items.length}), while only ${num} were expected.`);
-    return content.model.items.length == num;
+    return content.model.items.length === num;
   }
 
-  /** @method expectRenderSlot(particleName, slotName, options)
+  /**
    * Adds a rendering expectation for the given particle and slot names, where options may contain:
    * times: number of time the rendering request will occur
    * contentTypes: the types appearing in the rendering content
@@ -114,38 +127,39 @@ export class MockSlotComposer extends FakeSlotComposer {
     return this;
   }
 
-  /** @method expectationsCompleted()
+  /**
    * Returns promise to completion of all expectations.
    */
   expectationsCompleted() {
-    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
+    if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
   }
 
   assertExpectationsCompleted() {
-    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
+    if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
       return true;
     }
     assert(false, `${this.debugMessagesToString()}\nremaining expectations:\n ${this.expectQueue.map(expect => `  ${expect.toString()}`).join('\n')}`);
+   return undefined;
   }
 
-  /** @method sendEvent(particleName, slotName, event, data)
+  /**
    * Sends an event to the given particle and slot.
    */
   sendEvent(particleName, slotName, event, data) {
-    const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
-    assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
+    const particles = this.consumers.filter(s => s.consumeConn.particle.name === particleName).map(s => s.consumeConn.particle);
+    assert(1 === particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
 
   _addRenderExpectation(expectation) {
     let current = this.expectQueue.find(e => {
-      return e.particleName == expectation.particleName
-          && e.slotName == expectation.slotName
-          && e.hostedParticle == expectation.hostedParticle
-          && e.isOptional == expectation.isOptional;
+      return e.particleName === expectation.particleName
+          && e.slotName === expectation.slotName
+          && e.hostedParticle === expectation.hostedParticle
+          && e.isOptional === expectation.isOptional;
     });
     if (!current) {
       current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional, ignoreUnexpected: expectation.ignoreUnexpected,
@@ -162,13 +176,13 @@ export class MockSlotComposer extends FakeSlotComposer {
 
   _canIgnore(particleName, slotName, content) {
     // TODO: add support for ignoring specific particles and/or slots.
-    return this.expectQueue.find(e => e.type == 'render' && e.ignoreUnexpected);
+    return this.expectQueue.find(e => e.type === 'render' && e.ignoreUnexpected);
   }
 
   //TODO: reaching directly into data objects like this is super dodgy and we should
   // fix. It's particularly bad here as there's no guarantee that the backingStore
   // exists - should await ensureBackingStore() before accessing it.
-  _getHostedParticleNames(particle) {
+  _getHostedParticleNames(particle: Particle) {
     return Object.values(particle.connections)
         .filter(conn => conn.type instanceof InterfaceType)
         .map(conn => {
@@ -183,11 +197,11 @@ export class MockSlotComposer extends FakeSlotComposer {
 
   _verifyRenderContent(particle, slotName, content) {
     const index = this.expectQueue.findIndex(e => {
-      return e.type == 'render'
-          && e.particleName == particle.name
-          && e.slotName == slotName
+      return e.type === 'render'
+          && e.particleName === particle.name
+          && e.slotName === slotName
           && (!e.hostedParticle ||
-             ((names) => names.length == 1 && names[0] == e.hostedParticle)(this._getHostedParticleNames(particle)));
+             ((names) => names.length === 1 && names[0] === e.hostedParticle)(this._getHostedParticleNames(particle)));
     });
     if (index < 0) {
       console.log('\tno match');
@@ -203,12 +217,12 @@ export class MockSlotComposer extends FakeSlotComposer {
     } else if (expectation.contentTypes) {
       Object.keys(content).forEach(contentType => {
         const contentIndex = expectation.contentTypes.indexOf(contentType);
-        found |= contentIndex >= 0;
+        found = found || (contentIndex >= 0);
         if (contentIndex >= 0) {
           expectation.contentTypes.splice(contentIndex, 1);
         }
       });
-      complete = expectation.contentTypes.length == 0;
+      complete = expectation.contentTypes.length === 0;
     } else {
       assert(false, `Invalid expectation: ${JSON.stringify(expectation)}`);
     }
@@ -242,8 +256,8 @@ export class MockSlotComposer extends FakeSlotComposer {
     this.detailedLogDebug();
   }
 
-  _expectationsMet() {
-    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
+  _expectationsMet(): void {
+    if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
       this.onExpectationsComplete();
     }
   }
@@ -254,13 +268,15 @@ export class MockSlotComposer extends FakeSlotComposer {
       if (!expectationsByParticle[e.particleName]) {
         expectationsByParticle[e.particleName] = {};
       }
-      e.contentTypes && e.contentTypes.forEach(contentType => {
-        const key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
-        if (!expectationsByParticle[e.particleName][key]) {
-          expectationsByParticle[e.particleName][key] = 0;
-        }
-        expectationsByParticle[e.particleName][key]++;
-      });
+      if (e.contentTypes) {
+        e.contentTypes.forEach(contentType => {
+          const key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
+          if (!expectationsByParticle[e.particleName][key]) {
+            expectationsByParticle[e.particleName][key] = 0;
+          }
+          expectationsByParticle[e.particleName][key]++;
+        });
+      }
     });
     this._addDebugMessages(`${this.expectQueue.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
       return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
@@ -275,6 +291,7 @@ export class MockSlotComposer extends FakeSlotComposer {
       console.log(message);
     }
   }
+
   debugMessagesToString() {
     const result = [];
     result.push('--------------------------------------------');

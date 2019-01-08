@@ -12,7 +12,7 @@ import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {Random} from '../random.js';
 
 async function loadFilesIntoNewArc(fileMap) {
@@ -816,7 +816,8 @@ describe('particle-api', () => {
         });`,
         '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
       }),
-      slotComposer: new FakeSlotComposer()
+      // TODO(lindner): add strict rendering
+      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug')
     });
 
     const [recipe] = arc.context.recipes;

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../chai-web.js';
-import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
+import {MockSlotComposer} from '../../testing/mock-slot-composer.js';
 import {Modality} from '../../modality.js';
 import {ModalityHandler} from '../../modality-handler.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
@@ -36,7 +36,7 @@ async function storeResults(consumer, suggestions) {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
       const helper = await TestHelper.createAndPlan({
-        slotComposer: new FakeSlotComposer(),
+        slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
         manifestString: `
 import './src/runtime/test/artifacts/Products/Products.recipes'
 
@@ -122,7 +122,7 @@ describe('plan consumer', () => {
         `;
       };
       const helper = await TestHelper.create({
-        slotComposer: new FakeSlotComposer({
+        slotComposer: new MockSlotComposer({
           modalityName,
           modalityHandler: ModalityHandler.createHeadlessHandler()
         }), 

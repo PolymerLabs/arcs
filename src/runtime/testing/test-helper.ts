@@ -15,6 +15,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
@@ -55,7 +56,7 @@ export class TestHelper {
   arc;
   slotComposer: MockSlotComposer;
   recipeIndex: RecipeIndex;
-  
+
   /**
    * Initializes a single arc using a mock slot composer.
    * |options| may contain:
@@ -264,7 +265,9 @@ export class TestHelper {
 
   verifySlots(numConsumers: number, verifyHandler) {
     assert.lengthOf(this.slotComposer.consumers, numConsumers);
-    this.slotComposer.consumers.forEach(consumer => verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name, consumer._content));
+    for (const consumer of this.slotComposer.consumers as MockSlotDomConsumer[]) {
+      verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name, consumer._content);
+    }
   }
 
   // TODO: add more helper methods to verify data and slots.
