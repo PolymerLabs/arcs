@@ -13,6 +13,8 @@ import {assert} from '../test/chai-web.js';
 import {crypto} from '../../platform/crypto-web.js';
 
 describe('arcs key management', function() {
+  // Avoid initialising non-POD variables globally, since they would be constructed even when
+  // these tests are not going to be executed (i.e. another test file uses 'only').
   let IV;
   before(() => {
     IV = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);

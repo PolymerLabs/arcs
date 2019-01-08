@@ -16,6 +16,8 @@ import {Schema} from '../schema.js';
 import {EntityType, ReferenceType} from '../type.js';
 
 describe('schema', function() {
+  // Avoid initialising non-POD variables globally, since they would be constructed even when
+  // these tests are not going to be executed (i.e. another test file uses 'only').
   let loader;
   before(() => {
     loader = new StubLoader({

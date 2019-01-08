@@ -21,6 +21,8 @@ import {assertThrowsAsync} from '../testing/test-util.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 
 describe('Handle', function() {
+  // Avoid initialising non-POD variables globally, since they would be constructed even when
+  // these tests are not going to be executed (i.e. another test file uses 'only').
   let Bar;
   before(() => {
     Bar = new Schema(['Bar'], {id: 'Number', value: 'Text'}).entityClass();
