@@ -11,6 +11,7 @@ import {mixinBehaviors} from '../deps/@polymer/polymer/lib/legacy/class.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import './arcs-overview.js';
 import './arcs-stores.js';
+import './arcs-planning.js';
 import './arcs-communication-channel.js';
 import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
@@ -105,6 +106,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
           <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz"></iron-icon><label>PEC Channel Log</label></a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
+          <a name="planning" href="#planning"><iron-icon icon="line-weight"></iron-icon><label>Planning</label></a>
           <a name="recipeEditor" href="#recipeEditor"><iron-icon icon="image:edit"></iron-icon><label>Recipe Editor</label></a>
         </iron-selector>
       </nav>
@@ -114,6 +116,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
         <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
+        <arcs-planning name="planning"></arcs-planning>
         <arcs-recipe-editor name="recipeEditor"></arcs-recipe-editor>
       </iron-pages>
     </div>

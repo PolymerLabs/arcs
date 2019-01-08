@@ -110,7 +110,7 @@ export class PlanningResult {
       record.resolvedDerivations = 0;
       record.resolvedDerivationsByStrategy = {};
 
-      population.forEach(item => {
+      for (const item of population) {
         item.derivation = item.derivation.map(derivItem => {
           let parent;
           let strategy;
@@ -131,18 +131,18 @@ export class PlanningResult {
           record.resolvedDerivationsByStrategy[strategy]++;
         }
         const options = {showUnresolved: true, showInvalid: false, details: ''};
-      });
+      }
       const populationMap = {};
-      population.forEach(item => {
+      for (const item of population) {
         if (populationMap[item.derivation[0].strategy] == undefined) {
           populationMap[item.derivation[0].strategy] = [];
         }
         populationMap[item.derivation[0].strategy].push(item);
-      });
+      }
       const result = {population: [], record};
-      Object.keys(populationMap).forEach(strategy => {
+      for (const strategy of Object.keys(populationMap)) {
         result.population.push({strategy, recipes: populationMap[strategy]});
-      });
+      }
       return result;
     });
   }
