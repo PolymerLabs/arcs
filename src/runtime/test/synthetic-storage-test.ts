@@ -12,14 +12,12 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {StorageProviderBase, ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {ArcType} from '../type.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
-import {PouchDbStorage} from '../storage/pouchdb/pouch-db-storage.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 
 describe('synthetic storage ', () => {
   before(() => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     resetVolatileStorageForTesting();
-    PouchDbStorage.resetPouchDbStorageForTesting();
   });
 
   async function setup(serialization): Promise<{id: Id, targetStore: VariableStorageProvider, synth: CollectionStorageProvider}> {

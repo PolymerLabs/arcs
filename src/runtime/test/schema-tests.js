@@ -16,28 +16,33 @@ import {Schema} from '../schema.js';
 import {EntityType, ReferenceType} from '../type.js';
 
 describe('schema', function() {
-  const loader = new StubLoader({
-    'Product.schema': `
-        import './src/runtime/test/artifacts/Things/Thing.schema'
-        schema Product extends Thing
-          Text category
-          Text seller
-          Text price
-          Number shipDays
-          Boolean isReal
-          Object brand
+  // Avoid initialising non-POD variables globally, since they would be constructed even when
+  // these tests are not going to be executed (i.e. another test file uses 'only').
+  let loader;
+  before(() => {
+    loader = new StubLoader({
+      'Product.schema': `
+          import './src/runtime/test/artifacts/Things/Thing.schema'
+          schema Product extends Thing
+            Text category
+            Text seller
+            Text price
+            Number shipDays
+            Boolean isReal
+            Object brand
 
-        schema Animal extends Thing
-          Boolean isReal
+          schema Animal extends Thing
+            Boolean isReal
 
-        schema Person
-          Text name
-          Text surname
-          Number price
+          schema Person
+            Text name
+            Text surname
+            Number price
 
-        schema AlienLife
-          Boolean isBasedOnDna
-        `
+          schema AlienLife
+            Boolean isBasedOnDna
+          `
+    });
   });
 
   it('schemas load recursively', async function() {
