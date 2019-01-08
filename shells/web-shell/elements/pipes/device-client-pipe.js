@@ -115,6 +115,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.state = {staged: true};
     } else {
       const manifest = buildEntityManifest(entity);
+      log(manifest);
       const id = `${this.props.userid}-piped-${entity.id}`;
       this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
       this.state = {spawned: true};
@@ -142,19 +143,17 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
 
 customElements.define('device-client-pipe', DeviceClientPipe);
 
-const buildEntityManifest = entity => {
-  return `
+const buildEntityManifest = entity => `
 import 'https://$particles/Pipes/Pipes.recipes'
 
 resource PipeEntityResource
   start
   [{"type": "${entity.type}", "name": "${entity.name}"}]
 
-store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity in PipeEntityResource
+store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${entity.type} in PipeEntityResource
 
 recipe Pipe
-  use 'LivePipeEntity' #pipe_entity as pipe
+  use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
   PipeEntityReceiver
     pipe = pipe
-  `;
-};
+`;
