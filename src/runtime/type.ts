@@ -545,9 +545,9 @@ export class BigCollectionType extends Type {
 
 
 export class RelationType extends Type {
-  readonly relationEntities: [Type, Type, Type];
+  readonly relationEntities: Type[];
 
-  constructor(relation: [Type, Type, Type]) {
+  constructor(relation: Type[]) {
     super('Relation');
     this.relationEntities = relation;
   }
