@@ -61,8 +61,6 @@ describe('suggestion composer', function() {
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
-    assert.isEmpty(suggestConsumer._content);
-    await suggestConsumer._setContentPromise;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     await helper.acceptSuggestion({particles: ['LightCandles']});
@@ -89,7 +87,6 @@ describe('suggestion composer', function() {
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     const suggestConsumer = suggestionComposer._suggestConsumers[0];
-    await suggestConsumer._setContentPromise;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     // TODO(mmandlis): Better support in test-helper for instantiating suggestions in inner arcs.

@@ -188,8 +188,8 @@ store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
       'Extract person\'s location.',
-      'Find restaurants near',
-      'Make a reservation and find restaurants',
-      'You are free at ']);
+      'Find restaurants near person\'s location.',
+      'Find restaurants near person\'s location and make a reservation',
+      'you are free at ']);
   });
 });

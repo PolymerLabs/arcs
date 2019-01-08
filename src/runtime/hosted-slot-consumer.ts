@@ -9,9 +9,10 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {SlotConsumer} from './slot-consumer.js';
-import {HostedSlotContext} from './hosted-slot-context.js';
 import {Arc} from './arc.js';
+import {HostedSlotContext} from './hosted-slot-context.js';
+import {SlotConnection} from './recipe/slot-connection.js';
+import {SlotConsumer} from './slot-consumer.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
   readonly transformationSlotConsumer: SlotConsumer;
@@ -31,7 +32,7 @@ export class HostedSlotConsumer extends SlotConsumer {
     this.storeId = storeId;
   }
 
-  get consumeConn() { return this._consumeConn; }
+  get consumeConn(): SlotConnection { return this._consumeConn; }
   set consumeConn(consumeConn) {
     assert(!this._consumeConn, 'Consume connection can be set only once');
     assert(this.hostedSlotId === consumeConn.targetSlot.id,
@@ -43,7 +44,7 @@ export class HostedSlotConsumer extends SlotConsumer {
     this._consumeConn = consumeConn;
   }
 
-  async setContent(content, handler) {
+  setContent(content, handler, description) {
     if (this.renderCallback) {
       this.renderCallback(
         this.transformationSlotConsumer.consumeConn.particle,

@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
+import {Description} from './description.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Recipe} from './recipe/recipe.js';
 import {Relevance} from './relevance.js';
@@ -47,10 +48,10 @@ export class Speculator {
       return null;
     }
 
-    speculativeArc.description.relevance = relevance;
+    const description = await Description.create(speculativeArc, relevance);
     suggestion = Suggestion.create(plan, hash, relevance);
-    await suggestion.setDescription(
-        speculativeArc.description,
+    suggestion.setDescription(
+        description,
         arc.modality,
         arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
     this.suggestionByHash[hash] = suggestion;

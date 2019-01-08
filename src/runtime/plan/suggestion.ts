@@ -97,12 +97,12 @@ export class Suggestion {
     return this.descriptionByModality[modality];
   }
 
-  async setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
-    this.descriptionByModality['text'] = await description.getRecipeSuggestion();
+  setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
+    this.descriptionByModality['text'] = description.getRecipeSuggestion();
     for (const planModality of this.plan.modality) {
       if (modality.names.includes(planModality.name)) {
         this.descriptionByModality[planModality.name] =
-          await description.getRecipeSuggestion(descriptionFormatter);
+          description.getRecipeSuggestion(descriptionFormatter);
       }
     }
   }
