@@ -16,12 +16,17 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {Suggestion} from '../plan/suggestion';
 
 describe('recipe descriptions test', () => {
-  const loader = new StubLoader({
-    'test.js': `defineParticle(({Particle}) => {
-      return class P extends Particle {
-        constructor() { super(); this.relevance = 1; }
-      }
-    });`
+  // Avoid initialising non-POD variables globally, since they would be constructed even when
+  // these tests are not going to be executed (i.e. another test file uses 'only').
+  let loader;
+  before(() => {
+    loader = new StubLoader({
+      'test.js': `defineParticle(({Particle}) => {
+        return class P extends Particle {
+          constructor() { super(); this.relevance = 1; }
+        }
+      });`
+    });
   });
 
   function createManifestString(options) {

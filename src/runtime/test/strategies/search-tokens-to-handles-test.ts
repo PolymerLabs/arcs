@@ -14,8 +14,6 @@ import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.j
 import {assert} from '../chai-web.js';
 import {Loader} from '../../loader.js';
 
-const loader = new Loader();
-
 describe('SearchTokensToHandles', () => {
   it('finds local handle by tags', async () => {
     const manifest = (await Manifest.parse(`
@@ -52,6 +50,7 @@ describe('SearchTokensToHandles', () => {
   });
 
   it('finds remote handle by tags', async () => {
+    const loader = new Loader();
     const storeManifest = (await Manifest.parse(`
 import 'src/runtime/test/artifacts/test-particles.manifest'
 store Things of Foo #mything in ThingsJson

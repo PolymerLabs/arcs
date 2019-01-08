@@ -16,16 +16,10 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 
-function createTestArc() {
-  const loader = new Loader();
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader,
-                       context: new Manifest({id: 'test'})});
-  return arc;
-}
-
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
-    const arc = createTestArc();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader: new Loader(),
+                         context: new Manifest({id: 'test'})});
     const description = new Description(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);

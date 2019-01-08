@@ -12,16 +12,15 @@ import {Loader} from '../loader.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
 
-const loader = new Loader();
-
 describe('loader', () => {
   it('can extract a path', () => {
-    assert.equal(loader.path('a/foo'), 'a/');
+    assert.equal(new Loader().path('a/foo'), 'a/');
   });
   it('can join paths', () => {
-    assert.equal(loader.join('a/foo', 'b'), 'a/b');
+    assert.equal(new Loader().join('a/foo', 'b'), 'a/b');
   });
   it('can join an absolute path', () => {
+    const loader = new Loader();
     assert.equal(loader.join('a/foo', 'http://b'), 'http://b');
     assert.equal(loader.join('a/foo', 'https://b'), 'https://b');
   });
