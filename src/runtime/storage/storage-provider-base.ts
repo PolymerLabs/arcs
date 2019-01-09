@@ -45,6 +45,7 @@ export interface CollectionStorageProvider extends StorageProviderBase {
   // tslint:disable-next-line: no-any
   get(id: string): Promise<any>;
   remove(id: string, keys: string[], originatorId?: string);
+  store(value, keys: string[], originatorId?: string);
 }
 
 export abstract class StorageBase {
@@ -254,5 +255,4 @@ export abstract class StorageProviderBase {
   modelForSynchronization() {
     return this.toLiteral();
   }
-
 }

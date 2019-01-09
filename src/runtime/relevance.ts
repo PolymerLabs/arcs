@@ -15,9 +15,10 @@ export class Relevance {
   // stores a copy of arc.getVersionByStore
   readonly versionByStore = {};
 
-  private readonly relevanceMap: Map<Particle, number[]> = new Map();
+  // public for testing
+  public readonly relevanceMap: Map<Particle, number[]> = new Map();
 
-  private constructor() {}
+  protected constructor() {}
 
   static create(arc: Arc, recipe: Recipe) {
     const relevance = new Relevance();

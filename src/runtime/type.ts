@@ -606,7 +606,7 @@ export class InterfaceType extends Type {
     return this.interfaceInfo.maybeEnsureResolved();
   }
 
-  get canWriteSuperset() {
+  get canWriteSuperset(): InterfaceType {
     return new InterfaceType(this.interfaceInfo.canWriteSuperset);
   }
 
