@@ -68,7 +68,6 @@ src/runtime/test/reference-test.js
 src/runtime/test/schema-tests.js
 src/runtime/test/slot-consumer-tests.js
 src/runtime/test/storage-proxy-test.js
-src/runtime/test/suggestion-composer-tests.js
 src/runtime/test/type-checker-tests.js
 src/runtime/test/volatile-storage-test.js
 
