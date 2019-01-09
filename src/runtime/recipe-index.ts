@@ -84,7 +84,7 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  constructor(arc: Arc) {
+  constructor(arc: Arc, {reportGenerations = true} = {}) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
@@ -113,12 +113,11 @@ export class RecipeIndex {
         generations.push({record, generated: strategizer.generated});
       } while (strategizer.generated.length + strategizer.terminal.length > 0);
 
-      // TODO: This is workaround for #2546. Uncomment, when properly fixed.
-      // if (DevtoolsConnection.isConnected) {
-      //   StrategyExplorerAdapter.processGenerations(
-      //       PlanningResult.formatSerializableGenerations(generations),
-      //       DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
-      // }
+      if (reportGenerations && DevtoolsConnection.isConnected) {
+        StrategyExplorerAdapter.processGenerations(
+            PlanningResult.formatSerializableGenerations(generations),
+            DevtoolsConnection.get().forArc(arc), {label: 'Index', keep: true});
+      }
 
       const population = strategizer.population;
       const candidates = new Set(population);
@@ -133,8 +132,8 @@ export class RecipeIndex {
     }));
   }
 
-  static create(arc: Arc): RecipeIndex {
-    return new RecipeIndex(arc);
+  static create(arc: Arc, options = {}): RecipeIndex {
+    return new RecipeIndex(arc, options);
   }
 
   get recipes(): Recipe[] {

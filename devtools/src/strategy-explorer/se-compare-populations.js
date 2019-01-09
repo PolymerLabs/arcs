@@ -48,7 +48,7 @@ class SeComparePopulations extends PolymerElement {
     </style>
     <div on-click="_onSelected">
       <header id="current" current="" class="entry" selected\$="[[current.selected]]">
-        Most Recent: ⊕[[current.surviving]], ✓[[current.resolved]]
+        Most Recent: [[current.label]] ⊕[[current.surviving]], ✓[[current.resolved]]
         <template is="dom-if" if="[[!current.added]]">
           <iron-icon id="addCurrent" title="Add to Library" icon="av:playlist-add" on-click="_addCurrent"></iron-icon>
         </template>
@@ -82,6 +82,7 @@ class SeComparePopulations extends PolymerElement {
   constructor() {
     super();
     this.reset();
+    this.entryId = 0;
   }
 
   reset() {
@@ -90,8 +91,11 @@ class SeComparePopulations extends PolymerElement {
   }
 
   processOptions(options) {
+    if (options.label) {
+      this.set('current.label', options.label);
+    }
     if (options.keep) {
-      this._addCurrent(options);
+      this._addCurrent();
     }
   }
 
@@ -102,27 +106,34 @@ class SeComparePopulations extends PolymerElement {
       return;
     }
 
+    // Keep current labelled results, so that it's not overridden.
+    if (this.current.label && !this.library.some(e => e.label === this.current.label)) {
+      this._addCurrent();
+    }
+
     const stats = summaryStats(this.results);
     this.current = {
       id: 'current',
       surviving: stats.survivingDerivations,
       resolved: stats.resolvedDerivations,
       selected: true,
-      results: this.results
+      results: this.results,
+      time: Date.now()
     };
 
     this._updateSelection();
   }
 
-  _addCurrent({label} = {}) {
+  _addCurrent() {
+    if (this.library.some(e => e.results === this.current.results)) return;
+    const label = this.current.label;
     if (label) {
       const existingIdx = this.library.findIndex(e => e.label === label);
       if (existingIdx >= 0) this.splice('library', existingIdx, 1);
     }
-    const now = Date.now();
     const entry = Object.assign({}, this.current, {
-      id: String(now),
-      label: label || `@${formatTime(now)}`
+      id: `id_${++this.entryId}`,
+      label: `${label || ''} ${formatTime(this.current.time)}`
     });
     this.push('library', entry);
     this.set('current.added', true);
