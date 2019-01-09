@@ -208,7 +208,6 @@ export class SlotComposer {
 
   dispose() {
     this.consumers.forEach(consumer => consumer.dispose());
-    this.modalityHandler.slotConsumerClass.dispose();
     this._contexts.forEach(context => {
       context.clearSlotConsumers();
       if (context.container) {

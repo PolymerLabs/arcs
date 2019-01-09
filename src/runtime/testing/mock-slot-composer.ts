@@ -56,7 +56,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     this.debugMessages = [];
 
     // Clear all cached templates
-    SlotDomConsumer.dispose();
+    SlotDomConsumer.clearCache();
   }
 
    // Overriding this method to investigate AppVeyor failures.
