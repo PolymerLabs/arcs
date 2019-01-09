@@ -23,9 +23,6 @@ import './web-planner.js';
 import './ui/web-shell-ui.js';
 import './pipes/device-client-pipe.js';
 
-// disable flushing template cache on dispose
-SlotDomConsumer.multitenant = true;
-
 const manifests = {
   context: `
     import 'https://$particles/canonical.manifest'
