@@ -19,7 +19,9 @@ export class SuggestionComposer {
   private readonly _slotComposer: SlotComposer;
   private readonly arc: Arc;
   private _suggestions: Suggestion[] = [];
-  private _suggestConsumers: SuggestDomConsumer[] = [];
+
+  // used in tests
+  protected readonly _suggestConsumers: SuggestDomConsumer[] = [];
 
   constructor(arc: Arc, slotComposer: SlotComposer) {
     this._container = slotComposer.findContainerByName('suggestions');
@@ -34,7 +36,7 @@ export class SuggestionComposer {
       this.modalityHandler.slotConsumerClass.clear(this._container);
     }
     this._suggestConsumers.forEach(consumer => consumer.dispose());
-    this._suggestConsumers = [];
+    this._suggestConsumers.length = 0;
   }
 
   setSuggestions(suggestions: Suggestion[]) {

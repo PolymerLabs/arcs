@@ -19,7 +19,6 @@ export class FakeSlotComposer extends SlotComposer {
   constructor(options: SlotComposerOptions = {}) {
     super({
       rootContainer: {'root': 'root-context'},
-      modalityName: options.modalityName,
       modalityHandler: ModalityHandler.createHeadlessHandler(),
       ...options});
   }

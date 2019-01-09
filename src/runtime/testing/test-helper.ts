@@ -15,6 +15,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Planner} from '../planner.js';

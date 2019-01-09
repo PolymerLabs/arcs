@@ -21,7 +21,7 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
-  const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+  const slotComposer = new MockSlotComposer().newExpectations();
 
   const manifest = await TestHelper.parseManifest(recipeStr, new Loader());
   const loader = new StubLoader({
@@ -71,6 +71,8 @@ recipe
     consume otherSlot as slot2
         `;
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    slotComposer = slotComposer.expectRenderSlot('A', 'root', {'contentTypes': ['model']});
+
     assert.lengthOf(slotComposer.getAvailableContexts(), 1);
 
     const verifyContext = (name, expected) => {
@@ -109,10 +111,16 @@ recipe
     verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
     verifyContext('mySlot', {hasContainer: true, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
     verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
+    await slotComposer.expectationsCompleted();
   });
 
   it('initialize recipe and render hosted slots', async () => {
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const slotComposer = new MockSlotComposer().newExpectations()
+      .expectRenderSlot('List', 'root', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('List', 'root', {'contentTypes': ['model', 'templateName']})
+      .expectRenderSlot('ShowProduct', 'item', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('ItemMultiplexer', 'item', {'contentTypes': ['template', 'model', 'templateName']});
+
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/particles/artifacts/products-test.recipes',
       slotComposer
@@ -133,6 +141,7 @@ recipe
     verifySlot('List::root');
     verifySlot('ItemMultiplexer::item');
     verifyHostedSlot('ShowProduct::item');
+    await slotComposer.expectationsCompleted();
   });
 
   it('allows set slots to be consumed as a singleton slot', async () => {
@@ -154,8 +163,15 @@ recipe
       C
         consume item as slot1
     `;
-      
+
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    slotComposer = slotComposer
+      .expectRenderSlot('A', 'root', {'contentTypes': ['model']})
+      .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
+      .expectRenderSlot('C', 'item', {'contentTypes': ['model']})
+      .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
+      .expectRenderSlot('C', 'item', {'contentTypes': ['model']});
+
     assert.lengthOf(slotComposer.getAvailableContexts(), 1);
 
     plan = plan.clone();
@@ -197,15 +213,25 @@ recipe
 
     await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id1', title: 'C moved to id1'}});
     assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
+    await slotComposer.expectationsCompleted();
   });
 
   it('renders inner slots in transformations without intercepting', async () => {
     Random.seedForTests();
-    const {arc, slotComposer} = await TestHelper.create({
+    const slotComposer = new MockSlotComposer().newExpectations()
+      .expectRenderSlot('A', 'content', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('B', 'detail', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
+      .expectRenderSlot('A', 'content', {'contentTypes': ['model', 'templateName']})
+      .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['model', 'templateName']})
+      .expectRenderSlot('B', 'detail', {'contentTypes': ['model', 'templateName']});
+
+    const {arc} = await TestHelper.create({
       manifestString: `
         particle TransformationParticle in 'TransformationParticle.js'
           consume root
-    
+
         recipe
           slot 'rootslotid-root' as slot0
           TransformationParticle
@@ -279,7 +305,7 @@ recipe
           };
         });`
       }),
-      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug')
+      slotComposer
     });
 
     const [recipe] = arc.context.recipes;
@@ -291,7 +317,7 @@ recipe
 
     const detailSlotConsumer = slotComposer.contexts.find(c => c.name === 'detail').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer) as MockSlotDomConsumer;
     await detailSlotConsumer.contentAvailable;
-    
+
     assert.deepEqual(rootSlotConsumer._content, {
       model: {
         a: 'A content/intercepted-model',
@@ -306,5 +332,6 @@ recipe
       template: '<div>{{b}}</div>',
       templateName: 'default',
     });
+    await slotComposer.expectationsCompleted();
   });
 });
