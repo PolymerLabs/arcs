@@ -37,7 +37,7 @@ describe('suggestion composer', () => {
     assert.isEmpty(suggestionComposer.suggestConsumers);
 
     slotComposer.newExpectations()
-      .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']})
+      .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']});
 
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     await helper.acceptSuggestion({particles: ['MakeCake']});
@@ -87,7 +87,7 @@ describe('suggestion composer', () => {
 
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer.suggestConsumers, 1);
-    const suggestConsumer = suggestionComposer.suggestConsumers[0] as MockSuggestDomConsumer;;
+    const suggestConsumer = suggestionComposer.suggestConsumers[0] as MockSuggestDomConsumer;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     // TODO(mmandlis): Better support in test-helper for instantiating suggestions in inner arcs.
