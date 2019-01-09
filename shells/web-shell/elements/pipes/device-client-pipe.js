@@ -16,15 +16,17 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 
   working:
 
-  [id =] ShellApi.receiveEntity(`{"type": "tv_show", "name": "killing eve"}`)
+  ShellApi.receiveEntity(`{"type": "tv_show", "name": "killing eve"}`)
   ShellApi.chooseSuggestion(`Killing Eve is on BBC America at 20:00 on Sunday.`)
 
-  [id =] ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
+  ShellApi.receiveEntity(`{"type": "artist", "name": "stone sour"}`)
   ShellApi.chooseSuggestion(`Learn more about Stone Sour.`)
+
+  ShellApi.receiveEntity(`{"type": "search", "query": "restaurants"}`)
+  ShellApi.chooseSuggestion(`Find restaurants near you.`)
 
   not working (yet):
 
-  ShellApi.receiveEntity(`{"type": "search", "query": "restaurants"}`)
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
 
 */
