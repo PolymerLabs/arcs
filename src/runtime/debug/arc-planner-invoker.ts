@@ -62,7 +62,7 @@ export class ArcPlannerInvoker {
 
   private async invokePlanner(manifestString: string, method: string) {
     if (!this.recipeIndex) {
-      this.recipeIndex = RecipeIndex.create(this.arc);
+      this.recipeIndex = RecipeIndex.create(this.arc, {reportGenerations: false});
       await this.recipeIndex.ready;
     }
 
