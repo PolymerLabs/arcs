@@ -63,7 +63,7 @@ export class Planificator {
     this.searchStore = searchStore;
     this.result = new PlanningResult(store);
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.arc, this.result, searchStore, {debug});
+      this.producer = new PlanProducer(this.arc, this.result, searchStore, {debug, blockDevtools: true /* handled by consumer */});
       this.replanQueue = new ReplanQueue(this.producer);
       this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
