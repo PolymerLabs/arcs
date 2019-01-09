@@ -481,7 +481,6 @@ recipe
 
       // Rank B bound to fooStore2 higher than B that is bound to fooHandle1.
       const relevance = Relevance.create(arc, recipe);
-//      relevance.newArc = arc;
       relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
       relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[0], [1]);
       relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[1], [10]);
@@ -824,7 +823,7 @@ recipe
       await test.verifySuggestion({arc}, 'Return my best-foo (foo-name).');
 
       // Remove connection's description.
-      await (fooStore as VariableStorageProvider).set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await descriptionHandle.remove(ofooDesc);
       await test.verifySuggestion({arc}, 'Return my foo-name.');
     });

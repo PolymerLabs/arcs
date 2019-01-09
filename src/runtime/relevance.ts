@@ -18,7 +18,7 @@ export class Relevance {
   // public for testing
   public readonly relevanceMap: Map<Particle, number[]> = new Map();
 
-  protected constructor() {}
+  private constructor() {}
 
   static create(arc: Arc, recipe: Recipe) {
     const relevance = new Relevance();
