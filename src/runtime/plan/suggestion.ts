@@ -31,12 +31,15 @@ type FromLiteralOptions = {
   descriptionByModality?: {};
 };
 
+// TODO(#2557): This class is a temporary format for serializing suggestions.
+// Suggestion class should instead receive loader and context parameters in fromLiteral method
+// and deserialize the plan immediately. This class will be removed.
 export class Plan {
   constructor(public readonly serialization: string,
               public readonly name: string,
               public readonly particles: {name: string, connections: {}[], slotConnections: {}[]}[],
               public readonly handles: {id: string, tags: string[]}[],
-              public readonly handleConnections: {name: string, direction: string, particle: {}}[],
+              public readonly handleConnections: {name: string, direction: string, particle: {}, handle?: {}}[],
               public readonly slotConnections: {name: string, particle: {}}[],
               public readonly slots: {id: string, name: string, tags: string[]}[],
               public readonly modality: {name: string}[]) {}
@@ -50,7 +53,18 @@ export class Plan {
           slotConnections: Object.keys(p.consumedSlotConnections),
           unnamedConnections: []})),
         plan.handles.map(h => ({id: h.id, tags: h.tags})),
-        plan.handleConnections.map(hc => ({name: hc.name, direction: hc.direction, particle: {name: hc.particle.name}})),
+        plan.handleConnections.map(hc => ({
+          name: hc.name,
+          direction: hc.direction,
+          particle: {name: hc.particle.name},
+          handle: hc.handle ? {
+              localName: hc.handle.localName,
+              id: hc.handle.id,
+              originalId: hc.handle.originalId,
+              fate: hc.handle.fate,
+              originalFate: hc.handle.originalFate,
+              immediateValue: hc.handle.immediateValue
+            } : null})),
         plan.slotConnections.map(sc => ({name: sc.name, particle: sc.particle.name})),
         plan.slots.map(s => ({id: s.id, name: s.name, tags: s.tags})),
         plan.modality.names.map(n => ({name: n})));
