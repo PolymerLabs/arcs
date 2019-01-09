@@ -47,7 +47,8 @@ export class Plan {
         plan.particles.map(p => ({
           name: p.name,
           connections: Object.keys(p.connections).map(pcName => ({name: pcName})),
-          slotConnections: Object.keys(p.consumedSlotConnections)})),
+          slotConnections: Object.keys(p.consumedSlotConnections),
+          unnamedConnections: []})),
         plan.handles.map(h => ({id: h.id, tags: h.tags})),
         plan.handleConnections.map(hc => ({name: hc.name, direction: hc.direction, particle: {name: hc.particle.name}})),
         plan.slotConnections.map(sc => ({name: sc.name, particle: sc.particle.name})),
