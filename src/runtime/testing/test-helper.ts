@@ -13,14 +13,10 @@ import {Arc} from '../arc.js';
 import {InterfaceType} from '../type.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {MessageChannel} from '../message-channel.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
-import {SlotComposer} from '../slot-composer.js';
 import {Suggestion} from '../plan/suggestion.js';
 
 type TestHelperOptions = {
