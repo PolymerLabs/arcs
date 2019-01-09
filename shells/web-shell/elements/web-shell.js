@@ -114,23 +114,18 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.updateEnv({root}, state);
       this.spawnContext(state.userid);
     }
+    // spin up launcher arc
+    if (!state.launcherConfig && state.env && state.userid) {
+      this.spawnLauncher(state.userid);
+    }
+    // spin up nullArc
+    if (!state.nullConfig && state.context && state.userid) {
+      this.spawnNullArc(state.userid);
+      this.recordNullArc(state.userid);
+    }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
-    }
-    // initialize pipes once we have arcs-store
-    // if (state.store && !state.pipesInit) {
-    //   state.pipesInit = true;
-    //   this.recordPipesArc(state.userid);
-    // }
-    if (!state.launcherConfig && state.env && state.userid) {
-      // spin up launcher arc
-      this.spawnLauncher(state.userid);
-    }
-    if (!state.nullConfig && state.context && state.userid) {
-      // spin up nullArc
-      this.spawnNullArc(state.userid);
-      this.recordNullArc(state.userid);
     }
     // consume a suggestion
     if (state.suggestion && state.context) {
@@ -238,52 +233,43 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnSuggestion(suggestion) {
     const luid = generateId();
-    const key = `${this.state.userid}-${luid}`;
-    const manifest = null;
+    const id = `${this.state.userid}-${luid}`;
     const description = suggestion.descriptionText;
+    this.spawnArc({id, manifest: null, description});
+    this.state = {plan: suggestion.plan};
+  }
+  spawnArc({id, manifest, description}) {
+    //log(id, manifest);
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-    const arcMeta = {
-      key,
-      href: `?arc=${key}`,
-      description,
-      color,
-      touched: Date.now()
-    };
     this.state = {
       search: '',
       arc: null,
-      arckey: key,
-      arcMeta,
+      arckey: id,
+      arcMeta: {
+        key: id,
+        href: `?arc=${id}`,
+        description,
+        color,
+        touched: Date.now()
+      },
       // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
       arcConfig: {
-        id: key,
+        id,
         manifest,
         suggestionContainer: this.getSuggestionSlot()
       },
-      manifest: null,
-      plan: suggestion.plan
+      manifest: null
     };
   }
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
-  // recordPipesArc(userid) {
-  //   const pipesKey = `${userid}-pipes`;
-  //   this.recordArcMeta({
-  //     key: pipesKey,
-  //     href: `?arc=${pipesKey}`,
-  //     description: `Pipes!`,
-  //     color: 'silver',
-  //     // pretend to be really old
-  //     touched: 0 //Date.now()
-  //   });
-  // }
   recordNullArc(userid) {
     const nullKey = `${userid}-null`;
     this.recordArcMeta({
       key: nullKey,
       href: `?arc=${nullKey}`,
-      description: `Planning!`,
+      description: `Planning arc (null)`,
       color: 'silver',
       // pretend to be really old
       touched: 0 //Date.now()
@@ -326,7 +312,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     });
   }
   onSpawn(e, {id, manifest, description}) {
-    log(id, manifest);
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.state = {
       search: '',

@@ -1,42 +1,8 @@
-import 'TVMazePipe.recipes'
-//import 'ShowcaseArtistPipe.recipes'
-//import 'ShowcasePlayRecordPipe.recipes'
-//import '../Showcase/ShowcasePlayRecord.schema'
-import '../Common/AddCollectionItem.manifest'
+schema PipeEntity
+  Text type
+  Text name
 
-//store Store0 of [ShowcasePlayRecord] 'nowPlayingHistory' in 'playingNowHistory.json'
-
-particle BackgroundProcess in 'source/BackgroundProcess.js'
+particle PipeEntityReceiver in './source/PipeEntityReceiver.js'
+  in PipeEntity pipe
   consume root
-  //in ShowcasePlayRecord playRecord
-
-recipe BackgroundPipe
-//  slot 'rootslotid-root' as root
-//  create #piped #showcase_play_record as playRecord
-//  copy 'nowPlayingHistory' #all_piped #all_showcase_play_record as playRecords
-//  BackgroundProcess
-//    consume root as root
-//    playRecord = playRecord
-//  AddCollectionItem
-//    item = playRecord
-//    collection = playRecords
-  //
-//  create #nosync as findShow
-//  create #piped #tv_show as show
-//  create #all_piped #all_tv_shows as shows
-//  TVMazeFindShow
-//    find = findShow
-//    show = show
-//  AddCollectionItem
-//    item = show
-//    collection = shows
-  //
-//  create #nosync as findArtist
-//  create #piped #showcase_artist as artist
-//  create #all_piped #all_showcase_artists as artists
-//  ShowcaseFindArtist
-//    find = findArtist
-//    artist = artist
-//  AddCollectionItem
-//    item = artist
-//    collection = artists
+    provide pipes

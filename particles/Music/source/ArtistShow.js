@@ -63,7 +63,10 @@ defineParticle(({DomParticle, html}) => {
 </style>
 
 <div header>
-  <model-img cover photo url="{{imgUrl}}"></model-img>
+  <model-img cover photo src="{{imgUrl}}">
+    <img>
+  </model-img>
+  <!-- <model-img cover photo url="{{imgUrl}}"></model-img> -->
   <div cover scrim></div>
   <div description>{{description}}</div>
   <div name>{{name}}</div>

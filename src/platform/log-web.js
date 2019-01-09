@@ -7,6 +7,6 @@
 
 import {Debug, logFactory as _logFactory} from '../../modalities/dom/components/xen/xen-debug.js';
 
-const factory = Debug.Level < 1 ? () => () => {} : _logFactory;
+const factory = /*Debug.Level < 1 ? () => () => {} :*/ _logFactory;
 
 export const logFactory = (...args) => factory(...args);

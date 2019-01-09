@@ -9,7 +9,7 @@
 'use strict';
 
 /* global defineParticle, importScripts */
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, log, html}) => {
 
   /* global service */
   //importScripts(resolver('TVMazeFindShow/TvMaze.js'));
@@ -17,7 +17,8 @@ defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
     get template() {
-      return '&nbsp;'; //html`Searching`;
+      return html`<div slotid="content"></div>`;
+      //return '--find show lives--'; // '&nbsp;'; //html`Searching`;
     }
     update({find}, state) {
       // If we are asynchronously populating data, wait until this is done before
@@ -47,7 +48,7 @@ defineParticle(({DomParticle, log}) => {
     async receiveShow({show}) {
       log(`found`, show);
       if (show.image && show.image.medium) {
-        this.updateVariable('show', {
+        const entityData = {
           showid: String(show.id),
           name: show.name,
           description: show.summary,
@@ -55,8 +56,21 @@ defineParticle(({DomParticle, log}) => {
           network: show.network && show.network.name || show.webChannel && show.webChannel.name || '',
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
-        });
+        };
+        this.updateVariable('show', entityData);
+        if (this.props.descriptions) {
+          this.updateDescription(entityData);
+        }
       }
+    }
+    updateDescription(data) {
+      const description = `${
+        data.name} is on ${
+        data.network}${
+        data.time ? ` at ${data.time}` : ''}${
+        data.day ? ` on ${data.day}` : ''
+      }`;
+      console.warn(description);
     }
   };
 });

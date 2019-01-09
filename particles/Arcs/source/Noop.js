@@ -6,6 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'TVMazeShow.recipes'
-import 'TVMazeQuery.recipes'
-import 'TVMazePipe.recipes'
+'use strict';
+
+defineParticle(({DomParticle}) => {
+  return class extends DomParticle {
+    get template() {
+      return '&nbsp;';
+    }
+  };
+});

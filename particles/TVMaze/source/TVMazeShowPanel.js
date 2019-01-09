@@ -75,6 +75,9 @@ defineParticle(({DomParticle, html, log}) => {
         this.setParticleDescription(description);
       }
     }
+    shouldRender(props, {show}) {
+      return Boolean(show);
+    }
     render({alsoWatch}, {show}) {
       const hidden = Boolean(!show);
       if (hidden) {

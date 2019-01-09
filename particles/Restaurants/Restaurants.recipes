@@ -9,7 +9,6 @@ import 'RestaurantFind.recipes'
 import 'RestaurantDisplay.recipes'
 import 'Reservations.recipes'
 import 'FavoriteFoodAnnotation.recipes'
-
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 

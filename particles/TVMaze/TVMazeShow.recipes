@@ -17,7 +17,7 @@ particle TVMazeShowTile in './source/TVMazeShowTile.js'
 particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
   in TVMazeShow show
   out [Description] descriptions
-  consume content
+  consume content #tv_show_panel
     provide action
     provide items
   description `TV show information from TVMaze`
@@ -25,8 +25,8 @@ particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
 recipe TVMazeShowPanel
   use #tv_show as show
   create #nosync as descriptions
-  slot 'rootslotid-root' as root
   TVMazeShowPanel
-    consume content as root
+    consume content
     show = show
     descriptions = descriptions
+  description `${TVMazeShowPanel}`

@@ -38,7 +38,7 @@ export class Planner {
   private _arc: Arc;
   // public for debug tools
   strategizer: Strategizer;
-  
+
   // TODO: Use context.arc instead of arc
   init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}} = {}) {
     strategyArgs = Object.freeze({...strategyArgs});
@@ -152,7 +152,7 @@ export class Planner {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
           continue;
-        }        
+        }
         this._updateGeneration(generations, hash, async (g) => g.description = suggestion.descriptionText);
         suggestion.groupIndex = groupIndex;
 
