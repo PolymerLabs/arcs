@@ -215,11 +215,11 @@ export class PlanningResult {
       const currentVersions = currentSuggestion.versionByStore;
       assert(Object.keys(newVersions).length === Object.keys(currentVersions).length);
       if (Object.entries(newVersions).every(
-          ([id, version]) => currentVersions[id] !== undefined && version >= currentVersions[id])) {
+          ([id, newVersion]) => currentVersions[id] !== undefined && newVersion >= currentVersions[id])) {
         return newSuggestion;
       }
-      assert(Object.entries(currentVersions).every(([id, version]) => newVersions[id] !== undefined
-             && version <= newVersions[id]),
+      assert(Object.entries(currentVersions).every(([id, currentVersion]) => newVersions[id] !== undefined
+             && currentVersion >= newVersions[id]),
              `Inconsistent store versions for suggestions with hash: ${newSuggestion.hash}`);
       return currentSuggestion;
     }

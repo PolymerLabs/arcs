@@ -189,5 +189,30 @@ recipe R4
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
     assert.isEmpty(result1.suggestions);
   });
-  // TODO: add more tests.
+  it('merges same suggestion with older store versions', async () => {
+    const {helper, result1, result2} = await prepareMerge(
+      `${commonManifestStr}${recipeTwoStr}`,
+      `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
+    assert.lengthOf(result1.suggestions, 1);
+    assert.lengthOf(result2.suggestions, 2);
+
+    // Increment store 'thing-id-0' version in result1.
+    result1.suggestions[0].versionByStore['thing-id-0'] = 1;
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.lengthOf(result1.suggestions, 2);
+    assert.equal(result1.suggestions[0].versionByStore['thing-id-0'], 1);
+  });
+  it('merges same suggestion with newer store versions', async () => {
+    const {helper, result1, result2} = await prepareMerge(
+      `${commonManifestStr}${recipeTwoStr}`,
+      `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
+    assert.lengthOf(result1.suggestions, 1);
+    assert.lengthOf(result2.suggestions, 2);
+
+    // Increment store 'thing-id-0' version in result1.
+    result2.suggestions[0].versionByStore["thing-id-0"] = 1;
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
+    assert.lengthOf(result1.suggestions, 2);
+    assert.equal(result1.suggestions[0].versionByStore['thing-id-0'], 1);
+  });
 });
