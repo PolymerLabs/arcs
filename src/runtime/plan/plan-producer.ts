@@ -40,9 +40,8 @@ export class PlanProducer {
   searchStore?: VariableStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
-  blockDevtools: boolean;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: VariableStorageProvider, {debug = false, blockDevtools = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore?: VariableStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -55,7 +54,6 @@ export class PlanProducer {
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
     this.debug = debug;
-    this.blockDevtools = blockDevtools;
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -162,7 +160,7 @@ export class PlanProducer {
         search: options['search'],
         recipeIndex: this.recipeIndex
       },
-      blockDevtools: this.blockDevtools
+      blockDevtools: true // Devtools communication is handled by PlanConsumer in Producer+Consumer setup.
     });
 
     suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
