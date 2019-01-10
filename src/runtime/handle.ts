@@ -36,7 +36,7 @@ function restore(entry, entityClass) {
 
 export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notifyUpdate: boolean; notifyDesync: boolean;}
 
-/** @class Handle
+/**
  * Base class for Collections and Variables.
  */
 export abstract class Handle {

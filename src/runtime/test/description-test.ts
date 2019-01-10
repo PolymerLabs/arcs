@@ -1,34 +1,43 @@
 /**
-* @license
-* Copyright (c) 2017 Google Inc. All rights reserved.
-* This code may only be used under the BSD style license found at
-* http://polymer.github.io/LICENSE.txt
-* Code distributed by Google as part of this project is also
-* subject to an additional IP rights grant found at
-* http://polymer.github.io/PATENTS.txt
-*/
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../handle.js';
+import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
+import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 
-function createTestArc(recipe) {
+function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
-  const arc = new Arc({slotComposer, id: 'test'});
-  arc._activeRecipe = recipe;
-  arc._recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), patterns: recipe.patterns});
+  const arc = new Arc({slotComposer, id: 'test', context: manifest, loader: new Loader()});
+  // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
+  arc['_activeRecipe'] = recipe;
+  arc['_recipes'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
   return arc;
 }
+
+type VerifySuggestionOptions = {
+  arc: Arc;
+  relevance?;
+};
 
 const tests = [
   {
     name: 'text',
-    verifySuggestion: async ({arc, relevance}, expectedSuggestion) => {
+    verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
       const description = await Description.create(arc, relevance);
       assert.equal(description.getArcDescription(), expectedSuggestion);
       return description;
@@ -36,9 +45,13 @@ const tests = [
   },
   {
     name: 'dom',
-    verifySuggestion: async ({arc, relevance}, expectedSuggestion) => {
+    verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
       const description = await Description.create(arc, relevance);
-      const suggestion = description.getArcDescription(DescriptionDomFormatter);
+
+      // Use an any variable to override the default string return type
+      // tslint:disable-next-line: no-any
+      let suggestion: any;
+      suggestion = description.getArcDescription(DescriptionDomFormatter);
       let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
       Object.keys(suggestion.model).forEach(m => {
         assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
@@ -51,7 +64,7 @@ const tests = [
   },
 ];
 
-describe('Description', function() {
+describe('Description', () => {
   const schemaManifest = `
 schema Foo
   Text name
@@ -79,29 +92,30 @@ recipe
     ifoo <- fooHandle
     ofoos -> foosHandle
     consume root as slot0`;
-  async function prepareRecipeAndArc(manifestStr) {
+
+  async function prepareRecipeAndArc(manifestStr: string) {
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const Foo = manifest.findSchemaByName('Foo').entityClass();
-    recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
+    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     if (recipe.handles.length > 1) {
-      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
     }
     if (recipe.handles.length > 2) {
-      recipe.handles[2].mapToStorage({id: 'test:3', type: Foo.type});
+      recipe.handles[2].mapToStorage({id: 'test:3', type: fooType});
     }
     recipe.normalize();
 
     assert.isTrue(recipe.isResolved());
-    const ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
+    const ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo');
     const ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
-    const ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
+    const ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
-    const arc = createTestArc(recipe);
-    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    const foosStore = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
+    const arc = createTestArc(recipe, manifest);
+    const fooStore: VariableStorageProvider = await arc.createStore(fooType, undefined, 'test:1') as VariableStorageProvider;
+    const foosStore = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
     return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
 
@@ -164,7 +178,7 @@ ${recipeManifest}
       // Add more values to the collection handle.
       await foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
       description = await test.verifySuggestion({arc},
-          'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).');              
+          'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).');
       assert.equal(description.getHandleDescription(ifooHandle), 'my-in-foo');
       assert.equal(description.getHandleDescription(ofoosHandle), 'my-out-foos');
     });
@@ -193,16 +207,16 @@ ${recipeManifest}
             consume root as slot0`);
 
       const recipe = manifest.recipes[0];
-      const Foo = manifest.findSchemaByName('Foo').entityClass();
+      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
 
-      recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.bigCollectionOf()});
-      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type});
+      recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.bigCollectionOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
 
-      const arc = createTestArc(recipe);
-      const foosStore = await arc.createStore(Foo.type.bigCollectionOf(), undefined, 'test:1');
-      const fooStore = await arc.createStore(Foo.type, undefined, 'test:2');
+      const arc = createTestArc(recipe, manifest);
+      const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+      const fooStore = await arc.createStore(fooType, undefined, 'test:2') as VariableStorageProvider;
 
       // BigCollections don't trigger sync/update events when new values are added to the backing
       // store. Pre-populate the store to check the suggestion reads in the first one.
@@ -278,7 +292,7 @@ ${recipeManifest}
       await foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
       await foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
 
-      const description = await test.verifySuggestion({arc}, 
+      const description = await test.verifySuggestion({arc},
           'Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].');
 
       assert.equal(description.getHandleDescription(ifooHandle), '[fooValue: the-FOO]');
@@ -304,7 +318,7 @@ ${recipeManifest}
 
       let description = await test.verifySuggestion({arc}, 'Read from best-new-foo and populate my-foos.');
       assert.equal(description.getHandleDescription(ifooHandle), 'best-new-foo');
-      const oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
+      const oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'B' && hc.name === 'ofoo').handle;
       assert.equal(description.getHandleDescription(oBFooHandle), 'best-new-foo');
       assert.equal(description.getHandleDescription(ofoosHandle), 'my-foos');
 
@@ -320,7 +334,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('multiple particles ' + test.name, async () => {
-      const {arc, recipe, ifooHandleConn} = (await prepareRecipeAndArc(`
+      const {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   out Foo ofoo
@@ -353,17 +367,18 @@ recipe
     consume root as slot0
       provide action as slot1
     `));
-      const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
+      const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo').handle;
 
       let description = await test.verifySuggestion(
           {arc}, 'Display X1-foo, create X1::X1-foo, and create X2::X2-foo.');
       assert.equal(description.getHandleDescription(aFooHandle), 'X1-foo');
 
       // Rank X2 higher than X2
-      const relevance = new Relevance();
-      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
-      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X1'), [5]);
-      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X2'), [10]);
+      const relevance = Relevance.create(arc, recipe);
+
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'X1'), [5]);
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'X2'), [10]);
 
       description = await test.verifySuggestion(
           {arc, relevance}, 'Display X2-foo, create X2::X2-foo, and create X1::X1-foo.');
@@ -395,15 +410,15 @@ recipe
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
       const recipe = manifest.recipes[0];
-      const Foo = manifest.findSchemaByName('Foo').entityClass();
-      recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.collectionOf()});
-      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
+      const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+      recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
 
-      const arc = createTestArc(recipe);
-      const fooStore1 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:1');
-      const fooStore2 = await arc.createStore(Foo.type.collectionOf(), undefined, 'test:2');
+      const arc = createTestArc(recipe, manifest);
+      const fooStore1 = await arc.createStore(fooType.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+      const fooStore2 = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
 
       let description = await test.verifySuggestion({arc}, 'Write to X-foo and write to X-foo.');
       assert.equal(description.getHandleDescription(recipe.handles[0]), 'X-foo');
@@ -458,18 +473,17 @@ recipe
 
       // Add values to both Foo handles
       fooStore.set({id: 1, rawData: {name: 'the-FOO'}});
-      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3');
+      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3') as VariableStorageProvider;
       fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
       const description = await test.verifySuggestion({arc},
           'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
       assert.equal(description.getHandleDescription(ifooHandle), 'b-foo');
 
       // Rank B bound to fooStore2 higher than B that is bound to fooHandle1.
-      const relevance = new Relevance();
-      relevance.newArc = arc;
-      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
-      relevance.relevanceMap.set(recipe.particles.filter(p => p.name == 'B')[0], [1]);
-      relevance.relevanceMap.set(recipe.particles.filter(p => p.name == 'B')[1], [10]);
+      const relevance = Relevance.create(arc, recipe);
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
+      relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[0], [1]);
+      relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[1], [10]);
 
       await test.verifySuggestion({arc, relevance},
           'Do A with b-foo (the-FOO), output B to b-foo (another-FOO), and output B to b-foo.');
@@ -495,8 +509,8 @@ recipe
     `));
 
       const description = await test.verifySuggestion({arc}, 'Create &lt;new> &lt;&lt;my-foo>>.');
-      const handle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
-      assert.equal(description.getHandleDescription(handle, arc), '&lt;my-foo>');
+      const handle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoo').handle;
+      assert.equal(description.getHandleDescription(handle), '&lt;my-foo>');
     });
   });
 
@@ -521,19 +535,19 @@ recipe
         const manifest = (await Manifest.parse(manifestStr));
         assert.lengthOf(manifest.recipes, 1);
         const recipe = manifest.recipes[0];
-        const MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
-        recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
-        recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.collectionOf()});
+        const myBESTType = manifest.findSchemaByName('MyBESTType').entityClass().type;
+        recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType});
+        recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()});
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
-        const arc = createTestArc(recipe);
-        const tStore = await arc.createStore(MyBESTType.type, undefined, 'test:1');
-        const tsStore = await arc.createStore(MyBESTType.type.collectionOf(), undefined, 'test:2');
+        const arc = createTestArc(recipe, manifest);
+        const tStore = await arc.createStore(myBESTType, undefined, 'test:1') as VariableStorageProvider;
+        const tsStore = await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
 
         const description = await test.verifySuggestion({arc}, 'Make my best type list from my best type.');
-        const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
-        const tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
+        const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 't').handle;
+        const tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 'ts').handle;
         assert.equal(description.getHandleDescription(tRecipeHandle), 'my best type');
         assert.equal(description.getHandleDescription(tsRecipeHandle), 'my best type list');
 
@@ -594,7 +608,7 @@ recipe
       const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-      const arc = createTestArc(recipe);
+      const arc = createTestArc(recipe, manifest);
 
       await test.verifySuggestion({arc}, 'Hello first b and second b, see you at only c.');
     });
@@ -644,10 +658,10 @@ recipe
     consume myslot as slot1
       `));
       const recipe = manifest.recipes[0];
-      const arc = createTestArc(recipe);
+      const arc = createTestArc(recipe, manifest);
       const hostedParticle = manifest.findParticleByName('NoDescription');
       const hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
-      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
+      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as VariableStorageProvider;
       await newStore.set(hostedParticle.clone().toLiteral());
 
       await test.verifySuggestion({arc}, 'Start with capital letter.');
@@ -656,10 +670,11 @@ recipe
 
   it('has no particles description', async () => {
     const verify = async (manifestStr, expectedDescription) => {
-      const recipe = (await Manifest.parse(manifestStr)).recipes[0];
+      const manifest = await Manifest.parse(manifestStr);
+      const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-      const arc = createTestArc(recipe);
+      const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
 
       assert.equal(description.getRecipeSuggestion(), expectedDescription);
@@ -690,7 +705,7 @@ schema GitHubDash`));
       const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-      const arc = createTestArc(recipe);
+      const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
       assert.equal(description.getArcDescription(), expectedSuggestion);
     };
@@ -732,7 +747,7 @@ schema GitHubDash`));
   });
 });
 
-describe('Dynamic description', function() {
+describe('Dynamic description', () => {
   async function prepareRecipeAndArc() {
     const manifestStr = `
 schema Foo
@@ -757,21 +772,27 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const Foo = manifest.findSchemaByName('Foo').entityClass();
-    const DescriptionType = manifest.findSchemaByName('Description').entityClass();
-    recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
-    recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.collectionOf()});
+    const fooType = manifest.findSchemaByName('Foo').entityClass().type;
+    const descriptionType = manifest.findSchemaByName('Description').entityClass().type;
+    recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
+    recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()});
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
-    const arc = createTestArc(recipe);
-    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    const descriptionStore = await arc.createStore(DescriptionType.type.collectionOf(), undefined, 'test:2');
+    const arc = createTestArc(recipe, manifest);
+    const fooStore = await arc.createStore(fooType, undefined, 'test:1') as VariableStorageProvider;
+    const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
+
+    // Use an any variable to turn descriptionStore into a storageProxy
+    // tslint:disable-next-line: no-any
+    let descriptionStoreProxy: any;
+    descriptionStoreProxy = descriptionStore;
+
     return {
       arc,
       recipe,
       fooStore,
       DescriptionType: descriptionStore.type.primitiveType().entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionStore)
+      descriptionHandle: handleFor(descriptionStoreProxy)
     };
   }
 
@@ -798,7 +819,7 @@ recipe
       await test.verifySuggestion({arc}, 'Return my best-foo.');
 
       // Add value to connection's handle.
-      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await fooStore.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FO4'}});
       await test.verifySuggestion({arc}, 'Return my best-foo (foo-name).');
 
       // Remove connection's description.
@@ -816,8 +837,8 @@ recipe
       assert.isUndefined(description.getArcDescription());
 
       const recipeClone = recipe.clone();
-      arc._activeRecipe = recipeClone;
-      arc._recipes = [recipeClone];
+      arc['_activeRecipe'] = recipeClone;
+      arc['_recipes'] = [recipeClone];
 
       // Particle (static) spec pattern.
       recipeClone.particles[0].spec.pattern = 'hello world';

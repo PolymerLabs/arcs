@@ -208,12 +208,16 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   removeMultiple(items, originatorId: string) : Promise<void> {
     throw new Error('unimplemented');
   }
-  
+
   async get(id: string): Promise<{}> {
     throw new Error('unimplemented');
   }
 
   remove(id: string, keys: string[], originatorId: string) {
+    throw new Error('unimplemented');
+  }
+
+  store(value, keys: string[], originatorId?: string) {
     throw new Error('unimplemented');
   }
 }
