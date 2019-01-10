@@ -14,6 +14,7 @@ import {Description} from '../description.js';
 import {DescriptionFormatter} from '../description-formatter.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
+import {Particle} from '../recipe/particle.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
@@ -37,7 +38,7 @@ type FromLiteralOptions = {
 export class Plan {
   constructor(public readonly serialization: string,
               public readonly name: string,
-              public readonly particles: {name: string, connections: {}[], slotConnections: {}[]}[],
+              public readonly particles: {name: string, connections: {}, consumedSlotConnections: {}}[],
               public readonly handles: {id: string, tags: string[]}[],
               public readonly handleConnections: {name: string, direction: string, particle: {}, handle?: {}}[],
               public readonly slotConnections: {name: string, particle: {}}[],
@@ -45,18 +46,28 @@ export class Plan {
               public readonly modality: {name: string}[]) {}
 
   static create(plan: Recipe): Plan {
+    const particleToJson = (p: Particle) => {
+      return {
+        name: p.name,
+        connections: Object.values(p.connections).reduce((conns, conn) => {
+            conns[conn.name] = {name: conn.name};
+            return conns;
+          }, {}),
+        consumedSlotConnections: Object.values(p.consumedSlotConnections).reduce((conns, conn) => {
+          conns[conn.name] = {name: conn.name};
+          return conns;
+        }, {}),
+        unnamedConnections: []
+      };
+    };
     return new Plan(plan.toString(),
         plan.name,
-        plan.particles.map(p => ({
-          name: p.name,
-          connections: Object.keys(p.connections).map(pcName => ({name: pcName})),
-          slotConnections: Object.keys(p.consumedSlotConnections),
-          unnamedConnections: []})),
+        plan.particles.map(p => particleToJson(p)),
         plan.handles.map(h => ({id: h.id, tags: h.tags})),
         plan.handleConnections.map(hc => ({
           name: hc.name,
           direction: hc.direction,
-          particle: {name: hc.particle.name},
+          particle: particleToJson(hc.particle),
           handle: hc.handle ? {
               localName: hc.handle.localName,
               id: hc.handle.id,
