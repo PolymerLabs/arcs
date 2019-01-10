@@ -1,4 +1,5 @@
 import {Env} from '../arcs.js';
+import {Runtime} from '../../../build/runtime/runtime.js';
 
 export class EnvBase {
   constructor(rootPath, loaderKind) {
@@ -9,6 +10,9 @@ export class EnvBase {
     this.rootPath = rootPath;
     this.loaderKind = loaderKind;
     this.pathMap = this.createPathMap(rootPath);
+    this._loader = new (this.loaderKind)(this.pathMap);
+    // TODO. Temporary until ArcRunner carries this info.
+    Runtime.setLoader(this._loader);
     // publish instance methods into shared import object
     Object.defineProperties(Env, {
       loader: {
@@ -28,9 +32,8 @@ export class EnvBase {
       'https://$artifacts/': `${root}/particles/`, // deprecated
     };
   }
-  // loader construction is lazy, so pathMap can be configured prior
   get loader() {
-    return this._loader || (this._loader = new (this.loaderKind)(this.pathMap));
+    return this._loader;
   }
   // pecFactory construction is lazy, so loader can be configured prior
   //get pecFactory() // abstract

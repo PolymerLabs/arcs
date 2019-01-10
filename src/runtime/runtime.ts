@@ -9,21 +9,11 @@
  */
 
 import {Description} from './description.js';
+import {Loader} from './loader.js'
 import {Manifest} from './manifest.js';
 
-// To start with, this class will simply hide the runtime classes that are
-// currently imported by ArcsLib.js. Once that refactoring is done, we can
-// think about what the api should actually look like.
+// Runtime provides basic functionality exposed as a set of static methods.
 export class Runtime {
-  // list of all the arcs this runtime knows about
-  private arcs;
-  constructor() {
-    this.arcs = [];
-
-    // user information. One persona per runtime for now.
-  }
-
-
   // Stuff the shell needs
 
   /**
@@ -54,4 +44,17 @@ export class Runtime {
 
   // stuff the strategizer needs
 
+  // These are temporary to provide a mechanism whereby the shell can tell the
+  // runtime what loader to use, rather than always having to have an arc.
+  // TODO(raulverag): Move this stuff to ArcRunner, when it exists, as it will
+  // be part of the per-persona environment.
+  static _loader: Loader;
+
+  static setLoader(loader: Loader) {
+    Runtime._loader = loader;
+  }
+
+  static getLoader(): Loader {
+    return Runtime._loader;
+  }
 }
