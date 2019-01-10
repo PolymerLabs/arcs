@@ -9,7 +9,7 @@
  */
 
 import {Description} from './description.js';
-import {Loader} from './loader.js'
+import {Loader} from './loader.js';
 import {Manifest} from './manifest.js';
 
 // Runtime provides basic functionality exposed as a set of static methods.
