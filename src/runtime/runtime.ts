@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Loader} from './loader.js';
 import {Manifest} from './manifest.js';
@@ -55,6 +56,7 @@ export class Runtime {
   }
 
   static getLoader(): Loader {
+    assert(Runtime._loader, `Runtime must have a loader assigned.`);
     return Runtime._loader;
   }
 }
