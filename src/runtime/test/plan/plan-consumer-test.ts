@@ -22,7 +22,7 @@ async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
   const store = await Planificator['_initSuggestStore'](helper.arc, userid, storageKeyBase);
   assert.isNotNull(store);
-  return new PlanConsumer(helper.arc, new PlanningResult(store));
+  return new PlanConsumer(helper.arc, new PlanningResult(helper.envOptions, store));
 }
 
 async function storeResults(consumer, suggestions) {

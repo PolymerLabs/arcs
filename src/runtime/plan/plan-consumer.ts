@@ -76,7 +76,7 @@ export class PlanConsumer {
   getCurrentSuggestions(): Suggestion[] {
     const suggestions = this.result.suggestions.filter(
         suggestion => suggestion.plan.slots.length > 0
-                      && this.arc.modality.isCompatible(suggestion.plan.modality.map(m => m.name)));
+                      && this.arc.modality.isCompatible(suggestion.plan.modality.names));
 
     // `showAll`: returns all suggestions that render into slots.
     if (this.suggestFilter['showAll']) {

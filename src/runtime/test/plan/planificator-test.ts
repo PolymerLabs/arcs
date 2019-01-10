@@ -163,19 +163,35 @@ describe('remote planificator', () => {
     const storageKey = 'volatile://!123:demo^^abcdef';
 
     // Planning with products manifest.
-    const productsManifestFilename = './src/runtime/test/artifacts/Products/Products.recipes';
+    const productsManifestString = `
+import './src/runtime/test/artifacts/Places/ExtractLocation.manifest'
+import './src/runtime/test/artifacts/Restaurants/FindRestaurants.manifest'
+import './src/runtime/test/artifacts/Restaurants/RestaurantDetail.manifest'
+import './src/runtime/test/artifacts/Restaurants/RestaurantList.manifest'
+import './src/runtime/test/artifacts/Restaurants/RestaurantMasterDetail.manifest'
+import './src/runtime/test/artifacts/Events/PartySize.manifest'
+import './src/runtime/test/artifacts/Restaurants/ReservationAnnotation.manifest'
+import './src/runtime/test/artifacts/Restaurants/ReservationForm.manifest'
+import './src/runtime/test/artifacts/Events/Calendar.manifest'
+import './src/runtime/test/artifacts/Products/Products.recipes'
+    `;
     const showProductsDescription = 'Show products from your browsing context';
     const productsPlanificator = await Planificator.create(
-        await createArc({manifestFilename: productsManifestFilename}, storageKey), {userid, debug: false});
+        await createArc({manifestString: productsManifestString}, storageKey), {userid, debug: false});
     await productsPlanificator.requestPlanning({contextual: false});
     await verifyReplanning(productsPlanificator, 1, [showProductsDescription]);
 
     // Planning with restaurants manifest using the same arc - results are merged.
     const restaurantsManifestString = `
+import './src/runtime/test/artifacts/Common/List.manifest'
 import './src/runtime/test/artifacts/Restaurants/Restaurants.recipes'
 import './src/runtime/test/artifacts/People/Person.schema'
 store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
-    `;
+import './src/runtime/test/artifacts/Products/Product.schema'
+particle ShowProduct in 'show-product.js'
+  in Product product
+  consume item
+  `;
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, storageKey),
         userid, productsPlanificator.result.store, productsPlanificator.searchStore);
