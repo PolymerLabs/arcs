@@ -327,9 +327,9 @@ describe('references', () => {
     const values = await outputStore.toList();
     assert.equal(values.length, 2);
     for (const value of values) {
-      if (value.rawData.shortForm == 'a') {
+      if (value.rawData.shortForm === 'a') {
         assert.equal(value.rawData.result.id, 'id:a');
-      } else if (value.rawData.shortForm == 'b') {
+      } else if (value.rawData.shortForm === 'b') {
         assert.equal(value.rawData.result.id, 'id:b');
       } else {
         assert.isTrue(false);
@@ -479,7 +479,7 @@ describe('references', () => {
     const outputStore = arc._stores[1] as VariableStorageProvider;
     assert.equal((outputStore.type as EntityType).entitySchema.name, 'Foo');
     const values = await outputStore.get();
-    assert(values.rawData.result.length == 2);
+    assert(values.rawData.result.length === 2);
     assert.equal(values.rawData.result[0].id, 'id:1');
     assert.equal(values.rawData.result[1].id, 'id:2');
   });

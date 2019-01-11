@@ -16,15 +16,15 @@ import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 
-describe('interface', function() {
-  it('finds type variable references in handles', function() {
+describe('interface', () => {
+  it('finds type variable references in handles', () => {
     const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);
     assert.lengthOf(iface.typeVars, 1);
     assert.equal(iface.typeVars[0].field, 'type');
     assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
-  it('finds type variable references in slots', function() {
+  it('finds type variable references in slots', () => {
     const iface = new InterfaceInfo('Test', [], [
       {name: TypeVariable.make('a'), direction: '', isRequired: false, isSet: false}]);
     assert.lengthOf(iface.typeVars, 1);
@@ -32,7 +32,7 @@ describe('interface', function() {
     assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
-  it('upgrades type variable references', function() {
+  it('upgrades type variable references', () => {
     let type = InterfaceType.make('Test',
       [
         {name: TypeVariable.make('a')},
