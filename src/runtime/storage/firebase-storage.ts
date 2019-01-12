@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base';
+import {StorageBase, StorageProviderBase, BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base';
 
 // keep in sync with shell/source/ArcsLib.js
 import firebase from 'firebase/app';
@@ -1311,7 +1311,7 @@ class FirebaseCursor {
  *    }
  * ```
  */
-class FirebaseBigCollection extends FirebaseStorageProvider {
+class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollectionStorageProvider {
   private cursors: Map<number, FirebaseCursor>;
   private cursorIndex: number;
 
@@ -1330,14 +1330,14 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   }
 
   // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id
-  async get(id) {
+  async get(id: string) {
     const encId = FirebaseStorage.encodeKey(id);
     const snapshot = await this.reference.child('items/' + encId).once('value');
     return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 
   // originatorId is included to maintain parity with Collection.store but is not used.
-  async store(value, keys, originatorId) {
+  async store(value, keys: string[], originatorId?: string) {
     // Technically we don't really need keys here; Firebase provides the central replicated storage
     // protocol and the mutating ops here are all pass-through (so no local CRDT management is
     // required). This may change in the future - we may well move to full CRDT support in the
@@ -1381,7 +1381,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   }
 
   // keys and originatorId are included to maintain parity with Collection.remove but are not used.
-  async remove(id, keys, originatorId) {
+  async remove(id: string, keys: string[], originatorId?: string) {
     await this.reference.child('version').transaction(data => {
       return (data || 0) + 1;
     }, undefined, false);
@@ -1399,7 +1399,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
    * caveat that items removed during a streamed read may be returned at the end). Set forward to
    * false to return items in reverse insertion order.
    */
-  async stream(pageSize, forward = true) {
+  async stream(pageSize: number, forward = true) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
     const cursor = new FirebaseCursor(this.reference, pageSize, forward);
@@ -1412,7 +1412,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
    * Calls next() on the cursor identified by cursorId. The cursor will be discarded once the end
    * of the stream has been reached.
    */
-  async cursorNext(cursorId) {
+  async cursorNext(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     if (!cursor) {
       return {done: true};
@@ -1425,7 +1425,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   }
 
   /** Calls close() on and discards the cursor identified by cursorId. */
-  cursorClose(cursorId) {
+  cursorClose(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);
@@ -1436,7 +1436,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
   /**
    * Returns the version at which the cursor identified by cursorId is reading.
    */
-  cursorVersion(cursorId) {
+  cursorVersion(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     return cursor ? cursor.version : null;
   }
@@ -1463,5 +1463,9 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
 
   fromLiteral({version, model}) {
     throw new Error('FirebaseBigCollection does not yet implement fromLiteral');
+  }
+
+  clearItemsForTesting() {
+    throw new Error('unimplemented');
   }
 }
