@@ -308,7 +308,7 @@ ${this._slotsToManifestString()}
     return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
   }
 
-  static handlesMatch(interfaceHandle, particleHandle): boolean|[{var, value, direction}] {
+  static handlesMatch(interfaceHandle, particleHandle): boolean|{var, value, direction}[] {
     if (InterfaceInfo.mustMatch(interfaceHandle.name) &&
         interfaceHandle.name !== particleHandle.name) {
       return false;
