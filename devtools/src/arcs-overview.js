@@ -80,16 +80,13 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         padding: 16px 5px;
         margin: 0;
       }
-      .nav-list a:hover {
-        background-color: var(--light-gray);
-      }
     </style>
     <div id="graphContainer">
       <div class="legend">
         <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
         <div><span node style="background: var(--light-gray)"></span> Handle</div>
         <div><span node style="background: var(--dark-green)"></span> Slot</div>
-        <div><span node style="background: var(--darker-green)"></span> Hosted Slot</div>
+        <div><span node style="background: var(--dark-red)"></span> Arc</div>
         <div><span edge arrow-right style="background: var(--dark-green); border-color: var(--dark-green);"></span> Read</div>
         <div><span edge arrow-right style="background: var(--dark-red); border-color: var(--dark-red);"></span> Write</div>
         <div><span edge arrow-left arrow-right style="background: var(--highlight-blue); border-color: var(--highlight-blue);"></span> Read-Write</div>
@@ -99,9 +96,6 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       </div>
       <div id="popup">
         <pre id="popupText"></pre>
-        <div class="nav-list">
-          <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
-        </div>
       </div>
       <div id="graph"></div>
     </div>
@@ -124,9 +118,9 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     this._particles = new Map();
     this._handles = new Map();
     this._slots = new Map();
+    this._innerArcs = new Map();
     this._operations = new Map();
     this._callbackIdToPecMsg = new Map();
-    this._innerArcToTransformationParticle = new Map();
     this._needsRedraw = false;
   }
 
@@ -149,16 +143,11 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         case 'recipe-instantiated': {
           for (const sc of m.slotConnections) {
             if (sc.consumed) {
-              // TODO: Instead of fetching existing slot, use vis.DataSet,
-              // which allows per-attribute updates.
-              const existingSlotEntry = this._slots.get(sc.consumed.id);
-              const hosted = existingSlotEntry && existingSlotEntry.hosted;
               
               this._slots.set(sc.consumed.id, {
                 id: sc.consumed.id,
                 label: sc.consumed.name,
-                hosted,
-                color: this._cssVar(hosted ? '--darker-green' : '--dark-green'),
+                color: this._cssVar('--dark-green'),
                 font: {color: 'white'},
                 details: {
                   id: sc.consumed.id
@@ -176,7 +165,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                     type: 'circle'
                   }
                 },
-                color: {color: this._cssVar(hosted ? '--darker-green' : '--dark-green')}
+                color: {color: this._cssVar('--dark-green')}
               });
             }
   
@@ -211,81 +200,35 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         case 'PecLog': {
           switch (m.name) {
             case 'onConstructInnerArc':
-            case 'onArcCreateHandle':
-            case 'onArcCreateSlot':
               this._callbackIdToPecMsg.set(m.pecMsgBody.callback, m.pecMsgBody);
               break;
             case 'ConstructArcCallback': {
               const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
               if (!request) continue;
               this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
-              this._innerArcToTransformationParticle.set(m.pecMsgBody.arc, request.particle);
-              break;
-            }
-            case 'CreateHandleCallback': {
-              const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
-              if (!request) continue;
-              this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
 
-              const handleId = m.pecMsgBody.id;
-              const handleName = m.pecMsgBody.name;
-              const particleId = this._innerArcToTransformationParticle.get(request.arc);
-              if (!particleId) continue;
-
-              this._handles.set(handleId, {
-                id: handleId,
-                label: handleName ? `"${handleName}"` : '?',
-                color: this._cssVar('--light-gray'),
-                details: {
-                  id: handleId,
-                  name: handleName,
-                }
+              const innerArcId = m.pecMsgBody.arc;
+              const innerArcIdSuffix = innerArcId.substr(innerArcId.lastIndexOf(':') + 1);
+              this._innerArcs.set(innerArcId, {
+                id: innerArcId,
+                label: `Arc ${innerArcIdSuffix}`,
+                font: {color: 'white'},
+                color: this._cssVar('--dark-red'),
               });
 
-              const edgeId = `${particleId}¯\\_(ツ)_/¯${handleId}`;
+              const transformationParticle = request.particle;
+              const edgeId = `${transformationParticle}¯\\_(ツ)_/¯${innerArcId}`;
               this._operations.set(edgeId, {
                 id: edgeId,
-                from: particleId,
-                to: handleId,
-                arrows: 'to, from',
-                color: {color: this._cssVar('--highlight-blue')},
+                from: transformationParticle,
+                to: innerArcId,
+                // arrows: 'to, from',
+                color: {color: this._cssVar('--dark-red')},
                 details: {
                   direction: 'both',
                 }
               });
-              break;
-            }
-            case 'CreateSlotCallback': {
-              const request = this._callbackIdToPecMsg.get(m.pecMsgBody.callback);
-              if (!request) continue;
-              this._callbackIdToPecMsg.delete(m.pecMsgBody.callback);
 
-              const slotId = m.pecMsgBody.hostedSlotId;
-              const particleId = request.transformationParticle;
-
-              this._slots.set(slotId, {
-                id: slotId,
-                hosted: true,
-                color: this._cssVar('--darker-green'),
-                font: {color: 'white'},
-                details: {
-                  id: slotId
-                }
-              });
-
-              const edgeId = `${particleId}¯\\_(ツ)_/¯${slotId}`;
-              this._operations.set(edgeId, {
-                id: edgeId,
-                from: particleId,
-                to: slotId,
-                arrows: {
-                  to: {
-                    enabled: true,
-                    type: 'circle'
-                  }
-                },
-                color: {color: this._cssVar('--dark-red')}
-              });
               break;
             }
             case 'InstantiateParticle': {
@@ -376,7 +319,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
 
   _redraw() {
     this._needsRedraw = false;
-    const nodes = [...this._particles.values(), ...this._handles.values(), ...this._slots.values()];
+    const nodes = [...this._particles.values(), ...this._handles.values(), ...this._slots.values(), ...this._innerArcs.values()];
     const edges = [...this._operations.values()];
     if (this.graph) {
       this.graph.setData({nodes, edges});
@@ -394,17 +337,13 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
           if (this._particles.get(params.nodes[0])) {
             this.$.popupText.innerText = JSON.stringify(
               this._particles.get(params.nodes[0]).details, null, 2);
-            this.$.dataflowLink.href = `?particleFilter=${encodeURIComponent(params.nodes[0])}#dataflow`;
           } else {
             this.$.popupText.innerText = JSON.stringify(
               this._handles.get(params.nodes[0]).details, null, 2);
-            this.$.dataflowLink.href = `?handleFilter=${encodeURIComponent(params.nodes[0])}#dataflow`;
           }
         } else if (params.edges.length) {
           this.$.popupText.innerText = JSON.stringify(
             this._operations.get(params.edges[0]).details, null, 2);
-          const edgeNodes = params.edges[0].split('¯\\_(ツ)_/¯');
-          this.$.dataflowLink.href = `?particleFilter=${encodeURIComponent(edgeNodes[0])}&handleFilter=${encodeURIComponent(edgeNodes[1])}#dataflow`;
         } else {
           return;
         }
@@ -423,8 +362,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
     this._particles.clear();
     this._handles.clear();
     this._slots.clear();
+    this._innerArcs.clear();
     this._operations.clear();
-    this._innerArcToTransformationParticle.clear();
     this._callbackIdToPecMsg.clear();
     if (this.active) this._redraw();
   }
