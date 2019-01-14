@@ -12,13 +12,10 @@ import {assert} from '../test/chai-web.js';
 
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
-import {Manifest} from '../manifest.js';
-import {SlotConsumer} from '../slot-consumer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {HostedSlotContext} from '../slot-context.js';
 
 describe('Multiplexer', function() {
   it('Processes multiple inputs', async () => {
@@ -106,8 +103,8 @@ describe('Multiplexer', function() {
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
     await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
     await helper.idle();
-    assert.lengthOf(helper.slotComposer.consumers.filter(s => s.constructor === MockSlotDomConsumer), 2);
-    assert.lengthOf(helper.slotComposer.consumers.filter(s => s.constructor === HostedSlotConsumer), 4);
+    assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
+    assert.lengthOf(helper.slotComposer.consumers, 6);
     const itemSlot = helper.slotComposer.consumers.find(s => s.consumeConn.name == 'item');
     assert(itemSlot);
     const items = itemSlot.renderings.map(([subId, item]) => item);

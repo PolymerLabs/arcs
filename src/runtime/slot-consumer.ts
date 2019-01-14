@@ -11,14 +11,14 @@
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {Description} from './description.js';
-import {SlotContext} from './slot-context.js';
+import {SlotContext, ProvidedSlotContext, HostedSlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
-import {HostedSlotConsumer} from './hosted-slot-consumer.js';
 
 export class SlotConsumer {
   _consumeConn?: SlotConnection;
   slotContext: SlotContext;
-  providedSlotContexts: SlotContext[] = [];
+  readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
+  readonly hostedSlotContexts: HostedSlotContext[] = [];
   startRenderCallback: ({}) => void;
   stopRenderCallback: ({}) => void;
   eventHandler: ({}) => void;
@@ -42,7 +42,34 @@ export class SlotConsumer {
     this._renderingBySubId.set(subId, rendering);
   }
 
+  addHostedSlotContexts(context: HostedSlotContext) {
+    context.containerAvailable = Boolean(this.slotContext.containerAvailable);
+    this.hostedSlotContexts.push(context);
+  }
+
+  get allProvidedSlotContexts(): ProvidedSlotContext[] {
+    return [...this.generateProvidedContexts()];
+  }
+
+  findProvidedContext(predicate: (_: ProvidedSlotContext) => boolean) {
+    return this.generateProvidedContexts(predicate).next().value;
+  }
+
+  private *generateProvidedContexts(predicate = (_: ProvidedSlotContext) => true): IterableIterator<ProvidedSlotContext> {
+    for (const context of this.directlyProvidedSlotContexts) {
+      if (predicate(context)) yield context;
+    }
+    for (const hostedContext of this.hostedSlotContexts) {
+      for (const hostedConsumer of hostedContext.slotConsumers) {
+        yield* hostedConsumer.generateProvidedContexts(predicate);
+      }
+    }
+  }
+
   onContainerUpdate(newContainer, originalContainer) {
+    assert(this.slotContext instanceof ProvidedSlotContext, 'Container can only be updated in non-hosted context');
+    const context = this.slotContext as ProvidedSlotContext;
+
     if (Boolean(newContainer) !== Boolean(originalContainer)) {
       if (newContainer) {
         this.startRender();
@@ -50,13 +77,14 @@ export class SlotConsumer {
         this.stopRender();
       }
     }
+    this.hostedSlotContexts.forEach(ctx => ctx.containerAvailable = Boolean(newContainer));
 
     if (newContainer !== originalContainer) {
       const contextContainerBySubId = new Map();
-      if (this.slotContext && this.slotContext.spec.isSet) {
-        Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
+      if (context && context.spec.isSet) {
+        Object.keys(context.container || {}).forEach(subId => contextContainerBySubId.set(subId, context.container[subId]));
       } else {
-        contextContainerBySubId.set(undefined, this.slotContext.container);
+        contextContainerBySubId.set(undefined, context.container);
       }
 
       for (const [subId, container] of contextContainerBySubId) {
@@ -83,12 +111,12 @@ export class SlotConsumer {
 
   createProvidedContexts() {
     return this.consumeConn.slotSpec.providedSlots.map(
-      spec => new SlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
+      spec => new ProvidedSlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
   }
 
   updateProvidedContexts() {
-    this.providedSlotContexts.forEach(providedContext => {
-      providedContext.container = this.getInnerContainer(providedContext.id);
+    this.allProvidedSlotContexts.forEach(providedContext => {
+      providedContext.container = providedContext.sourceSlotConsumer.getInnerContainer(providedContext.id);
     });
   }
 
@@ -97,7 +125,7 @@ export class SlotConsumer {
       this.startRenderCallback({
         particle: this.consumeConn.particle,
         slotName: this.consumeConn.name,
-        providedSlots: new Map(this.providedSlotContexts.map(context => ([context.name, context.id] as [string, string]))),
+        providedSlots: new Map(this.allProvidedSlotContexts.map(context => ([context.name, context.id] as [string, string]))),
         contentTypes: this.constructRenderRequest()
       });
     }
@@ -158,21 +186,14 @@ export class SlotConsumer {
 
   isSameContainer(container, contextContainer) { return container === contextContainer; }
 
-  get hostedConsumers(): HostedSlotConsumer[] {
-    return this.providedSlotContexts
-        .filter(context => context.constructor.name === 'HostedSlotContext')
-        .map(context => context.sourceSlotConsumer)
-        .filter(consumer => consumer !== this) as HostedSlotConsumer[];
-  }
-
   // abstract
-  constructRenderRequest(hostedSlotConsumer = null): string[] { return []; }
+  constructRenderRequest(): string[] { return []; }
   dispose() {}
   createNewContainer(contextContainer, subId): {} { return null; }
   deleteContainer(container) {}
   clearContainer(rendering) {}
   setContainerContent(rendering, content, subId) {}
   formatContent(content, subId): object { return null; }
-  formatHostedContent(hostedSlot, content): {} { return null; }
+  formatHostedContent(content): {} { return null; }
   static clear(container) {}
 }

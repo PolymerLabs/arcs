@@ -12,6 +12,7 @@ import {SlotComposer} from './slot-composer.js';
 import {Arc} from './arc.js';
 import {Suggestion} from './plan/suggestion.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
+import {ProvidedSlotContext} from './slot-context.js';
 
 export class SuggestionComposer {
   private _container: HTMLElement | undefined; // eg div element.
@@ -65,7 +66,7 @@ export class SuggestionComposer {
     }
     const remoteSlot = remoteSlots[0];
 
-    const context = this._slotComposer.findContextById(remoteSlot.id);
+    const context = this._slotComposer.findContextById(remoteSlot.id) as ProvidedSlotContext;
     if (!context) {
       throw new Error('Missing context for ' + remoteSlot.id);
     }

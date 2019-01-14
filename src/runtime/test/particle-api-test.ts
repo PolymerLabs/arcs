@@ -787,7 +787,7 @@ describe('particle-api', () => {
               super.setHandles(handles);
   
               const innerArc = await this.constructInnerArc();
-              const hostedSlotId = await innerArc.createSlot(this, 'root', 'A', 'content');
+              const hostedSlotId = await innerArc.createSlot(this, 'root');
         
               const {providedSlotIds} = await innerArc.loadRecipe(\`
                 particle A in 'A.js'

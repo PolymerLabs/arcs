@@ -8,14 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
-import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {ProvidedSlotContext, HostedSlotContext} from '../slot-context.js';
 
 describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
@@ -37,8 +36,8 @@ describe('particle interface loading with slots', function() {
 
     const arc = new Arc({id: 'test', slotComposer, context: manifest});
 
-    assert(recipe.normalize(), 'can\'t normalize recipe');
-    assert(recipe.isResolved(), 'recipe isn\'t resolved');
+    assert(recipe.normalize(), `can't normalize recipe`);
+    assert(recipe.isResolved(), `recipe isn't resolved`);
 
     return {manifest, recipe, slotComposer, arc};
   }
@@ -79,9 +78,9 @@ describe('particle interface loading with slots', function() {
 
     // Verify slot template and models.
     assert.lengthOf(slotComposer.consumers, 3);
-    assert.isTrue(slotComposer.consumers[0] instanceof SlotDomConsumer);
-    assert.isTrue(slotComposer.consumers[1] instanceof HostedSlotConsumer);
-    assert.isTrue(slotComposer.consumers[2] instanceof HostedSlotConsumer);
+    assert.isTrue(slotComposer.consumers[0].slotContext instanceof ProvidedSlotContext);
+    assert.isTrue(slotComposer.consumers[1].slotContext instanceof HostedSlotContext);
+    assert.isTrue(slotComposer.consumers[2].slotContext instanceof HostedSlotContext);
     const slot = slotComposer.consumers[0];
     verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 

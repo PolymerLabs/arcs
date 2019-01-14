@@ -8,7 +8,6 @@
 import {Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
-import {Arc} from '../arc.js';
 import {SlotConnection} from '../recipe/slot-connection.js';
 
 import {assert} from '../../platform/assert-web.js';
@@ -114,6 +113,7 @@ export class MapSlots extends Strategy {
 
   static specMatch(slotConnection, slot) {
     return slotConnection.slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
+          slot.spec && // if there is no spec on the slot, it is a hosted slot in the inner arc
           slotConnection.slotSpec.isSet === slot.spec.isSet;
   }
 

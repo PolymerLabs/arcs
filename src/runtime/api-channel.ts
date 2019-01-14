@@ -443,7 +443,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
-  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string);
+  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
   InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: {}) {}
 
@@ -503,7 +503,7 @@ export abstract class PECInnerPort extends APIPort {
   ArcMapHandle(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
 
-  ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct hostedParticleName: string, @Direct hostedSlotName: string, @Direct handleId: string) {}
+  ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);
   abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: string);
 

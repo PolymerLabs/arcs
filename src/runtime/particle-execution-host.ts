@@ -17,7 +17,6 @@ import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
 import {Particle} from './recipe/particle.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {ParticleSpec} from './particle-spec.js';
 import { Type } from './type.js';
 import { Handle } from './recipe/handle.js';
 
@@ -164,10 +163,10 @@ export class ParticleExecutionHost {
         this.MapHandleCallback({}, callback, handle.id);
       }
 
-      onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, hostedParticleName: string, hostedSlotName: string, handleId: string) {
+      onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
         let hostedSlotId;
         if (pec.slotComposer) {
-          hostedSlotId = pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
+          hostedSlotId = pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
         }
         this.CreateSlotCallback({}, callback, hostedSlotId);
       }

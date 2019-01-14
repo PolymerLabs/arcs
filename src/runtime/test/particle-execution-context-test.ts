@@ -41,9 +41,9 @@ describe('Particle Execution Context', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const slotConsumer = slotComposer.contexts.find(c => c.name === 'root').slotConsumers.find(sc => sc.constructor === MockSlotDomConsumer) as MockSlotDomConsumer;
-    const detailContext = slotConsumer.providedSlotContexts.find(ctx => ctx.name === 'detail');
-    const annotationContext = slotConsumer.providedSlotContexts.find(ctx => ctx.name === 'annotation');
+    const slotConsumer = slotComposer.consumers[0] as MockSlotDomConsumer;
+    const detailContext = slotConsumer.directlyProvidedSlotContexts.find(ctx => ctx.name === 'detail');
+    const annotationContext = slotConsumer.directlyProvidedSlotContexts.find(ctx => ctx.name === 'annotation');
 
     await slotConsumer.contentAvailable;
     assert.deepEqual(
