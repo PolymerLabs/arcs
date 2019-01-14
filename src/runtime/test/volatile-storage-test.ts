@@ -9,7 +9,9 @@
  */
 
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {Arc} from '../arc.js';
+import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {assert} from '../test/chai-web.js';
@@ -19,14 +21,14 @@ import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 // * same version
 // * no pending changes
 async function synchronized(store1, store2, delay=1) {
-  while (store1._hasLocalChanges || store2._hasLocalChanges || store1.versionForTesting != store2.versionForTesting) {
+  while (store1._hasLocalChanges || store2._hasLocalChanges || store1.versionForTesting !== store2.versionForTesting) {
     await new Promise(resolve => {
       setTimeout(resolve, delay);
     });
   }
 }
 
-describe('volatile', function() {
+describe('volatile', () => {
 
   const storeKey = 'volatile';
 
@@ -41,11 +43,11 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', BarType, storeKey);
+      const variable = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
       assert.equal(value, result.value);
@@ -56,11 +58,11 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const var1 = await storage.construct('test0', BarType, storeKey);
-      const var2 = await storage.connect('test0', BarType, var1.storageKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const var1 = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
+      const var2 = await storage.connect('test0', barType, var1.storageKey) as VariableStorageProvider;
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
     });
@@ -71,11 +73,11 @@ describe('volatile', function() {
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
 
-      const var1 = await storage.construct('test0', BarType, storeKey);
+      const var1 = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
       
       const result = await var1.get();
@@ -93,11 +95,11 @@ describe('volatile', function() {
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
 
-      const var1 = await storage.construct('test0', new ReferenceType(BarType), storeKey);
+      const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as VariableStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
       const result = await var1.get();
@@ -115,12 +117,12 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
-      const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const collection = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -133,11 +135,11 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -148,11 +150,11 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       collection2.store({id: 'id1', value: 'value'}, ['key2']);
       collection1.remove('id1', ['key1']);
@@ -166,11 +168,11 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), storeKey);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), collection1.storageKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -183,11 +185,11 @@ describe('volatile', function() {
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
   
-      const collection1 = await storage.construct('test0', BarType.collectionOf(), storeKey);
+      const collection1 = await storage.construct('test0', barType.collectionOf(), storeKey) as CollectionStorageProvider;
   
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -207,10 +209,10 @@ describe('volatile', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const collection = await storage.construct('test1', BarType.collectionOf(), storeKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const collection = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -224,11 +226,11 @@ describe('volatile', function() {
           Text value
       `);
   
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
   
-      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), storeKey);
+      const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), storeKey) as CollectionStorageProvider;
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -249,11 +251,11 @@ describe('volatile', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
-      const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), collection1.storageKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const collection1 = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test0', barType.bigCollectionOf(), collection1.storageKey) as CollectionStorageProvider;
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -263,7 +265,7 @@ describe('volatile', function() {
       assert.equal((await collection2.get('id1')).data, 'ab');
       assert.equal((await collection1.get('id2')).data, 'cd');
 
-      await collection1.remove('id2');
+      await collection1.remove('id2', ['key2']);
       assert.isNull(await collection2.get('id2'));
 
       // Concurrent writes to the same id.
@@ -274,7 +276,7 @@ describe('volatile', function() {
       assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
 
       assert.isNull(await collection1.get('non-existent'));
-      await collection1.remove('non-existent');
+      await collection1.remove('non-existent', ['key1']);
     });
 
     async function checkNext(col, cid, ids) {
@@ -298,10 +300,10 @@ describe('volatile', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;
 
       const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {
@@ -341,10 +343,10 @@ describe('volatile', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', context: manifest, loader: new Loader()});
       const storage = new StorageProviderFactory(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const col = await storage.construct('test0', BarType.bigCollectionOf(), storeKey);
+      const barType = new EntityType(manifest.schemas.Bar);
+      const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;
 
       const ids = ['r01', 'i02', 'z03', 'q04', 'h05', 'y06', 'p07', 'g08', 'x09', 'o10'];
       for (let i = 0; i < ids.length; i++) {

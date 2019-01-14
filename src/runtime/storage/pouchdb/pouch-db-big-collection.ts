@@ -1,8 +1,9 @@
+import {BigCollectionStorageProvider} from '../storage-provider-base.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider';
 import {assert} from '../../../platform/assert-web.js';
 
 // TODO(lindner): update to operate like the firebase version
-export class PouchDbBigCollection extends PouchDbStorageProvider {
+export class PouchDbBigCollection extends PouchDbStorageProvider implements BigCollectionStorageProvider {
   constructor(type, storageEngine, name, id, key) {
     super(type, storageEngine, name, id, key);
   }
@@ -11,16 +12,28 @@ export class PouchDbBigCollection extends PouchDbStorageProvider {
     return this.type.primitiveType();
   }
 
-  async get(id) {
+  async get(id: string) {
     throw new Error('NotImplemented');
   }
 
-  async store(value, keys, originatorId) {
+  async store(value, keys: string[], originatorId?: string) {
     assert(keys != null && keys.length > 0, 'keys required');
     throw new Error('NotImplemented');
   }
 
-  async remove(id, keys, originatorId) {
+  async remove(id: string, keys: string[], originatorId?: string) {
+    throw new Error('NotImplemented');
+  }
+  async stream(pageSize: number, forward = true) {
+    throw new Error('NotImplemented');
+  }
+  async cursorNext(cursorId: number) {
+    throw new Error('NotImplemented');
+  }
+  cursorClose(cursorId: number) {
+    throw new Error('NotImplemented');
+  }
+  cursorVersion(cursorId: number) {
     throw new Error('NotImplemented');
   }
 
@@ -29,6 +42,10 @@ export class PouchDbBigCollection extends PouchDbStorageProvider {
   }
 
   cloneFrom() {
+    throw new Error('NotImplemented');
+  }
+
+  clearItemsForTesting(): void {
     throw new Error('NotImplemented');
   }
 

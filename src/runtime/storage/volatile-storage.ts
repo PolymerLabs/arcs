@@ -8,7 +8,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
-import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
@@ -517,7 +517,7 @@ class VolatileCursor {
   }
 }
 
-class VolatileBigCollection extends VolatileStorageProvider {
+class VolatileBigCollection extends VolatileStorageProvider implements BigCollectionStorageProvider {
   private items: Map<string, {index: number, value: {}, keys: {[index: string]: number}}>;
   private cursors: Map<number, VolatileCursor>;
   private cursorIndex: number;
@@ -537,12 +537,12 @@ class VolatileBigCollection extends VolatileStorageProvider {
     return this.type.primitiveType();
   }
 
-  async get(id) {
+  async get(id: string) {
     const data = this.items.get(id);
     return (data !== undefined) ? data.value : null;
   }
 
-  async store(value, keys, originatorId: string) {
+  async store(value, keys: string[], originatorId?: string) {
     assert(keys != null && keys.length > 0, 'keys required');
     this.version++;
 
@@ -555,12 +555,12 @@ class VolatileBigCollection extends VolatileStorageProvider {
     keys.forEach(k => data.keys[k] = this.version);
   }
 
-  async remove(id: string, keys: string[], originatorId: string) {
+  async remove(id: string, keys?: string[], originatorId?: string) {
     this.version++;
     this.items.delete(id);
   }
 
-  async stream(pageSize, forward = true) {
+  async stream(pageSize: number, forward = true) {
     assert(!isNaN(pageSize) && pageSize > 0);
     this.cursorIndex++;
     const cursor = new VolatileCursor(this.version, this.items.values(), pageSize, forward);
@@ -568,7 +568,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     return this.cursorIndex;
   }
 
-  async cursorNext(cursorId) {
+  async cursorNext(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     if (!cursor) {
       return {done: true};
@@ -580,7 +580,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     return data;
   }
 
-  cursorClose(cursorId) {
+  cursorClose(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);
@@ -588,7 +588,7 @@ class VolatileBigCollection extends VolatileStorageProvider {
     }
   }
 
-  cursorVersion(cursorId) {
+  cursorVersion(cursorId: number) {
     const cursor = this.cursors.get(cursorId);
     return cursor ? cursor.version : null;
   }

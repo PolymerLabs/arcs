@@ -50,7 +50,6 @@ src/runtime/multiplexer-dom-particle.js
 src/runtime/transformation-dom-particle.js
 src/runtime/manifest.md
 
-src/runtime/manual_tests/firebase-tests.js
 src/runtime/manual_tests/loader-tests.js
 
 src/runtime/test/akms-test.js
@@ -66,7 +65,6 @@ src/runtime/test/particle-interface-loading-with-slots-test.js
 src/runtime/test/schema-tests.js
 src/runtime/test/slot-consumer-tests.js
 src/runtime/test/storage-proxy-test.js
-src/runtime/test/volatile-storage-test.js
 
 src/runtime/test/artifacts/consumer-particle.js
 src/runtime/test/artifacts/hello.js
