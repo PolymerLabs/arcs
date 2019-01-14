@@ -18,11 +18,13 @@ import {Reference} from './reference.js';
 
 export class Schema {
   readonly names: string[];
-  readonly fields: {};
+  // tslint:disable-next-line: no-any
+  readonly fields: {[index: string]: any};
   description: {[index: string]: string};
   isAlias: boolean;
 
-  constructor(names: string[], fields: {}, description?) {
+  // tslint:disable-next-line: no-any
+  constructor(names: string[], fields: {[index: string]: any}, description?) {
     this.names = names;
     this.fields = fields;
     this.description = {};

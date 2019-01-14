@@ -21,6 +21,11 @@ export interface EntityInterface {
   identify(identifier);
   createIdentity(components);
   toLiteral();
+
+  // Used to access dynamic properties, but also may allow access to
+  // rawData and other internal state for tests..
+  // tslint:disable-next-line: no-any
+  [index: string]: any;
 }
 
 /**
