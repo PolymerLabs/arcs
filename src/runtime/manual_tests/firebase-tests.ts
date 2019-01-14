@@ -10,10 +10,12 @@
 
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
+import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {assert} from '../test/chai-web.js';
 import {resetStorageForTesting} from '../storage/firebase-storage.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -25,7 +27,7 @@ const backingStoreUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqTh
 // * same version
 // * no pending changes
 async function synchronized(store1, store2, delay=1) {
-  while (store1._hasLocalChanges || store2._hasLocalChanges || store1.versionForTesting != store2.versionForTesting) {
+  while (store1._hasLocalChanges || store2._hasLocalChanges || store1.versionForTesting !== store2.versionForTesting) {
     await new Promise(resolve => {
       setTimeout(resolve, delay);
     });
@@ -65,11 +67,11 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', BarType, newStoreKey('variable'));
+      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as VariableStorageProvider;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
       assert.equal(value, result.value);
@@ -79,12 +81,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
-      const var1 = await storage.construct('test0', BarType, key);
-      const var2 = await storage.connect('test0', BarType, key);
+      const var1 = await storage.construct('test0', barType, key) as VariableStorageProvider;
+      const var2 = await storage.connect('test0', barType, key) as VariableStorageProvider;
       var1.set({id: 'id1', value: 'value1'});
       var2.set({id: 'id2', value: 'value2'});
       await synchronized(var1, var2);
@@ -95,13 +97,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
   
-      const var1 = await storage.construct('test0', BarType, key1);
+      const var1 = await storage.construct('test0', barType, key1) as VariableStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
       
       const result = await var1.get();
@@ -117,13 +118,13 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
 
-      const arc = new Arc({id: 'test'});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', new ReferenceType(BarType), key1);
+      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as VariableStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
@@ -140,12 +141,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
-      const collection = await storage.construct('test1', BarType.collectionOf(), newStoreKey('collection'));
+      const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
@@ -158,12 +159,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       await collection2.store({id: 'id1', value: 'value'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -174,12 +175,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       collection1.store({id: 'id1', value: 'value'}, ['key1']);
       collection2.store({id: 'id1', value: 'value'}, ['key2']);
       collection1.remove('id1', ['key1']);
@@ -193,12 +194,12 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection1 = await storage.construct('test1', BarType.collectionOf(), key);
-      const collection2 = await storage.connect('test1', BarType.collectionOf(), key);
+      const collection1 = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
+      const collection2 = await storage.connect('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
       await synchronized(collection1, collection2);
@@ -211,12 +212,12 @@ describe('firebase', function() {
           Text value
       `);
 
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
   
-      const collection1 = await storage.construct('test0', BarType.collectionOf(), key1);
+      const collection1 = await storage.construct('test0', barType.collectionOf(), key1) as CollectionStorageProvider;
   
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
@@ -238,12 +239,12 @@ describe('firebase', function() {
           Text value
       `);
   
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
   
-      const collection1 = await storage.construct('test0', new ReferenceType(BarType).collectionOf(), key1);
+      const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), key1) as CollectionStorageProvider;
   
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
@@ -261,11 +262,11 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
-      const collection = await storage.construct('test1', BarType.collectionOf(), key);
+      const collection = await storage.construct('test1', barType.collectionOf(), key) as CollectionStorageProvider;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
       await collection.store({id: 'id2', value: 'value'}, ['key2']);
       await collection.removeMultiple([
@@ -295,12 +296,12 @@ describe('firebase', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
+      const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('bigcollection');
-      const collection1 = await storage.construct('test0', BarType.bigCollectionOf(), key);
-      const collection2 = await storage.connect('test0', BarType.bigCollectionOf(), key);
+      const collection1 = await storage.construct('test0', barType.bigCollectionOf(), key) as BigCollectionStorageProvider;
+      const collection2 = await storage.connect('test0', barType.bigCollectionOf(), key) as BigCollectionStorageProvider;
 
       // Concurrent writes to different ids.
       await Promise.all([
@@ -370,10 +371,10 @@ describe('firebase', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      const barType = new EntityType(manifest.schemas.Bar);
+      const col = await storage.construct('test0', barType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
       const items = new Map();
 
       // Add an initial set of items with lexicographically "random" ids.
@@ -447,10 +448,10 @@ describe('firebase', function() {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test'});
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
-      const BarType = new EntityType(manifest.schemas.Bar);
-      const col = await storage.construct('test0', BarType.bigCollectionOf(), newStoreKey('bigcollection'));
+      const barType = new EntityType(manifest.schemas.Bar);
+      const col = await storage.construct('test0', barType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
       const items = new Map();
 
       // Add an initial set of items with lexicographically "random" ids.
@@ -519,7 +520,7 @@ describe('firebase', function() {
       await checkDone(col, cid3);
     }).timeout(20000);
 
-    it('big collection API works from inside the PEC', async function() {
+    it('big collection API works from inside the PEC', async () => {
       const fileMap = {
         manifest: `
           schema Data
@@ -578,8 +579,8 @@ describe('firebase', function() {
       const manifest = arc._context;
 
       const storage = createStorage(arc.id);
-      const Data = new EntityType(manifest.schemas.Data);
-      const bigStore = await storage.construct('test0', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+      const dataType = new EntityType(manifest.schemas.Data);
+      const bigStore = await storage.construct('test0', dataType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
       const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(bigStore);
       recipe.normalize();
@@ -591,7 +592,7 @@ describe('firebase', function() {
       assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
-    it('serialization roundtrip re-attaches to the same firebase stores', async function() {
+    it('serialization roundtrip re-attaches to the same firebase stores', async () => {
       const loader = new StubLoader({
         manifest: `
           schema Data
@@ -615,14 +616,14 @@ describe('firebase', function() {
           defineParticle(({Particle}) => class Noop extends Particle {});
         `
       });
-      const arc = new Arc({id: 'test', loader});
       const manifest = await Manifest.load('manifest', loader);
+      const arc = new Arc({id: 'test', loader, context: manifest});
       const storage = createStorage(arc.id);
-      const Data = new EntityType(manifest.schemas.Data);
+      const dataType = new EntityType(manifest.schemas.Data);
 
-      const varStore = await storage.construct('test0', Data, newStoreKey('variable'));
-      const colStore = await storage.construct('test1', Data.collectionOf(), newStoreKey('collection'));
-      const bigStore = await storage.construct('test2', Data.bigCollectionOf(), newStoreKey('bigcollection'));
+      const varStore = await storage.construct('test0', dataType, newStoreKey('variable')) as VariableStorageProvider;
+      const colStore = await storage.construct('test1', dataType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
+      const bigStore = await storage.construct('test2', dataType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
 
       // Populate the stores, run the arc and get its serialization.
       await varStore.set({id: 'i1', rawData: {value: 'v1'}});
@@ -645,10 +646,10 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: ''});
-      const varStore2 = arc2.findStoreById(varStore.id);
-      const colStore2 = arc2.findStoreById(colStore.id);
-      const bigStore2 = arc2.findStoreById(bigStore.id);
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactory:undefined, slotComposer: undefined, context: manifest});
+      const varStore2 = arc2.findStoreById(varStore.id) as VariableStorageProvider;
+      const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
+      const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider; 
 
       // New storage providers should have been created.
       assert.notStrictEqual(varStore2, varStore);

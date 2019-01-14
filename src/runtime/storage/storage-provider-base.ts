@@ -48,6 +48,18 @@ export interface CollectionStorageProvider extends StorageProviderBase {
   store(value, keys: string[], originatorId?: string);
 }
 
+export interface BigCollectionStorageProvider extends StorageProviderBase {
+  get(id: string);
+  store(value, keys: string[], originatorId?: string);
+  remove(id: string, keys?: string[], originatorId?: string);
+  stream(pageSize: number, forward?: boolean);
+  cursorNext(cursorId: number);
+  cursorClose(cursorId: number);
+  cursorVersion(cursorId: number);
+  cloneFrom(handle);
+  clearItemsForTesting(): void;
+}
+
 export abstract class StorageBase {
   protected _debug = false;
   
