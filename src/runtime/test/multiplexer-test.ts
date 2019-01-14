@@ -14,10 +14,12 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {HostedSlotContext} from '../slot-context.js';
 
-describe('Multiplexer', function() {
+describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
     const manifest = await TestHelper.parseManifest(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
@@ -38,17 +40,17 @@ describe('Multiplexer', function() {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
+    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
     let slotsCreated = 0;
 
     slotComposer.createHostedSlot = (...args) => {
       slotsCreated++;
-      return slotComposer_createHostedSlot.apply(slotComposer, args);
+      return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: 'test', context: manifest, slotComposer});
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
+    const arc = new Arc({id: 'test', context: manifest, slotComposer, loader: new Loader()});
+    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -66,14 +68,14 @@ describe('Multiplexer', function() {
     assert.equal(slotsCreated, 3);
   });
 
-  it('renders polymorphic multiplexed slots', async function() {
+  it('renders polymorphic multiplexed slots', async () => {
     const helper = await TestHelper.create({
       manifestFilename: './src/runtime/test/particles/artifacts/polymorphic-muxing.recipes'
     });
     const context = helper.arc._context;
 
-    const showOneParticle = context.particles.find(p => p.name == 'ShowOne');
-    const showTwoParticle = context.particles.find(p => p.name == 'ShowTwo');
+    const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
+    const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
     const postsStore = context.stores[0];
@@ -105,20 +107,20 @@ describe('Multiplexer', function() {
     await helper.idle();
     assert.lengthOf(helper.slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
     assert.lengthOf(helper.slotComposer.consumers, 6);
-    const itemSlot = helper.slotComposer.consumers.find(s => s.consumeConn.name == 'item');
+    const itemSlot = helper.slotComposer.consumers.find(s => s.consumeConn.name === 'item');
     assert(itemSlot);
     const items = itemSlot.renderings.map(([subId, item]) => item);
 
     // verify model
     assert.lengthOf(items, 4);
     [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
-        assert(items.find(item => item.model.subId == expected.subId && item.model.message == expected.message),
+        assert(items.find(item => item.model.subId === expected.subId && item.model.message === expected.message),
               `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
     });
 
     // verify template names
     for (const item of items) {
-      if (item.model.subId == '2') {
+      if (item.model.subId === '2') {
         assert.equal('PostMuxer::item::ShowTwo::item::default', item.templateName);
       } else {
         assert.equal('PostMuxer::item::ShowOne::item::default', item.templateName);

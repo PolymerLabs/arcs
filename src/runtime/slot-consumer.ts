@@ -25,7 +25,7 @@ export class SlotConsumer {
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string|undefined, {container?: {}, model?}> = new Map();
+  private _renderingBySubId: Map<string|undefined, {container?: {}, model?, templateName?: string}> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
 
