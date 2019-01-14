@@ -45,11 +45,13 @@ export class ArcDebugHandler {
     const truncate = ({id, name}) => ({id, name});
     const slotConnections = [];
     particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
-      slotConnections.push({
-        particleId: cs.particle.id,
-        consumed: truncate(cs.targetSlot),
-        provided: Object.values(cs.providedSlots).map(slot  => truncate(slot)),
-      });
+      if (cs.targetSlot) {
+        slotConnections.push({
+          particleId: cs.particle.id,
+          consumed: truncate(cs.targetSlot),
+          provided: Object.values(cs.providedSlots).map(slot  => truncate(slot)),
+        });
+      }
     }));
     this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
