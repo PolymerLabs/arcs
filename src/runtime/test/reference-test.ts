@@ -14,8 +14,10 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Arc} from '../arc.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
+import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {VolatileStorage} from '../storage/volatile-storage.js';
 
-describe('references', function() {
+describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {
     const manifest = await Manifest.parse(`
         schema Result
@@ -46,7 +48,7 @@ describe('references', function() {
     assert.equal(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
     assert.isTrue(recipe.handles[0].type instanceof ReferenceType);
-    assert.equal(recipe.handles[0].type.resolvedType().referredType.entitySchema.name, 'Result');
+    assert.equal(((recipe.handles[0].type.resolvedType() as ReferenceType).referredType as EntityType).entitySchema.name, 'Result');
   });
 
   it('exposes a dereference API to particles', async () => {
@@ -87,20 +89,20 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    assert.isTrue(arc._stores[0]._type instanceof ReferenceType);
+    assert.isTrue(arc._stores[0].type instanceof ReferenceType);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
-    const backingStore = await volatileEngine.baseStorageFor(arc._stores[1]._type, volatileEngine.baseStorageKey(arc._stores[1]._type));
+    const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
+    const backingStore = await volatileEngine.baseStorageFor(arc._stores[1].type, volatileEngine.baseStorageKey(arc._stores[1].type));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
-    const refStore = arc._stores[0];
+    const refStore = arc._stores[0] as VariableStorageProvider;
     await refStore.set({id: 'id:1', storageKey: backingStore.storageKey});
 
     await assertSingletonWillChangeTo(arc, arc._stores[1], 'value', 'what a result!');
@@ -146,15 +148,15 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
-
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
+
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inputStore = arc._stores[0];
+    const inputStore = arc._stores[0] as VariableStorageProvider;
     await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
 
     const refStore = arc._stores[1];
@@ -205,20 +207,20 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
+    const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
     const baseStoreType = new EntityType(manifest.schemas.Result);
-    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
+    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     
-    const refStore = arc._stores[1];
-    assert.equal(refStore._type.entitySchema.name, 'Foo');
+    const refStore = arc._stores[1] as VariableStorageProvider;
+    assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:2', rawData: {result: {id: 'id:1', storageKey: backingStore.storageKey}}});
 
     await assertSingletonWillChangeTo(arc, arc._stores[0], 'value', 'what a result!');
@@ -301,33 +303,33 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const fooStore = arc._stores[0];
-    assert.equal(fooStore._type.entitySchema.name, 'Foo');
+    const fooStore = arc._stores[0] as VariableStorageProvider;
+    assert.equal((fooStore.type as EntityType).entitySchema.name, 'Foo');
     await fooStore.set({id: 'id:1', rawData: {result: null, shortForm: 'a'}});
 
-    const inputStore = arc._stores[1];
-    assert.equal(inputStore._type.getContainedType().entitySchema.name, 'Result');
+    const inputStore = arc._stores[1] as CollectionStorageProvider;
+    assert.equal(inputStore.type.getContainedType().entitySchema.name, 'Result');
     await inputStore.store({id: 'id:a', rawData: {value: 'this is an a'}}, ['a']);
     await inputStore.store({id: 'id:b', rawData: {value: 'this is a b'}}, ['a']);
 
-    const outputStore = arc._stores[2];
-    assert.equal(outputStore._type.getContainedType().entitySchema.name, 'Foo');
+    const outputStore = arc._stores[2] as CollectionStorageProvider;
+    assert.equal(outputStore.type.getContainedType().entitySchema.name, 'Foo');
     await outputStore.store({id: 'id:2', rawData: {result: null, shortForm: 'b'}}, ['a']);
 
     await arc.idle;
     const values = await outputStore.toList();
     assert.equal(values.length, 2);
     for (const value of values) {
-      if (value.rawData.shortForm == 'a') {
+      if (value.rawData.shortForm === 'a') {
         assert.equal(value.rawData.result.id, 'id:a');
-      } else if (value.rawData.shortForm == 'b') {
+      } else if (value.rawData.shortForm === 'b') {
         assert.equal(value.rawData.result.id, 'id:b');
       } else {
         assert.isTrue(false);
@@ -378,26 +380,26 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const volatileEngine = arc.storageProviderFactory._storageInstances['volatile'].storage;
+    const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
     const baseStoreType = new EntityType(manifest.schemas.Result);
-    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType));
+    const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
-    const refStore = arc._stores[1];
-    assert.equal(refStore._type.entitySchema.name, 'Foo');
+    const refStore = arc._stores[1] as VariableStorageProvider;
+    assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:a', rawData: {result: [{id: 'id:1', storageKey: backingStore.storageKey}, {id: 'id:2', storageKey: backingStore.storageKey}]}});
 
     await arc.idle;
-    const outputStore = arc._stores[0];
-    assert.equal(outputStore._type.getContainedType().entitySchema.name, 'Result');
+    const outputStore = arc._stores[0] as CollectionStorageProvider;
+    assert.equal(outputStore.type.getContainedType().entitySchema.name, 'Result');
     const values = await outputStore.toList();
     assert.equal(values.length, 2);
     assert.equal(values[0].rawData.value, 'what a result!');
@@ -461,23 +463,23 @@ describe('references', function() {
       `
     });
 
-    const arc = new Arc({id: 'test:0', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test:0', loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inputStore = arc._stores[0];
-    assert.equal(inputStore._type.getContainedType().entitySchema.name, 'Result');
+    const inputStore = arc._stores[0] as CollectionStorageProvider;
+    assert.equal(inputStore.type.getContainedType().entitySchema.name, 'Result');
     await inputStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await inputStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
     await arc.idle;
-    const outputStore = arc._stores[1];
-    assert.equal(outputStore._type.entitySchema.name, 'Foo');
+    const outputStore = arc._stores[1] as VariableStorageProvider;
+    assert.equal((outputStore.type as EntityType).entitySchema.name, 'Foo');
     const values = await outputStore.get();
-    assert(values.rawData.result.length == 2);
+    assert(values.rawData.result.length === 2);
     assert.equal(values.rawData.result[0].id, 'id:1');
     assert.equal(values.rawData.result[1].id, 'id:2');
   });

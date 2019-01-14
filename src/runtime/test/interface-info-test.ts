@@ -10,28 +10,29 @@
 
 import {assert} from './chai-web.js';
 import {InterfaceInfo} from '../interface-info.js';
-import {EntityType, TypeVariable, InterfaceType} from '../type.js';
+import {CollectionType, EntityType, TypeVariable, InterfaceType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 
-describe('interface', function() {
-  it('finds type variable references in handles', function() {
+describe('interface', () => {
+  it('finds type variable references in handles', () => {
     const iface = new InterfaceInfo('Test', [{type: TypeVariable.make('a')}], []);
     assert.lengthOf(iface.typeVars, 1);
     assert.equal(iface.typeVars[0].field, 'type');
     assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
-  it('finds type variable references in slots', function() {
-    const iface = new InterfaceInfo('Test', [], [{name: TypeVariable.make('a')}]);
+  it('finds type variable references in slots', () => {
+    const iface = new InterfaceInfo('Test', [], [
+      {name: TypeVariable.make('a'), direction: '', isRequired: false, isSet: false}]);
     assert.lengthOf(iface.typeVars, 1);
     assert.equal(iface.typeVars[0].field, 'name');
     assert.equal(iface.typeVars[0].object[iface.typeVars[0].field].variable.name, 'a');
   });
 
-  it('upgrades type variable references', function() {
+  it('upgrades type variable references', () => {
     let type = InterfaceType.make('Test',
       [
         {name: TypeVariable.make('a')},
@@ -47,8 +48,15 @@ describe('interface', function() {
     assert(map.has('a'));
     assert(map.has('b'));
     const iface = type.interfaceInfo;
-    assert.strictEqual(iface.handles[0].name.variable, iface.slots[0].name.variable);
-    assert.strictEqual(iface.handles[1].type, iface.handles[2].type.collectionType);
+
+    const handleName = iface.handles[0].name as TypeVariable;
+    const slotName = iface.slots[0].name as TypeVariable;
+    
+    assert.instanceOf(handleName, TypeVariable);
+    assert.instanceOf(slotName, TypeVariable);
+
+    assert.strictEqual(handleName.variable, slotName.variable);
+    assert.strictEqual(iface.handles[1].type, (iface.handles[2].type as CollectionType).collectionType);
   });
 
   it('matches particleSpecs', async () => {
@@ -74,12 +82,12 @@ describe('interface', function() {
           out Test far
           out NotTest foo
       `);
-      const type = new EntityType(manifest.schemas.Test);
-      const iface = new InterfaceInfo('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
-      assert(!iface.particleMatches(manifest.particles[0]));
-      assert(iface.particleMatches(manifest.particles[1]));
-      assert(iface.particleMatches(manifest.particles[2]));
-      assert(iface.particleMatches(manifest.particles[3]));
+    const type = new EntityType(manifest.schemas.Test);
+    const iface = new InterfaceInfo('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    assert(!iface.particleMatches(manifest.particles[0]));
+    assert(iface.particleMatches(manifest.particles[1]));
+    assert(iface.particleMatches(manifest.particles[2]));
+    assert(iface.particleMatches(manifest.particles[3]));
   });
 
   it('matches particleSpecs with slots', async () => {
@@ -104,15 +112,16 @@ describe('interface', function() {
             provide one
             provide set of randomSlot
       `);
-      const type = new EntityType(manifest.schemas.Test);
-      const iface = new InterfaceInfo('Test',
-        [{direction: 'in', type}],
-        [{name: 'one'}, {direction: 'provide', isSet: true}]);
+    const type = new EntityType(manifest.schemas.Test);
+    const iface = new InterfaceInfo('Test',[
+      {direction: 'in', type}],[
+        {name: 'one'},
+        {direction: 'provide', isSet: true}]);
 
-      assert(!iface.particleMatches(manifest.particles[0]));
-      assert(!iface.particleMatches(manifest.particles[1]));
-      assert(iface.particleMatches(manifest.particles[2]));
-      assert(iface.particleMatches(manifest.particles[3]));
+    assert(!iface.particleMatches(manifest.particles[0]));
+    assert(!iface.particleMatches(manifest.particles[1]));
+    assert(iface.particleMatches(manifest.particles[2]));
+    assert(iface.particleMatches(manifest.particles[3]));
   });
 
   it('Cannot ensure resolved an unresolved type variable', () => {
@@ -122,7 +131,7 @@ describe('interface', function() {
 
   it('Can ensure resolved a schema type', () => {
     const type = EntityType.make(['Thing'], {});
-    const iface = new InterfaceInfo('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    const iface = new InterfaceInfo('Test', [{type, name: 'foo'}, {type, direction: 'in'}, {type}], []);
     assert.isTrue(iface.canEnsureResolved());
     assert.isTrue(iface.maybeEnsureResolved());
   });
@@ -193,23 +202,23 @@ describe('interface', function() {
     // Initially handle type are unresolvable type variables.
     assert.lengthOf(recipe.handles, 2);
     for (const handle of recipe.handles) {
-      const collectionType = handle.type.collectionType;
+      const collectionType = (handle.type as CollectionType).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(resolved instanceof TypeVariable);
       assert.isFalse(resolved.canEnsureResolved());
     }
 
-    const hostedParticleType = multiplexer.connections['hostedParticle'].type;
+    const hostedParticleType = multiplexer.connections['hostedParticle'].type as InterfaceType;
     assert.isTrue(!!hostedParticleType.interfaceInfo.restrictType(burritoDisplayer));
 
     // After restricting the interface, handle types are constrainted to a Burrito.
     assert.lengthOf(recipe.handles, 2);
     for (const handle of recipe.handles) {
-      const collectionType = handle.type.collectionType;
+      const collectionType = (handle.type as CollectionType).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(collectionType instanceof TypeVariable);
       assert.isTrue(resolved.canEnsureResolved());
-      const canWriteSuperset = resolved.canWriteSuperset;
+      const canWriteSuperset = resolved.canWriteSuperset as EntityType;
       assert.isTrue(canWriteSuperset instanceof EntityType);
       assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
     }
@@ -260,7 +269,7 @@ describe('interface', function() {
     recipe.normalize();
 
     const hostParticle = recipe.particles.find(p => p.name === 'Host');
-    const hostedInterface = hostParticle.connections['hosted'].type.interfaceInfo;
+    const hostedInterface = (hostParticle.connections['hosted'].type as InterfaceType).interfaceInfo;
 
     const check = name => hostedInterface.particleMatches(manifest.findParticleByName(name));
 

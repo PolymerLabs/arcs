@@ -29,17 +29,19 @@ function _toLiteral(member) {
 const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
+// TODO(lindner): type should be required, only not used in tests
 interface Handle {
-  type: Type;
-  name: string;
-  direction: string;
+  type?: Type;
+  name?: string|TypeVariable;
+  direction?: string;
 }
 
+// TODO(lindner) only tests use optional props
 interface Slot {
-  name: string;
-  direction: string;
-  isRequired: boolean;
-  isSet: boolean;
+  name?: string|TypeVariable;
+  direction?: string;
+  isRequired?: boolean;
+  isSet?: boolean;
 }
 
 export class InterfaceInfo {
@@ -47,7 +49,8 @@ export class InterfaceInfo {
   handles: Handle[];
   slots: Slot[];
 
-  private readonly typeVars: {object: Handle|Slot, field: string}[];
+  // TODO(lindner) only accessed in tests
+  public readonly typeVars: {object: Handle|Slot, field: string}[];
 
   constructor(name: string, handles: Handle[], slots: Slot[]) {
     assert(name);
@@ -74,7 +77,7 @@ export class InterfaceInfo {
     }
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     return 'InterfaceInfo';
   }
 
@@ -293,19 +296,19 @@ ${this._slotsToManifestString()}
     return copy;
   }
 
-  static _updateTypeVar(typeVar, update) {
+  static _updateTypeVar(typeVar, update): void {
     typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
   }
 
-  static isTypeVar(reference) {
+  static isTypeVar(reference): boolean {
     return (reference instanceof Type) && reference.hasProperty(r => r instanceof TypeVariable);
   }
 
-  static mustMatch(reference) {
+  static mustMatch(reference): boolean {
     return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
   }
 
-  static handlesMatch(interfaceHandle, particleHandle) {
+  static handlesMatch(interfaceHandle, particleHandle): boolean|{var, value, direction}[] {
     if (InterfaceInfo.mustMatch(interfaceHandle.name) &&
         interfaceHandle.name !== particleHandle.name) {
       return false;
@@ -324,10 +327,9 @@ ${this._slotsToManifestString()}
     } else {
       return left.equals(right);
     }
-
   }
 
-  static slotsMatch(interfaceSlot, particleSlot) {
+  static slotsMatch(interfaceSlot, particleSlot): boolean {
     if (InterfaceInfo.mustMatch(interfaceSlot.name) &&
         interfaceSlot.name !== particleSlot.name) {
       return false;
@@ -347,17 +349,16 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  particleMatches(particleSpec) {
+  particleMatches(particleSpec): boolean {
     const interfaceInfo = this.cloneWithResolutions(new Map());
     return interfaceInfo.restrictType(particleSpec) !== false;
   }
 
-  restrictType(particleSpec) {
+  restrictType(particleSpec): boolean {
     return this._restrictThis(particleSpec);
   }
 
-  _restrictThis(particleSpec) {
-
+  _restrictThis(particleSpec): boolean {
     const handleMatches = this.handles.map(h =>
       particleSpec.connections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
                               .filter(a => a.result !== false)
@@ -416,6 +417,6 @@ ${this._slotsToManifestString()}
       }
     }
 
-    return this;
+    return true;
   }
 }
