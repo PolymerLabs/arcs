@@ -11,6 +11,7 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {Search} from '../../recipe/search.js';
+import {Recipe} from '../../recipe/recipe.js';
 import {Relevance} from '../../relevance.js';
 
 describe('suggestion', () => {
@@ -50,11 +51,20 @@ describe('suggestion', () => {
   });
 
   it('deserialize empty', async () => {
-    const suggestion1 = Suggestion.fromLiteral({plan: '{"serialization" : "recipe"}', hash: '123', rank: 1});
+    const helper = await TestHelper.create();
+    const envOptions = helper.envOptions;
+    const plan = new Recipe();
+    const suggestion1 = await Suggestion.fromLiteral({plan: plan.toString(), hash: '123', rank: 1}, envOptions);
     assert.isTrue(Boolean(suggestion1.plan));
-    const suggestion2 =
-        Suggestion.fromLiteral({plan: '{"serialization" : "recipe"}', hash: '123', rank: 1, versionByStore: '{}', searchGroups: [], descriptionByModality: {}});
+    const suggestion2 = await Suggestion.fromLiteral({
+        plan: plan.toString(),
+        hash: '123',
+        rank: 1,
+        versionByStore: '{}',
+        searchGroups: [],
+        descriptionByModality: {}
+      }, envOptions);
     assert.isTrue(Boolean(suggestion2.plan));
-    assert.deepEqual(suggestion2.toLiteral(), Suggestion.fromLiteral(suggestion2.toLiteral()).toLiteral());
+    assert.deepEqual(suggestion2.toLiteral(), (await Suggestion.fromLiteral(suggestion2.toLiteral(), envOptions)).toLiteral());
   });
 });

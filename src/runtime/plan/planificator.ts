@@ -61,7 +61,7 @@ export class Planificator {
     this.arc = arc;
     this.userid = userid;
     this.searchStore = searchStore;
-    this.result = new PlanningResult(store);
+    this.result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     if (!onlyConsumer) {
       this.producer = new PlanProducer(this.arc, this.result, searchStore, {debug});
       this.replanQueue = new ReplanQueue(this.producer);

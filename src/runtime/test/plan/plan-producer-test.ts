@@ -31,7 +31,7 @@ class TestPlanProducer extends PlanProducer {
   plannerPromise = null;
   
   constructor(arc, store) {
-    super(arc, new PlanningResult(store));
+    super(arc, new PlanningResult({context: arc.context, loader: arc.loader}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -67,28 +67,6 @@ class TestPlanProducer extends PlanProducer {
 
   get plannerRunCount() { return this.plannerRunOptions.length; }
 
-  plannerReturnFakeResults(planInfos): Suggestion[] {
-    const suggestions: Suggestion[] = [];
-    planInfos.forEach(info => {
-      if (!info.hash) {
-        info = {hash: info};
-      }
-      const plan = new Recipe(`Recipe${info.hash}`);
-      plan.newParticle('TestParticle');
-      if (!info.options || !info.options.invisible) {
-        plan.newSlot('slot0').id = 'id0';
-      }
-      plan.normalize();
-      const relevance = Relevance.create(this.arc, plan);
-      relevance.apply(new Map([[plan.particles[0], [info.rank || 0]]]));
-      const suggestion = Suggestion.create(plan, info.hash, relevance);
-      suggestion.descriptionByModality['text'] = `This is ${plan.name}`;
-      suggestions.push(suggestion);
-    });
-    this.plannerReturnResults(suggestions);
-    return suggestions;
-  }
-
   plannerReturnResults(suggestions: Suggestion[]) {
     if (this.plannerPromise) {
       this.plannerPromise(suggestions);
@@ -120,7 +98,7 @@ class TestPlanProducer extends PlanProducer {
     await producer.produceSuggestions();
     assert.lengthOf(producer.result.suggestions, 0);
 
-    producer.plannerReturnFakeResults(helper.suggestions);
+    producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.lengthOf(producer.result.suggestions, 1);
     assert.equal(producer.produceCalledCount, 1);
@@ -136,8 +114,8 @@ class TestPlanProducer extends PlanProducer {
       producer.produceSuggestions({test: i});
     }
 
-    producer.plannerReturnFakeResults(helper.suggestions);
-    producer.plannerReturnFakeResults(helper.suggestions);
+    producer.plannerReturnResults(helper.suggestions);
+    producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.equal(producer.produceCalledCount, 10);
     assert.equal(producer.plannerRunCount, 2);
@@ -153,7 +131,7 @@ class TestPlanProducer extends PlanProducer {
     producer.produceSuggestions();
     producer.produceSuggestions({cancelOngoingPlanning: true});
 
-    producer.plannerReturnFakeResults(helper.suggestions);
+    producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();
     assert.equal(producer.produceCalledCount, 2);
     assert.equal(producer.plannerRunCount, 2);
@@ -167,7 +145,7 @@ describe('plan producer - search', () => {
     produceSuggestionsCalled = 0;
     
     constructor(arc: Arc, searchStore: VariableStorageProvider) {
-      super(arc, new PlanningResult(searchStore), searchStore);
+      super(arc, new PlanningResult({context: arc.context, loader: arc.loader}, searchStore), searchStore);
     }
 
     async produceSuggestions(options = {}) {

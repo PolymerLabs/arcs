@@ -19,11 +19,12 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {Relevance} from '../relevance.js';
 import {Search} from '../recipe/search.js';
+import {Loader} from '../loader.js';
 
 /**
  * options for the fromLiteral() method.
  */
-type FromLiteralOptions = {
+export type FromLiteralOptions = {
   plan: string;
   hash: string;
   rank: number;
@@ -32,58 +33,15 @@ type FromLiteralOptions = {
   descriptionByModality?: {};
 };
 
-// TODO(#2557): This class is a temporary format for serializing suggestions.
-// Suggestion class should instead receive loader and context parameters in fromLiteral method
-// and deserialize the plan immediately. This class will be removed.
-export class Plan {
-  constructor(public readonly serialization: string,
-              public readonly name: string,
-              public readonly particles: {name: string, connections: {}, consumedSlotConnections: {}}[],
-              public readonly handles: {id: string, tags: string[]}[],
-              public readonly handleConnections: {name: string, direction: string, particle: {}, handle?: {}}[],
-              public readonly slotConnections: {name: string, particle: {}}[],
-              public readonly slots: {id: string, name: string, tags: string[]}[],
-              public readonly modality: {name: string}[]) {}
-
-  static create(plan: Recipe): Plan {
-    const particleToJson = (p: Particle) => {
-      return {
-        name: p.name,
-        connections: Object.values(p.connections).reduce((conns, conn) => {
-            conns[conn.name] = {name: conn.name};
-            return conns;
-          }, {}),
-        consumedSlotConnections: Object.values(p.consumedSlotConnections).reduce((conns, conn) => {
-          conns[conn.name] = {name: conn.name};
-          return conns;
-        }, {}),
-        unnamedConnections: []
-      };
-    };
-    return new Plan(plan.toString(),
-        plan.name,
-        plan.particles.map(p => particleToJson(p)),
-        plan.handles.map(h => ({id: h.id, tags: h.tags})),
-        plan.handleConnections.map(hc => ({
-          name: hc.name,
-          direction: hc.direction,
-          particle: particleToJson(hc.particle),
-          handle: hc.handle ? {
-              localName: hc.handle.localName,
-              id: hc.handle.id,
-              originalId: hc.handle.originalId,
-              fate: hc.handle.fate,
-              originalFate: hc.handle.originalFate,
-              immediateValue: hc.handle.immediateValue
-            } : null})),
-        plan.slotConnections.map(sc => ({name: sc.name, particle: sc.particle.name})),
-        plan.slots.map(s => ({id: s.id, name: s.name, tags: s.tags})),
-        plan.modality.names.map(n => ({name: n})));
-  }
-}
+// TODO(#2557): This is a temporary workaround until `context` and `loader`
+// are available in Runtime.
+export type EnvOptions = {
+  context: Manifest;
+  loader: Loader;
+};
 
 export class Suggestion {
-  plan: Plan;
+  plan: Recipe;
   // TODO: update Description class to be serializable.
   descriptionByModality = {};
   versionByStore = {};
@@ -97,13 +55,13 @@ export class Suggestion {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
     assert(relevance, `relevance cannot be null`);
-    const suggestion = new Suggestion(Plan.create(plan), hash, relevance.calcRelevanceScore(),
+    const suggestion = new Suggestion(plan, hash, relevance.calcRelevanceScore(),
         relevance.versionByStore);
     suggestion.setSearch(plan.search);
     return suggestion;
   }
 
-  constructor(plan: Plan, hash: string, rank: number, versionByStore: {}) {
+  constructor(plan: Recipe, hash: string, rank: number, versionByStore: {}) {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
     this.plan = plan;
@@ -130,9 +88,9 @@ export class Suggestion {
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
     this.descriptionByModality['text'] = description.getRecipeSuggestion();
-    for (const planModality of this.plan.modality) {
-      if (modality.names.includes(planModality.name)) {
-        this.descriptionByModality[planModality.name] =
+    for (const planModality of this.plan.modality.names) {
+      if (modality.names.includes(planModality)) {
+        this.descriptionByModality[planModality] =
           description.getRecipeSuggestion(descriptionFormatter);
       }
     }
@@ -186,8 +144,7 @@ export class Suggestion {
 
   toLiteral() {
     return {
-      // Needs to JSON.strigify to avoid emitting empty strings and arrays.
-      plan: JSON.stringify(this.plan),
+      plan: this.plan.toString(),
       hash: this.hash,
       rank: this.rank,
       // Needs to JSON.strigify because store IDs may contain invalid FB key symbols.
@@ -197,8 +154,15 @@ export class Suggestion {
     };
   }
 
-  static fromLiteral({plan, hash, rank, versionByStore, searchGroups, descriptionByModality}: FromLiteralOptions) {
-    const suggestion = new Suggestion(JSON.parse(plan), hash, rank, JSON.parse(versionByStore || '{}'));
+  static async fromLiteral(
+      {plan, hash, rank, versionByStore, searchGroups, descriptionByModality}: FromLiteralOptions,
+      {context, loader}: EnvOptions) {
+    const manifest = await Manifest.parse(plan, {loader, context, fileName: ''});
+    assert(manifest.recipes.length === 1);
+    const recipe = manifest.recipes[0];
+    assert(recipe.normalize({}), `can't normalize deserialized suggestion: ${plan}`);
+
+    const suggestion = new Suggestion(recipe, hash, rank, JSON.parse(versionByStore || '{}'));
     suggestion.searchGroups = searchGroups || [];
     suggestion.descriptionByModality = descriptionByModality;
     return suggestion;
@@ -207,34 +171,18 @@ export class Suggestion {
   async instantiate(arc: Arc): Promise<void> {
     // For now shell is responsible for creating and setting the new arc.
     assert(arc, `Cannot instantiate suggestion without and arc`);
-    const thePlan = await Suggestion.planFromString(this.plan.serialization, arc);
-    return arc.instantiate(thePlan);
+
+    const plan = await this.getResolvedPlan(arc);
+    assert(plan && plan.isResolved(), `can't resolve plan: ${this.plan.toString({showUnresolved: true})}`);
+    return arc.instantiate(plan);
   }
 
-  // TODO(mmandlis): temporarily used in shell's plan instantiation hack. 
-  // Make private again, once fixed.
-  static async planFromString(planString: string, arc: Arc): Promise<Recipe> {
-    try {
-      const manifest = await Manifest.parse(
-          planString, {loader: arc.loader, context: arc.context, fileName: ''});
-      assert(manifest.recipes.length === 1);
-      let plan = manifest.recipes[0];
-      assert(plan.normalize({}), `can't normalize deserialized suggestion: ${plan.toString()}`);
-      if (!plan.isResolved()) {
-        const recipeResolver = new RecipeResolver(arc);
-        const resolvedPlan = await recipeResolver.resolve(plan);
-        assert(resolvedPlan, `can't resolve plan: ${plan.toString({showUnresolved: true})}`);
-        if (resolvedPlan) {
-          plan = resolvedPlan;
-        }
-      }
-
-      assert(manifest.stores.length === 0, `Unexpected stores in suggestion manifest.`);
-
-      return plan;
-    } catch (e) {
-      console.error(`Failed to parse suggestion ${e}\n${planString}.`);
+  async getResolvedPlan(arc: Arc): Promise<Recipe> {
+    if (this.plan.isResolved()) {
+      return this.plan;
     }
-    return null;
+    // TODO(mmandlis): Is this still needed? Find out why and fix.
+    const recipeResolver = new RecipeResolver(arc);
+    return recipeResolver.resolve(this.plan);
   }
 }

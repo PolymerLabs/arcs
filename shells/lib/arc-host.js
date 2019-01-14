@@ -89,8 +89,8 @@ export class ArcHost {
     log('instantiatePlan');
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
-    if (plan.serialization) {
-      plan = await Suggestion.planFromString(plan.serialization, this.arc);
+    if (!plan.isResolved()) {
+      log(`Suggestion plan ${plan.toString({showUnresolved: true})} is not resolved.`);
     }
     try {
       await arc.instantiate(plan);

@@ -319,26 +319,22 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     `, loader});
     assert.lengthOf(helper.suggestions, 3);
     const recipe1 = new Recipe();
-    const plans = [];
-    for (const suggestion of helper.suggestions) {
-      plans.push(await Suggestion.planFromString(suggestion.plan.serialization, helper.arc));
-    }
-    plans[0].mergeInto(recipe1);
+    helper.suggestions[0].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 1);
     assert.lengthOf(recipe1.patterns, 1);
 
-    plans[1].mergeInto(recipe1);
+    helper.suggestions[1].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 2);
     assert.lengthOf(recipe1.patterns, 2);
 
-    plans[2].mergeInto(recipe1);
+    helper.suggestions[2].plan.mergeInto(recipe1);
     assert.lengthOf(recipe1.particles, 3);
     assert.deepEqual(['do A', 'do B', 'do C'], recipe1.patterns);
 
     const recipe2 = new Recipe();
-    plans[2].mergeInto(recipe2);
-    plans[0].mergeInto(recipe2);
-    plans[1].mergeInto(recipe2);
+    helper.suggestions[2].plan.mergeInto(recipe2);
+    helper.suggestions[0].plan.mergeInto(recipe2);
+    helper.suggestions[1].plan.mergeInto(recipe2);
     assert.deepEqual(['do C', 'do A', 'do B'], recipe2.patterns);
     assert.notDeepEqual(recipe1.patterns, recipe2.patterns);
 

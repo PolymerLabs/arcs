@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {logFactory} from '../../platform/log-web.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {Suggestion} from './suggestion.js';
+import {Suggestion, EnvOptions} from './suggestion.js';
 import {VariableStorageProvider} from '../storage/storage-provider-base.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
@@ -32,8 +32,12 @@ export class PlanningResult {
   store: VariableStorageProvider;
   private storeCallback: ({}) => void;
   private changeCallbacks: (() => void)[] = [];
+  private envOptions: EnvOptions;
 
-  constructor(store?: VariableStorageProvider) {
+  constructor(envOptions: EnvOptions, store?: VariableStorageProvider) {
+    this.envOptions = envOptions;
+    assert(envOptions.context, `context cannot be null`);
+    assert(envOptions.loader, `loader cannot be null`);
     this.store = store;
     if (this.store) {
       this.storeCallback = () => this.load();
@@ -54,7 +58,7 @@ export class PlanningResult {
   async load(): Promise<boolean> {
     const value = await this.store.get() || {};
     if (value.suggestions) {
-      if (this.fromLiteral(value)) {
+      if (await this.fromLiteral(value)) {
         return true;
       }
     }
@@ -277,9 +281,13 @@ export class PlanningResult {
            oldSuggestions.every(suggestion => newSuggestions.find(newSuggestion => suggestion.isEquivalent(newSuggestion)));
   }
 
-  fromLiteral({suggestions, generations, lastUpdated}: {suggestions, generations?, lastUpdated?: Date}) {
+  async fromLiteral({suggestions, generations, lastUpdated}: {suggestions, generations?, lastUpdated?: Date}) {
+    const deserializedSuggestions: Suggestion[] = [];
+    for (const suggestion of suggestions) {
+      deserializedSuggestions.push(await Suggestion.fromLiteral(suggestion, this.envOptions));
+    }
     return this.set({
-      suggestions: suggestions.map(suggestion => Suggestion.fromLiteral(suggestion)).filter(s => s),
+      suggestions: deserializedSuggestions,
       generations: JSON.parse(generations || '[]'),
       lastUpdated: new Date(lastUpdated),
       contextual: suggestions.contextual
