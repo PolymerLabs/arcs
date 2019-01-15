@@ -31,6 +31,4 @@ recipe Restaurants
     selected = selected
   RestaurantDetail
     restaurant = selected
-    consume content
-      provide action as actionSlot
   description `find restaurants near ${RestaurantFind.location}`

@@ -45,6 +45,9 @@ const template = Xen.Template.html`
     store-explorer {
       font-size: 0.9em;
     }
+    button {
+      margin: 8px;
+    }
     ${IconStyle}
   </style>
 
@@ -67,6 +70,9 @@ const template = Xen.Template.html`
       </div>
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
+      </div>
+      <div tab="Plumber's Helpers">
+        <button on-click="onReplan">Replan</button>
       </div>
     </simple-tabs>
   </div>
@@ -100,6 +106,12 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
     //   log('debugHandler.identifyArc', String(arc.id));
     //   arc.debugHandler.identifyArc(arc);
     // }
+  }
+  onReplan() {
+    const webPlanner =document.querySelector('web-shell').shadowRoot.querySelector('web-planner');
+    const producer = webPlanner.state.planificator.producer;
+    producer.result.suggestions = [];
+    producer.produceSuggestions();
   }
 }
 

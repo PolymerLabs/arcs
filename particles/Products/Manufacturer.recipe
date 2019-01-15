@@ -6,18 +6,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../List/List.recipes'
 import 'Product.schema'
 
 particle ManufacturerInfo in 'source/ManufacturerInfo.js'
   in Product product
   consume annotation
-  description `check manufacturer information`
 
 // Check manufacturer information for products.
-//recipe ManufacturerInfo
-//  use #shoplist as shoplist
-//  Multiplexer
-//    list = shoplist
-//    hostedParticle = ManufacturerInfo
-
-
+recipe ProductManufacturerInfo
+  use as shoplist
+  SimpleAnnotationMultiplexer
+    list = shoplist
+    hostedParticle = ManufacturerInfo
+  description `check manufacturer information`

@@ -139,7 +139,7 @@ defineParticle(({DomParticle, html}) => {
       </div>
     </div>
   </div>
-  <div control-panel slotid="action"></div>
+  <div control-panel slotid="detailAction"></div>
   <div detail-caption>Reviews</div>
   <div reviews unsafe-html="{{reviews}}"></div>
 </div>
@@ -170,10 +170,13 @@ defineParticle(({DomParticle, html}) => {
       // console.log(detail);
       this._setState({detail});
     }
-    shouldRender(props, state) {
-      return Boolean(state.restaurant);
-    }
+    //shouldRender(props, state) {
+      //return Boolean(state.restaurant);
+    //}
     render(props, {restaurant, detail}) {
+      if (!restaurant) {
+        return null;
+      }
       const model = {
         style: {
           backgroundImage: `url(${restaurant.photo})`
