@@ -105,11 +105,6 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
   constructor() {
     super();
     this._reset();
-
-    // TODO(mmandlis): mark which suggestions are visible.
-    // TODO(mmandlis): display metadata of replanning attempts that didn't update the suggestions.
-    // TODO(mmandlis): add indication and display what triggered the replanning.
-    // TODO(mmandlis): going back to launcher arc, should show `null` arcs suggestions.
   }
 
   onMessageBundle(messages) {
@@ -131,7 +126,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
             updated: msg.messageBody.lastUpdated,
             formattedUpdated: formatTime(msg.messageBody.lastUpdated, 3),
             suggestions: msg.messageBody.suggestions.map(s => Object.assign(s, {
-              particleNames: this._planParticleNamesToString(s.plan),
+              particleNames: this._planParticleNamesToString(s),
               descriptionText: this._formatDescriptionText(s.descriptionByModality.text)
             }))
           };
@@ -157,7 +152,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       ++acc[particle.name];
       return acc;},
     {});
-    return Object.keys(countByName).map(name => `${name}${countByName[name] > 1 ? ` * ${countByName[name]}`: ''}`).join(', ');
+    return `[${Object.keys(countByName).map(name => `${name}${countByName[name] > 1 ? ` * ${countByName[name]}`: ''}`).join(', ')}]`;
   }
 
   _reset() {

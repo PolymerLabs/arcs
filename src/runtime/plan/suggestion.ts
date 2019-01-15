@@ -42,6 +42,7 @@ export type EnvOptions = {
 
 export class Suggestion {
   plan: Recipe;
+  planString: string;
   // TODO: update Description class to be serializable.
   descriptionByModality = {};
   versionByStore = {};
@@ -65,6 +66,7 @@ export class Suggestion {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
     this.plan = plan;
+    this.planString = this.plan.toString();
     this.hash = hash;
     this.rank = rank;
     this.versionByStore = versionByStore;
@@ -144,7 +146,7 @@ export class Suggestion {
 
   toLiteral() {
     return {
-      plan: this.plan.toString(),
+      plan: this.planString,
       hash: this.hash,
       rank: this.rank,
       // Needs to JSON.strigify because store IDs may contain invalid FB key symbols.
