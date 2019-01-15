@@ -14,7 +14,7 @@
   static updatePlanningResults(result, devtoolsChannel) {
     if (devtoolsChannel) {
       const suggestions = result.suggestions.map(s => {
-        const suggestionCopy = Object.assign({}, s);
+        const suggestionCopy = {...s};
         suggestionCopy.particles = s.plan.particles.map(p => ({name: p.name}));
         delete suggestionCopy.plan;
         return suggestionCopy;
@@ -22,7 +22,7 @@
       devtoolsChannel.send({
         messageType: 'suggestions-changed',
         messageBody: {
-          suggestions: suggestions,
+          suggestions,
           lastUpdated: result.lastUpdated.getTime()
         }
       });
