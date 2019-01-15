@@ -49,14 +49,16 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({restaurant, event}) {
+    update({restaurant, event, descriptions}) {
       if (!event) {
         const now = this.toDateInputValue(new Date());
         event = {startDate: now, endDate: now, participants: 2};
       }
       this._setState({currentEvent: event});
-      log(this.getDescription(restaurant, event));
-      this.setParticleDescription(this.getDescription(restaurant, event));
+      if (descriptions) {
+        log(this.getDescription(restaurant, event));
+        this.setParticleDescription(this.getDescription(restaurant, event));
+      }
     }
     toDateInputValue(date) {
       const local = new Date(date);

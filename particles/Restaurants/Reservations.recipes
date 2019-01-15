@@ -53,6 +53,13 @@ particle ReservationAnnotation in 'source/ReservationAnnotation.js'
   out [Description] descriptions
   consume annotation
 
+// TODO(sjmiles): we don't have optional handles yet, so fork the particle
+// rather than having every instance generate descriptions
+particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
+  in Restaurant restaurant
+  inout Event event
+  consume annotation
+
 recipe Reservations
   use as restaurants
   use #reservation as event
@@ -69,7 +76,7 @@ recipe Reservations
   AnnotationMultiplexer
     list = restaurants
     annotation = event
-    hostedParticle = ReservationAnnotation
+    hostedParticle = ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   // TODO(sjmiles): can't find a way to target a RestaurantDetail slot
   DetailReservationForm
