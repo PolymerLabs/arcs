@@ -16,6 +16,8 @@ import {SuggestionComposer} from '../suggestion-composer.js';
 import {DevtoolsConnection} from '../debug/devtools-connection.js';
 import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
 import {Modality} from '../modality.js';
+import {ArcDevtoolsChannel} from '../debug/abstract-devtools-channel.js';
+import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 
 type Callback = ({}) => void;
 
@@ -29,6 +31,7 @@ export class PlanConsumer {
   private visibleSuggestionsChangeCallbacks: Callback[] = [];
   suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
+  devtoolsChannel: ArcDevtoolsChannel = null;
 
   constructor(arc: Arc, result: PlanningResult) {
     assert(arc, 'arc cannot be null');
@@ -42,6 +45,10 @@ export class PlanConsumer {
     this._initSuggestionComposer();
 
     this.result.registerChangeCallback(() => this.onSuggestionsChanged());
+
+    if (DevtoolsConnection.isConnected) {
+      this.devtoolsChannel = DevtoolsConnection.get().forArc(this.arc);
+    }
   }
 
   registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
@@ -60,16 +67,10 @@ export class PlanConsumer {
     this._onSuggestionsChanged();
     this._onMaybeSuggestionsChanged();
 
-    if (this.result.generations.length && DevtoolsConnection.isConnected) {
-      StrategyExplorerAdapter.processGenerations(this.result.generations,
-          DevtoolsConnection.get().forArc(this.arc), {label: 'Plan Consumer', keep: true});
-      DevtoolsConnection.get().forArc(this.arc).send({
-        messageType: 'suggestions-changed',
-        messageBody: {
-          suggestions: this.result.suggestions,
-           lastUpdated: this.result.lastUpdated.getTime()
-        },
-      });
+    PlanningExplorerAdapter.updatePlanningResults(this.result, this.devtoolsChannel);
+    if (this.result.generations.length) {
+      StrategyExplorerAdapter.processGenerations(
+          this.result.generations, this.devtoolsChannel, {label: 'Plan Consumer', keep: true});
     }
   }
 
