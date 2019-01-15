@@ -577,8 +577,8 @@ ${this.activeRecipe.toString()}`;
     }
 
     // TODO(sjmiles): use `volatile` for volatile stores
-    const hasNosyncTag = tags => tags && ((Array.isArray(tags) && tags.includes('volatile')) || tags === 'volatile');
-    if (storageKey == undefined || hasNosyncTag(tags)) {
+    const hasVolatileTag = tags => tags && ((Array.isArray(tags) && tags.includes('volatile')) || tags === 'volatile');
+    if (storageKey == undefined || hasVolatileTag(tags)) {
       storageKey = 'volatile';
     }
 
