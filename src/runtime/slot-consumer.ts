@@ -185,7 +185,7 @@ export class SlotConsumer {
   }
 
   isSameContainer(container, contextContainer) {
-    return (!container === !contextContainer) && (container === contextContainer);
+    return (!container && !contextContainer) || (container === contextContainer);
   }
 
   // abstract
