@@ -41,15 +41,18 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       }
       [hash]:not(:empty) {
         color: var(--devtools-purple);
+        display: inline-block;
         margin-right: 1ch;
         min-width: 50px;
       }
       [particles]:not(:empty) {
         color: var(--devtools-blue);
+        display: inline-block;
         margin-right: 1ch;
       }
       [description]:not(:empty) {
         color: var(--dark-gray);
+        display: inline-block;
         font-style: italic;
         font-size: 10px;
         margin-right: 1ch;
@@ -59,6 +62,9 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         color: var(--devtools-purple);
         margin-right: 1ch;
         min-width: 60px;
+      }
+      .visible-suggestion {
+        background-color: lightgreen;
       }
     </style>
     <div class="title">Latest planning</div>
@@ -74,9 +80,11 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
     <div class="content">
       <template is="dom-repeat" items="{{lastPlanning.suggestions}}">
         <object-explorer object="{{item}}">
-          <span hash>[[item.hash]]</span>
-          <span description>[[item.descriptionText]]</span>
-          <span particles>[[item.particleNames]]</span>
+          <div class$="[[_getClass(item.isVisible)]]">
+            <span hash>[[item.hash]]</span>
+            <span description>[[item.descriptionText]]</span>
+            <span particles>[[item.particleNames]]</span>
+          </div>
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!lastPlanning.suggestions.length}}">
@@ -127,9 +135,17 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
             formattedUpdated: formatTime(msg.messageBody.lastUpdated, 3),
             suggestions: msg.messageBody.suggestions.map(s => Object.assign(s, {
               particleNames: this._planParticleNamesToString(s),
-              descriptionText: this._formatDescriptionText(s.descriptionByModality.text)
+              descriptionText: this._formatDescriptionText(s.descriptionByModality.text),
+              isVisible: s.isVisible
             }))
           };
+          break;
+        case 'visible-suggestions-changed':
+          for (const index in this.lastPlanning.suggestions) {
+            this.set(`lastPlanning.suggestions.${index}.isVisible`,
+                msg.messageBody.visibleSuggestionHashes.some(
+                    hash => hash === this.lastPlanning.suggestions[index].hash));
+          }
           break;
         case 'arc-selected':
         case 'page-refresh':
@@ -158,6 +174,10 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
   _reset() {
     this.lastPlanning = {suggestions: []};
     this.planningSessions = [];
+  }
+
+  _getClass(isVisible) {
+    return isVisible ? 'visible-suggestion' : '';
   }
 }
 
