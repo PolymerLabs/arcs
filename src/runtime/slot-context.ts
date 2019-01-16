@@ -155,7 +155,7 @@ export class ProvidedSlotContext extends SlotContext {
              Object.values(this.container).every(
                 currentContainer => Object.values(container).some(newContainer => newContainer === currentContainer));
     }
-    return this.container === container;
+    return (!container && !this.container) || (this.container === container);
   }
 
   set container(container) {
