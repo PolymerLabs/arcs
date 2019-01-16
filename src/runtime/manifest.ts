@@ -380,9 +380,9 @@ export class Manifest {
           preamble = 'Post-parse processing error caused by';
         }
         message = `${preamble} '${fileName}' line ${e.location.start.line}.
-  ${e.message}
-    ${line}
-    ${highlight}`;
+${e.message}
+  ${line}
+  ${highlight}`;
       }
       const err = new ManifestError(e.location, message);
       if (!parseError) {
