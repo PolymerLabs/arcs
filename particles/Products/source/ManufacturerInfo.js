@@ -25,8 +25,8 @@ defineParticle(({DomParticle, html}) => {
     }
     render({product}) {
       const messages = {
-        'Power Tool Set': `Newer version available: ${product.name} v2.`,
-        'Guardian of the Galaxy Figure': `Manufacturer recommends a more appropriate gift for a 13yo.`,
+        'Power Tool Set': `Newer version, ${product.name} v2, is available now.`,
+        'Guardian of the Galaxy Figure': `Manufacturer recommended for ages 13 and older.`,
         'Book: How to Draw': `Award-winning book!`
       };
       return {message: messages[product.name]};
