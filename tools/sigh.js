@@ -500,8 +500,6 @@ function test(args) {
     explore: ['explore'],
     exceptions: ['exceptions'],
     boolean: ['manual', 'all'],
-    retries: ['retries'],
-    repeat: ['repeat'],
     alias: {g: 'grep'},
   });
 
@@ -538,12 +536,6 @@ function test(args) {
         mocha.suite.emit('require', null, '${test}', mocha);
         mocha.suite.emit('post-require', global, '${test}', mocha);
       `);
-      if (options.retries) {
-        chain.push(`
-          import {mocha} from '${mochaInstanceFile}';
-          mocha.suite.retries(${JSON.stringify(options.retries)})
-        `);
-      }
     }
     const chainImports = chain.map((entry, i) => {
       const file = path.join(tempDir, `chain${i}.js`);
@@ -589,23 +581,20 @@ function test(args) {
   }
 
   const runner = buildTestRunner();
-  for (var i = 0; i < JSON.stringify(options.repeat || 1); i++) {
-    console.log('RUN %s:', i+1);
-    saneSpawn(
-        'node',
-        [
-          '--experimental-modules',
-          '--trace-warnings',
-          '--no-deprecation',
-          ...extraFlags,
-          '--loader',
-          fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-          '-r',
-          'source-map-support/register.js',
-          runner
-        ],
-        {stdio: 'inherit'});
-  }
+  return saneSpawn(
+      'node',
+      [
+        '--experimental-modules',
+        '--trace-warnings',
+        '--no-deprecation',
+        ...extraFlags,
+        '--loader',
+        fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+        '-r',
+        'source-map-support/register.js',
+        runner
+      ],
+      {stdio: 'inherit'});
 }
 
 async function importSpotify(args) {
