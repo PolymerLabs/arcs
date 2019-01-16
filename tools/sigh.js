@@ -589,9 +589,12 @@ function test(args) {
   }
 
   const runner = buildTestRunner();
-  for (var i = 0; i < JSON.stringify(options.repeat || 1); i++) {
-    console.log('RUN %s:', i+1);
-    saneSpawn(
+  // Spawn processes as needed to repeat tests specified by 'repeat' flag.
+  const repeatCount = JSON.stringify(options.repeat || 1);
+  const testResults = [];
+  for (let i = 0; i < repeatCount; i++) {
+    console.log('RUN %s [%s]:', i+1, (new Date).toLocaleTimeString());
+    testResults.push(saneSpawn(
         'node',
         [
           '--experimental-modules',
@@ -604,8 +607,10 @@ function test(args) {
           'source-map-support/register.js',
           runner
         ],
-        {stdio: 'inherit'});
+        {stdio: 'inherit'})
+    );
   }
+  return testResults;
 }
 
 async function importSpotify(args) {
