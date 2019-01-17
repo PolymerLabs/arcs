@@ -11,29 +11,12 @@ import '../Events/Events.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Arcs/Description.schema'
 
-// particle RestaurantEvent in '../Common/source/Noop.js'
-//   in Event event
-//   in [Restaurant] restaurants
-//   consume root
-
-// // TODO(sjmiles): doesn't coalesce like this, needs more ... something (slots? handle-connections?)
-// recipe ReservationEvent
-//   create #reservation as event
-//   use as restaurants
-//   RestaurantEvent
-//     event = event
-//     restaurants = restaurants
-//     //consume toproot as toproot
-
 recipe ReservationCalendar
-  //use #reservation as event
   create #reservation as event
   create as descriptions
-  //slot 'rootslotid-toproot' as toproot
   Calendar
     event = event
     descriptions = descriptions
-    //consume action as toproot
 
 particle ReservationForm in 'source/ReservationForm.js'
   inout Event event
@@ -41,6 +24,8 @@ particle ReservationForm in 'source/ReservationForm.js'
   consume action
     provide annotation
 
+// TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
+// so fork the particle
 particle DetailReservationForm in 'source/ReservationForm.js'
   inout Event event
   in Restaurant restaurant
@@ -64,7 +49,6 @@ recipe Reservations
   use as restaurants
   use #reservation as event
   use #selected as restaurant
-  //create #event as event
   create as descriptions
   slot 'rootslotid-toproot' as toproot
   // top-of-frame event editor
@@ -78,7 +62,6 @@ recipe Reservations
     annotation = event
     hostedParticle = ReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
-  // TODO(sjmiles): can't find a way to target a RestaurantDetail slot
   DetailReservationForm
      restaurant = restaurant
      event = event
@@ -89,5 +72,3 @@ recipe Reservations
     event = event
     descriptions = descriptions
     consume annotation as detailAnnotation
-  //description `${ReservationAnnotation}`
-
