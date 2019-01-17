@@ -43,8 +43,8 @@ export class SuggestionComposer {
   setSuggestions(suggestions: Suggestion[]) {
     this.clear();
 
-    const sortedSuggestions = suggestions.sort(Suggestion.compare);
-    for (const suggestion of sortedSuggestions) {
+    this._suggestions = suggestions.sort(Suggestion.compare);
+    for (const suggestion of this._suggestions) {
       // TODO(mmandlis): use modality-appropriate description.
       const suggestionContent = {template: suggestion.descriptionText};
       if (!suggestionContent) {
