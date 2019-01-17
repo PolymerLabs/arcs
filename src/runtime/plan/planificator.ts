@@ -18,6 +18,7 @@ import {ReplanQueue} from './replan-queue.js';
 import {KeyBase} from "../storage/key-base.js";
 import {StorageProviderBase, VariableStorageProvider} from "../storage/storage-provider-base.js";
 import {EntityType} from '../type.js';
+import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 
 export type PlanificatorOptions = {
   userid: string;
@@ -72,6 +73,8 @@ export class Planificator {
 
     this.lastActivatedPlan = null;
     this.arc.registerInstantiatePlanCallback(this.arcCallback);
+
+    PlanningExplorerAdapter.subscribeToForceReplan(this);
   }
 
   async requestPlanning(options = {}) {
