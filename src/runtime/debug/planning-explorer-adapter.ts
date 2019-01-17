@@ -7,22 +7,16 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {PlanningResult} from '../plan/planning-result.js';
+import {Suggestion} from '../plan/suggestion';
 
- import {PlanningResult} from '../plan/planning-result.js';
-
- export class PlanningExplorerAdapter {
+export class PlanningExplorerAdapter {
   static updatePlanningResults(result, devtoolsChannel) {
     if (devtoolsChannel) {
-      const suggestions = result.suggestions.map(s => {
-        const suggestionCopy = {...s};
-        suggestionCopy.particles = s.plan.particles.map(p => ({name: p.name}));
-        delete suggestionCopy.plan;
-        return suggestionCopy;
-      });
       devtoolsChannel.send({
         messageType: 'suggestions-changed',
         messageBody: {
-          suggestions,
+          suggestions: PlanningExplorerAdapter._formatSuggestions(result.suggestions),
           lastUpdated: result.lastUpdated.getTime()
         }
       });
@@ -37,5 +31,25 @@
         }
       });
     }
+  }
+
+  static updatePlanningAttempt({suggestions}: {suggestions?: Suggestion[]}, devtoolsChannel) {
+    if (devtoolsChannel) {
+      devtoolsChannel.send({
+        messageType: 'planning-attempt',
+        messageBody: {
+          suggestions: suggestions ? PlanningExplorerAdapter._formatSuggestions(suggestions) : null,
+        }
+      });
+    }
+  }
+
+  private static _formatSuggestions(suggestions: Suggestion[]): {}[] {
+    return suggestions.map(s => {
+      const suggestionCopy = {...s};
+      suggestionCopy['particles'] = s.plan.particles.map(p => ({name: p.name}));
+      delete suggestionCopy.plan;
+      return suggestionCopy;
+    });
   }
 }
