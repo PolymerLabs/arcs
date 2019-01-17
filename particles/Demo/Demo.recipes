@@ -1,5 +1,5 @@
-import 'RestaurantsDemo.recipes'
-import 'TVMazeDemo.recipes'
-import 'ProductsDemo.recipe'
 import 'DemoData.manifest'
+//import 'RestaurantsDemo.recipes'
+//import 'ProductsDemo.recipe'
+import 'TVMazeDemo.recipes'
 import 'PipeDemo.recipe'

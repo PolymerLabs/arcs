@@ -15,7 +15,7 @@ defineParticle(({DomParticle, resolver, html}) => {
 <div ${host} style="padding: 8px;">
   <style>
     [${host}] {
-      max-width: 400px;
+      max-width: 500px;
       margin: 0 auto;
     }
     [${host}] > [items] {

@@ -36,9 +36,9 @@ defineParticle(({DomParticle, html}) => {
         // create a Date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
         estimated.setDate(estimated.getDate() + product.shipDays);
-        arrival = `Arrives ${estimated.toDateString()}`;
+        arrival = `Arrives ${estimated.toLocaleDateString()}`;
         if (estimated > needed) {
-          arrival += ` which may be too late.`;
+          arrival += `, which may be too late.`;
           style = {color: 'darkred', /*fontWeight: 'bold',*/ fontStyle: 'normal'};
         } else {
           style = {color: 'green'};

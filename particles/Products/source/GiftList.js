@@ -11,20 +11,20 @@
 defineParticle(({DomParticle, html}) => {
 
   const template = html`
+<style>
+  [gift-list] {
+    padding: 4px 0;
+    border-bottom: 2px solid #eeeeee;
+  }
+  [gift-list] input {
+    color: #666666;
+    font-size: 1.1em;
+    font-family: inherit;
+    border: none;
+  }
+</style>
 <div gift-list>
-  <style>
-    [gift-list] {
-      padding: 4px 0;
-      border-bottom: 2px solid #eeeeee;
-    }
-    [gift-list] input {
-      color: #666666;
-      font-size: 1.1em;
-      font-family: inherit;
-      border: none;
-    }
-  </style>
-  for <span>{{person}}</span>'s <span title="{{occasionDate}}">{{occasion}}</span> • <input type="date" value="{{date}}">
+  Shopping for <span>{{person}}</span>'s <span title="{{occasionDate}}">{{occasion}}</span> • <input type="date" value="{{date}}">
 </div>
   `;
 

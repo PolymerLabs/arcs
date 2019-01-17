@@ -99,9 +99,9 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     get template() {
       return template;
     }
-    shouldRender({selected}, {open}) {
-      return Boolean(selected || open);
-    }
+    //shouldRender({selected}, {open}) {
+    //  return Boolean(selected || open);
+    //}
     render({selected}, state) {
       let hide = true;
       const open = Boolean(selected && (selected.name || selected.id));

@@ -18,7 +18,7 @@ const searchFor = text => keys('input[search]', text);
 const receiveEntity = async entity =>
   browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 
-const findRestaurants = `[title^="[demo] find restaurants"]`;
+const findRestaurants = `[title^="Find restaurants"]`;
 
 describe('pipes', function() {
   it('searches', async function() {
@@ -47,32 +47,23 @@ describe('demo', function() {
     const calendarAction = `[particle-host="Calendar::action"]`;
     await searchFor(search);
     await click(findRestaurants);
+    // TODO(sjmiles): rendering tiles takes forever to stabilize
+    //await browser.pause(seconds(10));
     //await click(restaurantItem);
-    //await click(reservation);
-    //await waitFor(calendarAction);
+    await click(reservation);
+    await waitFor(calendarAction);
   });
   it('gifts', async function() {
     await openNewArc(this.test.fullTitle());
-    const search = `gifts`;
-    const buyGifts = `[title^="Buy gifts for"]`;
-    const item = `[particle-host="ItemMultiplexer::item"]`;
-    await searchFor(search);
+    const products = `products`;
+    const createList = `[title^="Create shopping list"]`;
+    const buyGifts = `[title^="Buy gifts"]`;
+    const checkManufacturer = `[title^="Check manufacturer"]`;
+    const interests = `[title^="Find out"]`;
+    await searchFor(products);
+    await click(createList);
     await click(buyGifts);
-    await waitFor(item);
-  //   const search = `products`;
-  //   const showProducts = `[title^="Show products"]`;
-  //   const items = `[particle-host="ItemMultiplexer::item"]`;
-  //   const checkShipping = `[title^="Check shipping"]`;
-  //   const annotations = `[particle-host="Multiplexer::annotation"]`;
-  //   const checkManufacturer = `[title^="Check manufacturer"]`;
-  //   const interests = `[title^="Find out"]`;
-  //   await openNewArc(this.test.fullTitle());
-  //   await searchFor(search);
-  //   await click(showProducts);
-  //   await waitFor(items);
-  //   await click(checkShipping);
-  //   await waitFor(annotations);
-  //   await click(checkManufacturer);
-  //   await click(interests);
+    await click(checkManufacturer);
+    await click(interests);
   });
 });

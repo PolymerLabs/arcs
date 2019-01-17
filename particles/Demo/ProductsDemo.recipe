@@ -37,7 +37,7 @@ recipe Products
   //
   // &addFromWishlist
   map #wishlist as wishlist
-  create #nosync as recommendations
+  create #volatile as recommendations
   // annotates shoplist
   ChoicesMultiplexer
     consume choice as annotationSlot

@@ -12,6 +12,7 @@ particle RestaurantFind in 'source/RestaurantFind.js'
   in Geolocation location
   inout [Restaurant] restaurants
 
+// TODO: see what happens if we decimate Restaurants.recipes::Recipes into smaller pieces like this
 //recipe RestaurantFind
 //  create #tiles as restaurants
 //  RestaurantFind

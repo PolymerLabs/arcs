@@ -72,19 +72,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     }
     warn(`failed to marshal arcsStore for [${userid}][${storage}]`);
   }
-  async updateSystemUser({userid, context}) {
-    const store = await context.findStoreById('SYSTEM_user');
-    if (store) {
-      const user = {
-        id: store.generateID(),
-        rawData: {
-          id: userid,
-        }
-      };
-      store.set(user);
-      log('installed SYSTEM_user');
-    }
-  }
   async updateUserContext({storage, userid, context}, {userContext, arcsStore}) {
     await this.disposeUserContext(userContext);
     // do not operate on stale userid

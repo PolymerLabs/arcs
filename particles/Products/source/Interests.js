@@ -34,7 +34,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     shouldRender({list, person}) {
-      if (list && person) {
+      if (person) {
         // TODO(sjmiles): simulate data fetch that only resolves for someone with Interest data
         return (person.name === 'Claire');
       }
@@ -42,17 +42,19 @@ defineParticle(({DomParticle, html}) => {
     }
     render({list}) {
       const models = [];
-      list.forEach(item => {
-        switch (item.name) {
-          case 'Field Hockey Stick':
+      //list.forEach(item => {
+        //switch (item.name) {
+          //case 'Field Hockey Stick':
             models.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. Players generally require a stick.</i><hr><br><br>'});
-          break;
+          //break;
+        //}
+      //});
+      return {
+        items: {
+          $template: 'interests',
+          models
         }
-      });
-      return {items: {
-        $template: 'interests',
-        models
-      }};
+      };
     }
   };
 

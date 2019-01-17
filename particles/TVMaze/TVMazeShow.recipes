@@ -24,7 +24,7 @@ particle TVMazeShowPanel in './source/TVMazeShowPanel.js'
 
 recipe TVMazeShowPanel
   use #tv_show as show
-  create #nosync as descriptions
+  create #volatile as descriptions
   TVMazeShowPanel
     consume content
     show = show

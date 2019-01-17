@@ -356,30 +356,34 @@ export class Manifest {
       }
       const lines = content.split('\n');
       const line = lines[e.location.start.line - 1];
-      let span = 1;
-      if (e.location.end.line === e.location.start.line) {
-        span = e.location.end.column - e.location.start.column;
-      } else {
-        span = line.length - e.location.start.column;
-      }
-      span = Math.max(1, span);
-      let highlight = '';
-      for (let i = 0; i < e.location.start.column - 1; i++) {
-        highlight += ' ';
-      }
-      for (let i = 0; i < span; i++) {
-        highlight += '^';
-      }
-      let preamble;
-      if (parseError) {
-        preamble = 'Parse error in';
-      } else {
-        preamble = 'Post-parse processing error caused by';
-      }
-      const message = `${preamble} '${fileName}' line ${e.location.start.line}.
+      // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
+      let message = e.message || '';
+      if (line) {
+        let span = 1;
+        if (e.location.end.line === e.location.start.line) {
+          span = e.location.end.column - e.location.start.column;
+        } else {
+          span = line.length - e.location.start.column;
+        }
+        span = Math.max(1, span);
+        let highlight = '';
+        for (let i = 0; i < e.location.start.column - 1; i++) {
+          highlight += ' ';
+        }
+        for (let i = 0; i < span; i++) {
+          highlight += '^';
+        }
+        let preamble;
+        if (parseError) {
+          preamble = 'Parse error in';
+        } else {
+          preamble = 'Post-parse processing error caused by';
+        }
+        message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
+      }
       const err = new ManifestError(e.location, message);
       if (!parseError) {
         err.stack = e.stack;

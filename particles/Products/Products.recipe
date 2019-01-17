@@ -7,19 +7,58 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../List/List.recipes'
-
 import 'ProductItem.recipe'
 import 'Gifts.recipe'
 import 'Recommend.recipe'
-//import 'Manufacturer.recipe'
-//import 'Interests.recipe'
+import 'Manufacturer.recipe'
+import 'Interests.recipe'
 
-//recipe Products
-//  map as products
-//  create #selected as selected
-//  SelectableItems
-//    list = products
-//    selected = selected
-//  ItemMultiplexer
-//    list = products
-//   hostedParticle = ProductItem
+recipe Products
+  use as products
+  Items
+    list = products
+  ItemMultiplexer
+    list = products
+    hostedParticle = ProductItem
+
+recipe CreateShoppingList
+  copy as products
+  Items
+    list = products
+  ItemMultiplexer
+    list = products
+    hostedParticle = ProductItem
+  description `create shopping list from ${Items.list}`
+
+recipe ShopForOccasion
+  use as shoplist
+  map as person
+  GiftList
+    person = person
+  SimpleAnnotationMultiplexer
+    list = shoplist
+    hostedParticle = Arrivinator
+    consume annotation as annotationSlot
+
+recipe UseWishlist
+  map #wishlist as wishlist
+  create #volatile as recommendations
+  // annotates shoplist
+  ChoicesMultiplexer
+    consume choice as annotationSlot
+    list = shoplist
+    choices = wishlist
+    hostedParticle = AlsoOn
+  // recommend products from wishlist
+  Recommend
+    population = wishlist
+    known = shoplist
+    recommendations = recommendations
+  // present recommendations for adding to shoplist
+  Chooser
+    consume action as actionSlot
+    person = person
+    choices = recommendations
+    resultList = shoplist
+
+

@@ -16,9 +16,16 @@ particle Interests in 'source/Interests.js'
   description `find out about ${person.name}'s interests`
 
 // Recommendations based on Claire's interest in field hockey.
-recipe InterestRecipe
-  map #wishlist as wishlist
+//recipe InterestRecipe
+//  map #wishlist as wishlist
+//  use as person
+//  Interests
+//    list = wishlist
+//    person = person
+
+recipe ProductInterests
+  use as list
   use as person
   Interests
-    list = wishlist
+    list = list
     person = person

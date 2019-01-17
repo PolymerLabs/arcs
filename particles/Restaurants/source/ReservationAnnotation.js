@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
 
@@ -49,14 +49,15 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    update(props, state) {
-      if (!props.event) {
+    update({restaurant, event, descriptions}) {
+      if (!event) {
         const now = this.toDateInputValue(new Date());
-        const event = {startDate: now, endDate: now, participants: 2};
-        this._setState({currentEvent: event});
-      } else {
-        const event = props.event;
-        this._setState({currentEvent: event});
+        event = {startDate: now, endDate: now, participants: 2};
+      }
+      this._setState({currentEvent: event});
+      if (descriptions) {
+        log(this.getDescription(restaurant, event));
+        this.setParticleDescription(this.getDescription(restaurant, event));
       }
     }
     toDateInputValue(date) {
@@ -79,6 +80,27 @@ defineParticle(({DomParticle, html}) => {
           models: times
         }
       };
+    }
+    getDescription(restaurant, currentEvent) {
+      if (restaurant) {
+        return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
+      }
+      return 'make reservations';
+    }
+    createDescription(restaurantId, participants, startDate) {
+      const times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
+      let closest = null;
+      times.map(({time, notAvailable}, i) => {
+        if (!notAvailable) {
+          if (!closest || i <= 2) {
+            // 2 is the closest time to default time
+            closest = time;
+          }
+        }
+      });
+      return closest
+        ? `there is a table for ${participants} available at ${closest}`
+        : `there is no table for ${participants} available within 2 hours`;
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time

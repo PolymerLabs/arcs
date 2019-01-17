@@ -42,7 +42,7 @@ export class ParticleExecutionHost {
     const pec = this;
 
     this._apiPort = new class extends PECOuterPort {
-    
+
       onRender(particle: Particle, slotName: string, content: string) {
         if (pec.slotComposer) {
           pec.slotComposer.renderSlot(particle, slotName, content);
@@ -148,8 +148,8 @@ export class ParticleExecutionHost {
 
       async onArcCreateHandle(callback: number, arc: Arc, type: Type, name: string) {
         // At the moment, inner arcs are not persisted like their containers, but are instead
-        // recreated when an arc is deserialized. As a consequence of this, dynamically 
-        // created handles for inner arcs must always be volatile to prevent storage 
+        // recreated when an arc is deserialized. As a consequence of this, dynamically
+        // created handles for inner arcs must always be volatile to prevent storage
         // in firebase.
         const store = await arc.createStore(type, name, null, [], 'volatile');
         // Store belongs to the inner arc, but the transformation particle,
@@ -187,7 +187,7 @@ export class ParticleExecutionHost {
               const particlelocalName = slot.sourceConnection.particle.localName;
               if (particlelocalName) {
                 successResponse.providedSlotIds[`${particlelocalName}.${slot.name}`] = slot.id;
-              }  
+              }
             }
           }
           const missingHandles = [];
@@ -222,7 +222,7 @@ export class ParticleExecutionHost {
                 manifest.stores.forEach(store => pec.arc._registerStore(store, []));
                 arc.instantiate(recipe0);
               } else {
-                error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
+                error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
               }
             } else {
               error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;

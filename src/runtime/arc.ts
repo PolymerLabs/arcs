@@ -217,10 +217,10 @@ export class Arc {
         context.handles += `store ${id} of ${handle.type.toString()} ${combinedId} @${handle.version === null ? 0 : handle.version} ${handleTags} at '${handle.storageKey}'\n`;
         break;
       case 'volatile': {
-        // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
-        const nosync = handleTags.includes('nosync');
+        // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
+        const volatile = handleTags.includes('volatile');
         let serializedData = [];
-        if (!nosync) {
+        if (!volatile) {
           // TODO: include keys in serialized [big]collections?
           serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
             if (value == null) {
@@ -492,7 +492,7 @@ ${this.activeRecipe.toString()}`;
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
-          
+
           assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
           const particleClone = particleSpec.clone().toLiteral();
           particleClone.id = newStore.id;
@@ -576,9 +576,9 @@ ${this.activeRecipe.toString()}`;
               .toString();
     }
 
-    // TODO(sjmiles): use `volatile` for nosync stores
-    const hasNosyncTag = tags => tags && ((Array.isArray(tags) && tags.includes('nosync')) || tags === 'nosync');
-    if (storageKey == undefined || hasNosyncTag(tags)) {
+    // TODO(sjmiles): use `volatile` for volatile stores
+    const hasVolatileTag = tags => tags && ((Array.isArray(tags) && tags.includes('volatile')) || tags === 'volatile');
+    if (storageKey == undefined || hasVolatileTag(tags)) {
       storageKey = 'volatile';
     }
 

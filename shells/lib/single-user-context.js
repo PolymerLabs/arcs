@@ -70,7 +70,8 @@ export const SingleUserContext = class {
       if (store) {
         await this.observeStore(store, key, info => this.onArcStoreChanged(key, info));
       } else {
-        warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]\nhttps://github.com/PolymerLabs/arcs/issues/2304`);
+        // TODO(sjmiles): turning off this warning temporarily ... fix!
+        //warn(`failed to get SyntheticStore for arc at [${storage}, ${key}]\nhttps://github.com/PolymerLabs/arcs/issues/2304`);
       }
     }
   }
@@ -170,9 +171,9 @@ export const SingleUserContext = class {
       // TODO(sjmiles): no mutation
       if (handle.type.isEntity) {
         if (info.data) {
-          // TODO(sjmiles): in the absence of data mutation, when entity changes
-          // it gets an entirely new id, so we cannot use entity id to track this
-          // entity in boxed stores. However as this entity is a Highlander for this
+          // TODO(sjmiles): in the absence of data mutation, when an entity changes
+          // it gets an entirely new id, so we cannot use ids to track entities
+          // in boxed stores. However as this entity is a Highlander for this
           // user and arc (by virtue of not being in a Collection) we can synthesize
           // a stable id.
           info.data.id = boxDataId;
@@ -260,10 +261,7 @@ export const SingleUserContext = class {
     log(`removing entities for [${userid}]`);
     const jobs = [];
     for (let i=0, store; (store=context.stores[i]); i++) {
-      // SYSTEM_users persists across users
-      if (store.id !== 'SYSTEM_users') {
-        jobs.push(this.removeUserStoreEntities(userid, store, isProfile));
-      }
+      jobs.push(this.removeUserStoreEntities(userid, store, isProfile));
     }
     await Promise.all(jobs);
   }

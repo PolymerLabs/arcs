@@ -14,6 +14,7 @@ import './panel-ui.js';
 // templates
 const template = Xen.Template.html`
   <style>
+    ${GlowableStyle}
     :host {
       --bar-max-width: 400px;
       --bar-max-height: 50vh;
@@ -26,10 +27,11 @@ const template = Xen.Template.html`
       --large-avatar-size: 40px;
     }
     :host {
+      pointer-events: none;
       display: block;
     }
-    ${GlowableStyle}
     [bar] {
+      pointer-events: all;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;

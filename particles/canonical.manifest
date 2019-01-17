@@ -1,6 +1,7 @@
 import 'List/List.recipes'
 import 'Profile/Profile.recipes'
 import 'Products/Products.recipe'
+import 'Events/Events.recipes'
 import 'Restaurants/Restaurants.recipes'
 import 'Music/Music.recipes'
 import 'TVMaze/TVMaze.recipes'
