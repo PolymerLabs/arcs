@@ -66,6 +66,20 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       .visible-suggestion {
         background-color: lightgreen;
       }
+      [prevDate] {
+        display: inline-block;
+        min-width: 100px;
+      }
+      [prevLength] {
+        display: inline-block;
+        min-width: 300px;
+      }
+      .inactive {
+        background-color: lightgrey;
+      }
+      .cancelled {
+        background: repeating-linear-gradient(45deg, white, white 5px, lightgrey 5px, lightgrey 10px);
+      }
     </style>
     <div class="title">Latest planning</div>
     <div>
@@ -96,8 +110,10 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
     <div class="content">
       <template is="dom-repeat" items="{{planningSessions}}">
         <object-explorer object="{{item}}">
-          <span date>[[item.formattedUpdated]]</span>
-          <span name>[[item.suggestions.length]]</span>
+          <div class$="[[_getPrevClass(item.cancelled, item.inactive)]]">
+            <span prevDate>[[item.formattedUpdated]]</span>
+            <span prevLength>Produced [[_getLength(item.suggestions)]] suggestions</span>
+        </div>
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!planningSessions.length}}">
@@ -127,7 +143,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
             this.push('planningSessions', {
               updated: this.lastPlanning.updated,
               formattedUpdated: this.lastPlanning.formattedUpdated,
-              suggestionsLength: msg.messageBody.suggestions.length
+              suggestions: msg.messageBody.suggestions
             });
           }
           this.lastPlanning = {
@@ -147,6 +163,17 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
                     hash => hash === this.lastPlanning.suggestions[index].hash));
           }
           break;
+        case 'planning-attempt': {
+          const updated = new Date().getTime();
+          this.push('planningSessions', {
+            updated,
+            formattedUpdated: formatTime(updated, 3),
+            suggestions: msg.messageBody.suggestions,
+            inactive: true,
+            cancelled: !msg.messageBody.suggestions,
+          });
+          break;
+        }
         case 'arc-selected':
         case 'page-refresh':
           this._reset();
@@ -178,6 +205,14 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
 
   _getClass(isVisible) {
     return isVisible ? 'visible-suggestion' : '';
+  }
+
+  _getPrevClass(cancelled, inactive) {
+    return cancelled ? 'cancelled' : inactive ? 'inactive' : '';
+  }
+
+  _getLength(suggestions) {
+    return suggestions ? suggestions.length : 'n/a';
   }
 }
 

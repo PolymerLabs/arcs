@@ -20,6 +20,9 @@ import {Speculator} from '../speculator.js';
 import {Suggestion} from './suggestion.js';
 import {VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StrategyDerived} from '../../planning/strategizer.js';
+import {DevtoolsConnection} from '../debug/devtools-connection.js';
+import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
+import {ArcDevtoolsChannel} from '../debug/abstract-devtools-channel.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -40,6 +43,7 @@ export class PlanProducer {
   searchStore?: VariableStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
+  devtoolsChannel: ArcDevtoolsChannel = null;
 
   constructor(arc: Arc, result: PlanningResult, searchStore?: VariableStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
@@ -54,6 +58,9 @@ export class PlanProducer {
       this.searchStore.on('change', this.searchStoreCallback, this);
     }
     this.debug = debug;
+    if (DevtoolsConnection.isConnected) {
+      this.devtoolsChannel = DevtoolsConnection.get().forArc(this.arc);
+    }
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -131,7 +138,7 @@ export class PlanProducer {
 
     let time = now();
 
-    let suggestions = [];
+    let suggestions: Suggestion[] = [];
     let generations = [];
     while (this.needReplan) {
       this.needReplan = false;
@@ -140,12 +147,20 @@ export class PlanProducer {
     }
     time = ((now() - time) / 1000).toFixed(2);
 
-    // Suggestions are null, if planning was cancelled.
     if (suggestions) {
       log(`[${this.arc.arcId}] Produced ${suggestions.length}${this.replanOptions['append'] ? ' additional' : ''} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
 
-      await this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions);
+      if (this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions)) {
+        // Store suggestions to store.
+        await this.result.flush();
+      } else {
+        // Add skipped result to devtools.
+        PlanningExplorerAdapter.updatePlanningAttempt({suggestions}, this.devtoolsChannel);
+      }
+    } else {  // Suggestions are null, if planning was cancelled.
+      // Add cancelled attempt to devtools.
+      PlanningExplorerAdapter.updatePlanningAttempt({}, this.devtoolsChannel);
     }
   }
 
@@ -182,19 +197,13 @@ export class PlanProducer {
     log(`Cancel planning`);
   }
 
-  private async _updateResult({suggestions, generations}, options) {
+  private _updateResult({suggestions, generations}, options): boolean {
     generations = PlanningResult.formatSerializableGenerations(generations);
     if (options.append) {
       assert(!options['contextual'], `Cannot append to contextual options`);
-      if (!this.result.append({suggestions, generations})) {
-        return;
-      }
+      return this.result.append({suggestions, generations});
     } else {
-      if (!this.result.merge({suggestions, generations, contextual: options['contextual']}, this.arc)) {
-        return;
-      }
+      return this.result.merge({suggestions, generations, contextual: options['contextual']}, this.arc);
     }
-    // Store suggestions to store.
-    await this.result.flush();
   }
 }
