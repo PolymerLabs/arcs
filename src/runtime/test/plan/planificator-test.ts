@@ -197,12 +197,17 @@ particle ShowProduct in 'show-product.js'
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, storageKey),
         userid, productsPlanificator.result.store, productsPlanificator.searchStore);
+    assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
+    assert.isFalse(restaurantsPlanificator.producer.result.contextual);
     assert.lengthOf(restaurantsPlanificator.result.suggestions, 1);
     assert.isTrue(restaurantsPlanificator.result.suggestions[0].descriptionText.includes(showProductsDescription));
 
     // Trigger replanning with restaurants context.
     await restaurantsPlanificator.setSearch('*');
+    // result is NOT contextual, so re-planning is not automatically triggered.
+    assert.isTrue(!restaurantsPlanificator.producer.isPlanning);
+    restaurantsPlanificator.requestPlanning();
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
       'Extract person\'s location.',
