@@ -98,6 +98,9 @@ describe('remote planificator', () => {
     for (const description of expectedDescriptions) {
       const filteredSuggestions = producePlanificator.producer.result.suggestions.filter(
           s => s.descriptionText.includes(description));
+      if (filteredSuggestions.length === 0) {
+        console.log(`Existing suggestions:${producePlanificator.producer.result.suggestions.map(suggestion => suggestion.descriptionText)}`);
+      }
       assert.isNotEmpty(filteredSuggestions, `Suggestion '${description}' is not found.`);
       assert.lengthOf(filteredSuggestions, 1, `Multiple suggestions corresponding to '${description}' were found:\n${filteredSuggestions.map(s => s.descriptionText).join('\n')}`);
     }
