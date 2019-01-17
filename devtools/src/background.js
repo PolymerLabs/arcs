@@ -78,7 +78,7 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
     return; // Ignore if it's not the top-frame.
   }
   const tabId = details.tabId;
-  if (tabId in tabsUrl) {
+  if (tabId in tabsUrl && tabId in tabsReady) {
     if (tabsUrl[tabId] === details.url) return;
     console.log(`Found updated URL for tab.${tabId}, notifying about Arc transition.`);
     connections[tabId].postMessage([{
