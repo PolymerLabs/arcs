@@ -206,7 +206,7 @@ particle ShowProduct in 'show-product.js'
     // Trigger replanning with restaurants context.
     await restaurantsPlanificator.setSearch('*');
     // result is NOT contextual, so re-planning is not automatically triggered.
-    assert.isTrue(!restaurantsPlanificator.producer.isPlanning);
+    assert.isFalse(restaurantsPlanificator.producer.isPlanning);
     restaurantsPlanificator.requestPlanning();
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
