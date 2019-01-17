@@ -32,9 +32,9 @@ export class PlanProducer {
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
   speculator: Speculator;
-  needReplan: boolean;
+  needReplan = false;
   replanOptions: {};
-  _isPlanning: boolean;
+  _isPlanning = false;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
   searchStore?: VariableStorageProvider;

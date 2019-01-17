@@ -98,6 +98,9 @@ describe('remote planificator', () => {
     for (const description of expectedDescriptions) {
       const filteredSuggestions = producePlanificator.producer.result.suggestions.filter(
           s => s.descriptionText.includes(description));
+      if (filteredSuggestions.length === 0) {
+        console.log(`Existing suggestions:${producePlanificator.producer.result.suggestions.map(suggestion => suggestion.descriptionText)}`);
+      }
       assert.isNotEmpty(filteredSuggestions, `Suggestion '${description}' is not found.`);
       assert.lengthOf(filteredSuggestions, 1, `Multiple suggestions corresponding to '${description}' were found:\n${filteredSuggestions.map(s => s.descriptionText).join('\n')}`);
     }
@@ -197,12 +200,17 @@ particle ShowProduct in 'show-product.js'
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, storageKey),
         userid, productsPlanificator.result.store, productsPlanificator.searchStore);
+    assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
+    assert.isFalse(restaurantsPlanificator.producer.result.contextual);
     assert.lengthOf(restaurantsPlanificator.result.suggestions, 1);
     assert.isTrue(restaurantsPlanificator.result.suggestions[0].descriptionText.includes(showProductsDescription));
 
     // Trigger replanning with restaurants context.
     await restaurantsPlanificator.setSearch('*');
+    // result is NOT contextual, so re-planning is not automatically triggered.
+    assert.isFalse(restaurantsPlanificator.producer.isPlanning);
+    restaurantsPlanificator.requestPlanning();
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
       'Extract person\'s location.',
