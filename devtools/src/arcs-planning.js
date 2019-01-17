@@ -39,6 +39,12 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         color: var(--mid-gray);
         white-space: nowrap;
       }
+      .refresh {
+        -webkit-mask-position: -165px 0px;
+        cursor: pointer;
+        transition: transform .5s;
+        vertical-align: middle;
+      }
       [hash]:not(:empty) {
         color: var(--devtools-purple);
         display: inline-block;
@@ -81,7 +87,10 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         background: repeating-linear-gradient(45deg, white, white 5px, lightgrey 5px, lightgrey 10px);
       }
     </style>
-    <div class="title">Latest planning</div>
+    <div class="title">
+      Latest planning
+      <span class="devtools-icon refresh" on-click="_forceReplan"></span>
+    </div>
     <div>
       <span class="subtitle">Total suggestions</span>
       <span>{{lastPlanning.suggestions.length}}</span>
@@ -175,6 +184,9 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
           break;
         }
         case 'arc-selected':
+          this._reset();
+          this.arcId = msg.messageBody.arcId;
+          break;
         case 'page-refresh':
           this._reset();
           break;
@@ -196,6 +208,14 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       return acc;},
     {});
     return `[${Object.keys(countByName).map(name => `${name}${countByName[name] > 1 ? ` * ${countByName[name]}`: ''}`).join(', ')}]`;
+  }
+
+  _forceReplan(e) {
+    this.send({
+      messageType: 'force-replan',
+      arcId: this.arcId
+    });
+    if (e) e.cancelBubble = true;
   }
 
   _reset() {

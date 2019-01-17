@@ -8,9 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {PlanningResult} from '../plan/planning-result.js';
+import {Planificator} from '../plan/planificator.js';
 import {Suggestion} from '../plan/suggestion';
+import {DevtoolsConnection} from './devtools-connection.js';
 
-export class PlanningExplorerAdapter {
+ export class PlanningExplorerAdapter {
   static updatePlanningResults(result, devtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
@@ -51,5 +53,17 @@ export class PlanningExplorerAdapter {
       delete suggestionCopy.plan;
       return suggestionCopy;
     });
+  }
+
+  static subscribeToForceReplan(planificator: Planificator) {
+    if (DevtoolsConnection.isConnected) {
+      const devtoolsChannel = DevtoolsConnection.get().forArc(planificator.arc);
+      devtoolsChannel.listen('force-replan', async () => {
+        planificator.consumer.result.suggestions = [];
+        await planificator.consumer.result.flush();
+        await planificator.requestPlanning();
+        await planificator.loadSuggestions();
+      });
+    }
   }
 }
