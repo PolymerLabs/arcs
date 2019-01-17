@@ -538,7 +538,7 @@ function test(args) {
         mocha.suite.emit('require', null, '${test}', mocha);
         mocha.suite.emit('post-require', global, '${test}', mocha);
       `);
-      if (options.retries) {
+      if (options.retries && !isNaN(options.retries)) {
         chain.push(`
           import {mocha} from '${mochaInstanceFile}';
           mocha.suite.retries(${JSON.stringify(options.retries)})
