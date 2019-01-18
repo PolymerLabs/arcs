@@ -74,6 +74,14 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
   }
   static get is() { return 'arcs-selector'; }
 
+  static get properties() {
+    return {
+      activePage: {
+        type: String
+      }
+    };
+  }
+
   constructor() {
     super();
     this.active = null;
@@ -95,6 +103,9 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         case 'arc-available': {
           const id = msg.meta.arcId;
           const name = id.substring(id.indexOf(':') + 1);
+          if (name.lastIndexOf(':inner') > 0) {
+            break; // skip inner arcs.
+          }
           const item = {id, name};
           if (name.endsWith('-null')) item.annotation = '(Planning)';
           if (!this.messages.has(id)) this.messages.set(id, []);
@@ -104,9 +115,11 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         }
         case 'arc-transition': {
           const arcName = msg.messageBody;
+          const defaultArcSuffix = (this.activePage === 'planning'
+              || this.activePage === 'strategyExplorer') ? '-null' : '-launcher';
           const item = arcName
               ? this.arcs.find(i => i.name === arcName)
-              : this.arcs.find(i => i.name.endsWith('-launcher'));
+              : this.arcs.find(i => i.name.endsWith(defaultArcSuffix));
           if (item) this._select(item);
           break;
         }

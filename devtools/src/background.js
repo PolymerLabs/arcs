@@ -83,7 +83,7 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
     console.log(`Found updated URL for tab.${tabId}, notifying about Arc transition.`);
     connections[tabId].postMessage([{
       messageType: 'arc-transition',
-      messageBody: new URLSearchParams(details.url).get('arc')
+      messageBody: new URLSearchParams(new URL(details.url).search).get('arc')
     }]);
   }
   console.log(`Setting URL for tab.${tabId} : ${details.url}`);

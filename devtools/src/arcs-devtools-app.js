@@ -95,7 +95,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon>
           <div divider></div>
           <arcs-notifications></arcs-notifications><div divider></div>
-          <arcs-selector></arcs-selector>
+          <arcs-selector active-page="[[routeData.page]]"></arcs-selector>
           <div divider></div>
           <input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
         </div>
