@@ -11,15 +11,17 @@ import {PlanningResult} from '../plan/planning-result.js';
 import {Planificator} from '../plan/planificator.js';
 import {Suggestion} from '../plan/suggestion';
 import {DevtoolsConnection} from './devtools-connection.js';
+import {Trigger} from '../plan/plan-producer.js';
 
  export class PlanningExplorerAdapter {
-  static updatePlanningResults(result, devtoolsChannel) {
+  static updatePlanningResults(result, metadata, devtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
         messageType: 'suggestions-changed',
         messageBody: {
           suggestions: PlanningExplorerAdapter._formatSuggestions(result.suggestions),
-          lastUpdated: result.lastUpdated.getTime()
+          lastUpdated: result.lastUpdated.getTime(),
+          metadata
         }
       });
     }
@@ -35,12 +37,13 @@ import {DevtoolsConnection} from './devtools-connection.js';
     }
   }
 
-  static updatePlanningAttempt({suggestions}: {suggestions?: Suggestion[]}, devtoolsChannel) {
+  static updatePlanningAttempt(suggestions: Suggestion[], metadata: {}, devtoolsChannel) {
     if (devtoolsChannel) {
       devtoolsChannel.send({
         messageType: 'planning-attempt',
         messageBody: {
           suggestions: suggestions ? PlanningExplorerAdapter._formatSuggestions(suggestions) : null,
+          metadata
         }
       });
     }
@@ -61,7 +64,7 @@ import {DevtoolsConnection} from './devtools-connection.js';
       devtoolsChannel.listen('force-replan', async () => {
         planificator.consumer.result.suggestions = [];
         await planificator.consumer.result.flush();
-        await planificator.requestPlanning();
+        await planificator.requestPlanning({metadata: {trigger: Trigger.Forced}});
         await planificator.loadSuggestions();
       });
     }
