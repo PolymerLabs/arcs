@@ -11,8 +11,10 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
       }
       #warningsSection {
         display: inline-block;
-        margin-right: 4px;
         position: relative;
+        background: #fffae0;
+        padding: 5px;
+        border-radius: 15px;
       }
       .warning-icon {
         vertical-align: unset;
@@ -21,12 +23,12 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
       }
       #warningsDetails {
         position: absolute;
-        right: 0;
-        top: 14px;
+        left: 0;
+        top: 20px;
         line-height: initial;
         width: 300px;
         border: 1px solid var(--mid-gray);
-        background: #fffae0;;
+        background: #fffae0;
         z-index: 1;
         border-radius: 8px;
         box-shadow: 2px 2px 2px rgba(0,0,0,.2);
@@ -54,6 +56,10 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
         type: Number,
         value: 0,
         observer: '_updateWarningCount'
+      },
+      visible: {
+        reflectToAttribute: true,
+        computed: '_visible(warningsCount)'
       }
     };
   }
@@ -74,14 +80,8 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
   onMessageBundle(messages) {
     for (const msg of messages) {
       switch (msg.messageType) {
-        case 'Warning':
-          switch (msg.messageBody) {
-            case 'PreExistingArcs':
-              this._addWarning(`Arcs Explorer has been opened after arc
-                creation, some <b>information may be missing</b>. Reload the page
-                to ensure all information is available.`);
-              break;
-          }
+        case 'warning':
+          this._addWarning(msg.messageBody);
           break;
         case 'page-refresh':
           this._clear();
@@ -90,9 +90,29 @@ class ArcsNotifications extends MessengerMixin(PolymerElement) {
     }
   }
 
-  _addWarning(message) {
+  _visible(warningsCount) {
+    return warningsCount > 0;
+  }
+
+  _addWarning(type) {
+    if (this.$.warningsDetails.querySelector(`[warningType=${type}]`)) return;
+
     const el = document.createElement('div');
-    el.innerHTML = message;
+    el.setAttribute('warningType', type);
+
+    if (type === 'pre-existing-arc') {
+      el.innerHTML = `Arcs Explorer has been opened after arc creation,
+          some <b>information may be missing</b>. Reload the page
+          to ensure all information is available.`;
+    } else if (type === 'reconnected') {
+      el.innerHTML = `Arcs Explorer has been closed and reopened,
+          some <b>information may be missing</b>. Reload the page
+          to ensure all information is available.`;
+    } else {
+      console.warn(`Warning type not recognized: ${type}`);
+      return;
+    }
+
     this.$.warningsDetails.appendChild(el);
     this.warningsCount++;
   }
