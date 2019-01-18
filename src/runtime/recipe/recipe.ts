@@ -7,7 +7,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
-import {Strategizer, Strategy, Descendant} from '../../planning/strategizer.js';
 import {ConnectionConstraint} from './connection-constraint.js';
 import {Particle} from './particle.js';
 import {Search} from './search.js';
@@ -455,10 +454,6 @@ export class Recipe {
     const result = {};
     Object.keys(dict).forEach(key => result[key] = this._cloneMap.get(dict[key]));
     return result;
-  }
-
-  static over(results, walker, strategy: Strategy): Descendant[]  {
-    return Strategizer.over(results, walker, strategy);
   }
 
   _makeLocalNameMap() {

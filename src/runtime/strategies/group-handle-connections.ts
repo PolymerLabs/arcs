@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Strategy} from '../../planning/strategizer.js';
+import {Strategizer, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../type.js';
 import {Walker} from '../recipe/walker.js';
@@ -115,6 +115,6 @@ export class GroupHandleConnections extends Strategy {
     return this._walker;
   }
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), this.walker, this);
+    return Strategizer.over(this.getResults(inputParams), this.walker, this);
   }
 }
