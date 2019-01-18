@@ -66,6 +66,11 @@ export class CoalesceRecipes extends Strategy {
             continue;
           }
 
+          if (RecipeUtil.matchesRecipe(recipe, providedSlot.recipe)) {
+            // skip candidate recipe, if matches the shape of the currently explored recipe
+            continue;
+          }
+
           results.push((recipe, slotConnection) => {
             const otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
 
