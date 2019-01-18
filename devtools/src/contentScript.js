@@ -24,7 +24,13 @@ let initialized = false;
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   switch (message.messageType) {
     case 'init-debug':
-      if (initialized) return;
+      if (initialized) {
+        chrome.runtime.sendMessage([{
+          messageType: 'warning',
+          messageBody: 'reconnected'
+        }]);
+        return;
+      }
       initialized = true;
       log('Connected.');
       if (document.readyState !== 'loading') {

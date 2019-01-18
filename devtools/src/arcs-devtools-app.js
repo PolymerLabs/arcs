@@ -79,6 +79,9 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       #search:focus {
         border-color: var(--focus-blue);
       }
+      arcs-notifications:not([visible])  + [divider] {
+        display: none;
+      }
     </style>
     <div id="container" nav-narrow="">
       <arcs-communication-channel></arcs-communication-channel>
@@ -87,16 +90,14 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       <app-route route="{{route}}" pattern=":page" data="{{routeData}}" tail="{{tail}}">
       </app-route>
       <header class="header">
-        <div section><!--
-          --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
-          --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
-         --><div divider></div><!--
-         --><arcs-selector></arcs-selector><!--
-         --><div divider></div><!--
-         --><input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
-        </div>
         <div section>
-          <arcs-notifications id="notifications"></arcs-notifications>
+          <div class="devtools-icon nav-toggle" on-click="toggleNav"></div>
+          <iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon>
+          <div divider></div>
+          <arcs-notifications></arcs-notifications><div divider></div>
+          <arcs-selector></arcs-selector>
+          <div divider></div>
+          <input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
         </div>
       </header>
       <nav>
