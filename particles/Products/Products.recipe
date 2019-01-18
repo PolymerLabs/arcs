@@ -43,9 +43,13 @@ recipe ShopForOccasion
 recipe UseWishlist
   map #wishlist as wishlist
   create #volatile as recommendations
+  use as person
+  use as shoplist
   // annotates shoplist
   ChoicesMultiplexer
-    consume choice as annotationSlot
+    // This is probably wrong, but it works now (instead of annotationSlot)
+    // consume choice as annotationSlot
+    consume choice as actionSlot
     list = shoplist
     choices = wishlist
     hostedParticle = AlsoOn
