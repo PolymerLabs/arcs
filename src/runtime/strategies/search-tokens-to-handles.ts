@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy} from '../../planning/strategizer.js';
+import {Strategizer, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
@@ -29,7 +29,7 @@ export class SearchTokensToHandles extends Strategy {
       return stores.map(store => ({store, fate, token}));
     };
 
-    return Recipe.over(this.getResults(inputParams), new class extends Walker {
+    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (!recipe.search || recipe.search.unresolvedTokens.length === 0) {
           return undefined;

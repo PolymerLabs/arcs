@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Strategy, Ruleset} from '../../../planning/strategizer.js';
+import {Strategizer, Strategy, Ruleset} from '../../../planning/strategizer.js';
 import {Arc} from '../../arc.js';
 import {Manifest} from '../../manifest.js';
 import {Planner} from '../../planner.js';
@@ -50,7 +50,7 @@ class FateAssigner extends Strategy {
 
   async generate(inputParams) {
     const self = this;
-    return Recipe.over(this.getResults(inputParams), new class extends Walker {
+    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate === '?') {
           return [
@@ -70,7 +70,7 @@ class AssignFateC extends FateAssigner {constructor() {super('use');}}
 
 class Resolve extends Strategy {
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends Walker {
+    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate !== '?' && !handle.id.endsWith('resolved')) {
           return [
