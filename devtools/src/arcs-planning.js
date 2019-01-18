@@ -76,6 +76,10 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         display: inline-block;
         min-width: 100px;
       }
+      [prevTrigger] {
+        display: inline-block;
+        min-width: 100px;
+      }
       [prevLength] {
         display: inline-block;
         min-width: 300px;
@@ -99,6 +103,10 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       <span class="subtitle">Last updated</span>
       <span>{{lastPlanning.formattedUpdated}}</span>
     </div>
+    <div>
+      <span class="subtitle">Trigger</span>
+      <span>[[_formatTrigger(lastPlanning.metadata)]]</span>
+    </div>
 
     <div class="content">
       <template is="dom-repeat" items="{{lastPlanning.suggestions}}">
@@ -121,6 +129,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         <object-explorer object="{{item}}">
           <div class$="[[_getPrevClass(item.cancelled, item.inactive)]]">
             <span prevDate>[[item.formattedUpdated]]</span>
+            <span prevTrigger>[[_formatTrigger(item.metadata)]]</span>
             <span prevLength>Produced [[_getLength(item.suggestions)]] suggestions</span>
         </div>
         </object-explorer>
@@ -149,10 +158,11 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
             break;
           }
           if (this.lastPlanning.updated) {
-            this.push('planningSessions', {
+            this.splice('planningSessions', 0, 0, {
               updated: this.lastPlanning.updated,
               formattedUpdated: this.lastPlanning.formattedUpdated,
-              suggestions: msg.messageBody.suggestions
+              suggestions: msg.messageBody.suggestions,
+              metadata: msg.messageBody.metadata || {}
             });
           }
           this.lastPlanning = {
@@ -162,7 +172,8 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
               particleNames: this._planParticleNamesToString(s),
               descriptionText: this._formatDescriptionText(s.descriptionByModality.text),
               isVisible: s.isVisible
-            }))
+            })),
+            metadata: msg.messageBody.metadata || {}
           };
           break;
         case 'visible-suggestions-changed':
@@ -174,10 +185,11 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
           break;
         case 'planning-attempt': {
           const updated = new Date().getTime();
-          this.push('planningSessions', {
+          this.splice('planningSessions', 0, 0, {
             updated,
             formattedUpdated: formatTime(updated, 3),
             suggestions: msg.messageBody.suggestions,
+            metadata: msg.messageBody.metadata || {},
             inactive: true,
             cancelled: !msg.messageBody.suggestions,
           });
@@ -193,12 +205,14 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       }
     }
   }
+
   _formatDescriptionText(text) {
     if (text.length <= 30) {
       return text;
     }
     return `${text.substring(0, 30)}...`;
   }
+
   _planParticleNamesToString(plan) {
     const countByName = plan.particles.reduce((acc, particle) => {
       if (!acc[particle.name]) {
@@ -208,6 +222,20 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       return acc;},
     {});
     return `[${Object.keys(countByName).map(name => `${name}${countByName[name] > 1 ? ` * ${countByName[name]}`: ''}`).join(', ')}]`;
+  }
+
+  _formatTrigger(metadata) {
+    if (!metadata) {
+      return '';
+    }
+    switch (metadata.trigger) {
+      case 'search':
+        return `${metadata.trigger} (${metadata.search})`;
+      case 'plan-instantiated':
+        return `plan [${metadata.particleNames}]`;
+      default:
+        return metadata.trigger ? `${metadata.trigger}`: 'unknown';
+    }
   }
 
   _forceReplan(e) {

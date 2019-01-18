@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 import {PlanConsumer} from './plan-consumer.js';
-import {PlanProducer} from './plan-producer.js';
+import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {Recipe} from '../recipe/recipe.js';
 import {ReplanQueue} from './replan-queue.js';
@@ -37,7 +37,7 @@ export class Planificator {
     const searchStore = await Planificator._initSearchStore(arc, userid);
     const planificator = new Planificator(arc, userid, store, searchStore, onlyConsumer, debug);
     await planificator.loadSuggestions();
-    planificator.requestPlanning({contextual: true});
+    planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
 
@@ -132,7 +132,10 @@ export class Planificator {
 
   private _onPlanInstantiated(plan) {
     this.lastActivatedPlan = plan;
-    this.requestPlanning();
+    this.requestPlanning({metadata: {
+      trigger: Trigger.PlanInstantiated,
+      particleNames: plan.particles.map(p => p.name).join(',')
+    }});
   }
 
   private _listenToArcStores() {

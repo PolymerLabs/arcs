@@ -10,7 +10,7 @@
  */
 
 import {now} from '../../platform/date-web.js';
-import {PlanProducer} from './plan-producer.js';
+import {PlanProducer, Trigger} from './plan-producer.js';
 
 const defaultDefaultReplanDelayMs = 3000;
 
@@ -62,7 +62,10 @@ export class ReplanQueue {
   private _scheduleReplan(intervalMs) {
     this._cancelReplanIfScheduled();
     this.replanTimer = setTimeout(
-        () => this.planProducer.produceSuggestions({contextual: this.planProducer.result.contextual}),
+        () => this.planProducer.produceSuggestions({
+          contextual: this.planProducer.result.contextual,
+          metadata: {trigger: Trigger.DataChanged}
+        }),
         intervalMs);
   }
 

@@ -29,6 +29,10 @@ const defaultTimeoutMs = 5000;
 const log = logFactory('PlanProducer', '#ff0090', 'log');
 const error = logFactory('PlanProducer', '#ff0090', 'error');
 
+export enum Trigger {
+  Init='init', Search='search', PlanInstantiated='plan-instantiated', DataChanged='data-changed', Forced='forced',
+}
+
 export class PlanProducer {
   arc: Arc;
   result: PlanningResult;
@@ -91,16 +95,19 @@ export class PlanProducer {
       // search string turned empty, no need to replan, going back to contextual suggestions.
       return;
     }
+    const metadata = {trigger: Trigger.Search, search: this.search};
     if (this.search === '*') { // Search for ALL (including non-contextual) suggestions.
       if (this.result.contextual) {
-        this.produceSuggestions({contextual: false});
+        this.produceSuggestions({contextual: false, metadata});
       }
     } else { // Search by search term.
-      const options: {cancelOngoingPlanning: boolean,
-      search: string,
-      strategies?: StrategyDerived[],
-      append?: boolean,
-      contextual?: boolean} = {
+      const options: {
+        cancelOngoingPlanning: boolean,
+        search: string,
+        strategies?: StrategyDerived[],
+        append?: boolean,
+        contextual?: boolean
+      } = {
         cancelOngoingPlanning: this.result.suggestions.length > 0,
         search: this.search
       };
@@ -116,7 +123,7 @@ export class PlanProducer {
         options.strategies = [InitSearch, ...Planner.ResolutionStrategies];
       }
 
-      this.produceSuggestions(options);
+      this.produceSuggestions({...options, metadata});
     }
   }
 
@@ -154,13 +161,14 @@ export class PlanProducer {
       if (this._updateResult({suggestions, generations: this.debug ? generations : []}, this.replanOptions)) {
         // Store suggestions to store.
         await this.result.flush();
+        PlanningExplorerAdapter.updatePlanningResults(this.result, options['metadata'], this.devtoolsChannel);
       } else {
         // Add skipped result to devtools.
-        PlanningExplorerAdapter.updatePlanningAttempt({suggestions}, this.devtoolsChannel);
+        PlanningExplorerAdapter.updatePlanningAttempt(suggestions, options['metadata'], this.devtoolsChannel);
       }
     } else {  // Suggestions are null, if planning was cancelled.
       // Add cancelled attempt to devtools.
-      PlanningExplorerAdapter.updatePlanningAttempt({}, this.devtoolsChannel);
+      PlanningExplorerAdapter.updatePlanningAttempt(null, options['metadata'], this.devtoolsChannel);
     }
   }
 
