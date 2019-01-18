@@ -1,5 +1,5 @@
 import {assert} from '../../../platform/assert-web.js';
-import {PouchDbStorageProvider} from './pouch-db-storage-provider';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
 import {Type} from '../../type.js';
 import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
@@ -354,7 +354,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         version: this.version,
         referenceMode: this.referenceMode
       };
-      
+
       // Update on pouchdb
       try {
         const putResult = await this.db.put(doc);

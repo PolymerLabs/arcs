@@ -1,5 +1,5 @@
 import {BigCollectionStorageProvider} from '../storage-provider-base.js';
-import {PouchDbStorageProvider} from './pouch-db-storage-provider';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {assert} from '../../../platform/assert-web.js';
 
 // TODO(lindner): update to operate like the firebase version
