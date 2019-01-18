@@ -6,12 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase, BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base';
+import {StorageBase, StorageProviderBase, BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base.js';
 
-// keep in sync with shell/source/ArcsLib.js
-import firebase from 'firebase/app';
-import 'firebase/database';
-import 'firebase/storage';
+import {firebase} from '../../platform/firebase-web.js';
 
 import {assert} from '../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
@@ -1197,7 +1194,7 @@ class FirebaseCursor {
                                      || (!this.forward && index <= this.nextBoundary)) {
         this.removed.push(snapshot.val().value);
       }
-    }); 
+    });
     this.state = CursorState.init;
   }
 
