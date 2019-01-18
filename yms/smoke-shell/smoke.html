@@ -5,21 +5,12 @@
 <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
 
 <script type="module">
-  import {Modality} from '../../build/runtime/modality.js';
-  import {ModalityHandler} from '../../build/runtime/modality-handler.js';
-  import {SlotComposer} from '../../build/runtime/slot-composer.js';
-  import {Utils} from '../lib/utils.js';
-
-  class DomSlotComposer extends SlotComposer {
-    constructor(options) {
-      options.modalityName = Modality.Name.Dom;
-      options.modalityHandler = ModalityHandler.domHandler;
-      super(options);
-    }
-  };
-
+  //import '../../shells/lib/build/pouchdb.js';
   import {App} from './app.js';
-  // run App
+  import {Utils} from '../lib/utils.js';
+  import {DomSlotComposer} from '../lib/dom-slot-composer.js';
+
+  // run
   (async () => {
     try {
       // configure arcs environment
