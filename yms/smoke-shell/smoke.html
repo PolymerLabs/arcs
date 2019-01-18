@@ -1,0 +1,37 @@
+<!doctype html>
+
+<script src="../../shells/lib/build/pouchdb.js"></script>
+<script src="../../shells/lib/build/firebase.js"></script>
+<script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+
+<script type="module">
+  import {Modality} from '../../build/runtime/modality.js';
+  import {ModalityHandler} from '../../build/runtime/modality-handler.js';
+  import {SlotComposer} from '../../build/runtime/slot-composer.js';
+  import {Utils} from '../lib/utils.js';
+
+  class DomSlotComposer extends SlotComposer {
+    constructor(options) {
+      options.modalityName = Modality.Name.Dom;
+      options.modalityHandler = ModalityHandler.domHandler;
+      super(options);
+    }
+  };
+
+  import {App} from './app.js';
+  // run App
+  (async () => {
+    try {
+      // configure arcs environment
+      Utils.init(Object.assign(Utils.createPathMap('../..'), {
+        'https://$shell/': `../../shells/`
+      }));
+      // construct renderer
+      const composer = new DomSlotComposer({rootContainer: document.body});
+      // start app
+      await App(composer);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

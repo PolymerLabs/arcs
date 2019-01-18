@@ -1,0 +1,17 @@
+<!doctype html>
+
+<script src="../../shells/lib/build/pouchdb.js"></script>
+<script src="../../shells/lib/build/firebase.js"></script>
+<script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+
+<script type="module">
+  import {App} from './app.js';
+  // run App
+  (async () => {
+    try {
+      await App();
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

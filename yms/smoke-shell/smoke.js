@@ -1,0 +1,22 @@
+import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {Utils} from '../lib/utils.js';
+import {App} from './app.js';
+
+// notify user we are live
+console.log('\n--- Arcs Shell ---\n');
+
+// run App
+(async () => {
+  try {
+    // configure arcs environment
+    Utils.init(Object.assign(Utils.createPathMap('../..'), {
+      'https://$shell/': `../../shells/`
+    }));
+    // create a composer configured for node
+    const composer = new RamSlotComposer();
+    await App(composer);
+  } catch (x) {
+    console.error(x);
+  }
+  console.log('');
+})();
