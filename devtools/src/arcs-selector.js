@@ -115,7 +115,8 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         }
         case 'arc-transition': {
           const arcName = msg.messageBody;
-          const defaultArcSuffix = this.activePage === 'planning' ? '-null' : '-launcher';
+          const defaultArcSuffix = (this.activePage === 'planning'
+              || this.activePage === 'strategyExplorer') ? '-null' : '-launcher';
           const item = arcName
               ? this.arcs.find(i => i.name === arcName)
               : this.arcs.find(i => i.name.endsWith(defaultArcSuffix));
