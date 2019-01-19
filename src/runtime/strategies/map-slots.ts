@@ -132,11 +132,11 @@ export class MapSlots extends Strategy {
 
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
   // TODO: should we move some of this logic to the recipe? Or type matching?
-  static handlesMatch(slotConnection: SlotConnection, slot) {
+  static handlesMatch(slotConnection: SlotConnection, slot): boolean {
     if (slot.handles.length === 0) {
       return true; // slot is not limited to specific handles
     }
-    return Object.values(slotConnection.particle.connections).find(handleConn => {
+    return !!Object.values(slotConnection.particle.connections).find(handleConn => {
       return slot.handles.includes(handleConn.handle) ||
               (handleConn.handle && handleConn.handle.id && slot.handles.map(sh => sh.id).includes(handleConn.handle.id));
     });
