@@ -1,11 +1,12 @@
 <!doctype html>
 
-<script src="../../shells/lib/build/pouchdb.js"></script>
-<script src="../../shells/lib/build/firebase.js"></script>
+<!-- can be imported -->
+<script src="..//lib/build/pouchdb.js"></script>
+<script src="../lib/build/firebase.js"></script>
+<!-- cannot be imported (tries to use `this`) -->
 <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
 
 <script type="module">
-  //import '../../shells/lib/build/pouchdb.js';
   import {App} from './app.js';
   import {Utils} from '../lib/utils.js';
   import {DomSlotComposer} from '../lib/dom-slot-composer.js';

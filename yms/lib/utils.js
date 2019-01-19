@@ -8,12 +8,6 @@ const log = console.log.bind(console);
 const warn = console.warn.bind(console);
 const env = {};
 
-const init = map => {
-  env.loader = new PlatformLoader(map);
-  env.pecFactory = PecIndustry(env.loader);
-  return env;
-};
-
 const createPathMap = root => ({
   'https://$cdn/': `${root}/`,
   'https://$shells/': `${root}/shells/`,
@@ -21,6 +15,12 @@ const createPathMap = root => ({
   'https://$shell/': `${root}/shells/`, // deprecated
   'https://$artifacts/': `${root}/particles/`, // deprecated
 });
+
+const init = map => {
+  env.loader = new PlatformLoader(map);
+  env.pecFactory = PecIndustry(env.loader);
+  return env;
+};
 
 const parse = async (content, options) => {
   const localOptions = {
