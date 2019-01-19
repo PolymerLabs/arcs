@@ -1,9 +1,9 @@
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = _expandUrls(loader._urlMap);
-  const workerPath = loader._resolve(`https://$shell/lib/build/worker.js`);
+  const workerFactory = workerIndustry(loader);
   return id => {
-    const worker = new Worker(workerPath);
+    const worker = workerFactory();
     const channel = new MessageChannel();
     worker.postMessage({id: `${id}:inner`, base: remap}, [channel.port1]);
     return channel.port2;
@@ -25,3 +25,16 @@ const _expandUrls = urlMap => {
   });
   return remap;
 };
+
+const workerIndustry = loader => {
+  const workerPath = loader._resolve(`https://$shell/lib/build/worker.js`);
+  return () => new Worker(workerPath);
+};
+
+// const workerIndustry1 = loader => () => {
+//   loader.loadResource(`https://$shell/lib/build/worker.js`)
+//   // "Server response", used in all examples
+//   const response = "self.onmessage=function(e){postMessage('Worker: '+e.data);}";
+//   const blob = new Blob([response], {type: 'application/javascript'});
+//   const worker = new Worker(URL.createObjectURL(blob));
+// };

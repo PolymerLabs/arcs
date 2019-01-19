@@ -32,6 +32,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   const content = `
     script-src
         'self'
+        blob:
         wss://*.firebase.io wss://*.firebaseio.com
         https://*.firebaseio.com
         https://*.firebase.io

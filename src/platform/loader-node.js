@@ -40,10 +40,9 @@ export class PlatformLoader extends Loader {
       }
     }
     url = url || path;
-    //console.log(`browser-loader: resolve(${path}) = ${url}`);
     return url;
   }
-  requireParticle(fileName) {
+  async requireParticle(fileName) {
     const path = this._resolve(fileName);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
@@ -62,8 +61,6 @@ export class PlatformLoader extends Loader {
     //  _resolve method allows particles to request remapping of assets paths
     //  for use in DOM
     const resolver = this._resolve.bind(this);
-    // TODO(sjmiles): hack to plumb `fetch` into Particle space under node
-    //const _fetch = NodeLoader.fetch || fetch;
     return particleWrapper({
       Particle,
       DomParticle,
@@ -73,7 +70,6 @@ export class PlatformLoader extends Loader {
       resolver,
       log: log || (() => {}),
       html,
-      //_fetch
     });
   }
 }
