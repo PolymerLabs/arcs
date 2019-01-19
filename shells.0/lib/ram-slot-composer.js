@@ -7,8 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ModalityHandler} from '../../build/runtime/modality-handler.js';
-import {SlotComposer} from '../../build/runtime/slot-composer.js';
+'use strict';
+
+import {SlotComposer, ModalityHandler} from './arcs.js';
 
 export class RamSlotComposer extends SlotComposer {
   constructor(options = {}) {

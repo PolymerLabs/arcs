@@ -1,9 +1,9 @@
 <!doctype html>
 
-<!-- can be imported -->
+<!-- could be `import`ed -->
 <script src="..//lib/build/pouchdb.js"></script>
 <script src="../lib/build/firebase.js"></script>
-<!-- cannot be imported (tries to use `this`) -->
+<!-- cannot be `import`ed (tries to use `this`) -->
 <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
 
 <script type="module">
@@ -15,9 +15,7 @@
   (async () => {
     try {
       // configure arcs environment
-      Utils.init(Object.assign(Utils.createPathMap('../..'), {
-        'https://$shell/': `../../shells/`
-      }));
+      Utils.init('../..');
       // construct renderer
       const composer = new DomSlotComposer({rootContainer: document.body});
       // start app

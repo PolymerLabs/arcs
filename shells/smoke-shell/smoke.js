@@ -9,9 +9,7 @@ console.log('\n--- Arcs Shell ---\n');
 (async () => {
   try {
     // configure arcs environment
-    Utils.init(Object.assign(Utils.createPathMap('../..'), {
-      'https://$shell/': `../../shells/`
-    }));
+    Utils.init('../..');
     // create a composer configured for node
     const composer = new RamSlotComposer();
     await App(composer);

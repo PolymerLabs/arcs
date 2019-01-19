@@ -10,8 +10,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
+import {Env} from '../../lib/env/web/env.js';
 import {Xen} from '../../lib/xen.js';
 import {Const} from '../../configuration/constants.js';
+import {SlotDomConsumer} from '../../lib/arcs.js';
 import {Utils} from '../../lib/utils.js';
 import './web-config.js';
 import './web-arc.js';
@@ -157,11 +159,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   async updateEnv({root}, state) {
     // capture anchor-clicks for SPA behavior
     linkJack(document, anchor => this.routeLink(anchor));
-    // configure arcs environment
-    Utils.init(Object.assign(Utils.createPathMap('../..'), {
-      'https://$shell/': `../../shells/`
-    }));
-    state.env = Utils.env;
+    // create arcs web-environment
+    state.env = new Env(root);
   }
   routeLink(anchor) {
     const url = new URL(anchor.href, document.location);

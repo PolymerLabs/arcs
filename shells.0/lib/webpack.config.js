@@ -8,7 +8,7 @@ module.exports = {
   },
   devtool: 'source-map',
   entry: {
-    //arcslib: './source/arcslib.js',
+    arcslib: './source/arcslib.js',
     worker: './source/worker.js',
     firebase: './source/firebase.js',
     pouchdb: './source/pouchdb.js'

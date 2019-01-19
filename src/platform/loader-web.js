@@ -18,6 +18,7 @@ import {logFactory} from '../platform/log-web.js';
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 const dumbCache = {};
+const blobCache = {};
 
 export class PlatformLoader extends Loader {
   constructor(urlMap) {
@@ -26,12 +27,7 @@ export class PlatformLoader extends Loader {
   }
   _loadURL(url) {
     const resolved = this._resolve(url);
-    // use URL to normalize the path for deduping
-    const cacheKey = new URL(resolved, document.URL).href;
-    // console.log(`browser-loader::_loadURL`);
-    // console.log(`    ${url}`);
-    // console.log(`    ${resolved}`);
-    // console.log(`    ${cacheKey}`);
+    const cacheKey = this.normalizeDots(url);
     const resource = dumbCache[cacheKey];
     return resource || (dumbCache[cacheKey] = super._loadURL(resolved));
   }
@@ -51,41 +47,61 @@ export class PlatformLoader extends Loader {
       }
     }
     url = url || path;
-    //console.log(`browser-loader: resolve(${path}) = ${url}`);
+    //console.log(`loader-web: resolve(${path}) = ${url}`);
     return url;
   }
-  requireParticle(fileName) {
-    const path = this._resolve(fileName);
-    //console.log(`requireParticle [${path}]`);
-    // inject path to this particle into the UrlMap,
-    // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
-    this.mapParticleUrl(path);
+  async requireParticle(fileName) {
+    const url = await this.provisionParticleUrl(fileName);
     const result = [];
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
-    importScripts(path);
+    importScripts(url);
     delete self.defineParticle;
-    const logger = logFactory(fileName.split('/').pop(), '#1faa00');
-    return this.unwrapParticle(result[0], logger);
+    return this.unwrapParticle(result[0], this.provisionLogger(fileName));
   }
-  mapParticleUrl(path) {
+  async provisionParticleUrl(fileName) {
+    // inject path to this particle into the UrlMap,
+    // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
+    this.mapParticleUrl(fileName);
+    // return an ObjectUrl for this file
+    const url = blobCache[fileName] || this.provisionObjectUrl(fileName);
+    blobCache[fileName] = url;
+    return url;
+  }
+  mapParticleUrl(fileName) {
+    const path = this._resolve(fileName);
     const parts = path.split('/');
     const suffix = parts.pop();
     const folder = parts.join('/');
     const name = suffix.split('.').shift();
     this._urlMap[name] = folder;
   }
+  async provisionObjectUrl(fileName) {
+    const raw = await this.loadResource(fileName);
+    // TODO(sjmiles): can manipulate/examine code before executing, right here
+    // ... consider automarshalling `defineParticle` boilerplate
+    const code = !fileName.includes('Launcher') ? raw :
+`'use strict';
+defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
+
+${raw}
+
+return AParticle;
+});`;
+    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+  }
+  provisionLogger(fileName) {
+    return logFactory(fileName.split('/').pop(), '#1faa00');
+  }
   unwrapParticle(particleWrapper, log) {
-    // TODO(sjmiles): `resolver` allows particles to request remapping of asset paths
-    const resolver = this._resolve.bind(this);
     return particleWrapper({
       Particle,
       DomParticle,
       MultiplexerDomParticle,
       SimpleParticle: DomParticle,
       TransformationDomParticle,
-      resolver,
+      resolver: this._resolve.bind(this),
       log,
       html
     });

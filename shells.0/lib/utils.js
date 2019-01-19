@@ -1,32 +1,16 @@
-import {Manifest} from '../../build/runtime/manifest.js';
-import {Arc} from '../../build/runtime/arc.js';
-import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
-import {PlatformLoader} from '../../build/platform/loader-web.js';
-import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {Manifest} from './arcs.js';
+import {Arc} from './arcs.js';
+import {RecipeResolver} from './arcs.js';
+import {Env} from './arcs.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
-const env = {};
-
-const createPathMap = root => ({
-  'https://$cdn/': `${root}/`,
-  'https://$shells/': `${root}/shells/`,
-  'https://$particles/': `${root}/particles/`,
-  'https://$shell/': `${root}/shells/`, // deprecated
-  'https://$artifacts/': `${root}/particles/`, // deprecated
-});
-
-const init = map => {
-  env.loader = new PlatformLoader(map);
-  env.pecFactory = PecIndustry(env.loader);
-  return env;
-};
 
 const parse = async (content, options) => {
   const localOptions = {
     id: 'in-memory.manifest',
     fileName: './in-memory.manifest',
-    loader: env.loader
+    loader: Env.loader
   };
   if (options) {
     Object.assign(localOptions, options);
@@ -58,17 +42,18 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     context,
     storageKey: storage,
     slotComposer: composer,
-    pecFactory: env.pecFactory,
-    loader: env.loader
+    pecFactory: Env.pecFactory,
+    loader: Env.loader
   };
-  Object.assign(params, env.params);
-  return serialization ? Arc.deserialize(params) : new Arc(params);
+  Object.assign(params, Env.params);
+  if (serialization) {
+    return Arc.deserialize(params);
+  } else {
+    return new Arc(params);
+  }
 };
 
 export const Utils = {
-  createPathMap,
-  init,
-  env,
   parse,
   resolve,
   spawn
