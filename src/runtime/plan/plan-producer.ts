@@ -209,9 +209,7 @@ export class PlanProducer {
     generations = PlanningResult.formatSerializableGenerations(generations);
     if (options.append) {
       assert(!options['contextual'], `Cannot append to contextual options`);
-      return this.result.append({suggestions, generations});
-    } else {
-      return this.result.merge({suggestions, generations, contextual: options['contextual']}, this.arc);
     }
+    return this.result.merge({suggestions, generations, contextual: options['contextual']}, this.arc);
   }
 }

@@ -50,6 +50,19 @@ describe('suggestion', () => {
     assert.deepEqual(s1.searchGroups, [[''], ['five'], ['one', 'three']]);
   });
 
+  it('merges with empty search', async () => {
+    const descriptionText = 'hello world';
+    const hash1 = 'hash1';
+    const s1 = createSuggestion(hash1, descriptionText);
+    const s2 = createSuggestion(hash1, descriptionText);
+    assert.isTrue(s1.isEquivalent(s2));
+    assert.isTrue(s2.isEquivalent(s1));
+    s2.setSearch(new Search('one two three', /* unresolvedTokens= */ ['two']));
+    assert.deepEqual(s2.searchGroups, [['one', 'three']]);
+    s2.mergeSearch(s1);
+    assert.deepEqual(s2.searchGroups, [[''], ['one', 'three']]);
+  });
+
   it('deserialize empty', async () => {
     const helper = await TestHelper.create();
     const envOptions = helper.envOptions;

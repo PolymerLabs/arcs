@@ -26,7 +26,7 @@ async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
 }
 
 async function storeResults(consumer, suggestions) {
-  assert.isTrue(consumer.result.set({suggestions}));
+  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }
@@ -61,7 +61,7 @@ recipe
           'TestUser', 'volatile://!158405822139616:demo^^volatile-0', storageKeyBase, helper);
 
       let suggestionsChangeCount = 0;
-      const suggestionsCallback = (suggestions) => { ++suggestionsChangeCount; };
+      const suggestionsCallback = (suggestions) => ++suggestionsChangeCount;
       let visibleSuggestionsChangeCount = 0;
       const visibleSuggestionsCallback = (suggestions) => { ++visibleSuggestionsChangeCount; };
       consumer.registerSuggestionsChangedCallback(suggestionsCallback);
