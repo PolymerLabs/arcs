@@ -38,6 +38,8 @@ before_deploy:
   - cd ${TRAVIS_BUILD_DIR} && git log -n 1 > VERSION
   # remove an inaccurate README from arcs-live
   - cd ${TRAVIS_BUILD_DIR} && rm README.md
+  # makes devtools/ useable from arcs-live instance
+  - cd ${TRAVIS_BUILD_DIR}/devtools && npm install
 
 deploy:
   provider: pages
