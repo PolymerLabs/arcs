@@ -16,7 +16,6 @@ export class SlotConnection {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
   private readonly _name: string;
-  private _slotSpec: SlotSpec | undefined = undefined;
   private _targetSlot: Slot | undefined = undefined;
   private _providedSlots: {[index: string]: Slot} = {};
   private _tags = <string[]>[];
@@ -38,7 +37,6 @@ export class SlotConnection {
   get particle() { return this._particle; }
   get name() { return this._name; }
   getQualifiedName() { return `${this.particle.name}::${this.name}`; }
-  get slotSpec() { return this._slotSpec; }
   get targetSlot() { return this._targetSlot; }
   set targetSlot(targetSlot: Slot | undefined) { this._targetSlot = targetSlot; }
   
@@ -46,23 +44,8 @@ export class SlotConnection {
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
 
-  set slotSpec(slotSpec) {
-    assert(this.name === slotSpec.name);
-    this._slotSpec = slotSpec;
-    slotSpec.providedSlots.forEach(providedSlot => {
-      let slot = this.providedSlots[providedSlot.name];
-      if (slot == undefined) {
-        slot = this.recipe.newSlot(providedSlot.name);
-        slot._sourceConnection = this;
-        slot._name = providedSlot.name;
-        this.providedSlots[providedSlot.name] = slot;
-      }
-      assert(slot.handleConnections.length === 0, 'Handle connections must be empty');
-      providedSlot.handles.forEach(handle => slot.handleConnections.push(this.particle.connections[handle]));
-      assert(slot._name === providedSlot.name);
-      assert(!slot.formFactor);
-      slot.formFactor = providedSlot.formFactor;
-    });
+  getSlotSpec() {
+    return this.particle.spec && this.particle.spec.getSlotSpec(this.name);
   }
 
   connectToSlot(targetSlot) {
@@ -86,11 +69,8 @@ export class SlotConnection {
       return cloneMap.get(this);
     }
 
-    const slotConnection = particle.addSlotConnection(this.name);
+    const slotConnection = particle.addSlotConnectionAsCopy(this.name);
     slotConnection.tags = this.tags;
-    if (this.slotSpec) {
-      slotConnection._slotSpec = particle.spec.getSlotSpec(this.name);
-    }
 
     cloneMap.set(this, slotConnection);
     return slotConnection;
@@ -142,7 +122,7 @@ export class SlotConnection {
       return false;
     }
 
-    if (this.slotSpec.isRequired) {
+    if (this.getSlotSpec().isRequired) {
       if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
         // The required connection has no target slot
         // or its target slot it not resolved (has no ID or source connection).
@@ -156,7 +136,7 @@ export class SlotConnection {
       return true;
     }
 
-    return this.slotSpec.providedSlots.every(providedSlot => {
+    return this.getSlotSpec().providedSlots.every(providedSlot => {
       if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
         if (options) {
           options.details = 'missing consuming slot';
@@ -203,8 +183,8 @@ export class SlotConnection {
       
       // Only assert that there's a spec for this provided slot if there's a spec for
       // the consumed slot .. otherwise this is just a constraint.
-      if (this.slotSpec) {
-        const providedSlotSpec = this.slotSpec.getProvidedSlotSpec(psName);
+      if (this.getSlotSpec()) {
+        const providedSlotSpec = this.getSlotSpec().getProvidedSlotSpec(psName);
         assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
       }
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);

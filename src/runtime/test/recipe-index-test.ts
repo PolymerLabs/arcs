@@ -87,6 +87,7 @@ describe('RecipeIndex', () => {
 
       recipe
         A
+          consume root
         B
     `), [
 `recipe

@@ -39,6 +39,11 @@ describe('A Strategy Sequence', () => {
     const arc = createTestArc(manifest);
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
+    // In this example, the first run of the ResolveRecipe strategy will map potential
+    // consume slot connections to remote slots, which exposes the corresponding provide
+    // slots. The second run of the ResolveRecipe strategy will map potential consume
+    // slots to these recently created provided slots.
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
@@ -72,6 +77,7 @@ describe('A Strategy Sequence', () => {
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
@@ -110,6 +116,7 @@ describe('A Strategy Sequence', () => {
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
 
     assert.isTrue(recipe.isResolved());
