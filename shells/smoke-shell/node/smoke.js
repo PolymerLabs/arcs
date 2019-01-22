@@ -8,7 +8,7 @@ import {App} from '../app.js';
 console.log('\n--- Arc Shell ---\n');
 
 // create an arcs environment
-new Env('../../..').pathMap[`https://$shell/`] = `../../../shells.2/`;
+new Env('../../..');
 
 // run App
 (async () => {
