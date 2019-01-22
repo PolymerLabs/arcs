@@ -1,0 +1,1 @@
+global.debugLevel = 2;
