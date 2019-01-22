@@ -102,12 +102,40 @@ export class Suggestion {
     return (this.hash === other.hash) && (this.descriptionText === other.descriptionText);
   }
 
+  isEqual(other: Suggestion): boolean {
+    return this.isEquivalent(other) &&
+          this.rank === other.rank &&
+          this._isSameSearch(other) &&
+          this._isSameDescription(other) &&
+          this._isSameVersions(other);
+  }
+
+  _isSameSearch(other: Suggestion): boolean {
+    return this.searchGroups.length === other.searchGroups.length &&
+           this.searchGroups.every(search => other.hasSearchGroup(search));
+  }
+
+  _isSameDescription(other: Suggestion): boolean {
+    return Object.keys(this.descriptionByModality).length === Object.keys(other.descriptionByModality).length &&
+        Object.keys(this.descriptionByModality).every(
+            key => JSON.stringify(this.descriptionByModality[key]) === JSON.stringify(other.descriptionByModality[key]));
+  }
+
+  _isSameVersions(other: Suggestion): boolean {
+    const storeIds = Object.keys(this.versionByStore);
+    return storeIds.length === Object.keys(other.versionByStore).length &&
+        storeIds.every(id => this.versionByStore[id] === other.versionByStore[id]);
+  }
+
   static compare(s1: Suggestion, s2: Suggestion): number {
     return s2.rank - s1.rank;
   }
 
   hasSearch(search: string): boolean {
-    const tokens = search.split(' ');
+    return this.hasSearchGroup(search.split(' '));
+  }
+
+  hasSearchGroup(tokens: string[]): boolean {
     return this.searchGroups.some(group => tokens.every(token => group.includes(token)));
   }
 
@@ -118,8 +146,11 @@ export class Suggestion {
     }
   }
 
-  mergeSearch(suggestion: Suggestion) {
+  mergeSearch(suggestion: Suggestion): boolean {
     let updated = false;
+    if (suggestion.searchGroups.length === 0) {
+      this._addSearch(['']);
+    }
     for (const other of suggestion.searchGroups) {
       if (this._addSearch(other)) {
         if (this.searchGroups.length === 1) {

@@ -232,7 +232,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       case 'search':
         return `${metadata.trigger} (${metadata.search})`;
       case 'plan-instantiated':
-        return `plan [${metadata.particleNames}]`;
+        return `plan ${metadata.hash}:[${metadata.particleNames}]`;
       default:
         return metadata.trigger ? `${metadata.trigger}`: 'unknown';
     }

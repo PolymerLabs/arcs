@@ -143,7 +143,9 @@ describe('remote planificator', () => {
       };
 
       // No contextual suggestions for empty arc.
-      await verifyReplanningAndConsuming(0);
+      await verifyReplanning(producePlanificator, 0);
+      await delay(100);
+      assert.lengthOf(consumePlanificator.consumer.result.suggestions, 0);
 
       // Replan non-contextual.
       await consumePlanificator.setSearch('*');
@@ -157,7 +159,6 @@ describe('remote planificator', () => {
 
       assert.notEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
       assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
-
       producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
       // TODO: GiftList+Arrivinator recipe is not considered active and appears again. Investigate.
       await verifyConsumerResults(5);

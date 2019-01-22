@@ -24,7 +24,7 @@ describe('planning result', () => {
       s.relevance.apply(new Map([[s.plan.particles[0], [1]]]));
     });
     const result = new PlanningResult(helper.envOptions);
-    result.set({suggestions: helper.suggestions});
+    result.merge({suggestions: helper.suggestions}, helper.arc);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
@@ -42,25 +42,25 @@ describe('planning result', () => {
         {manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes'});
     const result = new PlanningResult(helper.envOptions);
     // Appends new suggestion.
-    assert.isTrue(result.append({suggestions: helper.suggestions}));
+    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
     assert.lengthOf(result.suggestions, 1);
 
     // Tries to append already existing suggestions.
-    assert.isFalse(result.append({suggestions: helper.suggestions}));
+    assert.isFalse(result.merge({suggestions: helper.suggestions}, helper.arc));
     assert.lengthOf(result.suggestions, 1);
 
     // init results.
     const otherSuggestion = new Suggestion(helper.suggestions[0].plan, 'other-hash', 0, helper.arc);
     otherSuggestion.descriptionByModality['text'] = 'other description';
     helper.suggestions.push(otherSuggestion);
-    assert.isTrue(result.append({suggestions: helper.suggestions}));
+    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
     assert.lengthOf(result.suggestions, 2);
 
     const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, helper.arc);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
     helper.suggestions.push(suggestionWithSearch);
-    assert.isTrue(result.append({suggestions: helper.suggestions}));
+    assert.isTrue(result.merge({suggestions: helper.suggestions}, helper.arc));
     assert.lengthOf(result.suggestions, 2);
     assert.deepEqual(result.suggestions[1].searchGroups, [[''], ['hello', 'world']]);
   });
@@ -119,7 +119,7 @@ recipe R3
       const suggestions: Suggestion[] = await Promise.all(
           manifest.recipes.map(async plan => await planToSuggestion(plan)) as Promise<Suggestion>[]
       );
-      result.set({suggestions});
+      result.merge({suggestions}, helper.arc);
       return result;
     };
     return {
@@ -189,19 +189,7 @@ recipe R4
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
     assert.isEmpty(result1.suggestions);
   });
-  it('merges same suggestion with older store versions', async () => {
-    const {helper, result1, result2} = await prepareMerge(
-      `${commonManifestStr}${recipeTwoStr}`,
-      `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
-    assert.lengthOf(result1.suggestions, 1);
-    assert.lengthOf(result2.suggestions, 2);
 
-    // Increment store 'thing-id-0' version in result1.
-    result1.suggestions[0].versionByStore['thing-id-0'] = 1;
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
-    assert.lengthOf(result1.suggestions, 2);
-    assert.equal(result1.suggestions[0].versionByStore['thing-id-0'], 1);
-  });
   it('merges same suggestion with newer store versions', async () => {
     const {helper, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeTwoStr}`,
