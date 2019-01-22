@@ -25,7 +25,7 @@ export type PlanningResultOptions = {
 };
 
 export class PlanningResult {
-  _suggestions: Suggestion[];
+  suggestions: Suggestion[] = [];
   lastUpdated: Date = new Date(null);
   generations: {population: {}[], record: {}}[] = [];
   contextual = true;
@@ -84,12 +84,6 @@ export class PlanningResult {
     this.store.dispose();
   }
   
-  get suggestions(): Suggestion[] { return this._suggestions || []; }
-  set suggestions(suggestions) {
-    assert(Boolean(suggestions), `Cannot set uninitialized suggestions`);
-    this._suggestions = suggestions;
-  }
-
   static formatSerializableGenerations(generations) {
     // Make a copy of everything and assign IDs to recipes.
     const idMap = new Map(); // Recipe -> ID
@@ -215,7 +209,7 @@ export class PlanningResult {
   }
 
   isEquivalent(suggestions) {
-    return PlanningResult.isEquivalent(this._suggestions, suggestions);
+    return PlanningResult.isEquivalent(this.suggestions, suggestions);
   }
 
   static isEquivalent(oldSuggestions, newSuggestions) {
