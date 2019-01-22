@@ -183,7 +183,6 @@ describe('plan producer - search', () => {
     assert.equal(producer.search, '*');
     assert.equal(producer.produceSuggestionsCalled, 1);
     assert.isFalse(producer.options.contextual);
-    assert.isFalse(Boolean(producer.options.append));
 
     // Unchanged search term.
     await producer.setNextSearch('*');
@@ -206,7 +205,6 @@ describe('plan producer - search', () => {
     assert.equal(producer.produceSuggestionsCalled, 1);
     assert.equal(search, producer.options.search);
     assert.isFalse(producer.options.contextual);
-    assert.isFalse(Boolean(producer.options.append));
   });
 
   it('searches for term given non-contextual results', async () => {
@@ -219,7 +217,6 @@ describe('plan producer - search', () => {
     assert.equal(search, producer.search);
     assert.equal(producer.produceSuggestionsCalled, 1);
     assert.equal(search, producer.options.search);
-    assert.isTrue(producer.options.append);
     assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));
   });
   }); // end describe

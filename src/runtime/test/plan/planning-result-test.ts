@@ -119,7 +119,7 @@ recipe R3
       const suggestions: Suggestion[] = await Promise.all(
           manifest.recipes.map(async plan => await planToSuggestion(plan)) as Promise<Suggestion>[]
       );
-      result._set({suggestions});
+      result.merge({suggestions}, helper.arc);
       return result;
     };
     return {
