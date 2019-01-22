@@ -90,10 +90,8 @@ export class ResolveRecipe extends Strategy {
           return undefined;
         }
 
-
         const slotSpec = slotConnection.getSlotSpec();
         const particle = slotConnection.particle;
-
         const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
 
         const allSlots = [...local, ...remote];
@@ -111,7 +109,6 @@ export class ResolveRecipe extends Strategy {
       }
 
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
-
         const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
         const allSlots = [...local, ...remote];
 
