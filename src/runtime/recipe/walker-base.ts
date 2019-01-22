@@ -101,9 +101,9 @@ export abstract class WalkerBase extends StrategizerWalker {
               const cloneMap = new Map();
               const newRecipe = recipe.clone(cloneMap);
               if (context) {
-                score += f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
+                score = f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
               } else {
-                score += f(newRecipe);
+                score = f(newRecipe);
               }
               newRecipes.push({recipe: newRecipe, score});
             });
