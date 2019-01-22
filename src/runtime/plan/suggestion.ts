@@ -122,8 +122,9 @@ export class Suggestion {
   }
 
   _isSameVersions(other: Suggestion): boolean {
-    return Object.keys(this.versionByStore).length === Object.keys(other.versionByStore).length &&
-    Object.keys(this.versionByStore).every(key => this.versionByStore[key] === other.versionByStore[key]);
+    const storeIds = Object.keys(this.versionByStore);
+    return storeIds.length === Object.keys(other.versionByStore).length &&
+        storeIds.every(id => this.versionByStore[id] === other.versionByStore[id]);
   }
 
   static compare(s1: Suggestion, s2: Suggestion): number {

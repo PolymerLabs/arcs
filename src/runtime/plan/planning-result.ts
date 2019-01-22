@@ -145,7 +145,7 @@ export class PlanningResult {
     });
   }
 
-  _set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions) {
+  private _set({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions) {
     this.suggestions = suggestions;
     this.generations = generations;
     this.lastUpdated = lastUpdated;
@@ -155,8 +155,8 @@ export class PlanningResult {
   }
 
   merge({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions, arc: Arc): boolean {
-    const newSuggestions = [];
-    const removeIndexes = [];
+    const newSuggestions: Suggestion[] = [];
+    const removeIndexes: number[] = [];
     const arcVersionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
     for (const newSuggestion of suggestions) {
       const index = this.suggestions.findIndex(
