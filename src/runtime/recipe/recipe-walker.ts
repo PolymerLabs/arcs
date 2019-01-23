@@ -116,6 +116,7 @@ export class RecipeWalker extends Walker {
           updateList.push({continuation: result, context});
         }
       }
+    }
 
     this._runUpdateList(recipe, updateList);
   }
