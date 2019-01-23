@@ -31,6 +31,15 @@ import {assert} from '../platform/assert-web.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Modality} from './modality.js';
 import {ModalityHandler} from './modality-handler.js';
+import {ProvidedSlotSpec, SlotSpec} from './particle-spec.js';
+import {Particle} from './recipe/particle.js';
+import {HandleConnection} from './recipe/handle-connection.js';
+
+type ConsumeSlotConnectionMatch = {
+  recipeParticle: Particle,
+  slotSpec: SlotSpec,
+  matchingHandles: {handle:Handle, matchingConn: HandleConnection}[]
+};
 
 class RelevantContextRecipes extends Strategy {
   private _recipes: Recipe[] = [];
@@ -222,48 +231,42 @@ export class RecipeIndex {
   }
 
   /**
-   * Given a slot, find consume slot connections that could be connected to it.
+   * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that 
+   * could be connected to the potential slot.
    */
-  findConsumeSlotConnectionMatch(slot: Slot) {
+  findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvidedSlotSpec): ConsumeSlotConnectionMatch[] {
     this.ensureReady();
 
     const consumeConns = [];
     for (const recipe of this._recipes) {
-      if (recipe.particles.some(particle => !particle.name)) {
+      if (recipe.particles.some(recipeParticle => !recipeParticle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
         // to avoid trying to coalesce a recipe with itself.
         continue;
       }
-      for (const slotConn of recipe.slotConnections) {
-        if (!slotConn.targetSlot && MapSlots.specMatch(slotConn, slot) && MapSlots.tagsOrNameMatch(slotConn, slot)) {
-          const matchingHandles = [];
-          if (!MapSlots.handlesMatch(slotConn, slot)) {
-            // Find potential handle connections to coalesce
-            slot.handleConnections.forEach(slotHandleConn => {
-              const matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
-                return particleConn.direction !== 'host'
-                    && (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id === slotHandleConn.handle.id)
-                    && Handle.effectiveType(slotHandleConn.handle.mappedType, [particleConn]);
-              });
-              matchingConns.forEach(matchingConn => {
-                if (this._fatesAndDirectionsMatch(slotHandleConn, matchingConn)) {
-                  matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
-                }
-              });
-            });
-
-            if (matchingHandles.length === 0) {
-              continue;
+      for (const recipeParticle of recipe.particles) {
+        if (!recipeParticle.spec) continue;
+        for (const [name, slotSpec] of recipeParticle.spec.slots) {
+          const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
+          if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
+          if (MapSlots.specMatch(slotSpec, providedSlotSpec) && MapSlots.tagsOrNameMatch(slotSpec, providedSlotSpec)){
+            const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
+            let matchingHandles = [];
+            if (providedSlotSpec.handles.length !== 0 || (slotConn && !MapSlots.handlesMatch(recipeParticle, slotConn))) {
+              matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec);
+              if (matchingHandles.length === 0) {
+                continue;
+              }
             }
+            consumeConns.push({recipeParticle, slotSpec, matchingHandles});
           }
-          consumeConns.push({slotConn, matchingHandles});
         }
       }
     }
     return consumeConns;
   }
-
-  findProvidedSlot(slotConn: SlotConnection): Slot[] {
+  
+  findProvidedSlot(particle: Particle, slotSpec: SlotSpec): Slot[] {
     this.ensureReady();
 
     const providedSlots: Slot[] = [];
@@ -275,13 +278,33 @@ export class RecipeIndex {
       }
       for (const consumeConn of recipe.slotConnections) {
         for (const providedSlot of Object.values(consumeConn.providedSlots)) {
-          if (MapSlots.slotMatches(slotConn, providedSlot)) {
+          if (MapSlots.slotMatches(particle, slotSpec, providedSlot)) {
             providedSlots.push(providedSlot);
           }
         }
       }
     }
     return providedSlots;
+  }
+
+  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvidedSlotSpec) {
+    const matchingHandles = [];
+    for (const slotHandleConnName of providedSlotSpec.handles) {
+      const providedHandleConn = providingParticle.getConnectionByName(slotHandleConnName);
+      if (!providedHandleConn) continue;
+
+      const matchingConns = Object.values(particle.connections).filter(handleConn => {
+        return handleConn.direction !== 'host'
+          && (!handleConn.handle || !handleConn.handle.id || handleConn.handle.id === providedHandleConn.handle.id)
+          && Handle.effectiveType(providedHandleConn.handle.mappedType, [handleConn]);
+      });  
+      matchingConns.forEach(matchingConn => {
+        if (this._fatesAndDirectionsMatch(providedHandleConn, matchingConn)) {
+          matchingHandles.push({handle: providedHandleConn.handle, matchingConn});
+        }
+      }); 
+    }
+    return matchingHandles;
   }
 
   /**

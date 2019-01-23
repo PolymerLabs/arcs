@@ -77,7 +77,11 @@ export abstract class WalkerBase extends StrategizerWalker {
               continue;
             }
             permutation.forEach(({f, context}) => {
-              score += f(newRecipe, cloneMap.get(context));
+              if (context) {
+                score = f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
+              } else {
+                score = f(newRecipe);
+              }
             });
 
             newRecipes.push({recipe: newRecipe, score});
@@ -89,13 +93,18 @@ export abstract class WalkerBase extends StrategizerWalker {
             if (typeof continuation === 'function') {
               continuation = [continuation];
             }
+            let score = 0;
             continuation.forEach(f => {
               if (f == null) {
                 f = () => 0;
               }
               const cloneMap = new Map();
               const newRecipe = recipe.clone(cloneMap);
-              const score = f(newRecipe, cloneMap.get(context));
+              if (context) {
+                score = f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
+              } else {
+                score = f(newRecipe);
+              }
               newRecipes.push({recipe: newRecipe, score});
             });
           });

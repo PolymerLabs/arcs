@@ -10,7 +10,8 @@ import {SlotConnection} from './slot-connection.js';
 import {HandleConnection} from './handle-connection.js';
 import {compareComparables, compareStrings, compareArrays} from './util.js';
 import {Recipe} from './recipe.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+import {Slot} from './slot.js';
 
 export class Particle {
   private readonly _recipe: Recipe;
@@ -173,12 +174,7 @@ export class Particle {
       connection.type = speccedConnection.type;
       connection.direction = speccedConnection.direction;
     }
-    spec.slots.forEach(slotSpec => {
-      if (this._consumedSlotConnections[slotSpec.name] == undefined) {
-        this.addSlotConnection(slotSpec.name);
-      }
-      this._consumedSlotConnections[slotSpec.name].slotSpec = slotSpec;
-    });
+
   }
 
   addUnnamedConnection() {
@@ -223,7 +219,32 @@ export class Particle {
     this._unnamedConnections.splice(idx, 1);
   }
 
-  addSlotConnection(name) {
+  addSlotConnection(name: string) : SlotConnection {
+    assert(!(name in this._consumedSlotConnections), "slot connection already exists");
+    assert(!this.spec || this.spec.slots.has(name), "slot connection not in particle spec");
+    const slotConn = new SlotConnection(name, this);
+    this._consumedSlotConnections[name] = slotConn;
+
+    const slotSpec = this.getSlotSpecByName(name);
+    if (slotSpec) {
+      slotSpec.providedSlots.forEach(providedSlot => {
+        const slot = this.recipe.newSlot(providedSlot.name);
+        slot.sourceConnection = slotConn;
+        slotConn.providedSlots[providedSlot.name] = slot;
+        // TODO: hook the handles up
+
+        assert(slot.handleConnections.length === 0, 'Handle connections must be empty');
+        providedSlot.handles.forEach(handle => slot.handleConnections.push(this.connections[handle]));
+      });
+    }
+    return slotConn;
+  }
+
+  addSlotConnectionAsCopy(name: string) : SlotConnection {
+    // Called when a recipe and all of it's contents are being cloned. 
+    // Each slot connection in the existing recipe has to be created for the clone, 
+    // This method must not create slots for provided slot connections otherwise there 
+    // will be duplicate slots.
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
     return slotConn;
@@ -236,6 +257,27 @@ export class Particle {
 
   remove() {
     this.recipe.removeParticle(this);
+  }
+
+  getSlotConnectionBySpec(spec: SlotSpec) {
+    return Object.values(this._consumedSlotConnections).find(slotConn => slotConn.getSlotSpec() === spec);
+  }
+
+  getSlotSpecByName(name: string) : SlotSpec {
+    return this.spec && this.spec.slots.get(name);
+  }
+
+  getSlotConnectionByName(name: string) : SlotConnection {
+    return this._consumedSlotConnections[name];
+  }
+
+  getProvidedSlotByName(consumeName: string, name: string) : Slot {
+    return this.consumedSlotConnections[consumeName] && this.consumedSlotConnections[consumeName].providedSlots[name];
+  }
+
+  getSlotSpecs() : Map<string,SlotSpec> {
+    if (this.spec) return this.spec.slots;
+    return new Map();
   }
 
   toString(nameMap, options) {

@@ -48,9 +48,14 @@ export class InitPopulation extends Strategy {
 
   private _contextualResults(): ScoredRecipe[] {
     const results: ScoredRecipe[] = [];
-    for (const slot of this.arc.activeRecipe.slots.filter(s => s.sourceConnection)) {
-      results.push(...this._recipeIndex.findConsumeSlotConnectionMatch(slot).map(
-          ({slotConn}) => ({recipe: slotConn.recipe})));
+    for (const particle of this.arc.activeRecipe.particles) {
+      for (const [name, slotSpec] of particle.spec.slots) {
+        for (const providedSlotSpec of slotSpec.providedSlots) {
+          results.push(...this._recipeIndex.findConsumeSlotConnectionMatch(particle, providedSlotSpec).map(
+            ({recipeParticle}) => ({recipe: recipeParticle.recipe})
+          ));
+        }
+      }
     }
     for (const handle of [].concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?']).map(

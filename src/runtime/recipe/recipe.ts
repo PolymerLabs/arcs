@@ -137,6 +137,7 @@ export class Recipe {
         && this._handles.every(handle => handle.isResolved())
         && this._particles.every(particle => particle.isResolved())
         && this.modality.isResolved()
+        && this.allRequiredSlotsPresent()
         && this._slots.every(slot => slot.isResolved())
         && this.handleConnections.every(connection => connection.isResolved())
         && this.slotConnections.every(slotConnection => slotConnection.isResolved());
@@ -151,6 +152,38 @@ export class Recipe {
   get modality(): Modality {
     return this.particles.filter(p => Boolean(p.spec && p.spec.slots.size > 0)).map(p => p.spec.modality)
       .reduce((modality, total) => modality.intersection(total), Modality.all);
+  }
+
+  allRequiredSlotsPresent() {
+    // All required slots and at least one consume slot for each particle must be present in order for the 
+    // recipe to be considered resolved. 
+    for (const particle of this.particles) {
+      if (particle.spec.slots.size === 0) {
+        continue;
+      }
+
+      let atLeastOneSlotConnection = false;
+      for (const [name, slotSpec] of particle.spec.slots) {
+        if (slotSpec.isRequired && !particle.consumedSlotConnections[name]) {
+          return false;
+        }
+        // required provided slots are only required when the corresponding consume slot connection is present
+        if (particle.consumedSlotConnections[name]) {
+          for (const providedSlotSpec of slotSpec.providedSlots) {
+            if (providedSlotSpec.isRequired && !particle.getProvidedSlotByName(name, providedSlotSpec.name)) {
+              return false;
+            }
+          }
+        }
+        if (particle.consumedSlotConnections[name]) {
+          atLeastOneSlotConnection = true;
+        }
+      }
+      if (!atLeastOneSlotConnection) {
+        return false;
+      }
+    }
+    return true;
   }
 
   _findDuplicate(items, options) {

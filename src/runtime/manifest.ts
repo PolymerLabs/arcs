@@ -804,6 +804,24 @@ ${e.message}
         }
         let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
         if (!slotConn) {
+          // particles that reference verbs should store slot connection information as constraints to be used
+          // during verb matching. However, if there's a spec then the slots need to be validated against it
+          // instead.
+          if (particle.spec !== undefined) {
+            // Validate consumed and provided slots names are according to spec.
+            if (!particle.spec.slots.has(slotConnectionItem.param)) {
+              throw new ManifestError(
+                  slotConnectionItem.location,
+                  `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
+            }
+            slotConnectionItem.dependentSlotConnections.forEach(ps => {
+              if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
+                throw new ManifestError(
+                    ps.location,
+                    `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
+              }
+            });
+          }
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
         slotConn.tags = slotConnectionItem.tags || [];
@@ -963,25 +981,6 @@ ${e.message}
       }
 
       for (const slotConnectionItem of item.slotConnections) {
-        // particles that reference verbs should store slot connection information as constraints to be used
-        // during verb matching. However, if there's a spec then the slots need to be validated against it
-        // instead.
-        if (particle.spec !== undefined) {
-          // Validate consumed and provided slots names are according to spec.
-          if (!particle.spec.slots.has(slotConnectionItem.param)) {
-            throw new ManifestError(
-                slotConnectionItem.location,
-                `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
-          }
-          slotConnectionItem.dependentSlotConnections.forEach(ps => {
-            if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
-              throw new ManifestError(
-                  ps.location,
-                  `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
-            }
-          });
-        }
-
         let targetSlot = items.byName.get(slotConnectionItem.name);
         if (targetSlot) {
           assert(items.bySlot.has(targetSlot));

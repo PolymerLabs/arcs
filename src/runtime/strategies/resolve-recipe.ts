@@ -11,6 +11,9 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {MapSlots} from './map-slots.js';
 import {Handle} from '../recipe/handle';
+import {SlotConnection} from '../recipe/slot-connection.js';
+import {Particle} from '../recipe/particle.js';
+import {SlotSpec} from '../particle-spec.js';
 
 export class ResolveRecipe extends Strategy {
 
@@ -82,12 +85,15 @@ export class ResolveRecipe extends Strategy {
         return undefined;
       }
 
-      onSlotConnection(recipe: Recipe, slotConnection) {
+      onSlotConnection(recipe: Recipe, slotConnection: SlotConnection) {
         if (slotConnection.isConnected()) {
           return undefined;
         }
 
-        const {local, remote} = MapSlots.findAllSlotCandidates(slotConnection, arc);
+        const slotSpec = slotConnection.getSlotSpec();
+        const particle = slotConnection.particle;
+        const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
+
         const allSlots = [...local, ...remote];
 
         // MapSlots handles a multi-slot case.
@@ -98,6 +104,23 @@ export class ResolveRecipe extends Strategy {
         const selectedSlot = allSlots[0];
         return (recipe, slotConnection) => {
           MapSlots.connectSlotConnection(slotConnection, selectedSlot);
+          return 1;
+        };
+      }
+
+      onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
+        const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
+        const allSlots = [...local, ...remote];
+
+        // MapSlots handles a multi-slot case.
+        if (allSlots.length !== 1) {
+          return undefined;
+        }
+
+        const selectedSlot = allSlots[0];
+        return (recipe, particle, slotSpec) => {
+          const newSlotConnection = particle.addSlotConnection(slotSpec.name);
+          MapSlots.connectSlotConnection(newSlotConnection, selectedSlot);
           return 1;
         };
       }
