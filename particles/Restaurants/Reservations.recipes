@@ -11,7 +11,7 @@ import '../Events/Events.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Arcs/Description.schema'
 
-recipe ReservationCalendar
+recipe ReservationCalendar &calendarReserve
   create #reservation as event
   create as descriptions
   Calendar
@@ -24,7 +24,7 @@ particle ReservationForm in 'source/ReservationForm.js'
   in Restaurant restaurant
   consume action
     provide annotation
-  description `make reservations`
+  //description `make reservations`
 
 // TODO(sjmiles): couldn't find a way to project ReservationForm into detailAction slot,
 // so fork the particle
@@ -48,6 +48,7 @@ particle ReservationMultiAnnotation in 'source/ReservationAnnotation.js'
   consume annotation
 
 recipe MakeReservations
+  // &calendarReserve
   use as restaurants
   use #reservation as event
   use #selected as restaurant

@@ -18,8 +18,6 @@ const searchFor = text => keys('input[search]', text);
 const receiveEntity = async entity =>
   browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 
-const findRestaurants = `[title^="Find restaurants"]`;
-
 describe('pipes', function() {
   it('searches', async function() {
     await openNewArc(this.test.fullTitle());
@@ -42,6 +40,7 @@ describe('demo', function() {
   it('restaurants', async function() {
     await openNewArc(this.test.fullTitle());
     const search = `restaurants`;
+    const findRestaurants = `[title^="Find restaurants"]`;
     const restaurantItem = `#webtest-title`;
     const reservation = `[title*="ou are "]`;
     const calendarAction = `[particle-host="Calendar::action"]`;

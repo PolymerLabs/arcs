@@ -413,6 +413,16 @@ ${this.activeRecipe.toString()}`;
     // At least all non-optional connections must be resolved
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
+
+    // TODO(sjmiles):
+    // console.warn('warm the cache for particle code in outerPEC for centralized caching', recipeParticle.spec.implFile);
+    if (!recipeParticle.spec['implBlob']) {
+      recipeParticle.spec['implBlob'] = 'blob';
+    } else {
+      console.warn('found BLOB for', recipeParticle.spec.implFile);
+    }
+    // this.loader.loadResource(recipeParticle.spec.implFile);
+
     this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
   }
 

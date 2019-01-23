@@ -50,20 +50,32 @@ export class PlatformLoader extends Loader {
     //console.log(`loader-web: resolve(${path}) = ${url}`);
     return url;
   }
+  // Note: invoked from inside Worker
   async requireParticle(fileName) {
-    const url = await this.provisionParticleUrl(fileName);
+    // inject path to this particle into the UrlMap,
+    // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
+    this.mapParticleUrl(fileName);
+    // load wrapped particle
     const result = [];
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
+    // construct a URL to load fileName (may return a BLOB-url)
+    const url = await this.provisionParticleUrl(fileName);
     importScripts(url);
+    // clean up
     delete self.defineParticle;
+    // execute particle wrapper
     return this.unwrapParticle(result[0], this.provisionLogger(fileName));
   }
   async provisionParticleUrl(fileName) {
-    // inject path to this particle into the UrlMap,
-    // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
-    this.mapParticleUrl(fileName);
+    // TODO(sjmiles): blobCache is Worker-specific, we need a global
+    // cache.
+    //return this._resolve(fileName);
+    // TODO(sjmiles): It does occasionally hit, do we mutliplex Workers?
+    if (blobCache[fileName]) {
+      //console.warn(`warm cache for [${fileName}]`);
+    }
     // return an ObjectUrl for this file
     const url = blobCache[fileName] || this.provisionObjectUrl(fileName);
     blobCache[fileName] = url;
