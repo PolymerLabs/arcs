@@ -5,8 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer, Strategy} from '../../planning/strategizer.js';
-import {Walker} from '../recipe/walker.js';
+import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 
 /*
@@ -15,7 +14,7 @@ import {Recipe} from '../recipe/recipe.js';
  */
 export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
-    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
+    return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onHandle(recipe, handle) {
         if (handle.connections.length > 0) {
           return;
@@ -31,6 +30,6 @@ export class MatchFreeHandlesToConnections extends Strategy {
           };
         });
       }
-    }(Walker.Permuted), this);
+    }(StrategizerWalker.Permuted), this);
   }
 }
