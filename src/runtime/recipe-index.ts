@@ -33,6 +33,13 @@ import {Modality} from './modality.js';
 import {ModalityHandler} from './modality-handler.js';
 import {ProvidedSlotSpec, SlotSpec} from './particle-spec.js';
 import {Particle} from './recipe/particle.js';
+import {HandleConnection} from './recipe/handle-connection.js';
+
+type ConsumeSlotConnectionMatch = {
+  recipeParticle: Particle,
+  slotSpec: SlotSpec,
+  matchingHandles: {handle:Handle, matchingConn: HandleConnection}[]
+};
 
 class RelevantContextRecipes extends Strategy {
   private _recipes: Recipe[] = [];
@@ -227,7 +234,7 @@ export class RecipeIndex {
    * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that 
    * could be connected to the potential slot.
    */
-  findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvidedSlotSpec) {
+  findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvidedSlotSpec): ConsumeSlotConnectionMatch[] {
     this.ensureReady();
 
     const consumeConns = [];

@@ -220,10 +220,8 @@ export class Particle {
   }
 
   addSlotConnection(name: string) : SlotConnection {
-    assert(!(name in this._consumedSlotConnections));
-    if (this.spec) {
-      assert(this.spec.slots.has(name));
-    }
+    assert(!(name in this._consumedSlotConnections), "slot connection already exists");
+    assert(!this.spec || this.spec.slots.has(name), "slot connection not in particle spec");
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
 
@@ -278,8 +276,8 @@ export class Particle {
   }
 
   getSlotSpecs() : Map<string,SlotSpec> {
-    if (!this.spec) return new Map();
-    return this.spec.slots;
+    if (this.spec) return this.spec.slots;
+    return new Map();
   }
 
   toString(nameMap, options) {

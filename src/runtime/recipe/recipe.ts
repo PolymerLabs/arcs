@@ -157,7 +157,7 @@ export class Recipe {
   allRequiredSlotsPresent() {
     // All required slots and at least one consume slot for each particle must be present in order for the 
     // recipe to be considered resolved. 
-    for (const particle of this._particles) {
+    for (const particle of this.particles) {
       if (particle.spec.slots.size === 0) {
         continue;
       }
