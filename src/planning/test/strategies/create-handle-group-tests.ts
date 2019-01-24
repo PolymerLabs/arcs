@@ -126,14 +126,14 @@ describe('CreateHandleGroup', () => {
     assert.equal(handle.fate, 'create');
 
     for (const particle of result.particles) {
-      const connections = Object.values(particle.connections);
-      assert.lengthOf(connections, 1);
-      const connection = connections[0] as HandleConnection;
 
       if (['ReaderB', 'ReaderC', 'ReaderD', 'WriterBCD'].includes(particle.name)) {
-        assert.equal(connection.handle, handle);
+        const connections = Object.values(particle.connections);
+        assert.lengthOf(connections, 1);
+        const connection = connections[0] as HandleConnection;
+          assert.equal(connection.handle, handle);
       } else {
-        assert.isUndefined(connection.handle);
+        assert.isEmpty(Object.values(particle.connections));
       }
     }
   });

@@ -6,9 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, SlotSpec} from '../particle-spec.js';
+import {ParticleSpec, ProvidedSlotSpec, SlotSpec, ConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
+import {InterfaceType} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, RequireSection} from './recipe.js';
@@ -176,9 +177,29 @@ export class Particle {
         return false;
       }
     }
-    if (this.spec.connectionMap.size !== Object.keys(this._connections).length) {
+    // if (this.spec.connectionMap.size !== Object.keys(this._connections).length) {
+    if (!this.spec) {
       if (options && options.showUnresolved) {
-        options.details = 'unresolved connections';
+        options.details = 'missing spec';
+      }
+      return false;
+    }
+    const unresolvedRequiredConnections = this.spec.connections.filter(connSpec => {
+      if (connSpec.isOptional || this.connections[connSpec.name]) {
+        return false;
+      }
+      // A non-optional connection dependent on an optional and unresolved is ok.
+      const parent = connSpec.parentConnection;
+      while (parent !== null) {
+        if (!this.connections[parent.name]) {
+          return false;
+        }
+      }
+      return true;
+    });
+    if (unresolvedRequiredConnections.length > 0) {
+      if (options && options.showUnresolved) {
+        options.details = `unresolved connections: ${unresolvedRequiredConnections.map(c => c.name).join(', ')}`;
       }
       return false;
     }
@@ -208,17 +229,25 @@ export class Particle {
   set spec(spec) {
     this._spec = spec;
     for (const connectionName of spec.connectionMap.keys()) {
-      const speccedConnection = spec.connectionMap.get(connectionName);
       let connection = this.connections[connectionName];
+      const speccedConnection = spec.connectionMap.get(connectionName);
       if (connection == undefined) {
-        connection = this.addConnectionName(connectionName);
+        if (speccedConnection.type instanceof InterfaceType) {
+          // NOTE: At cloning, all type-variables change. Hence handle / handle-connections created in
+          // different planning generations cannot connect via interface.
+          // For now, eagerly create interfaces! Once this is solved:
+          // TODO: Unify addConnectionName and HandleConnection's connectToHandle methods.
+          // TODO: Make hande-connection invalid, if it doesn't have handle.
+          connection = this.addConnectionName(connectionName);
+        } else {
+          continue;
+        }
       }
       // TODO: don't just overwrite here, check that the types
       // are compatible if one already exists.
-      connection.type = speccedConnection.type;
-      connection.direction = speccedConnection.direction;
+      connection.type = speccedConnection.type;	
+      connection.direction = speccedConnection.direction;	
     }
-
   }
 
   addUnnamedConnection() {
@@ -227,9 +256,14 @@ export class Particle {
     return connection;
   }
 
-  addConnectionName(name) {
+  addConnectionName(name: string): HandleConnection {
     assert(this._connections[name] == undefined);
     this._connections[name] = new HandleConnection(name, this);
+    if (this.spec) {
+      const connSpec = this.spec.getConnectionByName(name);
+      this._connections[name].type = connSpec.type;
+      this._connections[name].direction = connSpec.direction;
+    }
     return this._connections[name];
   }
 
@@ -246,17 +280,18 @@ export class Particle {
   }
 
   nameConnection(connection, name) {
-    assert(!this._connections[name].handle, `Connection "${name}" already has a handle`);
+    assert(!this._connections[name], `Connection "${name}" already has a handle`);
 
     const idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
     connection._name = name;
 
-    connection.type = this._connections[name].type;
-    if (connection.direction !== this._connections[name].direction) {
+    const connectionSpec = this.spec.getConnectionByName(name);
+    connection.type = connectionSpec.type;
+    if (connection.direction !== connectionSpec.direction) {
       assert(connection.direction === 'inout',
-             `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${this._connections[name].direction}`);
-      connection.direction = this._connections[name].direction;
+             `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${connectionSpec.direction}`);
+      connection.direction = connectionSpec.direction;
     }
 
     this._connections[name] = connection;
@@ -276,9 +311,6 @@ export class Particle {
         slot.sourceConnection = slotConn;
         slotConn.providedSlots[providedSlot.name] = slot;
         // TODO: hook the handles up
-
-        assert(slot.handleConnections.length === 0, 'Handle connections must be empty');
-        providedSlot.handles.forEach(handle => slot.handleConnections.push(this.connections[handle]));
       });
     }
     return slotConn;

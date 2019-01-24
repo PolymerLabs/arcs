@@ -445,22 +445,22 @@ describe('recipe', () => {
     assert.equal(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notEqual(hash, hashResolvedClone);
   });
-  it('verifies modalities', async () => {
-    const isResolved = (recipe) => {
-      const recipeClone = recipe.clone();
-      assert.isTrue(recipeClone.normalize());
-      return recipeClone.isResolved();
-    };
-
+  const isResolved = (recipe) => {
+    const recipeClone = recipe.clone();
+    assert.isTrue(recipeClone.normalize());
+    return recipeClone.isResolved();
+  };
+  it('verifies modalities - no particles', async () => {
     // empty modality for recipe with no particles.
-    let recipe = (await Manifest.parse(`recipe`)).recipes[0];
+    const recipe = (await Manifest.parse(`recipe`)).recipes[0];
     assert.isEmpty(recipe.particles);
     assert.lengthOf(recipe.modality.names, Modality.all.names.length);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));
-
+  });
+  it('verifies modalities - no slots', async () => {
     // empty modality for recipe with non slot consuming particles.
-    recipe = (await Manifest.parse(`
+    const recipe = (await Manifest.parse(`
       particle P0
       particle P1
       particle P2
@@ -473,16 +473,19 @@ describe('recipe', () => {
     assert.lengthOf(recipe.modality.names, Modality.all.names.length);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));
-
-    // Default 'dom' modality in all particles.
-    recipe = (await Manifest.parse(`
-      particle P0
-        consume root
-      particle P1
-        consume root
-      particle P2
-      particle P3
-        consume root
+  });
+  const createParticleSpecString = (name, slotName, modalities = []) => {
+    return `
+      particle ${name}
+        ${slotName ? `consume ${slotName}` : ''}
+        ${modalities.map(m => `modality ${m}`).join('\n        ')}`;
+  };
+  const createRecipeString = (modalities = {}) => {
+    const str = `
+      ${createParticleSpecString('P0', 'root', modalities['P0'])}
+      ${createParticleSpecString('P1', 'root', modalities['P1'])}
+      ${createParticleSpecString('P2', null, modalities['P2'])}
+      ${createParticleSpecString('P3', 'root', modalities['P3'])}
       recipe
         slot 'slot-id' as root
         P0
@@ -491,21 +494,37 @@ describe('recipe', () => {
           consume root as root
         P2
         P3
-          consume root as root
-    `)).recipes[0];
+          consume root as root`;
+    return str;
+  };
+  it('verifies modalities - default', async () => {
+    // Default 'dom' modality in all particles.
+    const recipe = (await Manifest.parse(createRecipeString())).recipes[0];
     assert.deepEqual(recipe.modality.names, Modality.dom.names);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));
-
+  });
+  it('verifies modalities - non matching', async () => {
     // empty modality intersection, no consumed slots, recipe is resolved.
-    recipe.particles[0].spec.modality = Modality.create([Modality.Name.DomTouch, Modality.Name.Vr, Modality.Name.Voice]);
-    recipe.particles[1].spec.modality = Modality.vr;
+    // P0 modalities: dom-touch, voice, vr; P1 modality: vr; P2 and P3 modality: dom(default).
+    const recipe = (await Manifest.parse(createRecipeString({
+      'P0': ['dom-touch', 'vr', 'voice'],
+      'P1': ['vr']
+    }))).recipes[0];
     assert.isEmpty(recipe.modality.names);
     assert.isFalse(recipe.modality.isResolved());
     assert.isFalse(isResolved(recipe));
+  });
+  it('verifies modalities - matching vr', async () => {
+    // empty modality intersection, no consumed slots, recipe is resolved.
+    // P0: dom-touch, voice, vr; P1: vr; P2: dom(default); P3: voice, vr.
+    const recipe = (await Manifest.parse(createRecipeString({
+      'P0': ['dom-touch', 'vr', 'voice'],
+      'P1': ['vr'],
+      'P3': ['voice', 'vr']
+    }))).recipes[0];
 
     // resolved recipe with non empty modality names intersection.
-    recipe.particles[3].spec.modality = Modality.create([Modality.Name.Voice, Modality.Name.Vr]);
     assert.deepEqual(recipe.modality.names, Modality.vr.names);
     assert.isTrue(recipe.modality.isResolved());
     assert.isTrue(isResolved(recipe));

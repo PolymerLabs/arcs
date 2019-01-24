@@ -954,7 +954,7 @@ ${particleStr1}
     assert.equal(slotB.connections[0]._name, 'slotB');
     assert.equal(slotB.connections[1]._name, 'slotB');
 
-    const directions = slotB.connections.map(c => c._direction);
+    const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);
     assert.include(directions, '`provide');
     assert.include(directions, '`consume');
@@ -1857,7 +1857,7 @@ resource SomeName
     assert.equal(recipe.particles[0].primaryVerb, 'verb');
     assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0].connections.foo;
-    assert.equal(slotConnection._direction, '`consume');
+    assert.equal(slotConnection.direction, '`consume');
 
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 1);

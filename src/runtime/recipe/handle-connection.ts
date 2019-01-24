@@ -179,8 +179,8 @@ export class HandleConnection {
         options.details = 'missing handle';
       }
       return false;
-    } else if (parent) {
-      if (!parent.handle) {
+    } else if (this.spec) {
+      if (this.spec.parentConnection && (!parent || !parent.handle)) {
         if (options) {
           options.details = 'parent connection missing handle';
         }
@@ -239,7 +239,7 @@ export class HandleConnection {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
                  this.handle.type.equals(specConn.type) &&
-                 !this.particle.getConnectionByName(specConn.name).handle;
+                 !this.particle.getConnectionByName(specConn.name);
         });
   }
 }

@@ -864,11 +864,15 @@ ${e.message}
                 assert(theSlot !== providedSlot);
                 assert(!theSlot.name && providedSlot);
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
-                assert(theSlot.handleConnections.length === 0);
+                //assert(theSlot.handleConnections.length === 0);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
                 items.byName.set(ps.name,providedSlot);
                 recipe.removeSlot(theSlot);
+                // theSlot.name = providedSlot.name;
+                // theSlot.sourceConnection = providedSlot.sourceConnection;
+                // theSlot.sourceConnection.providedSlots[theSlot.name] = theSlot;
+                // theSlot.recipe.removeSlot(providedSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);
               }
@@ -903,6 +907,11 @@ ${e.message}
         } else {
           connection = particle.connections[connectionItem.param];
           if (!connection) {
+            if (particle.spec && !particle.spec.getConnectionByName(connectionItem.param)) {
+              throw new ManifestError(
+                connectionItem.location,
+                `param '${connectionItem.param}' is not defined by '${particle.name}'`);
+            }
             connection = particle.addConnectionName(connectionItem.param);
           }
           // TODO: else, merge tags? merge directions?

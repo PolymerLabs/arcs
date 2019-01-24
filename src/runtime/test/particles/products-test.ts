@@ -39,7 +39,7 @@ describe('products test', () => {
                 && content.model.items['$template'].length > 0
                 && 1 === content.model.items.models.length;
             if (verified) {
-              //TODO: reaching directly into data objects like this is super dodgy and we should
+              // TODO: reaching directly into data objects like this is super dodgy and we should
               // fix. It's particularly bad here as there's no guarantee that the backingStore
               // exists - should await ensureBackingStore() before accessing it.
               const reference = helper.arc._stores[0]._model.getValue(content.model.items.models[0].id);

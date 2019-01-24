@@ -31,11 +31,11 @@ describe('Recipe Particle', () => {
     let recipe = manifest.recipes[0];
     {
       const [recipeParticle] = recipe.particles;
-      const hostedParticleConn = recipeParticle.connections['hostedParticle'];
-      const listConn = recipeParticle.connections['list'];
+      const hostedParticleConn = recipeParticle.spec.getConnectionByName('hostedParticle');
       const type = hostedParticleConn.type as InterfaceType;
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
 
+      const listConn = recipeParticle.connections['list'];
       const listConnType = listConn.type as CollectionType<TypeVariable>;
       const listUnpackedVariable = listConnType.collectionType;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
@@ -44,13 +44,16 @@ describe('Recipe Particle', () => {
     recipe = recipe.clone();
     {
       const recipeParticle = recipe.particles[0];
-      const hostedParticleConn = recipeParticle.connections['hostedParticle'];
+      const hostedParticleConn = recipeParticle.spec.getConnectionByName('hostedParticle');
       const listConn = recipeParticle.connections['list'];
       const type = hostedParticleConn.type as InterfaceType;
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
       const listConnType = listConn.type as CollectionType<TypeVariable>;
       const listUnpackedVariable = listConnType.collectionType;
-      assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
+      // NOTE: During cloning, particle connections' rawType is cloned, but particle-spec
+      // connections' types remaing the same.
+      assert.isTrue(ifaceVariable.equals(listUnpackedVariable));
+      // assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });
 });

@@ -77,83 +77,90 @@ describe('MatchRecipeByVerb', () => {
   Q as particle1
     q <- handle0`);
   });
-  it('listens to handle constraints', async () => {
+
+  const basicHandlesContraintsManifest = `
+      particle P in 'A.js'
+        out S {} a
+
+      particle Q in 'B.js'
+        in S {} a
+        out S {} b
+
+      particle R in 'C.js'
+        in S {} c
+
+      recipe &verb
+        P
+
+      recipe &verb
+        P
+        Q
+
+      recipe &verb
+        Q
+
+      recipe &verb
+        R`;
+  const generatePlans = async (recipesManifest) => {
     const manifest = await Manifest.parse(`
-    particle P in 'A.js'
-      out S {} a
-    
-    particle Q in 'B.js'
-      in S {} a
-      out S {} b
-
-    particle R in 'C.js'
-      in S {} c
-
-    recipe &verb
-      P
-    
-    recipe &verb
-      P
-      Q
-    
-    recipe &verb
-      Q
-
-    recipe &verb
-      R
-
-    recipe 
-      &verb
-    
-    recipe
-      &verb
-        a ->
-    
-    recipe
-      &verb
-        a <-
-    
-    recipe
-      &verb
-        a <-
-        b ->
-    
-    recipe
-      create as handle0
-      &verb
-        * -> handle0
-    `);
-
+${basicHandlesContraintsManifest}
+${recipesManifest}`);
     const arc = StrategyTestHelper.createTestArc(manifest);
-    let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
+    const inputParams = {generated: [{result: manifest.recipes[manifest.recipes.length-1], score: 1}]};
     const mrv = new MatchRecipeByVerb(arc);
-    let results = await mrv.generate(inputParams);
-    assert.lengthOf(results, 4);
+    return await mrv.generate(inputParams);
+  };
 
-    inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
-    results = await mrv.generate(inputParams);
+  it('listens to handle constraints - all recipes', async () => {
+    const results = await generatePlans(`
+      recipe 
+        &verb`);
+    assert.lengthOf(results, 4);
+  });
+
+  it('listens to handle constraints - out connection', async () => {
+    const results = await generatePlans(`
+      recipe
+        &verb
+          a ->`);
     assert.lengthOf(results, 2);
     assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'P');
     assert.lengthOf(results[1].result.particles, 2);
-    
-    inputParams = {generated: [{result: manifest.recipes[6], score: 1}]};
-    results = await mrv.generate(inputParams);
-    assert.lengthOf(results, 2);
-    assert.lengthOf(results[1].result.particles, 1);
-    assert.equal(results[1].result.particles[0].name, 'Q');
-    assert.lengthOf(results[0].result.particles, 2);
-    
-    inputParams = {generated: [{result: manifest.recipes[7], score: 1}]};
-    results = await mrv.generate(inputParams);
-    assert.lengthOf(results, 2);
-    assert.lengthOf(results[1].result.particles, 1);
-    assert.equal(results[1].result.particles[0].name, 'Q');
-    assert.lengthOf(results[0].result.particles, 2);
+  });
 
-    inputParams = {generated: [{result: manifest.recipes[8], score: 1}]};
-    results = await mrv.generate(inputParams);
+  it('listens to handle constraints - in connection', async () => {
+    const results = await generatePlans(`
+      recipe 
+        &verb
+          a <-`);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[1].result.particles, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.lengthOf(results[0].result.particles, 2);
+  });
+
+  it('listens to handle constraints - both connection', async () => {
+    const results = await generatePlans(`
+      recipe
+        &verb
+          a <-
+          b ->
+      `);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[1].result.particles, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.lengthOf(results[0].result.particles, 2);
+  });
+  it('listens to handle constraints - handle', async () => {
+    const results = await generatePlans(`
+      recipe
+        create as handle0
+        &verb
+          * -> handle0
+      `);
     assert.lengthOf(results, 3);
+    assert.deepEqual([['P'], ['P', 'Q'], ['Q']], results.map(r => r.result.particles.map(p => p.name)));
   });
   it('listens to slot constraints', async () => {
     const manifest = await Manifest.parse(`
@@ -301,9 +308,11 @@ describe('MatchRecipeByVerb', () => {
     const results = await mrv.generate(inputParams);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
-    assert.equal(recipe.particles[1].connections.a.handle, recipe.particles[2].connections.b.handle);
-    assert.equal(recipe.particles[1].connections.a.handle.connections[0].particle, recipe.particles[1]);
-    assert.equal(recipe.particles[2].connections.b.handle.connections[1].particle, recipe.particles[2]);
+    const particleP = recipe.particles.find(p => p.name === 'P');
+    const particleQ = recipe.particles.find(p => p.name === 'Q');
+    assert.equal(particleP.connections.a.handle, particleQ.connections.b.handle);
+    assert.equal(particleP.connections.a.handle.connections[0].particle, particleP);
+    assert.equal(particleQ.connections.b.handle.connections[1].particle, particleQ);
   });
   it('carries slot assignments across verb substitution', async () => {
     const manifest = await Manifest.parse(`

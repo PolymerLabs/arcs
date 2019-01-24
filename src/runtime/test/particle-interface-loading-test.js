@@ -94,12 +94,12 @@ describe('particle interface loading', function() {
     recipeInterfaceHandle.mapToStorage(ifaceStore);
 
     const recipeOutHandle = recipe.newHandle();
-    particle.connections['output'].connectToHandle(recipeOutHandle);
+    particle.addConnectionName('output').connectToHandle(recipeOutHandle);
     recipeOutHandle.fate = 'use';
     recipeOutHandle.mapToStorage(outStore);
 
     const recipeInHandle = recipe.newHandle();
-    particle.connections['input'].connectToHandle(recipeInHandle);
+    particle.addConnectionName('input').connectToHandle(recipeInHandle);
     recipeInHandle.fate = 'use';
     recipeInHandle.mapToStorage(inStore);
 

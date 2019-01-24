@@ -110,7 +110,7 @@ export class SlotSpec {
     });
   }
 
-  getProvidedSlotSpec(name) {
+  getProvidedSlotSpec(name): ProvidedSlotSpec {
     return this.providedSlots.find(ps => ps.name === name);
   }
 }
@@ -215,6 +215,10 @@ export class ParticleSpec {
   isOutput(param: string) {
     for (const outputs of this.outputs) if (outputs.name === param) return true;
     return false;
+  }
+
+  getConnectionByName(name: string): ConnectionSpec {
+    return this.connectionMap.get(name);
   }
 
   getSlotSpec(slotName: string) {
