@@ -274,4 +274,23 @@ describe('manifest parser', () => {
         require
           handle as thing Thing #tag1 #tag2`);
   });
+  it('parses require section with handles, slots and particles', () => {
+    parse(`
+      recipe
+        require
+          handle as thing
+          slot as thing2
+          Particle
+            * <- thing 
+            consume thing2
+    `);
+  });
+  it('parses handle creation using the handle keyword', () => {
+    parse(`
+      recipe
+        handle as h0
+        Particle
+          input <- h0
+    `);
+  });
 });

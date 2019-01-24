@@ -213,6 +213,7 @@ export class Recipe {
         && (!this.search || this.search.isValid());
   }
 
+  get requires(): Recipe[] { return this._requires; }
   get name(): string | undefined { return this._name; }
   set name(name: string | undefined) { this._name = name; }
   get localName() { return this._localName; }
