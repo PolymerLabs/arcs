@@ -171,7 +171,8 @@ export class PlanningResult {
         });
         if (outdatedStores.length > 0) {
           console.warn(`New suggestions has older store versions:\n ${outdatedStores.map(id => `${id}: ${this.suggestions[index].versionByStore[id]} -> ${newSuggestion.versionByStore[id]}`).join(';')}`);
-          assert(false);
+          // TODO(mmandlis): investigate why this is happening.
+          // assert(false);
         }
         removeIndexes.push(index);
         newSuggestion.mergeSearch(this.suggestions[index]);

@@ -564,9 +564,11 @@ Recipe
     };
   }
 
+// RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
 RecipeItem
   = RecipeParticle
-  / RecipeHandle
+  / RecipeHandle 
+  / RequireHandleSection
   / RecipeRequire
   / RecipeSlot
   / RecipeSearch
@@ -786,7 +788,7 @@ RecipeHandle
   }
 
 RecipeRequire
-  = 'require' eolWhiteSpace items:(Indent (SameIndent (RecipeParticle /RequireHandleSection))*)?
+  = 'require' eolWhiteSpace items:(Indent (SameIndent (RecipeParticle / RequireHandleSection / RecipeSlot))*)?
   {
     return {
       kind: 'require',
@@ -796,14 +798,13 @@ RecipeRequire
   }
 
 RequireHandleSection
-  = 'handle' name:(whiteSpace LocalName)? id:(whiteSpace (id / upperIdent))? tags:SpaceTagList? eolWhiteSpace
+  = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleOrSlotRef)? eolWhiteSpace
   {
     return {
       kind: 'requireHandle',
       location: location(),
       name: optional(name, name => name[1], null),
-      id,
-      tags: tags || []
+      ref: optional(ref, ref => ref[1], null)
     }
   }
 

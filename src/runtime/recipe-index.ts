@@ -11,7 +11,8 @@
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
-import {Descendant, Strategizer, Strategy} from '../planning/strategizer.js';
+import {Descendant} from './recipe/walker.js';
+import {Strategizer, Strategy} from '../planning/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
