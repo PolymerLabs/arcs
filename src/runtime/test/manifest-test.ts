@@ -1936,4 +1936,30 @@ resource SomeName
     const recipe = manifest.recipes[0];
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
  });
+ it('can parse recipes with a require section', async () => {
+  const manifest = await Manifest.parse(`
+    particle P1
+      out S {} a
+      consume root 
+        provide details
+    particle P2
+      in S {} b
+        consume details
+    
+    recipe 
+      require
+        handle as h0
+        slot as s0
+        P1
+          * -> h0
+          consume root
+            provide details as s0
+        P2
+          * <- h0
+          consume details
+      P1
+  `);
+  const recipe = manifest.recipes[0];
+  assert(recipe.requires.length === 1, 'could not parse require section');
+ });
 });
