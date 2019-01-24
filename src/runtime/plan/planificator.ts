@@ -134,7 +134,6 @@ export class Planificator {
     this.lastActivatedPlan = plan;
     this.requestPlanning({metadata: {
       trigger: Trigger.PlanInstantiated,
-      hash: plan.hash,
       particleNames: plan.particles.map(p => p.name).join(',')
     }});
   }
