@@ -14,6 +14,8 @@ import {crypto} from '../../platform/crypto-web.js';
 import {DeviceKey, WrappedKey} from '../keymgmt/keys.js';
 
 describe('arcs key management', function() {
+  // do not remove, typescript removes imports that are unsed
+  const storedCrypto = crypto;
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let IV;
