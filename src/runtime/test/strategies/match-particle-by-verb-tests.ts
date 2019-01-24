@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../manifest.js';
 import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 import {Modality} from '../../modality.js';

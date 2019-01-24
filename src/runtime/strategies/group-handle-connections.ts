@@ -6,20 +6,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Strategizer, Strategy} from '../../planning/strategizer.js';
+import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../type.js';
-import {Walker} from '../recipe/walker.js';
 import {HandleConnection} from '../recipe/handle-connection.js';
 import {Arc} from '../arc.js';
 
 export class GroupHandleConnections extends Strategy {
-  _walker: Walker;
+  _walker: StrategizerWalker;
 
   constructor(arc?: Arc, args?) {
     super(arc, args);
 
-    this._walker = new class extends Walker {
+    this._walker = new class extends StrategizerWalker {
       onRecipe(recipe: Recipe, result) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.getUnnamedUntypedConnections()) {
@@ -109,12 +108,12 @@ export class GroupHandleConnections extends Strategy {
         }
         return undefined;
       }
-    }(Walker.Permuted);
+    }(StrategizerWalker.Permuted);
   }
   get walker() {
     return this._walker;
   }
   async generate(inputParams) {
-    return Strategizer.over(this.getResults(inputParams), this.walker, this);
+    return StrategizerWalker.over(this.getResults(inputParams), this.walker, this);
   }
 }

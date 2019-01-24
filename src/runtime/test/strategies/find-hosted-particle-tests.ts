@@ -15,7 +15,7 @@ import {Loader} from '../../loader.js';
 import {Arc} from '../../arc.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {InterfaceType} from '../../type.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {VariableStorageProvider} from '../../storage/storage-provider-base';
 
 async function runStrategy(manifestStr) {

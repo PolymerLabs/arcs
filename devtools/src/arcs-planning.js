@@ -82,7 +82,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       }
       [prevLength] {
         display: inline-block;
-        min-width: 300px;
+        min-width: 200px;
       }
       .inactive {
         background-color: lightgrey;
@@ -129,8 +129,8 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         <object-explorer object="{{item}}">
           <div class$="[[_getPrevClass(item.cancelled, item.inactive)]]">
             <span prevDate>[[item.formattedUpdated]]</span>
-            <span prevTrigger>[[_formatTrigger(item.metadata)]]</span>
             <span prevLength>Produced [[_getLength(item.suggestions)]] suggestions</span>
+            <span prevTrigger>[[_formatTrigger(item.metadata)]]</span>
         </div>
         </object-explorer>
       </template>
@@ -153,9 +153,25 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
     for (const msg of messages) {
       switch (msg.messageType) {
         case 'suggestions-changed':
-          if (this.lastPlanning.updated === msg.messageBody.lastUpdated) {
+          if (this.lastPlanning.updated === msg.messageBody.lastUpdated &&
+              this.lastPlanning.suggestions.length === msg.messageBody.suggestions.length &&
+              this.lastPlanning.suggestions.every(last => msg.messageBody.suggestions.some(
+                  s => s.hash === last.hash && s.descriptionText === last.descriptionText))) {
+            // The update contains an already seen planning result.
+            if ((!this.lastPlanning.metadata || !this.lastPlanning.metadata.trigger) &&
+                msg.messageBody.metadata && msg.messageBody.metadata.trigger) {
+              // The metadata might be missing, if the update from PlanConsumer came before the
+              // one in PlanProducer. This issue will be resolved once metadata is stored
+              // alongside the suggestion.
+              const combinedMetadata = Object.assign({}, this.lastPlanning.metadata, msg.messageBody.metadata);
+              this.set(`lastPlanning.metadata`, combinedMetadata);
+              this.set(`planningSessions.0.metadata`, combinedMetadata);
+            }
             // Skip message, if the same planning info was reloaded.
             break;
+          }
+          if (this.lastPlanning.updated === msg.messageBody.lastUpdated) {
+            console.warn('Unsupported duplicate update with the same timestamp.');
           }
           if (this.lastPlanning.updated) {
             this.splice('planningSessions', 0, 0, {
@@ -232,7 +248,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       case 'search':
         return `${metadata.trigger} (${metadata.search})`;
       case 'plan-instantiated':
-        return `plan ${metadata.hash}:[${metadata.particleNames}]`;
+        return `instantiated [${metadata.particleNames}]`;
       default:
         return metadata.trigger ? `${metadata.trigger}`: 'unknown';
     }

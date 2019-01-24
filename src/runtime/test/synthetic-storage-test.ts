@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Id} from '../id.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {StorageProviderBase, ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';

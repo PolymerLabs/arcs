@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';

@@ -10,7 +10,7 @@
 
 import {Manifest} from '../../manifest.js';
 import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('GroupHandleConnections', () => {
   const schemaAndParticlesStr = `

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {APIPort, PECOuterPort, PECInnerPort} from '../api-channel.js';
 
 class Registrar {

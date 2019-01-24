@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Particle} from '../recipe/particle.js';
 import {SlotComposerOptions} from '../slot-composer.js';
 import {FakeSlotComposer} from './fake-slot-composer.js';

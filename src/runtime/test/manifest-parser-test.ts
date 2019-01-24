@@ -10,7 +10,7 @@
 
 import {parser} from '../../../build/runtime/manifest-parser.js';
 const parse = parser.parse;
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 
 describe('manifest parser', () => {
   it('parses an empy manifest', () => {
@@ -273,5 +273,24 @@ describe('manifest parser', () => {
       recipe
         require
           handle as thing Thing #tag1 #tag2`);
+  });
+  it('parses require section with handles, slots and particles', () => {
+    parse(`
+      recipe
+        require
+          handle as thing
+          slot as thing2
+          Particle
+            * <- thing 
+            consume thing2
+    `);
+  });
+  it('parses handle creation using the handle keyword', () => {
+    parse(`
+      recipe
+        handle as h0
+        Particle
+          input <- h0
+    `);
   });
 });

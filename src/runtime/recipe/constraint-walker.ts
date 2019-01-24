@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {WalkerBase} from './walker-base.js';
+import {RecipeWalker} from './recipe-walker.js';
 import {Recipe} from './recipe';
 import {ConnectionConstraint} from './connection-constraint.js';
 
-export class ConstraintWalker extends WalkerBase {
+export class ConstraintWalker extends RecipeWalker {
   // Optional handler
   onConstraint?(recipe: Recipe, constraint: ConnectionConstraint);
   

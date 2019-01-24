@@ -5,9 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer, Strategy} from '../../planning/strategizer.js';
+import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
 import {SlotConnection} from '../recipe/slot-connection.js';
 import {Particle} from '../recipe/particle.js';
 import {SlotSpec, ProvidedSlotSpec} from '../particle-spec.js';
@@ -19,7 +18,7 @@ export class MapSlots extends Strategy {
   async generate(inputParams) {
     const arc = this.arc;
 
-    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
+    return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
         const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc); 
         // ResolveRecipe handles one-slot case.
@@ -70,7 +69,7 @@ export class MapSlots extends Strategy {
           return 1;
         }));
       }
-    }(Walker.Permuted), this);
+    }(StrategizerWalker.Permuted), this);
   }
 
   // Helper methods.

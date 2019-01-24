@@ -7,6 +7,9 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Action, Descendant} from '../runtime/recipe/walker.js';
+import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
+import {WalkerTactic} from '../runtime/recipe/walker.js';
 
 export class Strategizer {
   _strategies: Strategy[];
@@ -220,71 +223,29 @@ export class Strategizer {
     return mergedEvaluations;
   }
 
-  static over(results, walker: StrategizerWalker, strategy: Strategy): Descendant[] {
-    walker.onStrategy(strategy);
-    results.forEach(result => {
-      walker.onResult(result);
-      walker.onResultDone();
-    });
-    walker.onStrategyDone();
-    return walker.descendants;
-  }
 }
 
-export interface Descendant {result; score: number; derivation; hash; valid: boolean; errors?; normalized?;}
-
-export abstract class StrategizerWalker {
-  descendants: Descendant[];
-  currentStrategy;
-  currentResult;
-
-  protected constructor() {
-    this.descendants = [];
+export class StrategizerWalker extends RecipeWalker {
+  constructor(tactic) {
+    super(tactic);
   }
 
-  onStrategy(strategy: Strategy) {
-    this.currentStrategy = strategy;
+  createDescendant(recipe, score): void {
+    assert(this.currentAction instanceof Strategy, 'no current strategy');
+    // Note that the currentAction assertion in the superclass method is now
+    // guaranteed to succeed.
+    super.createDescendant(recipe, score);
   }
 
-  onResult(result): void {
-    this.currentResult = result;
-  }
-
-  createDescendant(result, score, hash, valid): void {
-    assert(this.currentResult, 'no current result');
-    assert(this.currentStrategy, 'no current strategy');
-    if (this.currentResult.score) {
-      score += this.currentResult.score;
-    }
-    this.descendants.push({
-      result,
-      score,
-      derivation: [{parent: this.currentResult, strategy: this.currentStrategy}],
-      hash,
-      valid,
-    });
-  }
-
-  onResultDone(): void {
-    this.currentResult = undefined;
-  }
-
-  onStrategyDone(): void {
-    this.currentStrategy = undefined;
+  static over(results, walker: StrategizerWalker, strategy: Strategy): Descendant[] {
+    return super.walk(results, walker, strategy);
   }
 }
 
 // TODO: Doc call convention, incl strategies are stateful.
-export abstract class Strategy {
-  private _arc?: Arc;
-  private _args?;
-
+export abstract class Strategy extends Action {
   constructor(arc?: Arc, args?) {
-    this._arc = arc;
-    this._args = args;
-  }
-  get arc(): Arc | undefined {
-    return this._arc;
+    super(arc, args);
   }
 
   async activate(strategizer) {
@@ -292,14 +253,6 @@ export abstract class Strategy {
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
-  }
-
-  getResults(inputParams) {
-    return inputParams.generated;
-  }
-
-  async generate(inputParams): Promise<Descendant[]> {
-    return [];
   }
 
   async evaluate(strategizer, individuals) {

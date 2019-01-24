@@ -9,7 +9,7 @@
  */
 
 import {InitSearch} from '../../strategies/init-search.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('InitSearch', async () => {
   it('initializes the search recipe', async () => {

@@ -5,7 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy, Descendant} from '../../planning/strategizer.js';
+import {Descendant} from '../recipe/walker.js';
+import {Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {assert} from '../../platform/assert-web.js';
 

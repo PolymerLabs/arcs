@@ -12,7 +12,7 @@
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 async function tryCoalesceRecipes(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);

@@ -10,7 +10,7 @@
 
 import {Search} from '../../recipe/search.js';
 import {Recipe} from '../../recipe/recipe.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('Recipe Search', () => {
   const createAndVerifyResolved = (search) => {
