@@ -120,5 +120,13 @@ export class RecipeWalker extends Walker {
 
     this._runUpdateList(recipe, updateList);
   }
+
+  createDescendant(recipe, score): void {
+    const valid = recipe.normalize();
+    //if (!valid) debugger;
+    const hash = valid ? recipe.digest() : null;
+    super.createWalkerDescendant(recipe, score, hash, valid);
+  }
+  
 }
 

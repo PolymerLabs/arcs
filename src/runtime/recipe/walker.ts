@@ -107,8 +107,8 @@ export abstract class Walker {
     return walker.descendants;
   }
 
-  _runUpdateList(recipe, updateList) {
-    const newRecipes = [];
+  _runUpdateList(start, updateList) {
+    const updated = [];
     if (updateList.length) {
       switch (this.tactic) {
         case WalkerTactic.Permuted: {
@@ -130,7 +130,7 @@ export abstract class Walker {
 
           for (let permutation of permutations) {
             const cloneMap = new Map();
-            const newRecipe = recipe.clone(cloneMap);
+            const newResult = start.clone(cloneMap);
             let score = 0;
             permutation = permutation.filter(p => p.f !== null);
             if (permutation.length === 0) {
@@ -138,13 +138,13 @@ export abstract class Walker {
             }
             permutation.forEach(({f, context}) => {
               if (context) {
-                score = f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
+                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
               } else {
-                score = f(newRecipe);
+                score = f(newResult);
               }
             });
 
-            newRecipes.push({recipe: newRecipe, score});
+            updated.push({result: newResult, score});
           }
           break;
         }
@@ -159,13 +159,13 @@ export abstract class Walker {
                 f = () => 0;
               }
               const cloneMap = new Map();
-              const newRecipe = recipe.clone(cloneMap);
+              const newResult = start.clone(cloneMap);
               if (context) {
-                score = f(newRecipe, ...context.map(c => cloneMap.get(c) || c));
+                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
               } else {
-                score = f(newRecipe);
+                score = f(newResult);
               }
-              newRecipes.push({recipe: newRecipe, score});
+              updated.push({result: newResult, score});
             });
           });
           break;
@@ -176,22 +176,24 @@ export abstract class Walker {
 
     // commit phase - output results.
 
-    for (const newRecipe of newRecipes) {
-      const result = this.createDescendant(newRecipe.recipe, newRecipe.score);
+    for (const newResult of updated) {
+      const result = this.createDescendant(newResult.result, newResult.score);
     }
   }
 
-  createDescendant(recipe, score) {
-    const valid = recipe.normalize();
-    //if (!valid) debugger;
-    const hash = valid ? recipe.digest() : null;
+  // This function must be overriden to generate hash and valid values for the
+  // kind of result being processed, and then call createWalkerDescendant,
+  // below. See RecipeWalker for an example.
+  abstract createDescendant(result, score): void;
+
+  createWalkerDescendant(item, score, hash, valid): void {
     assert(this.currentResult, 'no current result');
     assert(this.currentAction, 'no current action');
     if (this.currentResult.score) {
       score += this.currentResult.score;
     }
     this.descendants.push({
-      result: recipe,
+      result: item,
       score,
       derivation: [{parent: this.currentResult, strategy: this.currentAction}],
       hash,
@@ -208,7 +210,7 @@ export abstract class Walker {
       return true;
     }
 
-      assert(typeof result === 'function' || result.length);
+    assert(typeof result === 'function' || result.length);
 
     return false;
   }

@@ -230,11 +230,11 @@ export class StrategizerWalker extends RecipeWalker {
     super(tactic);
   }
 
-  createDescendant(result, score,): void {
+  createDescendant(recipe, score): void {
     assert(this.currentAction instanceof Strategy, 'no current strategy');
     // Note that the currentAction assertion in the superclass method is now
     // guaranteed to succeed.
-    super.createDescendant(result, score);
+    super.createDescendant(recipe, score);
   }
 
   static over(results, walker: StrategizerWalker, strategy: Strategy): Descendant[] {
