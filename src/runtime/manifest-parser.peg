@@ -567,7 +567,8 @@ Recipe
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
 RecipeItem
   = RecipeParticle
-  / RecipeHandle / RequireHandleSection
+  / RecipeHandle 
+  / RequireHandleSection
   / RecipeRequire
   / RecipeSlot
   / RecipeSearch
