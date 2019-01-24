@@ -11,8 +11,11 @@
 import {KeyManager} from '../keymgmt/manager.js';
 import {assert} from '../../platform/chai-web.js';
 import {crypto} from '../../platform/crypto-web.js';
+import {DeviceKey, WrappedKey} from '../keymgmt/keys.js';
 
-describe('arcs key management', function() {
+describe('arcs key management', () => {
+  // do not remove, typescript removes imports that are unsed
+  const storedCrypto = crypto;
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let IV;
@@ -34,8 +37,8 @@ describe('arcs key management', function() {
     // Test session key
     const sessionKey = await rewrappedKey.unwrap(cloudKey.privateKey());
     const testBuffer = new Uint8Array([42, 23, 99]);
-    const encryptBuffer = await sessionKey.encrypt(testBuffer, IV);
-    const decryptBuffer = await sessionKey.decrypt(encryptBuffer, IV);
+    const encryptBuffer = await sessionKey['encrypt'](testBuffer, IV);
+    const decryptBuffer = await sessionKey['decrypt'](encryptBuffer, IV);
     assert.deepEqual(testBuffer, new Uint8Array(decryptBuffer));
   });
 
@@ -48,18 +51,18 @@ describe('arcs key management', function() {
     assert.isNotNull(storageKey);
 
     await keyStorage.write(await deviceKey.fingerprint(), deviceKey);
-    const foundKey = await keyStorage.find(await deviceKey.fingerprint());
+    const foundKey = await keyStorage.find(await deviceKey.fingerprint()) as DeviceKey;
     assert(await deviceKey.fingerprint(), await foundKey.fingerprint());
 
     await keyStorage.write(await storageKey.fingerprint(), storageKey);
-    const foundStorageKey = await keyStorage.find(await storageKey.fingerprint());
+    const foundStorageKey = await keyStorage.find(await storageKey.fingerprint()) as WrappedKey;
     assert(await foundStorageKey.fingerprint(), await storageKey.fingerprint());
 
     const sessionKey = await storageKey.unwrap(deviceKey.privateKey());
-    const foundSessionKey = await foundStorageKey.unwrap(foundKey.privateKey());
+    const foundSessionKey = await foundStorageKey['unwrap'](foundKey['privateKey']());
     const testBuffer = new Uint8Array([42, 23, 99]);
-    const encryptBuffer = await sessionKey.encrypt(testBuffer, IV);
-    const decryptBuffer = await foundSessionKey.decrypt(encryptBuffer, IV);
+    const encryptBuffer = await sessionKey['encrypt'](testBuffer, IV);
+    const decryptBuffer = await foundSessionKey['decrypt'](encryptBuffer, IV);
     assert.deepEqual(testBuffer, new Uint8Array(decryptBuffer));
   });
 

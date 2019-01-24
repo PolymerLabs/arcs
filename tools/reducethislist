@@ -54,7 +54,6 @@ src/runtime/manifest.md
 
 src/runtime/manual_tests/loader-tests.js
 
-src/runtime/test/akms-test.js
 src/runtime/test/api-channel-test.js
 src/runtime/test/arc-tests.js
 src/runtime/test/data-layer-test.js
