@@ -10,7 +10,7 @@
 
 import {Manifest} from '../../manifest.js';
 import {CreateDescriptionHandle} from '../../strategies/create-description-handle.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('CreateDescriptionHandle', () => {
   it('descriptions handle created', async () => {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Bytes} from '../bytes.js';
 
 // Small Red Dot from https://en.wikipedia.org/wiki/Data_URI_scheme

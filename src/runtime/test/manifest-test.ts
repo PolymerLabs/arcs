@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {Schema} from '../schema.js';
 import {parser} from '../../../build/runtime/manifest-parser.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
 

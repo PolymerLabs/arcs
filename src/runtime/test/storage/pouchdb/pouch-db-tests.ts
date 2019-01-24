@@ -16,7 +16,7 @@ import {Arc} from '../../../arc.js';
 import {Loader} from '../../../loader.js';
 import {Manifest} from '../../../manifest.js';
 import {EntityType, ReferenceType} from '../../../type.js';
-import {assert} from '../../chai-web.js';
+import {assert} from '../../../../platform/chai-web.js';
 
 const testUrl = 'pouchdb://memory/user-test';
 

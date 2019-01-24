@@ -14,7 +14,7 @@ import {Manifest} from '../../manifest.js';
 import {Planner} from '../../planner.js';
 import {Recipe} from '../../recipe/recipe.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 class InitPopulation extends Strategy {
   private readonly _context: Manifest;

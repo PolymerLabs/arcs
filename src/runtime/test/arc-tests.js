@@ -11,7 +11,7 @@
 import {Arc} from '../arc.js';
 import {Id} from '../id.js';
 import {ArcType} from '../type.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import * as util from '../testing/test-util.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';

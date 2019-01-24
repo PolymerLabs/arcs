@@ -11,7 +11,7 @@
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {AddMissingHandles} from '../../strategies/add-missing-handles.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);

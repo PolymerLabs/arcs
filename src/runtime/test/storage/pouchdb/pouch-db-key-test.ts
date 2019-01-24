@@ -14,7 +14,7 @@
 
 import {PouchDbKey} from '../../../storage/pouchdb/pouch-db-key.js';
 
-import {assert} from '../../chai-web.js';
+import {assert} from '../../../../platform/chai-web.js';
 
 describe('pouch-db-key', () => {
   it('fails for non pouchdb: prefixed keys', () => {

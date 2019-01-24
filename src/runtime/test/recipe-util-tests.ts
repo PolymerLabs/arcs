@@ -10,7 +10,7 @@
 
 import {Manifest} from '../manifest.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 
 describe('recipe-util', () => {
   it('can produce a shape match to a simple recipe', async () => {

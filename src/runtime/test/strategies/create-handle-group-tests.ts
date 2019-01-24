@@ -12,7 +12,7 @@ import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 import {HandleConnection} from '../../recipe/handle-connection.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('CreateHandleGroup', () => {
   it('connects variables and inline schemas', async () => {

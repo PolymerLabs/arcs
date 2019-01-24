@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../manifest.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
