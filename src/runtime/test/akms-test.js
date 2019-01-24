@@ -9,7 +9,7 @@
  */
 
 import {KeyManager} from '../keymgmt/manager.js';
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {crypto} from '../../platform/crypto-web.js';
 
 describe('arcs key management', function() {

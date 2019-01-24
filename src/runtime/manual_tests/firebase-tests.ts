@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {resetStorageForTesting} from '../storage/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';

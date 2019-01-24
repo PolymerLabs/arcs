@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 

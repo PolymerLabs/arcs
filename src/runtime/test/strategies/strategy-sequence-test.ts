@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../manifest.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';

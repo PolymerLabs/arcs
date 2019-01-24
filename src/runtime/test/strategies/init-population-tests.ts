@@ -14,7 +14,7 @@ import {Manifest} from '../../manifest.js';
 import {InitPopulation} from '../../strategies/init-population.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {StubLoader} from '../../testing/stub-loader.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 
 describe('InitPopulation', async () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {

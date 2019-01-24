@@ -14,7 +14,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 
 // Resolves when the two stores are synchronzied with each other:

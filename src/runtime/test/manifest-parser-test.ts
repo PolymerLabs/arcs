@@ -10,7 +10,7 @@
 
 import {parser} from '../../../build/runtime/manifest-parser.js';
 const parse = parser.parse;
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 
 describe('manifest parser', () => {
   it('parses an empy manifest', () => {

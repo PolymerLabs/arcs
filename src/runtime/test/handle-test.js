@@ -10,7 +10,7 @@
 'use strict';
 
 import {Arc} from '../arc.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {handleFor} from '../handle.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {Manifest} from '../manifest.js';

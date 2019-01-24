@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../arc.js';
-import {assert} from './chai-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {ProvidedSlotContext, HostedSlotContext} from '../slot-context.js';
 import {Loader} from '../loader.js';

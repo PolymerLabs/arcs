@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Arc} from '../../arc.js';
-import {assert} from '../chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {FakeSlotComposer} from '../../testing/fake-slot-composer.js';
 import {Loader} from '../../loader.js';
