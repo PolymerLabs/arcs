@@ -8,7 +8,7 @@
 import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {MapSlots} from './map-slots.js';
+import {SlotUtils} from '../recipe/slot-utils.js';
 import {Handle} from '../recipe/handle';
 import {SlotConnection} from '../recipe/slot-connection.js';
 import {Particle} from '../recipe/particle.js';
@@ -91,27 +91,27 @@ export class ResolveRecipe extends Strategy {
 
         const slotSpec = slotConnection.getSlotSpec();
         const particle = slotConnection.particle;
-        const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
 
         const allSlots = [...local, ...remote];
 
-        // MapSlots handles a multi-slot case.
+        // SlotUtils handles a multi-slot case.
         if (allSlots.length !== 1) {
           return undefined;
         }
 
         const selectedSlot = allSlots[0];
         return (recipe, slotConnection) => {
-          MapSlots.connectSlotConnection(slotConnection, selectedSlot);
+          SlotUtils.connectSlotConnection(slotConnection, selectedSlot);
           return 1;
         };
       }
 
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
-        const {local, remote} = MapSlots.findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
         const allSlots = [...local, ...remote];
 
-        // MapSlots handles a multi-slot case.
+        // SlotUtils handles a multi-slot case.
         if (allSlots.length !== 1) {
           return undefined;
         }
@@ -119,7 +119,7 @@ export class ResolveRecipe extends Strategy {
         const selectedSlot = allSlots[0];
         return (recipe, particle, slotSpec) => {
           const newSlotConnection = particle.addSlotConnection(slotSpec.name);
-          MapSlots.connectSlotConnection(newSlotConnection, selectedSlot);
+          SlotUtils.connectSlotConnection(newSlotConnection, selectedSlot);
           return 1;
         };
       }
