@@ -134,7 +134,7 @@ export abstract class Type {
   }
 
   collectionOf() {
-    return new CollectionType<Type>(this);
+    return new CollectionType(this);
   }
 
   bigCollectionOf() {
