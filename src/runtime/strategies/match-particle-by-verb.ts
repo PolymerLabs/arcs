@@ -5,16 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer, Strategy} from '../../planning/strategizer.js';
+import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
 import {Arc} from '../arc.js';
 
 export class MatchParticleByVerb extends Strategy {
 
   async generate(inputParams) {
     const arc = this.arc;
-    return Strategizer.over(this.getResults(inputParams), new class extends Walker {
+    return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.
@@ -36,6 +35,6 @@ export class MatchParticleByVerb extends Strategy {
           };
         });
       }
-    }(Walker.Permuted), this);
+    }(StrategizerWalker.Permuted), this);
   }
 }

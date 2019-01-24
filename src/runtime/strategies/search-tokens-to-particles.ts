@@ -6,9 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Strategizer, Strategy} from '../../planning/strategizer.js';
+import {StrategizerWalker, Strategy} from '../../planning/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
-import {Walker} from '../recipe/walker.js';
 import {Arc} from '../arc.js';
 import {RecipeIndex} from '../recipe-index.js';
 
@@ -32,7 +31,7 @@ export class SearchTokensToParticles extends Strategy {
       r.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
     });
 
-    class SearchWalker extends Walker {
+    class SearchWalker extends StrategizerWalker {
       private recipeIndex: RecipeIndex;
       constructor(tactic, arc: Arc, recipeIndex: RecipeIndex) {
         super(tactic);
@@ -102,7 +101,7 @@ export class SearchTokensToParticles extends Strategy {
         });
       }
     }
-    this._walker = new SearchWalker(Walker.Permuted, arc, options['recipeIndex']);
+    this._walker = new SearchWalker(StrategizerWalker.Permuted, arc, options['recipeIndex']);
   }
 
   get walker() {
@@ -138,6 +137,6 @@ export class SearchTokensToParticles extends Strategy {
 
   async generate(inputParams) {
     await this.walker.recipeIndex.ready;
-    return Strategizer.over(this.getResults(inputParams), this.walker, this);
+    return StrategizerWalker.over(this.getResults(inputParams), this.walker, this);
   }
 }

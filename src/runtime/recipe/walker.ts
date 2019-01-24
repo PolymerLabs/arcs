@@ -5,126 +5,213 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {ConnectionConstraint} from './connection-constraint.js';
-import {Handle} from './handle.js';
-import {HandleConnection} from './handle-connection.js';
-import {Particle} from './particle.js';
-import {Recipe} from './recipe.js';
-import {Slot} from './slot.js';
-import {SlotConnection} from './slot-connection.js';
-import {SlotSpec} from '../particle-spec';
-import {WalkerBase, WalkerTactic} from './walker-base.js';
+import {assert} from '../../platform/assert-web.js';
+import {Arc} from '../arc.js';
 
-export class Walker extends WalkerBase {
-  // tslint:disable-next-line: variable-name
-  static Permuted: WalkerTactic;
-  // tslint:disable-next-line: variable-name
-  static Independent: WalkerTactic;
+/**
+ * Walkers traverse an object, calling methods based on the
+ * features encountered on that object. For example, a RecipeWalker
+ * takes a list of recipes and calls methods when:
+ *  - a new recipe is encountered
+ *  - a handle is found inside a recipe
+ *  - a particle is found inside a recipe
+ *  - etc..
+ * 
+ * Each of these methods can return a list of updates:
+ *   [(recipe, encountered_thing) => new_recipe]
+ *
+ * The walker then does something with the updates depending on the
+ * tactic selected.
+ * 
+ * If the tactic is "Permuted", then an output will be generated
+ * for every combination of 1 element drawn from each update list.
+ * For example, if 3 methods return [a,b], [c,d,e], and [f] respectively
+ * then "Permuted" will cause 6 outputs to be generated: [acf, adf, aef, bcf, bdf, bef]
+ * 
+ * If the tactic is "Independent", an output will be generated for each
+ * update, regardless of the list the update is in. For example,
+ * if 3 methods return [a,b], [c,d,e], and [f] respectively,
+ * then "Independent" will cause 6 outputs to be generated: [a,b,c,d,e,f]
+ */
 
-  // Optional lifecycle events
+export enum WalkerTactic {Permuted='permuted', Independent='independent'}
 
-  // tslint:disable-next-line: no-any
-  onHandle?(recipe: Recipe, handle: Handle): any;
-  // tslint:disable-next-line: no-any
-  onHandleConnection?(recipe: Recipe, handleConnection: HandleConnection): any;
-  // tslint:disable-next-line: no-any
-  onParticle?(recipe: Recipe, particle: Particle): any;
-  // tslint:disable-next-line: no-any
-  onRecipe?(recipe: Recipe, result): any;
-  // tslint:disable-next-line: no-any
-  onPotentialSlotConnection?(recipe: Recipe, particle: Particle, slotSpec: SlotSpec): any;
-  // tslint:disable-next-line: no-any
-  onSlotConnection?(recipe: Recipe, slotConnection: SlotConnection): any;
-  // tslint:disable-next-line: no-any
-  onSlot?(recipe: Recipe, slot: Slot): any;
-  // tslint:disable-next-line: no-any
-  onObligation?(recipe: Recipe, obligation: ConnectionConstraint): any;
+export interface Descendant {result; score: number; derivation; hash; valid: boolean; errors?; normalized?;}
 
-  onResult(result) {
-    super.onResult(result);
-    const recipe: Recipe = result.result;
-    const updateList = [];
+/**
+ * An Action generates the list of Descendants by walking the object with a 
+ * Walker.
+ */
+export abstract class Action {
+  private _arc?: Arc;
+  private _args?;
 
-    // update phase - walk through recipe and call onRecipe,
-    // onHandle, etc.
-
-    if (this.onRecipe) {
-      result = this.onRecipe(recipe, result);
-      if (!this.isEmptyResult(result)) {
-        updateList.push({continuation: result});
-      }
-    }
-    for (const particle of recipe.particles) {
-      if (this.onParticle) {
-        const context: [Particle] = [particle];
-        const result = this.onParticle(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-    for (const handleConnection of recipe.handleConnections) {
-      if (this.onHandleConnection) {
-        const context: [HandleConnection] = [handleConnection];
-        const result = this.onHandleConnection(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-    for (const handle of recipe.handles) {
-      if (this.onHandle) {
-        const context: [Handle] = [handle];
-        const result = this.onHandle(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-    if (this.onPotentialSlotConnection) {
-      for (const particle of recipe.particles) {
-        for (const [name, slotSpec] of particle.getSlotSpecs()) {
-          if (particle.getSlotConnectionByName(name)) continue;
-          const context: [Particle, SlotSpec] = [particle, slotSpec];
-          const result = this.onPotentialSlotConnection(recipe, ...context);
-          if (!this.isEmptyResult(result)) {
-            updateList.push({continuation: result, context});
-          }
-        }
-      }
-    }
-
-    if (this.onSlotConnection) {
-      for (const slotConnection of recipe.slotConnections) {
-        const context: [SlotConnection] = [slotConnection];
-        const result = this.onSlotConnection(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-    for (const slot of recipe.slots) {
-      if (this.onSlot) {
-        const context: [Slot] = [slot];
-        const result = this.onSlot(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-    for (const obligation of recipe.obligations) {
-      if (this.onObligation) {
-        const context: [ConnectionConstraint] = [obligation];
-        const result = this.onObligation(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
-      }
-    }
-
-    this._runUpdateList(recipe, updateList);
+  constructor(arc?: Arc, args?) {
+    this._arc = arc;
+    this._args = args;
   }
+
+  get arc(): Arc | undefined {
+    return this._arc;
+  }
+
+  getResults(inputParams) {
+    return inputParams.generated;
+  }
+
+  async generate(inputParams): Promise<Descendant[]> {
+    return [];
+  }
+
 }
 
-Walker.Permuted = WalkerTactic.Permuted;
-Walker.Independent = WalkerTactic.Independent;
+export abstract class Walker {
+  // tslint:disable-next-line: variable-name
+  static Permuted: WalkerTactic = WalkerTactic.Permuted;
+  // tslint:disable-next-line: variable-name
+  static Independent: WalkerTactic = WalkerTactic.Independent;
+  descendants: Descendant[];
+  currentAction;
+  currentResult;
+  tactic: WalkerTactic;
+
+  constructor(tactic) {
+    this.descendants = [];
+    assert(tactic);
+    this.tactic = tactic;
+  }
+
+  onAction(action: Action) {
+    this.currentAction = action;
+  }
+
+  onResult(result): void {
+    this.currentResult = result;
+  }
+
+  onResultDone(): void {
+    this.currentResult = undefined;
+  }
+
+  onActionDone(): void {
+    this.currentAction = undefined;
+  }
+
+  static walk(results, walker: Walker, action: Action): Descendant[] {
+    walker.onAction(action);
+    results.forEach(result => {
+      walker.onResult(result);
+      walker.onResultDone();
+    });
+    walker.onActionDone();
+    return walker.descendants;
+  }
+
+  _runUpdateList(start, updateList) {
+    const updated = [];
+    if (updateList.length) {
+      switch (this.tactic) {
+        case WalkerTactic.Permuted: {
+          let permutations = [[]];
+          updateList.forEach(({continuation, context}) => {
+            const newResults = [];
+            if (typeof continuation === 'function') {
+              continuation = [continuation];
+            }
+            continuation.forEach(f => {
+              permutations.forEach(p => {
+                const newP = p.slice();
+                newP.push({f, context});
+                newResults.push(newP);
+              });
+            });
+            permutations = newResults;
+          });
+
+          for (let permutation of permutations) {
+            const cloneMap = new Map();
+            const newResult = start.clone(cloneMap);
+            let score = 0;
+            permutation = permutation.filter(p => p.f !== null);
+            if (permutation.length === 0) {
+              continue;
+            }
+            permutation.forEach(({f, context}) => {
+              if (context) {
+                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
+              } else {
+                score = f(newResult);
+              }
+            });
+
+            updated.push({result: newResult, score});
+          }
+          break;
+        }
+        case WalkerTactic.Independent:
+          updateList.forEach(({continuation, context}) => {
+            if (typeof continuation === 'function') {
+              continuation = [continuation];
+            }
+            let score = 0;
+            continuation.forEach(f => {
+              if (f == null) {
+                f = () => 0;
+              }
+              const cloneMap = new Map();
+              const newResult = start.clone(cloneMap);
+              if (context) {
+                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
+              } else {
+                score = f(newResult);
+              }
+              updated.push({result: newResult, score});
+            });
+          });
+          break;
+        default:
+          throw new Error(`${this.tactic} not supported`);
+      }
+    }
+
+    // commit phase - output results.
+
+    for (const newResult of updated) {
+      const result = this.createDescendant(newResult.result, newResult.score);
+    }
+  }
+
+  // This function must be overriden to generate hash and valid values for the
+  // kind of result being processed, and then call createWalkerDescendant,
+  // below. See RecipeWalker for an example.
+  abstract createDescendant(result, score): void;
+
+  createWalkerDescendant(item, score, hash, valid): void {
+    assert(this.currentResult, 'no current result');
+    assert(this.currentAction, 'no current action');
+    if (this.currentResult.score) {
+      score += this.currentResult.score;
+    }
+    this.descendants.push({
+      result: item,
+      score,
+      derivation: [{parent: this.currentResult, strategy: this.currentAction}],
+      hash,
+      valid,
+    });
+  }
+
+  isEmptyResult(result) {
+    if (!result) {
+      return true;
+    }
+
+    if (result.constructor === Array && result.length <= 0) {
+      return true;
+    }
+
+    assert(typeof result === 'function' || result.length);
+
+    return false;
+  }
+}
