@@ -200,7 +200,7 @@ particle ShowProduct in 'show-product.js'
   `;
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, storageKey),
-        userid, productsPlanificator.result.store, productsPlanificator.searchStore);
+        userid, productsPlanificator.result, productsPlanificator.searchStore);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
     assert.isFalse(restaurantsPlanificator.producer.result.contextual);
