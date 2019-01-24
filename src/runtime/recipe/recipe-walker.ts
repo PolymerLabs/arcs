@@ -44,6 +44,7 @@ export class RecipeWalker extends Walker {
     // update phase - walk through recipe and call onRecipe,
     // onHandle, etc.
 
+    // TODO overriding the argument with a local variable is very confusing.
     if (this.onRecipe) {
       result = this.onRecipe(recipe, result);
       if (!this.isEmptyResult(result)) {
@@ -123,7 +124,6 @@ export class RecipeWalker extends Walker {
 
   createDescendant(recipe, score): void {
     const valid = recipe.normalize();
-    //if (!valid) debugger;
     const hash = valid ? recipe.digest() : null;
     super.createWalkerDescendant(recipe, score, hash, valid);
   }
