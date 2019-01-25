@@ -39,18 +39,3 @@ describe('entity', async () => {
     assert.notEqual(entity, clone);
   });
 });
-
-describe.skip('relation', () => {
-  it('can be created, stored, and restored', () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: null, loader: new Loader()});
-    const relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
-    assert.isDefined(relation);
-    // arc.commit does not exist (any more?)
-    // arc.commit([relation]);
-    const collection = arc.findStoresByType(relation.constructor.type.collectionOf())[0] as CollectionStorageProvider;
-    const clone = collection.toList()[0];
-    assert.isDefined(clone);
-    assert.equal(clone.entities[0].data, 'thing1');
-    assert.notEqual(relation, clone);
-  });
-});
