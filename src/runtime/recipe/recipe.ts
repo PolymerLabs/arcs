@@ -133,6 +133,7 @@ export class Recipe {
       return false;
     }
     return this._connectionConstraints.length === 0
+        && this.requires.every(require => require.isEmpty())
         && (this._search === null || this._search.isResolved())
         && this._handles.every(handle => handle.isResolved())
         && this._particles.every(particle => particle.isResolved())

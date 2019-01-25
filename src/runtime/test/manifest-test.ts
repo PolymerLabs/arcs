@@ -1962,4 +1962,21 @@ resource SomeName
   const recipe = manifest.recipes[0];
   assert(recipe.requires.length === 1, 'could not parse require section');
  });
+ it('recipe resolution checks the require sections', async () => {
+   const manifest = await Manifest.parse(`
+
+    particle A
+      in S {} input
+    particle B
+      out S {} output
+
+    recipe
+      require
+        A
+        B
+   `);
+   const recipe = manifest.recipes[0];
+   recipe.normalize();
+   assert.isFalse(recipe.isResolved(), 'recipe with a require section is resolved');
+ });
 });
