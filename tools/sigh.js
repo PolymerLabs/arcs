@@ -500,7 +500,6 @@ function test(args) {
     explore: ['explore'],
     exceptions: ['exceptions'],
     boolean: ['manual', 'all'],
-    retries: ['retries'],
     repeat: ['repeat'],
     alias: {g: 'grep'},
   });
@@ -538,12 +537,6 @@ function test(args) {
         mocha.suite.emit('require', null, '${test}', mocha);
         mocha.suite.emit('post-require', global, '${test}', mocha);
       `);
-      if (options.retries && !isNaN(options.retries)) {
-        chain.push(`
-          import {mocha} from '${mochaInstanceFile}';
-          mocha.suite.retries(${JSON.stringify(options.retries)})
-        `);
-      }
     }
     const chainImports = chain.map((entry, i) => {
       const file = path.join(tempDir, `chain${i}.js`);
@@ -590,11 +583,12 @@ function test(args) {
 
   const runner = buildTestRunner();
   // Spawn processes as needed to repeat tests specified by 'repeat' flag.
-  const repeatCount = JSON.stringify(options.repeat || 1);
+  const repeatCount = parseInt(JSON.stringify(options.repeat || 1));
   const testResults = [];
-  for (let i = 0; i < repeatCount; i++) {
-    console.log('RUN %s [%s]:', i+1, (new Date).toLocaleTimeString());
-    testResults.push(saneSpawn(
+  const failedRuns = [];
+  for (let i = 1; i < repeatCount + 1; i++) {
+    console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
+    const testResult = saneSpawn(
         'node',
         [
           '--experimental-modules',
@@ -607,8 +601,15 @@ function test(args) {
           'source-map-support/register.js',
           runner
         ],
-        {stdio: 'inherit'})
-    );
+        {stdio: 'inherit'});
+    if (testResult === false) {
+      failedRuns.push(i);
+    }
+    testResults.push(testResult);
+  }
+  console.log('%s runs completed. %s runs failed.', repeatCount, failedRuns.length);
+  if (failedRuns.length > 0) {
+    console.log('Failed runs: ', failedRuns);
   }
   return testResults;
 }
