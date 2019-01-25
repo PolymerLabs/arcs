@@ -30,7 +30,7 @@ describe('entity', async () => {
     // Get around incompatible types for handleFor()
     let storage;
     storage = await arc.createStore(collectionType);
-    const handle = handleFor(storage );
+    const handle = handleFor(storage);
     await handle.store(entity);
 
     const collection = arc.findStoresByType(collectionType)[0] as CollectionStorageProvider;
