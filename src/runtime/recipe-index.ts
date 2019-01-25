@@ -21,7 +21,7 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
-import {MapSlots} from './strategies/map-slots.js';
+import {SlotUtils} from './recipe/slot-utils.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
@@ -250,10 +250,10 @@ export class RecipeIndex {
         for (const [name, slotSpec] of recipeParticle.spec.slots) {
           const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
-          if (MapSlots.specMatch(slotSpec, providedSlotSpec) && MapSlots.tagsOrNameMatch(slotSpec, providedSlotSpec)){
+          if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)){
             const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
             let matchingHandles = [];
-            if (providedSlotSpec.handles.length !== 0 || (slotConn && !MapSlots.handlesMatch(recipeParticle, slotConn))) {
+            if (providedSlotSpec.handles.length !== 0 || (slotConn && !SlotUtils.handlesMatch(recipeParticle, slotConn))) {
               matchingHandles = this._getMatchingHandles(recipeParticle, particle, providedSlotSpec);
               if (matchingHandles.length === 0) {
                 continue;
@@ -279,7 +279,7 @@ export class RecipeIndex {
       }
       for (const consumeConn of recipe.slotConnections) {
         for (const providedSlot of Object.values(consumeConn.providedSlots)) {
-          if (MapSlots.slotMatches(particle, slotSpec, providedSlot)) {
+          if (SlotUtils.slotMatches(particle, slotSpec, providedSlot)) {
             providedSlots.push(providedSlot);
           }
         }
