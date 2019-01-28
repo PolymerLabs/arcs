@@ -395,10 +395,13 @@ ${this.activeRecipe.toString()}`;
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle : Particle) {
+  async _instantiateParticle(recipeParticle : Particle) {
     recipeParticle.id = this.generateID('particle');
     const handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(recipeParticle.id, handleMap);
+
+    // provide particle caching via BloblUrls representing spec.implFile
+    await this.provisionSpecUrl(recipeParticle.spec);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       if (!connection.handle) {
@@ -414,16 +417,14 @@ ${this.activeRecipe.toString()}`;
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
 
-    // TODO(sjmiles):
-    // console.warn('warm the cache for particle code in outerPEC for centralized caching', recipeParticle.spec.implFile);
-    if (!recipeParticle.spec['implBlob']) {
-      recipeParticle.spec['implBlob'] = 'blob';
-    } else {
-      console.warn('found BLOB for', recipeParticle.spec.implFile);
-    }
-    // this.loader.loadResource(recipeParticle.spec.implFile);
-
     this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
+  }
+
+  async provisionSpecUrl(spec) {
+    // if supported, construct spec.implBlobUrl for spec.implFile
+    if (this.loader['provisionParticleSpecUrl']) {
+      await this.loader['provisionParticleSpecUrl'](spec);
+    }
   }
 
   generateID(component: string = '') {
@@ -547,7 +548,7 @@ ${this.activeRecipe.toString()}`;
       this._registerStore(store, recipeHandle.tags);
     }
 
-    particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
+    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead

@@ -50,36 +50,50 @@ export class PlatformLoader extends Loader {
     //console.log(`loader-web: resolve(${path}) = ${url}`);
     return url;
   }
-  // Note: invoked from inside Worker
-  async requireParticle(fileName) {
+  async provisionParticleSpecUrl(spec) {
+    // if needed, construct spec.implBlobUrl for spec.implFile
+    if (!spec.implBlobUrl) {
+      const url = await this.provisionObjectUrl(spec.implFile);
+      spec.model['implBlobUrl'] = spec.implBlobUrl = url;
+    }
+  }
+  async provisionObjectUrl(fileName) {
+    const raw = await this.loadResource(fileName);
+    // TODO(sjmiles): can manipulate/examine code before executing, right here
+    // ... consider automarshalling `defineParticle` boilerplate
+    /*
+    const code = !fileName.includes('Launcher') ? raw :
+`'use strict';
+defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
+${raw}
+return AParticle;
+});`;
+    */
+    const code = raw;
+    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+  }
+  // Below here invoked from inside Worker
+  async loadParticleClass(spec) {
+    const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
+    clazz.spec = spec;
+    return clazz;
+  }
+  async requireParticle(fileName, blobUrl) {
     // inject path to this particle into the UrlMap,
-    // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
+    // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(fileName);
     // load wrapped particle
     const result = [];
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
-    // construct a URL to load fileName (may return a BLOB-url)
-    const url = await this.provisionParticleUrl(fileName);
+    // determine URL to load fileName
+    const url = blobUrl || (await this._resolve(fileName));
     importScripts(url);
     // clean up
     delete self.defineParticle;
     // execute particle wrapper
     return this.unwrapParticle(result[0], this.provisionLogger(fileName));
-  }
-  async provisionParticleUrl(fileName) {
-    return this._resolve(fileName);
-  }
-  async provisionParticleUrl0(fileName) {
-    // TODO(sjmiles): It does occasionally hit, do we mutliplex Workers?
-    if (blobCache[fileName]) {
-      //console.warn(`warm cache for [${fileName}]`);
-    }
-    // return an ObjectUrl for this file
-    const url = blobCache[fileName] || this.provisionObjectUrl(fileName);
-    blobCache[fileName] = url;
-    return url;
   }
   mapParticleUrl(fileName) {
     const path = this._resolve(fileName);
@@ -89,31 +103,18 @@ export class PlatformLoader extends Loader {
     const name = suffix.split('.').shift();
     this._urlMap[name] = folder;
   }
-  async provisionObjectUrl(fileName) {
-    const raw = await this.loadResource(fileName);
-    // TODO(sjmiles): can manipulate/examine code before executing, right here
-    // ... consider automarshalling `defineParticle` boilerplate
-    const code = !fileName.includes('Launcher') ? raw :
-`'use strict';
-defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
-
-${raw}
-
-return AParticle;
-});`;
-    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
-  }
-  provisionLogger(fileName) {
+    provisionLogger(fileName) {
     return logFactory(fileName.split('/').pop(), '#1faa00');
   }
   unwrapParticle(particleWrapper, log) {
+    const resolver = this._resolve.bind(this);
     return particleWrapper({
       Particle,
       DomParticle,
       MultiplexerDomParticle,
       SimpleParticle: DomParticle,
       TransformationDomParticle,
-      resolver: this._resolve.bind(this),
+      resolver,
       log,
       html
     });
