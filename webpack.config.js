@@ -1,6 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
 
+const lib = './shells/lib';
+
 module.exports = {
   mode: 'none',
   optimization: {
@@ -8,17 +10,17 @@ module.exports = {
   },
   devtool: 'source-map',
   entry: {
-    worker: './shells/lib/source/worker.js',
-    firebase: './shells/lib/source/firebase.js',
-    pouchdb: './shells/lib/source/pouchdb.js'
+    worker: `${lib}/source/worker.js`,
+    firebase: `${lib}/source/firebase.js`,
+    pouchdb: `${lib}/source/pouchdb.js`
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'shells/lib/build')
+    path: path.resolve(__dirname, `${lib}/build`)
   },
   plugins: [
+    new webpack.NormalModuleReplacementPlugin(
       // build/worker.js needs the node version of this file
-      new webpack.NormalModuleReplacementPlugin(
       /sourcemapped-stacktrace-web.js/,
       resource =>  resource.request = resource.request.replace(/web/, `node`)
     )

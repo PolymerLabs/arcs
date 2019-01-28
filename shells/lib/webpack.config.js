@@ -1,6 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
 
+const lib = '.';
+
 module.exports = {
   mode: 'none',
   optimization: {
@@ -8,13 +10,13 @@ module.exports = {
   },
   devtool: 'source-map',
   entry: {
-    worker: './source/worker.js',
-    firebase: './source/firebase.js',
-    pouchdb: './source/pouchdb.js'
+    worker: `${lib}/source/worker.js`,
+    firebase: `${lib}/source/firebase.js`,
+    pouchdb: `${lib}/source/pouchdb.js`
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'build')
+    path: path.resolve(__dirname, `${lib}/build`)
   },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
