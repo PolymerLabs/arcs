@@ -1,3 +1,5 @@
+const WORKER_PATH = `https://$shell/lib/build/worker.js`;
+
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = _expandUrls(loader._urlMap);
@@ -27,14 +29,16 @@ const _expandUrls = urlMap => {
 };
 
 const workerIndustry = loader => {
-  const workerPath = loader._resolve(`https://$shell/lib/build/worker.js`);
-  return () => new Worker(workerPath);
+  // will eventually (asynchronously) set `provisionWorker.workerBlobUrl`
+  provisionWorkerBlob(loader, WORKER_PATH);
+  // default url
+  const workerUrl = loader._resolve(WORKER_PATH);
+  // return Worker factory that uses workerBlobUrl or workerUrl, depending on availability
+  return () => new Worker(provisionWorkerBlob.url || workerUrl);
 };
 
-// const workerIndustry1 = loader => () => {
-//   loader.loadResource(`https://$shell/lib/build/worker.js`)
-//   // "Server response", used in all examples
-//   const response = "self.onmessage=function(e){postMessage('Worker: '+e.data);}";
-//   const blob = new Blob([response], {type: 'application/javascript'});
-//   const worker = new Worker(URL.createObjectURL(blob));
-// };
+const provisionWorkerBlob = async (loader, path) => {
+ const code = await loader.loadResource(path);
+ provisionWorkerBlob.url = URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+};
+
