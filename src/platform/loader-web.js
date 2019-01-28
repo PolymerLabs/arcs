@@ -69,9 +69,9 @@ export class PlatformLoader extends Loader {
     return this.unwrapParticle(result[0], this.provisionLogger(fileName));
   }
   async provisionParticleUrl(fileName) {
-    // TODO(sjmiles): blobCache is Worker-specific, we need a global
-    // cache.
-    //return this._resolve(fileName);
+    return this._resolve(fileName);
+  }
+  async provisionParticleUrl0(fileName) {
     // TODO(sjmiles): It does occasionally hit, do we mutliplex Workers?
     if (blobCache[fileName]) {
       //console.warn(`warm cache for [${fileName}]`);
