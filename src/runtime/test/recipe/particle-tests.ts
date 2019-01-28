@@ -38,7 +38,7 @@ describe('Recipe Particle', () => {
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
 
       const listConnType = listConn.type as CollectionType<TypeVariable>;
-      const listUnpackedVariable = listConnType.collectionType; // *question* as opposed to getContainedType()?
+      const listUnpackedVariable = listConnType.collectionType;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
 
