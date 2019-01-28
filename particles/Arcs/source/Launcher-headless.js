@@ -7,8 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 /* global html, DomParticle, log, resolver */
 
-defineParticle(({DomParticle, html, log}) => {
-
+const host = 'arcs-launcher';
 const template = html`
 
 <style>
@@ -96,7 +95,7 @@ const template = html`
 
 `;
 
-return class extends DomParticle {
+class AParticle extends DomParticle {
   get template() {
     return template;
   }
@@ -229,6 +228,4 @@ return class extends DomParticle {
     handle.store(entity);
     log(`mutated entity [${entity.id}]`);
   }
-};
-
-});
+}
