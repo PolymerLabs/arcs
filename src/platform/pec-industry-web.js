@@ -29,16 +29,10 @@ const _expandUrls = urlMap => {
 };
 
 const workerIndustry = loader => {
-  // will eventually (asynchronously) set `provisionWorker.workerBlobUrl`
-  provisionWorkerBlob(loader, WORKER_PATH);
   // default url
   const workerUrl = loader._resolve(WORKER_PATH);
-  // return Worker factory that uses workerBlobUrl or workerUrl, depending on availability
-  return () => new Worker(provisionWorkerBlob.url || workerUrl);
+  // return Worker factory
+  return () => new Worker(workerUrl);
 };
 
-const provisionWorkerBlob = async (loader, path) => {
- const code = await loader.loadResource(path);
- provisionWorkerBlob.url = URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
-};
 

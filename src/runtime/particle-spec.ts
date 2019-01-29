@@ -148,7 +148,6 @@ type SerializedParticleSpec = {
   args: SerializedConnectionSpec[],
   description: {pattern?: string},
   implFile: string,
-  implBlobUrl: string,
   modality: string[],
   slots: SerializedSlotSpec[]
 };
@@ -163,7 +162,6 @@ export class ParticleSpec {
   outputs: ConnectionSpec[];
   pattern: string;
   implFile: string;
-  implBlobUrl: string;
   modality: Modality;
   slots: Map<string, SlotSpec>;
 
@@ -188,7 +186,6 @@ export class ParticleSpec {
     });
 
     this.implFile = model.implFile;
-    this.implBlobUrl = model.implBlobUrl;
     this.modality = Modality.create(model.modality || []);
     this.slots = new Map();
     if (model.slots) {
@@ -232,19 +229,19 @@ export class ParticleSpec {
   }
 
   toLiteral() : SerializedParticleSpec {
-    const {args, name, verbs, description, implFile, implBlobUrl, modality, slots} = this.model;
+    const {args, name, verbs, description, implFile, modality, slots} = this.model;
     const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, implFile, implBlobUrl, modality, slots};
+    return {args: argsLiteral, name, verbs, description, implFile, modality, slots};
   }
 
   static fromLiteral(literal: SerializedParticleSpec) {
-    let {args, name, verbs, description, implFile, implBlobUrl, modality, slots} = literal;
+    let {args, name, verbs, description, implFile, modality, slots} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, implBlobUrl, modality, slots});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
   }
 
   clone() {

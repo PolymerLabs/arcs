@@ -18,7 +18,6 @@ import {logFactory} from '../platform/log-web.js';
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 const dumbCache = {};
-const blobCache = {};
 
 export class PlatformLoader extends Loader {
   constructor(urlMap) {
@@ -37,7 +36,6 @@ export class PlatformLoader extends Loader {
     return this._loadURL(name);
   }
   _resolve(path) {
-    //return new URL(path, this._base).href;
     let url = this._urlMap[path];
     if (!url && path) {
       // TODO(sjmiles): inefficient!
@@ -50,35 +48,8 @@ export class PlatformLoader extends Loader {
     //console.log(`loader-web: resolve(${path}) = ${url}`);
     return url;
   }
-  async provisionParticleSpecUrl(spec) {
-    // if needed, construct spec.implBlobUrl for spec.implFile
-    if (!spec.implBlobUrl) {
-      const url = await this.provisionObjectUrl(spec.implFile);
-      spec.model['implBlobUrl'] = spec.implBlobUrl = url;
-    }
-  }
-  async provisionObjectUrl(fileName) {
-    const raw = await this.loadResource(fileName);
-    // TODO(sjmiles): can manipulate/examine code before executing, right here
-    // ... consider automarshalling `defineParticle` boilerplate
-    /*
-    const code = !fileName.includes('Launcher') ? raw :
-`'use strict';
-defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
-${raw}
-return AParticle;
-});`;
-    */
-    const code = raw;
-    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
-  }
   // Below here invoked from inside Worker
-  async loadParticleClass(spec) {
-    const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
-    clazz.spec = spec;
-    return clazz;
-  }
-  async requireParticle(fileName, blobUrl) {
+  async requireParticle(fileName) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(fileName);
@@ -88,7 +59,7 @@ return AParticle;
       result.push(particleWrapper);
     };
     // determine URL to load fileName
-    const url = blobUrl || (await this._resolve(fileName));
+    const url = await this._resolve(fileName);
     importScripts(url);
     // clean up
     delete self.defineParticle;
