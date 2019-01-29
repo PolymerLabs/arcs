@@ -60,7 +60,6 @@ src/runtime/test/handle-test.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js
 src/runtime/test/slot-consumer-tests.js
-src/runtime/test/storage-proxy-test.js
 
 src/runtime/test/artifacts/consumer-particle.js
 src/runtime/test/artifacts/hello.js
