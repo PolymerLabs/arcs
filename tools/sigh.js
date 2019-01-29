@@ -500,6 +500,7 @@ function test(args) {
     explore: ['explore'],
     exceptions: ['exceptions'],
     boolean: ['manual', 'all'],
+    repeat: ['repeat'],
     alias: {g: 'grep'},
   });
 
@@ -581,20 +582,36 @@ function test(args) {
   }
 
   const runner = buildTestRunner();
-  return saneSpawn(
-      'node',
-      [
-        '--experimental-modules',
-        '--trace-warnings',
-        '--no-deprecation',
-        ...extraFlags,
-        '--loader',
-        fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-        '-r',
-        'source-map-support/register.js',
-        runner
-      ],
-      {stdio: 'inherit'});
+  // Spawn processes as needed to repeat tests specified by 'repeat' flag.
+  const repeatCount = parseInt(JSON.stringify(options.repeat || 1));
+  const testResults = [];
+  const failedRuns = [];
+  for (let i = 1; i < repeatCount + 1; i++) {
+    console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
+    const testResult = saneSpawn(
+        'node',
+        [
+          '--experimental-modules',
+          '--trace-warnings',
+          '--no-deprecation',
+          ...extraFlags,
+          '--loader',
+          fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+          '-r',
+          'source-map-support/register.js',
+          runner
+        ],
+        {stdio: 'inherit'});
+    if (testResult === false) {
+      failedRuns.push(i);
+    }
+    testResults.push(testResult);
+  }
+  console.log('%s runs completed. %s runs failed.', repeatCount, failedRuns.length);
+  if (failedRuns.length > 0) {
+    console.log('Failed runs: ', failedRuns);
+  }
+  return testResults;
 }
 
 async function importSpotify(args) {
