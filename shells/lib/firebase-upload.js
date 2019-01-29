@@ -1,5 +1,5 @@
 import {firebase, storage} from './firebase.js';
-import Xen from '../../../modalities/dom/components/xen/xen.js';
+import {Xen} from './xen.js';
 
 const template = `
   <style>

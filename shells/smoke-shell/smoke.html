@@ -1,0 +1,27 @@
+<!doctype html>
+
+<!-- could be `import`ed -->
+<script src="../lib/build/pouchdb.js"></script>
+<script src="../lib/build/firebase.js"></script>
+<!-- cannot be `import`ed (tries to use `this`) -->
+<script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+
+<script type="module">
+  import {App} from './app.js';
+  import {Utils} from '../lib/utils.js';
+  import {DomSlotComposer} from '../lib/dom-slot-composer.js';
+
+  // run
+  (async () => {
+    try {
+      // configure arcs environment
+      Utils.init('../..');
+      // construct renderer
+      const composer = new DomSlotComposer({rootContainer: document.body});
+      // start app
+      await App(composer);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

@@ -8,10 +8,8 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-//import {Const} from '../../configuration/constants.js';
-//import {SyntheticStores} from '../../lib/synthetic-stores.js';
 import {SingleUserContext} from './single-user-context.js';
-import {logFactory} from './arcs.js';
+import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('UserContext', '#4f0433');
 const warn = logFactory('UserContext', '#4f0433', 'warn');

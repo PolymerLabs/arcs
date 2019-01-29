@@ -10,4 +10,4 @@ import '../../modalities/dom/components/elements/model-input.js';
 import '../../modalities/dom/components/elements/model-img.js';
 
 // requires app-level firebase configuration
-import '../lib/firebase/firebase-upload.js';
+import '../lib/firebase-upload.js';

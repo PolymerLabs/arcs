@@ -413,6 +413,7 @@ ${this.activeRecipe.toString()}`;
     // At least all non-optional connections must be resolved
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
+
     this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
   }
 

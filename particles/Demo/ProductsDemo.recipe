@@ -56,12 +56,12 @@ recipe Products
     choices = recommendations
     resultList = shoplist
   //
-  // @manufacturerInfo
+  // &manufacturerInfo
   SimpleAnnotationMultiplexer
     list = shoplist
     hostedParticle = ManufacturerInfo
   //
-  // @productInterests
+  // &productInterests
   Interests
     list = shoplist
     person = person

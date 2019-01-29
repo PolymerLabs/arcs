@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import MersenneTwister from 'mersenne-twister';
+import {MersenneTwister} from '../platform/mersenne-twister-web.js';
 
 abstract class RNG {
   abstract next() : number;

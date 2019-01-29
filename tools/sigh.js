@@ -28,7 +28,7 @@ const sources = {
   pack: [{
     buildDir: 'shell/build',
   }, {
-    buildDir: 'shells/env/build'
+    buildDir: 'shells/lib/build'
   }],
   ts: {
     inputs: [

@@ -7,14 +7,14 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
+const headless = true;
+const root = `shells`;
+
 const process = require('process');
 const fs = require('fs');
 const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
-
-const headless = true;
-const root = `shells`;
 
 const HEADLESS = '--headless';
 const chromeArgs = headless ? [HEADLESS] : [];

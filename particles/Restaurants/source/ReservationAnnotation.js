@@ -50,15 +50,15 @@ defineParticle(({DomParticle, html, log}) => {
       return template;
     }
     update({restaurant, event, descriptions}) {
-      if (!event) {
-        const now = this.toDateInputValue(new Date());
-        event = {startDate: now, endDate: now, participants: 2};
+      let currentEvent = null;
+      if (event && event.startDate && event.participants) {
+        currentEvent = event.dataClone();
+        if (this.handles.get('descriptions')) {
+          log(currentEvent, this.getDescription(restaurant, currentEvent));
+          this.setParticleDescription(this.getDescription(restaurant, currentEvent));
+        }
       }
-      this._setState({currentEvent: event});
-      if (descriptions) {
-        log(this.getDescription(restaurant, event));
-        this.setParticleDescription(this.getDescription(restaurant, event));
-      }
+      this._setState({currentEvent});
     }
     toDateInputValue(date) {
       const local = new Date(date);
@@ -66,7 +66,7 @@ defineParticle(({DomParticle, html, log}) => {
       return local.toJSON().slice(0, 16);
     }
     render({restaurant}, {currentEvent}) {
-      if (restaurant) {
+      if (restaurant && currentEvent) {
         return this.renderSingle(restaurant, currentEvent.startDate, parseInt(currentEvent.participants) || 2);
       }
     }
@@ -82,7 +82,7 @@ defineParticle(({DomParticle, html, log}) => {
       };
     }
     getDescription(restaurant, currentEvent) {
-      if (restaurant) {
+      if (restaurant && currentEvent) {
         return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
       }
       return 'make reservations';

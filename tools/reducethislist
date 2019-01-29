@@ -5,7 +5,7 @@
 # The name reflects the fact that we want to reduce and eventually eliminate
 # this list, by converting the js to ts, by moving the file out of src, or by
 # adjusting the dependency to work without the link.
-# Creating the set of links is idempotent, but add-only (old links are not 
+# Creating the set of links is idempotent, but add-only (old links are not
 # removed), so it is important to run `tools/sigh clean` every time lines are
 # removed from this file.
 
@@ -41,6 +41,17 @@ src/platform/sourcemapped-stacktrace-node.js
 src/platform/sourcemapped-stacktrace-web.js
 src/platform/vm-node.js
 src/platform/vm-web.js
+
+src/platform/loader-web.js
+src/platform/loader-node.js
+src/platform/pec-industry-web.js
+src/platform/pec-industry-node.js
+src/platform/firebase-web.js
+src/platform/firebase-node.js
+src/platform/pouchdb-web.js
+src/platform/pouchdb-node.js
+src/platform/mersenne-twister-web.js
+src/platform/mersenne-twister-node.js
 
 src/tracelib/options.js
 src/tracelib/trace.js

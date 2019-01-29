@@ -230,7 +230,7 @@ export class ParticleSpec {
 
   toLiteral() : SerializedParticleSpec {
     const {args, name, verbs, description, implFile, modality, slots} = this.model;
-    const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec = 
+    const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
     return {args: argsLiteral, name, verbs, description, implFile, modality, slots};

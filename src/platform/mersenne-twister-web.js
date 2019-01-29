@@ -1,0 +1,2 @@
+const MersenneTwister = {};
+export {MersenneTwister};

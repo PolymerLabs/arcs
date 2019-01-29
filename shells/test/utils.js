@@ -12,7 +12,7 @@ I'm still a newb, but I stumbled on these things:
 */
 
 exports.seconds = s => s * 1e3;
-exports.defaultTimeout = exports.seconds(60);
+exports.defaultTimeout = exports.seconds(30);
 exports.shellUrl = `shells/web-shell`;
 
 const storageKey = `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`;
@@ -94,6 +94,7 @@ exports.openNewArc = async function(testTitle, useSolo) {
   const urlParams = [
     //`testFirebaseKey=${firebaseKey}`,
     //`log`,
+    `plannerStorage=volatile`,
     `storage=${storage}`,
     'user=selenium'
   ];

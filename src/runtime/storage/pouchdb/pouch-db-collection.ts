@@ -4,7 +4,7 @@ import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {Type, TypeLiteral} from '../../type.js';
 import {PouchDbStorage} from './pouch-db-storage';
 import {CollectionStorageProvider, ChangeEvent} from '../storage-provider-base.js';
-import PouchDB from 'pouchdb';
+import {PouchDB} from '../../../platform/pouchdb-web.js';
 
 /**
  * Defines a callback interface to allow for modifying a

@@ -1,9 +1,9 @@
-import {StorageProviderFactory} from '../lib/arcs.js';
+import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 
-const stores = {};
+//const stores = {};
 
 export class SyntheticStores {
-  static init(env) {
+  static init() {
     if (!SyntheticStores.providerFactory) {
       SyntheticStores.providerFactory = new StorageProviderFactory('shell');
     }

@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {SyntheticStores} from './synthetic-stores.js';
-import {logFactory} from '../lib/arcs.js';
+import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');
 const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
