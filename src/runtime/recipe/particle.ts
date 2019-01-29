@@ -189,11 +189,12 @@ export class Particle {
         return false;
       }
       // A non-optional connection dependent on an optional and unresolved is ok.
-      const parent = connSpec.parentConnection;
+      let parent = connSpec.parentConnection;
       while (parent !== null) {
         if (!this.connections[parent.name]) {
           return false;
         }
+        parent = parent.parentConnection;
       }
       return true;
     });
