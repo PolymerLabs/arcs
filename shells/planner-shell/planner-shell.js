@@ -13,7 +13,6 @@
 
 // generate platform specific environment
 import './config.js';
-import {Env} from '../lib/env/node/env.js';
 
 // platform agnostic code
 import {Utils} from '../lib/utils.js';
@@ -52,9 +51,9 @@ export class PlannerShellInterface {
     // connect to DevTools if running with --explore
     await maybeConnectToDevTools();
     // create an arcs environment
-    const env = new Env(assetsPath);
+    Utils.init(assetsPath);
     // observe user's arc list
-    const userArcs = new UserArcs(env, storage, userid);
+    const userArcs = new UserArcs(storage, userid);
     // base context (particles & recipes) from static manifest
     const context = await Utils.parse(contextManifest);
     // userContext continually updates context based on user's arcs

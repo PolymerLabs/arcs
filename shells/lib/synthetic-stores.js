@@ -3,7 +3,7 @@ import {StorageProviderFactory} from '../../build/runtime/storage/storage-provid
 const stores = {};
 
 export class SyntheticStores {
-  static init(env) {
+  static init() {
     if (!SyntheticStores.providerFactory) {
       SyntheticStores.providerFactory = new StorageProviderFactory('shell');
     }

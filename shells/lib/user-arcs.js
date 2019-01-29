@@ -16,11 +16,11 @@ const log = logFactory('UserArcs', '#4f0433');
 const warn = logFactory('UserArcs', '#4f0433', 'warn');
 
 export class UserArcs {
-  constructor(env, storage, userid) {
+  constructor(storage, userid) {
     this.values = [];
     this.listeners = [];
     this.contextWait = 3000;
-    SyntheticStores.init(env);
+    SyntheticStores.init();
     this.updateArcsStore(storage, userid);
   }
   async subscribe(listener) {
