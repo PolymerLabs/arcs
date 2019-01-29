@@ -1,6 +1,6 @@
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 
-const stores = {};
+//const stores = {};
 
 export class SyntheticStores {
   static init() {

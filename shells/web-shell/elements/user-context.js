@@ -18,9 +18,10 @@ const warn = Xen.logFactory('UserContext', '#4f0433', 'warn');
 
 customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['env', 'storage', 'context', 'userid', 'users'];
+    return ['storage', 'context', 'userid', 'users'];
   }
   _getInitialState() {
+    SyntheticStores.init();
     return {
       // ms to wait until we think there is probably some context
       contextWait: 3000,
@@ -34,10 +35,6 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     };
   }
   update(props, state) {
-    if (!state.env && props.env) {
-      state.env = props.env;
-      SyntheticStores.init(props.env);
-    }
     if (props.context && state.context !== props.context) {
       state.context = props.context;
       this.updateFriends(props, state);
