@@ -17,7 +17,9 @@ import {compareStrings, compareNumbers} from '../recipe/util.js';
 enum EventKind {
   change = 'Change'
 }
-type Callback = ({}) => void;
+
+// tslint:disable-next-line: no-any
+type Callback = (v: {[index: string]: any}) => void;
 
 /**
  * Methods that must be implemented by a Variable Storage Provider
