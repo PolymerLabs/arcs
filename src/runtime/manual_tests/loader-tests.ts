@@ -12,7 +12,7 @@ import {Loader} from '../loader.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 
-describe('loader', function() {
+describe('loader', () => {
   it('correctly loads Thing as a dependency', async () => {
     const loader = new Loader();
     const schemaString = await loader.loadResource('http://schema.org/Product');
