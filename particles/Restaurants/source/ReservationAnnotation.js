@@ -53,8 +53,6 @@ defineParticle(({DomParticle, html, log}) => {
       let currentEvent = null;
       if (event && event.startDate && event.participants) {
         currentEvent = event.dataClone();
-        //const now = this.toDateInputValue(new Date());
-        //event = {startDate: now, endDate: now, participants: 2};
         if (this.handles.get('descriptions')) {
           log(currentEvent, this.getDescription(restaurant, currentEvent));
           this.setParticleDescription(this.getDescription(restaurant, currentEvent));
@@ -87,8 +85,7 @@ defineParticle(({DomParticle, html, log}) => {
       if (restaurant && currentEvent) {
         return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
       }
-      //return 'make reservations';
-      return 'plblblblblt';
+      return 'make reservations';
     }
     createDescription(restaurantId, participants, startDate) {
       const times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
