@@ -12,21 +12,4 @@ particle Calendar in 'source/Calendar.js'
   inout Event event
   out [Description] descriptions
   consume action
-  consume modifier
   description `Select a time from your calendar`
-
-//recipe
-//  use as event
-//  create as descriptions
-//  Calendar
-
-//particle EmbeddedCalendar in 'source/Calendar.js'
-//  inout [Event] event
-//  consume action
-//  consume modifier
-//  description `embedded calendar`
-
-//recipe
-//  create as event
-//  EmbeddedCalendar
-//    event = event

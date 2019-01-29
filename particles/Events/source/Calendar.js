@@ -187,21 +187,20 @@ ${styles}
     get template() {
       return template;
     }
-    willReceiveProps(props, state) {
+    update(props, state) {
       const event = Object.assign({}, props.event && props.event.rawData || {});
       this._event = event;
       this._savedStartDate = event.startDate || (new Date()).toJSON().slice(0, 16);
       if (!event.startDate) {
         this._storeNewEvent(this._savedStartDate);
       }
-
       const conflicts = this._findConflicts(this._savedStartDate);
-      this.setParticleDescription(
-        'you are ' +
-        (conflicts.length ? `busy with ${conflicts[0].name}` : 'free') +
-        ' ' + this._generateHumanReadableTime(this._savedStartDate) +
-        ', consult your calendar');
-
+      this.setParticleDescription([
+        'you are ',
+        (conflicts.length ? `busy with ${conflicts[0].name} ` : 'free '),
+        this._generateHumanReadableTime(this._savedStartDate),
+        //', consult your calendar'
+      ].join(''));
     }
     render(props, state) {
       const events = this._getEventsForDate(this._savedStartDate);
