@@ -11,6 +11,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../xen/xen.js';
 
 const log = Xen.logFactory('ModelImg', 'blue');
+/*
+ Has two modes:
+  add an <img> child and set `src`
+  set `url` (will use background style)
+
+ Probably should be two elements instead.
+*/
 
 class ModelImg extends Xen.Base {
   static get observedAttributes() {
@@ -18,26 +25,31 @@ class ModelImg extends Xen.Base {
   }
   _update({src, url, fadems}, state) {
     const fade = fadems || 150;
-    const img = this.img;
-    if (img && !state.listener) {
-      state.listener = img.addEventListener('load', e => this.onLoad(img, e));
-    }
-    if (img && src) {
+    if (src && state.src !== src) {
+      //log(src);
+      state.src = src;
+      const img = this.img;
       img.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
       img.src = src;
+      img.onload = e => this.onLoad(img, src);
     }
-    if (url) {
+    if (url && state.url !== url) {
+      //log(url);
+      state.url = url;
       this.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
-      Object.assign(new Image(), {src: url}).onload = () => {
-        this.style.backgroundImage = `url(${url})`;
-        this.style.opacity = 1;
+      const image = Object.assign(new Image(), {src: url});
+      image.onload = () => {
+        this.style.cssText = `background-image: url(${url}); opacity: 1;`;
+        this.onLoad(image, url);
       };
     }
   }
   get img() {
     return this.firstElementChild;
   }
-  onLoad(img, e) {
+  onLoad(img, url) {
+    //log(`[${url}] loaded`);
+    img.onload = null;
     img.style.opacity = 1;
   }
 }
