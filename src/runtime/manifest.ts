@@ -327,7 +327,7 @@ export class Manifest {
     return await registry[fileName];
   }
 
-  static async parse(content, options?): Promise<Manifest> {
+  static async parse(content: string, options?): Promise<Manifest> {
     options = options || {};
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
     let {id, fileName, position, loader, registry, context} = options;

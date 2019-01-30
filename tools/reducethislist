@@ -63,7 +63,6 @@ src/runtime/multiplexer-dom-particle.js
 src/runtime/transformation-dom-particle.js
 
 src/runtime/test/api-channel-test.js
-src/runtime/test/arc-tests.js
 src/runtime/test/particle-interface-loading-test.js
 src/runtime/test/particle-interface-loading-with-slots-test.js
 src/runtime/test/slot-consumer-tests.js

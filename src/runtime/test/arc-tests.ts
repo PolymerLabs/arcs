@@ -19,11 +19,12 @@ import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 
 async function setup() {
   const loader = new Loader();
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     import 'src/runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
@@ -33,6 +34,7 @@ async function setup() {
         foo <- handle0
         bar -> handle1
   `, {loader, fileName: process.cwd() + '/input.manifest'});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test', context: manifest});
   return {
     arc,
     recipe: manifest.recipes[0],
@@ -44,7 +46,6 @@ async function setup() {
 
 async function setupWithOptional(cProvided, dProvided) {
   const loader = new Loader();
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     schema Thing
       Text value
@@ -67,12 +68,13 @@ async function setupWithOptional(cProvided, dProvided) {
         ${cProvided ? 'c <- maybeThingC' : ''}
         ${dProvided ? 'd -> maybeThingD' : ''}
   `, {loader, fileName: process.cwd() + '/input.manifest'});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
 
-  const Thing = manifest.findSchemaByName('Thing').entityClass();
-  const aStore = await arc.createStore(Thing.type, 'aStore', 'test:1');
-  const bStore = await arc.createStore(Thing.type, 'bStore', 'test:2');
-  const cStore = await arc.createStore(Thing.type, 'cStore', 'test:3');
-  const dStore = await arc.createStore(Thing.type, 'dStore', 'test:4');
+  const thingClass = manifest.findSchemaByName('Thing').entityClass();
+  const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+  const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+  const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+  const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
 
   const recipe = manifest.recipes[0];
   recipe.handles[0].mapToStorage(aStore);
@@ -82,12 +84,11 @@ async function setupWithOptional(cProvided, dProvided) {
   recipe.normalize();
   await arc.instantiate(recipe);
 
-  return {arc, recipe, Thing, aStore, bStore, cStore, dStore};
+  return {arc, recipe, thingClass, aStore, bStore, cStore, dStore};
 }
 
 async function setupSlandlesWithOptional(cProvided, dProvided) {
   const loader = new Loader();
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test'});
   const manifest = await Manifest.parse(`
     particle TestParticle in 'src/runtime/test/artifacts/test-dual-slandle-particle.js'
       description \`particle a two required slandles and two optional slandles\`
@@ -107,11 +108,13 @@ async function setupSlandlesWithOptional(cProvided, dProvided) {
         ${cProvided ? 'c <- maybeSlotC' : ''}
         ${dProvided ? 'd -> maybeSlotD' : ''}
   `, {loader, fileName: process.cwd() + '/input.manifest'});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: 'test', context: manifest});
 
-  const aStore = await arc.createStore(Slot.type, 'aStore', 'test:1');
-  const bStore = await arc.createStore(Slot.type, 'bStore', 'test:2');
-  const cStore = await arc.createStore(Slot.type, 'cStore', 'test:3');
-  const dStore = await arc.createStore(Slot.type, 'dStore', 'test:4');
+  const slotType = manifest.findSchemaByName('Slot').entityClass().type;
+  const aStore = await arc.createStore(slotType, 'aStore', 'test:1');
+  const bStore = await arc.createStore(slotType, 'bStore', 'test:2');
+  const cStore = await arc.createStore(slotType, 'cStore', 'test:3');
+  const dStore = await arc.createStore(slotType, 'dStore', 'test:4');
 
   const recipe = manifest.recipes[0];
   recipe.handles[0].mapToStorage(aStore);
@@ -139,7 +142,8 @@ describe('Arc', () => {
     const {arc, recipe, Foo, Bar} = await setup();
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
-    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(fooStore as any).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
     assert(recipe.normalize());
@@ -156,36 +160,44 @@ describe('Arc', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(fooStore as any).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
   it('optional handles aren\'t required to resolve', async () => {
-    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
       = await setupWithOptional(false, false);
 
-    await handleFor(aStore).set(new Thing({value: 'from_a'}));
-    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    // NOTE: handleFor using incompatible types
+    // tslint:disable-next-line: no-any
+    await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(cStore as any).set(new thingClass({value: 'from_c'}));
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
   it('optional provided handles aren\'t required to resolve', async () => {
-    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
       = await setupWithOptional(true, false);
 
-    await handleFor(aStore).set(new Thing({value: 'from_a'}));
-    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(cStore as any).set(new thingClass({value: 'from_c'}));
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
   it('optional provided handles resolve when provided', async () => {
-    const {arc, recipe, Thing, aStore, bStore, cStore, dStore}
+    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
       = await setupWithOptional(true, true);
 
-    await handleFor(aStore).set(new Thing({value: 'from_a'}));
-    await handleFor(cStore).set(new Thing({value: 'from_c'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(cStore as any).set(new thingClass({value: 'from_c'}));
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', 'from_c1');
   });
@@ -193,19 +205,20 @@ describe('Arc', () => {
   it('deserializing a serialized empty arc produces an empty arc', async () => {
     const slotComposer = new FakeSlotComposer();
     const loader = new Loader();
-    const arc = new Arc({slotComposer, loader, id: 'test'});
+    const arc = new Arc({slotComposer, loader, id: 'test', context: undefined});
     const serialization = await arc.serialize();
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer});
-    assert.equal(newArc.storesById.size, 0);
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    assert.equal(newArc._stores.length, 0);
     assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.equal(newArc.id.toStringWithoutSessionForTesting(), 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
     const {arc, recipe, Foo, Bar, loader} = await setup();
-    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
-    let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']);
+    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as VariableStorageProvider;
+    // tslint:disable-next-line: no-any
+    await handleFor(fooStore as any).set(new Foo({value: 'a Foo'}));
+    let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']) as VariableStorageProvider;
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
@@ -217,9 +230,9 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     arc.stop();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer: new FakeSlotComposer()});
-    fooStore = newArc.findStoreById(fooStore.id);
-    barStore = newArc.findStoreById(barStore.id);
+    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context: undefined});
+    fooStore = newArc.findStoreById(fooStore.id) as VariableStorageProvider;
+    barStore = newArc.findStoreById(barStore.id) as VariableStorageProvider;
     assert.equal(fooStore.version, 1);
     assert.equal(barStore.version, 1);
     assert.lengthOf(newArc.findStoresByType(Bar.type, {tags: ['tag1']}), 1);
@@ -245,19 +258,19 @@ describe('Arc', () => {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    const slotComposer_createHostedSlot = slotComposer.createHostedSlot;
+    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
 
     let slotsCreated = 0;
 
     slotComposer.createHostedSlot = (...args) => {
       slotsCreated++;
-      return slotComposer_createHostedSlot.apply(slotComposer, args);
+      return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: 'test', context: manifest, slotComposer});
+    const arc = new Arc({id: 'test', context: manifest, slotComposer, loader: new Loader()});
 
-    const barType = manifest.findTypeByName('Bar');
-    let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
+    const barType = manifest.findTypeByName('Bar') ;
+    let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(store);
 
     assert(recipe.normalize());
@@ -270,9 +283,9 @@ describe('Arc', () => {
     arc.stop();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest});
     await newArc.idle;
-    store = newArc.storesById.get(store.id);
+    store = newArc.findStoreById(store.id) as CollectionStorageProvider;
     await store.store({id: 'a', rawData: {value: 'one'}}, ['somekey']);
 
     await newArc.idle;
@@ -316,7 +329,7 @@ describe('Arc', () => {
     assert.deepEqual(['best'], [...helper.arc.storeTags.get([...helper.arc.storesById.values()][0])]);
   });
 
-  it('serialization roundtrip preserves data for volatile stores', async function() {
+  it('serialization roundtrip preserves data for volatile stores', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -341,13 +354,13 @@ describe('Arc', () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const arc = new Arc({id: 'test', loader});
     const manifest = await Manifest.load('manifest', loader);
-    const Data = manifest.findSchemaByName('Data').entityClass();
+    const dataClass = manifest.findSchemaByName('Data').entityClass();
+    const arc = new Arc({id: 'test', loader, context: manifest});
 
-    const varStore = await arc.createStore(Data.type, undefined, 'test:0');
-    const colStore = await arc.createStore(Data.type.collectionOf(), undefined, 'test:1');
-    const bigStore = await arc.createStore(Data.type.bigCollectionOf(), undefined, 'test:2');
+    const varStore = await arc.createStore(dataClass.type, undefined, 'test:0') as VariableStorageProvider;
+    const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), undefined, 'test:2') as BigCollectionStorageProvider;
 
     // TODO: Reference Mode: Deal With It (TM)
     varStore.referenceMode = false;
@@ -355,7 +368,8 @@ describe('Arc', () => {
 
     // Populate the stores, run the arc and get its serialization.
     // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
-    await handleFor(varStore).set(new Data({value: 'v1'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(varStore as any).set(new dataClass({value: 'v1'}));
     await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
     await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
     await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
@@ -377,14 +391,16 @@ describe('Arc', () => {
     const bigData = JSON.parse(JSON.stringify(bigStore.toLiteral()));
 
     await varStore.clear();
-    colStore.clearItemsForTesting();
-    bigStore.clearItemsForTesting();
+
+    // TODO better casting...
+    colStore['clearItemsForTesting']();
+    bigStore['clearItemsForTesting']();
 
     // Deserialize into a new arc.
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: ''});
-    const varStore2 = arc2.findStoreById(varStore.id);
-    const colStore2 = arc2.findStoreById(colStore.id);
-    const bigStore2 = arc2.findStoreById(bigStore.id);
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+    const varStore2 = arc2.findStoreById(varStore.id) as VariableStorageProvider;
+    const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
+    const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
 
     // New storage providers should have been created.
     assert.notStrictEqual(varStore2, varStore);
@@ -421,8 +437,8 @@ describe('Arc', () => {
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
 
-    const arc = new Arc({id: 'test', loader});
     const manifest = await Manifest.load('manifest', loader);
+    const arc = new Arc({id: 'test', loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -449,12 +465,12 @@ describe('Arc', () => {
   ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
     it('persist serialization for ' + storageKeyPrefix, async () => {
       const id = new Id('123', ['test']).toString();
-      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`});
       const manifest = await Manifest.parse(`
       schema Data
         Text value
       recipe
         description \`abc\``);
+      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`, loader: new Loader(), context: manifest});
       const recipe = manifest.recipes[0];
       recipe.normalize();
       await arc.instantiate(recipe);
@@ -466,7 +482,7 @@ describe('Arc', () => {
             : storageKeyPrefix + '!123:test/arc-info';
 
 
-      const store = await arc.storageProviderFactory.connect('id', new ArcType(), key);
+      const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as VariableStorageProvider;
 
       assert.isNotNull(store, 'got a valid store');
       const data = await store.get();
@@ -549,14 +565,14 @@ describe('Arc', () => {
           };
         });`,
       }),
-      slotComposer: new FakeSlotComposer(),
+      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug')
     });
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc);
+    const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc) as MockSlotDomConsumer;
     await rootSlotConsumer.contentAvailable;
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
