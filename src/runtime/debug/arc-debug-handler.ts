@@ -10,7 +10,7 @@
 
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {Arc} from '../arc.js';
-import {ArcPlannerInvoker} from './arc-planner-invoker.js';
+import {ArcPlannerInvoker} from '../../planning/debug/arc-planner-invoker.js';
 import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
 import {DevtoolsConnection} from './devtools-connection.js';

@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {handleFor} from '../handle.js';
-import {Speculator} from '../speculator.js';
+import {Speculator} from '../../planning/speculator.js';
 import {StorageProxy} from '../storage-proxy.js';
 
 async function setup() {
