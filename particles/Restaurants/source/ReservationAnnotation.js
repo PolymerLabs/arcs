@@ -54,7 +54,6 @@ defineParticle(({DomParticle, html, log}) => {
       if (event && event.startDate && event.participants) {
         currentEvent = event.dataClone();
         if (this.handles.get('descriptions')) {
-          log(currentEvent, this.getDescription(restaurant, currentEvent));
           this.setParticleDescription(this.getDescription(restaurant, currentEvent));
         }
       }
