@@ -10,7 +10,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {MockSlotComposer} from '../../testing/mock-slot-composer.js';
 import {Modality} from '../../modality.js';
-import {ModalityHandler} from '../../modality-handler.js';
+import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -124,7 +124,7 @@ describe('plan consumer', () => {
       const helper = await TestHelper.create({
         slotComposer: new MockSlotComposer({
           modalityName,
-          modalityHandler: ModalityHandler.createHeadlessHandler()
+          modalityHandler: PlanningModalityHandler.createHeadlessHandler()
         }), 
         manifestString: `
   particle ParticleDom in './src/runtime/test/artifacts/consumer-particle.js'
