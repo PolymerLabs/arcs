@@ -59,7 +59,7 @@ Polymer({
 
   _recipeChanged: function(recipe) {
     // Maintain find-highlight after results are reloaded.
-    this.setFindPhrase(document.strategyExplorer.searchPhrase);
+    this.setFindParams(document.strategyExplorer.searchParams);
 
     this.selected = false;
     this.selectedParent = false;
@@ -172,9 +172,22 @@ Polymer({
     });
   },
 
-  setFindPhrase: function(phrase) {
-    this.findHighlight = !!phrase &&
-        (this.recipe.result.toLowerCase().includes(phrase.toLowerCase()) ||
-        (this.recipe.description && this.recipe.description.toLowerCase().includes(phrase.toLowerCase())));
-  }
+  setFindParams: function(params) {
+    this.findHighlight = (() => {
+      if (!params) {
+        return false;
+      } else if (params.phrase) {
+        if (this.recipe.result.toLowerCase().includes(params.phrase)) {
+          return true;
+        }
+        return !!(this.recipe.description && this.recipe.description.toLowerCase().includes(params.phrase));
+      } else {
+        const re = new RegExp(params.regex, 'i');
+        if (re.test(this.recipe.result)) {
+          return true;
+        }
+        return !!(this.recipe.description && re.test(this.recipe.description));
+      }
+    })();
+  },
 });

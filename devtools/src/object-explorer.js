@@ -212,27 +212,43 @@ export class ObjectExplorer extends PolymerElement {
     return data;
   }
 
-  static find(data, phrase) {
+  static find(data, params) {
+    const localParams = {phrase: null, regex: null, compiledRegex: null};
+    if (params) {
+      if (params.phrase) {
+        localParams.phrase = params.phrase;
+      } else {
+        localParams.regex = params.regex;
+        localParams.compiledRegex = new RegExp(params.regex, 'gi');
+      }
+    }
+    return this._findInternal(data, localParams);
+  }
+  
+  static _findInternal(data, params) {
     // As _onFindChanged is called on object explorer in the order
     // from leafs to the root, this allows to skip O(n^2).
-    if (data.findPhrase === phrase) return data.found;
+    if (data.foundPhrase === params.phrase && data.foundRegex === params.regex) {
+      return data.found;
+    }
 
-    const [displayKey, foundInKey] = this._highlight(phrase, data.key);
+    const [displayKey, foundInKey] = this._highlight(data.key, params);
     data.displayKey = displayKey;
 
     if (data.type === 'object') {
       let foundInside = false;
       for (const inner of data.props) {
-        foundInside = this.find(inner, phrase) || foundInside;
+        foundInside = this._findInternal(inner, params) || foundInside;
       }
       data.foundInside = foundInside;
       data.found = foundInKey || foundInside; 
     } else {
-      const [displayValue, foundInValue] = this._highlight(phrase, String(data.value));
+      const [displayValue, foundInValue] = this._highlight(String(data.value), params);
       data.displayValue = displayValue;
       data.found = foundInKey || foundInValue; 
     }
-    data.findPhrase = phrase;
+    data.foundPhrase = params.phrase;
+    data.foundRegex = params.regex;
 
     return data.found;
   }
@@ -252,26 +268,45 @@ export class ObjectExplorer extends PolymerElement {
     return str.replace(/[\u00A0-\u9999<>\\&]/gim, i => ('&#' + i.charCodeAt(0) + ';'));
   }
 
-  static _highlight(phrase, value) {
-    if (!phrase) {
+  // TODO: this gets called *many* times when the page first loads and then when the search params
+  // change, due to the param bindings being shared with multiple panels. This may end up causing
+  // performance issues.
+  static _highlight(value, params) {
+    if (!params.phrase && !params.regex) {
       return [this._escape(value), false];
     }
-    const lcPhrase = phrase.toLowerCase();
-    const lcValue = value.toLowerCase();
 
     const parts = [];
     let i = 0;
-    let found = false;
-    while (i < value.length) {
-      const pi = lcValue.indexOf(lcPhrase, i);
-      parts.push(this._escape(value.substring(i, pi !== -1 ? pi : value.length)));
-      if (pi === -1) break;
-      parts.push(`<span highlight>${this._escape(value.substring(pi, pi + phrase.length))}</span>`);
-      found = true;
-      i = pi + phrase.length;
+    if (params.phrase) {
+      const lcValue = value.toLowerCase();
+      while (i < value.length) {
+        const pi = lcValue.indexOf(params.phrase, i);
+        parts.push(this._escape(value.substring(i, pi !== -1 ? pi : value.length)));
+        if (pi === -1) break;
+        i = pi + params.phrase.length;
+        parts.push(`<span highlight>${this._escape(value.substring(pi, i))}</span>`);
+      }
+    } else {
+      params.compiledRegex.lastIndex = 0;
+      let m;
+      while (m = params.compiledRegex.exec(value)) {
+        // Some patterns can return empty matches: 'abXXc'.match(/X*/g) returns ['', '', 'XX', '', ''].
+        // Using exec() with such patterns will loop infinitely on an empty match at index 0 unless we
+        // manually skip them.
+        if (m[0].length === 0) {
+          params.compiledRegex.lastIndex++;
+        } else {
+          parts.push(this._escape(value.substring(i, m.index)));
+          i = m.index + Math.max(m[0].length, 1);
+          parts.push(`<span highlight>${this._escape(value.substring(m.index, i))}</span>`);
+        }
+      }
+      if (i < value.length) {
+        parts.push(this._escape(value.substring(i)));
+      }
     }
-
-    return [parts.join(''), found];
+    return [parts.join(''), i > 0];
   }
 
   static get properties() {
@@ -347,9 +382,9 @@ export class ObjectExplorer extends PolymerElement {
     this.dispatchEvent(new CustomEvent('expand', {detail: this.data}));
   }
 
-  _onFindChanged(find) {
+  _onFindChanged(params) {
     if (!this.data) return;
-    ObjectExplorer.find(this.data, find);
+    ObjectExplorer.find(this.data, params);
     this.notifyPath('data.displayKey');
     this.notifyPath('data.displayValue');
     this.notifyPath('data.foundInside');

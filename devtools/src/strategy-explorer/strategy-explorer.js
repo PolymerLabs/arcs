@@ -55,9 +55,9 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
         type: Array,
         value: []
       },
-      searchPhrase: {
-        type: String,
-        observer: '_onSearchPhraseChanged'
+      searchParams: {
+        type: Object,
+        observer: '_onSearchChanged'
       },
       findBacklit: Boolean
     };
@@ -101,10 +101,10 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
     }
   }
 
-  _onSearchPhraseChanged(phrase) {
-    this.findBacklit = !!phrase;
+  _onSearchChanged(params) {
+    this.findBacklit = !!params;
     for (const seRecipe of this.idMap.values()) {
-      seRecipe.setFindPhrase(phrase);
+      seRecipe.setFindParams(params);
     }
   }
 }
