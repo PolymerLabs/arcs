@@ -381,42 +381,42 @@ export class TypeVariable extends Type {
 }
 
 
-export class CollectionType extends Type {
-  readonly collectionType: Type;
+export class CollectionType<T extends Type> extends Type {
+  readonly collectionType: T;
 
-  constructor(collectionType: Type) {
+  constructor(collectionType: T) {
     super('Collection');
     this.collectionType = collectionType;
   }
 
-  get isCollection() {
+  get isCollection(): boolean {
     return true;
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): CollectionType<Type> {
     const primitiveType = this.collectionType;
     const result = primitiveType.mergeTypeVariablesByName(variableMap);
     return (result === primitiveType) ? this : result.collectionOf();
   }
 
-  _applyExistenceTypeTest(test) {
+  _applyExistenceTypeTest(test: (type: Type) => boolean): boolean {
     return this.collectionType._applyExistenceTypeTest(test);
   }
 
   // TODO: remove this in favor of a renamed collectionType
-  primitiveType() {
+  primitiveType(): T {
     return this.collectionType;
   }
 
-  getContainedType() {
+  getContainedType(): T {
     return this.collectionType;
   }
 
-  isTypeContainer() {
+  isTypeContainer(): boolean {
     return true;
   }
 
-  resolvedType() {
+  resolvedType(): CollectionType<Type> {
     const primitiveType = this.collectionType;
     const resolvedPrimitiveType = primitiveType.resolvedType();
     return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.collectionOf() : this;
@@ -426,7 +426,7 @@ export class CollectionType extends Type {
     return this.collectionType.canEnsureResolved();
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return this.collectionType.maybeEnsureResolved();
   }
 
@@ -443,19 +443,19 @@ export class CollectionType extends Type {
     return {tag: this.tag, data: this.collectionType.toLiteral()};
   }
 
-  _hasProperty(property) {
+  _hasProperty(property): boolean {
     return this.collectionType.hasProperty(property);
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     return `[${this.collectionType.toString(options)}]`;
   }
 
-  getEntitySchema() {
+  getEntitySchema(): Schema {
     return this.collectionType.getEntitySchema();
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     const entitySchema = this.getEntitySchema();
     if (entitySchema && entitySchema.description.plural) {
       return entitySchema.description.plural;

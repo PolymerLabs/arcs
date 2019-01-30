@@ -99,8 +99,8 @@ describe('TypeChecker', () => {
     const a = TypeVariable.make('a').collectionOf();
     const b = TypeVariable.make('b').collectionOf();
     const resolution = EntityType.make(['Thing'], {});
-    (a.collectionType as TypeVariable).variable.resolution = resolution;
-    (b.collectionType as TypeVariable).variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
+    b.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
     assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
@@ -122,7 +122,7 @@ describe('TypeChecker', () => {
   it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
     const a = TypeVariable.make('a').collectionOf();
     const resolution = EntityType.make(['Thing'], {});
-    (a.collectionType as TypeVariable).variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
     assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
@@ -144,7 +144,7 @@ describe('TypeChecker', () => {
   it(`doesn't resolve a pair of out [~a (is Thing)], in [Product]`, async () => {
     const a = TypeVariable.make('a').collectionOf();
     const resolution = EntityType.make(['Thing'], {});
-    (a.collectionType as TypeVariable).variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.isNull(result);
@@ -162,7 +162,7 @@ describe('TypeChecker', () => {
   it(`doesn't resolve a pair of out [~a (is Thing)], inout [Product]`, async () => {
     const a = TypeVariable.make('a').collectionOf();
     const resolution = EntityType.make(['Thing'], {});
-    (a.collectionType as TypeVariable).variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'inout'}]);
     assert.isNull(result);
@@ -181,13 +181,13 @@ describe('TypeChecker', () => {
     const a = TypeVariable.make('a').collectionOf();
     const b = TypeVariable.make('b').collectionOf();
     let resolution = EntityType.make(['Thing'], {});
-    (a.collectionType as TypeVariable).variable.resolution = resolution;
-    (b.collectionType as TypeVariable).variable.resolution = resolution;
+    a.collectionType.variable.resolution = resolution;
+    b.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const d = TypeVariable.make('c').collectionOf();
     const e = TypeVariable.make('d').collectionOf();
     resolution = EntityType.make(['Product', 'Thing'], {});
-    (e.collectionType as TypeVariable).variable.resolution = resolution;
+    e.collectionType.variable.resolution = resolution;
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
     assert.isNull(result);
   });

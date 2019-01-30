@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {InterfaceInfo} from '../interface-info.js';
-import {CollectionType, EntityType, TypeVariable, InterfaceType} from '../type.js';
+import {CollectionType, EntityType, TypeVariable, Type, InterfaceType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
@@ -56,7 +56,7 @@ describe('interface', () => {
     assert.instanceOf(slotName, TypeVariable);
 
     assert.strictEqual(handleName.variable, slotName.variable);
-    assert.strictEqual(iface.handles[1].type, (iface.handles[2].type as CollectionType).collectionType);
+    assert.strictEqual(iface.handles[1].type, (iface.handles[2].type as CollectionType<Type>).collectionType);
   });
 
   it('matches particleSpecs', async () => {
@@ -202,7 +202,7 @@ describe('interface', () => {
     // Initially handle type are unresolvable type variables.
     assert.lengthOf(recipe.handles, 2);
     for (const handle of recipe.handles) {
-      const collectionType = (handle.type as CollectionType).collectionType;
+      const collectionType = (handle.type as CollectionType<Type>).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(resolved instanceof TypeVariable);
       assert.isFalse(resolved.canEnsureResolved());
@@ -214,7 +214,7 @@ describe('interface', () => {
     // After restricting the interface, handle types are constrainted to a Burrito.
     assert.lengthOf(recipe.handles, 2);
     for (const handle of recipe.handles) {
-      const collectionType = (handle.type as CollectionType).collectionType;
+      const collectionType = (handle.type as CollectionType<Type>).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(collectionType instanceof TypeVariable);
       assert.isTrue(resolved.canEnsureResolved());

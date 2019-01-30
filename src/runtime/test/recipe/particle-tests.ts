@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../../manifest.js';
-import {InterfaceType, CollectionType, TypeVariable} from '../../type.js';
+import {InterfaceType, CollectionType, TypeVariable, Type} from '../../type.js';
 
 import {assert} from '../../../platform/chai-web.js';
 
@@ -37,8 +37,8 @@ describe('Recipe Particle', () => {
       const type = hostedParticleConn.type as InterfaceType;
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
 
-      const listConnType = listConn.type as CollectionType;
-      const listUnpackedVariable = listConnType.collectionType as TypeVariable;
+      const listConnType = listConn.type as CollectionType<TypeVariable>;
+      const listUnpackedVariable = listConnType.collectionType;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
 
@@ -49,8 +49,8 @@ describe('Recipe Particle', () => {
       const listConn = recipeParticle.connections['list'];
       const type = hostedParticleConn.type as InterfaceType;
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
-      const listConnType = listConn.type as CollectionType;
-      const listUnpackedVariable = listConnType.collectionType as TypeVariable;
+      const listConnType = listConn.type as CollectionType<TypeVariable>;
+      const listUnpackedVariable = listConnType.collectionType;
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });
