@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ModalityHandler} from './modality-handler.js';
+import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {SlotComposer} from './slot-composer.js';
 import {Arc} from './arc.js';
 import {Suggestion} from './plan/suggestion.js';
@@ -30,7 +30,7 @@ export class SuggestionComposer {
     this.arc = arc;
   }
 
-  get modalityHandler(): ModalityHandler { return this._slotComposer.modalityHandler; }
+  get modalityHandler(): PlanningModalityHandler { return this._slotComposer.modalityHandler as PlanningModalityHandler; }
 
   clear(): void {
     if (this._container) {

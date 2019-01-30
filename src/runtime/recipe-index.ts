@@ -31,7 +31,7 @@ import {Handle} from './recipe/handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Modality} from './modality.js';
-import {ModalityHandler} from './modality-handler.js';
+import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {ProvidedSlotSpec, SlotSpec} from './particle-spec.js';
 import {Particle} from './recipe/particle.js';
 import {HandleConnection} from './recipe/handle-connection.js';
@@ -101,7 +101,7 @@ export class RecipeIndex {
       context: new Manifest({id: 'empty-context'}),
       loader: arc.loader,
       slotComposer: new SlotComposer({
-        modalityHandler: ModalityHandler.createHeadlessHandler(),
+        modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
         noRoot: true
       }),
       // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.

@@ -43,7 +43,9 @@ export class SlotComposer {
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
   constructor(options: SlotComposerOptions) {
-    assert(options.modalityHandler && options.modalityHandler.constructor === ModalityHandler,
+//    assert(options.modalityHandler && options.modalityHandler.constructor === ModalityHandler,
+//           `Missing or invalid modality handler: ${options.modalityHandler}`);
+    assert(options.modalityHandler,
            `Missing or invalid modality handler: ${options.modalityHandler}`);
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext || (options.containers || Object).root;

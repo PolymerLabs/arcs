@@ -9,23 +9,19 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
 import {DescriptionFormatter} from './description-formatter.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 export class ModalityHandler {
   constructor(public readonly slotConsumerClass: typeof SlotDomConsumer,
-              public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
-              public readonly descriptionFormatter?: typeof DescriptionFormatter) {}
+              public readonly descriptionFormatter?: typeof DescriptionFormatter){}
 
   static createHeadlessHandler(): ModalityHandler {
-    return new ModalityHandler(MockSlotDomConsumer, MockSuggestDomConsumer);
+    return new ModalityHandler(MockSlotDomConsumer);
   }
 
-  static readonly domHandler = new ModalityHandler(
+  static readonly domHandler : ModalityHandler = new ModalityHandler(
     SlotDomConsumer,
-    SuggestDomConsumer,
     DescriptionDomFormatter);
 }

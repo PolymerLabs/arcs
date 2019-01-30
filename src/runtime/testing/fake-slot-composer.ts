@@ -9,7 +9,7 @@
  */
 
 import {Modality} from '../modality.js';
-import {ModalityHandler} from '../modality-handler.js';
+import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 
 /**
@@ -19,7 +19,7 @@ export class FakeSlotComposer extends SlotComposer {
   constructor(options: SlotComposerOptions = {}) {
     super({
       rootContainer: {'root': 'root-context'},
-      modalityHandler: ModalityHandler.createHeadlessHandler(),
+      modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
       ...options});
   }
 
