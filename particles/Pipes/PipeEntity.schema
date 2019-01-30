@@ -1,3 +1,6 @@
 schema PipeEntity
   Text type
   Text name
+  Number timestamp
+  Number count
+  Text source

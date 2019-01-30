@@ -1,6 +1,4 @@
-schema PipeEntity
-  Text type
-  Text name
+import 'PipeEntity.schema'
 
 particle PipeEntityReceiver in './source/PipeEntityReceiver.js'
   in PipeEntity pipe
