@@ -42,12 +42,12 @@ recipe MakeReservations
   use as restaurants
   use #selected as restaurant
   create #reservation as event
-  create as calendar_descriptions
-  create as annotation_descriptions
+  create as calendarDescriptions
+  create as annotationDescriptions
   slot 'rootslotid-toproot' as toproot
   Calendar
     event = event
-    descriptions = calendar_descriptions
+    descriptions = calendarDescriptions
   // top-of-frame event editor
   ReservationForm
     restaurant = restaurant
@@ -67,5 +67,5 @@ recipe MakeReservations
   ReservationAnnotation
     restaurant = restaurant
     event = event
-    descriptions = annotation_descriptions
+    descriptions = annotationDescriptions
     consume annotation as detailAnnotation
