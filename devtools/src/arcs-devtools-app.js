@@ -182,6 +182,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
   }
 
   // TODO: you can't enter '?' in the search field; it displays the console prefs page instead :-/
+  // See https://bugs.chromium.org/p/chromium/issues/detail?id=923338
   _onSearchChanged(text, isRegex) {
     if (this.searchDebounce) {
       clearTimeout(this.searchDebounce);
