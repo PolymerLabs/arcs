@@ -465,37 +465,37 @@ export class CollectionType<T extends Type> extends Type {
 }
 
 
-export class BigCollectionType extends Type {
-  readonly bigCollectionType: Type;
+export class BigCollectionType<T extends Type> extends Type {
+  readonly bigCollectionType: T;
 
-  constructor(bigCollectionType: Type) {
+  constructor(bigCollectionType: T) {
     super('BigCollection');
     this.bigCollectionType = bigCollectionType;
   }
 
-  get isBigCollection() {
+  get isBigCollection(): boolean {
     return true;
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): BigCollectionType<Type> {
     const primitiveType = this.bigCollectionType;
     const result = primitiveType.mergeTypeVariablesByName(variableMap);
     return (result === primitiveType) ? this : result.bigCollectionOf();
   }
 
-  _applyExistenceTypeTest(test) {
+  _applyExistenceTypeTest(test): boolean {
     return this.bigCollectionType._applyExistenceTypeTest(test);
   }
 
-  getContainedType() {
+  getContainedType(): T {
     return this.bigCollectionType;
   }
 
-  isTypeContainer() {
+  isTypeContainer(): boolean {
     return true;
   }
 
-  resolvedType() {
+  resolvedType(): BigCollectionType<Type> {
     const primitiveType = this.bigCollectionType;
     const resolvedPrimitiveType = primitiveType.resolvedType();
     return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.bigCollectionOf() : this;
@@ -505,7 +505,7 @@ export class BigCollectionType extends Type {
     return this.bigCollectionType.canEnsureResolved();
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return this.bigCollectionType.maybeEnsureResolved();
   }
 
@@ -522,19 +522,19 @@ export class BigCollectionType extends Type {
     return {tag: this.tag, data: this.bigCollectionType.toLiteral()};
   }
 
-  _hasProperty(property) {
+  _hasProperty(property): boolean {
     return this.bigCollectionType.hasProperty(property);
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     return `BigCollection<${this.bigCollectionType.toString(options)}>`;
   }
 
-  getEntitySchema() {
+  getEntitySchema(): Schema {
     return this.bigCollectionType.getEntitySchema();
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     const entitySchema = this.getEntitySchema();
     if (entitySchema && entitySchema.description.plural) {
       return entitySchema.description.plural;
