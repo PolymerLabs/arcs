@@ -40,6 +40,15 @@ type ArcOptions = {
   innerArc?: boolean;
 };
 
+type DeserializeArcOptions = {
+  serialization: string;
+  pecFactory?: (id: string) => PECInnerPort;
+  slotComposer?: SlotComposer;
+  loader: Loader;
+  fileName: string;
+  context: Manifest;
+};
+
 export type PlanCallback = (recipe: Recipe) => void;
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
@@ -359,7 +368,7 @@ ${this.activeRecipe.toString()}`;
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}): Promise<Arc> {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: manifest.meta.name,
