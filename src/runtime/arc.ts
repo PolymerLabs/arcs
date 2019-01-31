@@ -509,7 +509,11 @@ ${this.activeRecipe.toString()}`;
             this.storeDescriptions.set(newStore, copiedStoreDesc);
           }
         }
-        recipeHandle.id = newStore.id;
+        if (recipeHandle.fate === 'copy' || recipeHandle.id === null) {
+          recipeHandle.id = newStore.id;
+        } /*else {
+          newStore.id = recipeHandle.id;
+        }*/
         recipeHandle.fate = 'use';
         recipeHandle.storageKey = newStore.storageKey;
         continue;
