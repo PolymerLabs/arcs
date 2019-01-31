@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {logFactory} from '../../build/platform/log-web.js';
-import {Planificator} from '../../build/runtime/plan/planificator.js';
+import {Planificator} from '../../build/planning/plan/planificator.js';
 
 const log = logFactory('UserPlanner', '#4f0433');
 const warn = logFactory('UserPlanner', '#4f0433', 'warn');

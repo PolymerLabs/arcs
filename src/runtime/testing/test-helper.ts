@@ -15,9 +15,9 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {Planner} from '../planner.js';
-import {RecipeIndex} from '../recipe-index.js';
-import {Suggestion} from '../plan/suggestion.js';
+import {Planner} from '../../planning/planner.js';
+import {RecipeIndex} from '../../planning/recipe-index.js';
+import {Suggestion} from '../../planning/plan/suggestion.js';
 
 type TestHelperOptions = {
   slotComposerStrict?: boolean,
