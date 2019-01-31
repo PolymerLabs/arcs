@@ -1,4 +1,5 @@
 schema PipeEntity
+  Text id
   Text type
   Text name
   Number timestamp

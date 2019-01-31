@@ -28,7 +28,6 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
   not working (yet):
 
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
-
 */
 
 // DeviceClient object supplied externally, otherwise a fake
@@ -40,31 +39,52 @@ const DeviceClient = window.DeviceClient || {
   }
 };
 
-// public handshake object
-const ShellApi = window.ShellApi = {
-  // attach a shell-aware agent
-  registerPipe(pipe) {
-    //console.log('ShellApi::registerPipe');
-    ShellApi.pipe = pipe;
-    if (ShellApi.pendingEntity) {
-      ShellApi.receiveEntity(ShellApi.pendingEntity);
-    }
-  },
-  // receive information from external pipe
-  receiveEntity(entityJSON) {
+// abstract entity sink
+const PipeSink = class {
+  constructor() {
+    this.sink = null;
+    this.pending = [];
+  }
+  receiveEntityJSON(entityJSON) {
     try {
       const entity = JSON.parse(entityJSON);
       entity.id = generateId();
-      //console.log('ShellApi::receiveEntity:', entity);
-      if (ShellApi.pipe) {
-        ShellApi.pipe.receiveEntity(entity);
-      } else {
-        ShellApi.pendingEntity = entity;
-      }
+      this.receiveEntity(entity);
       return entity.id;
     } catch (x) {
       console.warn(x);
     }
+  }
+  receiveEntity(entity) {
+    if (this.sink) {
+      this.sink(entity);
+    } else {
+      this.pending.push(entity);
+    }
+  }
+  registerSink(sink) {
+    this.sink = sink;
+    this.pending.forEach(entity => this.receiveEntity(entity));
+  }
+};
+
+// public handshake object
+const ShellApi = window.ShellApi = {
+  observeSink: new PipeSink(),
+  receiveSink: new PipeSink(),
+  // attach a shell-aware agent
+  registerPipe(pipe) {
+    //console.log('ShellApi::registerPipe');
+    ShellApi.pipe = pipe;
+    ShellApi.observeSink.registerSink(entity => pipe.receiveEntity(entity));
+    ShellApi.observeSink.registerSink(entity => pipe.observeEntity(entity));
+  },
+  // receive information from external pipe
+  receiveEntity(entityJSON) {
+    ShellApi.receiveSink.receiveEntityJSON(entityJSON);
+  },
+  observeEntity(entityJSON) {
+    ShellApi.observeSink.receiveEntityJSON(entityJSON);
   },
   chooseSuggestion(suggestion) {
     if (ShellApi.pipe) {
@@ -82,10 +102,18 @@ const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'storage', 'suggestions'];
+    return ['context', 'userid', 'storage', 'suggestions', 'pipearc'];
   }
-  update({userid, context, suggestions}, state) {
-    if (!state.registered) {
+  update({userid, context, suggestions, pipearc}, state) {
+    if (pipearc && !state.pipeStore) {
+      state.pipeStore = pipearc._stores[0];
+      log('got pipeStore', state.pipeStore);
+      // retry
+      if (!state.pipeStore) {
+        setTimeout(() => this._invalidate(), 50);
+      }
+    }
+    if (!state.registered && state.pipeStore) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
@@ -93,6 +121,10 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     if (userid && state.entity) {
       this.updateEntity(state.entity);
       this.state = {entity: null};
+    }
+    if (state.observe && state.pipeStore) {
+      this.updateObserved(state.observe, state.pipeStore);
+      this.state = {observe: null};
     }
     if (context && suggestions && suggestions.length > 0) {
       if (state.spawned) {
@@ -128,6 +160,10 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     // instead, for now, wait 1s for planning to take place before updating state
     setTimeout(() => this.state = state, 1000);
   }
+  updateObserved(entity, store) {
+    log('storing observed entity', entity);
+    store.store({id: entity.id, rawData: entity}, [generateId()]);
+  }
   onArc(e, arc) {
     this.state = {arc};
     this.fire('arc', arc);
@@ -142,6 +178,9 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   }
   receiveEntity(entity) {
     this.state = {entity};
+  }
+  observeEntity(observe) {
+    this.state = {observe};
   }
   reset() {
     this.fire('reset');
