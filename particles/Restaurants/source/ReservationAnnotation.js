@@ -54,7 +54,6 @@ defineParticle(({DomParticle, html, log}) => {
       if (event && event.startDate && event.participants) {
         currentEvent = event.dataClone();
         if (this.handles.get('descriptions')) {
-          log(currentEvent, this.getDescription(restaurant, currentEvent));
           this.setParticleDescription(this.getDescription(restaurant, currentEvent));
         }
       }
@@ -83,12 +82,12 @@ defineParticle(({DomParticle, html, log}) => {
     }
     getDescription(restaurant, currentEvent) {
       if (restaurant && currentEvent) {
-        return this.createDescription(restaurant.id, currentEvent.participants, currentEvent.startDate);
+        return this.createDescription(restaurant, currentEvent.participants, currentEvent.startDate);
       }
       return 'make reservations';
     }
-    createDescription(restaurantId, participants, startDate) {
-      const times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
+    createDescription(restaurant, participants, startDate) {
+      const times = this.makeUpReservationTimes(restaurant.id, participants, startDate, 5);
       let closest = null;
       times.map(({time, notAvailable}, i) => {
         if (!notAvailable) {
@@ -99,8 +98,8 @@ defineParticle(({DomParticle, html, log}) => {
         }
       });
       return closest
-        ? `there is a table for ${participants} available at ${closest}`
-        : `there is no table for ${participants} available within 2 hours`;
+        ? `${restaurant.name} has a table for ${participants} available at ${closest}`
+        : `no tables for ${participants} at ${restaurant.name} available within 2 hours`;
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time
