@@ -1,3 +1,12 @@
+(function startup() {
+
+try {
+  // Don't execute for iframes.
+  if (window.self !== window.top) return;
+} catch (e) {
+  return;
+}
+
 const startupTime = Date.now();
 
 const log = console.log.bind(console,
@@ -70,3 +79,4 @@ function addMarkConnectedScript() {
 
 // Initial ping to background.js.
 chrome.runtime.sendMessage('content-script-ready');
+})();
