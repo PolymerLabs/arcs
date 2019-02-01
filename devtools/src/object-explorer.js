@@ -23,9 +23,12 @@ import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
  *     <object-explorer object="[[objectToExplore]]"></object-explorer>
  * 
  *   Trigger searching through a 'find' attribute:
- *     <object-explorer object="[[objectToExplore]]" find="[[searchPhrase]]">
+ *     <object-explorer object="[[objectToExplore]]" find="[[searchParams]]">
  *     or:
- *     this.$.explorer.find = searchPhrase;
+ *     this.$.explorer.find = searchParams;
+ *
+ * searchParams must be null or an object of the form {phrase, regex}, with
+ * exactly one of those fields set to a non-empty string.
  * 
  * 2) When using inside an IronList:
  * 
@@ -42,16 +45,16 @@ import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
  * 
  *   To perform a search, we need to manually trigger search change in the underlying
  *   data model, as there is more data than ObjectExplorer DOM elements. We do it with
- *   ObjectExplorer.find(data, phrase) method.
+ *   ObjectExplorer.find(data, params) method.
  *     
- *     this.items.forEach(item => ObjectExplorer.find(item, searchPhrase));
+ *     this.items.forEach(item => ObjectExplorer.find(item, searchParams));
  * 
  *   As the ObjectExplorer DOM elements have not been notified of the underlying data
  *   changes, we need to also notify them manually. We can do it by setting a 'find'
  *   attribute.
  * 
  *     for (const explorer of this.shadowRoot.querySelectorAll('iron-list object-explorer')) {
- *       explorer.find = phrase;
+ *       explorer.find = params;
  *     }
  * 
  *   When in doubt, talk to piotrswigon@github / piotrs@google.
