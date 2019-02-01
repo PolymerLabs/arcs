@@ -76,7 +76,7 @@ const ShellApi = window.ShellApi = {
   registerPipe(pipe) {
     //console.log('ShellApi::registerPipe');
     ShellApi.pipe = pipe;
-    ShellApi.observeSink.registerSink(entity => pipe.receiveEntity(entity));
+    ShellApi.receiveSink.registerSink(entity => pipe.receiveEntity(entity));
     ShellApi.observeSink.registerSink(entity => pipe.observeEntity(entity));
   },
   // receive information from external pipe
@@ -85,6 +85,11 @@ const ShellApi = window.ShellApi = {
   },
   observeEntity(entityJSON) {
     ShellApi.observeSink.receiveEntityJSON(entityJSON);
+  },
+  queryEntities(queryJSON) {
+    if (ShellApi.pipe) {
+      ShellApi.pipe.queryObservedEntities(queryJSON);
+    }
   },
   chooseSuggestion(suggestion) {
     if (ShellApi.pipe) {
@@ -181,6 +186,14 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   }
   observeEntity(observe) {
     this.state = {observe};
+  }
+  async queryObservedEntities(query) {
+    const {pipeStore} = this.state;
+    if (pipeStore) {
+      const entities = await pipeStore.toList();
+      const results = entities.filter(entity => entity.rawData.type === query.type);
+      console.log(results);
+    }
   }
   reset() {
     this.fire('reset');

@@ -1,0 +1,35 @@
+import '../Arcs/Description.schema'
+import '../Pipes/PipeEntity.schema'
+
+schema SuggestionText
+  Text text
+
+particle MapQuery in './source/MapQuery.js'
+  in PipeEntity pipe
+  in [PipeEntity] entities
+  out SuggestionText text
+  consume pipes
+    provide pipeContent
+
+recipe MapQuery
+  use #pipe_maps as pipe
+  map 'PROFILE_pipeEntities' as entities
+  create #piped #text as text
+  MapQuery
+    entities = entities
+    pipe = pipe
+    text = text
+
+particle EchoSuggestionText in './source/EchoSuggestionText.js'
+  in SuggestionText text
+  out [Description] descriptions
+  consume pipeContent
+
+recipe SuggestSuggestion
+  use as text
+  create as descriptions
+  EchoSuggestionText
+    text = text
+    descriptions = descriptions
+    consume pipeContent
+
