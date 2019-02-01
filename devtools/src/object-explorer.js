@@ -27,8 +27,8 @@ import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
  *     or:
  *     this.$.explorer.find = searchParams;
  *
- * searchParams must be null or an object of the form {phrase, regex}, with
- * exactly one of those fields set to a non-empty string.
+ *   searchParams must be null or an object of the form {phrase, regex}, with
+ *   exactly one of those fields set to a non-empty string.
  * 
  * 2) When using inside an IronList:
  * 
