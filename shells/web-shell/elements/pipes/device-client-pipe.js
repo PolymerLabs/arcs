@@ -182,6 +182,11 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     }
   }
   receiveEntity(entity) {
+    if (entity.type === 'mops') {
+      this.queryObservedEntities({type: 'address'})
+        .then(results => DeviceClient.foundSuggestions(JSON.stringify(results.slice(0, 3).map(address => address.rawData.name))));
+      return;
+    }
     this.state = {entity};
   }
   observeEntity(observe) {
@@ -193,6 +198,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       const entities = await pipeStore.toList();
       const results = entities.filter(entity => entity.rawData.type === query.type);
       console.log(results);
+      return results;
     }
   }
   reset() {
