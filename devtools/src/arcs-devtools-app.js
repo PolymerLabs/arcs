@@ -71,13 +71,16 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         outline: 0;
         border: 1px solid white;
         padding: 2px;
-        margin: 0 3px;
+        margin: 0 6px 0 3px;
       }
       #search:hover {
         border-color: var(--mid-gray);
       }
       #search:focus {
         border-color: var(--focus-blue);
+      }
+      .invalidRegex {
+        color: red;
       }
       arcs-notifications:not([visible])  + [divider] {
         display: none;
@@ -97,7 +100,9 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
           <arcs-notifications></arcs-notifications><div divider></div>
           <arcs-selector active-page="[[routeData.page]]"></arcs-selector>
           <div divider></div>
-          <input placeholder="Filter" id="search" value="{{searchInputPhrase::input}}" title="Focus: ctrl+f, Clear: ctrl+esc">
+          <input placeholder="Filter" id="search" value="{{searchTextInput::input}}" title="Focus: ctrl+f, Clear: ctrl+esc, Regex: ctrl+x">
+          <input type="checkbox" id="regex" checked="{{searchRegexInput::change}}">
+          <label for="regex">Regex</label>
         </div>
       </header>
       <nav>
@@ -113,10 +118,10 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
-        <arcs-stores name="stores" search-phrase="[[searchPhrase]]"></arcs-stores>
+        <arcs-stores name="stores" search-params="[[searchParams]]"></arcs-stores>
         <arcs-tracing name="traces"></arcs-tracing>
-        <arcs-pec-log name="pecLog" search-phrase="[[searchPhrase]]"></arcs-pec-log>
-        <strategy-explorer name="strategyExplorer" search-phrase="[[searchPhrase]]"></strategy-explorer>
+        <arcs-pec-log name="pecLog" search-params="[[searchParams]]"></arcs-pec-log>
+        <strategy-explorer name="strategyExplorer" search-params="[[searchParams]]"></strategy-explorer>
         <arcs-planning name="planning"></arcs-planning>
         <arcs-recipe-editor name="recipeEditor"></arcs-recipe-editor>
       </iron-pages>
@@ -128,10 +133,11 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
 
   static get properties() {
     return {
-      searchPhrase: String,
-      searchInputPhrase: {
-        type: String,
-        observer: '_onSearchPhraseChanged'
+      searchTextInput: String,
+      searchRegexInput: Boolean,
+      searchParams: {
+        type: Object,
+        value: null,
       },
       keyEventTarget: {
         type: Object,
@@ -140,6 +146,10 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         }
       }
     };
+  }
+
+  static get observers() {
+    return ['_onSearchChanged(searchTextInput, searchRegexInput)'];
   }
 
   ready() {
@@ -171,13 +181,30 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
     }
   }
 
-  _onSearchPhraseChanged(phrase) {
+  // TODO: you can't enter '?' in the search field; it displays the console prefs page instead :-/
+  // See https://bugs.chromium.org/p/chromium/issues/detail?id=923338
+  _onSearchChanged(text, isRegex) {
     if (this.searchDebounce) {
       clearTimeout(this.searchDebounce);
     }
     this.searchDebounce = setTimeout(() => {
-      this.searchPhrase = phrase || null;
       this.searchDebounce = null;
+      this.$.search.classList.remove('invalidRegex');
+      if (!text) {
+        this.searchParams = null;
+      } else if (isRegex) {
+        // Test that the regex is valid. Note that we don't pass the compiled RegExp in the params
+        // because different receivers may use different flags for their searches.
+        try {
+          new RegExp(text);
+        } catch (error) {
+          this.$.search.classList.add('invalidRegex');
+          return;
+        }
+        this.searchParams = {phrase: null, regex: text};
+      } else {
+        this.searchParams = {phrase: text.toLowerCase(), regex: null};
+      }
     }, 100);
   }
 
@@ -185,7 +212,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
     return {
       'ctrl+f': '_focus',
       // CTRL to avoid clashing with devtools toolbar showing/hiding, which I cannot supress.
-      'ctrl+esc': '_clear'
+      'ctrl+esc': '_clear',
+      'ctrl+x': '_regex'
     };
   }
 
@@ -193,10 +221,15 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
     this.$.search.focus();
   }
 
-  _clear(e) {
+  _clear() {
     this.$.search.value = '';
-    this.searchPhrase = null;
+    this.searchTextInput = null;
     this.$.search.blur();
+  }
+
+  _regex() {
+    this.$.regex.checked = !this.$.regex.checked;
+    this.searchRegexInput = this.$.regex.checked;
   }
 }
 

@@ -82,7 +82,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         margin: 2px;
       }
     </style>
-    <iron-list id="list" items="{{filteredEntries}}" searchPhrase$="[[searchPhrase]]">
+    <iron-list id="list" items="{{filteredEntries}}">
       <template>
         <div entry>
           <object-explorer data="[[item.explorerData]]" on-expand="_handleExpand">
@@ -117,23 +117,22 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
 
   static get properties() {
     return {
-      searchPhrase: {
-        type: String,
-        value: null,
-        observer: '_onSearchPhraseChanged'
+      searchParams: {
+        type: Object,
+        observer: '_onSearchChanged'
       },
       entries: Array,
       filteredEntries: Array,
     };
   }
 
-  _onSearchPhraseChanged(phrase) {
+  _onSearchChanged(params) {
     // Go through filtered and non-filtered entries at the same time and
     // check which messages should be removed/added/kept to the filtered entries.
     let fi = 0; // Filtered index.
     for (const entry of this.entries) {
-      const found = ObjectExplorer.find(entry.explorerData, phrase);
-      const filter = !phrase || found;
+      const found = ObjectExplorer.find(entry.explorerData, params);
+      const filter = !params || found;
       if (entry === this.filteredEntries[fi]) {
         if (filter) {
           fi++;
@@ -149,7 +148,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       }
     }
     for (const explorer of this.shadowRoot.querySelectorAll('[entry] > object-explorer')) {
-      explorer.find = phrase;
+      explorer.find = params;
     }
   }
 
@@ -167,7 +166,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         case 'PecLog': {
           const entry = this.newEntry(msg.messageBody);
           this.entries.push(entry);
-          if (!this.searchPhrase || entry.explorerData.found) {
+          if (!this.searchParams || entry.explorerData.found) {
             newFilteredEntries.push(entry);
           }
           break;
@@ -219,7 +218,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     };
 
     const explorerData = ObjectExplorer.prepareData(msg.pecMsgBody);
-    ObjectExplorer.find(explorerData, this.searchPhrase);
+    ObjectExplorer.find(explorerData, this.searchParams);
 
     return {
       icon,

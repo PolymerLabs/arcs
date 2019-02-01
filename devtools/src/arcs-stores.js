@@ -91,10 +91,9 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         reflectToAttribute: true,
         value: false
       },
-      searchPhrase: {
-        type: String,
-        value: null,
-        observer: '_onSearchPhraseChanged'
+      searchParams: {
+        type: Object,
+        observer: '_onSearchChanged'
       }
     };
   }
@@ -110,9 +109,9 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
     }];
   }
 
-  _onSearchPhraseChanged(phrase) {
+  _onSearchChanged(params) {
     for (const explorer of this.shadowRoot.querySelectorAll('object-explorer')) {
-      explorer.find = phrase;
+      explorer.find = params;
     }
   }
 
