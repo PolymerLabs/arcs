@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../xen/xen.js';
+import {Random} from '../../../../src/runtime/random.js';
 
 const Template = Xen.Template;
 const entityTemplate = Template.html`
@@ -28,7 +29,7 @@ const htmlTemplate = Template.html`
 class AFrameHtml extends Xen.Base {
   static get observedAttributes() { return ['html', 'rotation', 'position', 'width', 'height', 'geometry', 'material']; }
   _getInitialState() {
-    const id = `h${Math.floor((Math.random()+1)*1e7)}`;
+    const id = `h${Math.floor((Random.next()+1)*1e7)}`;
     return {
       id,
       position: `0 0.1 -2`,

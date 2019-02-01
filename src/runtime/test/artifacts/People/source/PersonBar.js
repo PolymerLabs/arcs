@@ -1,3 +1,5 @@
+import {Random} from '../../../../random.js';
+
 // @license
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
@@ -58,7 +60,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
             name: person.name,
             avatar: resolver(avatar && avatar.url || 'https://$shell/assets/avatars/user.jpg'),
             //active: Boolean(person.active)
-            active: Math.random()<0.9,
+            active: Random.next()<0.9,
             order: `z-index: ${count - i}`
           };
         });

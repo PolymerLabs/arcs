@@ -17,7 +17,11 @@ import {Loader} from '../../../loader.js';
 import {Manifest} from '../../../manifest.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {assert} from '../../../../platform/chai-web.js';
+<<<<<<< HEAD
 import {CallbackTracker} from '../../../testing/callback-tracker.js';
+=======
+import {Random} from '../../../random.js';
+>>>>>>> Trying again after reset
 
 const testUrl = 'pouchdb://memory/user-test';
 
@@ -63,7 +67,7 @@ describe('pouchdb', () => {
       const arc = new Arc({id: 'test', context: manifest, loader: new Loader()});
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-      const value = 'Hi there' + Math.random();
+      const value = 'Hi there' + Random.next();
       const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbVariable;
       const callbackTracker = new CallbackTracker(variable, 1);
 
@@ -158,8 +162,8 @@ describe('pouchdb', () => {
       const arc = new Arc({id: 'test', context: manifest, loader: new Loader()});
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-      const value1 = 'Hi there' + Math.random();
-      const value2 = 'Goodbye' + Math.random();
+      const value1 = 'Hi there' + Random.next();
+      const value2 = 'Goodbye' + Random.next();
       const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as PouchDbCollection;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);

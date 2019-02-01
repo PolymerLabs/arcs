@@ -24,6 +24,17 @@ class MathRandomRNG extends RNG {
 }
 
 /**
+ * Random number generator using WebCrypto.
+ */
+class WebCryptoRNG extends RNG {
+  next(): number {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0];
+  }
+}
+
+/**
  * Provides a deterministic Random Number Generator for Tests
  */
 class SeededRNG extends RNG {
@@ -34,7 +45,7 @@ class SeededRNG extends RNG {
 }
 
 // Singleton Pattern
-let random: RNG = new MathRandomRNG();
+let random: RNG = new WebCryptoRNG();
 
 export class Random {
   static next() : number {

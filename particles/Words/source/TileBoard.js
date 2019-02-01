@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 'use strict';
+import {Random} from '../../../src/runtime/random.js';
 
 // Taken from Wikipedia at https://goo.gl/f4NJEq.
 const CHAR_FREQUENCIES = [
@@ -186,7 +187,7 @@ class TileBoard {
       const currentTile = tilesForCompression[t];
       for (let y = currentTile.y; y >= 0; y--) {
         if (!this._rows[y][currentTile.x]) {
-          const rnd = Math.random();
+          const rnd = Random.next();
           const isFire = rnd < this._chanceOfFire;
           // TileBoard.info(`Generating tile [rnd=${rnd}, chanceOfFire=${this._chanceOfFire}, isFire=${isFire}].`);
           const tileStyle = isFire ? Tile.Style.FIRE : Tile.Style.NORMAL;
@@ -207,7 +208,7 @@ class TileBoard {
     // Fisher-Yates shuffle per https://bost.ocks.org/mike/shuffle/
     let m = TILE_COUNT;
     while (m) {
-      const i = Math.floor(Math.random() * m--);
+      const i = Math.floor(Random.next() * m--);
       const tx = TileBoard.indexToX(i);
       const ty = TileBoard.indexToY(i);
       const mx = TileBoard.indexToX(m);
@@ -232,7 +233,7 @@ class TileBoard {
     // Unique id generation is a hack swiped from ArcsUtils. We could perhaps
     // use the Board entity id, or a more legitimate id generator if needed.
     const gameId = Date.now().toString(36).substr(2) +
-        Math.random().toString(36).substr(2);
+        Random.next().toString(36).substr(2);
     return {
       gameId,
       letters: tiles.map(t => `${t.letter}${t.styleAsNumber}`).join(''),
@@ -241,7 +242,7 @@ class TileBoard {
     };
   }
   static pickCharWithFrequencies() {
-    const pick = Math.random() * 100;
+    const pick = Random.next() * 100;
     let accumulator = 0;
     for (let i = 0; i < CHAR_FREQUENCIES.length; i++) {
       accumulator += CHAR_FREQUENCIES[i][1];

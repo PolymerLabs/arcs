@@ -13,6 +13,7 @@ import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {Xen} from '../../lib/xen.js';
 import {Const} from '../../configuration/constants.js';
 import {Utils} from '../../lib/utils.js';
+import {Random} from '../../../src/runtime/random.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';
@@ -262,7 +263,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnArc({id, manifest, description}) {
     //log(id, manifest);
-    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Random.next()*5)];
     this.state = {
       search: '',
       arc: null,
@@ -323,7 +324,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     });
   }
   onSpawn(e, {id, manifest, description}) {
-    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
+    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Random.next()*5)];
     this.state = {
       search: '',
       arc: null,

@@ -1,3 +1,5 @@
+import {Random} from '../../../src/runtime/random.js';
+
 const PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 const lastRandChars = [];
 let lastPushTime = 0;
@@ -19,7 +21,7 @@ export const generateId = function() {
 
     if (!duplicateTime) {
       for (let i = 0; i < 12; i++) {
-        lastRandChars[i] = Math.floor(Math.random() * 64);
+        lastRandChars[i] = Math.floor(Random.next() * 64);
       }
     } else {
       let i;

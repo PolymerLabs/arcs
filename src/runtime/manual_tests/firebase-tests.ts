@@ -20,6 +20,7 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorage
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
+import {Random} from '../../../src/runtime/random.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -72,7 +73,7 @@ describe('firebase', function() {
       const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-      const value = 'Hi there' + Math.random();
+      const value = 'Hi there' + Random.next();
       const variable = await storage.construct('test0', barType, newStoreKey('variable')) as VariableStorageProvider;
       const callbackTracker = new CallbackTracker(variable, 1);
 
@@ -156,8 +157,8 @@ describe('firebase', function() {
       const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-      const value1 = 'Hi there' + Math.random();
-      const value2 = 'Goodbye' + Math.random();
+      const value1 = 'Hi there' + Random.next();
+      const value2 = 'Goodbye' + Random.next();
       const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);

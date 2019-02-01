@@ -1,6 +1,6 @@
 import {firebase, storage} from './firebase.js';
 import {Xen} from './xen.js';
-
+import {Random} from '../../src/runtime/random.js';
 const template = `
   <style>
     ::slotted(*) {
@@ -34,7 +34,7 @@ class FirebaseUpload extends Xen.Base {
     // TODO(wkorman): Handle multiple files if present.
     const input = e.currentTarget;
     const file = input.files[0];
-    const random = Math.floor((Math.random() + 1) * 1e8);
+    const random = Math.floor((Random.next() + 1) * 1e8);
     const path = `files/${random}`;
     log(`Uploading file [name=${file.name}, size=${
         Math.floor(file.size / 1024)} KB, path=${path}].`);
