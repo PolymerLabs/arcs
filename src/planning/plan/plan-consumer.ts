@@ -49,6 +49,7 @@ export class PlanConsumer {
     if (DevtoolsConnection.isConnected) {
       this.devtoolsChannel = DevtoolsConnection.get().forArc(this.arc);
     }
+    this._maybeUpdateStrategyExplorer();
   }
 
   registerSuggestionsChangedCallback(callback) { this.suggestionsChangeCallbacks.push(callback); }
@@ -66,11 +67,7 @@ export class PlanConsumer {
   onSuggestionsChanged() {
     this._onSuggestionsChanged();
     this._onMaybeSuggestionsChanged();
-
-    if (this.result.generations.length) {
-      StrategyExplorerAdapter.processGenerations(
-          this.result.generations, this.devtoolsChannel, {label: 'Plan Consumer', keep: true});
-    }
+    this._maybeUpdateStrategyExplorer();
   }
 
   getCurrentSuggestions(): Suggestion[] {
@@ -139,6 +136,13 @@ export class PlanConsumer {
       this.suggestionComposer = new SuggestionComposer(this.arc, composer);
       this.registerVisibleSuggestionsChangedCallback(
           (suggestions) => this.suggestionComposer.setSuggestions(suggestions));
+    }
+  }
+
+  _maybeUpdateStrategyExplorer() {
+    if (this.result.generations.length) {
+      StrategyExplorerAdapter.processGenerations(
+          this.result.generations, this.devtoolsChannel, {label: 'Plan Consumer', keep: true});
     }
   }
 }
