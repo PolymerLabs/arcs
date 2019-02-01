@@ -7,6 +7,10 @@ try {
   return;
 }
 
+// Don't execute if Shell is requesting remote Arcs Explorer.
+// TODO: Send a message to Arcs Explorer in Chrome DevTools that it should be disabled?
+if (new URLSearchParams(window.location.search).has('remote-explore-key')) return;
+
 const startupTime = Date.now();
 
 const log = console.log.bind(console,
