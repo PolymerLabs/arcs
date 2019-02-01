@@ -182,7 +182,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     }
   }
   receiveEntity(entity) {
-    if (entity.type === 'mops') {
+    if (entity.type === 'com.google.android.apps.maps') {
       this.queryObservedEntities({type: 'address'})
         .then(results => DeviceClient.foundSuggestions(JSON.stringify(results.slice(0, 3).map(address => address.rawData.name))));
       return;
