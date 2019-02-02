@@ -8,12 +8,19 @@
   const msgQueue = [];
   let windowForEvents = undefined;
 
-  // Use the extension API if we're in devtools and having a window to inspect.
-  // Otherwise use WebSocket. In later case we might be in devtools but running
-  // against NodeJS, but in such case there's no window to inspect.
-  const sendMessage = (chrome.devtools && chrome.devtools.inspectedWindow.tabId)
-      ? connectViaExtensionApi()
-      : connectViaWebSocket();
+  const sendMessage = (function chooseConnection() {
+    const remoteExploreKey = new URLSearchParams(window.location.search).get('remote-explore-key');
+    if (remoteExploreKey) {
+      return connectViaWebRtc(remoteExploreKey);
+    } else if (chrome.devtools && chrome.devtools.inspectedWindow.tabId) {
+      // Use the extension API if we're in devtools and having a window to inspect.
+      return connectViaExtensionApi();
+    } else {
+      // Otherwise use WebSocket. We may still be in devtools, but inspecting Node.js.
+      // In such case, there's no window to inspect.
+      return connectViaWebSocket();
+    }
+  })();
 
   if (chrome && chrome.devtools) {
     // Add the panel for devtools, and flush the events to it once it's shown.
@@ -85,6 +92,54 @@
       };
     })();
     return msg => ws.send(JSON.stringify(msg));
+  }
+
+  function connectViaWebRtc(remoteExploreKey) {
+    console.log(`Establishing connection with Remote WebShell on "${remoteExploreKey}".`);
+    const hub = signalhub('arcs-demo', 'https://arcs-debug-switch.herokuapp.com/');
+    const p = new SimplePeer({initatior: false, trickle: false, objectMode: true});
+
+    p.on('signal', (data) => {
+      const signal = data;
+      console.log(`broadcasting my signal on ${remoteExploreKey}:answer`, signal);
+      hub.broadcast(`${remoteExploreKey}:answer`, btoa(JSON.stringify(signal)));
+      hub.close();
+    });
+
+    console.log(`Listening on ${remoteExploreKey}:offer`);
+    hub.subscribe(`${remoteExploreKey}:offer`).on('data', (message) => {
+      const receivedSignal = JSON.parse(atob(message));
+      console.log(`received signal on ${remoteExploreKey}:offer:`, receivedSignal);
+      p.signal(receivedSignal);
+    });
+
+    hub.broadcast(`${remoteExploreKey}:answer`, 'waiting');
+
+    let connectedPeer = null;
+    p.on('connect', () => {
+      console.log('WebRTC channel established!');
+      p.send('init');
+      connectedPeer = p;
+    });
+    p.on('data', msg => {
+      let m = null;
+      try {
+        m = JSON.parse(msg);
+      } catch (e) {
+        console.err('Issues with parsing messages:', e);
+        return;
+      }
+      queueOrFire(m);
+    });
+    p.on('error', (err) => console.err('error', err));
+
+    return msg => {
+      if (!connectedPeer) {
+        console.log('too early for', msg);
+      } else {
+        connectedPeer.send(JSON.stringify(msg));
+      }
+    };
   }
 
   function queueOrFire(msg) {
