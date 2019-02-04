@@ -181,23 +181,32 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.fire('suggestion', suggestion);
     }
   }
+  observeEntity(entity) {
+    if (!entity.timestamp) {
+      entity.timestamp = Date.now();
+    }
+    this.state = {observe: entity};
+  }
   receiveEntity(entity) {
     if (entity.type === 'com.google.android.apps.maps') {
-      this.queryObservedEntities({type: 'address'})
-        .then(results => DeviceClient.foundSuggestions(JSON.stringify(results.slice(0, 3).map(address => address.rawData.name))));
-      return;
+      this.suggestFromObservations({type: 'address'});
+    } else {
+      this.state = {entity};
     }
-    this.state = {entity};
   }
-  observeEntity(observe) {
-    this.state = {observe};
+  async suggestFromObservations(query) {
+    const results = await this.queryObservedEntities({type: 'address'});
+    const sorted = results.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+    //console.log(sorted);
+    const sliced = sorted.slice(0, 3);
+    const json = JSON.stringify(sliced.map(e => e.rawData));
+    DeviceClient.foundSuggestions(json);
   }
   async queryObservedEntities(query) {
     const {pipeStore} = this.state;
     if (pipeStore) {
       const entities = await pipeStore.toList();
       const results = entities.filter(entity => entity.rawData.type === query.type);
-      console.log(results);
       return results;
     }
   }
