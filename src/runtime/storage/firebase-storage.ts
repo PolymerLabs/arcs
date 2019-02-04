@@ -776,6 +776,12 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
       }
     }
 
+    if (add.length === 0 && remove.length === 0) {
+      // The update had no effect.
+      this.resolveInitialized();
+      return;
+    }
+
     // Bump version monotonically. Ideally we would use the remote
     // version, but we might not be able to if there have been local
     // modifications in the meantime. We'll recover the remote version
@@ -783,11 +789,6 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     this.version = Math.max(this.version + 1, newRemoteState.version);
     this.remoteState = newRemoteState;
     this.resolveInitialized();
-
-    if (add.length === 0 && remove.length === 0) {
-      // The update had no effect.
-      return;
-    }
 
     if (this.referenceMode) {
       const ids = add.map(({value}) => value.id).concat(remove.map(({value}) => value.id));
