@@ -188,9 +188,10 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     this.state = {observe: entity};
   }
   receiveEntity(entity) {
-    if (entity.type === 'com.google.android.apps.maps') {
+    if (entity.type === 'hack.com.google.android.apps.maps') {
       this.suggestFromObservations({type: 'address'});
     } else {
+      entity.type = entity.type.replace(/\./g, '_');
       this.state = {entity};
     }
   }

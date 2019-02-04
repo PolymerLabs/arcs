@@ -12,7 +12,7 @@ particle MapQuery in './source/MapQuery.js'
     provide pipeContent
 
 recipe MapQuery
-  use #pipe_maps as pipe
+  use #pipe_com_google_android_apps_maps as pipe
   map 'PROFILE_pipeEntities' as entities
   create #piped #text as text
   MapQuery

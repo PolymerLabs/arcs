@@ -8,13 +8,9 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  const host = `bg-process`;
-
   const template = html`
 
-<div ${host}>
-  <span>Handling background processing...</span>
-</div>
+<div>Handling background processing...</div>
 
   `;
 

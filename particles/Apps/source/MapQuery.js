@@ -14,13 +14,20 @@ defineParticle(({DomParticle, html, log}) => {
       return html`<div slotid="pipeContent"></div>`;
     }
     update({entities, pipe}, state) {
-      if (/*entities &&*/ pipe) {
+      if (entities && pipe) {
         //const text = `there are ${entities.length} known entities.`;
-        const text = `there is AInfo`;
-        this.updateVariable('text', {text});
+        const text = this.query(entities);
+        //const text = `there is AInfo`;
         //this.setParticleDescription(text);
+        this.updateVariable('text', {text});
       }
     }
+    query(entities) {
+      const results = entities.filter(entity => entity.rawData.type === 'address');
+      const sorted = results.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+      //console.log(sorted);
+      const sliced = sorted.slice(0, 3);
+      return JSON.stringify(sliced.map(e => e.rawData));
+    }
   };
-
 });
