@@ -157,7 +157,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       const manifest = buildEntityManifest(entity);
       log(manifest);
       const id = `${this.props.userid}-piped-${entity.id}`;
-      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
+      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name || entity.type}`});
       state = {spawned: true};
     }
     // TODO(sjmiles): we need to know when suggestions we receive are up to date
