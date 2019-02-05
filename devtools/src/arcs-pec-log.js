@@ -257,7 +257,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     if (!this.downloadEnabled) return;
 
     const lines = this.filteredEntries.map(e => {
-      return `${e.msgCount} ${e.time} ${e.icon} ${e.name} ${JSON.stringify(e.pecMsgBody)}\n`
+      return `${e.msgCount} ${e.time} ${e.icon} ${e.name} ${JSON.stringify(e.pecMsgBody)}\n`;
     });
     const a = document.createElement('a');
     a.download = `pec-${this.arcName}.log`;
