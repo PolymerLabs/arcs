@@ -107,9 +107,9 @@ const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'storage', 'suggestions', 'pipearc'];
+    return ['context', 'userid', 'storage', 'suggestions', 'arc', 'pipearc'];
   }
-  update({userid, context, suggestions, pipearc}, state) {
+  update({userid, context, suggestions, arc, pipearc}, state) {
     if (pipearc && !state.pipeStore) {
       state.pipeStore = pipearc._stores[0];
       log('got pipeStore', state.pipeStore);
@@ -131,8 +131,9 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.updateObserved(state.observe, state.pipeStore);
       this.state = {observe: null};
     }
-    if (context && suggestions && suggestions.length > 0) {
-      if (state.spawned) {
+    if (context && arc && suggestions && suggestions.length > 0) {
+      log(state.spawned, String(arc.id));
+      if (String(arc.id).includes(state.spawned)) {
         log(suggestions[0]);
         this.state = {spawned: false, staged: true, suggestions};
         this.fire('suggestion', suggestions[0]);
@@ -158,11 +159,12 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       log(manifest);
       const id = `${this.props.userid}-piped-${entity.id}`;
       this.fire('spawn', {id, manifest, description: `(from device) ${entity.name || entity.type}`});
-      state = {spawned: true};
+      state = {spawned: id};
     }
     // TODO(sjmiles): we need to know when suggestions we receive are up to date
     // relative to the changes we just made
     // instead, for now, wait 1s for planning to take place before updating state
+    this.state = {spawned: false, staged: false};
     setTimeout(() => this.state = state, 1000);
   }
   updateObserved(entity, store) {

@@ -78,7 +78,7 @@ const template = Xen.Template.html`
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe userid="{{userid}}" context="{{context}}" storage="{{storage}}" pipearc="{{pipesArc}}" Xon-arc="onPipesArc" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
+  <device-client-pipe userid="{{userid}}" context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
