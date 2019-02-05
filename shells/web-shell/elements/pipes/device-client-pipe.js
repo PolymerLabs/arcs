@@ -131,15 +131,23 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.updateObserved(state.observe, state.pipeStore);
       this.state = {observe: null};
     }
-    if (context && arc && suggestions && suggestions.length > 0) {
-      log(state.spawned, String(arc.id));
-      if (String(arc.id).includes(state.spawned)) {
-        log(suggestions[0]);
-        this.state = {spawned: false, staged: true, suggestions};
-        this.fire('suggestion', suggestions[0]);
+    if (arc && suggestions && suggestions.length > 0) {
+      state.suggestions = null;
+      if (state.staged || String(arc.id).includes(state.spawned)) {
+        state.suggestions = suggestions;
       }
-      if (state.staged && state.suggestions !== suggestions) {
-         const texts = suggestions.map(suggestion => String(suggestion.descriptionText));
+    }
+    if (context && state.suggestions) {
+      log(state.spawned, String(arc.id));
+      if (state.spawned) {
+        const suggestion = state.suggestions[0];
+        log(suggestion);
+        this.state = {spawned: false, staged: true, suggestions: null};
+        this.fire('suggestion', suggestion);
+      }
+      if (state.staged && state.suggestions) {
+         const texts = state.suggestions.map(suggestion => String(suggestion.descriptionText));
+         state.suggestions = null;
          const unique = [...new Set(texts)];
          DeviceClient.foundSuggestions(JSON.stringify(unique));
          log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);
