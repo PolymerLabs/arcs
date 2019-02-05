@@ -14,6 +14,20 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       iron-list {
         height: calc(100vh - 27px);
       }
+      #download {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        z-index: 1;
+        color: rgb(200, 200, 200);
+        cursor: default;
+        --iron-icon-height: 32px;
+        --iron-icon-width: 32px;
+      }
+      #download[enabled] {
+        color: rgb(90, 90, 90);
+        cursor: pointer;
+      }
       [noPointer] {
         cursor: default;
       }
@@ -82,6 +96,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         margin: 2px;
       }
     </style>
+    <iron-icon id="download" enabled$="{{downloadEnabled}}" icon="file-download" title="Download log" on-click="downloadLog"></iron-icon>
     <iron-list id="list" items="{{filteredEntries}}">
       <template>
         <div entry>
@@ -113,6 +128,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
   constructor() {
     super();
     this.reset();
+    this.arcName = '';
   }
 
   static get properties() {
@@ -150,6 +166,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     for (const explorer of this.shadowRoot.querySelectorAll('[entry] > object-explorer')) {
       explorer.find = params;
     }
+    this.downloadEnabled = !!this.filteredEntries.length;
   }
 
   reset() {
@@ -157,6 +174,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     this.filteredEntries = [];
     this.originalCallName = {}; // Callback id to original method name;
     this.highlightedGroupCallbackId = null;
+    this.downloadEnabled = false;
   }
 
   onMessageBundle(messages) {
@@ -172,6 +190,8 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
           break;
         }
         case 'arc-selected':
+          this.arcName = msg.messageBody.arcId.substring(msg.messageBody.arcId.indexOf(':') + 1);
+          // fallthrough
         case 'page-refresh':
           this.reset();
           break;
@@ -180,6 +200,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     if (newFilteredEntries.length) {
       this.push('filteredEntries', ...newFilteredEntries);
     }
+    this.downloadEnabled = !!this.filteredEntries.length;
   }
 
   newEntry(msg) {
@@ -230,6 +251,19 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
       time: formatTime(msg.timestamp, 3),
       highlight: msg.pecMsgBody.callback === this.highlightedGroupCallbackId
     };
+  }
+
+  downloadLog() {
+    if (!this.downloadEnabled) return;
+
+    const lines = this.filteredEntries.map(e => {
+      return `${e.msgCount} ${e.time} ${e.icon} ${e.name} ${JSON.stringify(e.pecMsgBody)}\n`;
+    });
+    const a = document.createElement('a');
+    a.download = `pec-${this.arcName}.log`;
+    a.href = window.URL.createObjectURL(new Blob(lines, {type: 'text/plain'}));
+    a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+    a.click();
   }
 
   _blockEvent(event) {
