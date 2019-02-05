@@ -38,6 +38,7 @@ type ArcOptions = {
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
+  stub?: boolean
 };
 
 type DeserializeArcOptions = {
@@ -58,6 +59,7 @@ export class Arc {
   private readonly pecFactory: (id: string) => PECInnerPort;
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
+  public readonly isStub: boolean;
   private _activeRecipe = new Recipe();
   // TODO: rename: these are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
   private _recipes: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
@@ -84,7 +86,7 @@ export class Arc {
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -94,6 +96,7 @@ export class Arc {
     this.id = Id.newSessionId().fromString(id);
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
+    this.isStub = !!stub;
     this._loader = loader;
 
     this.storageKey = storageKey;

@@ -104,8 +104,7 @@ export class RecipeIndex {
         modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
         noRoot: true
       }),
-      // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
-      speculative: true
+      stub: true
     });
     const strategizer = new Strategizer(
       [

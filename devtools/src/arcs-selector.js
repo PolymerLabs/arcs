@@ -37,8 +37,8 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
       }
       [list] {
         /* Overrides attributes set by the iron-dropdown */
-        max-width: 50vw !important;
-        max-height: 50vh !important;
+        max-width: 80vw !important;
+        max-height: 80vh !important;
       }
       [entry] {
         line-height: 20px;
@@ -48,6 +48,26 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
       [entry][active] [name] {
         font-weight: bold;
       }
+      [entry][speculative] {
+        padding-left: 20px;
+        position: relative;
+      }
+      [entry][speculative]:before {
+        content: '?';
+        position: absolute;
+        color: #666;
+        left: 6px;
+      }
+      [desc] {
+        font-style: italic;
+        color: #444;
+      }
+      [desc]:not(:empty):before {
+        content: '"';
+      }
+      [desc]:not(:empty):after {
+        content: '"';
+      }
       [annotation] {
         font-style: italic;
       }
@@ -55,7 +75,7 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         font-size: 10px;
         color: var(--dark-gray);
       }
-      [entry]:hover, [entry]:hover [arcId] {
+      [entry]:hover, [entry]:hover [arcId], [entry]:hover [desc], [entry]:hover:before {
         color: #fff;
         background-color: var(--highlight-blue);
       }
@@ -64,7 +84,8 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
     <iron-dropdown class="dropdown" id="dropdown" horizontal-align="left" horizontal-offset="-6" vertical-align="top" vertical-offset="23">
       <div slot="dropdown-content" list>
         <template is="dom-repeat" items="[[arcs]]">
-          <div entry active$=[[item.active]] on-click="_arcSelected">
+          <div entry active$=[[item.active]] on-click="_arcSelected" speculative$=[[item.speculative]]>
+            <div desc>[[item.description]]</div>
             <div name>[[item.name]] <span annotation>[[item.annotation]]</span></div>
             <div arcId>[[item.id]]</div>
           </div>
@@ -106,11 +127,20 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
           if (name.lastIndexOf(':inner') > 0) {
             break; // skip inner arcs.
           }
-          const item = {id, name};
+          const speculative = msg.messageBody.speculative;
+          const item = {id, name, speculative};
           if (name.endsWith('-null')) item.annotation = '(Planning)';
           if (!this.messages.has(id)) this.messages.set(id, []);
           this.push('arcs', item);
-          this._select(item);
+          if (!speculative) this._select(item);
+          break;
+        }
+        case 'arc-description': {
+          const id = msg.meta.arcId;
+          const description = msg.messageBody;
+          const ix = this.arcs.findIndex(a => a.id === id);
+          if (ix === -1) break;
+          this.set(`arcs.${ix}.description`, description);
           break;
         }
         case 'arc-transition': {
