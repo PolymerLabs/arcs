@@ -18,6 +18,7 @@ import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {CallbackTracker} from '../testing/callback-tracker.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
@@ -216,6 +217,8 @@ describe('Arc', () => {
   it('deserializing a simple serialized arc produces that arc', async () => {
     const {arc, recipe, Foo, Bar, loader} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as VariableStorageProvider;
+    const fooStoreCallbacks = new CallbackTracker(fooStore, 1);
+
     // tslint:disable-next-line: no-any
     await handleFor(fooStore as any).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']) as VariableStorageProvider;
@@ -226,7 +229,7 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
     assert.equal(fooStore.version, 1);
     assert.equal(barStore.version, 1);
-
+    fooStoreCallbacks.verify();
     const serialization = await arc.serialize();
     arc.stop();
 
@@ -483,11 +486,12 @@ describe('Arc', () => {
 
 
       const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as VariableStorageProvider;
+      const callbackTracker = new CallbackTracker(store, 0);
 
       assert.isNotNull(store, 'got a valid store');
       const data = await store.get();
-
       assert.isNotNull(data, 'got valid data');
+      callbackTracker.verify();
 
       // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
       data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
