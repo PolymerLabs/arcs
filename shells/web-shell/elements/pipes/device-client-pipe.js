@@ -229,6 +229,6 @@ store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${enti
 
 recipe Pipe
   use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
-  PipeEntityReceiver
+  Trigger
     pipe = pipe
 `;

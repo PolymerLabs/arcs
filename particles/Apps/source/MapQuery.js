@@ -11,21 +11,17 @@
 defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     get template() {
-      return html`<div slotid="pipeContent"></div>`;
+      return html`<div slotid="assistance"></div>`;
     }
-    update({entities, pipe}, state) {
-      if (entities && pipe) {
-        //const text = `there are ${entities.length} known entities.`;
-        const text = this.query(entities);
-        //const text = `there is AInfo`;
-        //this.setParticleDescription(text);
+    update({recentEntities, currentApp}, state) {
+      if (recentEntities && currentApp) {
+        const text = this.query(recentEntities);
         this.updateVariable('text', {text});
       }
     }
     query(entities) {
       const results = entities.filter(entity => entity.rawData.type === 'address');
       const sorted = results.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
-      //console.log(sorted);
       const sliced = sorted.slice(0, 3);
       return JSON.stringify(sliced.map(e => e.rawData));
     }

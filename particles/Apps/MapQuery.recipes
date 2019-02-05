@@ -4,26 +4,36 @@ import '../Pipes/PipeEntity.schema'
 schema SuggestionText
   Text text
 
-particle MapQuery in './source/MapQuery.js'
-  in PipeEntity pipe
-  in [PipeEntity] entities
-  out SuggestionText text
-  consume pipes
-    provide pipeContent
+particle RecentAddresses in './source/MapQuery.js'
+  in PipeEntity currentApp
+  in [PipeEntity] recentEntities
+  out SuggestionText address
+  consume app
+    provide assistance
 
-recipe MapQuery
+particle Autofill in '../Common/source/Noop.js'
+  in SuggestionText address
+  out [Description] descriptions
+  consume assistance
+
+recipe RecentAddresses
   use #pipe_com_google_android_apps_maps as pipe
-  map 'PROFILE_pipeEntities' as entities
-  create #piped #text as text
-  MapQuery
-    entities = entities
-    pipe = pipe
-    text = text
+  map 'PROFILE_pipeEntities' as recentEntities
+  create #piped #text as address
+  create as descriptions
+  RecentAddresses
+    recentEntities = recentEntities
+    currentApp = pipe
+    address = address
+  Autofill
+    address = address
+    descriptions = descriptions
+    consume assistance
 
 particle EchoSuggestionText in './source/EchoSuggestionText.js'
   in SuggestionText text
   out [Description] descriptions
-  consume pipeContent
+  consume assistance
 
 recipe SuggestSuggestion
   use as text
@@ -31,5 +41,5 @@ recipe SuggestSuggestion
   EchoSuggestionText
     text = text
     descriptions = descriptions
-    consume pipeContent
+    consume assistance
 
