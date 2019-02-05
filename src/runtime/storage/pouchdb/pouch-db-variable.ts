@@ -44,6 +44,18 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, storageEngine, name, id, key);
     this.backingStore = null;
+
+    // Insure that there's a value stored.
+    this.db.get(this.pouchDbKey.location).catch((err) => {
+      if (err.name === 'not_found') {
+        this.db.put({
+          _id: this.pouchDbKey.location,
+          value: null,
+          version: 0,
+          referenceMode: this.referenceMode
+        }).catch((e) => {console.log('error init', e);});
+      }
+    });
   }
 
   backingType(): Type {
