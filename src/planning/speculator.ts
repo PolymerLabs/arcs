@@ -15,6 +15,8 @@ import {PlanningResult} from './plan/planning-result.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Relevance} from '../runtime/relevance.js';
 import {Suggestion} from './plan/suggestion.js';
+import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
+import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 
 export class Speculator {
   private suggestionByHash: {} = {};
@@ -55,6 +57,15 @@ export class Speculator {
         arc.modality,
         arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
     this.suggestionByHash[hash] = suggestion;
+
+    // TODO: Find a better way to associate arcs with descriptions.
+    //       Ideally, a way that works also for non-speculative arcs.
+    if (DevtoolsConnection.isConnected) {
+      DevtoolsConnection.get().forArc(speculativeArc).send({
+        messageType: 'arc-description',
+        messageBody: suggestion.descriptionText
+      });
+    }
     return suggestion;
   }
 
