@@ -138,7 +138,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
         this.fire('suggestion', suggestions[0]);
       }
       if (state.staged && state.suggestions !== suggestions) {
-         const texts = suggestions.map(suggestion => suggestion.descriptionText);
+         const texts = suggestions.map(suggestion => String(suggestion.descriptionText));
          const unique = [...new Set(texts)];
          DeviceClient.foundSuggestions(JSON.stringify(unique));
          log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);

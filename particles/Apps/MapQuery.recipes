@@ -13,21 +13,18 @@ particle RecentAddresses in './source/MapQuery.js'
 
 particle Autofill in '../Common/source/Noop.js'
   in SuggestionText address
-  out [Description] descriptions
   consume assistance
 
 recipe RecentAddresses
   use #pipe_com_google_android_apps_maps as pipe
   map 'PROFILE_pipeEntities' as recentEntities
   create #piped #text as address
-  create as descriptions
   RecentAddresses
     recentEntities = recentEntities
     currentApp = pipe
     address = address
   Autofill
     address = address
-    descriptions = descriptions
     consume assistance
 
 particle EchoSuggestionText in './source/EchoSuggestionText.js'

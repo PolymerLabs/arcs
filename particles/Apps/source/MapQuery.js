@@ -16,7 +16,7 @@ defineParticle(({DomParticle, html, log}) => {
     update({recentEntities, currentApp}, state) {
       if (recentEntities && currentApp) {
         const text = this.query(recentEntities);
-        this.updateVariable('text', {text});
+        this.updateVariable('address', {text});
       }
     }
     query(entities) {
