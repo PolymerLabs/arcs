@@ -120,7 +120,7 @@ describe('remote planificator', () => {
     return {consumePlanificator, producePlanificator};
   }
 
-  [null, 'pouchdb://memory/user/'].forEach(plannerStorageKeyBase => {
+  ['volatile', 'pouchdb://memory/user/'].forEach(plannerStorageKeyBase => {
     it(`consumes remotely produced gifts demo from ${plannerStorageKeyBase}`, async () => {
       let {consumePlanificator, producePlanificator} = await init(
           plannerStorageKeyBase,

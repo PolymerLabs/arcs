@@ -505,7 +505,7 @@ describe('Arc', () => {
   //
   // B performs the same thing, but puts C in its inner arc. C puts D etc. The whole affair stops
   // with Z, which just renders 'Z'.
-  // 
+  //
   // As aresult we get 26 arcs in total, the first one is an outer arc and each next is an inner arc
   // of a preceding one. A ends up rendering 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
   it('handles recursive inner arcs', async () => {
@@ -515,31 +515,31 @@ describe('Arc', () => {
       const next = String.fromCharCode(current.charCodeAt(0) + 1);
       sources[`${current}.js`] = `defineParticle(({DomParticle}) => {
         return class extends DomParticle {
-          async setHandles(handles) { 
+          async setHandles(handles) {
             super.setHandles(handles);
 
             const innerArc = await this.constructInnerArc();
             const hostedSlotId = await innerArc.createSlot(this, 'root');
-      
+
             innerArc.loadRecipe(\`
               particle ${next} in '${next}.js'
                 consume root
-              
+
               recipe
                 slot '\` + hostedSlotId + \`' as hosted
                 ${next}
                   consume root as hosted
             \`);
           }
-      
+
           renderHostedSlot(slotName, hostedSlotId, content) {
             this.setState(content);
           }
-      
+
           shouldRender() {
             return Boolean(this.state.template);
           }
-      
+
           getTemplate() {
             return '${current}' + this.state.template;
           }
@@ -552,12 +552,12 @@ describe('Arc', () => {
       manifestString: `
         particle A in 'A.js'
           consume root
-    
+
         recipe
           slot 'rootslotid-root' as root
           A
             consume root as root`,
-      loader: new StubLoader({        
+      loader: new StubLoader({
         ...sources,
         'Z.js': `defineParticle(({DomParticle}) => {
           return class extends DomParticle {
@@ -576,4 +576,57 @@ describe('Arc', () => {
     await rootSlotConsumer.contentAvailable;
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
+
+  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+    it('handles serialization/deserialization of empty arcs handles ' + storageKeyPrefix, async () => {
+      const id = new Id('123', ['test']).toString();
+      const loader = new Loader();
+
+      const manifest = await Manifest.parse(`
+        schema FavoriteFood
+          Text food
+
+        particle FavoriteFoodPicker in 'particles/Profile/source/FavoriteFoodPicker.js'
+          inout [FavoriteFood] foods
+          description \`select favorite foods\`
+            foods \`favorite foods\`
+
+        recipe FavoriteFood
+          create #favoriteFoods as foods
+          FavoriteFoodPicker
+            foods = foods
+        `, {loader, fileName: process.cwd() + '/input.manifest'});
+
+      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`, loader: new Loader(), context: manifest});
+      assert.isNotNull(arc);
+
+      const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
+      assert.isNotNull(favoriteFoodClass);
+
+      const recipe = manifest.recipes[0];
+      assert.isNotNull(recipe);
+
+      const foodStore = await arc.createStore(favoriteFoodClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
+      assert.isNotNull(foodStore);
+      recipe.handles[0].mapToStorage(foodStore);
+
+      const favoriteFoodType = manifest.findTypeByName('FavoriteFood') ;
+      assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
+
+      const options = {errors: new Map()};
+      const normalized = recipe.normalize(options);
+      assert(normalized, 'not normalized ' + options.errors);
+      assert(recipe.isResolved());
+      await arc.instantiate(recipe);
+
+      const serialization = await arc.serialize();
+
+      const slotComposer = new FakeSlotComposer();
+
+      const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+      assert.equal(newArc._stores.length, 1);
+      assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+      assert.equal(newArc.id.toStringWithoutSessionForTesting(), 'test');
+    });
+  });  // end forEach(storageKeyPrefix)
 });
