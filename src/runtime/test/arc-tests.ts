@@ -578,24 +578,24 @@ describe('Arc', () => {
   });
 
   ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
-    it('handles serialization/deserializatoin of empty arcs handles ' + storageKeyPrefix, async () => {
+    it('handles serialization/deserialization of empty arcs handles ' + storageKeyPrefix, async () => {
       const id = new Id('123', ['test']).toString();
       const loader = new Loader();
 
       const manifest = await Manifest.parse(`
-schema FavoriteFood
-  Text food
+        schema FavoriteFood
+          Text food
 
-particle FavoriteFoodPicker in 'particles/Profile/source/FavoriteFoodPicker.js'
-  inout [FavoriteFood] foods
-  description \`select favorite foods\`
-    foods \`favorite foods\`
+        particle FavoriteFoodPicker in 'particles/Profile/source/FavoriteFoodPicker.js'
+          inout [FavoriteFood] foods
+          description \`select favorite foods\`
+            foods \`favorite foods\`
 
-recipe FavoriteFood
-  create #favoriteFoods as foods
-  FavoriteFoodPicker
-    foods = foods
-`, {loader, fileName: process.cwd() + '/input.manifest'});
+        recipe FavoriteFood
+          create #favoriteFoods as foods
+          FavoriteFoodPicker
+            foods = foods
+        `, {loader, fileName: process.cwd() + '/input.manifest'});
 
       const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`, loader: new Loader(), context: manifest});
       assert.isNotNull(arc);

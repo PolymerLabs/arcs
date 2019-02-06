@@ -43,7 +43,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
     this._model = new CrdtCollectionModel();
 
-    // Insure that the underlying database item is created.
+    // Ensure that the underlying database item is created.
     this.db.get(this.pouchDbKey.location).catch((err) => {
       if (err.name === 'not_found') {
         this.db.put({
@@ -51,7 +51,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
           model: this._model.toLiteral(),
           referenceMode: this.referenceMode,
           type: this.type.toLiteral()
-        }).catch((e) => {console.log('error init', e);});
+        }).catch((e) => {console.warn('error init', e);});
       }
     });
 
