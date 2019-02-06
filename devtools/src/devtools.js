@@ -95,7 +95,7 @@
   }
 
   function connectViaWebRtc(remoteExploreKey) {
-    console.log(`Establishing connection with Remote WebShell on "${remoteExploreKey}".`);
+    console.log(`Attempting a connection with Remote WebShell on "${remoteExploreKey}".`);
     const hub = signalhub('arcs-demo', 'https://arcs-debug-switch.herokuapp.com/');
     const p = new SimplePeer({initatior: false, trickle: false, objectMode: true});
 
@@ -121,7 +121,17 @@
       p.send('init');
       connectedPeer = p;
     });
+    let heartbeatTimeout = null;
     p.on('data', msg => {
+      if (msg === 'heartbeat') {
+        clearTimeout(heartbeatTimeout);
+        heartbeatTimeout = setTimeout(() => {
+          if (window.confirm('Arcs WebShell appears disconnected. Reload and attempt reconnecting?')) {
+            window.location.reload();
+          }
+        }, 5000);
+        return;
+      }
       let m = null;
       try {
         m = JSON.parse(msg);
@@ -131,7 +141,7 @@
       }
       queueOrFire(m);
     });
-    p.on('error', (err) => console.err('error', err));
+    p.on('error', (err) => console.error('error', err));
 
     return msg => {
       if (!connectedPeer) {

@@ -26,9 +26,9 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   }
 
   _connectViaWebRtc(remoteExploreKey) {
-    console.log(`Establishing connection with remote Arcs Explorer on "${remoteExploreKey}".`);
+    console.log(`Attempting a connection with remote Arcs Explorer on "${remoteExploreKey}".`);
 
-    const showConnectionMarker = this._createVisualMarkerForRemoteDebugging();
+    const [showConnectionSuccess, showConnectionLost] = this._createVisualMarkerForRemoteDebugging();
     const p = new SimplePeer({initiator: true, trickle: false, objectMode: true});
 
     p.on('signal', (data) => {
@@ -60,17 +60,28 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
       hub.broadcast(`${remoteExploreKey}:offer`, encoded);
     });
 
-    p.on('error', (err) => console.log('error', err));
+    p.on('error', (err) => {
+      console.error('WebRTC error. Disconnecting.', err);
+      this.webRtcPeer = null;
+      showConnectionLost();
+    });
     p.on('connect', () => console.log('WebRTC channel established!'));
     p.on('data', (msg) => {
       if (msg === 'init') {
         this.webRtcPeer = p;
         DevtoolsBroker.markConnected();
-        showConnectionMarker();
+        showConnectionSuccess();
+        this._sendHeartbeat();
       } else {
         this._handleMessage(JSON.parse(msg));
       }
     });
+  }
+
+  _sendHeartbeat() {
+    if (!this.webRtcPeer) return;
+    this.webRtcPeer.send('heartbeat');
+    setTimeout(() => this._sendHeartbeat(), 1000);
   }
 
   _createVisualMarkerForRemoteDebugging() {
@@ -83,16 +94,22 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
     body.style.paddingTop = '16px';
     body.appendChild(notification);
 
-    return () => {
+    return [() => {
       notification.innerText = 'Remote Explorer Connected';
       notification.style.background = 'Red';
-    };
+    }, () => {
+      notification.innerText = 'Remote Explorer Disconnected';
+      notification.style.background = 'Black';
+    }];
   }
 
   _flush(messages) {
     if (this.remoteExploreKey) {
-      assert(this.webRtcPeer);
-      this.webRtcPeer.send(JSON.stringify(messages));
+      if (this.webRtcPeer) {
+        this.webRtcPeer.send(JSON.stringify(messages));
+      } else {
+        console.warn('Connection to DevTools is closed. Message not sent.');
+      }
     } else {
       document.dispatchEvent(new CustomEvent('arcs-debug-out', {detail: messages}));
     }
