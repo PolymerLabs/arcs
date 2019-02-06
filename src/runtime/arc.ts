@@ -27,6 +27,7 @@ import {Particle} from './recipe/particle.js';
 import {Slot} from './recipe/slot.js';
 import {SlotComposer} from './slot-composer.js';
 import {Modality} from './modality.js';
+import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
 
 type ArcOptions = {
   id: string;
@@ -39,6 +40,7 @@ type ArcOptions = {
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean
+  listenerClasses?: ArcDebugListenerDerived[];
 };
 
 type DeserializeArcOptions = {
@@ -48,6 +50,7 @@ type DeserializeArcOptions = {
   loader: Loader;
   fileName: string;
   context: Manifest;
+  listenerClasses?: ArcDebugListenerDerived[];
 };
 
 export type PlanCallback = (recipe: Recipe) => void;
@@ -81,12 +84,13 @@ export class Arc {
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
   private innerArcsByParticle: Map<Particle, Arc[]> = new Map();
+  private listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -106,7 +110,8 @@ export class Arc {
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
-    this.debugHandler = new ArcDebugHandler(this);
+    this.listenerClasses = listenerClasses;
+    this.debugHandler = new ArcDebugHandler(this, listenerClasses);
   }
   get loader(): Loader {
     return this._loader;
@@ -371,7 +376,7 @@ ${this.activeRecipe.toString()}`;
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, listenerClasses}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: manifest.meta.name,
@@ -380,7 +385,8 @@ ${this.activeRecipe.toString()}`;
       pecFactory,
       loader,
       storageProviderFactory: manifest.storageProviderFactory,
-      context
+      context,
+      listenerClasses
     });
     await Promise.all(manifest.stores.map(async store => {
       const tags = manifest.storeTags.get(store);
@@ -439,7 +445,13 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    const arc = new Arc({id: this.generateID().toString(), pecFactory: this.pecFactory, context: this.context, loader: this._loader, speculative: true, innerArc: this.isInnerArc});
+    const arc = new Arc({id: this.generateID().toString(),
+                         pecFactory: this.pecFactory,
+                         context: this.context,
+                         loader: this._loader,
+                         speculative: true,
+                         innerArc: this.isInnerArc,
+                         listenerClasses: this.listenerClasses});
     const storeMap = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');

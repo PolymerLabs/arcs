@@ -17,7 +17,7 @@ import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
 import * as Rulesets from '../strategies/rulesets.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {ArcDevtoolsChannel, ArcDebugListener, ArcDebugListenerDerived} from '../../runtime/debug/abstract-devtools-channel.js';
 
 class InitialRecipe extends Strategy {
   private recipe: Recipe;
@@ -42,11 +42,12 @@ class InitialRecipe extends Strategy {
   }
 }
 
-export class ArcPlannerInvoker {
+export class ArcPlannerInvoker extends ArcDebugListener {
   private arc: Arc;
   private recipeIndex: RecipeIndex;
   
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
+    super(arc, arcDevtoolsChannel);
     this.arc = arc;
 
     arcDevtoolsChannel.listen('fetch-strategies', () => arcDevtoolsChannel.send({
@@ -209,3 +210,8 @@ export class ArcPlannerInvoker {
     return depth;
   }
 }
+
+// TODO: This should move to the planning interface file when it exists. 
+export const defaultPlanningDebugListeners: ArcDebugListenerDerived[] = [
+  ArcPlannerInvoker
+];
