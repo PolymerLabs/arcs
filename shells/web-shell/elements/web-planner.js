@@ -59,6 +59,8 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     //this.fire('metaplans', metaplans);
   }
   _suggestionsChanged(planificator, suggestions) {
+    // TODO(sjmiles): maybe have @mmandlis do this at planner, also note that
+    // suggestion.versionByStore is avaialble for validation against arc.getVersionByStore()
     suggestions.arcid = planificator.arc.id.toString();
     log('suggestionsChanged', suggestions.arcid);
     this.fire('suggestions', suggestions);
