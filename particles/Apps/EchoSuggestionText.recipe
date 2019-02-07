@@ -1,3 +1,5 @@
+import '../Arcs/Description.schema'
+
 schema SuggestionText
   Text text
 

@@ -1,4 +1,3 @@
-import '../Arcs/Description.schema'
 import '../Pipes/PipeEntity.schema'
 import './EchoSuggestionText.recipe'
 
