@@ -69,7 +69,7 @@ describe('manifest', () => {
     verify(manifest);
     // TODO(dstockwell): The connection between particles and schemas does
     //                   not roundtrip the same way.
-    const type = manifest.recipes[0].handleConnections[0].rawType;
+    const type = manifest.recipes[0].handleConnections[0].type;
     assert.equal('one-s', type.toPrettyString());
     assert.equal('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));

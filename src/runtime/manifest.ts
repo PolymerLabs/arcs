@@ -907,11 +907,6 @@ ${e.message}
         } else {
           connection = particle.connections[connectionItem.param];
           if (!connection) {
-            if (particle.spec && !particle.spec.getConnectionByName(connectionItem.param)) {
-              throw new ManifestError(
-                connectionItem.location,
-                `param '${connectionItem.param}' is not defined by '${particle.name}'`);
-            }
             connection = particle.addConnectionName(connectionItem.param);
           }
           // TODO: else, merge tags? merge directions?

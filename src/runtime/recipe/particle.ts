@@ -244,10 +244,6 @@ export class Particle {
           continue;
         }
       }
-      // TODO: don't just overwrite here, check that the types
-      // are compatible if one already exists.
-      connection.type = speccedConnection.type;	
-      connection.direction = speccedConnection.direction;	
     }
   }
 
@@ -258,13 +254,9 @@ export class Particle {
   }
 
   addConnectionName(name: string): HandleConnection {
+    assert(name, `Cannot create connection with no name`);
     assert(this._connections[name] == undefined);
     this._connections[name] = new HandleConnection(name, this);
-    if (this.spec) {
-      const connSpec = this.spec.getConnectionByName(name);
-      this._connections[name].type = connSpec.type;
-      this._connections[name].direction = connSpec.direction;
-    }
     return this._connections[name];
   }
 
