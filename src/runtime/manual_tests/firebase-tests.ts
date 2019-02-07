@@ -74,8 +74,9 @@ describe('firebase', function() {
       const variable = await storage.construct('test0', barType, newStoreKey('variable')) as VariableStorageProvider;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
-      assert.equal(value, result.value);
+      assert.equal(result.value, value);
     });
+
     it('resolves concurrent set', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -92,6 +93,7 @@ describe('firebase', function() {
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });
+
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -113,6 +115,7 @@ describe('firebase', function() {
 
       assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
     });
+
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -128,10 +131,46 @@ describe('firebase', function() {
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
-      assert.equal('underlying', result.storageKey);
+      assert.equal(result.storageKey, 'underlying');
 
       assert.isFalse(var1.referenceMode);
       assert.isNull(var1.backingStore);
+    });
+
+    it('multiple variables with the same backing store', async () => {
+      // Note the schema needs to be unique across this file, to avoid polluting other tests
+      // related to FirebaseBackingStore.
+      const manifest = await Manifest.parse(`
+        schema Bar1
+          Text data
+      `);
+      const barType = new EntityType(manifest.schemas.Bar1);
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const storage = createStorage(arc.id);
+
+      const var1 = await storage.construct('test1', barType, newStoreKey('variable')) as VariableStorageProvider;
+      const var2 = await storage.construct('test2', barType, newStoreKey('variable')) as VariableStorageProvider;
+
+      const bar = n => ({id: 'id' + n, data: 'd' + n});
+      await var1.set(bar(1));
+      await var2.set(bar(2));
+
+      // The two variables have the same Type objects, so they should reference the same backing
+      // store instance.
+      const backing = var1.backingStore;
+      assert.isNotNull(backing);
+      assert.strictEqual(backing, var2.backingStore);
+
+      assert.deepEqual(await var1.get(), bar(1));
+      assert.deepEqual(await var2.get(), bar(2));
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2)]);
+
+      await var1.clear();
+      await var2.set(bar(3));
+     
+      assert.isNull(await var1.get());
+      assert.deepEqual(await var2.get(), bar(3));
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
     });
   });
 
@@ -150,10 +189,11 @@ describe('firebase', function() {
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
       let result = await collection.get('id0');
-      assert.equal(value1, result.value);
+      assert.equal(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
+
     it('resolves concurrent add of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -170,6 +210,7 @@ describe('firebase', function() {
       await synchronized(collection1, collection2);
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
+
     it('resolves concurrent add/remove of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -189,6 +230,7 @@ describe('firebase', function() {
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());
     });
+
     it('resolves concurrent add of different id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -206,6 +248,7 @@ describe('firebase', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
+
     it('enables referenceMode by default', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -223,9 +266,9 @@ describe('firebase', function() {
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.value);
+      assert.equal(result.value, 'value1');
       result = await collection1.get('id2');
-      assert.equal('value2', result.value);
+      assert.equal(result.value, 'value2');
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
@@ -233,6 +276,7 @@ describe('firebase', function() {
       assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
       assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
     });
+
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -250,13 +294,14 @@ describe('firebase', function() {
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
-      assert.equal('value1', result.storageKey);
+      assert.equal(result.storageKey, 'value1');
       result = await collection1.get('id2');
-      assert.equal('value2', result.storageKey);
+      assert.equal(result.storageKey, 'value2');
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
     }); 
+
     it('supports removeMultiple', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -273,6 +318,56 @@ describe('firebase', function() {
         {id: 'id1', keys: ['key1']}, {id: 'id2', keys: ['key2']}
       ]);
       assert.isEmpty(await collection.toList());
+    });
+
+    it('multiple collections with the same backing store', async () => {
+      // Note the schema needs to be unique across this file, to avoid polluting other tests
+      // related to FirebaseBackingStore.
+      const manifest = await Manifest.parse(`
+        schema Bar2
+          Text data
+      `);
+      const barType = new EntityType(manifest.schemas.Bar2);
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const storage = createStorage(arc.id);
+
+      const col1 = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
+      const col2 = await storage.construct('test2', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
+
+      const bar = n => ({id: 'id' + n, data: 'd' + n});
+      await col1.store(bar(1), ['key1']);
+      await col2.store(bar(2), ['key2']);
+      await col1.store(bar(3), ['key3']);
+
+      // The two collections have the same type (as different Type objects), so they should
+      // reference the same backing store instance.
+      const backing = col1.backingStore;
+      assert.isNotNull(backing);
+      assert.strictEqual(backing, col2.backingStore);
+
+      // The two collections should see only their own additions, while the backing store sees all.
+      assert.sameDeepMembers(await col1.toList(), [bar(1), bar(3)]);
+      assert.sameDeepMembers(await col2.toList(), [bar(2)]);
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
+
+      // Removing one of col2's ids from col1 should have no effect.
+      await col1.removeMultiple([{id: 'id1', keys: []}, {id: 'id2', keys: []}]);
+      assert.sameDeepMembers(await col1.toList(), [bar(3)]);
+      assert.sameDeepMembers(await col2.toList(), [bar(2)]);
+      
+      // Remove ops are *not* currently propagated to the backing.
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
+
+      // Both collections can store the same entity with different keys.
+      await Promise.all([col1.store(bar(4), ['key4a']), col2.store(bar(4), ['key4b'])]);
+      assert.sameDeepMembers(await col1.toList(), [bar(3), bar(4)]);
+      assert.sameDeepMembers(await col2.toList(), [bar(2), bar(4)]);
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3), bar(4)]);
+
+      // Remove the duplicate from one collection shouldn't affect the other.
+      await col2.remove('id4', []);
+      assert.sameDeepMembers(await col1.toList(), [bar(3), bar(4)]);
+      assert.sameDeepMembers(await col2.toList(), [bar(2)]);
     });
   });
 
@@ -665,6 +760,79 @@ describe('firebase', function() {
       assert.isFalse(done);
       assert.deepEqual(value.map(e => e.rawData.value), ['v3', 'v6']);
       assert.isTrue((await bigStore.cursorNext(cursorId)).done);
+    });
+  });
+
+  describe('backing store', () => {
+    it('backing store API', async () => {
+      // Note the schema needs to be unique across this file, to avoid polluting other tests
+      // related to FirebaseBackingStore.
+      const manifest = await Manifest.parse(`
+        schema Bar3
+          Text data
+      `);
+      const barType = new EntityType(manifest.schemas.Bar3);
+      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const storage = createStorage(arc.id);
+      const col = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
+      const backing = await col.ensureBackingStore();
+      backing.maxConcurrentRequests = 3;
+
+      const bar = n => ({id: 'id' + n, data: 'd' + n});
+
+      // store, storeMultiple
+      await backing.store(bar(1), ['key1']);
+      await backing.store(bar(2), ['key2a', 'key2b', 'key2c']);
+      await backing.storeMultiple([bar(3), bar(4), bar(5), bar(6)], ['keyM']);
+
+      // get, getMultiple, toList
+      assert.deepEqual(await backing.get('id1'), bar(1));
+      assert.deepEqual(await backing.get('id5'), bar(5));
+      assert.isNull(await backing.get('not-an-id'));
+      assert.deepEqual(await backing.getMultiple(['id6', 'id2', 'not-an-id', 'id5']), [bar(6), bar(2), null, bar(5)]);
+      assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3), bar(4), bar(5), bar(6)]);
+
+      // remove: removing a subset of keys should not delete item
+      await backing.remove('id2', ['key2b']);
+      assert.deepEqual(await backing.get('id2'), bar(2));
+
+      // removing remaining keys should delete item
+      await backing.remove('id2', ['key2c', 'key2a', 'not-a-key']);
+      assert.isNull(await backing.get('id2'));
+
+      // empty key list should delete item
+      await backing.remove('id6', []);
+      assert.isNull(await backing.get('id6'));
+
+      // removing a non-existent key should have no effect
+      await backing.remove('id1', ['not-a-key']);
+      assert.deepEqual(await backing.get('id1'), bar(1));
+
+      // removing a non-existent id should have no effect
+      await backing.remove('not-an-id', []);
+      assert.isNull(await backing.get('not-an-id'));
+
+      // removeMultiple: safe to use non-existent keys and ids
+      await backing.removeMultiple([
+        {id: 'id1', keys: ['key1']},
+        {id: 'id4', keys: ['keyM']},
+        {id: 'id5', keys: ['not-a-key']},
+        {id: 'not-an-id', keys: []}
+      ]);
+      assert.sameDeepMembers(await backing.toList(), [bar(3), bar(5)]);
+
+      // removeMultiple: empty key list deletes item, removing subset of keys does not
+      await backing.store(bar(7), ['key7a', 'key7b', 'key7c']);
+      await backing.store(bar(8), ['key8a', 'key8b', 'key8c']);
+      await backing.removeMultiple([
+        {id: 'id7', keys: []},
+        {id: 'id8', keys: ['key8b', 'key8c']},
+      ]);
+      assert.sameDeepMembers(await backing.toList(), [bar(3), bar(5), bar(8)]);
+    
+      // removeMultiple: empty item list deletes everything
+      await backing.removeMultiple([]);
+      assert.isEmpty(await backing.toList());
     });
   });
 });
