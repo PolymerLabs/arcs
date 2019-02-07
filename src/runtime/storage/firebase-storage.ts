@@ -112,8 +112,8 @@ enum Mode {direct, reference, backing}
 export class FirebaseStorage extends StorageBase {
   private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
-  private baseStores: Map<string, FirebaseCollection>;
-  private baseStorePromises: Map<string, Promise<FirebaseCollection>>;
+  private baseStores: Map<string, FirebaseBackingStore>;
+  private baseStorePromises: Map<string, Promise<FirebaseBackingStore>>;
 
   constructor(arcId: Id) {
     super(arcId);
@@ -161,7 +161,7 @@ export class FirebaseStorage extends StorageBase {
     if (storage = this.baseStorePromises.get(typeStr)) {
       return storage;
     }
-    const storagePromise = this._join(typeStr, type.collectionOf(), key, 'unknown', Mode.backing) as Promise<FirebaseCollection>;
+    const storagePromise = this._join(typeStr, type.collectionOf(), key, 'unknown', Mode.backing) as Promise<FirebaseBackingStore>;
     this.baseStorePromises.set(typeStr, storagePromise);
     storage = await storagePromise;
     assert(storage, 'baseStorageFor should not fail');
@@ -250,9 +250,9 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>|null;
   protected reference: firebase.database.Reference;
-  backingStore: FirebaseCollection|null;
+  backingStore: FirebaseBackingStore|null;
   protected storageEngine: FirebaseStorage;
-  private pendingBackingStore: Promise<FirebaseCollection>|null;
+  private pendingBackingStore: Promise<FirebaseBackingStore>|null;
 
   protected constructor(type, storageEngine, id, reference, key) {
     super(type, undefined, id, key.toString());
@@ -1585,7 +1585,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement enableReferenceMode');
   }
 
-  async ensureBackingStore(): Promise<FirebaseCollection> {
+  async ensureBackingStore(): Promise<FirebaseBackingStore> {
     throw new Error('FirebaseBackingStore does not implement ensureBackingStore');
   }
 
