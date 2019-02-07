@@ -131,17 +131,20 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.updateObserved(state.observe, state.pipeStore);
       this.state = {observe: null};
     }
+    //
+    state.suggestions = null;
     if (arc && suggestions && suggestions.length > 0) {
-      state.suggestions = null;
-      if (state.staged || String(arc.id).includes(state.spawned)) {
+      if (suggestions.arcid === String(arc.id)) {
+        log('promoting suggestions for ', arc.id.toString());
         state.suggestions = suggestions;
       }
     }
     if (context && state.suggestions) {
-      log(state.spawned, String(arc.id));
       if (state.spawned) {
         const suggestion = state.suggestions[0];
-        log(suggestion);
+        log('active recipe:', arc.activeRecipe.toString());
+        log('suggested recipe:', suggestion.plan.toString());
+        log(suggestion.descriptionText, suggestion);
         this.state = {spawned: false, staged: true, suggestions: null};
         this.fire('suggestion', suggestion);
       }
@@ -149,6 +152,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
          const texts = state.suggestions.map(suggestion => String(suggestion.descriptionText));
          state.suggestions = null;
          const unique = [...new Set(texts)];
+        log(arc.activeRecipe.toString());
          DeviceClient.foundSuggestions(JSON.stringify(unique));
          log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);
       }
@@ -172,7 +176,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     // TODO(sjmiles): we need to know when suggestions we receive are up to date
     // relative to the changes we just made
     // instead, for now, wait 1s for planning to take place before updating state
-    this.state = {spawned: false, staged: false};
+    this.state = {spawned: false, staged: false, suggestions: null};
     setTimeout(() => this.state = state, 1000);
   }
   updateObserved(entity, store) {
