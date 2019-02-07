@@ -1,8 +1,6 @@
 import '../Arcs/Description.schema'
 import '../Pipes/PipeEntity.schema'
-
-schema SuggestionText
-  Text text
+import './EchoSuggestionText.recipe'
 
 particle RecentAddresses in './source/MapQuery.js'
   in PipeEntity currentApp
@@ -26,11 +24,6 @@ recipe RecentAddresses
   Autofill
     address = address
     consume assistance
-
-particle EchoSuggestionText in './source/EchoSuggestionText.js'
-  in SuggestionText text
-  out [Description] descriptions
-  consume assistance
 
 recipe SuggestSuggestion
   use as text

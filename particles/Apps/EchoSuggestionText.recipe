@@ -4,4 +4,4 @@ schema SuggestionText
 particle EchoSuggestionText in './source/EchoSuggestionText.js'
   in SuggestionText text
   out [Description] descriptions
-  consume pipeContent
+  consume assistance
