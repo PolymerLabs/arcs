@@ -12,6 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
+import {Type} from '../type.js';
 
 describe('recipe', () => {
   it('normalize errors', async () => {
@@ -628,5 +629,52 @@ describe('recipe', () => {
           consume root as s0`)).recipes[0];
     const recipeString = "recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0";
     assert.isTrue(recipe.toString() === recipeString.toString(), "incorrect recipe toString method");
+  });
+  it('clones connections with type variables', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+      resource ThingResource
+        start
+        [
+          {"name": "mything"}
+        ]
+      store ThingStore of Thing 'mything' in ThingResource
+      particle P
+        in ~a inThing
+        inout [~a] outThing
+      recipe
+        map 'mything' as handle0
+        create as handle1
+        P
+          inThing = handle0
+          outThing = handle1
+    `)).recipes[0];
+    const verifyRecipe = (recipe, errorPrefix) => {
+      const errors = [];
+      const resolvedType = recipe.handleConnections[0].type.resolvedType();
+      if (resolvedType !== recipe.handleConnections[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handle connection types mismatch`);
+      }
+      if (resolvedType !== recipe.handles[0].type.resolvedType()) {
+        errors.push(`${errorPrefix}: handle0 type mismatch with handle-connection`);
+      }
+      if (resolvedType !== recipe.handles[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handle1 type mismatch with handle-connection`);
+      }
+      if (recipe.handles[0].type.resolvedType() !== recipe.handles[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handles type mismatch`);
+      }
+      assert.lengthOf(errors, 0, `\ndetailed errors: [\n${errors.join('\n')}\n]\n`);
+      return resolvedType;
+    };
+    assert.isTrue(recipe.normalize());
+    assert.equal(recipe.handleConnections[0].type, recipe.handleConnections[1].type.primitiveType());
+    const recipeResolvedType = verifyRecipe(recipe, 'recipe');
+    const type = recipe.handleConnections[0].type;
+
+    // Clone the recipe and verify types consistency.
+    const recipeClone = recipe.clone();
+    const recipeCloneResolvedType = verifyRecipe(recipeClone, 'recipe-clone');
+    assert.notEqual(recipeResolvedType, recipeCloneResolvedType);
   });
 });

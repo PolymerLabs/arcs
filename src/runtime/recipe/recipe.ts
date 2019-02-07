@@ -483,8 +483,9 @@ export class Recipe {
   }
 
   _copyInto(recipe, cloneMap) {
+    const variableMap = new Map();
     function cloneTheThing(object) {
-      const clonedObject = object._copyInto(recipe, cloneMap);
+      const clonedObject = object._copyInto(recipe, cloneMap, variableMap);
       cloneMap.set(object, clonedObject);
     }
 
