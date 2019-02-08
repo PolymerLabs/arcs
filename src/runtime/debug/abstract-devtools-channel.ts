@@ -89,4 +89,16 @@ export class ArcDevtoolsChannel {
   listen(messageType, callback) {
     this.channel.listen(this.arcId, messageType, callback);
   }
+
+  static instantiateListener(listenerClass: ArcDebugListenerDerived, 
+                             arc: Arc,
+                             channel: ArcDevtoolsChannel): ArcDebugListener {
+    return new listenerClass(arc, channel);
+  }
 }
+
+export abstract class ArcDebugListener {
+  constructor(arc: Arc, channel: ArcDevtoolsChannel) {}
+}
+type ArcDebugListenerClass = typeof ArcDebugListener;
+export interface ArcDebugListenerDerived extends ArcDebugListenerClass {}

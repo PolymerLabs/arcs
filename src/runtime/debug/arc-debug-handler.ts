@@ -10,21 +10,22 @@
 
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {Arc} from '../arc.js';
-import {ArcPlannerInvoker} from '../../planning/debug/arc-planner-invoker.js';
-import {ArcStoresFetcher} from './arc-stores-fetcher.js';
+import {ArcDevtoolsChannel, ArcDebugListenerDerived} from '../../runtime/debug/abstract-devtools-channel.js';
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {Particle} from '../recipe/particle.js';
+import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 
 // Arc-independent handlers for devtools logic.
 DevtoolsConnection.onceConnected.then(devtoolsChannel => {
   enableTracingAdapter(devtoolsChannel);
 });
 
+
 export class ArcDebugHandler {
   private arcDevtoolsChannel: DevtoolsChannel = null;
   
-  constructor(arc: Arc) {
+  constructor(arc: Arc, listenerClasses: ArcDebugListenerDerived[]) {
     if (arc.isStub) return;
 
     const connectedOnInstantiate = DevtoolsConnection.isConnected;
@@ -39,9 +40,13 @@ export class ArcDebugHandler {
 
       this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
-      // Message handles go here.
-      const arcPlannerInvoker = new ArcPlannerInvoker(arc, this.arcDevtoolsChannel);
-      const arcStoresFetcher = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
+      if (!!listenerClasses) { // undefined => false
+      	// TODO: This should just be a foreach, as there is no need to keep
+      	// the results.
+        const listeners = listenerClasses.map(l => {
+          ArcDevtoolsChannel.instantiateListener(l, arc, this.arcDevtoolsChannel);
+        });
+      }
 
       this.arcDevtoolsChannel.send({
         messageType: 'arc-available',
@@ -72,3 +77,8 @@ export class ArcDebugHandler {
     });
   }
 }
+
+// TODO: This should move to the core interface file when it exists. 
+export const defaultCoreDebugListeners: ArcDebugListenerDerived[] = [
+  ArcStoresFetcher
+];
