@@ -49,17 +49,20 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
     };
     const planificator = await Planificator.create(arc, options);
     planificator.registerSuggestionsChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
-    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    planificator.registerVisibleSuggestionsChangedCallback(suggestions => this._suggestionsChanged(planificator, suggestions));
     planificator.loadSuggestions && await planificator.loadSuggestions();
     window.planificator = planificator; // for debugging only
     return planificator;
   }
   _plansChanged(metaplans, metaplan) {
     //log('plansChanged', metaplans, metaplan);
-    this.fire('metaplans', metaplans);
+    //this.fire('metaplans', metaplans);
   }
-  _suggestionsChanged(suggestions) {
-    //log('suggestionsChanged', suggestions);
+  _suggestionsChanged(planificator, suggestions) {
+    // TODO(sjmiles): maybe have @mmandlis do this at planner, also note that
+    // suggestion.versionByStore is avaialble for validation against arc.getVersionByStore()
+    suggestions.arcid = planificator.arc.id.toString();
+    log('suggestionsChanged', suggestions.arcid);
     this.fire('suggestions', suggestions);
   }
 }

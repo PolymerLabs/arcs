@@ -28,6 +28,9 @@ const manifests = {
   `,
   launcher: `
     import 'https://$particles/Arcs/Launcher.recipe'
+  `,
+  pipes: `
+    import 'https://$particles/Pipes/BackgroundPipes.recipes'
   `
 };
 
@@ -54,26 +57,28 @@ const template = Xen.Template.html`
   <!-- manage configuration (read and persist) -->
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
   <!-- context bootstrap -->
-  <web-arc id="context" env="{{env}}" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
+  <web-arc id="context" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
-  <user-context env="{{env}}" storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
+  <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
   <!-- web planner -->
-  <web-planner env="{{env}}" config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
+  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState">
     <!-- launcher -->
-    <web-arc id="launcher" hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
-    <!-- <web-launcher hidden="{{hideLauncher}}" env="{{env}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
-    <!-- other arcs -->
-    <web-arc id="nullArc" hidden env="{{env}}" storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <web-arc id="arc" hidden="{{hideArc}}" env="{{env}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
+    <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
+    <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
+    <!-- background arcs -->
+    <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
+    <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc>
+    <!-- user arc -->
+    <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
     <div slot="suggestions" suggestions>
       <div slotid="suggestions" on-plan-choose="onChooseSuggestion"></div>
     </div>
   </web-shell-ui>
   <!-- data pipes -->
-  <device-client-pipe env="{{env}}" userid="{{userid}}" context="{{context}}" storage="{{storage}}" on-arc="onPipesArc" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
+  <device-client-pipe userid="{{userid}}" context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -116,7 +121,10 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // spin up nullArc
     if (!state.nullConfig && state.context && state.userid) {
       this.spawnNullArc(state.userid);
-      this.recordNullArc(state.userid);
+    }
+    // spin up pipesArc
+    if (!state.pipesConfig && state.context && state.userid) {
+      this.spawnPipesArc(state.userid);
     }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
@@ -158,7 +166,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // capture anchor-clicks for SPA behavior
     linkJack(document, anchor => this.routeLink(anchor));
     // configure arcs environment
-    Utils.init(Object.assign('../..'));
+    Utils.init(root);
     state.env = Utils.env;
   }
   routeLink(anchor) {
@@ -210,10 +218,28 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnNullArc(userid) {
     this.state = {
-      nullConfig: {
-        id: `${userid}-null`,
-        suggestionContainer: this.getSuggestionSlot()
-      }
+      nullConfig: this.configureBgArc(userid, 'null')
+    };
+  }
+  spawnPipesArc(userid) {
+    const pipesConfig = this.configureBgArc(userid, 'pipes');
+    pipesConfig.manifest = manifests.pipes;
+    this.state = {
+      pipesConfig
+    };
+  }
+  configureBgArc(userid, name)  {
+    const key = `${userid}-${name.toLowerCase()}`;
+    this.recordArcMeta({
+      key: key,
+      href: `?arc=${key}`,
+      description: `${name} arc`,
+      color: 'silver',
+      touched: 0
+    });
+    return {
+      id: key,
+      suggestionContainer: this.getSuggestionSlot()
     };
   }
   spawnSerialization(key) {
@@ -259,17 +285,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
-  }
-  recordNullArc(userid) {
-    const nullKey = `${userid}-null`;
-    this.recordArcMeta({
-      key: nullKey,
-      href: `?arc=${nullKey}`,
-      description: `Planning arc (null)`,
-      color: 'silver',
-      // pretend to be really old
-      touched: 0 //Date.now()
-    });
   }
   async recordArcMeta(meta) {
     const {store} = this._state;

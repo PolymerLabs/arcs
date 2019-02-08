@@ -24,9 +24,10 @@ const init = (root, urls) => {
 };
 
 const parse = async (content, options) => {
+  const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
   const localOptions = {
-    id: 'in-memory.manifest',
-    fileName: './in-memory.manifest',
+    id,
+    fileName: `./${id}`,
     loader: env.loader
   };
   if (options) {

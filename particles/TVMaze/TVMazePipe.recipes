@@ -1,7 +1,7 @@
+import '../Arcs/Description.schema'
+import '../Pipes/PipeEntity.schema'
 import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'
-import '../Pipes/PipeEntity.schema'
-import '../Arcs/Description.schema'
 
 particle TVMazeShowPipe in './source/TVMazeShowPipe.js'
   in PipeEntity pipe
@@ -11,7 +11,7 @@ particle TVMazeFindPipeShow in './source/TVMazeFindShow.js'
   in TVMazeFind find
   out TVMazeShow show
   out [Description] descriptions
-  consume pipes
+  consume app
     provide content
       handle show
   //description `find out about "${find.name}" (from TVMaze)`

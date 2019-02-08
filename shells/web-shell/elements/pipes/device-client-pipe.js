@@ -28,7 +28,6 @@ import {generateId} from '../../../../modalities/dom/components/generate-id.js';
   not working (yet):
 
   ShellApi.receiveEntity(`{"type": "playRecord", ?}`)
-
 */
 
 // DeviceClient object supplied externally, otherwise a fake
@@ -40,30 +39,56 @@ const DeviceClient = window.DeviceClient || {
   }
 };
 
+// abstract entity sink
+const PipeSink = class {
+  constructor() {
+    this.sink = null;
+    this.pending = [];
+  }
+  receiveEntityJSON(entityJSON) {
+    try {
+      const entity = JSON.parse(entityJSON);
+      entity.id = generateId();
+      this.receiveEntity(entity);
+      return entity.id;
+    } catch (x) {
+      console.warn(x);
+    }
+  }
+  receiveEntity(entity) {
+    if (this.sink) {
+      this.sink(entity);
+    } else {
+      this.pending.push(entity);
+    }
+  }
+  registerSink(sink) {
+    this.sink = sink;
+    this.pending.forEach(entity => this.receiveEntity(entity));
+  }
+};
+
 // public handshake object
 const ShellApi = window.ShellApi = {
+  observeSink: new PipeSink(),
+  receiveSink: new PipeSink(),
   // attach a shell-aware agent
   registerPipe(pipe) {
     //console.log('ShellApi::registerPipe');
     ShellApi.pipe = pipe;
-    if (ShellApi.pendingEntity) {
-      ShellApi.receiveEntity(ShellApi.pendingEntity);
-    }
+    ShellApi.receiveSink.registerSink(entity => pipe.receiveEntity(entity));
+    ShellApi.observeSink.registerSink(entity => pipe.observeEntity(entity));
   },
   // receive information from external pipe
   receiveEntity(entityJSON) {
-    try {
-      const entity = JSON.parse(entityJSON);
-      entity.id = generateId();
-      //console.log('ShellApi::receiveEntity:', entity);
-      if (ShellApi.pipe) {
-        ShellApi.pipe.receiveEntity(entity);
-      } else {
-        ShellApi.pendingEntity = entity;
-      }
-      return entity.id;
-    } catch (x) {
-      console.warn(x);
+    ShellApi.receiveSink.receiveEntityJSON(entityJSON);
+  },
+  observeEntity(entityJSON) {
+    ShellApi.observeSink.receiveEntityJSON(entityJSON);
+  },
+  queryEntities(queryJSON) {
+    if (ShellApi.pipe) {
+      ShellApi.pipe.queryObservedEntities(queryJSON);
     }
   },
   chooseSuggestion(suggestion) {
@@ -82,10 +107,18 @@ const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'storage', 'suggestions'];
+    return ['context', 'userid', 'storage', 'suggestions', 'arc', 'pipearc'];
   }
-  update({userid, context, suggestions}, state) {
-    if (!state.registered) {
+  update({userid, context, suggestions, arc, pipearc}, state) {
+    if (pipearc && !state.pipeStore) {
+      state.pipeStore = pipearc._stores[0];
+      log('got pipeStore', state.pipeStore);
+      // retry
+      if (!state.pipeStore) {
+        setTimeout(() => this._invalidate(), 50);
+      }
+    }
+    if (!state.registered && state.pipeStore) {
       state.registered = true;
       ShellApi.registerPipe(this);
       log('registerPipe');
@@ -94,15 +127,32 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.updateEntity(state.entity);
       this.state = {entity: null};
     }
-    if (context && suggestions && suggestions.length > 0) {
-      if (state.spawned) {
-        log(suggestions[0]);
-        this.state = {spawned: false, staged: true, suggestions};
-        this.fire('suggestion', suggestions[0]);
+    if (state.observe && state.pipeStore) {
+      this.updateObserved(state.observe, state.pipeStore);
+      this.state = {observe: null};
+    }
+    //
+    state.suggestions = null;
+    if (arc && suggestions && suggestions.length > 0) {
+      if (suggestions.arcid === String(arc.id)) {
+        log('promoting suggestions for ', arc.id.toString());
+        state.suggestions = suggestions;
       }
-      if (state.staged && state.suggestions !== suggestions) {
-         const texts = suggestions.map(suggestion => suggestion.descriptionText);
+    }
+    if (context && state.suggestions) {
+      if (state.spawned) {
+        const suggestion = state.suggestions[0];
+        log('active recipe:', arc.activeRecipe.toString());
+        log('suggested recipe:', suggestion.plan.toString());
+        log(suggestion.descriptionText, suggestion);
+        this.state = {spawned: false, staged: true, suggestions: null};
+        this.fire('suggestion', suggestion);
+      }
+      if (state.staged && state.suggestions) {
+         const texts = state.suggestions.map(suggestion => String(suggestion.descriptionText));
+         state.suggestions = null;
          const unique = [...new Set(texts)];
+        log(arc.activeRecipe.toString());
          DeviceClient.foundSuggestions(JSON.stringify(unique));
          log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);
       }
@@ -120,13 +170,18 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       const manifest = buildEntityManifest(entity);
       log(manifest);
       const id = `${this.props.userid}-piped-${entity.id}`;
-      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name}`});
-      state = {spawned: true};
+      this.fire('spawn', {id, manifest, description: `(from device) ${entity.name || entity.type}`});
+      state = {spawned: id};
     }
     // TODO(sjmiles): we need to know when suggestions we receive are up to date
     // relative to the changes we just made
     // instead, for now, wait 1s for planning to take place before updating state
+    this.state = {spawned: false, staged: false, suggestions: null};
     setTimeout(() => this.state = state, 1000);
+  }
+  updateObserved(entity, store) {
+    log('storing observed entity', entity);
+    store.store({id: entity.id, rawData: entity}, [generateId()]);
   }
   onArc(e, arc) {
     this.state = {arc};
@@ -140,8 +195,35 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       this.fire('suggestion', suggestion);
     }
   }
+  observeEntity(entity) {
+    if (!entity.timestamp) {
+      entity.timestamp = Date.now();
+    }
+    this.state = {observe: entity};
+  }
   receiveEntity(entity) {
-    this.state = {entity};
+    if (entity.type === 'hack.com.google.android.apps.maps') {
+      this.suggestFromObservations({type: 'address'});
+    } else {
+      entity.type = entity.type.replace(/\./g, '_');
+      this.state = {entity};
+    }
+  }
+  async suggestFromObservations(query) {
+    const results = await this.queryObservedEntities({type: 'address'});
+    const sorted = results.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+    //console.log(sorted);
+    const sliced = sorted.slice(0, 3);
+    const json = JSON.stringify(sliced.map(e => e.rawData));
+    DeviceClient.foundSuggestions(json);
+  }
+  async queryObservedEntities(query) {
+    const {pipeStore} = this.state;
+    if (pipeStore) {
+      const entities = await pipeStore.toList();
+      const results = entities.filter(entity => entity.rawData.type === query.type);
+      return results;
+    }
   }
   reset() {
     this.fire('reset');
@@ -161,6 +243,6 @@ store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${enti
 
 recipe Pipe
   use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
-  PipeEntityReceiver
+  Trigger
     pipe = pipe
 `;
