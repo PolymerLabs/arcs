@@ -3,8 +3,7 @@ import {Arc} from '../../build/runtime/arc.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../build/platform/loader-web.js';
 import {PecIndustry} from '../../build/platform/pec-industry-web.js';
-import {defaultCoreDebugListeners} from '../../build/runtime/debug/arc-debug-handler.js';
-import {ArcPlannerInvoker, defaultPlanningDebugListeners} from '../../build/planning/debug/arc-planner-invoker.js';
+import {debugListeners} from './debug-listeners.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
@@ -54,16 +53,6 @@ const resolve = async (arc, recipe) =>{
   }
 };
 
-// Debug-channel listeners must now be injected, so that the runtime need
-// not know about them. The refactoring that established that put these here,
-// but this will need to change when we build a shell that actually doesn't
-// include planning.
-// TODO: move these to a more appropriate place when that place is clear.
-const debugListenerClasses = [
-    ...defaultPlanningDebugListeners,
-    ...defaultCoreDebugListeners
-  ];
-
 const spawn = async ({id, serialization, context, composer, storage}) => {
   const params = {
     id,
@@ -74,7 +63,7 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     slotComposer: composer,
     pecFactory: env.pecFactory,
     loader: env.loader,
-    listenerClasses: debugListenerClasses
+    listenerClasses: debugListeners
   };
   Object.assign(params, env.params);
   return serialization ? Arc.deserialize(params) : new Arc(params);
