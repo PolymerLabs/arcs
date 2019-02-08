@@ -10,7 +10,7 @@ defineParticle(({DomParticle, html}) => {
 
   const template = html`
 
-<div>Handling background processing...</div>
+<div slotid="pipes"></div>
 
   `;
 

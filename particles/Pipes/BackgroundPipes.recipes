@@ -2,8 +2,8 @@ import 'PipeEntity.schema'
 
 particle BackgroundPipes in './source/BackgroundProcess.js'
   in [PipeEntity] entities
-    consume root
-      provide pipes
+  consume root
+    provide pipes
 
 recipe BackgroundPipes
   create #pipeEntities as entities
