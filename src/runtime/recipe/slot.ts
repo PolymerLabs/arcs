@@ -55,6 +55,9 @@ export class Slot {
 
   _copyInto(recipe, cloneMap) {
     let slot = undefined;
+    if (cloneMap.has(this)) {
+      return cloneMap.get(this);
+    }
     if (!this.sourceConnection && this.id) {
       slot = recipe.findSlot(this.id);
     }
@@ -71,7 +74,11 @@ export class Slot {
       }
       this._handleConnections.forEach(connection => slot._handleConnections.push(cloneMap.get(connection)));
     }
-    this._consumeConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
+    this._consumeConnections.forEach(connection => {
+      if (cloneMap.get(connection) && cloneMap.get(connection).targetSlot == undefined) {
+        cloneMap.get(connection).connectToSlot(slot);
+      }
+    });
     return slot;
   }
 

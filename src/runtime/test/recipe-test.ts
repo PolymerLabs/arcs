@@ -51,6 +51,23 @@ describe('recipe', () => {
     const clonedRecipe = recipe.clone();
     assert.equal(recipe.toString(), clonedRecipe.toString());
   });
+  it('clones recipe with require section', async () => {
+    const manifest = await Manifest.parse(`
+      particle P1
+        consume details
+      recipe MyRecipe 
+        require
+          A
+            consume root
+              provide details as s0
+        P1
+          consume details as s0
+    `);
+    const recipe = manifest.recipes[0];
+    const clonedRecipe = recipe.clone(); 
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "recipe slots don't match");
+    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "cloned recipe slots don't match");
+  });
   it('validate handle connection types', async () => {
     const manifest = await Manifest.parse(`
         schema MyType
@@ -509,5 +526,93 @@ describe('recipe', () => {
     assert.isFalse(recipe.isResolved());
     assert.isTrue(recipe.toString({showUnresolved: true}).includes(
         'unresolved particle: unfullfilled slot connections'));
+  });
+  it('particles match if one particle is a subset of another', async () => {
+    const recipes = (await Manifest.parse(`
+      particle P0
+        consume root
+          provide details
+      particle P1
+        consume root
+
+      recipe
+        require
+          P1
+            consume root as s0
+        P0
+          consume root as s0
+            provide details as s1
+      
+      recipe 
+        P0
+    `)).recipes;
+    const recipe1 = recipes[0];
+    const recipe2 = recipes[1];
+    assert.isTrue(recipe2.particles[0].matches(recipe1.particles[0]), "particle2 should match particle1 but doesn't");
+    assert.isFalse(recipe1.particles[0].matches(recipe2.particles[0]), "particle1 matches particle2 but it shouldn't");
+  });
+  it('slots with local names are the same in the recipe as they are in the require section', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P0
+        consume details 
+          provide moreDetails 
+      particle P1
+        consume root 
+          provide details 
+      
+      recipe 
+        require
+          slot as s1
+          P1
+            consume root
+              provide details as s1
+        P0
+          consume details as s1
+            provide moreDetails
+    `)).recipes[0];
+    const s1SlotRecipe = recipe.slots.find(slot => slot.name === "details");
+    const s1SlotRequire = recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"];
+    assert.isTrue(s1SlotRecipe === s1SlotRequire, "slot in require section is not the same as slot in recipe");
+  });
+  it("particles in require section don't need to have a particle spec", async () => {
+    const recipe = (await Manifest.parse(`
+      schema Type
+      particle A
+        in Type input
+        consume details 
+      
+      recipe 
+        require 
+          B
+            output -> h0
+            consume root
+              provide details as s0
+        A
+          input <- h0
+          consume details as s0
+    `)).recipes[0];
+    assert(recipe.requires[0].particles[0].spec === undefined);
+  });
+  it("slots in require section with the same local name match", async () => {
+    const recipe = (await Manifest.parse(`
+      particle A
+        consume details 
+      particle B
+        consume details
+      particle C
+        consume details
+
+      
+      recipe 
+        require 
+          A
+            consume details as s0
+          B 
+            consume details as s0
+        C
+          consume details as s0
+    `)).recipes[0];
+    assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections["details"].targetSlot, "there is more than one slot");
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot, "slot in the require section doesn't match slot in the recipe");
   });
 });

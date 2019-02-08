@@ -18,10 +18,10 @@ import {RecipeIndex} from '../../recipe-index.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {arcId?: string, modalityName?: string} = {}) {
+  static createTestArc(context: Manifest, options: {arcId?: string, modalityName?: string, loader?: Loader} = {}) {
     return new Arc({
       id: options.arcId || 'test-arc',
-      loader: new Loader(),
+      loader: options.loader || new Loader(),
       context,
       slotComposer: new FakeSlotComposer(options)
     });
