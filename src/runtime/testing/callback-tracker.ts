@@ -21,6 +21,7 @@ import {StorageProviderBase} from '../storage/storage-provider-base.js';
  *   varCallbacks.verify();
  * ```
  */
+// TODO(lindner): make this more generic when we have a mocking toolkit available
 export class CallbackTracker {
   // tslint:disable-next-line: no-any
   events: {[index: string]: any}[] = [];
