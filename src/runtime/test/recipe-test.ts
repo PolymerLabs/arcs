@@ -494,4 +494,20 @@ describe('recipe', () => {
     assert.isTrue(recipe.modality.isCompatible([Modality.Name.Vr]));
     assert.isFalse(recipe.modality.isCompatible([Modality.Name.Dom]));
   });
+  it('comments unfullfilled slot connections', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+      particle MyParticle in 'myparticle.js'
+        in Thing inThing
+        consume mySlot
+      recipe
+        create as handle0
+        MyParticle as particle0
+          inThing <- handle0
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isFalse(recipe.isResolved());
+    assert.isTrue(recipe.toString({showUnresolved: true}).includes(
+        'unresolved particle: unfullfilled slot connections'));
+  });
 });
