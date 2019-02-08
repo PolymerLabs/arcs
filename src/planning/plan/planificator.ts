@@ -38,6 +38,7 @@ export class Planificator {
     const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     await result.load();
     const planificator = new Planificator(arc, userid, result, searchStore, onlyConsumer, debug);
+    await planificator._storeSearch(); // Reset search value for the current arc.
     planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
@@ -194,7 +195,11 @@ export class Planificator {
     const arcKey = this.arc.arcId;
     const newValues = [];
     for (const {arc, search} of values) {
-      if (arc !== arcKey) {
+      if (arc === arcKey) {
+        if (search === this.search) {
+          return; // Unchanged search value for the current arc.
+        }
+      } else {
         newValues.push({arc, search});
       }
     }
