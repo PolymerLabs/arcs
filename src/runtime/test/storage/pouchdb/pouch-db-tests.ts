@@ -17,11 +17,8 @@ import {Loader} from '../../../loader.js';
 import {Manifest} from '../../../manifest.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {assert} from '../../../../platform/chai-web.js';
-<<<<<<< HEAD
 import {CallbackTracker} from '../../../testing/callback-tracker.js';
-=======
 import {Random} from '../../../random.js';
->>>>>>> Trying again after reset
 
 const testUrl = 'pouchdb://memory/user-test';
 
