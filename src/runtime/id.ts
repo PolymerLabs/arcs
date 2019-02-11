@@ -27,7 +27,7 @@ export class Id {
   }
 
   static newSessionId() {
-    const session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
+    const session = Math.floor(Math.random() * Math.pow(2, 50)) + '';
     return new Id(session);
   }
 

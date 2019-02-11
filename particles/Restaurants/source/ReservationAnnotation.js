@@ -5,7 +5,7 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-import {Random} from '../../../src/runtime/random.js';
+// import {Random} from '../../../build/runtime/random.js';
 
 defineParticle(({DomParticle, html, log}) => {
 
@@ -115,7 +115,7 @@ defineParticle(({DomParticle, html, log}) => {
       const result = [];
       while (n--) {
         // This seems somewhat balanced
-        const notAvailable = Random.next() < 0.3; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
+        const notAvailable = Math.random() < 0.3; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
         result.push({
           time: `${hour}:${minute}`,
           notAvailable

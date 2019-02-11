@@ -1,4 +1,4 @@
-import {Random} from '../../../src/runtime/random.js';
+import {Random} from '../../../build/runtime/random.js';
 
 const PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 const lastRandChars = [];

@@ -13,7 +13,7 @@ import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {Xen} from '../../lib/xen.js';
 import {Const} from '../../configuration/constants.js';
 import {Utils} from '../../lib/utils.js';
-import {Random} from '../../../src/runtime/random.js';
+import {Random} from '../../../build/runtime/random.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';

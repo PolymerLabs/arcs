@@ -1,6 +1,6 @@
 import {firebase, storage} from './firebase.js';
 import {Xen} from './xen.js';
-import {Random} from '../../src/runtime/random.js';
+import {Random} from '../../build/runtime/random.js';
 const template = `
   <style>
     ::slotted(*) {
