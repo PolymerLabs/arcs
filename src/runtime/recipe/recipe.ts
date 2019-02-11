@@ -19,7 +19,7 @@ import {InterfaceType} from '../type.js';
 import {Modality} from '../modality.js';
 
 export class Recipe {
-  private _requires: Recipe[] = [];
+  private _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
   private _slots: Slot[] = [];
@@ -227,7 +227,7 @@ export class Recipe {
         && (!this.search || this.search.isValid());
   }
 
-  get requires(): Recipe[] { return this._requires; }
+  get requires(): RequireSection[] { return this._requires; }
   get name(): string | undefined { return this._name; }
   set name(name: string | undefined) { this._name = name; }
   get localName() { return this._localName; }
@@ -594,6 +594,9 @@ export class Recipe {
         result.push(slotString.replace(/^|(\n)/g, '$1  '));
       }
     }
+    for (const require of this.requires) {
+      if (!require.isEmpty()) result.push(require.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+    }
     for (const particle of this.particles) {
       result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
@@ -671,5 +674,57 @@ export class RequireSection extends Recipe {
   constructor(parent = undefined, name = undefined) {
     super(name);
     this.parent = parent;
+  }
+
+  toString(nameMap = undefined, options = undefined): string {
+    if (nameMap == undefined) {
+      nameMap = this._makeLocalNameMap();
+    }
+    const result = [];
+    result.push(`require`);
+    if (options && options.showUnresolved) {
+      if (this.search) {
+        result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
+      }
+    }
+    for (const constraint of this.connectionConstraints) {
+      let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
+      if (options && options.showUnresolved) {
+        constraintStr = constraintStr.concat(' // unresolved connection-constraint');
+      }
+      result.push(constraintStr);
+    }
+    result.push(...this.handles
+        .map(h => h.toString(nameMap, options))
+        .filter(strValue => strValue)
+        .map(strValue => strValue.replace(/^|(\n)/g, '$1  ')));
+    for (const slot of this.slots) {
+      const slotString = slot.toString(nameMap, options);
+      if (slotString) {
+        result.push(slotString.replace(/^|(\n)/g, '$1  '));
+      }
+    }
+    for (const particle of this.particles) {
+      result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+    }
+    if (this.patterns.length > 0 || this.handles.find(h => h.pattern !== undefined)) {
+      result.push(`  description \`${this.patterns[0]}\``);
+      for (let i = 1; i < this.patterns.length; ++i) {
+        result.push(`    pattern \`${this.patterns[i]}\``);
+      }
+      this.handles.forEach(h => {
+        if (h.pattern) {
+          result.push(`    ${h.localName} \`${h.pattern}\``);
+        }
+      });
+    }
+    if (this.obligations.length > 0) {
+      result.push('  obligations');
+      for (const obligation of this.obligations) {
+        const obligationStr = obligation.toString(nameMap, options).replace(/^|(\n)/g, '$1    ');
+        result.push(obligationStr);
+      }
+    }
+    return result.join('\n');
   }
 }
