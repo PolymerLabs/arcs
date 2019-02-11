@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {parser} from '../../build/runtime/manifest-parser.js';
-import {Recipe} from './recipe/recipe.js';
+import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Handle} from './recipe/handle.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
@@ -25,6 +25,7 @@ import {ManifestMeta} from './manifest-meta.js';
 import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Id} from './id.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
+import {Slot} from './recipe/slot.js';
 
 class ManifestError extends Error {
   location: {offset: number, line: number, column: number};
@@ -792,12 +793,15 @@ ${e.message}
       const particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
       particle.verbs = item.ref.verbs;
-      if (item.ref.name) {
-        const spec = manifest.findParticleByName(item.ref.name);
-        if (!spec) {
-          throw new ManifestError(item.location, `could not find particle ${item.ref.name}`);
+
+      if (!(recipe instanceof RequireSection)) {
+        if (item.ref.name) {
+          const spec = manifest.findParticleByName(item.ref.name);
+          if (!spec) {
+            throw new ManifestError(item.location, `could not find particle ${item.ref.name}`);
+          }
+          particle.spec = spec.clone();
         }
-        particle.spec = spec.clone();
       }
       if (item.name) {
         // TODO: errors.
@@ -841,6 +845,14 @@ ${e.message}
           if (ps.dependentSlotConnections.length !== 0) {
             throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
           }
+          if (recipe instanceof RequireSection) {
+            // replace provided slot if it already exist in recipe. 
+            const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.name);
+            if (existingSlot !== undefined) {
+              slotConn.providedSlots[ps.param] = existingSlot;
+              existingSlot.sourceConnection = slotConn;
+            }
+          }
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
             if (ps.name) {
@@ -853,11 +865,10 @@ ${e.message}
                 assert(!theSlot.name && providedSlot);
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
                 assert(theSlot.handleConnections.length === 0);
-                theSlot.name = providedSlot.name;
-                theSlot.sourceConnection = providedSlot.sourceConnection;
-                theSlot.sourceConnection.providedSlots[theSlot.name] = theSlot;
-                theSlot._handleConnections = providedSlot.handleConnections.slice();
-                theSlot.recipe.removeSlot(providedSlot);
+                providedSlot.id = theSlot.id;
+                providedSlot.tags = theSlot.tags;
+                items.byName.set(ps.name,providedSlot);
+                recipe.removeSlot(theSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);
               }
@@ -879,6 +890,7 @@ ${e.message}
           if (!slotConn.providedSlots[ps.param]) {
             slotConn.providedSlots[ps.param] = providedSlot;
           }
+          providedSlot.localName = ps.name;
         });
       }
     }
@@ -999,12 +1011,22 @@ ${e.message}
           assert(targetSlot === items.byName.get(slotConnectionItem.name),
                  `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
         } else if (slotConnectionItem.name) {
-          targetSlot = recipe.newSlot(slotConnectionItem.param);
-          targetSlot.localName = slotConnectionItem.name;
-          if (slotConnectionItem.name) {
-            items.byName.set(slotConnectionItem.name, targetSlot);
+          // if this is a require section, check if slot exists in recipe. 
+          if (recipe instanceof RequireSection) {
+            targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.name);
+            if (targetSlot !== undefined) {
+              items.bySlot.set(targetSlot, slotConnectionItem);
+              if (slotConnectionItem.name) {
+                items.byName.set(slotConnectionItem.name, targetSlot);
+              }
+            }
           }
-          items.bySlot.set(targetSlot, slotConnectionItem);
+          if (targetSlot == undefined) {
+            targetSlot = recipe.newSlot(slotConnectionItem.param);
+            targetSlot.localName = slotConnectionItem.name;
+            items.byName.set(slotConnectionItem.name, targetSlot);
+            items.bySlot.set(targetSlot, slotConnectionItem);
+          }
         }
         if (targetSlot) {
           particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);

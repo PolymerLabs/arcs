@@ -35,6 +35,8 @@ export class RecipeWalker extends Walker {
   onSlot?(recipe: Recipe, slot: Slot): any;
   // tslint:disable-next-line: no-any
   onObligation?(recipe: Recipe, obligation: ConnectionConstraint): any;
+  // tslint:disable-next-line: no-any
+  onRequiredParticle?(recipe: Recipe, particle: Particle): any;
 
   onResult(result) {
     super.onResult(result);
@@ -51,8 +53,8 @@ export class RecipeWalker extends Walker {
         updateList.push({continuation: result});
       }
     }
-    for (const particle of recipe.particles) {
-      if (this.onParticle) {
+    if (this.onParticle) {
+      for (const particle of recipe.particles) {
         const context: [Particle] = [particle];
         const result = this.onParticle(recipe, ...context);
         if (!this.isEmptyResult(result)) {
@@ -60,8 +62,8 @@ export class RecipeWalker extends Walker {
         }
       }
     }
-    for (const handleConnection of recipe.handleConnections) {
-      if (this.onHandleConnection) {
+    if (this.onHandleConnection) {
+      for (const handleConnection of recipe.handleConnections) {
         const context: [HandleConnection] = [handleConnection];
         const result = this.onHandleConnection(recipe, ...context);
         if (!this.isEmptyResult(result)) {
@@ -69,8 +71,8 @@ export class RecipeWalker extends Walker {
         }
       }
     }
-    for (const handle of recipe.handles) {
-      if (this.onHandle) {
+    if (this.onHandle) {
+      for (const handle of recipe.handles) {
         const context: [Handle] = [handle];
         const result = this.onHandle(recipe, ...context);
         if (!this.isEmptyResult(result)) {
@@ -100,8 +102,8 @@ export class RecipeWalker extends Walker {
         }
       }
     }
-    for (const slot of recipe.slots) {
-      if (this.onSlot) {
+    if (this.onSlot) {
+      for (const slot of recipe.slots) {
         const context: [Slot] = [slot];
         const result = this.onSlot(recipe, ...context);
         if (!this.isEmptyResult(result)) {
@@ -109,12 +111,23 @@ export class RecipeWalker extends Walker {
         }
       }
     }
-    for (const obligation of recipe.obligations) {
-      if (this.onObligation) {
+    if (this.onObligation) {
+      for (const obligation of recipe.obligations) {
         const context: [ConnectionConstraint] = [obligation];
         const result = this.onObligation(recipe, ...context);
         if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context});
+        }
+      }
+    }
+    if (this.onRequiredParticle) {
+      for (const require of recipe.requires) {
+        for (const particle of require.particles) {
+          const context: [Particle] = [particle];
+          const result = this.onRequiredParticle(recipe, ...context);
+          if (!this.isEmptyResult(result)) {
+            updateList.push({continuation: result, context});
+          }
         }
       }
     }

@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {compareStrings, compareComparables} from './util.js';
-import {Recipe} from './recipe.js';
+import {Recipe, RequireSection} from './recipe.js';
 import {Particle} from './particle.js';
 import {SlotSpec} from '../particle-spec.js';
 import {Slot} from './slot.js';
@@ -51,7 +51,7 @@ export class SlotConnection {
   connectToSlot(targetSlot) {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot;
     targetSlot.consumeConnections.push(this);

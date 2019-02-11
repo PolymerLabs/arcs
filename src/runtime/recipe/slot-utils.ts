@@ -5,31 +5,40 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Recipe} from './recipe.js';
+import {Recipe, RequireSection} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {SlotSpec, ProvidedSlotSpec} from '../particle-spec.js';
 import {Slot} from './slot.js';
 
 import {assert} from '../../platform/assert-web.js';
+import { O_TRUNC } from 'constants';
 
 export class SlotUtils {
   // Helper methods.
+  static getClonedSlot(recipe, selectedSlot) {
+    let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
+    if (!clonedSlot) {
+      if (selectedSlot.id) {
+        clonedSlot = recipe.findSlotByID(selectedSlot.id);
+      }
+      if (clonedSlot == undefined) {
+        if (recipe instanceof RequireSection) {
+          clonedSlot = recipe.parent.newSlot(selectedSlot.name);
+        } else {
+          clonedSlot = recipe.newSlot(selectedSlot.name);
+        }
+        clonedSlot.id = selectedSlot.id;
+      }
+    }
+    return clonedSlot;
+  }
+
   // Connect the given slot connection to the selectedSlot, create the slot, if needed.
   static connectSlotConnection(slotConnection, selectedSlot) {
     const recipe = slotConnection.recipe;
     if (!slotConnection.targetSlot) {
-      let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
-
-      if (!clonedSlot) {
-        if (selectedSlot.id) {
-          clonedSlot = recipe.findSlotByID(selectedSlot.id);
-        }
-        if (clonedSlot == undefined) {
-          clonedSlot = recipe.newSlot(selectedSlot.name);
-          clonedSlot.id = selectedSlot.id;
-        }
-      }
+      const clonedSlot = SlotUtils.getClonedSlot(recipe, selectedSlot);
       slotConnection.connectToSlot(clonedSlot);
     }
 
@@ -117,6 +126,26 @@ export class SlotUtils {
     }
 
     return consumeSlotSpec.name === (provideSlot ? provideSlot.name : provideSlotSpec.name);
+  }
+
+  static replaceOldSlot(recipe: Recipe, oldSlot: Slot, newSlot: Slot): boolean {
+    if (oldSlot && (!oldSlot.id || oldSlot.id !== newSlot.id)) {
+      if (oldSlot.sourceConnection !== undefined) {
+        if (newSlot.sourceConnection === undefined) return false;
+        const clonedSlot = SlotUtils.getClonedSlot(oldSlot.sourceConnection.recipe, newSlot);
+        oldSlot.sourceConnection.providedSlots[oldSlot.name] = clonedSlot;
+        clonedSlot.sourceConnection = oldSlot.sourceConnection;
+      }
+
+      while (oldSlot.consumeConnections.length > 0) {
+        const conn = oldSlot.consumeConnections[0];
+        conn.disconnectFromSlot();
+        SlotUtils.connectSlotConnection(conn, newSlot);
+      }
+      
+    }
+    
+    return true;
   }
 }
 
