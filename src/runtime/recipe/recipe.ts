@@ -649,7 +649,7 @@ export class Recipe {
     let slot = this.slots.find(s => s.id === id);
     if (slot == undefined) {
       if (this instanceof RequireSection) {
-        slot = this.recipe.slots.find(s => s.id === id);
+        slot = this.parent.slots.find(s => s.id === id);
       } else {
         for (const require of this.requires) {
           slot = require.slots.find(s => s.id === id);
@@ -667,11 +667,9 @@ export class Recipe {
 }
 
 export class RequireSection extends Recipe {
-  private _recipe: Recipe;
-  constructor(recipe = undefined, name = undefined) {
+  public parent: Recipe;
+  constructor(parent = undefined, name = undefined) {
     super(name);
-    this.recipe = recipe;
+    this.parent = parent;
   }
-  set recipe(recipe) {this._recipe = recipe;}
-  get recipe() {return this._recipe; }
 }

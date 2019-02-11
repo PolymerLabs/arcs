@@ -126,7 +126,7 @@ export class Particle {
    * @param particle 
    */
   matches(particle: Particle): boolean {
-    if (this.name && particle.name && !(this.name === particle.name)) return false;
+    if (this.name && particle.name && this.name !== particle.name) return false;
     for (const [name, slotConn] of Object.entries(this.consumedSlotConnections)) {
       if (particle.consumedSlotConnections[name] == undefined
           || particle.consumedSlotConnections[name].targetSlot == undefined
@@ -134,13 +134,11 @@ export class Particle {
       
       if (slotConn.targetSlot && slotConn.targetSlot.id && slotConn.targetSlot.id !== particle.consumedSlotConnections[name].targetSlot.id) return false;
       
-      if ((Object.keys(slotConn.providedSlots)).some(pname => {
+      for (const pname of Object.keys(slotConn.providedSlots)) {
         const slot = slotConn.providedSlots[pname];
         const pslot = particle.consumedSlotConnections[name].providedSlots[pname];
-        if (pslot == undefined) return true;
-        if (slot.id && pslot.id && slot.id !== pslot.id) return true;
-        return false;
-      })) return false;
+        if (pslot == undefined || (slot.id && pslot.id && slot.id !== pslot.id)) return false;
+      }
     }
     return true;
   }

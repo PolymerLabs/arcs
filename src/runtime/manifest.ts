@@ -847,7 +847,7 @@ ${e.message}
           }
           if (recipe instanceof RequireSection) {
             // replace provided slot if it already exist in recipe. 
-            const existingSlot = recipe.recipe.slots.find(rslot => rslot.localName === ps.name);
+            const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.name);
             if (existingSlot !== undefined) {
               slotConn.providedSlots[ps.param] = existingSlot;
               existingSlot.sourceConnection = slotConn;
@@ -1013,7 +1013,7 @@ ${e.message}
         } else if (slotConnectionItem.name) {
           // if this is a require section, check if slot exists in recipe. 
           if (recipe instanceof RequireSection) {
-            targetSlot = recipe.recipe.slots.find(slot => slot.localName === slotConnectionItem.name);
+            targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.name);
             if (targetSlot !== undefined) {
               items.bySlot.set(targetSlot, slotConnectionItem);
               if (slotConnectionItem.name) {
@@ -1024,9 +1024,7 @@ ${e.message}
           if (targetSlot == undefined) {
             targetSlot = recipe.newSlot(slotConnectionItem.param);
             targetSlot.localName = slotConnectionItem.name;
-            if (slotConnectionItem.name) {
-              items.byName.set(slotConnectionItem.name, targetSlot);
-            }
+            items.byName.set(slotConnectionItem.name, targetSlot);
             items.bySlot.set(targetSlot, slotConnectionItem);
           }
         }

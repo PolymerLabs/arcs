@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Google Inc. All rights reserved.
+// Copyright (c) 2019 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
 // Code distributed by Google as part of this project is also
@@ -19,6 +19,7 @@ export class FindRequiredParticle extends Strategy {
         const particlesMatch: Particle[] = arc.activeRecipe.particles.filter(arcParticle => particle.matches(arcParticle));
         
         return particlesMatch.map(particleMatch => ((recipe: Recipe, particle: Particle) => {
+          if (!particle.matches(particleMatch)) return;
           for (const [name,slotConn] of Object.entries(particle.consumedSlotConnections)) {
             const oldSlot = slotConn.targetSlot;
             const newSlot = particleMatch.consumedSlotConnections[name].targetSlot;

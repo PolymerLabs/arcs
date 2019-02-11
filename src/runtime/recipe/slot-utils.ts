@@ -24,8 +24,7 @@ export class SlotUtils {
       }
       if (clonedSlot == undefined) {
         if (recipe instanceof RequireSection) {
-          clonedSlot = recipe.recipe.newSlot(selectedSlot.name);
-          // recipe.addSlot(clonedSlot);
+          clonedSlot = recipe.parent.newSlot(selectedSlot.name);
         } else {
           clonedSlot = recipe.newSlot(selectedSlot.name);
         }
@@ -131,22 +130,21 @@ export class SlotUtils {
 
   static replaceOldSlot(recipe: Recipe, oldSlot: Slot, newSlot: Slot): boolean {
     if (oldSlot && (!oldSlot.id || oldSlot.id !== newSlot.id)) {
-      if (recipe.slots.indexOf(oldSlot) !== -1 ) {
-        if (oldSlot.sourceConnection !== undefined) {
-          if (newSlot.sourceConnection === undefined) return false;
-          const clonedSlot = SlotUtils.getClonedSlot(oldSlot.sourceConnection.recipe, newSlot);
-          oldSlot.sourceConnection.providedSlots[oldSlot.name] = clonedSlot;
-          clonedSlot.sourceConnection = oldSlot.sourceConnection;
-        }
-
-        while (oldSlot.consumeConnections.length > 0) {
-          const conn = oldSlot.consumeConnections[0];
-          conn.disconnectFromSlot();
-          SlotUtils.connectSlotConnection(conn, newSlot);
-        }
-        
+      if (oldSlot.sourceConnection !== undefined) {
+        if (newSlot.sourceConnection === undefined) return false;
+        const clonedSlot = SlotUtils.getClonedSlot(oldSlot.sourceConnection.recipe, newSlot);
+        oldSlot.sourceConnection.providedSlots[oldSlot.name] = clonedSlot;
+        clonedSlot.sourceConnection = oldSlot.sourceConnection;
       }
+
+      while (oldSlot.consumeConnections.length > 0) {
+        const conn = oldSlot.consumeConnections[0];
+        conn.disconnectFromSlot();
+        SlotUtils.connectSlotConnection(conn, newSlot);
+      }
+      
     }
+    
     return true;
   }
 }
