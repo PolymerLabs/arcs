@@ -73,6 +73,7 @@
   "dependencies": {
     "@types/node": "^10.12.24",
     "@types/pouchdb-core": "^7.0.1",
+    "@wdio/cli": "^5.4.17",
     "assert": "^1.4.1",
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
