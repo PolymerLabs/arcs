@@ -142,7 +142,7 @@ There are additional targets provided to run subsets of those commands.
 To run a specific Selenium test using Mocha's 'grep' capability:
 
 - In one terminal: `npm start`
-- In another: `npm run test-wdio -- --mochaOpts.grep 'regex'`
+- In another: `npm run test-wdio-shells -- --mochaOpts.grep 'regex'`
 
 ### Debugging tests
 
@@ -178,7 +178,7 @@ To activate a sane set of helpful debugging flags, there's a `wdio-debug`
 command line argument that you can pass in. This will run Chrome in a
 non-headless fashion, and will increase timeouts.
 
-Through npm: `npm run test-wdio --wdio-debug=true` (or `npm test
+Through npm: `npm run test-wdio-shells --wdio-debug=true` (or `npm test
 --wdio-debug=true`).  Directly through wdio: `node_modules/.bin/wdio
 --wdio-debug=true shell/test/wdio.conf.js`.
 
