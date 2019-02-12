@@ -76,7 +76,6 @@ describe('FindRequiredParticles', () => {
           consume b as slot
     `));
     const recipes = manifest.recipes;
-    console.log(recipes[0].requires[0].toString());
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const arc = StrategyTestHelper.createTestArc(manifest, {loader});
     await arc.instantiate(recipes[1]);
@@ -84,8 +83,6 @@ describe('FindRequiredParticles', () => {
     const inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
     const results = await strategy.generate(inputParams);
     const recipe = results[0].result;
-    console.log(recipe.toString());
-    console.log(recipe.requires[0].toString());
     assert.isTrue(recipe.slots[0].id === arc.activeRecipe.slots[0].id, "results recipe does not have the correct slot");
     assert.isTrue(recipe.isResolved());
   });
