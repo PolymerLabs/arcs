@@ -14,7 +14,7 @@ const process = require('process');
 const fs = require('fs');
 const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
-const debug = true;//process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
+const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
 const HEADLESS = '--headless';
 const chromeArgs = headless ? [HEADLESS] : [];
