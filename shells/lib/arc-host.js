@@ -24,7 +24,9 @@ export class ArcHost {
     this.composer = composer;
   }
   disposeArc() {
-    this.arc && this.arc.dispose();
+    if (this.arc) {
+      this.arc.dispose();
+    }
     this.arc = null;
   }
   // config = {id, [serialization], [manifest]}

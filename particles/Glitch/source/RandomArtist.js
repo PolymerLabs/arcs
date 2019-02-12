@@ -12,9 +12,9 @@ defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     update() {
       const entities = [
-        {type: "artist", name: "Taylor Swift", source: "com.weaseldev.fortunecookies"},
-        {type: "artist", name: "Stone Sour", source: "com.weaseldev.fortunecookies"},
-        {type: "artist", name: "Metallica", source: "com.weaseldev.fortunecookies"}
+        {type: 'artist', name: 'Taylor Swift', source: 'com.weaseldev.fortunecookies'},
+        {type: 'artist', name: 'Stone Sour', source: 'com.weaseldev.fortunecookies'},
+        {type: 'artist', name: 'Metallica', source: 'com.weaseldev.fortunecookies'}
       ];
       const artist = entities[Math.floor(Math.random() * entities.length)];
       this.updateVariable('artist', artist);
