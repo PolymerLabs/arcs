@@ -2,28 +2,6 @@
 import {Utils} from '../lib/utils.js';
 import {now} from '../../build/platform/date-web.js';
 
-const buildEntityManifest = entity => `
-import 'https://$particles/Pipes/Pipes.recipes'
-
-resource PipeEntityResource
-  start
-  [{"type": "${entity.type}", "name": "${entity.name}"}]
-
-store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${entity.type} in PipeEntityResource
-
-recipe Pipe
-  use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
-  Trigger
-    pipe = pipe
-`;
-
-const logArc = async arc => {
-  console.log(`\narc serialization`);
-  console.log(`=============================================================================`);
-  console.log(await arc.serialize());
-  console.log(`=============================================================================`);
-};
-
 export const App = async (composer) => {
   const t0 = now();
 
@@ -31,7 +9,6 @@ export const App = async (composer) => {
   console.log(`arc [${arc.id}]`);
 
   await (async () => {
-    //const manifestContent = `import 'https://$particles/Arcs/Login.recipe'`;
     const manifestContent = buildEntityManifest({type: 'com_music_spotify'});
     const manifest = await Utils.parse(manifestContent);
     console.log(`manifest [${manifest.id}]`);
@@ -39,6 +16,7 @@ export const App = async (composer) => {
     //console.log(`recipe [${recipe.name}]`);
     const plan = await Utils.resolve(arc, recipe);
     await arc.instantiate(plan);
+    await logArc(arc);
     //console.log(`store [${arc._stores[0].id}]`);
     console.log(`stores`, arc._stores);
   })();
@@ -57,8 +35,8 @@ export const App = async (composer) => {
       console.log(String(recipe));
       const plan = await Utils.resolve(arc, recipe);
       await arc.instantiate(plan);
+      await logArc(arc);
     })();
-    //await logArc(arc);
     // accrete recipe
     await (async () => {
       const recipe = manifest.allRecipes[1];
@@ -66,6 +44,7 @@ export const App = async (composer) => {
       console.log(String(recipe));
       const plan = await Utils.resolve(arc, recipe);
       await arc.instantiate(plan);
+      //await logArc(arc);
     })();
     // wait for data to appear
     const cb = async info => {
@@ -74,6 +53,9 @@ export const App = async (composer) => {
         console.log(info.data.rawData);
         const dt = now() - t0;
         console.log(`dt = ${dt.toFixed(1)}ms`);
+        if (typeof document != 'undefined') {
+          document.body.appendChild(Object.assign(document.createElement('div'), {innerText: `dt = ${dt.toFixed(1)}ms`}));
+        }
       }
     };
     const store = arc._stores[2];
@@ -86,3 +68,25 @@ export const App = async (composer) => {
   await logArc(arc);
   return arc;
 };
+
+const logArc = async arc => {
+  console.log(`\narc serialization`);
+  console.log(`=============================================================================`);
+  console.log(await arc.serialize());
+  console.log(`=============================================================================`);
+};
+
+const buildEntityManifest = entity => `
+import 'https://$particles/Pipes/Pipes.recipes'
+
+resource PipeEntityResource
+  start
+  [{"type": "${entity.type}", "name": "${entity.name}"}]
+
+store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${entity.type} in PipeEntityResource
+
+recipe Pipe
+  use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
+  Trigger
+    pipe = pipe
+`;

@@ -1,0 +1,7 @@
+particle WasmTest in 'source/WasmTest.js'
+  consume root
+
+recipe WasmTest
+  slot 'rootslotid-root' as root
+  WasmTest
+    consume root

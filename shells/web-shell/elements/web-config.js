@@ -20,7 +20,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   _update({userid, arckey}, state, oldProps) {
     if (!state.config) {
       state.config = this._configure();
-      if (!state.config.storage) {
+      if (!state.config.storage || state.config.storage === 'default') {
         state.config.storage = Const.defaultStorageKey;
       }
       localStorage.setItem(Const.LOCALSTORAGE.storage, state.config.storage);

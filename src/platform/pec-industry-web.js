@@ -1,4 +1,4 @@
-const WORKER_PATH = `https://$shell/lib/build/worker.js`;
+const WORKER_PATH = `https://$shells/lib/build/worker.js`;
 
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here

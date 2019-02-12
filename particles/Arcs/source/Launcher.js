@@ -33,7 +33,7 @@ const template = html`
     margin: 0 auto;
   }
   [chip] {
-    font-family: 'Google Sans';
+    font-family: 'Google Sans', sans-serif;
     position: relative;
     display: flex;
     flex-direction: column;

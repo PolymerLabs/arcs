@@ -59,7 +59,7 @@ const template = Xen.Template.html`
   <!-- context bootstrap -->
   <web-arc id="context" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
-  <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" arcstore="{{store}}" on-context="onState"></user-context>
+  <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></user-context>
   <!-- web planner -->
   <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
   <!-- ui chrome -->
@@ -89,6 +89,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   get template() {
     return template;
+  }
+  attributeChangedCallback(n, old, value) {
+    this[n] = value;
   }
   // TODO(sjmiles): only dev-time stuff in this override
   async _update(props, state) {
