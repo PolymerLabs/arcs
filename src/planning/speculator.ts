@@ -77,7 +77,7 @@ export class Speculator {
     if (speculativeArc.pec.messageCount !== messageCount + 2) {
       return this.awaitCompletion(relevance, speculativeArc);
     } else {
-      speculativeArc.stop();
+      speculativeArc.dispose();
       this.speculativeArcs.splice(this.speculativeArcs.indexOf(speculativeArc, 1));
       return relevance;
     }
