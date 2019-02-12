@@ -615,7 +615,7 @@ describe('recipe', () => {
     assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections["details"].targetSlot, "there is more than one slot");
     assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot, "slot in the require section doesn't match slot in the recipe");
   });
-  it.only('recipe with require section toString method works', async () => {
+  it('recipe with require section toString method works', async () => {
     const recipe = (await Manifest.parse(`
       particle B
         consume root
