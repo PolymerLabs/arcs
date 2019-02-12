@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@google-cloud/compute": "^0.10.0",
-    "@kubernetes/client-node": "^0.7.1",
+    "@kubernetes/client-node": "^0.8.1",
     "arcs": "file:../",
     "cors": "^2.8.4",
     "debug": "^4.1.1",
