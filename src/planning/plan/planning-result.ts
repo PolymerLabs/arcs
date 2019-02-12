@@ -9,11 +9,12 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {logFactory} from '../../platform/log-web.js';
+import {Arc} from '../../runtime/arc.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Suggestion, EnvOptions} from './suggestion.js';
 import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+
+import {EnvOptions, Suggestion} from './suggestion.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
 

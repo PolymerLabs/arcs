@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {CreateDescriptionHandle} from '../../strategies/create-description-handle.js';
-import {assert} from '../../../platform/chai-web.js';
 
 describe('CreateDescriptionHandle', () => {
   it('descriptions handle created', async () => {

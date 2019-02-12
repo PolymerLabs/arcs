@@ -6,18 +6,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase, BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider, ChangeEvent} from './storage-provider-base.js';
-
-import {firebase} from '../../platform/firebase-web.js';
-
 import {assert} from '../../platform/assert-web.js';
-import {KeyBase} from './key-base.js';
 import {atob} from '../../platform/atob-web.js';
 import {btoa} from '../../platform/btoa-web.js';
-import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {firebase} from '../../platform/firebase-web.js';
 import {Id} from '../id.js';
-import {Type, TypeVariable, CollectionType, BigCollectionType, ReferenceType} from '../type.js';
+import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../type.js';
 import {setDiff} from '../util.js';
+
+import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {KeyBase} from './key-base.js';
+import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);

@@ -6,11 +6,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {Arc} from '../../runtime/arc.js';
+import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Type} from '../../runtime/type.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
-import {Arc} from '../../runtime/arc.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class GroupHandleConnections extends Strategy {
   _walker: StrategizerWalker;

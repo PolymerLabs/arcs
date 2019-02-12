@@ -6,13 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import cors from "cors";
+import {NextFunction, Request, Response} from "express";
+import express from "express";
+import fetch from 'node-fetch';
+
 import {AppBase} from "./app-base";
 import {CloudManager} from "./deployment/cloud";
 import {Container, DeploymentStatus} from "./deployment/containers";
-import {NextFunction, Request, Response} from "express";
-import express from "express";
-import cors from "cors";
-import fetch from 'node-fetch';
 
 interface Deployment {
   id: string;

@@ -7,16 +7,17 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
+import {Modality} from '../modality.js';
+import {InterfaceType} from '../type.js';
+
 import {ConnectionConstraint} from './connection-constraint.js';
+import {HandleConnection} from './handle-connection.js';
+import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Search} from './search.js';
-import {Slot} from './slot.js';
 import {SlotConnection} from './slot-connection.js';
-import {Handle} from './handle.js';
-import {HandleConnection} from './handle-connection.js';
+import {Slot} from './slot.js';
 import {compareComparables} from './util.js';
-import {InterfaceType} from '../type.js';
-import {Modality} from '../modality.js';
 
 export class Recipe {
   private _requires: RequireSection[] = [];

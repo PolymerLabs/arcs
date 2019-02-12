@@ -7,18 +7,18 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {assert} from '../platform/assert-web.js';
+import {fetch} from '../platform/fetch-web.js';
 import {fs} from '../platform/fs-web.js';
 import {vm} from '../platform/vm-web.js';
-import {fetch} from '../platform/fetch-web.js';
 
-import {assert} from '../platform/assert-web.js';
-import {Particle} from './particle.js';
+import {JsonldToManifest} from './converters/jsonldToManifest.js';
 import {DomParticle} from './dom-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
+import {Particle} from './particle.js';
 import {Reference} from './reference.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
-import {JsonldToManifest} from './converters/jsonldToManifest.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 

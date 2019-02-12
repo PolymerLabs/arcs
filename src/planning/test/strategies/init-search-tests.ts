@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {InitSearch} from '../../strategies/init-search.js';
 import {assert} from '../../../platform/chai-web.js';
+import {InitSearch} from '../../strategies/init-search.js';
 
 describe('InitSearch', async () => {
   it('initializes the search recipe', async () => {

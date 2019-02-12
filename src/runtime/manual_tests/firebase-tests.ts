@@ -8,18 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
+import {Id} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {Id} from '../id.js';
-import {EntityType, ReferenceType} from '../type.js';
-import {assert} from '../../platform/chai-web.js';
 import {resetStorageForTesting} from '../storage/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {CallbackTracker} from '../testing/callback-tracker.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {CallbackTracker} from '../testing/callback-tracker.js';
+import {EntityType, ReferenceType} from '../type.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';

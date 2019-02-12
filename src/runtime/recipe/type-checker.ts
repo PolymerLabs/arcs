@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, ReferenceType, InterfaceType, SlotType} from '../type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
 
 export class TypeChecker {
 

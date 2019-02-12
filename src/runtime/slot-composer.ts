@@ -9,13 +9,14 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Modality} from './modality.js';
-import {ModalityHandler} from './modality-handler.js';
+
 import {Arc} from './arc.js';
-import {SlotContext, ProvidedSlotContext, HostedSlotContext} from './slot-context.js';
-import {SlotConsumer} from './slot-consumer.js';
-import {Particle} from './recipe/particle.js';
 import {Description} from './description.js';
+import {ModalityHandler} from './modality-handler.js';
+import {Modality} from './modality.js';
+import {Particle} from './recipe/particle.js';
+import {SlotConsumer} from './slot-consumer.js';
+import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 
 export type SlotComposerOptions = {
   modalityName?: string;

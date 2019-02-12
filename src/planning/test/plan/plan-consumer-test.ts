@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {MockSlotComposer} from '../../../runtime/testing/mock-slot-composer.js';
 import {Modality} from '../../../runtime/modality.js';
-import {PlanningModalityHandler} from '../../planning-modality-handler.js';
+import {Relevance} from '../../../runtime/relevance.js';
+import {MockSlotComposer} from '../../../runtime/testing/mock-slot-composer.js';
+import {TestHelper} from '../../../runtime/testing/test-helper.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
-import {Relevance} from '../../../runtime/relevance.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {TestHelper} from '../../../runtime/testing/test-helper.js';
+import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 
 async function createPlanConsumer(userid, arcKey, storageKeyBase, helper) {
   helper.arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';

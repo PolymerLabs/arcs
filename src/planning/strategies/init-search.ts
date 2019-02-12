@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {assert} from '../../platform/assert-web.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {assert} from '../../platform/assert-web.js';
 
 export class InitSearch extends Strategy {
   _search;

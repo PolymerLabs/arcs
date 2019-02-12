@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Descendant} from '../../runtime/recipe/walker.js';
-import {Strategy} from '../strategizer.js';
 import {Arc} from '../../runtime/arc.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
 import {RecipeIndex} from '../recipe-index.js';
+import {Strategy} from '../strategizer.js';
 
 type ScoredRecipe = {
   recipe: Recipe;

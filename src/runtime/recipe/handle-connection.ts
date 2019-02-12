@@ -6,12 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {compareComparables, compareStrings, compareArrays} from './util.js';
 import {ConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
-import {Recipe} from './recipe.js';
-import {Particle} from './particle.js';
+
 import {Handle} from './handle.js';
+import {Particle} from './particle.js';
+import {Recipe} from './recipe.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
 
 export type Direction = 'in' | 'out' | 'inout' | 'host';
 

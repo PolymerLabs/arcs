@@ -11,10 +11,10 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer';
 
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {

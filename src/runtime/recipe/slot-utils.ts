@@ -5,14 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Recipe, RequireSection} from './recipe.js';
-import {SlotConnection} from './slot-connection.js';
-import {Particle} from './particle.js';
-import {SlotSpec, ProvidedSlotSpec} from '../particle-spec.js';
-import {Slot} from './slot.js';
+import { O_TRUNC } from 'constants';
 
 import {assert} from '../../platform/assert-web.js';
-import { O_TRUNC } from 'constants';
+import {ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+
+import {Particle} from './particle.js';
+import {Recipe, RequireSection} from './recipe.js';
+import {SlotConnection} from './slot-connection.js';
+import {Slot} from './slot.js';
 
 export class SlotUtils {
   // Helper methods.

@@ -8,9 +8,10 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+
+import {handleFor} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
-import {handleFor} from './handle.js';
 
 enum ReferenceMode {Unstored, Stored}
 

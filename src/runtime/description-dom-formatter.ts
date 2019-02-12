@@ -9,7 +9,8 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {DescriptionFormatter, CombinedDescriptionsOptions, ParticleDescription} from './description-formatter.js';
+
+import {CombinedDescriptionsOptions, DescriptionFormatter, ParticleDescription} from './description-formatter.js';
 
 export class DescriptionDomFormatter extends DescriptionFormatter {
   private nextID = 0;

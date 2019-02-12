@@ -6,12 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {SlotConnection} from './slot-connection.js';
-import {HandleConnection} from './handle-connection.js';
-import {compareComparables, compareStrings, compareArrays} from './util.js';
-import {Recipe, RequireSection} from './recipe.js';
 import {ParticleSpec, SlotSpec} from '../particle-spec.js';
+
+import {HandleConnection} from './handle-connection.js';
+import {Recipe, RequireSection} from './recipe.js';
+import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
 
 export class Particle {
   private readonly _recipe: Recipe;

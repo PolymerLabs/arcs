@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
+
+import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {DescriptionFormatter} from './description-formatter.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
-import {DescriptionFormatter} from './description-formatter.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 export class ModalityHandler {
   constructor(public readonly slotConsumerClass: typeof SlotDomConsumer,

@@ -7,8 +7,8 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Action, Descendant} from '../runtime/recipe/walker.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
+import {Action, Descendant} from '../runtime/recipe/walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
 
 export class Strategizer {

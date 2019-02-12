@@ -9,10 +9,11 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+
 import {Arc} from './arc.js';
 import {Description} from './description.js';
-import {SlotContext, ProvidedSlotContext, HostedSlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
+import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 
 export class SlotConsumer {
   _consumeConn?: SlotConnection;

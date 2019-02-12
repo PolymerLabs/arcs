@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Suggestion} from '../../planning/plan/suggestion';
 import {assert} from '../../platform/chai-web.js';
-import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Recipe} from '../recipe/recipe.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Suggestion} from '../../planning/plan/suggestion';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when

@@ -5,12 +5,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {assert} from '../../platform/assert-web.js';
+import {Arc} from '../../runtime/arc.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Handle} from '../../runtime/recipe/handle.js';
-import {Arc} from '../../runtime/arc.js';
-import {assert} from '../../platform/assert-web.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 // This strategy substitutes '&verb' declarations with recipes,
 // according to the following conditions:

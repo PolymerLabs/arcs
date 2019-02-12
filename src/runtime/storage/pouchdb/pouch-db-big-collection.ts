@@ -1,6 +1,7 @@
-import {BigCollectionStorageProvider} from '../storage-provider-base.js';
-import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {assert} from '../../../platform/assert-web.js';
+import {BigCollectionStorageProvider} from '../storage-provider-base.js';
+
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 
 // TODO(lindner): update to operate like the firebase version
 export class PouchDbBigCollection extends PouchDbStorageProvider implements BigCollectionStorageProvider {

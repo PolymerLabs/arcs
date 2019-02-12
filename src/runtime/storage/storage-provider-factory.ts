@@ -6,14 +6,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
-import {VolatileStorage} from './volatile-storage.js';
-import {FirebaseStorage} from './firebase-storage.js';
-import {PouchDbStorage} from './pouchdb/pouch-db-storage.js';
-import {SyntheticStorage} from './synthetic-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
+
+import {FirebaseStorage} from './firebase-storage.js';
 import {KeyBase} from './key-base.js';
+import {PouchDbStorage} from './pouchdb/pouch-db-storage.js';
+import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {SyntheticStorage} from './synthetic-storage.js';
+import {VolatileStorage} from './volatile-storage.js';
 
 export class StorageProviderFactory {
   private _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};

@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
-import {Suggestion} from './plan/suggestion.js';
 import {Arc} from '../runtime/arc.js';
+import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
+
+import {Suggestion} from './plan/suggestion.js';
 
 export class SuggestDomConsumer extends SlotDomConsumer {
   _suggestion: Suggestion;

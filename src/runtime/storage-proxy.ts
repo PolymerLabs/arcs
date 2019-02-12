@@ -9,13 +9,14 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {Type, CollectionType, BigCollectionType} from './type.js';
-import {PECInnerPort, CursorNextValue} from './api-channel.js';
+import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
+
+import {CursorNextValue, PECInnerPort} from './api-channel.js';
+import {Handle, HandleOptions} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
-import {Handle, HandleOptions} from './handle.js';
-import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
+import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
+import {BigCollectionType, CollectionType, Type} from './type.js';
 
 enum SyncState {none, pending, full}
 

@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {DevtoolsBroker} from '../../../devtools/shared/devtools-broker.js';
 import {assert} from '../../platform/assert-web.js';
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
+
 import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
-import {DevtoolsBroker} from '../../../devtools/shared/devtools-broker.js';
 
 let channel: DevtoolsChannel = null;
 let isConnected = false;

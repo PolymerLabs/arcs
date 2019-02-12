@@ -12,12 +12,12 @@ import {assert} from '../../platform/chai-web.js';
 
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
+import {HostedSlotContext} from '../slot-context.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {HostedSlotContext} from '../slot-context.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
