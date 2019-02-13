@@ -9,12 +9,13 @@
 'use strict';
 
 /* global defineParticle */
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, resolver, log}) => {
 
-  const x = '../out/main.wasm';
+  const x = resolver('https://$particles/WASM/source/main.wasm');
   const memoryStates = new WeakMap();
 
   let instance = null;
+  let message = '';
 
   function syscall(instance, n, args) {
     switch (n) {
@@ -50,8 +51,8 @@ defineParticle(({DomParticle, html, log}) => {
   let s = '';
   fetch(x).then(response =>
     response.arrayBuffer()
-  ).then(bytes =>
-    WebAssembly.instantiate(bytes, {
+  ).then(bytes => {
+    return WebAssembly.instantiate(bytes, {
       env: {
         __syscall0: function __syscall0(n) { return syscall(instance, n, []); },
         __syscall1: function __syscall1(n, a) { return syscall(instance, n, [a]); },
@@ -63,29 +64,34 @@ defineParticle(({DomParticle, html, log}) => {
         putc_js: function(c) {
           c = String.fromCharCode(c);
           if (c === '\n') {
-            console.log(s);
+            message = s;
+            console.warn(s);
             s = '';
           } else {
             s += c;
           }
         }
       }
-    })
-  ).then(results => {
+    });
+  }).then(results => {
     instance = results.instance;
   }).catch(console.error);
 
   return class extends DomParticle {
     get template() {
-      return html`<div>Hello World</div>`;
+      return html`<div>{{msg}}</div>`;
     }
-    update() {
+    render() {
+      let msg;
       if (instance) {
         const result = instance.exports.main();
-        console.log(result);
+        console.warn(result);
+        msg = message;
       } else {
+        msg = 'WASM is thinking...';
         this._invalidate();
       }
+      return {msg};
     }
   };
 
