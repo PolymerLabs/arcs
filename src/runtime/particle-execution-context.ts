@@ -8,14 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {handleFor, Handle} from './handle.js';
 import {assert} from '../platform/assert-web.js';
+
 import {PECInnerPort} from './api-channel.js';
-import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {ParticleSpec} from './particle-spec.js';
-import {Loader} from './loader.js';
-import {Particle} from './particle.js';
+import {Handle, handleFor} from './handle.js';
 import {Id} from './id.js';
+import {Loader} from './loader.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Particle} from './particle.js';
+import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 
 export class ParticleExecutionContext {

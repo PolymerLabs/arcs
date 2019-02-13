@@ -6,10 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import { Runtime } from 'arcs';
 import bodyParser from 'body-parser';
 import express from 'express';
 import logger from 'morgan';
-import { Runtime } from 'arcs';
 
 /**
  * Centralized base class that configures and ExpressJS server.

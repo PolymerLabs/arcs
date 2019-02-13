@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
+import {Recipe} from '../../../runtime/recipe/recipe.js';
+import {Search} from '../../../runtime/recipe/search.js';
+import {Relevance} from '../../../runtime/relevance.js';
 import {TestHelper} from '../../../runtime/testing/test-helper.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {Search} from '../../../runtime/recipe/search.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js';
-import {Relevance} from '../../../runtime/relevance.js';
 
 describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {

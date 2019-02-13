@@ -5,16 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Action} from '../recipe/walker.js';
-import {RecipeWalker} from '../recipe/recipe-walker.js';
 import {Arc} from '../arc.js';
-import {Recipe} from '../recipe/recipe.js';
-import {RecipeUtil} from '../recipe/recipe-util.js';
-import {SlotUtils} from '../recipe/slot-utils.js';
-import {Handle} from '../recipe/handle';
-import {SlotConnection} from '../recipe/slot-connection.js';
-import {Particle} from '../recipe/particle.js';
 import {SlotSpec} from '../particle-spec.js';
+import {Handle} from '../recipe/handle';
+import {Particle} from '../recipe/particle.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {RecipeWalker} from '../recipe/recipe-walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {SlotConnection} from '../recipe/slot-connection.js';
+import {SlotUtils} from '../recipe/slot-utils.js';
+import {Action} from '../recipe/walker.js';
 
 export class ResolveWalker extends RecipeWalker {
   private arc: Arc;

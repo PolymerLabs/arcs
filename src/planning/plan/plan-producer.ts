@@ -9,20 +9,21 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
-import {InitSearch} from '../strategies/init-search.js';
-import {logFactory} from '../../platform/log-web.js';
 import {now} from '../../platform/date-web.js';
+import {logFactory} from '../../platform/log-web.js';
+import {Arc} from '../../runtime/arc.js';
+import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
+import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 import {Planner} from '../planner.js';
-import {PlanningResult} from './planning-result.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
-import {Suggestion} from './suggestion.js';
-import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+import {InitSearch} from '../strategies/init-search.js';
 import {StrategyDerived} from '../strategizer.js';
-import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
-import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
-import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+
+import {PlanningResult} from './planning-result.js';
+import {Suggestion} from './suggestion.js';
 
 const defaultTimeoutMs = 5000;
 

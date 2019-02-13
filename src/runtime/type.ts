@@ -6,13 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Schema} from './schema.js';
-import {TypeVariableInfo} from './type-variable-info.js';
-import {InterfaceInfo} from './interface-info.js';
-import {SlotInfo} from './slot-info.js';
-import {TypeChecker} from './recipe/type-checker.js';
-import {ArcInfo} from './synthetic-types.js';
 import {Id} from './id.js';
+import {InterfaceInfo} from './interface-info.js';
+import {TypeChecker} from './recipe/type-checker.js';
+import {Schema} from './schema.js';
+import {SlotInfo} from './slot-info.js';
+import {ArcInfo} from './synthetic-types.js';
+import {TypeVariableInfo} from './type-variable-info.js';
 
 // tslint:disable-next-line: no-any
 export type TypeLiteral = {tag: string, data?: any};

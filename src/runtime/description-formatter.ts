@@ -9,12 +9,13 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './particle-spec.js';
+
 import {Arc} from './arc.js';
+import {ParticleSpec} from './particle-spec.js';
+import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
-import {HandleConnection} from './recipe/handle-connection.js';
-import {CollectionType, BigCollectionType, InterfaceType} from './type.js';
+import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
 
 export type ParticleDescription = {
   _particle: Particle,

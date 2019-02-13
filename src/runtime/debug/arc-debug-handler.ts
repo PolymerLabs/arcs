@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {enableTracingAdapter} from './tracing-adapter.js';
-import {Arc} from '../arc.js';
-import {ArcDevtoolsChannel, ArcDebugListenerDerived} from '../../runtime/debug/abstract-devtools-channel.js';
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
-import {DevtoolsConnection} from './devtools-connection.js';
+import {ArcDebugListenerDerived, ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {Arc} from '../arc.js';
 import {Particle} from '../recipe/particle.js';
+
 import {ArcStoresFetcher} from './arc-stores-fetcher.js';
+import {DevtoolsConnection} from './devtools-connection.js';
+import {enableTracingAdapter} from './tracing-adapter.js';
 
 // Arc-independent handlers for devtools logic.
 DevtoolsConnection.onceConnected.then(devtoolsChannel => {

@@ -9,11 +9,12 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+
 import {Arc} from './arc.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
-import {CollectionType, BigCollectionType, EntityType, InterfaceType} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
 
 export class Description {
   private constructor(private readonly particleDescriptions = <ParticleDescription[]>[],

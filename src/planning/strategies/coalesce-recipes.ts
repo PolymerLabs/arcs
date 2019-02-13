@@ -5,16 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {Handle} from '../../runtime/recipe/handle.js';
-import {TypeVariable} from '../../runtime/type.js';
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {RecipeIndex} from '../recipe-index.js';
-import {Particle} from '../../runtime/recipe/particle.js';
 import {SlotSpec} from '../../runtime/particle-spec.js';
+import {Handle} from '../../runtime/recipe/handle.js';
+import {Particle} from '../../runtime/recipe/particle.js';
+import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {TypeVariable} from '../../runtime/type.js';
+import {RecipeIndex} from '../recipe-index.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved

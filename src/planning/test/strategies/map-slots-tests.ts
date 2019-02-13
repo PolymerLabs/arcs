@@ -9,14 +9,15 @@
  */
 'use strict';
 
+import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {MapSlots} from '../../strategies/map-slots.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
-import {assert} from '../../../platform/chai-web.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 describe('MapSlots', () => {
   const particlesSpec = `

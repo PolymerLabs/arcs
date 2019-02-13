@@ -7,9 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../platform/assert-web.js';
+
+import {Schema} from './schema.js';
 import {Symbols} from './symbols.js';
 import {Type} from './type.js';
-import {Schema} from './schema.js';
 
 /**
  * Regular interface for Entities.

@@ -9,14 +9,15 @@
  */
 'use strict';
 
-import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
-import {Loader} from '../../../runtime/loader.js';
-import {Arc} from '../../../runtime/arc.js';
-import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
-import {InterfaceType} from '../../../runtime/type.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Arc} from '../../../runtime/arc.js';
+import {Loader} from '../../../runtime/loader.js';
+import {Manifest} from '../../../runtime/manifest.js';
 import {VariableStorageProvider} from '../../../runtime/storage/storage-provider-base';
+import {InterfaceType} from '../../../runtime/type.js';
+import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);

@@ -9,19 +9,19 @@
  */
 'use strict';
 
-import {Arc} from '../../../runtime/arc.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
-import {RecipeIndex} from '../../recipe-index.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {RecipeIndex} from '../../recipe-index.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {arcId?: string, modalityName?: string} = {}) {
+  static createTestArc(context: Manifest, options: {arcId?: string, modalityName?: string, loader?: Loader} = {}) {
     return new Arc({
       id: options.arcId || 'test-arc',
-      loader: new Loader(),
+      loader: options.loader || new Loader(),
       context,
       slotComposer: new FakeSlotComposer(options)
     });

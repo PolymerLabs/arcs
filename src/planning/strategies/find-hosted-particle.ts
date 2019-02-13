@@ -5,13 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Arc} from '../../runtime/arc.js';
 import {assert} from '../../platform/assert-web.js';
+import {Arc} from '../../runtime/arc.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
-import {InterfaceType} from '../../runtime/type.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {InterfaceType} from '../../runtime/type.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class FindHostedParticle extends Strategy {
 

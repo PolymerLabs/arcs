@@ -9,18 +9,19 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {ParticleSpec} from './particle-spec.js';
-import {Type} from './type.js';
-import {OuterPortAttachment} from './debug/outer-port-attachment.js';
-import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {Handle} from './handle.js';
-import {Particle} from './particle.js';
-import * as recipeParticle from './recipe/particle.js';
-import * as recipeHandle from './recipe/handle.js';
+
 import {Arc} from './arc.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
+import {OuterPortAttachment} from './debug/outer-port-attachment.js';
+import {Handle} from './handle.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Particle} from './particle.js';
+import * as recipeHandle from './recipe/handle.js';
+import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import { SerializedModelEntry } from './storage/crdt-collection-model.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {Type} from './type.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 

@@ -9,10 +9,11 @@
  */
 'use strict';
 
-import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 async function tryCoalesceRecipes(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);

@@ -9,12 +9,13 @@
  */
  'use strict';
 
+import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
+import {Manifest} from '../../runtime/manifest.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
-import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../../runtime/manifest.js';
+
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {

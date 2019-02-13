@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
-import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 describe('MatchRecipeByVerb', () => {
   it('removes a particle and adds a recipe', async () => {

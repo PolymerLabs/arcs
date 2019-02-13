@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RecipeIndex} from '../recipe-index.js';
+import {assert} from '../../platform/chai-web.js';
+import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Arc} from '../../runtime/arc.js';
-import {assert} from '../../platform/chai-web.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
+import {RecipeIndex} from '../recipe-index.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {

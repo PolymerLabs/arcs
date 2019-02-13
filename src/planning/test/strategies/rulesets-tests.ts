@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StrategizerWalker, Strategy, Ruleset} from '../../strategizer.js';
+import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Planner} from '../../planner.js';
 import {Recipe} from '../../../runtime/recipe/recipe.js';
+import {Planner} from '../../planner.js';
+import {Ruleset, StrategizerWalker, Strategy} from '../../strategizer.js';
+
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {assert} from '../../../platform/chai-web.js';
 
 class InitPopulation extends Strategy {
   private readonly _context: Manifest;

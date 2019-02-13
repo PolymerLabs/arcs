@@ -6,9 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type, EntityType, TypeVariable, SlotType} from './type.js';
 import {assert} from '../platform/assert-web.js';
+
 import {Schema} from './schema.js';
+import {EntityType, SlotType, Type, TypeVariable} from './type.js';
 
 export class TypeVariableInfo {
   name: string;

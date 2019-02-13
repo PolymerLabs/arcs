@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Arc} from '../../runtime/arc.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {RecipeIndex} from '../recipe-index.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class SearchTokensToParticles extends Strategy {
   private readonly _walker;

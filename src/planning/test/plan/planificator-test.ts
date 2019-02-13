@@ -9,11 +9,11 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {Loader} from '../../../runtime/loader.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestHelper} from '../../../runtime/testing/test-helper.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
-import {TestHelper} from '../../../runtime/testing/test-helper.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {

@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import idb, {ObjectStore} from 'idb';
+import rs from 'jsrsasign';
+
+import {decode, encode} from './base64';
 import {DeviceKey, Key, PrivateKey, PublicKey, RecoveryKey, SessionKey, WrappedKey} from "./keys";
 import {KeyGenerator, KeyStorage} from "./manager";
-import idb, {ObjectStore} from 'idb';
-import {decode, encode} from './base64';
-import rs from 'jsrsasign';
 import {TestableKey} from "./testing/cryptotestutils";
 
 const DEVICE_KEY_ALGORITHM = 'RSA-OAEP';

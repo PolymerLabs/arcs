@@ -7,13 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
-import {MockSlotDomConsumer} from '../runtime/testing/mock-slot-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
-import {ModalityHandler} from '../runtime/modality-handler.js';
-import {DescriptionFormatter} from '../runtime/description-formatter.js';
 import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
+import {DescriptionFormatter} from '../runtime/description-formatter.js';
+import {ModalityHandler} from '../runtime/modality-handler.js';
+import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
+import {MockSlotDomConsumer} from '../runtime/testing/mock-slot-dom-consumer.js';
+
+import {SuggestDomConsumer} from './suggest-dom-consumer.js';
+import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
 
 
 export class PlanningModalityHandler extends ModalityHandler{

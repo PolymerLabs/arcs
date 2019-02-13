@@ -6,19 +6,20 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Ruleset} from '../strategizer.js';
-import {ConvertConstraintsToConnections} from './convert-constraints-to-connections.js';
+
+import {AddMissingHandles} from './add-missing-handles.js';
 import {AssignHandles} from './assign-handles.js';
+import {ConvertConstraintsToConnections} from './convert-constraints-to-connections.js';
+import {CreateDescriptionHandle} from './create-description-handle.js';
+import {GroupHandleConnections} from './group-handle-connections.js';
 import {InitPopulation} from './init-population.js';
+import {InitSearch} from './init-search.js';
 import {MapSlots} from './map-slots.js';
+import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
 import {MatchParticleByVerb} from './match-particle-by-verb.js';
 import {MatchRecipeByVerb} from './match-recipe-by-verb.js';
-import {AddMissingHandles} from './add-missing-handles.js';
-import {CreateDescriptionHandle} from './create-description-handle.js';
-import {InitSearch} from './init-search.js';
-import {SearchTokensToParticles} from './search-tokens-to-particles.js';
-import {GroupHandleConnections} from './group-handle-connections.js';
-import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
 import {ResolveRecipe} from './resolve-recipe.js';
+import {SearchTokensToParticles} from './search-tokens-to-particles.js';
 
 // tslint:disable-next-line: variable-name
 export const Empty = new Ruleset.Builder().build();

@@ -15,7 +15,10 @@ exports.seconds = s => s * 1e3;
 exports.defaultTimeout = exports.seconds(30);
 exports.shellUrl = `shells/web-shell`;
 
-const storageKey = `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`;
+const storageKeyByType = {
+  'pouchdb': `pouchdb://local/user`,
+  'firebase': `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8`
+};
 
 function deepQuerySelector(selector) {
   return browser.execute(function(selector) {
@@ -79,17 +82,38 @@ exports.keys = async function(selector, keys, timeout) {
   await browser.keys(keys);
 };
 
-exports.openNewArc = async function(testTitle, useSolo) {
+/**
+ * Start a new arc in the webdriver environment.
+ * @param storage pouchdb or firebase
+ */
+
+exports.openNewArc = async function(testTitle, useSolo, storageType) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
   browser.switchTab(openTabs[0]);
   openTabs.slice(1).forEach(tabToClose => {
     browser.close(tabToClose);
   });
-  // setup url params
-  const suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
-  const storage = `${storageKey}/${suffix}`;
-  //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+
+  const storageKey = storageKeyByType[storageType];
+  let storage;
+  let suffix;
+
+  switch (storageType) {
+
+  case 'pouchdb':
+    // setup url params
+    suffix = `${Date.now()}-${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+    storage = `${storageKey}/${suffix}/`;
+    break;
+  case 'firebase':
+    suffix = `${new Date().toISOString()}_${testTitle}`.replace(/\W+/g, '-').replace(/\./g, '_');
+    storage = `${storageKey}/${suffix}`;
+    //console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
+    break;
+  default:
+    throw new Error('must specify firebase/pouchdb parameter');
+  }
   console.log(`running test "${testTitle}" [${storage}]`);
   const urlParams = [
     //`testFirebaseKey=${firebaseKey}`,

@@ -7,8 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Container, ContainerManager, DeploymentStatus} from "../containers";
-import {Disk} from "../disks";
 import {
   Core_v1Api,
   Extensions_v1beta1Api, ExtensionsV1beta1DeploymentSpec,
@@ -34,7 +32,14 @@ import {
   V1VolumeMount
 } from "@kubernetes/client-node";
 
+import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
+import {CloudManager} from "../cloud";
+import {Container, ContainerManager, DeploymentStatus} from "../containers";
+import {Disk} from "../disks";
+import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
+import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
 import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+
 import {
   ARCS_DOCKER_IMAGE,
   ARCS_INGRESS_PREFIX,
@@ -42,10 +47,6 @@ import {
   EXTERNAL_PORT,
   K18S_NAMESPACE
 } from "./k18s-constants";
-import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
-import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
-import {CloudManager} from "../cloud";
-import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
 
 
 const USE_PREFIX_MAPPING = true;
