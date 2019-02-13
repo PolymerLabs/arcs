@@ -637,8 +637,7 @@ ${e.message}
     };
     processArgTypes(particleItem.args);
 
-    const particleSpec = new ParticleSpec(particleItem);
-    manifest._particles[particleItem.name] = particleSpec;
+    manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   static _processInterface(manifest, interfaceItem) {

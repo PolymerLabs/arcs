@@ -30,8 +30,7 @@ export class Loader {
   public pec?: ParticleExecutionContext;
 
   path(fileName: string): string {
-    const path = fileName.replace(/[/][^/]+$/, '/');
-    return path;
+    return fileName.replace(/[/][^/]+$/, '/');
   }
 
   join(prefix: string , path: string): string {
