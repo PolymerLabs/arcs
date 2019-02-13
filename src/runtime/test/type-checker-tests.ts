@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker} from '../recipe/type-checker.js';

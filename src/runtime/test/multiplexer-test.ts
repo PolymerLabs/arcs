@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {HostedSlotContext} from '../slot-context.js';
