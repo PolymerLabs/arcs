@@ -24,7 +24,7 @@ import {decode} from './keymgmt/base64.js';
  * ```
  */
 export class Bytes {
-  private blob: Uint8Array;
+  private readonly blob: Uint8Array;
 
   /**
    * Constructs a Bytes object from a base64 string.

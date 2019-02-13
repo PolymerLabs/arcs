@@ -56,7 +56,7 @@ export abstract class StorageProxy {
   protected readonly port: PECInnerPort;
   protected readonly scheduler: StorageProxyScheduler;
   name: string;
-  private baseForNewID: string;
+  private readonly baseForNewID: string;
   pec: ParticleExecutionContext;
 
   private localIDComponent = 0;
@@ -65,7 +65,7 @@ export abstract class StorageProxy {
   private keepSynced = false;
   protected synchronized = SyncState.none;
   protected observers: {particle: Particle, handle: Handle}[] = [];
-  private updates: {version: number}[] = [];
+  private readonly updates: {version: number}[] = [];
   protected barrier: string | null = null;
   constructor(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
     this.id = id;

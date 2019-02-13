@@ -17,7 +17,7 @@ import {SlotUtils} from '../recipe/slot-utils.js';
 import {Action} from '../recipe/walker.js';
 
 export class ResolveWalker extends RecipeWalker {
-  private arc: Arc;
+  private readonly arc: Arc;
 
   constructor(tactic, arc) {
     super(tactic);
