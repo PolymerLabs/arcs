@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {Arc} from './arc.js';
 import {ParticleSpec} from './particle-spec.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';

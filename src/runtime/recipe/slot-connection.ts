@@ -6,7 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {SlotSpec} from '../particle-spec.js';
 
 import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';

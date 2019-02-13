@@ -21,7 +21,6 @@ import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
-import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/util.js';
 import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';

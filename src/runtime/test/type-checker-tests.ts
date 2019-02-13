@@ -12,9 +12,6 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {Schema} from '../schema.js';
-import {SlotInfo} from '../slot-info.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 import {EntityType, SlotType, TypeVariable} from '../type.js';
 
 

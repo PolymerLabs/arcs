@@ -14,7 +14,7 @@ import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {Walker, WalkerTactic} from './walker.js';
+import {Walker} from './walker.js';
 
 export class RecipeWalker extends Walker {
 

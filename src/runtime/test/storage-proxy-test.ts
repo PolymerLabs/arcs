@@ -12,12 +12,9 @@
 import {assert} from '../../platform/chai-web.js';
 import {handleFor} from '../handle.js';
 import {Id} from '../id.js';
-import {Loader} from '../loader.js';
-import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Schema} from '../schema.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
-import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
 
