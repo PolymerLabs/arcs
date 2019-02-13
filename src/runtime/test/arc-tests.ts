@@ -8,21 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
-import {Id} from '../id.js';
-import {ArcType} from '../type.js';
 import {assert} from '../../platform/chai-web.js';
-import * as util from '../testing/test-util.js';
+import {Arc} from '../arc.js';
 import {handleFor} from '../handle.js';
-import {Manifest} from '../manifest.js';
+import {Id} from '../id.js';
 import {Loader} from '../loader.js';
-import {TestHelper} from '../testing/test-helper.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Manifest} from '../manifest.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {TestHelper} from '../testing/test-helper.js';
+import * as util from '../testing/test-util.js';
+import {ArcType} from '../type.js';
 
 async function setup() {
   const loader = new Loader();

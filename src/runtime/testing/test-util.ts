@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {CollectionType} from '../type.js';
 import {Arc} from '../arc.js';
+import {CollectionType} from '../type.js';
 
 /**
  * Helper class for testing a Collection-based store that collects messages from a particle.

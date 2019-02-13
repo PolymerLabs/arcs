@@ -9,11 +9,11 @@
  */
 
 import {DeviceKey, Key, PublicKey, RecoveryKey, WrappedKey} from "./keys";
+import {WebCryptoMemoryKeyStorage} from "./testing/cryptotestutils";
 import {
     WebCryptoKeyGenerator,
     WebCryptoKeyIndexedDBStorage,
 } from "./webcrypto";
-import {WebCryptoMemoryKeyStorage} from "./testing/cryptotestutils";
 
 
 /**

@@ -7,16 +7,16 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../../platform/assert-web.js';
-import {StorageBase} from '../storage-provider-base.js';
-import {PouchDbKey} from './pouch-db-key.js';
+import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../platform/pouchdb-web.js';
 import {Id} from '../../id.js';
-import {Type, CollectionType, BigCollectionType, ReferenceType} from '../../type.js';
-import {PouchDbCollection} from './pouch-db-collection.js';
-import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
-import {PouchDbBigCollection} from './pouch-db-big-collection.js';
-import {PouchDbVariable} from './pouch-db-variable.js';
+import {BigCollectionType, CollectionType, ReferenceType, Type} from '../../type.js';
+import {StorageBase} from '../storage-provider-base.js';
 
-import {PouchDB, PouchDbMemory, PouchDbDebug} from '../../../platform/pouchdb-web.js';
+import {PouchDbBigCollection} from './pouch-db-big-collection.js';
+import {PouchDbCollection} from './pouch-db-collection.js';
+import {PouchDbKey} from './pouch-db-key.js';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
+import {PouchDbVariable} from './pouch-db-variable.js';
 
 PouchDB.plugin(PouchDbDebug);
 PouchDB.debug.disable();

@@ -6,10 +6,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {compareArrays, compareComparables, compareStrings} from './util.js';
-import {SlotConnection} from './slot-connection.js';
-import {Recipe} from './recipe.js';
+
 import {HandleConnection} from './handle-connection.js';
+import {Recipe} from './recipe.js';
+import {SlotConnection} from './slot-connection.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
 
 export class Slot {
   private readonly _recipe: Recipe;

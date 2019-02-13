@@ -9,10 +9,11 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Direction} from './recipe/handle-connection.js';
+
 import {Modality} from './modality.js';
-import {Type, TypeLiteral, InterfaceType} from './type.js';
+import {Direction} from './recipe/handle-connection.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {InterfaceType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
 

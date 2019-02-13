@@ -9,12 +9,13 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type, EntityType, ReferenceType} from './type.js';
-import {TypeChecker} from './recipe/type-checker.js';
+
 import {Entity} from './entity.js';
 import {EntityClass} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
+import {TypeChecker} from './recipe/type-checker.js';
 import {Reference} from './reference.js';
+import {EntityType, ReferenceType, Type} from './type.js';
 
 export class Schema {
   readonly names: string[];

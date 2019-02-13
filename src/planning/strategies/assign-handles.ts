@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {assert} from '../../platform/assert-web.js';
+import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {

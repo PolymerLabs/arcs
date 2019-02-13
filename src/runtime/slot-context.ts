@@ -9,10 +9,11 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {SlotConsumer} from './slot-consumer.js';
+
+import {Description} from './description.js';
 import {ProvidedSlotSpec} from './particle-spec.js';
 import {Handle} from './recipe/handle.js';
-import {Description} from './description.js';
+import {SlotConsumer} from './slot-consumer.js';
 
 /**
  * Represents a single slot in the rendering system.

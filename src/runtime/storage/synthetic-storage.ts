@@ -7,14 +7,15 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent} from './storage-provider-base.js';
-import {StorageProviderFactory} from './storage-provider-factory.js';
-import {KeyBase} from './key-base.js';
 import {Id} from '../id.js';
-import {Type, ArcType, HandleType} from '../type.js';
-import {ArcInfo, ArcHandle} from '../synthetic-types.js';
 import {Manifest} from '../manifest.js';
+import {ArcHandle, ArcInfo} from '../synthetic-types.js';
+import {ArcType, HandleType, Type} from '../type.js';
 import {setDiffCustom} from '../util.js';
+
+import {KeyBase} from './key-base.js';
+import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {StorageProviderFactory} from './storage-provider-factory.js';
 
 enum Scope {
   arc = 1  // target must be a storage key for an ArcInfo Variable

@@ -5,14 +5,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {SlotSpec} from '../particle-spec';
+
 import {ConnectionConstraint} from './connection-constraint.js';
-import {Handle} from './handle.js';
 import {HandleConnection} from './handle-connection.js';
+import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
-import {Slot} from './slot.js';
 import {SlotConnection} from './slot-connection.js';
-import {SlotSpec} from '../particle-spec';
+import {Slot} from './slot.js';
 import {Walker, WalkerTactic} from './walker.js';
 
 export class RecipeWalker extends Walker {

@@ -9,17 +9,17 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Recipe} from '../../../runtime/recipe/recipe.js';
+import {Relevance} from '../../../runtime/relevance.js';
+import {StorageProviderBase, VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {TestHelper} from '../../../runtime/testing/test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
-import {Relevance} from '../../../runtime/relevance.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {StorageProviderBase, VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 
 class TestPlanProducer extends PlanProducer {
   options;

@@ -12,10 +12,10 @@ import {assert} from '../../platform/chai-web.js';
 
 import {Arc} from '../../runtime/arc.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
+import {SuggestionComposer} from '../suggestion-composer.js';
+import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   get suggestConsumers() {

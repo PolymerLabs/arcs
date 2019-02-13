@@ -7,11 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlanningResult} from '../plan/planning-result.js';
-import {Planificator} from '../plan/planificator.js';
-import {Suggestion} from '../plan/suggestion';
 import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
 import {Trigger} from '../plan/plan-producer.js';
+import {Planificator} from '../plan/planificator.js';
+import {PlanningResult} from '../plan/planning-result.js';
+import {Suggestion} from '../plan/suggestion';
 
  export class PlanningExplorerAdapter {
   static updatePlanningResults(result, metadata, devtoolsChannel) {

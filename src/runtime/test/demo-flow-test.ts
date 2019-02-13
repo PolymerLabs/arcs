@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../manifest.js';
-import {Loader} from '../loader.js';
 import {assert} from '../../platform/chai-web.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 describe('demo flow', () => {

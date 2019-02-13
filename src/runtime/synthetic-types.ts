@@ -6,8 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Type} from './type.js';
 import {Id} from './id.js';
+import {Type} from './type.js';
 
 // Equivalent to an Entity with Schema { serialization Text }
 export class ArcInfo {

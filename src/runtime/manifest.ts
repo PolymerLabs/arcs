@@ -8,24 +8,25 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {parser} from '../../build/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
-import {parser} from '../../build/runtime/manifest-parser.js';
-import {Recipe, RequireSection} from './recipe/recipe.js';
-import {Handle} from './recipe/handle.js';
-import {ParticleSpec} from './particle-spec.js';
-import {Schema} from './schema.js';
-import {Search} from './recipe/search.js';
+
+import {Id} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
-import {Type, EntityType, TypeVariable, CollectionType, BigCollectionType, ReferenceType, InterfaceType, SlotType} from './type.js';
+import {ManifestMeta} from './manifest-meta.js';
+import {ParticleSpec} from './particle-spec.js';
+import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
+import {Handle} from './recipe/handle.js';
+import {RecipeUtil} from './recipe/recipe-util.js';
+import {Recipe, RequireSection} from './recipe/recipe.js';
+import {Search} from './recipe/search.js';
+import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/util.js';
+import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {ManifestMeta} from './manifest-meta.js';
-import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
-import {Id} from './id.js';
-import {RecipeUtil} from './recipe/recipe-util.js';
-import {Slot} from './recipe/slot.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 
 class ManifestError extends Error {
   location: {offset: number, line: number, column: number};

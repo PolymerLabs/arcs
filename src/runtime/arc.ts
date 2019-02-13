@@ -9,25 +9,26 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type, EntityType, TypeVariable, CollectionType, InterfaceType, RelationType, ArcType} from './type.js';
-import {ParticleExecutionHost} from './particle-execution-host.js';
-import {Handle} from './recipe/handle.js';
-import {Recipe} from './recipe/recipe.js';
-import {Manifest, StorageStub} from './manifest.js';
-import {compareComparables} from './recipe/util.js';
-import {FakePecFactory} from './fake-pec-factory.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {Id} from './id.js';
-import {ArcDebugHandler} from './debug/arc-debug-handler.js';
-import {Loader} from './loader.js';
-import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
-import {ParticleSpec} from './particle-spec.js';
+
 import {PECInnerPort} from './api-channel.js';
-import {Particle} from './recipe/particle.js';
-import {Slot} from './recipe/slot.js';
-import {SlotComposer} from './slot-composer.js';
-import {Modality} from './modality.js';
 import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
+import {ArcDebugHandler} from './debug/arc-debug-handler.js';
+import {FakePecFactory} from './fake-pec-factory.js';
+import {Id} from './id.js';
+import {Loader} from './loader.js';
+import {Manifest, StorageStub} from './manifest.js';
+import {Modality} from './modality.js';
+import {ParticleExecutionHost} from './particle-execution-host.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Handle} from './recipe/handle.js';
+import {Particle} from './recipe/particle.js';
+import {Recipe} from './recipe/recipe.js';
+import {Slot} from './recipe/slot.js';
+import {compareComparables} from './recipe/util.js';
+import {SlotComposer} from './slot-composer.js';
+import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 
 type ArcOptions = {
   id: string;

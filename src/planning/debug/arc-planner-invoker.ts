@@ -9,15 +9,15 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
+import {ArcDebugListener, ArcDebugListenerDerived, ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {CoalesceRecipes} from '../strategies/coalesce-recipes.js';
-import {Descendant} from '../../runtime/recipe/walker.js';
-import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
 import * as Rulesets from '../strategies/rulesets.js';
-import {Manifest} from '../../runtime/manifest.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {ArcDevtoolsChannel, ArcDebugListener, ArcDebugListenerDerived} from '../../runtime/debug/abstract-devtools-channel.js';
+import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
 
 class InitialRecipe extends Strategy {
   private recipe: Recipe;

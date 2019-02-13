@@ -5,13 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Recipe} from './recipe.js';
 import {assert} from '../../platform/assert-web.js';
-import {Particle} from './particle.js';
-import {Handle} from './handle.js';
-import {HandleConnection} from './handle-connection.js';
-import {InterfaceType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {InterfaceType} from '../type.js';
+
+import {HandleConnection} from './handle-connection.js';
+import {Handle} from './handle.js';
+import {Particle} from './particle.js';
+import {Recipe} from './recipe.js';
 
 class Shape {
   recipe: Recipe;

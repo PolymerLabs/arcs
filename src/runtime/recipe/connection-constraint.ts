@@ -5,11 +5,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {compareArrays, compareStrings, compareComparables, Comparable} from './util.js';
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
-import {Handle} from './handle.js';
+
 import {Direction} from './handle-connection.js';
+import {Handle} from './handle.js';
+import {Comparable, compareArrays, compareComparables, compareStrings} from './util.js';
 
 export abstract class EndPoint implements Comparable {
   abstract _compareTo(other): number;

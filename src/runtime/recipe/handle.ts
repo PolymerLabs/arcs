@@ -6,12 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {compareStrings, compareArrays, compareComparables} from './util.js';
-import {TypeChecker} from './type-checker.js';
-import {Type} from '../type.js';
-import {Recipe} from './recipe.js';
-import {HandleConnection} from './handle-connection.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {Type} from '../type.js';
+
+import {HandleConnection} from './handle-connection.js';
+import {Recipe} from './recipe.js';
+import {TypeChecker} from './type-checker.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
 
 type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 

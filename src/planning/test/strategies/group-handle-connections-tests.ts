@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
-import {assert} from '../../../platform/chai-web.js';
 
 describe('GroupHandleConnections', () => {
   const schemaAndParticlesStr = `

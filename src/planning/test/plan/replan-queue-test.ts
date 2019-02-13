@@ -11,10 +11,10 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;

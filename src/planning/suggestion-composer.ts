@@ -7,12 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlanningModalityHandler} from './planning-modality-handler.js';
-import {SlotComposer} from '../runtime/slot-composer.js';
 import {Arc} from '../runtime/arc.js';
-import {Suggestion} from './plan/suggestion.js';
-import {SuggestDomConsumer} from './suggest-dom-consumer.js';
+import {SlotComposer} from '../runtime/slot-composer.js';
 import {ProvidedSlotContext} from '../runtime/slot-context.js';
+
+import {Suggestion} from './plan/suggestion.js';
+import {PlanningModalityHandler} from './planning-modality-handler.js';
+import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
 export class SuggestionComposer {
   private _container: HTMLElement | undefined; // eg div element.

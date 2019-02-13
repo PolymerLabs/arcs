@@ -1,5 +1,5 @@
-import {KeyStorage} from "../manager";
 import {DeviceKey, Key, WrappedKey} from "../keys";
+import {KeyStorage} from "../manager";
 
 export interface TestableKey {
     // Visible For Testing

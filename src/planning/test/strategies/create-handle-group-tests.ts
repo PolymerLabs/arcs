@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
-import {HandleConnection} from '../../../runtime/recipe/handle-connection.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {HandleConnection} from '../../../runtime/recipe/handle-connection.js';
+import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 describe('CreateHandleGroup', () => {
   it('connects variables and inline schemas', async () => {

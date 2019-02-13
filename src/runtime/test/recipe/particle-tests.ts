@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../../manifest.js';
-import {InterfaceType, CollectionType, TypeVariable, Type} from '../../type.js';
+import {CollectionType, InterfaceType, Type, TypeVariable} from '../../type.js';
 
 import {assert} from '../../../platform/chai-web.js';
 

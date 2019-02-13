@@ -1,10 +1,11 @@
-import {CrdtCollectionModel} from '../crdt-collection-model.js';
 import {assert} from '../../../platform/assert-web.js';
-import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
-import {Type, TypeLiteral} from '../../type.js';
-import {PouchDbStorage} from './pouch-db-storage';
-import {CollectionStorageProvider, ChangeEvent} from '../storage-provider-base.js';
 import {PouchDB} from '../../../platform/pouchdb-web.js';
+import {Type, TypeLiteral} from '../../type.js';
+import {CrdtCollectionModel} from '../crdt-collection-model.js';
+import {ChangeEvent, CollectionStorageProvider} from '../storage-provider-base.js';
+
+import {PouchDbStorage} from './pouch-db-storage';
+import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 
 /**
  * Defines a callback interface to allow for modifying a

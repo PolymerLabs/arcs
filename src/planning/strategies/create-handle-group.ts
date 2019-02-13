@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Handle} from '../../runtime/recipe/handle.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class CreateHandleGroup extends Strategy {
 

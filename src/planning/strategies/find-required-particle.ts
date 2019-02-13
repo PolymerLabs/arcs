@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Particle} from '../../runtime/recipe/particle.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class FindRequiredParticle extends Strategy {
 

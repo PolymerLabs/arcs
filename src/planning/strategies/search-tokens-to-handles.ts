@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Arc} from '../../runtime/arc.js';
+import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class SearchTokensToHandles extends Strategy {
 

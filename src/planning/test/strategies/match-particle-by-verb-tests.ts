@@ -11,9 +11,10 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Planner} from '../../planner.js';
+import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
+
 import {StrategyTestHelper} from './strategy-test-helper.js';
 
 describe('MatchParticleByVerb', () => {

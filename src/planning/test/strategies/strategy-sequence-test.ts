@@ -10,10 +10,11 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
-import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
+import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
+import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 const {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 

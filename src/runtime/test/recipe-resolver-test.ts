@@ -10,10 +10,10 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 
 describe('RecipeResolver', () => {

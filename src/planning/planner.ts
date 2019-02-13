@@ -6,35 +6,36 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {now} from '../platform/date-web.js';
-import {Arc} from '../runtime/arc.js';
-import {Strategizer, Strategy, StrategyDerived} from './strategizer.js';
-import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
+import {Arc} from '../runtime/arc.js';
+import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
-import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {Tracing} from '../tracelib/trace.js';
+
+import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
+import {PlanningResult} from './plan/planning-result.js';
+import {Suggestion} from './plan/suggestion.js';
+import {Speculator} from './speculator.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {AssignHandles} from './strategies/assign-handles.js';
+import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
+import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
+import {CreateHandleGroup} from './strategies/create-handle-group.js';
+import {FindHostedParticle} from './strategies/find-hosted-particle.js';
+import {GroupHandleConnections} from './strategies/group-handle-connections.js';
 import {InitPopulation} from './strategies/init-population.js';
+import {InitSearch} from './strategies/init-search.js';
 import {MapSlots} from './strategies/map-slots.js';
+import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {MatchParticleByVerb} from './strategies/match-particle-by-verb.js';
 import {MatchRecipeByVerb} from './strategies/match-recipe-by-verb.js';
 import {NameUnnamedConnections} from './strategies/name-unnamed-connections.js';
-import {AddMissingHandles} from './strategies/add-missing-handles.js';
-import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
-import {InitSearch} from './strategies/init-search.js';
+import {ResolveRecipe} from './strategies/resolve-recipe.js';
+import * as Rulesets from './strategies/rulesets.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
-import {GroupHandleConnections} from './strategies/group-handle-connections.js';
-import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
-import {CreateHandleGroup} from './strategies/create-handle-group.js';
-import {FindHostedParticle} from './strategies/find-hosted-particle.js';
-import {CoalesceRecipes} from './strategies/coalesce-recipes.js';
-import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {Speculator} from './speculator.js';
-import {Suggestion} from './plan/suggestion.js';
-import {Tracing} from '../tracelib/trace.js';
-import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
-import {PlanningResult} from './plan/planning-result.js';
+import {Strategizer, Strategy, StrategyDerived} from './strategizer.js';
 
 export class Planner {
   private _arc: Arc;

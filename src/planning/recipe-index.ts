@@ -8,33 +8,34 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../runtime/manifest.js';
-import {Arc} from '../runtime/arc.js';
-import {SlotComposer} from '../runtime/slot-composer.js';
-import {Descendant} from '../runtime/recipe/walker.js';
 import {Strategizer, Strategy} from '../planning/strategizer.js';
-import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
+import {assert} from '../platform/assert-web.js';
+import {Arc} from '../runtime/arc.js';
+import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Modality} from '../runtime/modality.js';
+import {ProvidedSlotSpec, SlotSpec} from '../runtime/particle-spec.js';
+import {HandleConnection} from '../runtime/recipe/handle-connection.js';
+import {Handle} from '../runtime/recipe/handle.js';
+import {Particle} from '../runtime/recipe/particle.js';
+import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
+import {SlotConnection} from '../runtime/recipe/slot-connection.js';
+import {SlotUtils} from '../runtime/recipe/slot-utils.js';
+import {Slot} from '../runtime/recipe/slot.js';
+import {Descendant} from '../runtime/recipe/walker.js';
+import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
+
+import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
+import {PlanningResult} from './plan/planning-result.js';
+import {PlanningModalityHandler} from './planning-modality-handler.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {CreateHandleGroup} from './strategies/create-handle-group.js';
-import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
-import {SlotUtils} from '../runtime/recipe/slot-utils.js';
-import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
-import {RecipeUtil} from '../runtime/recipe/recipe-util.js';
-import {Slot} from '../runtime/recipe/slot.js';
-import {SlotConnection} from '../runtime/recipe/slot-connection.js';
-import {Handle} from '../runtime/recipe/handle.js';
-import {assert} from '../platform/assert-web.js';
-import {PlanningResult} from './plan/planning-result.js';
-import {Modality} from '../runtime/modality.js';
-import {PlanningModalityHandler} from './planning-modality-handler.js';
-import {ProvidedSlotSpec, SlotSpec} from '../runtime/particle-spec.js';
-import {Particle} from '../runtime/recipe/particle.js';
-import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 
 type ConsumeSlotConnectionMatch = {
   recipeParticle: Particle,
