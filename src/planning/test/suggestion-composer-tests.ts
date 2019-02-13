@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-
 import {Arc} from '../../runtime/arc.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';

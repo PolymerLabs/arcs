@@ -331,17 +331,24 @@ export class K18sContainerManager implements ContainerManager {
 
   async find(fingerprint: string): Promise<Container | null> {
 
-    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(K18S_NAMESPACE, undefined,
-      undefined, undefined,
-      true, undefined);
+    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(
+      K18S_NAMESPACE,
+      true // includeUnitialized
+    );
     const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(this.k8sName, K18S_NAMESPACE,
       undefined, false, false);
 
     const deploymentList = v1Deployment.items;
     if (deploymentList.length > 0) {
 
-      const {body:v1Service} = await this.k8sApi.listNamespacedService(K18S_NAMESPACE, undefined,
-        undefined, "metadata.name=svc-"+fingerprint, true, undefined);
+      const {body:v1Service} = await this.k8sApi.listNamespacedService(
+        K18S_NAMESPACE,
+        true, // includeUnitialized
+        undefined, // pretty
+        undefined, // _continue
+        "metadata.name=svc-"+fingerprint, // fieldSelector
+        undefined // labelSelector
+      );
       if (v1Service.items.length > 0) {
         return Promise.resolve(new K18sDeployment(this.k8sApi, deploymentList[0], v1Service.items[0], ingress));
       }

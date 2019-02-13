@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {assert} from '../../platform/assert-web.js';
 import {ProvidedSlotSpec, SlotSpec} from '../../runtime/particle-spec.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
@@ -12,8 +13,6 @@ import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
 import {Slot} from '../../runtime/recipe/slot.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-
-import {assert} from '../../platform/assert-web.js';
 
 export class MapSlots extends Strategy {
   async generate(inputParams) {
