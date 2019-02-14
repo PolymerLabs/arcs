@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {SlotSpec, ConnectionSpec} from '../particle-spec.js';
+import {ConnectionSpec, SlotSpec} from '../particle-spec.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';

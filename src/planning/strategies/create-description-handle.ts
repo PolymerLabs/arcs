@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {ConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class CreateDescriptionHandle extends Strategy {
   async generate(inputParams) {

@@ -8,8 +8,8 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {ConnectionSpec} from '../../runtime/particle-spec.js';
-import {Handle} from '../../runtime/recipe/handle.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';

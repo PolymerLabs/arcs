@@ -8,10 +8,10 @@
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
+import {ConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
-import {ConnectionSpec} from '../particle-spec.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';

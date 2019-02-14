@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, ProvidedSlotSpec, SlotSpec, ConnectionSpec} from '../particle-spec.js';
+import {ConnectionSpec, ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType} from '../type.js';
@@ -22,7 +22,7 @@ export class Particle {
   private _id: string | undefined = undefined;
   private _name: string;
   private _localName: string | undefined = undefined;
-  private _spec: ParticleSpec | undefined = undefined;
+  spec: ParticleSpec | undefined = undefined;
   private _verbs: string[] = [];
   private _connections: {[index: string]: HandleConnection} = {};
   
@@ -42,7 +42,7 @@ export class Particle {
     const particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._verbs = [...this._verbs];
-    particle._spec = this._spec;
+    particle.spec = this.spec ? this.spec.cloneWithResolutions(variableMap) : undefined;
 
     Object.keys(this._connections).forEach(key => {
       particle._connections[key] = this._connections[key]._clone(particle, cloneMap);
@@ -220,32 +220,11 @@ export class Particle {
   set id(id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
   get name() { return this._name; }
   set name(name) { this._name = name; }
-  get spec() { return this._spec; }
   get connections() { return this._connections; } // {parameter -> HandleConnection}
   get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get consumedSlotConnections() { return this._consumedSlotConnections; }
   get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
   set verbs(verbs) { this._verbs = verbs; }
-
-  set spec(spec) {
-    this._spec = spec;
-    for (const connectionName of spec.connectionMap.keys()) {
-      let connection = this.connections[connectionName];
-      const speccedConnection = spec.connectionMap.get(connectionName);
-      if (connection == undefined) {
-        if (speccedConnection.type instanceof InterfaceType) {
-          // NOTE: At cloning, all type-variables change. Hence handle / handle-connections created in
-          // different planning generations cannot connect via interface.
-          // For now, eagerly create interfaces! Once this is solved:
-          // TODO: Unify addConnectionName and HandleConnection's connectToHandle methods.
-          // TODO: Make hande-connection invalid, if it doesn't have handle.
-          connection = this.addConnectionName(connectionName);
-        } else {
-          continue;
-        }
-      }
-    }
-  }
 
   addUnnamedConnection() {
     const connection = new HandleConnection(undefined, this);

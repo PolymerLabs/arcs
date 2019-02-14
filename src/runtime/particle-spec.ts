@@ -13,6 +13,8 @@ import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {Direction} from './recipe/handle-connection.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {Schema} from './schema.js';
+import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
@@ -249,8 +251,16 @@ export class ParticleSpec {
     return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
   }
 
-  clone() {
+  clone(): ParticleSpec {
     return ParticleSpec.fromLiteral(this.toLiteral());
+  }
+
+  cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
+    const spec = this.clone();
+    this.connectionMap.forEach((conn, name) => {
+      spec.connectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
+    });
+    return spec;
   }
 
   equals(other) {
