@@ -303,7 +303,7 @@ export class TypeVariable extends Type {
     return true;
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) { // QUESTION: Does this map needs to be updated too?
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
     const name = this.variable.name;
     let variable = variableMap.get(name);
     if (!variable) {
