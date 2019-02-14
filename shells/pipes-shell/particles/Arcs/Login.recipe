@@ -5,10 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-//import atob from 'atob';
+schema UserName
+  Text username
 
-function atob(str) {
-  return Buffer.from(str, 'base64').toString('binary');
-}
+particle Login in 'source/Login.js'
+  out UserName username
+  consume root
 
-export {atob};
+recipe Login &login
+  create as username
+  slot 'rootslotid-root' as root
+  Login
+    username = username
+    consume root as root
+  description `user sign in`

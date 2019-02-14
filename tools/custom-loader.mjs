@@ -5,12 +5,12 @@ export function resolve(specifier, parent, resolve) {
     let result;
     try {
       result = resolve(specifier, parent);
-    } catch(e) {}
-
+    } catch (e) {
+      //
+    }
     if (!result && !parent.includes('-node.js') && !parent.includes('node_modules')) {
       throw new Error(`cannot load ${specifier} from ${parent}. Only node_modules can be loaded using non-filesystem paths.`);
     }
-
     return result;
   }
   if (!/\.(js|mjs)$/.test(specifier)) {
