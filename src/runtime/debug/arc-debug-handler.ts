@@ -41,12 +41,9 @@ export class ArcDebugHandler {
 
       this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
-      if (!!listenerClasses) { // undefined => false
-      	// TODO: This should just be a foreach, as there is no need to keep
-      	// the results.
-        const listeners = listenerClasses.map(l => {
-          ArcDevtoolsChannel.instantiateListener(l, arc, this.arcDevtoolsChannel);
-        });
+      if (!!listenerClasses) { // undefined -> false
+      	  listenerClasses.forEach(l => ArcDevtoolsChannel.instantiateListener(l, 
+      	  	  arc, this.arcDevtoolsChannel));
       }
 
       this.arcDevtoolsChannel.send({
