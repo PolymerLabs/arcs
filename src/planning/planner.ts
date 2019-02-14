@@ -23,6 +23,7 @@ import {ConvertConstraintsToConnections} from './strategies/convert-constraints-
 import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {FindHostedParticle} from './strategies/find-hosted-particle.js';
+import {FindRequiredParticle} from './strategies/find-required-particle.js';
 import {GroupHandleConnections} from './strategies/group-handle-connections.js';
 import {InitPopulation} from './strategies/init-population.js';
 import {InitSearch} from './strategies/init-search.js';
@@ -212,7 +213,8 @@ export class Planner {
     MatchFreeHandlesToConnections,
     ResolveRecipe,
     FindHostedParticle,
-    CoalesceRecipes
+    CoalesceRecipes,
+    FindRequiredParticle
   ];
 
   // tslint:disable-next-line: variable-name

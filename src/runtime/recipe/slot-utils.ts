@@ -135,7 +135,6 @@ export class SlotUtils {
         if (newSlot.sourceConnection === undefined) return false;
         const clonedSlot = SlotUtils.getClonedSlot(oldSlot.sourceConnection.recipe, newSlot);
         oldSlot.sourceConnection.providedSlots[oldSlot.name] = clonedSlot;
-        clonedSlot.sourceConnection = oldSlot.sourceConnection;
       }
 
       while (oldSlot.consumeConnections.length > 0) {
