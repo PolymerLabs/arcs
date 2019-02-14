@@ -261,6 +261,15 @@ export class EntityType extends Type {
     return this.entitySchema;
   }
 
+  _cloneWithResolutions(variableMap) {
+    if (variableMap.has(this.entitySchema)) {
+      return variableMap.get(this.entitySchema);
+    }
+    const clonedEntityType = new EntityType(this.entitySchema);
+    variableMap.set(this.entitySchema, clonedEntityType);
+    return clonedEntityType;
+  }
+
   toPrettyString() {
     if (this.entitySchema.description.pattern) {
       return this.entitySchema.description.pattern;
@@ -342,14 +351,13 @@ export class TypeVariable extends Type {
     }
   }
   
-  _cloneWithResolutions(variableMap) {
-    const name = this.variable.name;
-    if (variableMap.has(name)) {
-      return new TypeVariable(variableMap.get(name));
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+    if (variableMap.has(this.variable)) {
+      return new TypeVariable(variableMap.get(this.variable) as TypeVariableInfo);
     } else {
       const newTypeVariable = TypeVariableInfo.fromLiteral(this.variable.toLiteralIgnoringResolutions());
       if (this.variable.resolution) {
-        newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
+        newTypeVariable._resolution = this.variable._resolution._cloneWithResolutions(variableMap);
       }
       if (this.variable._canReadSubset) {
         newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
@@ -357,7 +365,7 @@ export class TypeVariable extends Type {
       if (this.variable._canWriteSuperset) {
         newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
       }
-      variableMap.set(name, newTypeVariable);
+      variableMap.set(this.variable, newTypeVariable);
       return new TypeVariable(newTypeVariable);
     }
   }

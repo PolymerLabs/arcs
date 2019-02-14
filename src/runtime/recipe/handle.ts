@@ -7,6 +7,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {Schema} from '../schema.js';
+import {TypeVariableInfo} from '../type-variable-info.js';
 import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
@@ -40,7 +42,7 @@ export class Handle {
     this._recipe = recipe;
   }
 
-  _copyInto(recipe: Recipe) {
+  _copyInto(recipe: Recipe, cloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
     let handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
@@ -50,7 +52,7 @@ export class Handle {
       handle = recipe.newHandle();
       handle._id = this._id;
       handle._tags = [...this._tags];
-      handle._type = this._type ? Type.fromLiteral(this._type.toLiteral()) : undefined;
+      handle._type = this._type ? this._type._cloneWithResolutions(variableMap) : undefined;
       handle._fate = this._fate;
       handle._originalFate = this._originalFate;
       handle._originalId = this._originalId;
