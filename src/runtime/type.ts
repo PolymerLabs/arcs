@@ -121,6 +121,10 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
+  primitiveType() {
+    return null;
+  }
+
   getContainedType() {
     return null;
   }
@@ -405,6 +409,11 @@ export class CollectionType<T extends Type> extends Type {
 
   _applyExistenceTypeTest(test: (type: Type) => boolean): boolean {
     return this.collectionType._applyExistenceTypeTest(test);
+  }
+
+  // TODO: remove this in favor of a renamed collectionType
+  primitiveType(): T {
+    return this.collectionType;
   }
 
   getContainedType(): T {

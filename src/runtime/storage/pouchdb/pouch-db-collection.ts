@@ -61,7 +61,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
   /** @inheritDoc */
   backingType() {
-    return this.type.getContainedType();
+    return this.type.primitiveType();
   }
 
   // TODO(lindner): write tests
@@ -197,7 +197,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     const item = {value, keys, effective: false};
 
     if (this.referenceMode) {
-      const referredType = this.type.getContainedType();
+      const referredType = this.type.primitiveType();
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
 
       // Update the referred data

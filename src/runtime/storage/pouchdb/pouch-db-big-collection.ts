@@ -10,7 +10,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
   }
 
   backingType() {
-    return this.type.getContainedType();
+    return this.type.primitiveType();
   }
 
   async get(id: string) {
