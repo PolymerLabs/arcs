@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {assert} from '../platform/assert-web.js';
 
-export class MockSlotDomConsumer extends SlotDomConsumer {
+import {SlotDomConsumer} from './slot-dom-consumer.js';
+
+export class HeadlessSlotDomConsumer extends SlotDomConsumer {
   _content;
   contentAvailable;
   _contentAvailableResolve;

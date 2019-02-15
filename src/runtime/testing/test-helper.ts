@@ -13,10 +13,10 @@ import {Planner} from '../../planning/planner.js';
 import {RecipeIndex} from '../../planning/recipe-index.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {InterfaceType} from '../type.js';
 
 type TestHelperOptions = {
@@ -266,7 +266,7 @@ export class TestHelper {
 
   verifySlots(numConsumers: number, verifyHandler) {
     assert.lengthOf(this.slotComposer.consumers, numConsumers);
-    for (const consumer of this.slotComposer.consumers as MockSlotDomConsumer[]) {
+    for (const consumer of this.slotComposer.consumers as HeadlessSlotDomConsumer[]) {
       verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name, consumer._content);
     }
   }
