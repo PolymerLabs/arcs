@@ -24,7 +24,7 @@ describe('FindRequiredParticles', () => {
     const manifest = (await Manifest.parse(`
       particle A in 'A.js'
         consume root
-          provide c
+          provide x
     
       particle C
         consume c 
@@ -33,7 +33,7 @@ describe('FindRequiredParticles', () => {
         require
           A
             consume root
-              provide c as s0
+              provide x as s0
         C
           consume c as s0
       

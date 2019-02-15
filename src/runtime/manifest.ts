@@ -852,6 +852,7 @@ ${e.message}
             if (existingSlot !== undefined) {
               slotConn.providedSlots[ps.param] = existingSlot;
               existingSlot.sourceConnection = slotConn;
+              existingSlot.name = ps.param;
             }
           }
           let providedSlot = slotConn.providedSlots[ps.param];
