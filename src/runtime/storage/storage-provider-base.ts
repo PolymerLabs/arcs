@@ -64,7 +64,7 @@ export interface BigCollectionStorageProvider extends StorageProviderBase {
 
 export abstract class StorageBase {
   protected _debug = false;
-  
+
   protected constructor(protected readonly arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
   }
@@ -117,7 +117,7 @@ export abstract class StorageProviderBase {
 
   protected readonly _storageKey: string;
   referenceMode = false;
-  
+
   version: number|null;
   id: string;
   originalId: string|null;
