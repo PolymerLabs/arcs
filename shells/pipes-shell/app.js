@@ -4,23 +4,24 @@ import {now} from '../../build/platform/date-web.js';
 
 let t0;
 
-export const App = async (composer) => {
+export const App = async (composer, callback) => {
   t0 = now();
 
   const arc = await Utils.spawn({id: 'smoke-arc', composer});
   console.log(`arc [${arc.id}]`);
+  console.log(`dt = ${(now() - t0).toFixed(1)}ms`);
 
   //com_google_android_apps_maps(arc);
-  com_music_spotify(arc);
+  com_music_spotify(arc, callback);
 
   const dt = now() - t0;
-  console.log(`dt = ${dt.toFixed(1)}ms`);
+  //console.log(`dt = ${dt.toFixed(1)}ms`);
 
-  await logArc(arc);
+  //await logArc(arc);
   return arc;
 };
 
-const com_music_spotify = async arc => {
+const com_music_spotify = async (arc, callback) => {
   await (async () => {
     const manifestContent = buildEntityManifest({type: 'com_music_spotify'});
     const manifest = await Utils.parse(manifestContent);
@@ -32,14 +33,14 @@ const com_music_spotify = async arc => {
     // local files added ~90ms
     //const manifestContent = `import 'https://$particles/Glitch/custom.recipes'`;
     const manifest = await Utils.parse(`import 'https://$particles/Glitch/custom.recipes'`);
-    console.log(`manifest [${manifest.id}]`, manifest);
+    //console.log(`manifest [${manifest.id}]`, manifest);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RandomArtist');
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'SuggestForSpotify');
     // wait for data to appear
     const store = arc._stores[2];
-    store.on('change', onChange, arc);
+    store.on('change', info => onChange(info, callback), arc);
   })();
 };
 
@@ -54,15 +55,15 @@ const com_google_android_apps_maps = async arc => {
     //const moreRecipeContent = `import 'https://short-virgo.glitch.me/custom.recipes'`;
     // local files added ~90ms
     const manifest = await Utils.parse(`import 'https://$particles/Apps/MapQuery.recipes'`);
-    console.log(`manifest [${manifest.id}]`, manifest);
+    //console.log(`manifest [${manifest.id}]`, manifest);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // accrete recipe
     //await instantiateRecipe(arc, manifest, 'SuggestForSpotify');
     // wait for data to appear
-    console.log(arc._stores);
-    //const store = arc._stores[2];
-    //store.on('change', onChange, arc);
+    //console.log(arc._stores);
+    const store = arc._stores[2];
+    store.on('change', onChange, arc);
   })();
 };
 
@@ -81,18 +82,19 @@ const instantiateRecipe = async (arc, manifest, name) => {
   const recipe = recipeByName(manifest, name);
   //const recipe = manifest.allRecipes[0];
   //console.log(`recipe [${recipe.name}]`);
-  console.log(String(recipe));
+  //console.log(String(recipe));
   const plan = await Utils.resolve(arc, recipe);
   await arc.instantiate(plan);
   // TODO(sjmiles): necessary for iOS
-  await logArc(arc);
+  //await logArc(arc);
 };
 
-const onChange = change => {
-  //console.log(change);
+const onChange = (change, callback) => {
+  //console.log(change, callback.toString());
   if (change.data) {
     const text = change.data.rawData.text;
-    console.log(text);
+    callback(text);
+    //console.log(text);
     const dt = now() - t0;
     console.log(`dt = ${dt.toFixed(1)}ms`);
     if (typeof document != 'undefined') {
