@@ -122,7 +122,7 @@ export class SlotConnection {
       return false;
     }
 
-    if (this.getSlotSpec().isRequired) {
+    if (this.getSlotSpec() == undefined || this.getSlotSpec().isRequired) {
       if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
         // The required connection has no target slot
         // or its target slot it not resolved (has no ID or source connection).
@@ -135,6 +135,8 @@ export class SlotConnection {
     if (!this.targetSlot) {
       return true;
     }
+
+    if (this.getSlotSpec() == undefined) return true;
 
     return this.getSlotSpec().providedSlots.every(providedSlot => {
       if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
