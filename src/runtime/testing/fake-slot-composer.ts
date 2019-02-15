@@ -9,7 +9,6 @@
  */
 
 import {PlanningModalityHandler} from '../../planning/planning-modality-handler.js';
-import {Modality} from '../modality.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 
 /**

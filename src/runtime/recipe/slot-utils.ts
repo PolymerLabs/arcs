@@ -5,8 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import { O_TRUNC } from 'constants';
-
 import {assert} from '../../platform/assert-web.js';
 import {ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
 

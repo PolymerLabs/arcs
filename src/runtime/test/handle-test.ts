@@ -15,12 +15,10 @@ import {handleFor} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
-import {CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
-import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
-import {Type} from '../type.js';
 
 describe('Handle', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when

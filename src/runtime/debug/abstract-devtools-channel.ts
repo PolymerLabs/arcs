@@ -72,7 +72,7 @@ export class AbstractDevtoolsChannel {
 
 export class ArcDevtoolsChannel {
   private channel: AbstractDevtoolsChannel;
-  private arcId: string;
+  private readonly arcId: string;
 
   constructor(arc: Arc, channel: AbstractDevtoolsChannel) {
     this.channel = channel;

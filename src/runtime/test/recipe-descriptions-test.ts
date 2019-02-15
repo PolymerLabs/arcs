@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Suggestion} from '../../planning/plan/suggestion';
 import {assert} from '../../platform/chai-web.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Recipe} from '../recipe/recipe.js';

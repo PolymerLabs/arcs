@@ -7,10 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/chai-web.js';
-import {InterfaceInfo} from '../interface-info.js';
 import {Manifest} from '../manifest.js';
-import {Schema} from '../schema.js';
-import {SlotInfo} from '../slot-info.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable} from '../type.js';

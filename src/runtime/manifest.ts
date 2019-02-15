@@ -21,7 +21,6 @@ import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
-import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/util.js';
 import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
@@ -638,8 +637,7 @@ ${e.message}
     };
     processArgTypes(particleItem.args);
 
-    const particleSpec = new ParticleSpec(particleItem);
-    manifest._particles[particleItem.name] = particleSpec;
+    manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
   static _processInterface(manifest, interfaceItem) {

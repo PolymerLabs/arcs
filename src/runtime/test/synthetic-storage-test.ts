@@ -8,7 +8,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Id} from '../id.js';
-import {ChangeEvent, CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {assertThrowsAsync} from '../testing/test-util.js';

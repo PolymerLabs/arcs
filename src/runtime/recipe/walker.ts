@@ -43,7 +43,7 @@ export interface Descendant {result; score: number; derivation; hash; valid: boo
  * Walker.
  */
 export abstract class Action {
-  private _arc?: Arc;
+  private readonly _arc?: Arc;
   private _args?;
 
   constructor(arc?: Arc, args?) {

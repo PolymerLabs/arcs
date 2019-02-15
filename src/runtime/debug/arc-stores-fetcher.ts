@@ -10,7 +10,7 @@
 
 import {Arc} from '../arc.js';
 
-import {ArcDebugListener, ArcDevtoolsChannel} from './abstract-devtools-channel.js';
+import {ArcDebugListener} from './abstract-devtools-channel.js';
 
 export class ArcStoresFetcher extends ArcDebugListener {
   private arc: Arc;

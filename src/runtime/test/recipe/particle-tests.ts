@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../manifest.js';
-import {CollectionType, InterfaceType, Type, TypeVariable} from '../../type.js';
+import {CollectionType, InterfaceType, TypeVariable} from '../../type.js';
 
 describe('Recipe Particle', () => {
   it('cloning maints type variable mapping', async () => {

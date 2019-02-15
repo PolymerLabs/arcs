@@ -85,7 +85,7 @@ export class Arc {
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
   private innerArcsByParticle: Map<Particle, Arc[]> = new Map();
-  private listenerClasses: ArcDebugListenerDerived[];
+  private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();

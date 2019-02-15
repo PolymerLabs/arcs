@@ -12,8 +12,6 @@ import {assert} from '../../platform/chai-web.js';
 import {InterfaceInfo} from '../interface-info.js';
 import {Manifest} from '../manifest.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {Schema} from '../schema.js';
-import {TypeVariableInfo} from '../type-variable-info.js';
 import {CollectionType, EntityType, InterfaceType, Type, TypeVariable} from '../type.js';
 
 describe('interface', () => {

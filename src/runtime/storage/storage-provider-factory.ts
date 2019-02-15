@@ -17,7 +17,7 @@ import {SyntheticStorage} from './synthetic-storage.js';
 import {VolatileStorage} from './volatile-storage.js';
 
 export class StorageProviderFactory {
-  private _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
+  private readonly _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
 
   constructor(private readonly arcId: Id) {
     this._storageInstances = {
