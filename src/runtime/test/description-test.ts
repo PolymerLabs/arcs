@@ -791,7 +791,7 @@ recipe
       arc,
       recipe,
       fooStore,
-      DescriptionType: descriptionStore.type.getContainedType().entitySchema.entityClass(),
+      DescriptionType: descriptionStore.type.primitiveType().entitySchema.entityClass(),
       descriptionHandle: handleFor(descriptionStoreProxy)
     };
   }
