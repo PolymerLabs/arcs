@@ -687,7 +687,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.getContainedType();
   }
 
   remoteStateChanged(dataSnapshot) {
@@ -903,7 +903,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     let effective;
     // 1. Apply the change to the local model.
     if (this.referenceMode) {
-      const referredType = this.type.primitiveType();
+      const referredType = this.type.getContainedType();
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
       effective = this.model.add(id, {id, storageKey}, keys);
       this.version++;
@@ -1047,7 +1047,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
       if (items.length === 0) {
         return [];
       }
-      const referredType = this.type.primitiveType();
+      const referredType = this.type.getContainedType();
 
       const refSet = new Set();
 
@@ -1319,7 +1319,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.getContainedType();
   }
 
   enableReferenceMode() {

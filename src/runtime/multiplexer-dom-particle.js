@@ -96,7 +96,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
 
       const itemHandlePromise =
-          arc.createHandle(type.primitiveType(), 'item' + index);
+          arc.createHandle(type.getContainedType(), 'item' + index);
       this.handleIds[item.id] = itemHandlePromise;
 
       const itemHandle = await itemHandlePromise;

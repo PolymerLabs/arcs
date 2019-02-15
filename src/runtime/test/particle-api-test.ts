@@ -581,8 +581,8 @@ describe('particle-api', () => {
               if (handle.name !== 'inputs')
                 return;
               for (let input of model) {
-                let inHandle = await this.arc.createHandle(this.resHandle.type.primitiveType(), 'the-in');
-                let outHandle = await this.arc.createHandle(this.resHandle.type.primitiveType(), 'the-out', this);
+                let inHandle = await this.arc.createHandle(this.resHandle.type.getContainedType(), 'the-in');
+                let outHandle = await this.arc.createHandle(this.resHandle.type.getContainedType(), 'the-out', this);
                 try {
                   let done = await this.arc.loadRecipe(\`
                     schema Result
