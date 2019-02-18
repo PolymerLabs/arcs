@@ -6,11 +6,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {compareStrings, compareComparables} from './util.js';
-import {Recipe} from './recipe.js';
+
 import {Particle} from './particle.js';
-import {SlotSpec} from '../particle-spec.js';
+import {Recipe, RequireSection} from './recipe.js';
 import {Slot} from './slot.js';
+import {compareComparables, compareStrings} from './util.js';
 
 export class SlotConnection {
   private readonly _recipe: Recipe;
@@ -51,7 +51,7 @@ export class SlotConnection {
   connectToSlot(targetSlot) {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot;
     targetSlot.consumeConnections.push(this);
@@ -122,7 +122,7 @@ export class SlotConnection {
       return false;
     }
 
-    if (this.getSlotSpec().isRequired) {
+    if (this.getSlotSpec() == undefined || this.getSlotSpec().isRequired) {
       if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
         // The required connection has no target slot
         // or its target slot it not resolved (has no ID or source connection).
@@ -135,6 +135,8 @@ export class SlotConnection {
     if (!this.targetSlot) {
       return true;
     }
+
+    if (this.getSlotSpec() == undefined) return true;
 
     return this.getSlotSpec().providedSlots.every(providedSlot => {
       if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {

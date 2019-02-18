@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../../../runtime/manifest.js';
-import {StrategyTestHelper} from './strategy-test-helper.js';
-import {SearchTokensToParticles} from '../../strategies/search-tokens-to-particles.js';
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../../runtime/manifest.js';
+import {SearchTokensToParticles} from '../../strategies/search-tokens-to-particles.js';
+
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 describe('SearchTokensToParticles', () => {
   it('matches particles by verb strategy', async () => {

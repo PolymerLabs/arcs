@@ -12,6 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
+import {Type} from '../type.js';
 
 describe('recipe', () => {
   it('normalize errors', async () => {
@@ -50,6 +51,23 @@ describe('recipe', () => {
     const recipe = manifest.recipes[0];
     const clonedRecipe = recipe.clone();
     assert.equal(recipe.toString(), clonedRecipe.toString());
+  });
+  it('clones recipe with require section', async () => {
+    const manifest = await Manifest.parse(`
+      particle P1
+        consume details
+      recipe MyRecipe 
+        require
+          A
+            consume root
+              provide details as s0
+        P1
+          consume details as s0
+    `);
+    const recipe = manifest.recipes[0];
+    const clonedRecipe = recipe.clone(); 
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "recipe slots don't match");
+    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "cloned recipe slots don't match");
   });
   it('validate handle connection types', async () => {
     const manifest = await Manifest.parse(`
@@ -493,5 +511,170 @@ describe('recipe', () => {
     assert.isTrue(isResolved(recipe));
     assert.isTrue(recipe.modality.isCompatible([Modality.Name.Vr]));
     assert.isFalse(recipe.modality.isCompatible([Modality.Name.Dom]));
+  });
+  it('comments unfullfilled slot connections', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+      particle MyParticle in 'myparticle.js'
+        in Thing inThing
+        consume mySlot
+      recipe
+        create as handle0
+        MyParticle as particle0
+          inThing <- handle0
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isFalse(recipe.isResolved());
+    assert.isTrue(recipe.toString({showUnresolved: true}).includes(
+        'unresolved particle: unfullfilled slot connections'));
+  });
+  it('particles match if one particle is a subset of another', async () => {
+    const recipes = (await Manifest.parse(`
+      particle P0
+        consume root
+          provide details
+      particle P1
+        consume root
+
+      recipe
+        require
+          P1
+            consume root as s0
+        P0
+          consume root as s0
+            provide details as s1
+      
+      recipe 
+        P0
+    `)).recipes;
+    const recipe1 = recipes[0];
+    const recipe2 = recipes[1];
+    assert.isTrue(recipe2.particles[0].matches(recipe1.particles[0]), "particle2 should match particle1 but doesn't");
+    assert.isFalse(recipe1.particles[0].matches(recipe2.particles[0]), "particle1 matches particle2 but it shouldn't");
+  });
+  it('slots with local names are the same in the recipe as they are in the require section', async () => {
+    const recipe = (await Manifest.parse(`
+      particle P0
+        consume details 
+          provide moreDetails 
+      particle P1
+        consume root 
+          provide details 
+      
+      recipe 
+        require
+          slot as s1
+          P1
+            consume root
+              provide details as s1
+        P0
+          consume details as s1
+            provide moreDetails
+    `)).recipes[0];
+    const s1SlotRecipe = recipe.slots.find(slot => slot.name === "details");
+    const s1SlotRequire = recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"];
+    assert.isTrue(s1SlotRecipe === s1SlotRequire, "slot in require section is not the same as slot in recipe");
+  });
+  it("particles in require section don't need to have a particle spec", async () => {
+    const recipe = (await Manifest.parse(`
+      schema Type
+      particle A
+        in Type input
+        consume details 
+      
+      recipe 
+        require 
+          B
+            output -> h0
+            consume root
+              provide details as s0
+        A
+          input <- h0
+          consume details as s0
+    `)).recipes[0];
+    assert(recipe.requires[0].particles[0].spec === undefined);
+  });
+  it("slots in require section with the same local name match", async () => {
+    const recipe = (await Manifest.parse(`
+      particle A
+        consume details 
+      particle B
+        consume details
+      particle C
+        consume details
+
+      
+      recipe 
+        require 
+          A
+            consume details as s0
+          B 
+            consume details as s0
+        C
+          consume details as s0
+    `)).recipes[0];
+    assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections["details"].targetSlot, "there is more than one slot");
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot, "slot in the require section doesn't match slot in the recipe");
+  });
+  it('recipe with require section toString method works', async () => {
+    const recipe = (await Manifest.parse(`
+      particle B
+        consume root
+
+      recipe
+        require
+          A as p1
+            consume root
+        B as p2
+          consume root as s0`)).recipes[0];
+    const recipeString = "recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0";
+    assert.isTrue(recipe.toString() === recipeString.toString(), "incorrect recipe toString method");
+  });
+  it('clones connections with type variables', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+      resource ThingResource
+        start
+        [
+          {"name": "mything"}
+        ]
+      store ThingStore of Thing 'mything' in ThingResource
+      particle P
+        in ~a inThing
+        inout [~a] outThing
+      recipe
+        map 'mything' as handle0
+        create as handle1
+        P
+          inThing = handle0
+          outThing = handle1
+    `)).recipes[0];
+    const verifyRecipe = (recipe, errorPrefix) => {
+      const errors = [];
+      const resolvedType = recipe.handleConnections[0].type.resolvedType();
+      if (resolvedType !== recipe.handleConnections[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handle connection types mismatch`);
+      }
+      if (resolvedType !== recipe.handles[0].type.resolvedType()) {
+        errors.push(`${errorPrefix}: handle0 type mismatch with handle-connection`);
+      }
+      if (resolvedType !== recipe.handles[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handle1 type mismatch with handle-connection`);
+      }
+      if (recipe.handles[0].type.resolvedType() !== recipe.handles[1].type.primitiveType().resolvedType()) {
+        errors.push(`${errorPrefix}: handles type mismatch`);
+      }
+      assert.lengthOf(errors, 0, `\ndetailed errors: [\n${errors.join('\n')}\n]\n`);
+      return resolvedType;
+    };
+    assert.isTrue(recipe.normalize());
+    assert.equal(recipe.handleConnections[0].type, recipe.handleConnections[1].type.primitiveType());
+    const recipeResolvedType = verifyRecipe(recipe, 'recipe');
+    const type = recipe.handleConnections[0].type;
+
+    // Clone the recipe and verify types consistency.
+    const recipeClone = recipe.clone();
+    const recipeCloneResolvedType = verifyRecipe(recipeClone, 'recipe-clone');
+    assert.notEqual(recipeResolvedType, recipeCloneResolvedType);
   });
 });

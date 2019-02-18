@@ -9,24 +9,26 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Type, EntityType, TypeVariable, CollectionType, InterfaceType, RelationType, ArcType} from './type.js';
-import {ParticleExecutionHost} from './particle-execution-host.js';
-import {Handle} from './recipe/handle.js';
-import {Recipe} from './recipe/recipe.js';
-import {Manifest, StorageStub} from './manifest.js';
-import {compareComparables} from './recipe/util.js';
-import {FakePecFactory} from './fake-pec-factory.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {Id} from './id.js';
-import {ArcDebugHandler} from './debug/arc-debug-handler.js';
-import {Loader} from './loader.js';
-import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
-import {ParticleSpec} from './particle-spec.js';
+
 import {PECInnerPort} from './api-channel.js';
-import {Particle} from './recipe/particle.js';
-import {Slot} from './recipe/slot.js';
-import {SlotComposer} from './slot-composer.js';
+import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
+import {ArcDebugHandler} from './debug/arc-debug-handler.js';
+import {FakePecFactory} from './fake-pec-factory.js';
+import {Id} from './id.js';
+import {Loader} from './loader.js';
+import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
+import {ParticleExecutionHost} from './particle-execution-host.js';
+import {ParticleSpec} from './particle-spec.js';
+import {Handle} from './recipe/handle.js';
+import {Particle} from './recipe/particle.js';
+import {Recipe} from './recipe/recipe.js';
+import {Slot} from './recipe/slot.js';
+import {compareComparables} from './recipe/util.js';
+import {SlotComposer} from './slot-composer.js';
+import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 
 type ArcOptions = {
   id: string;
@@ -39,6 +41,7 @@ type ArcOptions = {
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean
+  listenerClasses?: ArcDebugListenerDerived[];
 };
 
 type DeserializeArcOptions = {
@@ -48,6 +51,7 @@ type DeserializeArcOptions = {
   loader: Loader;
   fileName: string;
   context: Manifest;
+  listenerClasses?: ArcDebugListenerDerived[];
 };
 
 export type PlanCallback = (recipe: Recipe) => void;
@@ -81,12 +85,13 @@ export class Arc {
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
   private innerArcsByParticle: Map<Particle, Arc[]> = new Map();
+  private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
   particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -106,7 +111,8 @@ export class Arc {
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
-    this.debugHandler = new ArcDebugHandler(this);
+    this.listenerClasses = listenerClasses;
+    this.debugHandler = new ArcDebugHandler(this, listenerClasses);
   }
   get loader(): Loader {
     return this._loader;
@@ -137,7 +143,8 @@ export class Arc {
       innerArc.dispose();
     }
     this.instantiatePlanCallbacks = [];
-    // TODO: disconnect all assocated store event handlers
+    // TODO: disconnect all associated store event handlers
+    this.pec.stop();
     this.pec.close();
     // Slot contexts and consumers from inner and outer arcs can be interwoven. Slot composer
     // is therefore disposed in its entirety with an outer Arc's disposal.
@@ -196,7 +203,7 @@ export class Arc {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner').toString();
-    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative});
+    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, listenerClasses: this.listenerClasses});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -371,7 +378,7 @@ ${this.activeRecipe.toString()}`;
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, listenerClasses}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: manifest.meta.name,
@@ -380,7 +387,8 @@ ${this.activeRecipe.toString()}`;
       pecFactory,
       loader,
       storageProviderFactory: manifest.storageProviderFactory,
-      context
+      context,
+      listenerClasses
     });
     await Promise.all(manifest.stores.map(async store => {
       const tags = manifest.storeTags.get(store);
@@ -439,7 +447,13 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    const arc = new Arc({id: this.generateID().toString(), pecFactory: this.pecFactory, context: this.context, loader: this._loader, speculative: true, innerArc: this.isInnerArc});
+    const arc = new Arc({id: this.generateID().toString(),
+                         pecFactory: this.pecFactory,
+                         context: this.context,
+                         loader: this._loader,
+                         speculative: true,
+                         innerArc: this.isInnerArc,
+                         listenerClasses: this.listenerClasses});
     const storeMap = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
@@ -726,10 +740,6 @@ ${this.activeRecipe.toString()}`;
 
   keyForId(id: string): string {
     return this.storageKeys[id];
-  }
-
-  stop(): void {
-    this.pec.stop();
   }
 
   toContextString(options): string {

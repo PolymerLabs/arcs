@@ -7,14 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Arc} from '../../../runtime/arc.js';
 import {assert} from '../../../platform/chai-web.js';
-import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
+import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 
 describe('ConvertConstraintsToConnections', async () => {
   const newArc = (manifest: Manifest) => {

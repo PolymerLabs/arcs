@@ -9,13 +9,13 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Manifest} from '../manifest.js';
-import {StubLoader} from '../testing/stub-loader.js';
-import {EntityType, ReferenceType} from '../type.js';
 import {Arc} from '../arc.js';
-import {assertSingletonWillChangeTo} from '../testing/test-util.js';
+import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {assertSingletonWillChangeTo} from '../testing/test-util.js';
+import {EntityType, ReferenceType} from '../type.js';
 
 describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {

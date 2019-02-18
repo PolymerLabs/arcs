@@ -8,10 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Manifest} from '../../manifest.js';
-import {InterfaceType, CollectionType, TypeVariable, Type} from '../../type.js';
-
 import {assert} from '../../../platform/chai-web.js';
+import {Manifest} from '../../manifest.js';
+import {CollectionType, InterfaceType, TypeVariable} from '../../type.js';
 
 describe('Recipe Particle', () => {
   it('cloning maints type variable mapping', async () => {

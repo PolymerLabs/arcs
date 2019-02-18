@@ -9,13 +9,14 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
-import {Type, CollectionType, BigCollectionType} from './type.js';
-import {PECInnerPort, CursorNextValue} from './api-channel.js';
+import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
+
+import {CursorNextValue, PECInnerPort} from './api-channel.js';
+import {Handle, HandleOptions} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
-import {Handle, HandleOptions} from './handle.js';
-import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
+import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
+import {BigCollectionType, CollectionType, Type} from './type.js';
 
 enum SyncState {none, pending, full}
 
@@ -55,7 +56,7 @@ export abstract class StorageProxy {
   protected readonly port: PECInnerPort;
   protected readonly scheduler: StorageProxyScheduler;
   name: string;
-  private baseForNewID: string;
+  private readonly baseForNewID: string;
   pec: ParticleExecutionContext;
 
   private localIDComponent = 0;
@@ -64,7 +65,7 @@ export abstract class StorageProxy {
   private keepSynced = false;
   protected synchronized = SyncState.none;
   protected observers: {particle: Particle, handle: Handle}[] = [];
-  private updates: {version: number}[] = [];
+  private readonly updates: {version: number}[] = [];
   protected barrier: string | null = null;
   constructor(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
     this.id = id;

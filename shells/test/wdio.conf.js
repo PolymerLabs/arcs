@@ -288,7 +288,7 @@ exports.config = {
           .pipe(request.post(uploadEndpoint + filename, (err, response, body) => {
             if (err) {
               console.error(`Error on uploading screenshot ${filename}:\n`, err);
-              reject();
+              reject(new Error());
             } else {
               console.log(`View ${filename} at https://drive.google.com/file/d/${body}/view`);
               resolve();

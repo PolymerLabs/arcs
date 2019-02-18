@@ -9,14 +9,15 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
 import {Arc} from '../runtime/arc.js';
+import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 import {Description} from '../runtime/description.js';
-import {PlanningResult} from './plan/planning-result.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Relevance} from '../runtime/relevance.js';
+
+import {PlanningResult} from './plan/planning-result.js';
 import {Suggestion} from './plan/suggestion.js';
-import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
-import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 
 export class Speculator {
   private suggestionByHash: {} = {};
@@ -77,7 +78,7 @@ export class Speculator {
     if (speculativeArc.pec.messageCount !== messageCount + 2) {
       return this.awaitCompletion(relevance, speculativeArc);
     } else {
-      speculativeArc.stop();
+      speculativeArc.dispose();
       this.speculativeArcs.splice(this.speculativeArcs.indexOf(speculativeArc, 1));
       return relevance;
     }

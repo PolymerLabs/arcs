@@ -10,6 +10,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+
 import {StrategyTestHelper} from './strategy-test-helper.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;

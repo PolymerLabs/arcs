@@ -9,15 +9,15 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
+import {ArcDebugListener, ArcDebugListenerDerived, ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {CoalesceRecipes} from '../strategies/coalesce-recipes.js';
-import {Descendant} from '../../runtime/recipe/walker.js';
-import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
 import * as Rulesets from '../strategies/rulesets.js';
-import {Manifest} from '../../runtime/manifest.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
 
 class InitialRecipe extends Strategy {
   private recipe: Recipe;
@@ -42,11 +42,12 @@ class InitialRecipe extends Strategy {
   }
 }
 
-export class ArcPlannerInvoker {
+export class ArcPlannerInvoker extends ArcDebugListener {
   private arc: Arc;
   private recipeIndex: RecipeIndex;
   
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
+    super(arc, arcDevtoolsChannel);
     this.arc = arc;
 
     arcDevtoolsChannel.listen('fetch-strategies', () => arcDevtoolsChannel.send({
@@ -149,7 +150,7 @@ export class ArcPlannerInvoker {
 
   extractDerivation(result: Descendant): string[] {
     const found: string[] = [];
-    for (const deriv of result.derivation) {
+    for (const deriv of result.derivation || []) {
       if (!deriv.parent && deriv.strategy.constructor !== InitialRecipe) { 
         found.push(deriv.strategy.constructor.name);
       } else if (deriv.parent) {
@@ -202,10 +203,15 @@ export class ArcPlannerInvoker {
     for (const child of manifest.imports) {
       depth = Math.min(depth, this.findManifestNamesRecursive(child, predicate, fileNames) + 1);
     }
-    // http check to avoid listin shell created 'in-memory manifest'.
+    // http check to avoid listing shell created 'in-memory manifest'.
     if (depth < Number.MAX_SAFE_INTEGER && manifest.fileName.startsWith('http')) {
       fileNames.set(manifest.fileName, depth);
     }
     return depth;
   }
 }
+
+// TODO: This should move to the planning interface file when it exists. 
+export const defaultPlanningDebugListeners: ArcDebugListenerDerived[] = [
+  ArcPlannerInvoker
+];

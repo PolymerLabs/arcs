@@ -9,9 +9,9 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StubLoader} from '../../testing/stub-loader.js';
 import {DevtoolsForTests} from '../../debug/devtools-connection.js';
 import {Random} from '../../random.js';
+import {StubLoader} from '../../testing/stub-loader.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('OuterPortAttachment', () => {

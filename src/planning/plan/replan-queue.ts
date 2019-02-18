@@ -10,6 +10,7 @@
  */
 
 import {now} from '../../platform/date-web.js';
+
 import {PlanProducer, Trigger} from './plan-producer.js';
 
 const defaultDefaultReplanDelayMs = 3000;

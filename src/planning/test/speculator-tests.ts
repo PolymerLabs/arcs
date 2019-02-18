@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Speculator} from '../speculator.js';
-import {Arc} from '../../runtime/arc.js';
 import {assert} from '../../platform/chai-web.js';
+import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {Speculator} from '../speculator.js';
 
 describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {

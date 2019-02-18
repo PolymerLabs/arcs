@@ -3,6 +3,7 @@ import {Arc} from '../../build/runtime/arc.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../build/platform/loader-web.js';
 import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {debugListeners} from './debug-listeners.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
@@ -24,9 +25,10 @@ const init = (root, urls) => {
 };
 
 const parse = async (content, options) => {
+  const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
   const localOptions = {
-    id: 'in-memory.manifest',
-    fileName: './in-memory.manifest',
+    id,
+    fileName: `./${id}`,
     loader: env.loader
   };
   if (options) {
@@ -60,7 +62,8 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     storageKey: storage,
     slotComposer: composer,
     pecFactory: env.pecFactory,
-    loader: env.loader
+    loader: env.loader,
+    listenerClasses: debugListeners
   };
   Object.assign(params, env.params);
   return serialization ? Arc.deserialize(params) : new Arc(params);

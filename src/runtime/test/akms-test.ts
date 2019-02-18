@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {KeyManager} from '../keymgmt/manager.js';
 import {assert} from '../../platform/chai-web.js';
 import {crypto} from '../../platform/crypto-web.js';
 import {DeviceKey, WrappedKey} from '../keymgmt/keys.js';
+import {KeyManager} from '../keymgmt/manager.js';
 
 describe('arcs key management', () => {
   // do not remove, typescript removes imports that are unsed

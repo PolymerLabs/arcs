@@ -7,8 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Container, ContainerManager, DeploymentStatus} from "../containers";
-import {Disk} from "../disks";
 import {
   Core_v1Api,
   Extensions_v1beta1Api, ExtensionsV1beta1DeploymentSpec,
@@ -34,7 +32,14 @@ import {
   V1VolumeMount
 } from "@kubernetes/client-node";
 
+import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
+import {CloudManager} from "../cloud";
+import {Container, ContainerManager, DeploymentStatus} from "../containers";
+import {Disk} from "../disks";
+import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
+import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
 import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+
 import {
   ARCS_DOCKER_IMAGE,
   ARCS_INGRESS_PREFIX,
@@ -42,10 +47,6 @@ import {
   EXTERNAL_PORT,
   K18S_NAMESPACE
 } from "./k18s-constants";
-import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
-import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
-import {CloudManager} from "../cloud";
-import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
 
 
 const USE_PREFIX_MAPPING = true;
@@ -330,17 +331,24 @@ export class K18sContainerManager implements ContainerManager {
 
   async find(fingerprint: string): Promise<Container | null> {
 
-    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(K18S_NAMESPACE, undefined,
-      undefined, undefined,
-      true, undefined);
+    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(
+      K18S_NAMESPACE,
+      true // includeUnitialized
+    );
     const {body: ingress} = await this.k8sBetaApi.readNamespacedIngress(this.k8sName, K18S_NAMESPACE,
       undefined, false, false);
 
     const deploymentList = v1Deployment.items;
     if (deploymentList.length > 0) {
 
-      const {body:v1Service} = await this.k8sApi.listNamespacedService(K18S_NAMESPACE, undefined,
-        undefined, "metadata.name=svc-"+fingerprint, true, undefined);
+      const {body:v1Service} = await this.k8sApi.listNamespacedService(
+        K18S_NAMESPACE,
+        true, // includeUnitialized
+        undefined, // pretty
+        undefined, // _continue
+        "metadata.name=svc-"+fingerprint, // fieldSelector
+        undefined // labelSelector
+      );
       if (v1Service.items.length > 0) {
         return Promise.resolve(new K18sDeployment(this.k8sApi, deploymentList[0], v1Service.items[0], ingress));
       }

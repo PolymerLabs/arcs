@@ -8,20 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
-import {Id} from '../id.js';
-import {ArcType} from '../type.js';
 import {assert} from '../../platform/chai-web.js';
-import * as util from '../testing/test-util.js';
+import {Arc} from '../arc.js';
 import {handleFor} from '../handle.js';
-import {Manifest} from '../manifest.js';
+import {Id} from '../id.js';
 import {Loader} from '../loader.js';
-import {TestHelper} from '../testing/test-helper.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Manifest} from '../manifest.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {CallbackTracker} from '../testing/callback-tracker.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {TestHelper} from '../testing/test-helper.js';
+import * as util from '../testing/test-util.js';
+import {ArcType} from '../type.js';
 
 async function setup() {
   const loader = new Loader();
@@ -216,6 +217,8 @@ describe('Arc', () => {
   it('deserializing a simple serialized arc produces that arc', async () => {
     const {arc, recipe, Foo, Bar, loader} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as VariableStorageProvider;
+    const fooStoreCallbacks = new CallbackTracker(fooStore, 1);
+
     // tslint:disable-next-line: no-any
     await handleFor(fooStore as any).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']) as VariableStorageProvider;
@@ -226,9 +229,9 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
     assert.equal(fooStore.version, 1);
     assert.equal(barStore.version, 1);
-
+    fooStoreCallbacks.verify();
     const serialization = await arc.serialize();
-    arc.stop();
+    arc.dispose();
 
     const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context: undefined});
     fooStore = newArc.findStoreById(fooStore.id) as VariableStorageProvider;
@@ -280,7 +283,6 @@ describe('Arc', () => {
     await arc.idle;
 
     const serialization = await arc.serialize();
-    arc.stop();
     arc.dispose();
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest});
@@ -383,7 +385,7 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const serialization = await arc.serialize();
-    arc.stop();
+    arc.dispose();
 
     // Grab a snapshot of the current state from each store, then clear them.
     const varData = JSON.parse(JSON.stringify(await varStore.toLiteral()));
@@ -483,11 +485,12 @@ describe('Arc', () => {
 
 
       const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as VariableStorageProvider;
+      const callbackTracker = new CallbackTracker(store, 0);
 
       assert.isNotNull(store, 'got a valid store');
       const data = await store.get();
-
       assert.isNotNull(data, 'got valid data');
+      callbackTracker.verify();
 
       // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
       data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');

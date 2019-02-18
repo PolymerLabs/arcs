@@ -10,14 +10,15 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
+import {Modality} from '../../runtime/modality.js';
+import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
+import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
+import {SuggestionComposer} from '../suggestion-composer.js';
+
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
-import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
-import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
-import {Modality} from '../../runtime/modality.js';
-import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
-import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 
 type Callback = ({}) => void;
 

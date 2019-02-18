@@ -7,15 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Disk, DiskManager} from "../disks";
+import common from "@google-cloud/common";
 import Compute from '@google-cloud/compute';
 
+import {CloudManager} from "../cloud";
+import {Disk, DiskManager} from "../disks";
 import {ARCS_NODE_LABEL, arcsKeyFor, waitForGcp} from "../utils";
 
-
-import common from "@google-cloud/common";
 import {GCE_PERSISTENT_DISK_TYPE, GCP_ZONE} from "./gcp-constants";
-import {CloudManager} from "../cloud";
 
 /**
  * Represents disk storage provisioned on a cloud provider.

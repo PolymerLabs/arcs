@@ -8,11 +8,12 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, StorageBase, StorageProviderBase, ChangeEvent, VariableStorageProvider} from './storage-provider-base.js';
-import {KeyBase} from './key-base.js';
-import {CrdtCollectionModel} from './crdt-collection-model.js';
 import {Id} from '../id.js';
-import {Type, CollectionType, BigCollectionType, ReferenceType} from '../type.js';
+import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js';
+
+import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {KeyBase} from './key-base.js';
+import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
 
 export function resetVolatileStorageForTesting() {
   for (const key of Object.keys(__storageCache)) {
@@ -285,8 +286,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
         return null;
       }
       await this.ensureBackingStore();
-      const result = await this.backingStore.get(ref.id);
-      return result;
+      return await this.backingStore.get(ref.id);
     }
     return this._model.getValue(id);
   }
@@ -440,8 +440,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
       const value = this._stored as {id: string, storageKey: string};
 
       await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
-      return result;
+      return await this.backingStore.get(value.id);
     }
     return this._stored;
   }

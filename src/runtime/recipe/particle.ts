@@ -6,12 +6,15 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {SlotConnection} from './slot-connection.js';
+import {ParticleSpec, SlotSpec} from '../particle-spec.js';
+import {Schema} from '../schema.js';
+import {TypeVariableInfo} from '../type-variable-info.js';
+
 import {HandleConnection} from './handle-connection.js';
-import {compareComparables, compareStrings, compareArrays} from './util.js';
-import {Recipe} from './recipe.js';
-import {ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+import {Recipe, RequireSection} from './recipe.js';
+import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
+import {compareArrays, compareComparables, compareStrings} from './util.js';
 
 export class Particle {
   private readonly _recipe: Recipe;
@@ -34,7 +37,7 @@ export class Particle {
     this._name = name;
   }
 
-  _copyInto(recipe: Recipe, cloneMap) {
+  _copyInto(recipe: Recipe, cloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
     const particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._verbs = [...this._verbs];
@@ -44,25 +47,44 @@ export class Particle {
       particle._connections[key] = this._connections[key]._clone(particle, cloneMap);
     });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection._clone(particle, cloneMap));
-    particle._cloneConnectionRawTypes();
-    Object.keys(this._consumedSlotConnections).forEach(key => {
-      particle._consumedSlotConnections[key] = this._consumedSlotConnections[key]._clone(particle, cloneMap);
-    });
+    particle._cloneConnectionRawTypes(variableMap);
+
+    for (const [key, slotConn] of Object.entries(this.consumedSlotConnections)) {
+      particle.consumedSlotConnections[key] = slotConn._clone(particle, cloneMap);
+      
+      // if recipe is a requireSection, then slot may already exist in recipe.
+      if (cloneMap.has(slotConn.targetSlot)) {
+        assert(recipe instanceof RequireSection);
+        particle.consumedSlotConnections[key].connectToSlot(cloneMap.get(slotConn.targetSlot));
+        if (particle.recipe.slots.indexOf(cloneMap.get(slotConn.targetSlot)) === -1) {
+          particle.recipe.slots.push(cloneMap.get(slotConn.targetSlot));
+        }
+      }
+      for (const [name, slot] of Object.entries(slotConn.providedSlots)) {
+        if (cloneMap.has(slot)) {
+          assert(recipe instanceof RequireSection);
+          const clonedSlot = cloneMap.get(slot);
+          clonedSlot.sourceConnection = particle.consumedSlotConnections[key];
+          particle.consumedSlotConnections[key].providedSlots[name] = clonedSlot;
+          if (particle.recipe.slots.indexOf(clonedSlot) === -1) {
+            particle.recipe.slots.push(clonedSlot);
+          }
+        }
+      }
+    }
 
     return particle;
   }
 
-  _cloneConnectionRawTypes() {
-    // TODO(shans): evaluate whether this is the appropriate context root for cloneWithResolution
-    const map = new Map();
+  _cloneConnectionRawTypes(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
     for (const connection of Object.values(this._connections)) {
       if (connection.rawType) {
-        connection._rawType = connection.rawType._cloneWithResolutions(map);
+        connection._rawType = connection.rawType._cloneWithResolutions(variableMap);
       }
     }
     for (const connection of this._unnamedConnections) {
       if (connection.rawType) {
-        connection._rawType = connection.rawType._cloneWithResolutions(map);
+        connection._rawType = connection.rawType._cloneWithResolutions(variableMap);
       }
     }
   }
@@ -99,6 +121,29 @@ export class Particle {
     return 0;
   }
 
+  /**
+   * Param particle matches this particle if the names are the same and the slot and handle requirements this particle 
+   * is a subset of the slot and handle requirements of the param particle. 
+   * @param particle 
+   */
+  matches(particle: Particle): boolean {
+    if (this.name && particle.name && this.name !== particle.name) return false;
+    for (const [name, slotConn] of Object.entries(this.consumedSlotConnections)) {
+      if (particle.consumedSlotConnections[name] == undefined
+          || particle.consumedSlotConnections[name].targetSlot == undefined
+         ) return false;
+      
+      if (slotConn.targetSlot && slotConn.targetSlot.id && slotConn.targetSlot.id !== particle.consumedSlotConnections[name].targetSlot.id) return false;
+      
+      for (const pname of Object.keys(slotConn.providedSlots)) {
+        const slot = slotConn.providedSlots[pname];
+        const pslot = particle.consumedSlotConnections[name].providedSlots[pname];
+        if (pslot == undefined || (slot.id && pslot.id && slot.id !== pslot.id)) return false;
+      }
+    }
+    return true;
+  }
+
   _isValid(options) {
     if (!this.spec) {
       return true;
@@ -116,21 +161,20 @@ export class Particle {
 
   isResolved(options = undefined) {
     assert(Object.isFrozen(this));
-    const consumedSlotConnections = Object.values(this.consumedSlotConnections);
-    if (consumedSlotConnections.length > 0) {
-      const fulfilledSlotConnections = consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
+    if (!this.spec) {
+      if (options && options.showUnresolved) {
+        options.details = 'missing spec';
+      }
+      return false;
+    }
+    if (this.spec.slots.size > 0) {
+      const fulfilledSlotConnections = Object.values(this.consumedSlotConnections).filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
           options.details = 'unfullfilled slot connections';
         }
         return false;
       }
-    }
-    if (!this.spec) {
-      if (options && options.showUnresolved) {
-        options.details = 'missing spec';
-      }
-      return false;
     }
     if (this.spec.connectionMap.size !== Object.keys(this._connections).length) {
       if (options && options.showUnresolved) {

@@ -10,10 +10,13 @@
 
 import {Arc} from '../arc.js';
 
-export class ArcStoresFetcher {
+import {ArcDebugListener} from './abstract-devtools-channel.js';
+
+export class ArcStoresFetcher extends ArcDebugListener {
   private arc: Arc;
   
   constructor(arc, arcDevtoolsChannel) {
+    super(arc, arcDevtoolsChannel);    
     this.arc = arc;
 
     arcDevtoolsChannel.listen('fetch-stores', async () => arcDevtoolsChannel.send({

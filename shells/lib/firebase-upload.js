@@ -68,7 +68,7 @@ class FirebaseUpload extends Xen.Base {
       };
       image.onerror = () => {
         URL.revokeObjectURL(url);
-        reject({});
+        reject(new Error({}));
       };
       image.src = url;
     });

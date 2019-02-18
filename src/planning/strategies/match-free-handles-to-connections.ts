@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
+import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 /*
  * Match free handles (i.e. handles that aren't connected to any connections)

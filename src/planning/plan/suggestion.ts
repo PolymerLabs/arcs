@@ -10,16 +10,16 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {Description} from '../../runtime/description.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
+import {Description} from '../../runtime/description.js';
+import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/modality.js';
 import {Particle} from '../../runtime/recipe/particle.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
-import {Relevance} from '../../runtime/relevance.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';
-import {Loader} from '../../runtime/loader.js';
+import {Relevance} from '../../runtime/relevance.js';
 
 /**
  * options for the fromLiteral() method.

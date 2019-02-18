@@ -9,16 +9,17 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+
 import {PECOuterPort} from './api-channel.js';
-import {Manifest} from './manifest.js';
-import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
-import {SlotComposer} from './slot-composer.js';
+import {Manifest} from './manifest.js';
+import { Handle } from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
+import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import { Type } from './type.js';
-import { Handle } from './recipe/handle.js';
 
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;

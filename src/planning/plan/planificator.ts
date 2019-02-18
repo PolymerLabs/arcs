@@ -10,15 +10,16 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {PlanConsumer} from './plan-consumer.js';
-import {PlanProducer, Trigger} from './plan-producer.js';
-import {PlanningResult} from './planning-result.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {ReplanQueue} from './replan-queue.js';
 import {KeyBase} from "../../runtime/storage/key-base.js";
 import {StorageProviderBase, VariableStorageProvider} from "../../runtime/storage/storage-provider-base.js";
 import {EntityType} from '../../runtime/type.js';
 import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
+
+import {PlanConsumer} from './plan-consumer.js';
+import {PlanProducer, Trigger} from './plan-producer.js';
+import {PlanningResult} from './planning-result.js';
+import {ReplanQueue} from './replan-queue.js';
 
 export type PlanificatorOptions = {
   userid: string;
@@ -38,6 +39,7 @@ export class Planificator {
     const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     await result.load();
     const planificator = new Planificator(arc, userid, result, searchStore, onlyConsumer, debug);
+    await planificator._storeSearch(); // Reset search value for the current arc.
     planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
@@ -194,7 +196,11 @@ export class Planificator {
     const arcKey = this.arc.arcId;
     const newValues = [];
     for (const {arc, search} of values) {
-      if (arc !== arcKey) {
+      if (arc === arcKey) {
+        if (search === this.search) {
+          return; // Unchanged search value for the current arc.
+        }
+      } else {
         newValues.push({arc, search});
       }
     }
