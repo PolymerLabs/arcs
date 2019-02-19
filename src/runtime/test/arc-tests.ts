@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {handleFor} from '../handle.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Id} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
@@ -18,7 +19,6 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorage
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import * as util from '../testing/test-util.js';
@@ -575,7 +575,7 @@ describe('Arc', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc) as MockSlotDomConsumer;
+    const rootSlotConsumer = slotComposer.consumers.find(c => !c.arc.isInnerArc) as HeadlessSlotDomConsumer;
     await rootSlotConsumer.contentAvailable;
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });

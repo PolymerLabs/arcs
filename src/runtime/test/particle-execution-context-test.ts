@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -41,7 +41,7 @@ describe('Particle Execution Context', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const slotConsumer = slotComposer.consumers[0] as MockSlotDomConsumer;
+    const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
     const detailContext = slotConsumer.directlyProvidedSlotContexts.find(ctx => ctx.name === 'detail');
     const annotationContext = slotConsumer.directlyProvidedSlotContexts.find(ctx => ctx.name === 'annotation');
 

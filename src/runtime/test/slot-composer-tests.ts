@@ -12,11 +12,11 @@ import {Planner} from '../../planning/planner.js';
 import {StrategyTestHelper} from '../../planning/test/strategies/strategy-test-helper.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Loader} from '../loader.js';
 import {Random} from '../random.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
@@ -302,10 +302,10 @@ recipe
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    const rootSlotConsumer = slotComposer.consumers.find(consumer => consumer.consumeConn.name === 'root') as MockSlotDomConsumer;
+    const rootSlotConsumer = slotComposer.consumers.find(consumer => consumer.consumeConn.name === 'root') as HeadlessSlotDomConsumer;
     await rootSlotConsumer.contentAvailable;
 
-    const detailSlotConsumer = slotComposer.consumers.find(consumer => consumer.consumeConn.name === 'detail') as MockSlotDomConsumer;
+    const detailSlotConsumer = slotComposer.consumers.find(consumer => consumer.consumeConn.name === 'detail') as HeadlessSlotDomConsumer;
     await detailSlotConsumer.contentAvailable;
 
     assert.deepEqual(rootSlotConsumer._content, {
