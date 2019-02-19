@@ -9,6 +9,7 @@
  */
 'use strict';
 
+import {offerWebRtcSignal} from '../../devtools/shared/web-rtc-signalling.js';
 import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 import {assert} from './assert-web.js';
@@ -33,31 +34,10 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
 
     p.on('signal', (data) => {
       const encoded = btoa(JSON.stringify(data));
-      const hub = signalhub('arcs-demo', 'https://arcs-debug-switch.herokuapp.com/');
-
-      let receivedAnswer = false;
-
-      hub.subscribe(`${remoteExploreKey}:answer`).on('data', (message) => {
-        if (message === 'waiting') {
-          console.log('Received:', message);
-          setTimeout(() => {
-            if (!receivedAnswer) {
-              // Re-broadcast if we connected first and our offer was lost.
-              console.log(`Re-broadcasting my signal on ${remoteExploreKey}:offer:`, data);
-              hub.broadcast(`${remoteExploreKey}:offer`, encoded);
-            }
-          }, 500);
-        } else {
-          receivedAnswer = true;
-          const receivedSignal = JSON.parse(atob(message));
-          console.log(`Received on ${remoteExploreKey}:answer:`, receivedSignal);
-          p.signal(receivedSignal);
-          hub.close();
-        }
+      offerWebRtcSignal(remoteExploreKey, encoded, resp => {
+        const decoded = JSON.parse(atob(resp));
+        p.signal(decoded);
       });
-
-      console.log(`Broadcasting my signal on ${remoteExploreKey}:offer:`, data);
-      hub.broadcast(`${remoteExploreKey}:offer`, encoded);
     });
 
     p.on('error', (err) => {

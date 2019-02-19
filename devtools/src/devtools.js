@@ -4,6 +4,8 @@
 
 // TODO: Clean this up a little bit, it's spaghetti-ish.
 
+import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
+
 (() => {
   const msgQueue = [];
   let windowForEvents = undefined;
@@ -96,24 +98,19 @@
 
   function connectViaWebRtc(remoteExploreKey) {
     console.log(`Attempting a connection with Remote WebShell on "${remoteExploreKey}".`);
-    const hub = signalhub('arcs-demo', 'https://arcs-debug-switch.herokuapp.com/');
+
     const p = new SimplePeer({initatior: false, trickle: false, objectMode: true});
 
-    p.on('signal', (data) => {
-      const signal = data;
-      console.log(`broadcasting my signal on ${remoteExploreKey}:answer`, signal);
-      hub.broadcast(`${remoteExploreKey}:answer`, btoa(JSON.stringify(signal)));
-      hub.close();
-    });
-
-    console.log(`Listening on ${remoteExploreKey}:offer`);
-    hub.subscribe(`${remoteExploreKey}:offer`).on('data', (message) => {
-      const receivedSignal = JSON.parse(atob(message));
-      console.log(`received signal on ${remoteExploreKey}:offer:`, receivedSignal);
+    let onDevToolsSignal = null;
+    listenForWebRtcSignal(remoteExploreKey, encodedSignal => {
+      const receivedSignal = JSON.parse(atob(encodedSignal));
+      console.log(`received signal:`, receivedSignal);
+      const result = new Promise(resolve => onDevToolsSignal = resolve);
       p.signal(receivedSignal);
+      return result;
     });
 
-    hub.broadcast(`${remoteExploreKey}:answer`, 'waiting');
+    p.on('signal', signal => onDevToolsSignal(btoa(JSON.stringify(signal))));
 
     let connectedPeer = null;
     p.on('connect', () => {
