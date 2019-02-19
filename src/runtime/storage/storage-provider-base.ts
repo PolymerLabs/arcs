@@ -40,7 +40,7 @@ export interface CollectionStorageProvider extends StorageProviderBase {
 
   // tslint:disable-next-line: no-any
   getMultiple(ids: string[]): Promise<any[]>;
-  storeMultiple(values: {}, keys: string[], originatorId: string): Promise<void>;
+  storeMultiple(values: {}, keys: string[], originatorId?: string): Promise<void>;
   // tslint:disable-next-line: no-any
   removeMultiple(items: any[], originatorId?: string) : Promise<void>;
 

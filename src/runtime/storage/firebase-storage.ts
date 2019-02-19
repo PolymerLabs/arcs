@@ -106,11 +106,13 @@ class FirebaseKey extends KeyBase {
 
 let _nextAppNameSuffix = 0;
 
+enum Mode {direct, reference, backing}
+
 export class FirebaseStorage extends StorageBase {
   private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
   private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
-  private baseStores: Map<Type, FirebaseCollection>;
-  private baseStorePromises: Map<Type, Promise<FirebaseCollection>>;
+  private baseStores: Map<string, FirebaseBackingStore>;
+  private baseStorePromises: Map<string, Promise<FirebaseBackingStore>>;
 
   constructor(arcId: Id) {
     super(arcId);
@@ -120,17 +122,17 @@ export class FirebaseStorage extends StorageBase {
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<FirebaseStorageProvider> {
-    let referenceMode = !(type instanceof ReferenceType);
+    let mode = (type instanceof ReferenceType) ? Mode.direct : Mode.reference;
     if (type instanceof BigCollectionType) {
-      referenceMode = false;
+      mode = Mode.direct;
     } else if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
-      referenceMode = false;
+      mode = Mode.direct;
     }
-    return this._join(id, type, keyFragment, false, referenceMode);
+    return this._join(id, type, keyFragment, false, mode);
   }
 
   async connect(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
-    return this._join(id, type, key, true);
+    return this._join(id, type, key, true, Mode.direct);
   }
 
   // Unit tests should call this in an 'after' block.
@@ -150,17 +152,20 @@ export class FirebaseStorage extends StorageBase {
   }
 
   async baseStorageFor(type, key: string) {
-    if (this.baseStores.has(type)) {
-      return this.baseStores.get(type);
+    const typeStr = type.toString();
+    let storage;
+    if (storage = this.baseStores.get(typeStr)) {
+      return storage;
     }
-    if (this.baseStorePromises.has(type)) {
-      return this.baseStorePromises.get(type);
+    if (storage = this.baseStorePromises.get(typeStr)) {
+      return storage;
     }
-    const storagePromise = this._join(type.toString(), type.collectionOf(), key, 'unknown') as Promise<FirebaseCollection>;
-    this.baseStorePromises.set(type, storagePromise);
-    const storage = await storagePromise;
+    const storagePromise = this._join(typeStr, type.collectionOf(), key, 'unknown', Mode.backing) as Promise<FirebaseBackingStore>;
+    this.baseStorePromises.set(typeStr, storagePromise);
+    storage = await storagePromise;
     assert(storage, 'baseStorageFor should not fail');
-    this.baseStores.set(type, storage);
+    this.baseStores.set(typeStr, storage);
+    this.baseStorePromises.delete(typeStr);
     return storage;
   }
 
@@ -168,9 +173,9 @@ export class FirebaseStorage extends StorageBase {
     return new FirebaseKey(s);
   }
 
-  // referenceMode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
+  // mode is only referred to if shouldExist is false, or if shouldExist is 'unknown'
   // but this _join creates the storage location.
-  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', referenceMode = false) {
+  async _join(id: string, type: Type, keyString: string, shouldExist: boolean | 'unknown', mode: Mode) {
     assert(!(type instanceof TypeVariable));
     assert(!type.isTypeContainer() || !(type.getContainedType() instanceof TypeVariable));
     const fbKey = new FirebaseKey(keyString);
@@ -211,22 +216,24 @@ export class FirebaseStorage extends StorageBase {
         if (data != null) {
           return undefined;
         }
-        return {version: 0, referenceMode};
+        return {version: 0, referenceMode: mode === Mode.reference};
       }, undefined, false);
 
       if (!result.committed) {
         return null;
       }
-      enableReferenceMode = referenceMode;
+      enableReferenceMode = (mode === Mode.reference);
     }
 
-    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist);
+    const provider = FirebaseStorageProvider.newProvider(type, this, id, reference, fbKey, shouldExist, mode);
     if (enableReferenceMode) {
+      assert(mode !== Mode.backing, 'backing stores should not have referenceMode enabled');
       provider.enableReferenceMode();
     }
     return provider;
   }
 
+  // For reference, Firebase keys cannot contain these chars: .#$/[]
   static encodeKey(key: string): string {
     key = btoa(key);
     return key.replace(/\//g, '*');
@@ -242,9 +249,9 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
   private firebaseKey: string;
   protected persisting: Promise<void>|null;
   protected reference: firebase.database.Reference;
-  backingStore: FirebaseCollection|null;
+  backingStore: FirebaseBackingStore|null;
   protected storageEngine: FirebaseStorage;
-  private pendingBackingStore: Promise<FirebaseCollection>|null;
+  private pendingBackingStore: Promise<FirebaseBackingStore>|null;
 
   protected constructor(type, storageEngine, id, reference, key) {
     super(type, undefined, id, key.toString());
@@ -277,7 +284,10 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 
   abstract backingType() : Type;
 
-  static newProvider(type, storageEngine, id, reference, key, shouldExist) {
+  static newProvider(type, storageEngine, id, reference, key, shouldExist, mode) {
+    if (mode === Mode.backing) {
+      return new FirebaseBackingStore(type, storageEngine, id, reference, key);
+    }
     if (type instanceof CollectionType) {
       return new FirebaseCollection(type, storageEngine, id, reference, key);
     }
@@ -1463,5 +1473,133 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
 
   clearItemsForTesting() {
     throw new Error('unimplemented');
+  }
+}
+
+/**
+ * Thin wrapper providing a Collection API for a Firebase reference. This is used by
+ * FirebaseVariable and FirebaseCollection to access their underlying backing store
+ * collections without pulling the entirety of those collections locally.
+ */
+class FirebaseBackingStore extends FirebaseStorageProvider implements CollectionStorageProvider {
+  public maxConcurrentRequests = 5;
+
+  private childRef(id) {
+    return this.reference.child('items/' + FirebaseStorage.encodeKey(id));
+  }
+
+  async store(value, keys: string[]) {
+    await this.storeSingle(value, keys);
+  }
+
+  async storeMultiple(values, keys: string[]) {
+    while (values.length > 0) {
+      const chunk = values.splice(0, this.maxConcurrentRequests);
+      await Promise.all(chunk.map(value => this.storeSingle(value, keys)));
+    }
+  }
+
+  private storeSingle(value, keys: string[]) {
+    return this.childRef(value.id).transaction(data => {
+      if (data === null) {
+        data = {value, keys: {}};
+      } else {
+        // Allow legacy mutation for now.
+        data.value = value;
+      }
+      for (const key of keys) {
+        const encKey = FirebaseStorage.encodeKey(key);
+        data.keys[encKey] = 1;
+      }
+      return data;
+    }, undefined, false);
+  }
+
+  async remove(id: string, keys: string[]) {
+    await this.removeSingle(id, keys);
+  }
+
+  async removeMultiple(items) {
+    if (items.length === 0) {
+      await this.reference.child('items').remove();
+    } else {
+      while (items.length > 0) {
+        const chunk = items.splice(0, this.maxConcurrentRequests);
+        await Promise.all(chunk.map(item => this.removeSingle(item.id, item.keys)));
+      }
+    }
+  }
+
+  private removeSingle(id: string, keys: string[]) {
+    return this.childRef(id).transaction(data => {
+      if (data === null) {
+        return null;
+      }
+      if (keys.length > 0) {
+        keys.forEach(key => delete data.keys[FirebaseStorage.encodeKey(key)]);
+        if (Object.keys(data.keys).length > 0) {
+          return data;
+        }
+      }
+      // Returning an empty object deletes the Firebase node.
+      return {};
+    }, undefined, false);
+  }
+
+  async get(id: string) {
+    const snapshot = await this.childRef(id).once('value');
+    return (snapshot.val() !== null) ? snapshot.val().value : null;
+  }
+
+  async getMultiple(ids: string[]) {
+    const values = [];
+    while (ids.length > 0) {
+      const chunk = ids.splice(0, this.maxConcurrentRequests);
+      const snapshots = await Promise.all(chunk.map(id => this.childRef(id).once('value')));
+      values.push(...snapshots.map(s => (s.val() !== null) ? s.val().value : null));
+    }
+    return values;
+  }
+ 
+  async toList() {
+    const snapshot = await this.reference.child('items').once('value');
+    // tslint:disable-next-line: no-any
+    return snapshot.val() ? Object.values(snapshot.val()).map((x: any) => x.value) : [];
+  }
+
+  backingType() {
+    return this.type;
+  }
+
+  get _hasLocalChanges() {
+    return false;
+  }
+
+  async _persistChangesImpl() {
+    throw new Error('FirebaseBackingStore does not implement _persistChangesImpl');
+  }
+
+  enableReferenceMode() {
+    throw new Error('FirebaseBackingStore does not implement enableReferenceMode');
+  }
+
+  async ensureBackingStore(): Promise<FirebaseBackingStore> {
+    throw new Error('FirebaseBackingStore does not implement ensureBackingStore');
+  }
+
+  on(kindStr, callback, target) {
+    throw new Error('FirebaseBackingStore does not implement on');
+  }
+
+  off(kindStr, callback) {
+    throw new Error('FirebaseBackingStore does not implement off');
+  }
+
+  toLiteral() {
+    throw new Error('FirebaseBackingStore does not implement toLiteral');
+  }
+
+  cloneFrom(store: StorageProviderBase) {
+    throw new Error('FirebaseBackingStore does not implement cloneFrom');
   }
 }
