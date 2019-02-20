@@ -13,8 +13,8 @@ import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js'
 import {ModalityHandler} from '../runtime/modality-handler.js';
 import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
 
+import {HeadlessSuggestDomConsumer} from './headless-suggest-dom-consumer.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
-import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
 
 
 export class PlanningModalityHandler extends ModalityHandler{
@@ -25,7 +25,7 @@ export class PlanningModalityHandler extends ModalityHandler{
   }
 
   static createHeadlessHandler(): PlanningModalityHandler {
-    return new PlanningModalityHandler(HeadlessSlotDomConsumer, MockSuggestDomConsumer);
+    return new PlanningModalityHandler(HeadlessSlotDomConsumer, HeadlessSuggestDomConsumer);
   }
 
   static readonly domHandler : PlanningModalityHandler = new PlanningModalityHandler(
