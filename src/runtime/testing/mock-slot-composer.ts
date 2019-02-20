@@ -234,7 +234,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     return found;
   }
 
-  async renderSlot(particle, slotName, content) {
+  renderSlot(particle, slotName, content) {
     this._addDebugMessages(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert.isAbove(this.expectQueue.length, 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further. Enable {strict: false, logging: true} to diagnose`);
@@ -242,7 +242,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     // renderSlot must happen before _verifyRenderContent, because the latter removes this call from expectations,
     // and potentially making mock-slot-composer idle before the renderSlot has actualy complete.
     // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
-    await super.renderSlot(particle, slotName, content);
+    super.renderSlot(particle, slotName, content);
 
     const found = this._verifyRenderContent(particle, slotName, content);
     if (!found) {

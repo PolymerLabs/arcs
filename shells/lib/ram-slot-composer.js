@@ -25,8 +25,8 @@ export class RamSlotComposer extends SlotComposer {
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
 
-  async renderSlot(particle, slotName, content) {
-    await super.renderSlot(particle, slotName, content);
+  renderSlot(particle, slotName, content) {
+    super.renderSlot(particle, slotName, content);
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     if (slotConsumer) {
       slotConsumer.updateProvidedContexts();

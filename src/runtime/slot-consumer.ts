@@ -16,7 +16,7 @@ import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 
 export class SlotConsumer {
-  _consumeConn?: SlotConnection;
+  public readonly consumeConn?: SlotConnection;
   slotContext: SlotContext;
   readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
   readonly hostedSlotContexts: HostedSlotContext[] = [];
@@ -29,13 +29,18 @@ export class SlotConsumer {
   private _renderingBySubId: Map<string|undefined, {container?: {}, model?, templateName?: string}> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
+  private _description: Description;
 
   constructor(arc: Arc, consumeConn?: SlotConnection, containerKind?: string) {
     this.arc = arc;
-    this._consumeConn = consumeConn;
+    this.consumeConn = consumeConn;
     this.containerKind = containerKind;
   }
-  get consumeConn() { return this._consumeConn; }
+
+  get description() { return this._description; }
+  async resetDescription() {
+    this._description = await Description.create(this.arc);
+  }
 
   getRendering(subId?) { return this._renderingBySubId.get(subId); }
   get renderings() { return [...this._renderingBySubId.entries()]; }
@@ -138,9 +143,9 @@ export class SlotConsumer {
     }
   }
 
-  setContent(content, handler, description?: Description) {
-    if (content && Object.keys(content).length > 0 && description) {
-      content.descriptions = this.populateHandleDescriptions(description);
+  setContent(content, handler) {
+    if (content && Object.keys(content).length > 0 && this.description) {
+      content.descriptions = this.populateHandleDescriptions();
     }
     this.eventHandler = handler;
     for (const [subId, rendering] of this.renderings) {
@@ -148,13 +153,13 @@ export class SlotConsumer {
     }
   }
 
-  populateHandleDescriptions(description: Description) {
+  populateHandleDescriptions() {
     if (!this.consumeConn) return null;
     const descriptions = {};
     Object.values(this.consumeConn.particle.connections).map(handleConn => {
       if (handleConn.handle) {
         descriptions[`${handleConn.name}.description`] =
-            description.getHandleDescription(handleConn.handle).toString();
+            this.description.getHandleDescription(handleConn.handle).toString();
       }
     });
     return descriptions;

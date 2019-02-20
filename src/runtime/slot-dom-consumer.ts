@@ -13,6 +13,7 @@ import {Template} from '../../modalities/dom/components/xen/xen-template.js';
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
+import {Description} from './description.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotContext} from './slot-context.js';
