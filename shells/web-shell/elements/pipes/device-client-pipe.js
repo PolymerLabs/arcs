@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {Xen} from '../../../lib/xen.js';
 import {generateId} from '../../../../modalities/dom/components/generate-id.js';
+import {Tracing} from '../../../../build/tracelib/trace.js';
 
 /*
   Examples:
@@ -81,7 +82,9 @@ const ShellApi = window.ShellApi = {
   },
   // receive information from external pipe
   receiveEntity(entityJSON) {
+    const trace = Tracing.start({cat: 'device-client', name: 'ShellApi::receiveEntity', overview: true, args: {entity: JSON.parse(entityJSON)}});
     ShellApi.receiveSink.receiveEntityJSON(entityJSON);
+    trace.end();
   },
   observeEntity(entityJSON) {
     ShellApi.observeSink.receiveEntityJSON(entityJSON);
@@ -152,9 +155,11 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
          const texts = state.suggestions.map(suggestion => String(suggestion.descriptionText));
          state.suggestions = null;
          const unique = [...new Set(texts)];
-        log(arc.activeRecipe.toString());
+         log(arc.activeRecipe.toString());
+         const trace = Tracing.start({cat: 'device-client', name: 'DeviceClient::foundSuggestions', overview: true, args: {suggestions: unique}});
          DeviceClient.foundSuggestions(JSON.stringify(unique));
          log(`try\n\t> ShellApi.chooseSuggestion('${unique[0]}')`);
+         trace.end();
       }
     }
   }
