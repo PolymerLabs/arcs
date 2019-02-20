@@ -304,6 +304,7 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
   }
 
   runPlanner() {
+    if (!this.arcId) return;
     this.send({
       messageType: 'invoke-planner',
       messageBody: {
