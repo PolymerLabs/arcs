@@ -13,8 +13,8 @@ import {Arc} from '../../runtime/arc.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
+import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
-import {MockSuggestDomConsumer} from '../testing/mock-suggest-dom-consumer.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   get suggestConsumers() {
@@ -46,7 +46,7 @@ describe('suggestion composer', () => {
     assert.lengthOf(helper.suggestions, 1);
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer.suggestConsumers, 1);
-    const suggestConsumer = suggestionComposer.suggestConsumers[0] as MockSuggestDomConsumer;
+    const suggestConsumer = suggestionComposer.suggestConsumers[0] as HeadlessSuggestDomConsumer;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     slotComposer.newExpectations()
@@ -86,7 +86,7 @@ describe('suggestion composer', () => {
 
     await suggestionComposer.setSuggestions(helper.suggestions);
     assert.lengthOf(suggestionComposer.suggestConsumers, 1);
-    const suggestConsumer = suggestionComposer.suggestConsumers[0] as MockSuggestDomConsumer;
+    const suggestConsumer = suggestionComposer.suggestConsumers[0] as HeadlessSuggestDomConsumer;
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     // TODO(mmandlis): Better support in test-helper for instantiating suggestions in inner arcs.

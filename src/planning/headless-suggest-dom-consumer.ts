@@ -7,11 +7,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
-import {SuggestDomConsumer} from '../suggest-dom-consumer.js';
+import {assert} from '../platform/assert-web.js';
+import {Arc} from '../runtime/arc.js';
 
-export class MockSuggestDomConsumer extends SuggestDomConsumer {
+import {SuggestDomConsumer} from './suggest-dom-consumer.js';
+
+export class HeadlessSuggestDomConsumer extends SuggestDomConsumer {
   _eventHandler;
   _setContentPromise;
   _suggestion;
