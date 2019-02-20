@@ -12,7 +12,6 @@
 import {offerWebRtcSignal} from '../../devtools/shared/web-rtc-signalling.js';
 import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
-import {assert} from './assert-web.js';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
@@ -27,66 +26,61 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   }
 
   _connectViaWebRtc(remoteExploreKey) {
-    console.log(`Attempting a connection with remote Arcs Explorer on "${remoteExploreKey}".`);
+    console.log(`Attempting a connection with remote Arcs Explorer.`);
 
-    const [showConnectionSuccess, showConnectionLost] = this._createVisualMarkerForRemoteDebugging();
-    const p = new SimplePeer({initiator: true, trickle: false, objectMode: true});
-
-    p.on('signal', (data) => {
-      const encoded = btoa(JSON.stringify(data));
-      offerWebRtcSignal(remoteExploreKey, encoded, resp => {
-        const decoded = JSON.parse(atob(resp));
-        p.signal(decoded);
-      });
+    const connection = new RTCPeerConnection({
+      iceServers: [
+        {urls: 'stun:stun.l.google.com:19302'},
+        {urls: 'stun:stun1.l.google.com:19302'},
+        {urls: 'stun:stun2.l.google.com:19302'},
+      ]
     });
+    const channel = connection.createDataChannel('arcs-explorer');
 
-    p.on('error', (err) => {
-      console.error('WebRTC error. Disconnecting.', err);
-      this.webRtcPeer = null;
-      showConnectionLost();
-    });
-    p.on('connect', () => console.log('WebRTC channel established!'));
-    p.on('data', (msg) => {
-      if (msg === 'init') {
-        this.webRtcPeer = p;
+    channel.onopen = e => {
+      console.log('WebRTC channel opened');
+    };
+    channel.onmessage = ({data}) => {
+      if (data === 'init') {
+        this.webRtcChannel = channel;
         DevtoolsBroker.markConnected();
-        showConnectionSuccess();
         this._sendHeartbeat();
       } else {
-        this._handleMessage(JSON.parse(msg));
+        this._handleMessage(JSON.parse(data));
       }
+    };
+    channel.onclose = e => {
+      console.warn('WebRTC channel closed');
+      this.webRtcChannel = null;
+    };
+    connection.onicecandidate = e => {
+      // Last invocation has null candidate and
+      // indicates all candidates have been generated.
+      if (e.candidate) return;
+      offerWebRtcSignal(
+          window.firebase,
+          remoteExploreKey,
+          btoa(JSON.stringify(connection.localDescription)),
+          signal => connection.setRemoteDescription(JSON.parse(atob(signal))).catch(e => console.error(e)));
+    };
+
+    connection.createOffer().then(offer => {
+      return connection.setLocalDescription(offer);
+    }).catch(e => {
+      console.error(e);
     });
   }
 
   _sendHeartbeat() {
-    if (!this.webRtcPeer) return;
-    this.webRtcPeer.send('heartbeat');
+    if (!this.webRtcChannel) return;
+    this.webRtcChannel.send('heartbeat');
     setTimeout(() => this._sendHeartbeat(), 1000);
-  }
-
-  _createVisualMarkerForRemoteDebugging() {
-    // TODO: Discuss with Scott moving these bits to WebShell if we want this.
-    const notification = document.createElement('div');
-    notification.innerText = 'Connecting to Remote Explorer...';
-    notification.style.cssText = 'background-color: darkorange; font-size: 12px; font-weight: bold; color: white; text-align: center; position: fixed; left: 0; top: 0; right: 0; box-shadow: 0 0 4px rgba(0,0,0,.5); z-index: 1;';
-
-    const body = document.querySelector('body');
-    body.style.paddingTop = '16px';
-    body.appendChild(notification);
-
-    return [() => {
-      notification.innerText = 'Remote Explorer Connected';
-      notification.style.background = 'Red';
-    }, () => {
-      notification.innerText = 'Remote Explorer Disconnected';
-      notification.style.background = 'Black';
-    }];
   }
 
   _flush(messages) {
     if (this.remoteExploreKey) {
-      if (this.webRtcPeer) {
-        this.webRtcPeer.send(JSON.stringify(messages));
+      if (this.webRtcChannel) {
+        this.webRtcChannel.send(JSON.stringify(messages));
       } else {
         console.warn('Connection to DevTools is closed. Message not sent.');
       }

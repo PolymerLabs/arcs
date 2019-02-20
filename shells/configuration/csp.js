@@ -41,7 +41,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.tvmaze.com
         https://media.w3.org
         https://*.glitch.me
-        https://cdnjs.cloudflare.com
         ;
     font-src
         'self'

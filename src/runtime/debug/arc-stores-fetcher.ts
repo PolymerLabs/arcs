@@ -48,7 +48,7 @@ export class ArcStoresFetcher extends ArcDebugListener {
       } else if (store.get) {
         value = await store.get();
       }
-      // Issues with WebRTC message splitting.
+      // TODO: Fix issues with WebRTC message splitting.
       if (JSON.stringify(value).length > 50000) value = 'too large for WebRTC';
       result.push({
         name: store.name,
