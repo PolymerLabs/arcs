@@ -17,7 +17,7 @@
   ],
   "permissions": ["<all_urls>", "activeTab", "webNavigation"],
   "web_accessible_resources" : [
-    "shared/devtools-broker.js",
+    "shared/*.js",
     "src/run-mark-connected.js",
     "img/*.png"
   ],

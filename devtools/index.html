@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Arcs Explorer</title>
+    <!-- External dependencies are disallowed by CSP when running as an extension,
+         but will load when running standalone. -->
+    <script src="https://www.gstatic.com/firebasejs/5.8.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.2/firebase-database.js"></script>
+
     <script src="deps/vis/dist/vis.min.js"></script>
     <script src="deps/diff/dist/diff.min.js"></script>
     <script src="deps/web-animations-js/web-animations-next-lite.min.js"></script>

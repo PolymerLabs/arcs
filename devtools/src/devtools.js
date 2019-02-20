@@ -2,18 +2,25 @@
 // and queing, so that opening DevTools without showing the Arcs panel is
 // sufficient to start gathering information.
 
-// TODO: Clean this up a little bit, it's spaghetti-ish.
+ import {listenForWebRtcSignal} from '../shared/web-rtc-signalling.js';
 
 (() => {
   const msgQueue = [];
   let windowForEvents = undefined;
 
-  // Use the extension API if we're in devtools and having a window to inspect.
-  // Otherwise use WebSocket. In later case we might be in devtools but running
-  // against NodeJS, but in such case there's no window to inspect.
-  const sendMessage = (chrome.devtools && chrome.devtools.inspectedWindow.tabId)
-      ? connectViaExtensionApi()
-      : connectViaWebSocket();
+  const sendMessage = (function chooseConnection() {
+    const remoteExploreKey = new URLSearchParams(window.location.search).get('remote-explore-key');
+    if (remoteExploreKey) {
+      return connectViaWebRtc(remoteExploreKey);
+    } else if (chrome.devtools && chrome.devtools.inspectedWindow.tabId) {
+      // Use the extension API if we're in devtools and having a window to inspect.
+      return connectViaExtensionApi();
+    } else {
+      // Otherwise use WebSocket. We may still be in devtools, but inspecting Node.js.
+      // In such case, there's no window to inspect.
+      return connectViaWebSocket();
+    }
+  })();
 
   if (chrome && chrome.devtools) {
     // Add the panel for devtools, and flush the events to it once it's shown.
@@ -85,6 +92,64 @@
       };
     })();
     return msg => ws.send(JSON.stringify(msg));
+  }
+
+  function connectViaWebRtc(remoteExploreKey) {
+    console.log(`Attempting a connection with Remote WebShell.`);
+
+    const connection = new RTCPeerConnection();
+    listenForWebRtcSignal(
+      firebase.initializeApp({databaseURL: 'https://arcs-storage.firebaseio.com'}).database(),
+      remoteExploreKey,
+      offer => connection.setRemoteDescription(JSON.parse(atob(offer)))
+        .then(() => connection.createAnswer())
+        .then(async answer => {
+          await connection.setLocalDescription(answer);
+          return btoa(JSON.stringify(answer));
+        }));
+
+    let channel = null;
+    let heartbeatTimeout = null;
+    connection.ondatachannel = event => {
+      channel = event.channel;
+      channel.onmessage = ({data}) => {
+        // Heartbeat allows notifying when Shell got reloaded.
+        // E.g. due to the lifycycle of the component owning it.
+        if (data === 'heartbeat') {
+          clearTimeout(heartbeatTimeout);
+          heartbeatTimeout = setTimeout(() => {
+            if (window.confirm('Arcs WebShell appears disconnected. Reload and attempt reconnecting?')) {
+              window.location.reload();
+            }
+          }, 5000);
+          return;
+        }
+        let m = null;
+        try {
+          m = JSON.parse(data);
+        } catch (e) {
+          console.error('Issues with parsing messages:', e);
+          return;
+        }
+        queueOrFire(m);
+      };
+      channel.onopen = e => {
+        console.log('WebRTC channel opened.');
+        channel.send('init');
+      };
+      channel.onclose = e => {
+        console.log('WebRTC channel closed');
+        channel = null;
+      };
+    };
+
+    return msg => {
+      if (!channel) {
+        console.warn('Channel not available', msg);
+      } else {
+        channel.send(JSON.stringify(msg));
+      }
+    };
   }
 
   function queueOrFire(msg) {
