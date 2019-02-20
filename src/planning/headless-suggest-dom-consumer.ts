@@ -49,8 +49,8 @@ export class HeadlessSuggestDomConsumer extends SuggestDomConsumer {
     return undefined;
   }
 
-  async setContent(content, handler) {
-    await super.setContent(content, handler);
+  setContent(content, handler) {
+    super.setContent(content, handler);
 
     // Mimics the behaviour of DomSlotConsumer::setContent, where template is only set at first,
     // and model is overriden every time.

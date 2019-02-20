@@ -23,7 +23,7 @@ export class HeadlessSlotDomConsumer extends SlotDomConsumer {
     this.contentAvailable = new Promise(resolve => this._contentAvailableResolve = resolve);
   }
 
-  setContent(content, handler, description) {
+  setContent(content, handler) {
     super.setContent(content, handler);
 
     // Mimics the behaviour of DomSlotConsumer::setContent, where template is only set at first,

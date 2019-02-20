@@ -38,7 +38,7 @@ export abstract class SlotContext {
     this.slotConsumers.length = 0;
   }
 
-  abstract onRenderSlot(consumer: SlotConsumer, content, handler, description?: Description);
+  abstract onRenderSlot(consumer: SlotConsumer, content, handler);
   abstract get containerAvailable(): boolean;
 }
 
@@ -132,8 +132,8 @@ export class ProvidedSlotContext extends SlotContext {
       : [];
   }
 
-  onRenderSlot(consumer: SlotConsumer, content, handler, description?: Description) {
-    consumer.setContent(content, handler, description);
+  onRenderSlot(consumer: SlotConsumer, content, handler) {
+    consumer.setContent(content, handler);
   }
 
   get container() { return this._container; }

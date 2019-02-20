@@ -123,8 +123,9 @@ export class SlotComposer {
     this._consumers.push(slot);
   }
 
-  initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
+  async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
     const newConsumers = [];
+
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
@@ -147,13 +148,14 @@ export class SlotComposer {
       assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
       context.addSlotConsumer(consumer);
     });
+
+    await Promise.all(this.consumers.map(async consumer => await consumer.resetDescription()));
   }
 
-  async renderSlot(particle: Particle, slotName: string, content) {
+  renderSlot(particle: Particle, slotName: string, content) {
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
-    const description = await Description.create(slotConsumer.arc);
     slotConsumer.slotContext.onRenderSlot(slotConsumer, content, async (eventlet) => {
       slotConsumer.arc.pec.sendEvent(particle, slotName, eventlet);
       // This code is a temporary hack implemented in #2011 which allows to route UI events from
@@ -184,7 +186,7 @@ export class SlotComposer {
           }
         }
       }
-    }, description);
+    });
   }
 
   getAvailableContexts(): SlotContext[] {
