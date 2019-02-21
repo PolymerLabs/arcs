@@ -8,29 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Speculator} from '../../planning/speculator.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {handleFor} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {StorageProxy} from '../storage-proxy.js';
+import {manifestTestSetup} from '../testing/manifest-integration-test-setup.js';
 
-async function setup() {
-  const registry = {};
-  const loader = new Loader();
-  const manifest = await Manifest.load('./src/runtime/test/artifacts/test.manifest', loader, registry);
-  assert(manifest);
-  const arc = new Arc({id: 'test', context: manifest, loader});
-  const recipe = manifest.recipes[0];
-  assert(recipe.normalize());
-  assert(recipe.isResolved());
-  return {arc, recipe};
-}
 
-describe('manifest integration', () => {
+describe('runtime manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
-    const {arc, recipe} = await setup();
+    const {arc, recipe} = await manifestTestSetup();
     await arc.instantiate(recipe);
     await arc.idle;
     const type = recipe.handles[0].type;
@@ -46,12 +35,5 @@ describe('manifest integration', () => {
     type.maybeEnsureResolved();
     const result = await handle.get();
     assert.equal(result.value, 'Hello, world!');
-  });
-
-  it('can produce a recipe that can be speculated', async () => {
-    const {arc, recipe} = await setup();
-    const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
-    const suggestion = await new Speculator().speculate(arc, recipe, hash);
-    assert.equal(suggestion.rank, 1);
   });
 });
