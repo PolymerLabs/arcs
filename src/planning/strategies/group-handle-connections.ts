@@ -40,28 +40,22 @@ export class GroupHandleConnections extends Strategy {
 
         const groupsByType = new Map();
         for (const type of types) {
-          // Find the particle with the largest number of unbound required connections of the same type.
-          const countConnectionsByType = (particle: Particle) => {
-            return particle.spec.connections.filter(connSpec => {
-              return !connSpec.isOptional &&
-                     type.equals(connSpec.type) &&
-                     !particle.getConnectionByName(connSpec.name);
-            }).length;
-          };
           const sortedParticles = [...recipe.particles].sort((p1, p2) => {
-            return countConnectionsByType(p2) - countConnectionsByType(p1);
-          }).filter(p => countConnectionsByType(p) > 0);
+            return p2.getUnboundConnections(type).length - p1.getUnboundConnections(type).length;
+          }).filter(p => p.getUnboundConnections(type).length > 0);
           assert(sortedParticles.length > 0);
 
-          // Handle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
-          // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
+          // Handle connections of the same particle cannot be bound to the same handle. Iterate
+          // on handle connections of the particle with the most connections of the given type,
+          // and group each of them with same typed handle connections of other particles.
           const particleWithMostConnectionsOfType = sortedParticles[0];
           const groups: {
             particle: Particle,
             connSpec: ConnectionSpec,
             group: {particle: Particle, connSpec: ConnectionSpec}[]
           }[] = [];
-          let allTypeHandleConnections = recipe.getTypeHandleConnections(type, particleWithMostConnectionsOfType);
+          let allTypeHandleConnections = recipe.getFreeConnections(type)
+              .filter(c => c.particle !== particleWithMostConnectionsOfType);
 
           let iteration = 0;
           while (allTypeHandleConnections.length > 0) {

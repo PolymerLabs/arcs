@@ -9,7 +9,7 @@ import {assert} from '../../platform/assert-web.js';
 import {ConnectionSpec, ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
-import {InterfaceType} from '../type.js';
+import {InterfaceType, Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, RequireSection} from './recipe.js';
@@ -177,17 +177,13 @@ export class Particle {
         return false;
       }
     }
-    // if (this.spec.connectionMap.size !== Object.keys(this._connections).length) {
     if (!this.spec) {
       if (options && options.showUnresolved) {
         options.details = 'missing spec';
       }
       return false;
     }
-    const unresolvedRequiredConnections = this.spec.connections.filter(connSpec => {
-      if (connSpec.isOptional || this.connections[connSpec.name]) {
-        return false;
-      }
+    const unresolvedRequiredConnections = this.getUnboundConnections().filter(connSpec => {
       // A non-optional connection dependent on an optional and unresolved is ok.
       let parent = connSpec.parentConnection;
       while (parent !== null) {
@@ -269,6 +265,14 @@ export class Particle {
     this._connections[name] = connection;
     this._unnamedConnections.splice(idx, 1);
   }
+
+  getUnboundConnections(type?: Type) {
+    return this.spec.connections.filter(
+        connSpec => !connSpec.isOptional &&
+                    !this.getConnectionByName(connSpec.name) &&
+                    (!type || type.equals(connSpec.type)));
+  }
+
 
   addSlotConnection(name: string) : SlotConnection {
     assert(!(name in this._consumedSlotConnections), "slot connection already exists");

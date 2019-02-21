@@ -109,21 +109,17 @@ export class MatchRecipeByVerb extends Strategy {
               }
             }
 
-            function tryApplyHandleConstraint(name: string, connSpec: ConnectionSpec, particle: Particle, connection: HandleConnection, constraint, handle) {
-              if (connection) {
-                if (connection.handle != null) {
-                  return false;
-                }
-                if (!MatchRecipeByVerb.connectionMatchesConstraint(connection, constraint)) {
-                  return false;
-                }
-              } else {
-                assert(connSpec);
-                if (!MatchRecipeByVerb.connectionMatchesConstraint(connSpec, constraint)) {
-                  return false;
-                }
-                connection = particle.addConnectionName(connSpec.name);
+            function tryApplyHandleConstraint(
+                name: string, connSpec: ConnectionSpec, particle: Particle, constraint, handle) {
+              let connection = particle.connections[name];
+              if (connection && connection.handle != null) {
+                return false;
               }
+              // const connSpec = connection.spec;
+              if (!MatchRecipeByVerb.connectionMatchesConstraint(connection || connSpec, constraint)) {
+                return false;
+              }
+              connection = connection || particle.addConnectionName(connSpec.name);
               for (let i = 0; i < handle.connections.length; i++) {
                 const candidate = handle.connections[i];
                 // TODO candidate.name === name triggers test failures
@@ -142,18 +138,12 @@ export class MatchRecipeByVerb extends Strategy {
               for (const particle of particles) {
                 if (name) {
                   if (tryApplyHandleConstraint(
-                          name,
-                          particle.spec.getConnectionByName(name),
-                          particle,
-                          particle.connections[name],
-                          constraint,
-                          mappedHandle)) {
+                    name, particle.spec.getConnectionByName(name), particle, constraint, mappedHandle)) {
                     return true;
                   }
                 } else {
                   for (const connSpec of particle.spec.connections) {
-                    if (tryApplyHandleConstraint(
-                            name, connSpec, particle, particle.connections[name], constraint, mappedHandle)) {
+                    if (tryApplyHandleConstraint(name, connSpec, particle, constraint, mappedHandle)) {
                       return true;
                     }
                   }

@@ -9,7 +9,7 @@ import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
 import {ConnectionSpec} from '../particle-spec.js';
-import {InterfaceType} from '../type.js';
+import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';
@@ -628,12 +628,14 @@ export class Recipe {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
-  getFreeConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
+  getFreeConnections(type?: Type): {particle: Particle, connSpec: ConnectionSpec}[] {
     const freeConnections: {particle: Particle, connSpec: ConnectionSpec}[] = [];
     for (const particle of this.particles) {
       if (particle.spec) {
         for (const connSpec of particle.spec.connections) {
-          if (!connSpec.isOptional && !particle.connections[connSpec.name]) {
+          if (!connSpec.isOptional &&
+              !particle.connections[connSpec.name] &&
+              (!type || type.equals(connSpec.type))) {
             freeConnections.push({particle, connSpec});
           }
         }
@@ -648,22 +650,6 @@ export class Recipe {
 
   getUnnamedUntypedConnections() {
     return this.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional);
-  }
-
-  getTypeHandleConnections(type, p): {particle: Particle, connSpec: ConnectionSpec}[] {
-    // returns the {particle, connSpec} tuples for connections of type 'type'
-    // that do not belong to particle 'p'.
-    const results: {particle: Particle, connSpec: ConnectionSpec}[] = [];
-    for (const particle of this.particles) {
-      if (particle.spec && particle !== p ) {
-        for (const connSpec of particle.spec.connections) {
-          if (!connSpec.isOptional && !particle.connections[connSpec.name] && type.equals(connSpec.type)) {
-            results.push({particle, connSpec});
-          }
-        }
-      }
-    }
-    return results;
   }
 
   getParticlesByImplFile(files: Set<string>) {
@@ -685,7 +671,7 @@ export class Recipe {
     return slot;
   }
 
-  // TODO: Unify getDisconnectedConnections, getFreeConnections (and getTypeHandleConnections?)
+  // TODO: Unify getDisconnectedConnections, getFreeConnections.
   getDisconnectedConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
     const disconnected: {particle: Particle, connSpec: ConnectionSpec}[] = [];
     for (const particle of this.particles) {

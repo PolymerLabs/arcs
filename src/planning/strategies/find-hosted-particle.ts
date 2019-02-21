@@ -19,25 +19,6 @@ export class FindHostedParticle extends Strategy {
   async generate(inputParams) {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      // onHandleConnection(recipe: Recipe, connection: HandleConnection) {
-      //   const matchingParticleSpecs = this._findMatchingParticleSpecs(arc, connection.spec, connection, connection.type);
-      //   if (!matchingParticleSpecs) {
-      //     return undefined;
-      //   }
-      //   const results = [];
-      //   for (const particleSpec of matchingParticleSpecs) {
-      //     results.push((recipe, hc) => {
-      //       const handle = RecipeUtil.constructImmediateValueHandle(
-      //         hc, particleSpec, arc.generateID());
-      //       assert(handle); // Type matching should have been ensure by the checks above;
-      //       hc.connectToHandle(handle);
-      //     });
-      //   }
-      //   return results;
-      // }
-
-      // TODO: Temporarily unused. Once interface connections no longer created eagerly.
-      // (see particle.ts comment in set spec), uncomment this and delete onHandleConnection
       onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
         const matchingParticleSpecs = this._findMatchingParticleSpecs(
             arc, connectionSpec, /* connection= */ null, connectionSpec.type);
