@@ -4,6 +4,7 @@ import {now} from '../../build/platform/date-web.js';
 let t0;
 
 const log = (...args) => {
+  console.log(args.join());
   //document.body.appendChild(document.createElement('div')).innerText = args.join();
 };
 
@@ -51,23 +52,15 @@ const com_music_spotify = async (arc, callback) => {
   })();
   //await logArc(arc);
   await (async () => {
-    // actual glitch added ~750ms
-    //const moreRecipeContent = `import 'https://short-virgo.glitch.me/custom.recipes'`;
-    // local files added ~90ms
-    //const manifestContent = `import 'https://$particles/Glitch/custom.recipes'`;
     const manifest = await Utils.parse(`import 'https://$particles/Glitch/custom.recipes'`);
-    //log(`manifest [${manifest.id}]`, manifest);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RandomArtist');
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'SuggestForSpotify');
     // wait for data to appear
-    //await logArc(arc);
     const store = arc._stores[2];
     store.on('change', info => onChange(info, callback), arc);
     //dumpStores(arc._stores);
-    //setTimeout(() => dumpStores(arc._stores), 2000);
-    //log(`store.get()`, await store.get());
   })();
 };
 
@@ -78,15 +71,10 @@ const com_google_android_apps_maps = async arc => {
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
   await (async () => {
-    // actual glitch added ~750ms
-    //const moreRecipeContent = `import 'https://short-virgo.glitch.me/custom.recipes'`;
-    // local files added ~90ms
     const manifest = await Utils.parse(`import 'https://$particles/Apps/MapQuery.recipes'`);
-    //log(`manifest [${manifest.id}]`, manifest);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
-    //log(arc._stores);
     const store = arc._stores[2];
     store.on('change', onChange, arc);
   })();
@@ -105,12 +93,11 @@ const recipeByName = (manifest, name) => {
 
 const instantiateRecipe = async (arc, manifest, name) => {
   const recipe = recipeByName(manifest, name);
-  //const recipe = manifest.allRecipes[0];
   //log(`recipe [${recipe.name}]`);
   //log(String(recipe));
   const plan = await Utils.resolve(arc, recipe);
   await arc.instantiate(plan);
-  // TODO(sjmiles): necessary for iOS
+  // TODO(sjmiles): necessary for iOS (!?)
   //await logArc(arc);
 };
 

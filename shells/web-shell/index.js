@@ -11,7 +11,6 @@ import '../configuration/whitelisted.js';
 
 const params = (new URL(document.location)).searchParams;
 const logLevel = params.get('logLevel') || (params.has('log') ? 2 : Xen.Debug.level);
-
 window.debugLevel = Xen.Debug.level = logLevel;
 
 (async () => {

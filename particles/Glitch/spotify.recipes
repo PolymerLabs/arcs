@@ -1,9 +1,9 @@
 import './ArtistAutofill.recipes'
 
 recipe SuggestForSpotify
-  use as artist
   //use #pipe_com_spotify_music as currentApp
   use as currentApp
+  use as artist
   create #text as artistSuggestion
   ArtistAutofill
     currentApp = currentApp

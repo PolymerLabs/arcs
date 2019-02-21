@@ -2,16 +2,16 @@
 //import '../lib/build/firebase.js';
 //import '../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
-console.log(`version: feb-20.6`);
+console.log(`version: feb-21.2`);
 
 window.DeviceClient = window.DeviceClient || {
   foundSuggestions(text) {
-    console.log('foundSuggestions:', text);
   }
 };
 
 window.ShellApi = {
   receiveEntity(json) {
+    console.log('received entity...');
     testMode = !json;
     run(json);
     return true;
@@ -30,17 +30,15 @@ import {App} from './app.js';
 import '../configuration/whitelisted.js';
 
 // configure arcs environment
-Utils.init('.', {
-  //'https://$build/': `./`,
-  'https://$build/': `https://behelits.com/projects/arcs/arcs/shells/lib/build/`,
-  'https://$particles/': `https://behelits.com/projects/arcs/arcs/particles/`
-});
+Utils.init(window.envPaths.root, window.envPaths.map);
 
 let testMode;
 const callback = text => {
   if (testMode) {
-    console.log('foundSuggestions (testMode):', text);
+    console.log(`foundSuggestions (testMode): "${text}"`);
   } else {
+    console.log(`invoking window.DeviceClient.foundSuggestions("${text}")`);
+    console.log(window.DeviceClient.foundSuggestions.toString());
     window.DeviceClient.foundSuggestions(text);
   }
 };
@@ -52,8 +50,11 @@ const run = async json => {
   } catch (x) {
     console.error(x);
   }
-  //console.log('done.');
 };
 
 // test
 window.ShellApi.receiveEntity();
+
+document.body.onclick = () => {
+  window.ShellApi.receiveEntity();
+};
