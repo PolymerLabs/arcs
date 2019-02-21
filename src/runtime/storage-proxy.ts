@@ -89,8 +89,13 @@ export abstract class StorageProxy {
 
   raiseSystemException(exception, methodName, particleId) {
     // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
-    mapStackTrace(exception.stack, mappedStack => this.port.RaiseSystemException(
-        {message: exception.message, stack: mappedStack.join('\n'), name: exception.name}, methodName, particleId));
+    const {message, stack, name} = exception;
+    const raise = stack => this.port.RaiseSystemException({message, stack, name}, methodName, particleId);
+    if (!mapStackTrace) {
+      raise(stack);
+    } else {
+      mapStackTrace(stack, mappedStack => raise(mappedStack.join('\n')));
+    }
   }
 
   /**
@@ -189,12 +194,12 @@ export abstract class StorageProxy {
         return true;
       }
       // Holy Layering Violation Batman
-      // 
+      //
       // If we are a variable waiting for a barriered set response
       // then that set response *is* the next thing we're waiting for,
       // regardless of version numbers.
       //
-      // TODO(shans): refactor this code so we don't need to layer-violate. 
+      // TODO(shans): refactor this code so we don't need to layer-violate.
       if (this.barrier && update.barrier === this.barrier) {
         return true;
       }
@@ -395,7 +400,7 @@ export class CollectionProxy extends StorageProxy {
  */
 export class VariableProxy extends StorageProxy {
   model: {id: string} | null = null;
-  
+
   _getModelForSync() {
     return this.model;
   }
@@ -428,7 +433,7 @@ export class VariableProxy extends StorageProxy {
         // We just cleared a barrier which means we are now synchronized. If we weren't
         // synchronized already, then we need to tell the handles.
         //
-        // TODO(shans): refactor this code so we don't need to layer-violate. 
+        // TODO(shans): refactor this code so we don't need to layer-violate.
         if (this.synchronized !== SyncState.full) {
           this.synchronized = SyncState.full;
           const syncModel = this._getModelForSync();
@@ -462,8 +467,8 @@ export class VariableProxy extends StorageProxy {
     }
     let barrier;
 
-    // If we're setting to this handle but we aren't listening to firebase, 
-    // then there's no point creating a barrier. In fact, if the response 
+    // If we're setting to this handle but we aren't listening to firebase,
+    // then there's no point creating a barrier. In fact, if the response
     // to the set comes back before a listener is registered then this proxy will
     // end up locked waiting for a barrier that will never arrive.
     if (this.listenerAttached) {

@@ -1,2 +1,2 @@
-const {firebase} = window.firebase;
+const firebase = window.firebase ? window.firebase.firebase : null;
 export {firebase};

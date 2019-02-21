@@ -54,7 +54,7 @@ export class OuterPortAttachment {
 
     // The slice discards the stack frame corresponding to the API channel
     // function, which is already being displayed in the log entry.
-    mapStackTrace(stackString, mapped => mapped.slice(1).map(frameString => {
+    mapStackTrace && mapStackTrace(stackString, mapped => mapped.slice(1).map(frameString => {
       // Each frame has the form '    at function (source:line:column)'.
       // Extract the function name and source:line:column text, then set up
       // a frame object with the following fields:

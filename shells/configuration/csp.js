@@ -38,6 +38,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
+        https://behelits.com
         https://*.tvmaze.com
         https://media.w3.org
         https://*.glitch.me
@@ -48,6 +49,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://fonts.gstatic.com
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
+        https://xenonjs.com
+        https://behelits.com
         ;
     img-src
         'self'
@@ -58,6 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
+        https://behelits.com
         https://*.tvmaze.com
         https://media.w3.org
         http://*.gstatic.com
@@ -72,6 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://raw.githubusercontent.com/shaper/
         https://sjmiles.github.io
         https://xenonjs.com
+        https://behelits.com
         https://media.w3.org
         ;
   `

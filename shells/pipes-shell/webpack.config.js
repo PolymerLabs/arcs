@@ -1,15 +1,16 @@
 const path = require('path');
-const webpack = require('webpack');
+//const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
+const Visualizer = require('webpack-visualizer-plugin');
 
 module.exports = {
-  target: 'node',
+  //target: 'node',
   mode: 'none',
   optimization: {
-    minimize: false,
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
+     minimize: true,
+     minimizer: [
+       new TerserPlugin({
+         terserOptions: {
           mangle: false, // Note `mangle.properties` is `false` by default.
         }
       }),
@@ -17,7 +18,7 @@ module.exports = {
   },
   //devtool: 'source-map',
   entry: {
-    shell: `./node.js`
+    shell: `./web.js`
   },
   output: {
     filename: '[name].js',
@@ -29,14 +30,20 @@ module.exports = {
       type: 'javascript/auto',
     }]
   },
+  stats: {
+    modulesSort: '!size'
+  },
   plugins: [
-    new webpack.NormalModuleReplacementPlugin(
-      // build/worker.js needs the node version of this file
-      /platform/,
-      resource =>  resource.request = resource.request.replace(/-web/, `-node`)
-    )
+    new Visualizer({
+      filename: '../webpack-stats.html'
+    }),
+  //   new webpack.NormalModuleReplacementPlugin(
+  //     // build/worker.js needs the node version of this file
+  //     /platform/,
+  //     resource =>  resource.request = resource.request.replace(/-web/, `-node`)
+  //   )
   ],
-  externals: {
-    leveldown: 'require("leveldown")'
-  }
+  // externals: [
+  //   //'fs'
+  // ]
 };

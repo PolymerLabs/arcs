@@ -16,18 +16,48 @@ http://polymer.github.io/PATENTS.txt
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
-  <link rel="stylesheet" href="../configuration/index.css">
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700"> -->
 
-  <script src="..//lib/build/pouchdb.js"></script>
-  <script src="../lib/build/firebase.js"></script>
-  <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+  <style>
+    /* body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      background-color: white;
+    } */
+    body, button, input {
+      font-family: 'Google Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    table {
+      font-size: 80%;
+      border: 1px solid #000000;
+      text-align: left;
+      border-collapse: collapse;
+    }
+    td, th {
+      border: 1px solid #000000;
+      padding: 6px 8px;
+    }
+    th {
+      background-color: #eeeeee;
+    }
+    td {
+      font-size: 90%;
+    }
+  </style>
 
+  <script src="../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
   <script type="module" src="./web.js"></script>
-  <script type="module" src="../configuration/whitelisted.js"></script>
 
 </head>
 <body>
+
+  <table id="arcs">
+    <tr><th colspan="2">Arcs</th></tr>
+    <tr><th>Id</th><th>Description</th></tr>
+  </table>
 
 </body>
 </html>

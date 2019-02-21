@@ -74,7 +74,7 @@ export class PlatformLoader extends Loader {
     const name = suffix.split('.').shift();
     this._urlMap[name] = folder;
   }
-    provisionLogger(fileName) {
+  provisionLogger(fileName) {
     return logFactory(fileName.split('/').pop(), '#1faa00');
   }
   unwrapParticle(particleWrapper, log) {
