@@ -7,6 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import '../../../runtime/storage/firebase/firebase-provider.js';
+import '../../../runtime/storage/pouchdb/pouchdb-provider.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
@@ -125,7 +127,7 @@ describe('plan consumer', () => {
         slotComposer: new MockSlotComposer({
           modalityName,
           modalityHandler: PlanningModalityHandler.createHeadlessHandler()
-        }), 
+        }),
         manifestString: `
   particle ParticleDom in './src/runtime/test/artifacts/consumer-particle.js'
     consume root
