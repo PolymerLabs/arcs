@@ -18,7 +18,7 @@ module.exports = {
   },
   //devtool: 'source-map',
   entry: {
-    shell: `./web.js`
+    shell: `../web.js`
   },
   output: {
     filename: '[name].js',
