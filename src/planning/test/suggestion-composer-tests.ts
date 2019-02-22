@@ -13,7 +13,6 @@ import {Arc} from '../../runtime/arc.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
-
 import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
 import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
