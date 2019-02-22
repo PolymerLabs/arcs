@@ -6,26 +6,35 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {VolatileStorage} from './volatile-storage.js';
+import {SyntheticStorage} from './synthetic-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
-
-import {FirebaseStorage} from './firebase-storage.js';
 import {KeyBase} from './key-base.js';
-import {PouchDbStorage} from './pouchdb/pouch-db-storage.js';
-import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
-import {SyntheticStorage} from './synthetic-storage.js';
-import {VolatileStorage} from './volatile-storage.js';
+
+// TODO(sjmiles): StorageProviderFactory.register can be used
+// to install additional providers, as long as it's invoked
+// before any StorageProviderFactory objects are constructed.
+
+const providers = {
+  volatile: {storage: VolatileStorage, isPersistent: false},
+  synthetic: {storage: SyntheticStorage, isPersistent: false}
+};
 
 export class StorageProviderFactory {
-  private readonly _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
+  static register(name: string, instance: {storage: Function, isPersistent: boolean}) {
+    providers[name] = instance;
+  }
+
+  private _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
 
   constructor(private readonly arcId: Id) {
-    this._storageInstances = {
-      volatile: {storage: new VolatileStorage(arcId), isPersistent: false},
-      firebase: {storage: new FirebaseStorage(arcId), isPersistent: true},
-      pouchdb: {storage: new PouchDbStorage(arcId), isPersistent: true},
-      synthetic: {storage: new SyntheticStorage(arcId, this), isPersistent: false},
-    };
+    this._storageInstances = {};
+    Object.keys(providers).forEach(name => {
+      const {storage, isPersistent} = providers[name];
+      this._storageInstances[name] = {storage: new storage(arcId, this), isPersistent};
+    });
   }
 
   private getInstance(key: string) {
