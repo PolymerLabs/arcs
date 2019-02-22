@@ -37,7 +37,10 @@
     "no-var-keyword": true,
     "object-literal-shorthand": true,
     "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
-    "ordered-imports": [true, {"grouped-imports": true}],
+    // TODO: This caused problems for storage-provider factory and strangely
+    // differing behavior on Travis vs local builds. Reenable when these are
+    // sorted out and if it seems warranted.
+    //"ordered-imports": [true, {"grouped-imports": true}],
     "prefer-const": [true, {"destructuring": "all"}],
     "prefer-object-spread": true,
     "radix": true,

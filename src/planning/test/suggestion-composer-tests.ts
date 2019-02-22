@@ -14,6 +14,7 @@ import {SlotComposer} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
 import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
+import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
@@ -24,7 +25,9 @@ class TestSuggestionComposer extends SuggestionComposer {
 
 describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
-    const slotComposer = new MockSlotComposer().newExpectations('debug');
+    const slotComposer = new MockSlotComposer({
+      modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
+    }).newExpectations('debug');
 
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cake.recipes',
@@ -61,7 +64,10 @@ describe('suggestion composer', () => {
   });
 
   it('suggestion set-slots', async () => {
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const slotComposer = new MockSlotComposer({
+      strict: false,
+      modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
+    }).newExpectations('debug');
 
     const helper = await TestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cakes.recipes',
