@@ -1,6 +1,8 @@
 import '../../lib/build/pouchdb.js';
+import '../../../build/runtime/storage/pouchdb-provider.js';
 import '../../lib/build/firebase.js';
-import '../../configuration/whitelisted.js';
+import '../../../build/runtime/storage/firebase-provider.js';
+//import '../../configuration/whitelisted.js';
 
 import {Xen} from '../../lib/xen.js';
 const params = (new URL(document.location)).searchParams;
