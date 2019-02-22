@@ -99,7 +99,7 @@ describe('pouchdb', () => {
       const v1 = await var1.get();
       const v2 = await var2.get();
       assert.deepEqual(v1, v2);
-      
+
       var1Callbacks.verify();
       var2Callbacks.verify();
     });
