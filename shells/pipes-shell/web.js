@@ -9,11 +9,27 @@ window.DeviceClient = window.DeviceClient || {
   }
 };
 
+// ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`)
+
 window.ShellApi = {
   receiveEntity(json) {
     console.log('received entity...');
     testMode = !json;
     run(json);
+    return true;
+  },
+  async observeEntity(json) {
+    console.log('observing entity...');
+    let rawData;
+    try {
+      rawData = JSON.parse(json);
+      console.log(rawData);
+    } catch (x) {
+      return false;
+    }
+    const store = context.findStoreById('addresses');
+    await store.store({id: store.generateID(), rawData: {address: rawData.name}}, ['oogabooga']);
+    console.log(await store.toList());
     return true;
   }
 };
@@ -24,10 +40,13 @@ import {Xen} from '../lib/xen.js';
 //window.debugLevel = Xen.Debug.level = logLevel;
 Xen.Debug.level = window.logLevel;
 
-import {Utils} from '../lib/utils.js';
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {Stores} from '../lib/stores.js';
+import {Utils} from '../lib/utils.js';
+import {Schemas} from './schemas.js';
 import {App} from './app.js';
-import '../configuration/whitelisted.js';
+
+//import '../configuration/whitelisted.js';
 
 // configure arcs environment
 Utils.init(window.envPaths.root, window.envPaths.map);
@@ -38,22 +57,46 @@ const callback = text => {
     console.log(`foundSuggestions (testMode): "${text}"`);
   } else {
     console.log(`invoking window.DeviceClient.foundSuggestions("${text}")`);
-    console.log(window.DeviceClient.foundSuggestions.toString());
+    //console.log(window.DeviceClient.foundSuggestions.toString());
     window.DeviceClient.foundSuggestions(text);
   }
 };
 
+let context;
+const initContext = async () => {
+  context = await Utils.parse('');
+  await initAddressStore(context);
+  return context;
+};
+
+const initAddressStore = async context => {
+  const store = await Stores.create(context, {
+    name: 'addresses',
+    id: 'addresses',
+    schema: Schemas.Address,
+    isCollection: true,
+    tags: null,
+    storageKey: null
+  });
+  console.log(store);
+  window.ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`);
+  window.ShellApi.observeEntity(`{"type": "address", "name": "South Pole"}`);
+};
+
 const run = async json => {
   try {
+    if (!context) {
+      await initContext();
+    }
     const composer = new RamSlotComposer();
-    await App(composer, callback, json);
+    await App(composer, context, callback, json);
   } catch (x) {
     console.error(x);
   }
 };
 
 // test
-window.ShellApi.receiveEntity();
+//window.ShellApi.receiveEntity();
 
 document.body.onclick = () => {
   window.ShellApi.receiveEntity();

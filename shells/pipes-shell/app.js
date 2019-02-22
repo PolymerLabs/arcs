@@ -4,16 +4,21 @@ import {now} from '../../build/platform/date-web.js';
 let t0;
 
 const log = (...args) => {
-  console.log(args.join());
+  //console.log(args.join(' '));
+  console.log(...args);
   //document.body.appendChild(document.createElement('div')).innerText = args.join();
 };
 
-export const App = async (composer, callback, json) => {
+export const App = async (composer, context, callback, json) => {
   t0 = now();
-  const arc = await Utils.spawn({id: 'piping-arc', composer});
+  const arc = await Utils.spawn({id: 'piping-arc', composer, context});
+  window.arc = arc;
   log(`arc [${arc.id}]`);
-  //log(`dt = ${(now() - t0).toFixed(1)}ms`);
-  //
+  dispatch(extractType(json), arc, callback);
+  return arc;
+};
+
+const extractType = json => {
   let type = 'com.music.spotify';
   if (json) {
     try {
@@ -23,13 +28,7 @@ export const App = async (composer, callback, json) => {
       //
     }
   }
-  //
-  dispatch(type, arc, callback);
-  //
-  //const dt = now() - t0;
-  //log(`dt = ${dt.toFixed(1)}ms`);
-  //await logArc(arc);
-  return arc;
+  return type;
 };
 
 const dispatch = (type, arc, callback) => {
@@ -50,7 +49,6 @@ const com_music_spotify = async (arc, callback) => {
     const manifest = await Utils.parse(manifestContent);
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
-  //await logArc(arc);
   await (async () => {
     const manifest = await Utils.parse(`import 'https://$particles/Glitch/custom.recipes'`);
     // accrete recipe
@@ -64,19 +62,22 @@ const com_music_spotify = async (arc, callback) => {
   })();
 };
 
-const com_google_android_apps_maps = async arc => {
+const com_google_android_apps_maps = async (arc, callback) => {
   await (async () => {
     const manifestContent = buildEntityManifest({type: 'com_google_android_apps_maps'});
     const manifest = await Utils.parse(manifestContent);
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
   await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/Apps/MapQuery.recipes'`);
+    //const manifest = await Utils.parse(`import 'https://$particles/Apps/MapQuery.recipes'`);
+    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsApp.recipes'`);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
-    const store = arc._stores[2];
-    store.on('change', onChange, arc);
+    await dumpStores(arc.context.allStores);
+    await dumpStores(arc._stores);
+    const store = arc._stores[1];
+    store.on('change', info => onChange(info, callback), arc);
   })();
 };
 
@@ -93,18 +94,22 @@ const recipeByName = (manifest, name) => {
 
 const instantiateRecipe = async (arc, manifest, name) => {
   const recipe = recipeByName(manifest, name);
-  //log(`recipe [${recipe.name}]`);
-  //log(String(recipe));
-  const plan = await Utils.resolve(arc, recipe);
-  await arc.instantiate(plan);
-  // TODO(sjmiles): necessary for iOS (!?)
-  //await logArc(arc);
+  if (!recipe) {
+    log(`couldn't find recipe "${name}" in manifest`);
+  } else {
+    //log(`recipe [${recipe.name}]`);
+    //log(String(recipe));
+    const plan = await Utils.resolve(arc, recipe);
+    await arc.instantiate(plan);
+    // TODO(sjmiles): necessary for iOS (!?)
+    //await logArc(arc);
+  }
 };
 
 const onChange = (change, callback) => {
   //log(change, callback.toString());
   if (change.data) {
-    const text = change.data.rawData.text;
+    const text = change.data.rawData.text || change.data.rawData.address;
     callback(text);
     //log(text);
     const dt = now() - t0;
@@ -133,9 +138,9 @@ recipe Pipe
     pipe = pipe
 `;
 
-const dumpStores = stores => {
-  log('stores dump, length =', stores.length);
-  stores.forEach(async (store, i) => {
+const dumpStores = async stores => {
+  log(`stores dump, length = ${stores.length}`);
+  await Promise.all(stores.map(async (store, i) => {
     if (store) {
       if (store.get) {
         log(`store #${i}:`, store.id, await store.get());
@@ -143,5 +148,5 @@ const dumpStores = stores => {
         log(`store #${i}:`, store.id, await store.toList());
       }
     }
-  });
+  }));
 };
