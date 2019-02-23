@@ -2,7 +2,7 @@
 //import '../lib/build/firebase.js';
 //import '../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
-console.log(`version: feb-21.2`);
+console.log(`version: feb-22.0`);
 
 window.DeviceClient = window.DeviceClient || {
   foundSuggestions(text) {
@@ -98,6 +98,6 @@ const run = async json => {
 // test
 //window.ShellApi.receiveEntity();
 
-document.body.onclick = () => {
+window.onclick = () => {
   window.ShellApi.receiveEntity();
 };
