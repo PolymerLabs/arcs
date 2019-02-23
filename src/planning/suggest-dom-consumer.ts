@@ -9,6 +9,7 @@
  */
 
 import {Arc} from '../runtime/arc.js';
+import {Modality} from '../runtime/modality.js';
 import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
 
 import {Suggestion} from './plan/suggestion.js';
@@ -18,10 +19,10 @@ export class SuggestDomConsumer extends SlotDomConsumer {
   _suggestionContent;
   _eventHandler;
 
-  constructor(arc: Arc, containerKind: string, suggestion: Suggestion, suggestionContent, eventHandler) {
+  constructor(arc: Arc, containerKind: string, suggestion: Suggestion, eventHandler) {
     super(arc, /* consumeConn= */null, containerKind);
     this._suggestion = suggestion;
-    this._suggestionContent = suggestionContent;
+    this._suggestionContent = SuggestDomConsumer._extractContent(this._suggestion);
     this._eventHandler = eventHandler;
   }
 
@@ -49,8 +50,16 @@ export class SuggestDomConsumer extends SlotDomConsumer {
     }
   }
 
-  static render(arc: Arc, container, plan, content): SlotDomConsumer {
-    const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
+  static _extractContent(suggestion: Suggestion) {
+    return suggestion.getDescription(Modality.Name.Dom) || {template: suggestion.descriptionText};
+  }
+
+  static render(arc: Arc, container, suggestion: Suggestion): SlotDomConsumer {
+    const content = SuggestDomConsumer._extractContent(suggestion) as {template, model?};
+    if (!content) {
+      return undefined;
+    }
+    const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan: suggestion});
     container.appendChild(suggestionContainer, container.firstElementChild);
     const rendering = {container: suggestionContainer, model: content.model};
     const consumer = new SlotDomConsumer(arc);

@@ -46,21 +46,17 @@ export class SuggestionComposer {
 
     this._suggestions = suggestions.sort(Suggestion.compare);
     for (const suggestion of this._suggestions) {
-      // TODO(mmandlis): use modality-appropriate description.
-      const suggestionContent = {template: suggestion.descriptionText};
-      if (!suggestionContent) {
-        throw new Error('No suggestion content available');
-      }
-
       if (this._container) {
-        this.modalityHandler.suggestionConsumerClass.render(this.arc, this._container, suggestion, suggestionContent);
+        if (!this.modalityHandler.suggestionConsumerClass.render(this.arc, this._container, suggestion)) {
+          throw new Error(`Couldn't render suggestion for ${suggestion.hash}`);
+        }
       }
 
-      this._addInlineSuggestion(suggestion, suggestionContent);
+      this._addInlineSuggestion(suggestion);
     }
   }
 
-  private _addInlineSuggestion(suggestion, suggestionContent): void {
+  private _addInlineSuggestion(suggestion: Suggestion): void {
     const remoteSlots = suggestion.plan.slots.filter(s => !!s.id);
     if (remoteSlots.length !== 1) {
       return;
@@ -88,12 +84,12 @@ export class SuggestionComposer {
 
     const handleIds = context.spec.handles.map(
       handleName => context.sourceSlotConsumer.consumeConn.particle.connections[handleName].handle.id);
-    if (!handleIds.find(handleId => suggestion.plan.handles.find(handle => handle.id === handleId))) {
+    if (!handleIds.find(handleId => suggestion.plan.handles.some(handle => handle.id === handleId))) {
       // the suggestion doesn't use any of the handles that the context is restricted to.
       return;
     }
 
-    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this.arc, this._slotComposer.containerKind, suggestion, suggestionContent, (eventlet) => {
+    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this.arc, this._slotComposer.containerKind, suggestion, (eventlet) => {
       const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
       suggestConsumer.dispose();
       if (suggestion) {
