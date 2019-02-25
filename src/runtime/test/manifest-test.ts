@@ -60,7 +60,7 @@ describe('manifest', () => {
       assert.lengthOf(recipe.patterns, 1);
       assert.equal(recipe.patterns[0], 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best handle');
-      const type = recipe.handleConnections[0].rawType;
+      const type = recipe.handleConnections[0]._resolvedType;
       assert.lengthOf(Object.keys(manifest.schemas), 1);
       const schema = Object.values(manifest.schemas)[0] as Schema;
       assert.lengthOf(Object.keys(schema.description), 3);

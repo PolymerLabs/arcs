@@ -50,10 +50,8 @@ describe('Recipe Particle', () => {
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
       const listConnType = listConn.type as CollectionType<TypeVariable>;
       const listUnpackedVariable = listConnType.collectionType;
-      // NOTE: During cloning, particle connections' rawType is cloned, but particle-spec
-      // connections' types remaing the same.
       assert.isTrue(ifaceVariable.equals(listUnpackedVariable));
-      // assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
+      assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });
   it('verifies is resolved for optional connections', async () =>  {

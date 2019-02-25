@@ -20,7 +20,7 @@ export class HandleConnection {
   _recipe: Recipe;
   _name: string;
   _tags: string[] = [];
-  _rawType: Type | undefined = undefined;
+  private resolvedType: Type | undefined = undefined;
   _direction: Direction | undefined = undefined;
   _particle: Particle;
   _handle: Handle | undefined = undefined;
@@ -39,10 +39,10 @@ export class HandleConnection {
     }
     const handleConnection = new HandleConnection(this._name, particle);
     handleConnection._tags = [...this._tags];
-    // Note that _rawType will be cloned later by the particle that references this connection.
+    // Note: _resolvedType will be cloned later by the particle that references this connection.
     // Doing it there allows the particle to maintain variable associations across the particle
     // scope.
-    handleConnection._rawType = this._rawType;
+    handleConnection.resolvedType = this.resolvedType;
     handleConnection._direction = this._direction;
     if (this._handle != undefined) {
       handleConnection._handle = cloneMap.get(this._handle);
@@ -51,6 +51,13 @@ export class HandleConnection {
     }
     cloneMap.set(this, handleConnection);
     return handleConnection;
+  }
+
+  // Note: don't call this method directly, only called from particle cloning.
+  cloneTypeWithResolutions(variableMap) {
+    if (this.resolvedType) {
+      this.resolvedType = this.resolvedType._cloneWithResolutions(variableMap);
+    }
   }
 
   _normalize() {
@@ -76,14 +83,11 @@ export class HandleConnection {
   getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get tags() { return this._tags; }
   get type() {
-    if (this._rawType) {
-      return this._rawType;
+    if (this.resolvedType) {
+      return this.resolvedType;
     }
     const spec = this.spec;
     return spec ? spec.type : null;
-  }
-  get rawType() {
-    return this._rawType;
   }
   get direction() { // in/out/inout/host/consume/provide
     if (this._direction) {
@@ -103,7 +107,7 @@ export class HandleConnection {
 
   set tags(tags: string[]) { this._tags = tags; }
   set type(type: Type) {
-    this._rawType = type;
+    this.resolvedType = type;
     this._resetHandleType();
   }
 
@@ -148,16 +152,15 @@ export class HandleConnection {
         }
         return false;
       }
-      if (!this.rawType) {
-        this._rawType = connectionSpec.type;
-      }
-      if (this.type) {
-        if (!connectionSpec.isCompatibleType(this.rawType)) {
+      if (this.resolvedType) {
+        if (!connectionSpec.isCompatibleType(this.resolvedType)) {
           if (options && options.errors) {
-            options.errors.set(this, `Type '${this.rawType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
+            options.errors.set(this, `Type '${this.resolvedType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
           }
           return false;
         }
+    } else {
+        this.resolvedType = connectionSpec.type;
       }
     }
     return true;

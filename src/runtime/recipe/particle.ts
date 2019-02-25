@@ -79,14 +79,10 @@ export class Particle {
 
   _cloneConnectionRawTypes(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
     for (const connection of Object.values(this._connections)) {
-      if (connection.rawType) {
-        connection._rawType = connection.rawType._cloneWithResolutions(variableMap);
-      }
+      connection.cloneTypeWithResolutions(variableMap);
     }
     for (const connection of this._unnamedConnections) {
-      if (connection.rawType) {
-        connection._rawType = connection.rawType._cloneWithResolutions(variableMap);
-      }
+      connection.cloneTypeWithResolutions(variableMap);
     }
   }
 
