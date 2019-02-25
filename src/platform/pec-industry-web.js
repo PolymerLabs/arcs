@@ -1,9 +1,5 @@
 const WORKER_PATH = `https://$build/worker.js`;
 
-// const log = (...args) => {
-//   document.body.appendChild(document.createElement('div')).innerText = args.join();
-// };
-
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = _expandUrls(loader._urlMap);
