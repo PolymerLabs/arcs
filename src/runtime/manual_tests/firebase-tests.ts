@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Id} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {resetStorageForTesting} from '../storage/firebase-storage.js';
+import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -105,10 +105,10 @@ describe('firebase', function() {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
-  
+
       const var1 = await storage.construct('test0', barType, key1) as VariableStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
-      
+
       const result = await var1.get();
       assert.equal(result.value, 'underlying');
 
@@ -169,7 +169,7 @@ describe('firebase', function() {
 
       await var1.clear();
       await var2.set(bar(3));
-     
+
       assert.isNull(await var1.get());
       assert.deepEqual(await var2.get(), bar(3));
       assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
@@ -261,12 +261,12 @@ describe('firebase', function() {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
-  
+
       const collection1 = await storage.construct('test0', barType.collectionOf(), key1) as CollectionStorageProvider;
-  
+
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.equal(result.value, 'value1');
       result = await collection1.get('id2');
@@ -284,16 +284,16 @@ describe('firebase', function() {
         schema Bar
           Text value
       `);
-  
+
       const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
-  
+
       const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), key1) as CollectionStorageProvider;
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
-      
+
       let result = await collection1.get('id1');
       assert.equal(result.storageKey, 'value1');
       result = await collection1.get('id2');
@@ -301,7 +301,7 @@ describe('firebase', function() {
 
       assert.isFalse(collection1.referenceMode);
       assert.isNull(collection1.backingStore);
-    }); 
+    });
 
     it('supports removeMultiple', async () => {
       const manifest = await Manifest.parse(`
@@ -355,7 +355,7 @@ describe('firebase', function() {
       await col1.removeMultiple([{id: 'id1', keys: []}, {id: 'id2', keys: []}]);
       assert.sameDeepMembers(await col1.toList(), [bar(3)]);
       assert.sameDeepMembers(await col2.toList(), [bar(2)]);
-      
+
       // Remove ops are *not* currently propagated to the backing.
       assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
 
@@ -745,8 +745,8 @@ describe('firebase', function() {
       const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactory:undefined, slotComposer: undefined, context: manifest});
       const varStore2 = arc2.findStoreById(varStore.id) as VariableStorageProvider;
       const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
-      const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider; 
-      
+      const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
+
       // New storage providers should have been created.
       assert.notStrictEqual(varStore2, varStore);
       assert.notStrictEqual(colStore2, colStore);
@@ -830,7 +830,7 @@ describe('firebase', function() {
         {id: 'id8', keys: ['key8b', 'key8c']},
       ]);
       assert.sameDeepMembers(await backing.toList(), [bar(3), bar(5), bar(8)]);
-    
+
       // removeMultiple: empty item list deletes everything
       await backing.removeMultiple([]);
       assert.isEmpty(await backing.toList());

@@ -12,7 +12,7 @@ import fs from 'fs';
 import {Manifest} from '../build/runtime/manifest.js';
 import {EntityType} from '../build/runtime/type.js';
 import {StorageProviderFactory} from '../build/runtime/storage/storage-provider-factory.js';
-import {resetStorageForTesting} from '../build/runtime/storage/firebase-storage.js';
+import {resetStorageForTesting} from '../build/runtime/storage/firebase/firebase-storage.js';
 
 // Imports Spotify playlists from JSON files, formatted as per the API
 // described on https://developer.spotify.com/console/get-playlist
