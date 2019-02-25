@@ -1,6 +1,8 @@
 //import '../lib/build/pouchdb.js';
 //import '../lib/build/firebase.js';
 //import '../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
+import {Xen} from '../lib/xen.js';
+Xen.Debug.level = window.logLevel;
 
 console.log(`version: feb-22.0`);
 
@@ -9,6 +11,7 @@ window.DeviceClient = window.DeviceClient || {
   }
 };
 
+// usage:
 // ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`)
 
 window.ShellApi = {
@@ -33,12 +36,6 @@ window.ShellApi = {
     return true;
   }
 };
-
-import {Xen} from '../lib/xen.js';
-//const params = (new URL(document.location)).searchParams;
-//const logLevel = params.get('logLevel') || (params.has('log') ? 2 : Xen.Debug.level);
-//window.debugLevel = Xen.Debug.level = logLevel;
-Xen.Debug.level = window.logLevel;
 
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {Stores} from '../lib/stores.js';

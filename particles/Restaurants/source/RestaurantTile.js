@@ -12,16 +12,16 @@ defineParticle(({DomParticle, html}) => {
 
   <style>
     :host {
-      --tile-size: var(--tile-width, calc(100vw - 36px));
+      --tile-size: var(--tile-width, calc(100vw - 42px));
     }
     @media (min-width: 720px) {
       :host {
-        --tile-size: var(--tile-width, calc(50vw - 36px));
+        --tile-size: var(--tile-width, calc(50vw - 42px));
       }
     }
     @media (min-width: 1100px) {
       :host {
-        --tile-size: var(--tile-width, calc(33vw - 36px));
+        --tile-size: var(--tile-width, calc(33vw - 42px));
       }
     }
   </style>
