@@ -628,20 +628,19 @@ export class Recipe {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
+  get allSpecifiedConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
+    return [].concat(...
+        this.particles.filter(p => p.spec && p.spec.connections.length > 0)
+                      .map(particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
+  }
+
   getFreeConnections(type?: Type): {particle: Particle, connSpec: ConnectionSpec}[] {
-    const freeConnections: {particle: Particle, connSpec: ConnectionSpec}[] = [];
-    for (const particle of this.particles) {
-      if (particle.spec) {
-        for (const connSpec of particle.spec.connections) {
-          if (!connSpec.isOptional &&
-              !particle.connections[connSpec.name] &&
-              (!type || type.equals(connSpec.type))) {
-            freeConnections.push({particle, connSpec});
-          }
-        }
-      }
-    }
-    return freeConnections;
+    return this.allSpecifiedConnections.filter(
+        ({particle, connSpec}) => !connSpec.isOptional &&
+                                  connSpec.name !== 'descriptions' &&
+                                  connSpec.direction !== 'host' &&
+                                  !particle.connections[connSpec.name] &&
+                                  (!type || type.equals(connSpec.type)));
   }
 
   findHandleByID(id): Handle {
@@ -669,22 +668,6 @@ export class Recipe {
       }
     }
     return slot;
-  }
-
-  // TODO: Unify getDisconnectedConnections, getFreeConnections.
-  getDisconnectedConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
-    const disconnected: {particle: Particle, connSpec: ConnectionSpec}[] = [];
-    for (const particle of this.particles) {
-      if (particle.spec) {
-        for (const connSpec of particle.spec.connections) {
-          if (!connSpec.isOptional && connSpec.name !== 'descriptions' &&
-              connSpec.direction !== 'host' && !particle.connections[connSpec.name]) {
-            disconnected.push({particle, connSpec});
-          }
-        }
-      }
-    }
-    return disconnected;
   }
 }
 
