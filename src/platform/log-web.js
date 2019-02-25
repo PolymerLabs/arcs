@@ -7,7 +7,7 @@
 
 let logLevel = 2;
 if (typeof window !== 'undefined') {
-  logLevel = window.logLevel || logLevel;
+  logLevel = ('logLevel' in window) ? window.logLevel : logLevel;
   console.log(`binding log-web, logLevel = ${logLevel}`);
 }
 
