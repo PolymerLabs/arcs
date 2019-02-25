@@ -19,22 +19,21 @@ http://polymer.github.io/PATENTS.txt
   <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700"> -->
 
   <style>
-    /* body {
-      margin: 0;
-      min-width: 320px;
-      overflow-x: hidden;
-      overflow-y: scroll;
-      background-color: white;
-    } */
     body, button, input {
       font-family: 'Google Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
+    }
+    [scroller] {
+      display: inline-block;
+      max-height: 400px;
+      overflow: auto;
     }
     table {
       font-size: 80%;
       border: 1px solid #000000;
       text-align: left;
       border-collapse: collapse;
+      table-layout: fixed;
     }
     td, th {
       border: 1px solid #000000;
@@ -54,10 +53,26 @@ http://polymer.github.io/PATENTS.txt
 </head>
 <body>
 
-  <table id="arcs">
-    <tr><th colspan="2">Arcs</th></tr>
-    <tr><th>Id</th><th>Description</th></tr>
+  <table id="user">
+    <thead>
+      <tr><th colspan="1">User</th><th></th></tr>
+    </thead>
+    <tbody>
+    </tbody>
   </table>
+
+  <br>
+
+  <div scroller>
+    <table id="arcs">
+      <thead>
+        <tr><th colspan="2">Arcs</th></tr>
+        <tr><th>Id</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
 
 </body>
 </html>

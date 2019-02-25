@@ -16,7 +16,7 @@ import {App} from './app.js';
 const msg = msg => document.body.appendChild(Object.assign(document.createElement('div'), {innerHTML: msg}));
 
 const addRow = (tableId, key, cols) => {
-  const table = document.body.querySelector(`#${tableId}`);
+  const table = document.body.querySelector(`#${tableId} tbody`);
   const html = cols.map(msg => `<td>${msg}</td>`).join('');
   const node = table.appendChild(Object.assign(document.createElement('tr'), {innerHTML: html}));
   node.id = key;
