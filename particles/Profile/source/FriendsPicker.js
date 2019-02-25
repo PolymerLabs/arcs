@@ -111,7 +111,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       const avatarModels = others.map((p, i) => {
         const avatar = this.boxQuery(avatars, p.id)[0];
         const name = this.boxQuery(names, p.id)[0];
-        const url = (avatar && avatar.url) || `https://$shell/assets/avatars/user%20(0).png`;
+        const url = (avatar && avatar.url) || `https://$shells/assets/avatars/user%20(0).png`;
         return {
           key: i,
           value: p.id,

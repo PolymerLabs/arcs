@@ -6,6 +6,8 @@ import '../lib/build/pouchdb.js';
 import '../../build/runtime/storage/pouchdb/pouchdb-provider.js';
 // whitelist components
 import '../configuration/whitelisted.js';
+// shell
+import './elements/web-shell.js';
 
 import {Xen} from '../lib/xen.js';
 const params = (new URL(document.location)).searchParams;
@@ -20,7 +22,7 @@ import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.
     await DevtoolsConnection.onceConnected;
   }
   // Shell blocks until root is provided
-  document.querySelector('web-shell').root = '../../';
+  document.querySelector('web-shell').root = '../..';
   /*
   document.querySelector('body').appendChild(document.createElement('web-shell'));
   // configure root path

@@ -75,7 +75,7 @@ defineParticle(({DomParticle, html, resolver}) => {
     }
     render({avatar}) {
       return {
-        avatar: avatar && avatar.url || resolver(`https://$shell/assets/avatars/user (0).png`)
+        avatar: avatar && avatar.url || resolver(`https://$shells/assets/avatars/user (0).png`)
       };
     }
     onUpload(e) {
