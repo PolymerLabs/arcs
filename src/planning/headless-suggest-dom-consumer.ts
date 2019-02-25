@@ -11,21 +11,19 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
+import {Suggestion} from './plan/suggestion.js';
 
 export class HeadlessSuggestDomConsumer extends SuggestDomConsumer {
   _eventHandler;
   _setContentPromise;
-  _suggestion;
-  _suggestionContent;
   _content;
   contentAvailable;
   _contentAvailableResolve;
 
-  constructor(arc, containerKind, suggestion, suggestionContent, eventHandler) {
-    super(arc, containerKind, suggestion, suggestionContent, eventHandler);
-    this._suggestion = suggestion;
-    this._suggestionContent = suggestionContent.template ? suggestionContent : {
-      template: `<dummy-suggestion>${suggestionContent}</dummy-element>`,
+  constructor(arc: Arc, containerKind, suggestion: Suggestion, eventHandler) {
+    super(arc, containerKind, suggestion, eventHandler);
+    this._suggestionContent = this._suggestionContent.template ? this._suggestionContent : {
+      template: `<dummy-suggestion>${this._suggestionContent}</dummy-element>`,
       templateName: 'dummy-suggestion',
       model: {}
     };
@@ -45,7 +43,7 @@ export class HeadlessSuggestDomConsumer extends SuggestDomConsumer {
     }
   }
 
-  static render(arc: Arc, container, plan, content): SuggestDomConsumer {
+  static render(arc: Arc, container, suggestion: Suggestion): SuggestDomConsumer {
     return undefined;
   }
 
