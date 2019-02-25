@@ -115,7 +115,6 @@ export class MatchRecipeByVerb extends Strategy {
               if (connection && connection.handle != null) {
                 return false;
               }
-              // const connSpec = connection.spec;
               if (!MatchRecipeByVerb.connectionMatchesConstraint(connection || connSpec, constraint)) {
                 return false;
               }

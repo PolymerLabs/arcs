@@ -251,10 +251,12 @@ export class ParticleSpec {
     return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
   }
 
+  // Note: this method shouldn't be called directly.
   clone(): ParticleSpec {
     return ParticleSpec.fromLiteral(this.toLiteral());
   }
 
+  // Note: this method shouldn't be called directly (only as part of particle copying).
   cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
     const spec = this.clone();
     this.connectionMap.forEach((conn, name) => {

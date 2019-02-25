@@ -21,7 +21,7 @@ export class FindHostedParticle extends Strategy {
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
         const matchingParticleSpecs = this._findMatchingParticleSpecs(
-            arc, connectionSpec, /* connection= */ null, connectionSpec.type);
+            arc, connectionSpec, connectionSpec.type);
         if (!matchingParticleSpecs) {
           return undefined;
         }
@@ -38,15 +38,12 @@ export class FindHostedParticle extends Strategy {
         return results;
       }
 
-      private _findMatchingParticleSpecs(arc: Arc, connectionSpec: ConnectionSpec,
-          handleConnection: HandleConnection, connectionType: Type): ParticleSpec[] {
+      private _findMatchingParticleSpecs(
+          arc: Arc, connectionSpec: ConnectionSpec, connectionType: Type): ParticleSpec[] {
         if (!connectionSpec) {
           return undefined;
         }
         if (connectionSpec.direction !== 'host') {
-          return undefined;
-        }
-        if (handleConnection && handleConnection.handle) {
           return undefined;
         }
         assert(connectionType instanceof InterfaceType);

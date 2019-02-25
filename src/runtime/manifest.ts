@@ -864,15 +864,10 @@ ${e.message}
                 assert(theSlot !== providedSlot);
                 assert(!theSlot.name && providedSlot);
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
-                //assert(theSlot.handleConnections.length === 0);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
                 items.byName.set(ps.name,providedSlot);
                 recipe.removeSlot(theSlot);
-                // theSlot.name = providedSlot.name;
-                // theSlot.sourceConnection = providedSlot.sourceConnection;
-                // theSlot.sourceConnection.providedSlots[theSlot.name] = theSlot;
-                // theSlot.recipe.removeSlot(providedSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);
               }
