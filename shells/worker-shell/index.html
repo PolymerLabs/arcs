@@ -1,8 +1,0 @@
-<!doctype html>
-<script>
-  const worker = new Worker('./worker.js');
-  worker.onmessage = e => {
-    console.log(e.data);
-    document.body.innerHTML = JSON.stringify(e.data);
-  }
-</script>
