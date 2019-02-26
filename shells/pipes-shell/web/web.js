@@ -92,7 +92,7 @@ const run = async json => {
       await initContext();
     }
     const composer = new RamSlotComposer();
-    await App(composer, context, callback, json);
+    window.arc = await App(composer, context, callback, json);
   } catch (x) {
     console.error(x);
   }
