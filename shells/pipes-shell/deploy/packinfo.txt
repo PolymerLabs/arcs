@@ -1,7 +1,7 @@
 Hash: e655f353633eaef2c22d
 Version: webpack 4.27.0
-Time: 5061ms
-Built at: 02/25/2019 5:35:11 PM
+Time: 4924ms
+Built at: 02/25/2019 5:42:37 PM
    Asset     Size  Chunks             Chunk Names
 shell.js  632 KiB       0  [emitted]  shell
 Entrypoint shell = shell.js
