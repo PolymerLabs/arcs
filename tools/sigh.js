@@ -31,10 +31,6 @@ const sources = {
     buildDir: 'shells/lib/build'
   }],
   ts: {
-    inputs: [
-      'src/runtime',
-      'src/planning',
-    ],
     buildDir: 'build'
   }
 };

@@ -8,17 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Planner} from '../../planning/planner.js';
-import {StrategyTestHelper} from '../../planning/test/strategies/strategy-test-helper.js';
-import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
-import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-import {Loader} from '../loader.js';
-import {Random} from '../random.js';
-import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
-import {TestHelper} from '../testing/test-helper.js';
+import {Planner} from '../planning/planner.js';
+import {StrategyTestHelper} from '../planning/test/strategies/strategy-test-helper.js';
+import {assert} from '../platform/chai-web.js';
+import {Arc} from '../runtime/arc.js';
+import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
+import {Loader} from '../runtime/loader.js';
+import {Random} from '../runtime/random.js';
+import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
+import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
+import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {TestHelper} from '../runtime/testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new MockSlotComposer().newExpectations();
