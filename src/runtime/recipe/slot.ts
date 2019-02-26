@@ -8,6 +8,7 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {HandleConnection} from './handle-connection.js';
+import {Handle} from './handle.js';
 import {Recipe} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {compareArrays, compareComparables, compareStrings} from './util.js';
@@ -20,8 +21,6 @@ export class Slot {
   private _tags = <string[]>[];
   _sourceConnection: SlotConnection | undefined = undefined;
   private _formFactor: string | undefined = undefined;
-  // can only be set if source connection is set and particle in slot connections is set
-  private _handleConnections = <HandleConnection[]>[];
   private _consumeConnections = <SlotConnection[]>[];
   constructor(recipe, name) {
     assert(recipe);
@@ -41,7 +40,6 @@ export class Slot {
   set tags(tags) { this._tags = tags; }
   get formFactor() { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
-  get handleConnections() { return this._handleConnections; }
   get sourceConnection() { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumeConnections; }
@@ -50,8 +48,17 @@ export class Slot {
     // the constructed {isSet: false, tags: []}?
     return (this.sourceConnection && this.sourceConnection.getSlotSpec()) ? this.sourceConnection.getSlotSpec().getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
   }
-  get handles() {
-    return this.handleConnections.map(connection => connection.handle).filter(a => a !== undefined);
+  get handles(): Handle[] {
+    const handles = [];
+    if (this.sourceConnection && this.sourceConnection.getSlotSpec()) {
+      for (const handleName of this.sourceConnection.getSlotSpec().getProvidedSlotSpec(this.name).handles) {
+        const handleConn = this.sourceConnection.particle.connections[handleName];
+        if (handleConn || handleConn.handle) {
+          handles.push(handleConn.handle);
+        }
+      }
+    }
+    return handles;
   }
 
   _copyInto(recipe, cloneMap) {
@@ -73,7 +80,6 @@ export class Slot {
       if (slot.sourceConnection) {
         slot.sourceConnection._providedSlots[slot.name] = slot;
       }
-      this._handleConnections.forEach(connection => slot._handleConnections.push(cloneMap.get(connection)));
     }
     this._consumeConnections.forEach(connection => {
       if (cloneMap.get(connection) && cloneMap.get(connection).targetSlot == undefined) {
@@ -107,8 +113,7 @@ export class Slot {
   }
 
   findHandleByID(id) {
-    const connection = this.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id === id);
-    return connection && connection.handle;
+    return this.handles.find(handle => handle.id === id);
   }
 
   removeConsumeConnection(slotConnection) {

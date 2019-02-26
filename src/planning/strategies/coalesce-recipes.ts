@@ -156,7 +156,7 @@ export class CoalesceRecipes extends Strategy {
           results.push((recipe, slot) => {
             // Find other handles that may be merged, as recipes are being coalesced.
             const otherToHandle = index.findCoalescableHandles(recipe, recipeParticle.recipe,
-              new Set(slot.handleConnections.map(hc => hc.handle).concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
+              new Set(slot.handles.concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
 
             const {cloneMap} = recipeParticle.recipe.mergeInto(slot.recipe);
             const slotConn = recipeParticle.getSlotConnectionByName(slot.name);

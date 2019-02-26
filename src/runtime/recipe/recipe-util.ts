@@ -89,31 +89,35 @@ export class RecipeUtil {
     function _buildNewHCMatches(recipe: Recipe, shapeHC: HandleConnection, match, outputList) {
       const {forward, reverse, score} = match;
       let matchFound = false;
-      for (const recipeHC of recipe.handleConnections) {
+      for (const recipeParticle of recipe.particles) {
+        if (!recipeParticle.spec) {
+          continue;
+        }
+        for (const recipeConnSpec of recipeParticle.spec.connections) {
         // TODO are there situations where multiple handleConnections should
         // be allowed to point to the same one in the recipe?
-        if (reverse.has(recipeHC)) {
+        if (reverse.has(recipeConnSpec)) {
           continue;
         }
 
         // TODO support unnamed shape particles.
-        if (recipeHC.particle.name !== shapeHC.particle.name) {
+        if (recipeParticle.name !== shapeHC.particle.name) {
           continue;
         }
 
-        if (shapeHC.name && shapeHC.name !== recipeHC.name) {
+        if (shapeHC.name && shapeHC.name !== recipeConnSpec.name) {
           continue;
         }
 
         const acceptedDirections = {'in': ['in', 'inout'], 'out': ['out', 'inout'], '=': ['in', 'out', 'inout'], 'inout': ['inout'], 'host': ['host']};
-        if (recipeHC.direction) {
-          if (!acceptedDirections[shapeHC.direction].includes(
-                  recipeHC.direction)) {
+        if (recipeConnSpec.direction) {
+          if (!acceptedDirections[shapeHC.direction].includes(recipeConnSpec.direction)) {
             continue;
           }
         }
 
-        if (shapeHC.handle && recipeHC.handle && shapeHC.handle.localName &&
+        const recipeHC = recipeParticle.connections[recipeConnSpec.name];
+        if (shapeHC.handle && recipeHC && recipeHC.handle && shapeHC.handle.localName &&
             shapeHC.handle.localName !== recipeHC.handle.localName) {
           continue;
         }
@@ -121,8 +125,8 @@ export class RecipeUtil {
         // recipeHC is a candidate for shapeHC. shapeHC references a
         // particle, so recipeHC must reference the matching particle,
         // or a particle that isn't yet mapped from shape.
-        if (reverse.has(recipeHC.particle)) {
-          if (reverse.get(recipeHC.particle) !== shapeHC.particle) {
+        if (reverse.has(recipeParticle)) {
+          if (reverse.get(recipeParticle) !== shapeHC.particle) {
             continue;
           }
         } else if (forward.has(shapeHC.particle)) {
@@ -135,7 +139,7 @@ export class RecipeUtil {
         // shapeHC doesn't necessarily reference a handle, but if it does
         // then recipeHC needs to reference the matching handle, or one
         // that isn't yet mapped, or no handle yet.
-        if (shapeHC.handle && recipeHC.handle) {
+        if (shapeHC.handle && recipeHC && recipeHC.handle) {
           if (reverse.has(recipeHC.handle)) {
             if (reverse.get(recipeHC.handle) !== shapeHC.handle) {
               continue;
@@ -164,12 +168,12 @@ export class RecipeUtil {
 
         // clone forward and reverse mappings and establish new components.
         const newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
-        assert(!newMatch.reverse.has(recipeHC.particle) || newMatch.reverse.get(recipeHC.particle) === shapeHC.particle);
-        assert(!newMatch.forward.has(shapeHC.particle) || newMatch.forward.get(shapeHC.particle) === recipeHC.particle);
-        newMatch.forward.set(shapeHC.particle, recipeHC.particle);
-        newMatch.reverse.set(recipeHC.particle, shapeHC.particle);
+        assert(!newMatch.reverse.has(recipeParticle) || newMatch.reverse.get(recipeParticle) === shapeHC.particle);
+        assert(!newMatch.forward.has(shapeHC.particle) || newMatch.forward.get(shapeHC.particle) === recipeParticle);
+        newMatch.forward.set(shapeHC.particle, recipeParticle);
+        newMatch.reverse.set(recipeParticle, shapeHC.particle);
         if (shapeHC.handle) {
-          if (!recipeHC.handle) {
+          if (!recipeHC || !recipeHC.handle) {
             if (!newMatch.forward.has(shapeHC.handle)) {
               newMatch.forward.set(shapeHC.handle, null);
               newMatch.score -= 2;
@@ -179,10 +183,11 @@ export class RecipeUtil {
             newMatch.reverse.set(recipeHC.handle, shapeHC.handle);
           }
         }
-        newMatch.forward.set(shapeHC, recipeHC);
-        newMatch.reverse.set(recipeHC, shapeHC);
+        newMatch.forward.set(shapeHC, recipeConnSpec);
+        newMatch.reverse.set(recipeConnSpec, shapeHC);
         outputList.push(newMatch);
         matchFound = true;
+      }
       }
 
       if (matchFound === false) {

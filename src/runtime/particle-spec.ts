@@ -13,6 +13,8 @@ import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {Direction} from './recipe/handle-connection.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {Schema} from './schema.js';
+import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
@@ -110,7 +112,7 @@ export class SlotSpec {
     });
   }
 
-  getProvidedSlotSpec(name) {
+  getProvidedSlotSpec(name): ProvidedSlotSpec {
     return this.providedSlots.find(ps => ps.name === name);
   }
 }
@@ -217,6 +219,10 @@ export class ParticleSpec {
     return false;
   }
 
+  getConnectionByName(name: string): ConnectionSpec {
+    return this.connectionMap.get(name);
+  }
+
   getSlotSpec(slotName: string) {
     return this.slots.get(slotName);
   }
@@ -245,8 +251,18 @@ export class ParticleSpec {
     return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
   }
 
-  clone() {
+  // Note: this method shouldn't be called directly.
+  clone(): ParticleSpec {
     return ParticleSpec.fromLiteral(this.toLiteral());
+  }
+
+  // Note: this method shouldn't be called directly (only as part of particle copying).
+  cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
+    const spec = this.clone();
+    this.connectionMap.forEach((conn, name) => {
+      spec.connectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
+    });
+    return spec;
   }
 
   equals(other) {

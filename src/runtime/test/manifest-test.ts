@@ -60,7 +60,7 @@ describe('manifest', () => {
       assert.lengthOf(recipe.patterns, 1);
       assert.equal(recipe.patterns[0], 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best handle');
-      const type = recipe.handleConnections[0].rawType;
+      const type = recipe.handleConnections[0]._resolvedType;
       assert.lengthOf(Object.keys(manifest.schemas), 1);
       const schema = Object.values(manifest.schemas)[0] as Schema;
       assert.lengthOf(Object.keys(schema.description), 3);
@@ -69,7 +69,7 @@ describe('manifest', () => {
     verify(manifest);
     // TODO(dstockwell): The connection between particles and schemas does
     //                   not roundtrip the same way.
-    const type = manifest.recipes[0].handleConnections[0].rawType;
+    const type = manifest.recipes[0].handleConnections[0].type;
     assert.equal('one-s', type.toPrettyString());
     assert.equal('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -954,7 +954,7 @@ ${particleStr1}
     assert.equal(slotB.connections[0]._name, 'slotB');
     assert.equal(slotB.connections[1]._name, 'slotB');
 
-    const directions = slotB.connections.map(c => c._direction);
+    const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);
     assert.include(directions, '`provide');
     assert.include(directions, '`consume');
@@ -1857,7 +1857,7 @@ resource SomeName
     assert.equal(recipe.particles[0].primaryVerb, 'verb');
     assert.isUndefined(recipe.particles[0].spec);
     const slotConnection = recipe.particles[0].connections.foo;
-    assert.equal(slotConnection._direction, '`consume');
+    assert.equal(slotConnection.direction, '`consume');
 
     assert.lengthOf(recipe.handles, 1);
     assert.lengthOf(recipe.handles[0].connections, 1);

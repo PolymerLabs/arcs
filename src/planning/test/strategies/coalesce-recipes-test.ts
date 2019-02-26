@@ -148,7 +148,8 @@ describe('CoalesceRecipes', () => {
 
     // hostedParticle connection should not be affected.
     const p2 = recipe.particles.find(p => p.name === 'P2');
-    assert.isUndefined(p2.connections['hostedParticle'].handle);
+    assert.equal('hostedParticle', p2.spec.getConnectionByName('hostedParticle').name);
+    assert.isUndefined(p2.connections['hostedParticle']);
   });
 
   it('does not coalesce required slots if handle constraint is not met', async () => {

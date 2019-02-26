@@ -9,7 +9,11 @@
 import '../../artifacts/Common/List.manifest'
 import '../../artifacts/Products/test/ProductFilter.manifest'
 import '../../artifacts/Products/test/ProductIsBook.manifest'
-import '../../artifacts/Products/ShowProducts.recipes'
+
+import '../../artifacts/Products/Product.schema'
+particle ShowProduct in '../../artifacts/Products/source/ShowProduct.js'
+  in Product product
+  consume item
 
 // Filter books and display them.
 recipe

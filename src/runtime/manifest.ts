@@ -864,7 +864,6 @@ ${e.message}
                 assert(theSlot !== providedSlot);
                 assert(!theSlot.name && providedSlot);
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
-                assert(theSlot.handleConnections.length === 0);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
                 items.byName.set(ps.name,providedSlot);

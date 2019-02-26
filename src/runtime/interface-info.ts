@@ -360,8 +360,7 @@ ${this._slotsToManifestString()}
   }
 
   _restrictThis(particleSpec): boolean {
-    const handleMatches = this.handles.map(h =>
-      particleSpec.connections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
+    const handleMatches = this.handles.map(h => particleSpec.connections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
                               .filter(a => a.result !== false)
     );
 

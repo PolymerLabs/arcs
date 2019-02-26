@@ -20,11 +20,12 @@ export class MatchFreeHandlesToConnections extends Strategy {
           return;
         }
 
-        const matchingConnections = recipe.getDisconnectedConnections();
+        const matchingConnections = recipe.getFreeConnections();
 
-        return matchingConnections.map(connection => {
+        return matchingConnections.map(({particle, connSpec}) => {
           return (recipe, handle) => {
-            const newConnection = recipe.updateToClone({connection}).connection;
+            const cloneParticle = recipe.updateToClone({particle}).particle;
+            const newConnection = cloneParticle.addConnectionName(connSpec.name);
             newConnection.connectToHandle(handle);
             return 1;
           };

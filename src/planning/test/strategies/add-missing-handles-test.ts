@@ -82,6 +82,6 @@ describe('AddMissingHandles', () => {
     assert.lengthOf(results, 1);
     const recipe = results[0];
     assert.lengthOf(recipe.handles, 1);
-    assert.isUndefined(recipe.particles[0].connections['hosted'].handle);
+    assert.isUndefined(recipe.particles[0].connections['hosted']);
   });
 });

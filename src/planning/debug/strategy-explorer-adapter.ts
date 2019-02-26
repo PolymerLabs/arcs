@@ -17,4 +17,36 @@ export class StrategyExplorerAdapter {
       });
     }
   }
+
+  // This is a helper method that logs all possible derivations of stratetegies that contributed
+  // to generating the resolved recipes.
+  static printGenerations(generations) {
+    for (let i = 0; i < generations.length; ++i) {
+      for (let j = 0; j < generations[i].generated.length; ++j) {
+        const gg = generations[i].generated[j];
+        if (!gg.result.isResolved()) {
+          continue;
+        }
+        const results = StrategyExplorerAdapter._collectDerivation(gg.derivation, []);
+        console.log(results.map(r => `gen [${i}][${j}] ${r.reverse().join(' -> ')}`).join('\n'));
+      }
+    }
+  }
+
+  static _collectDerivation(derivation, allResults) {
+    for (const d of derivation) {
+      const results = [];
+      results.push(d.strategy.constructor.name);
+
+      if (d.parent) {
+        const innerResults = StrategyExplorerAdapter._collectDerivation(d.parent.derivation, []);
+        for (const ir of innerResults) {
+          allResults.push([].concat(results, ir));
+        }
+      } else {
+        allResults.push(results);
+      }
+    }
+    return allResults;
+  }
 }

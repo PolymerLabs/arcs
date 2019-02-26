@@ -5,13 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {ConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class CreateDescriptionHandle extends Strategy {
   async generate(inputParams) {
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onHandleConnection(recipe, handleConnection) {
+      onHandleConnection(recipe: Recipe, handleConnection: HandleConnection) {
         if (handleConnection.handle) {
           return undefined;
         }
@@ -20,11 +23,24 @@ export class CreateDescriptionHandle extends Strategy {
         }
 
         return (recipe, handleConnection) => {
-          const handle = recipe.newHandle();
-          handle.fate = 'create';
-          handleConnection.connectToHandle(handle);
-          return 1;
+          return this._createAndConnectHandle(handleConnection);
         };
+      }
+
+      onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
+        if (connectionSpec.name !== 'descriptions') {
+          return undefined;
+        }
+        return (recipe, particle, connectionSpec) => {
+          return this._createAndConnectHandle(particle.addConnectionName(connectionSpec.name));
+        };
+      }
+
+      _createAndConnectHandle(handleConnection: HandleConnection): number {
+        const handle = handleConnection.recipe.newHandle();
+        handle.fate = 'create';
+        handleConnection.connectToHandle(handle);
+        return 1;
       }
     }(StrategizerWalker.Permuted), this);
   }

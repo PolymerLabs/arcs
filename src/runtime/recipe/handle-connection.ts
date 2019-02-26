@@ -20,8 +20,7 @@ export class HandleConnection {
   _recipe: Recipe;
   _name: string;
   _tags: string[] = [];
-  _type: Type | undefined = undefined;
-  _rawType: Type | undefined = undefined;
+  private resolvedType: Type | undefined = undefined;
   _direction: Direction | undefined = undefined;
   _particle: Particle;
   _handle: Handle | undefined = undefined;
@@ -40,10 +39,10 @@ export class HandleConnection {
     }
     const handleConnection = new HandleConnection(this._name, particle);
     handleConnection._tags = [...this._tags];
-    // Note that _rawType will be cloned later by the particle that references this connection.
+    // Note: _resolvedType will be cloned later by the particle that references this connection.
     // Doing it there allows the particle to maintain variable associations across the particle
     // scope.
-    handleConnection._rawType = this._rawType;
+    handleConnection.resolvedType = this.resolvedType;
     handleConnection._direction = this._direction;
     if (this._handle != undefined) {
       handleConnection._handle = cloneMap.get(this._handle);
@@ -52,6 +51,13 @@ export class HandleConnection {
     }
     cloneMap.set(this, handleConnection);
     return handleConnection;
+  }
+
+  // Note: don't call this method directly, only called from particle cloning.
+  cloneTypeWithResolutions(variableMap) {
+    if (this.resolvedType) {
+      this.resolvedType = this.resolvedType._cloneWithResolutions(variableMap);
+    }
   }
 
   _normalize() {
@@ -77,15 +83,19 @@ export class HandleConnection {
   getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get tags() { return this._tags; }
   get type() {
-    if (this._type) {
-      return this._type;
+    if (this.resolvedType) {
+      return this.resolvedType;
     }
-    return this._rawType;
+    const spec = this.spec;
+    return spec ? spec.type : null;
   }
-  get rawType() {
-    return this._rawType;
+  get direction() { // in/out/inout/host/consume/provide
+    if (this._direction) {
+      return this._direction;
+    }
+    const spec = this.spec;
+    return spec ? spec.direction : null;
   }
-  get direction() { return this._direction; } // in/out
   get isInput() {
     return this.direction === 'in' || this.direction === 'inout';
   }
@@ -97,8 +107,7 @@ export class HandleConnection {
 
   set tags(tags: string[]) { this._tags = tags; }
   set type(type: Type) {
-    this._rawType = type;
-    this._type = undefined;
+    this.resolvedType = type;
     this._resetHandleType();
   }
 
@@ -128,19 +137,30 @@ export class HandleConnection {
       }
       return false;
     }
-    if (this.type && this.spec) {
+    if (this.particle.spec && this.name) {
       const connectionSpec = this.spec;
-      if (!connectionSpec.isCompatibleType(this.rawType)) {
+      if (!connectionSpec) {
         if (options && options.errors) {
-          options.errors.set(this, `Type '${this.rawType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
+          options.errors.set(this, `Connection ${this.name} is not defined by ${this.particle.name}.`);
         }
         return false;
       }
-      if (this.direction !== connectionSpec.direction) {
+      if (this.direction !== connectionSpec.direction &&
+          !(['in', 'out'].includes(this.direction) && connectionSpec.direction === 'inout')) {
         if (options && options.errors) {
           options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.getQualifiedName()}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
         }
         return false;
+      }
+      if (this.resolvedType) {
+        if (!connectionSpec.isCompatibleType(this.resolvedType)) {
+          if (options && options.errors) {
+            options.errors.set(this, `Type '${this.resolvedType.toString()} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type.toString()}'`);
+          }
+          return false;
+        }
+    } else {
+        this.resolvedType = connectionSpec.type;
       }
     }
     return true;
@@ -165,7 +185,7 @@ export class HandleConnection {
       }
       return false;
     }
-    if (!this._direction) {
+    if (!this.direction) {
       if (options) {
         options.details = 'missing direction';
       }
@@ -179,8 +199,8 @@ export class HandleConnection {
         options.details = 'missing handle';
       }
       return false;
-    } else if (parent) {
-      if (!parent.handle) {
+    } else if (this.spec) {
+      if (this.spec.parentConnection && (!parent || !parent.handle)) {
         if (options) {
           options.details = 'parent connection missing handle';
         }
@@ -239,7 +259,7 @@ export class HandleConnection {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
                  this.handle.type.equals(specConn.type) &&
-                 !this.particle.getConnectionByName(specConn.name).handle;
+                 !this.particle.getConnectionByName(specConn.name);
         });
   }
 }

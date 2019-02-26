@@ -7,7 +7,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {ConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
+import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Type} from '../../runtime/type.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
@@ -24,83 +26,93 @@ export class GroupHandleConnections extends Strategy {
         if (recipe.getUnnamedUntypedConnections()) {
           return undefined;
         }
+        // All particles must have spec.
+        if (recipe.particles.some(p => !p.spec)) {
+          return undefined;
+        }
         // Find all unique types used in the recipe that have unbound handle connections.
         const types: Set<Type> = new Set();
-        recipe.getFreeConnections().forEach(hc => {
-          if (!Array.from(types).find(t => t.equals(hc.type))) {
-            types.add(hc.type);
+        recipe.getFreeConnections().forEach(({connSpec}) => {
+          if (!Array.from(types).find(t => t.equals(connSpec.type))) {
+            types.add(connSpec.type);
           }
         });
 
         const groupsByType = new Map();
-        types.forEach(type => {
-          // Find the particle with the largest number of unbound connections of the same type.
-          const countConnectionsByType = (connections: {[index: string]: HandleConnection}) => Object.values(connections).filter(conn => {
-            return !conn.isOptional && !conn.handle && type.equals(conn.type);
-          }).length;
+        for (const type of types) {
           const sortedParticles = [...recipe.particles].sort((p1, p2) => {
-            return countConnectionsByType(p2.connections) - countConnectionsByType(p1.connections);
-          }).filter(p => countConnectionsByType(p.connections) > 0);
+            return p2.getUnboundConnections(type).length - p1.getUnboundConnections(type).length;
+          }).filter(p => p.getUnboundConnections(type).length > 0);
           assert(sortedParticles.length > 0);
 
-          // Handle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
-          // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
+          // Handle connections of the same particle cannot be bound to the same handle. Iterate
+          // on handle connections of the particle with the most connections of the given type,
+          // and group each of them with same typed handle connections of other particles.
           const particleWithMostConnectionsOfType = sortedParticles[0];
-          const groups = new Map();
-          let allTypeHandleConnections = recipe.getTypeHandleConnections(type, particleWithMostConnectionsOfType);
+          const groups: {
+            particle: Particle,
+            connSpec: ConnectionSpec,
+            group: {particle: Particle, connSpec: ConnectionSpec}[]
+          }[] = [];
+          let allTypeHandleConnections = recipe.getFreeConnections(type)
+              .filter(c => c.particle !== particleWithMostConnectionsOfType);
 
           let iteration = 0;
           while (allTypeHandleConnections.length > 0) {
-            Object.values(particleWithMostConnectionsOfType.connections).forEach(handleConnection => {
-              if (!type.equals(handleConnection.type)) {
-                return;
+            for (const connSpec of particleWithMostConnectionsOfType.spec.connections) {
+              if (!type.equals(connSpec.type)) {
+                continue;
               }
-              if (!groups.has(handleConnection)) {
-                groups.set(handleConnection, []);
+              if (!groups.find(g => g.particle === particleWithMostConnectionsOfType && g.connSpec === connSpec)) {
+                groups.push({particle: particleWithMostConnectionsOfType, connSpec, group: []});
               }
-              const group = groups.get(handleConnection);
+              const group = groups.find(g => g.particle === particleWithMostConnectionsOfType && g.connSpec === connSpec).group;
 
               // filter all connections where this particle is already in a group.
               const possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle === c.particle));
-              let selectedConn = possibleConnections.find(c => handleConnection.isInput !== c.isInput || handleConnection.isOutput !== c.isOutput);
+              let selectedConn = possibleConnections.find(({connSpec}) => connSpec.isInput !== connSpec.isInput || connSpec.isOutput !== connSpec.isOutput);
               // TODO: consider tags.
               // TODO: Slots handle restrictions should also be accounted for when grouping.
               if (!selectedConn) {
                 if (possibleConnections.length === 0 || iteration === 0) {
                   // During first iteration only bind opposite direction connections ("in" with "out" and vice versa)
                   // to ensure each group has both direction connections as much as possible.
-                  return;
+                  continue;
                 }
                 selectedConn = possibleConnections[0];
               }
               group.push(selectedConn);
-              allTypeHandleConnections = allTypeHandleConnections.filter(c => c !== selectedConn);
-            });
+              allTypeHandleConnections = allTypeHandleConnections.filter(({connSpec}) => connSpec !== selectedConn.connSpec);
+            }
             iteration++;
           }
           // Remove groups where no connections were bound together.
-          groups.forEach((otherConns, conn) => {
-            if (otherConns.length === 0) {
-              groups.delete(conn);
+          for (let i = 0; i < groups.length; ++i) {
+            if (groups[i].group.length === 0) {
+              groups.splice(i,  1);
             } else {
-              otherConns.push(conn);
+              groups[i].group.push({particle: groups[i].particle, connSpec: groups[i].connSpec});
             }
-          });
+          }
 
-          if (groups.size !== 0) {
+          if (groups.length !== 0) {
             groupsByType.set(type, groups);
           }
-        });
+        }
 
         if (groupsByType.size > 0) {
           return recipe => {
             groupsByType.forEach((groups, type) => {
-              groups.forEach(group => {
+              groups.forEach(({group}) => {
                 const recipeHandle = recipe.newHandle();
-                group.forEach(conn => {
-                  const cloneConn = recipe.updateToClone({conn}).conn;
-                  cloneConn.connectToHandle(recipeHandle);
-                });
+                for (const {particle, connSpec} of group) {
+                  const particleClone = recipe.updateToClone({particle}).particle;
+                  if (!particleClone.connections[connSpec.name]) {
+                    particleClone.addConnectionName(connSpec.name);
+                  }
+                  const conn = particleClone.connections[connSpec.name];
+                  conn.connectToHandle(recipeHandle);
+                }
               });
             });
             // TODO: score!

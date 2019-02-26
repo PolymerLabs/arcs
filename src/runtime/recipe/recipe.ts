@@ -8,7 +8,8 @@
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
-import {InterfaceType} from '../type.js';
+import {ConnectionSpec} from '../particle-spec.js';
+import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';
@@ -627,8 +628,19 @@ export class Recipe {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
-  getFreeConnections() {
-    return this.handleConnections.filter(hc => !hc.handle && !hc.isOptional);
+  get allSpecifiedConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
+    return [].concat(...
+        this.particles.filter(p => p.spec && p.spec.connections.length > 0)
+                      .map(particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
+  }
+
+  getFreeConnections(type?: Type): {particle: Particle, connSpec: ConnectionSpec}[] {
+    return this.allSpecifiedConnections.filter(
+        ({particle, connSpec}) => !connSpec.isOptional &&
+                                  connSpec.name !== 'descriptions' &&
+                                  connSpec.direction !== 'host' &&
+                                  !particle.connections[connSpec.name] &&
+                                  (!type || type.equals(connSpec.type)));
   }
 
   findHandleByID(id): Handle {
@@ -637,13 +649,6 @@ export class Recipe {
 
   getUnnamedUntypedConnections() {
     return this.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional);
-  }
-
-  getTypeHandleConnections(type, p) {
-    // returns the handles of type 'type' that do not belong to particle 'p'
-    return this.handleConnections.filter(c => {
-      return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle !== p);
-    });
   }
 
   getParticlesByImplFile(files: Set<string>) {
@@ -663,11 +668,6 @@ export class Recipe {
       }
     }
     return slot;
-  }
-
-  getDisconnectedConnections() {
-    return this.handleConnections.filter(
-        hc => hc.handle == null && !hc.isOptional && hc.name !== 'descriptions' && hc.direction !== 'host');
   }
 }
 

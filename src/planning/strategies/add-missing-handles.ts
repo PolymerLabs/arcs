@@ -24,17 +24,18 @@ export class AddMissingHandles extends Strategy {
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
         // not being properly supported in arc instantiation). For now just hardcode skiping them.
-        const disconnectedConnections = recipe.getDisconnectedConnections();
+        const disconnectedConnections = recipe.getFreeConnections();
         if (disconnectedConnections.length === 0) {
           return undefined;
         }
 
         return recipe => {
-          disconnectedConnections.forEach(hc => {
-            const clonedHC = recipe.updateToClone({hc}).hc;
+          disconnectedConnections.forEach(({particle, connSpec}) => {
+            const cloneParticle = recipe.updateToClone({particle}).particle;
+            const handleConnection = cloneParticle.addConnectionName(connSpec.name);
             const handle = recipe.newHandle();
             handle.fate = '?';
-            clonedHC.connectToHandle(handle);
+            handleConnection.connectToHandle(handle);
           });
           return 0;
         };

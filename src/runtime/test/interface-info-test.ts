@@ -206,7 +206,7 @@ describe('interface', () => {
       assert.isFalse(resolved.canEnsureResolved());
     }
 
-    const hostedParticleType = multiplexer.connections['hostedParticle'].type as InterfaceType;
+    const hostedParticleType = multiplexer.spec.getConnectionByName('hostedParticle').type as InterfaceType;
     assert.isTrue(!!hostedParticleType.interfaceInfo.restrictType(burritoDisplayer));
 
     // After restricting the interface, handle types are constrainted to a Burrito.
@@ -267,7 +267,7 @@ describe('interface', () => {
     recipe.normalize();
 
     const hostParticle = recipe.particles.find(p => p.name === 'Host');
-    const hostedInterface = (hostParticle.connections['hosted'].type as InterfaceType).interfaceInfo;
+    const hostedInterface = (hostParticle.spec.getConnectionByName('hosted').type as InterfaceType).interfaceInfo;
 
     const check = name => hostedInterface.particleMatches(manifest.findParticleByName(name));
 
