@@ -21,11 +21,11 @@ const config = {
 };
 
 // firebase app
-const app = firebase.initializeApp(config, 'images');
+const app = firebase && firebase.initializeApp(config, 'images');
 // firebase database
-const database = app.database();
+const database = app && app.database();
 // firebase storage (for file upload, e.g.)
-const storage = app.storage();
+const storage = app && app.storage();
 
 window.firebase = database;
 

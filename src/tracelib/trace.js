@@ -64,16 +64,16 @@ function pushEvent(event) {
     });
 }
 
-const module = {exports: {}};
-export const Tracing = module.exports;
-module.exports.enabled = false;
-module.exports.enable = function() {
-  module.exports.enabled = true;
+const module_ = {exports: {}};
+export const Tracing = module_.exports;
+module_.exports.enabled = false;
+module_.exports.enable = function() {
+  module_.exports.enabled = true;
   init();
 };
 
 // TODO: Add back support for options.
-//module.exports.options = options;
+//module_.exports.options = options;
 //var enabled = Boolean(options.traceFile);
 
 function init() {
@@ -96,23 +96,23 @@ function init() {
       return v;
     },
   };
-  module.exports.wrap = function(info, fn) {
+  module_.exports.wrap = function(info, fn) {
     return fn;
   };
-  module.exports.start = function(info, fn) {
+  module_.exports.start = function(info, fn) {
     return result;
   };
-  module.exports.flow = function(info, fn) {
+  module_.exports.flow = function(info, fn) {
     return result;
   };
 
-  if (!module.exports.enabled) {
+  if (!module_.exports.enabled) {
     return;
   }
 
-  module.exports.wrap = function(info, fn) {
+  module_.exports.wrap = function(info, fn) {
     return function(...args) {
-      const t = module.exports.start(info);
+      const t = module_.exports.start(info);
       try {
         return fn(...args);
       } finally {
@@ -152,7 +152,7 @@ function init() {
       beginTs: begin
     };
   }
-  module.exports.start = function(info) {
+  module_.exports.start = function(info) {
     let trace = startSyncTrace(info);
     let flow;
     const baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview, sequence: info.sequence};
@@ -160,7 +160,7 @@ function init() {
       async wait(v, info) {
         const flowExisted = !!flow;
         if (!flowExisted) {
-          flow = module.exports.flow(baseInfo);
+          flow = module_.exports.flow(baseInfo);
         }
         trace.end(info, flow);
         if (flowExisted) {
@@ -199,7 +199,7 @@ function init() {
       }
     };
   };
-  module.exports.flow = function(info) {
+  module_.exports.flow = function(info) {
     info = parseInfo(info);
     const id = flowId++;
     let started = false;
@@ -255,22 +255,22 @@ function init() {
       id: () => id
     };
   };
-  module.exports.save = function() {
+  module_.exports.save = function() {
     return {traceEvents: events};
   };
-  module.exports.download = function() {
+  module_.exports.download = function() {
     const a = document.createElement('a');
     a.download = 'trace.json';
-    a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module.exports.save()));
+    a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module_.exports.save()));
     a.click();
   };
-  module.exports.now = now;
-  module.exports.stream = function(callback, predicate) {
+  module_.exports.now = now;
+  module_.exports.stream = function(callback, predicate) {
     // Once we start streaming we no longer keep events in memory.
     events.length = 0;
     streamingCallbacks.push({callback, predicate});
   };
-  module.exports.__clearForTests = function() {
+  module_.exports.__clearForTests = function() {
     events.length = 0;
     streamingCallbacks.length = 0;
   };

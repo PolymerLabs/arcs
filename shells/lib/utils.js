@@ -10,11 +10,10 @@ const warn = console.warn.bind(console);
 const env = {};
 
 const createPathMap = root => ({
-  'https://$cdn/': `${root}/`,
+  'https://$arcs/': `${root}/`,
   'https://$shells/': `${root}/shells/`,
+  'https://$build/': `${root}/shells/lib/build/`,
   'https://$particles/': `${root}/particles/`,
-  'https://$shell/': `${root}/shells/`, // deprecated
-  'https://$artifacts/': `${root}/particles/`, // deprecated
 });
 
 const init = (root, urls) => {

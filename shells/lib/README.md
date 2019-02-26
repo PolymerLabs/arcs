@@ -22,7 +22,7 @@ Is a platform-agnostic (Web/Nodejs) library of Arcs middle-ware.
 
 ```
 import {Utils} from 'lib/utils.js'
-Utils.init([relative path from document root to arcs root]);
+Utils.init(path_to_arcs_root);
 console.log(Utils.env.loader, Utils.env.pecFactory);
 ```
 

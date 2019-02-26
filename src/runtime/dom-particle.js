@@ -111,9 +111,11 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
         this._handlesToSync.add(name);
       }
     }
-    // make sure we invalidate once, even if there are no incoming handles
-    setTimeout(() => !this._hasProps && this._invalidate(), 200);
-    //this._invalidate();
+    // TODO(sjmiles): we must invalidate at least once, but we don't know if
+    // _handlesToProps will ever be called. If we wait we can avoid an extra
+    // invalidation, but then we potentially waste cycles.
+    //setTimeout(() => !this._hasProps && this._invalidate(), 20);
+    this._invalidate();
   }
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);

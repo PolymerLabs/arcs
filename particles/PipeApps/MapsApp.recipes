@@ -1,0 +1,13 @@
+schema Address
+  Text address
+
+particle RecentAddresses in './source/RecentAddresses.js'
+  in [Address] recentAddresses
+  out Address address
+
+recipe RecentAddresses
+  create as address
+  map 'addresses' as recentAddresses
+  RecentAddresses
+    address = address
+    recentAddresses = recentAddresses

@@ -15,7 +15,6 @@ import {Collection} from './handle.js';
 import {Variable} from './handle.js';
 import {Particle} from './particle.js';
 
-
 /**
  * Particle that interoperates with DOM.
  */

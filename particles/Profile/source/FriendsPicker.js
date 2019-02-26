@@ -1,10 +1,12 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 defineParticle(({DomParticle, html, resolver}) => {
 
@@ -111,7 +113,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       const avatarModels = others.map((p, i) => {
         const avatar = this.boxQuery(avatars, p.id)[0];
         const name = this.boxQuery(names, p.id)[0];
-        const url = (avatar && avatar.url) || `https://$shell/assets/avatars/user%20(0).png`;
+        const url = (avatar && avatar.url) || `https://$shells/assets/avatars/user%20(0).png`;
         return {
           key: i,
           value: p.id,

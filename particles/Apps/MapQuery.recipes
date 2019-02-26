@@ -31,4 +31,3 @@ recipe SuggestSuggestion
     text = text
     descriptions = descriptions
     consume assistance
-

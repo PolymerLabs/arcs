@@ -1,0 +1,11 @@
+import './schema/Artist.schema'
+
+particle RandomArtist in './source/RandomArtist.js'
+  out Artist artist
+
+recipe RandomArtist
+  create as artist
+  RandomArtist
+    artist = artist
+  description `${RandomArtist.artist}`
+    

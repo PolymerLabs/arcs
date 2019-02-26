@@ -1,4 +1,4 @@
-const WORKER_PATH = `https://$shell/lib/build/worker.js`;
+const WORKER_PATH = `https://$build/worker.js`;
 
 export const PecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
@@ -6,6 +6,8 @@ export const PecIndustry = loader => {
   const workerFactory = workerIndustry(loader);
   return id => {
     const worker = workerFactory();
+    //worker.onmessage = e => log(e.data);
+    //worker.onerror = e => console.error(e);
     const channel = new MessageChannel();
     worker.postMessage({id: `${id}:inner`, base: remap}, [channel.port1]);
     return channel.port2;

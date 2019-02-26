@@ -22,13 +22,27 @@ http://polymer.github.io/PATENTS.txt
   <link rel="shortcut icon" href="../configuration/logo_64.png">
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
-  <link rel="stylesheet" href="../configuration/index.css">
 
-  <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
+  <style>
+    body, button, input {
+      font-family: 'Google Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    @font-face {
+      font-family: 'Material Icons';
+      font-style: normal;
+      font-weight: 400;
+      src: url(../configuration/icons.woff2) format('woff2');
+    }
+  </style>
 
   <script type="module" src="./index.js"></script>
-  <script type="module" src="./elements/web-shell.js"></script>
 
 </head>
+<body>
+
+  <web-shell></web-shell>
+
+</body>
 </html>
 

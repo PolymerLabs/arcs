@@ -1,10 +1,12 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 defineParticle(({DomParticle, html}) => {
 
@@ -12,16 +14,16 @@ defineParticle(({DomParticle, html}) => {
 
   <style>
     :host {
-      --tile-size: var(--tile-width, calc(100vw - 36px));
+      --tile-size: var(--tile-width, calc(100vw - 42px));
     }
     @media (min-width: 720px) {
       :host {
-        --tile-size: var(--tile-width, calc(50vw - 36px));
+        --tile-size: var(--tile-width, calc(50vw - 42px));
       }
     }
     @media (min-width: 1100px) {
       :host {
-        --tile-size: var(--tile-width, calc(33vw - 36px));
+        --tile-size: var(--tile-width, calc(33vw - 42px));
       }
     }
   </style>

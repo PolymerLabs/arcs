@@ -54,40 +54,42 @@ export class OuterPortAttachment {
 
     // The slice discards the stack frame corresponding to the API channel
     // function, which is already being displayed in the log entry.
-    mapStackTrace(stackString, mapped => mapped.slice(1).map(frameString => {
-      // Each frame has the form '    at function (source:line:column)'.
-      // Extract the function name and source:line:column text, then set up
-      // a frame object with the following fields:
-      //   location: text to display as the source in devtools Arcs panel
-      //   target: URL to open in devtools Sources panel
-      //   targetClass: CSS class specifier to attach to the location text
-      let match = frameString.match(/^ {4}at (.*) \((.*)\)$/);
-      if (match === null) {
-        match = {1: '<unknown>', 2: frameString.replace(/^ *at */, '')};
-      }
+    if (mapStackTrace) {
+      mapStackTrace(stackString, mapped => mapped.slice(1).map(frameString => {
+        // Each frame has the form '    at function (source:line:column)'.
+        // Extract the function name and source:line:column text, then set up
+        // a frame object with the following fields:
+        //   location: text to display as the source in devtools Arcs panel
+        //   target: URL to open in devtools Sources panel
+        //   targetClass: CSS class specifier to attach to the location text
+        let match = frameString.match(/^ {4}at (.*) \((.*)\)$/);
+        if (match === null) {
+          match = {1: '<unknown>', 2: frameString.replace(/^ *at */, '')};
+        }
 
-      const frame: {method, location?, target?, targetClass?} = {method: match[1]};
-      const source = match[2].replace(/:[0-9]+$/, '');
-      if (source.startsWith('http')) {
-        // 'http://<url>/arcs.*/shell/file.js:150'
-        // -> location: 'shell/file.js:150', target: same as source
-        frame.location = source.replace(/^.*\/arcs[^/]*\//, '');
-        frame.target = source;
-        frame.targetClass = 'link';
-      } else if (source.startsWith('webpack')) {
-        // 'webpack:///runtime/sub/file.js:18'
-        // -> location: 'runtime/sub/file.js:18', target: 'webpack:///./runtime/sub/file.js:18'
-        frame.location = source.slice(11);
-        frame.target = `webpack:///./${frame.location}`;
-        frame.targetClass = 'link';
-      } else {
-        // '<anonymous>' (or similar)
-        frame.location = source;
-        frame.target = null;
-        frame.targetClass = 'noLink';
-      }
-      stack.push(frame);
-    }), {sync: false, cacheGlobally: true});
+        const frame: {method, location?, target?, targetClass?} = {method: match[1]};
+        const source = match[2].replace(/:[0-9]+$/, '');
+        if (source.startsWith('http')) {
+          // 'http://<url>/arcs.*/shell/file.js:150'
+          // -> location: 'shell/file.js:150', target: same as source
+          frame.location = source.replace(/^.*\/arcs[^/]*\//, '');
+          frame.target = source;
+          frame.targetClass = 'link';
+        } else if (source.startsWith('webpack')) {
+          // 'webpack:///runtime/sub/file.js:18'
+          // -> location: 'runtime/sub/file.js:18', target: 'webpack:///./runtime/sub/file.js:18'
+          frame.location = source.slice(11);
+          frame.target = `webpack:///./${frame.location}`;
+          frame.targetClass = 'link';
+        } else {
+          // '<anonymous>' (or similar)
+          frame.location = source;
+          frame.target = null;
+          frame.targetClass = 'noLink';
+        }
+        stack.push(frame);
+      }), {sync: false, cacheGlobally: true});
+    }
     return stack;
   }
 }
