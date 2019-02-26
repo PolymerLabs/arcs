@@ -25,4 +25,4 @@ mkdir dist/particles/PipeApps
 cp -fR ../../../particles/PipeApps/* dist/particles/PipeApps
 # collate sources
 echo packing...
-npx webpack
+npx webpack | tee packinfo.txt

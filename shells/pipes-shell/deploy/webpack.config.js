@@ -30,7 +30,10 @@ module.exports = {
     }]
   },
   stats: {
-    modulesSort: '!size'
+    //modulesSort: '!size',
+    maxModules: 300,
+    exclude: false,
+    excludeModules: false
   },
   plugins: [
     // new Visualizer({
