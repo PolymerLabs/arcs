@@ -23,23 +23,24 @@ export class CreateDescriptionHandle extends Strategy {
         }
 
         return (recipe, handleConnection) => {
-          const handle = recipe.newHandle();
-          handle.fate = 'create';
-          handleConnection.connectToHandle(handle);
-          return 1;
+          return this._createAndConnectHandle(handleConnection);
         };
       }
+
       onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
         if (connectionSpec.name !== 'descriptions') {
           return undefined;
         }
         return (recipe, particle, connectionSpec) => {
-          const handleConnection = particle.addConnectionName(connectionSpec.name);
-          const handle = recipe.newHandle();
-          handle.fate = 'create';
-          handleConnection.connectToHandle(handle);
-          return 1;
+          return this._createAndConnectHandle(particle.addConnectionName(connectionSpec.name));
         };
+      }
+
+      _createAndConnectHandle(handleConnection: HandleConnection): number {
+        const handle = handleConnection.recipe.newHandle();
+        handle.fate = 'create';
+        handleConnection.connectToHandle(handle);
+        return 1;
       }
     }(StrategizerWalker.Permuted), this);
   }
