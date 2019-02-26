@@ -1,10 +1,10 @@
 const path = require('path');
+const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
-//const Visualizer = require('webpack-visualizer-plugin');
 
 module.exports = {
   mode: 'none',
-  //target: 'node',
+  target: 'node',
   //devtool: 'source-map',
   optimization: {
      minimize: true,
@@ -17,7 +17,7 @@ module.exports = {
     ],
   },
   entry: {
-    shell: `../web.js`
+    shell: `../../node.js`
   },
   output: {
     filename: '[name].js',
@@ -36,8 +36,15 @@ module.exports = {
     excludeModules: false
   },
   plugins: [
-    // new Visualizer({
-    //   filename: '../webpack-stats.html'
-    // })
-  ]
+    new webpack.NormalModuleReplacementPlugin(
+      // use -node versions from platform/*
+      /platform/,
+      resource =>  resource.request = resource.request.replace(/-web/, `-node`)
+    ),
+    new webpack.NormalModuleReplacementPlugin(
+      // use -node versions from platform/*
+      /paths.js/,
+      resource =>  resource.request = './deploy/node/source/paths.js'
+    )
+  ],
 };

@@ -7,7 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-window.envPaths = {
+import {g} from './global.js';
+g.envPaths = {
   root: '.',
   map: {
     'https://$build/': `../lib/build/`,

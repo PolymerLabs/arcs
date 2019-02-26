@@ -12,7 +12,7 @@ const log = (...args) => {
 export const App = async (composer, context, callback, json) => {
   t0 = now();
   const arc = await Utils.spawn({id: 'piping-arc', composer, context});
-  window.arc = arc;
+  //window.arc = arc;
   log(`arc [${arc.id}]`);
   dispatch(extractType(json), arc, callback);
   return arc;

@@ -8,15 +8,11 @@
 * http://polymer.github.io/PATENTS.txt
 */
 
-//import '../lib/build/pouchdb.js';
-//import '../lib/build/firebase.js';
-//import '../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
-
-import './config-web.js';
+import './config-node.js';
 
 console.log(`version: feb-26.0`);
 
-window.DeviceClient = window.DeviceClient || {
+global.DeviceClient = global.DeviceClient || {
   foundSuggestions(text) {
   }
 };
@@ -24,7 +20,7 @@ window.DeviceClient = window.DeviceClient || {
 // usage:
 // ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`)
 
-window.ShellApi = {
+global.ShellApi = {
   receiveEntity(json) {
     console.log('received entity...');
     testMode = !json;
@@ -53,17 +49,19 @@ import {Utils} from '../lib/utils.js';
 import {Schemas} from './schemas.js';
 import {App} from './app.js';
 
+//import '../configuration/whitelisted.js';
+
 // configure arcs environment
-Utils.init(window.envPaths.root, window.envPaths.map);
+Utils.init(global.envPaths.root, global.envPaths.map);
 
 let testMode;
 const callback = text => {
   if (testMode) {
     console.log(`foundSuggestions (testMode): "${text}"`);
   } else {
-    console.log(`invoking window.DeviceClient.foundSuggestions("${text}")`);
-    //console.log(window.DeviceClient.foundSuggestions.toString());
-    window.DeviceClient.foundSuggestions(text);
+    console.log(`invoking global.DeviceClient.foundSuggestions("${text}")`);
+    //console.log(global.DeviceClient.foundSuggestions.toString());
+    global.DeviceClient.foundSuggestions(text);
   }
 };
 
@@ -83,9 +81,9 @@ const initAddressStore = async context => {
     tags: null,
     storageKey: null
   });
-  console.log(store);
-  window.ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`);
-  window.ShellApi.observeEntity(`{"type": "address", "name": "South Pole"}`);
+  //console.log(store.id);
+  global.ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`);
+  global.ShellApi.observeEntity(`{"type": "address", "name": "South Pole"}`);
 };
 
 const run = async json => {
@@ -101,8 +99,6 @@ const run = async json => {
 };
 
 // test
-//window.ShellApi.receiveEntity();
+global.ShellApi.receiveEntity();
 
-window.onclick = () => {
-  window.ShellApi.receiveEntity();
-};
+

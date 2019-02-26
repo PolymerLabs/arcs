@@ -10,8 +10,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+import {now} from '../platform/date-web.js';
 
 const events = [];
+const pid = 42;
+/*
 let pid;
 let now;
 if (typeof document == 'object') {
@@ -26,6 +29,7 @@ if (typeof document == 'object') {
     return t[0] * 1000000 + t[1] / 1000;
   };
 }
+*/
 
 let flowId = 0;
 
