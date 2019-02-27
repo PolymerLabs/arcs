@@ -9,94 +9,35 @@
 */
 
 import './config.js';
-//import '../../configuration/whitelisted.js';
-import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
-import {Stores} from '../../lib/stores.js';
+
+// optional
+//import '../../lib/pouchdb-support.js';
+//import '../../lib/firebase-support.js';
+//import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
+
 import {Utils} from '../../lib/utils.js';
-import {Schemas} from '../schemas.js';
-import {App} from '../app.js';
-
-console.log(`version: feb-26.0`);
-
-global.DeviceClient = global.DeviceClient || {
-  foundSuggestions(text) {
-  }
-};
+import {DeviceApiFactory} from '../device.js';
 
 // usage:
-// ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`)
+//
+// ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
+// ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
+//
+// ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
+//
+// results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
 
-global.ShellApi = {
-  receiveEntity(json) {
-    console.log('received entity...');
-    testMode = !json;
-    run(json);
-    return true;
-  },
-  async observeEntity(json) {
-    console.log('observing entity...');
-    let rawData;
-    try {
-      rawData = JSON.parse(json);
-      console.log(rawData);
-    } catch (x) {
-      return false;
-    }
-    const store = context.findStoreById('addresses');
-    await store.store({id: store.generateID(), rawData: {address: rawData.name}}, ['oogabooga']);
-    console.log(await store.toList());
-    return true;
-  }
-};
+global.ShellApi = DeviceApiFactory(`volatile://`, global.DeviceClient);
+
+console.log(`version: feb-27.0`);
 
 // configure arcs environment
 Utils.init(global.envPaths.root, global.envPaths.map);
 
-let testMode;
-const callback = text => {
-  if (testMode) {
-    console.log(`foundSuggestions (testMode): "${text}"`);
-  } else {
-    console.log(`invoking global.DeviceClient.foundSuggestions("${text}")`);
-    //console.log(global.DeviceClient.foundSuggestions.toString());
-    global.DeviceClient.foundSuggestions(text);
-  }
-};
+// test it
 
-let context;
-const initContext = async () => {
-  context = await Utils.parse('');
-  await initAddressStore(context);
-  return context;
-};
-
-const initAddressStore = async context => {
-  const store = await Stores.create(context, {
-    name: 'addresses',
-    id: 'addresses',
-    schema: Schemas.Address,
-    isCollection: true,
-    tags: null,
-    storageKey: null
-  });
-  //console.log(store.id);
-  global.ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`);
-  global.ShellApi.observeEntity(`{"type": "address", "name": "South Pole"}`);
-};
-
-const run = async json => {
-  try {
-    if (!context) {
-      await initContext();
-    }
-    const composer = new RamSlotComposer();
-    await App(composer, context, callback, json);
-  } catch (x) {
-    console.error(x);
-  }
-};
-
-// test
-global.ShellApi.receiveEntity();
-
-
+setTimeout(() => {
+  global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
+  global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
+  global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
+}, 500);

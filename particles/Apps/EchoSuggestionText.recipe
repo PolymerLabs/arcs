@@ -1,9 +1,0 @@
-import '../Arcs/Description.schema'
-
-schema SuggestionText
-  Text text
-
-particle EchoSuggestionText in './source/EchoSuggestionText.js'
-  in SuggestionText text
-  out [Description] descriptions
-  consume assistance

@@ -14,7 +14,6 @@ export const Context = class {
     this.context = await Utils.parse('');
     await this.initAddressStore(this.context);
     await this.initPipesArc(storage);
-    //this.seedAddressStore();
   }
   async initAddressStore(context) {
     const store = await Stores.create(context, {
@@ -29,11 +28,12 @@ export const Context = class {
     //console.log(store);
   }
   async initPipesArc(storage) {
-    console.log('context::initPipesArc');
+    console.log('Context::initPipesArc');
     const id = 'pipes-arc';
     const manifest = `import 'https://$particles/Pipes/BackgroundPipes.recipes'`;
     const composer = new RamSlotComposer();
     const host = new ArcHost(null, storage, composer);
+    debugger;
     this.pipesArc = await host.spawn({id, manifest});
     // TODO(sjmiles): findById would be better,
     // but I can't get the id to materialize via manifest
@@ -42,17 +42,10 @@ export const Context = class {
       await this.entityStoreChange(await this.getInitialChange(this.entityStore));
       this.entityStore.on('change', info => this.entityStoreChange(info), this);
     } else {
-      console.log('failed to find entityStore');
+      console.log('Context::initPipesArc: failed to find entityStore');
     }
     dumpStores([this.entityStore]);
   }
-  // seedAddressStore() {
-  //   const type = 'address';
-  //   const source = 'com.weaseldev.fortunecookies';
-  //   const count = 1;
-  //   window.ShellApi.observeEntity(JSON.stringify({type, name: 'North Pole', source, timestamp: Date.now(), count}));
-  //   window.ShellApi.observeEntity(JSON.stringify({type, name: 'South Pole', source, timestamp: Date.now(), count}));
-  // }
   async getInitialChange(store) {
     const change = {add: []};
     const values = await store.toList();
@@ -67,7 +60,6 @@ export const Context = class {
   async cloneStoreChange(change, store) {
     if (store && change.add) {
       await Promise.all(change.add.map(async add => {
-        //console.log('add', add);
         await store.store(add.value, [now()/*generateId()*/]);
       }));
     }
@@ -78,12 +70,8 @@ const dumpStores = async stores => {
   //console.log(`stores dump, length = ${stores.length}`);
   await Promise.all(stores.map(async (store, i) => {
     if (store) {
-      let value;
-      if (store.type.isCollection) {
-        value = await store.toList();
-      } else {
-        value = await store.get();
-      }
+      const accessor = store.type.isCollection ? 'toList' : 'get';
+      const value = await store[accessor]();
       console.log(`store #${i}:`, store.id, value);
     }
   }));
