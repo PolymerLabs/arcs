@@ -65,8 +65,7 @@ export class Arc {
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
   private _activeRecipe = new Recipe();
-  // TODO: rename: these are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
-  private _recipes: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
+  private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   // Public for debug access
   public readonly _loader: Loader;
   private dataChangeCallbacks = new Map<object, () => void>();
@@ -409,7 +408,9 @@ ${this.activeRecipe.toString()}`;
   }
 
   get activeRecipe() { return this._activeRecipe; }
-  get recipes() { return this._recipes; }
+  get allRecipes() { return [this.activeRecipe].concat(this.context.allRecipes); }
+  get recipes() { return [this.activeRecipe]; }
+  get recipeDeltas() { return this._recipeDeltas; }
 
   loadedParticles() {
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
@@ -473,7 +474,7 @@ ${this.activeRecipe.toString()}`;
 
     const {cloneMap} = this._activeRecipe.mergeInto(arc._activeRecipe);
 
-    this._recipes.forEach(recipe => arc._recipes.push({
+    this._recipeDeltas.forEach(recipe => arc._recipeDeltas.push({
       particles: recipe.particles.map(p => cloneMap.get(p)),
       handles: recipe.handles.map(h => cloneMap.get(h)),
       slots: recipe.slots.map(s => cloneMap.get(s)),
@@ -498,7 +499,7 @@ ${this.activeRecipe.toString()}`;
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
-    this._recipes.push({particles, handles, slots, patterns: recipe.patterns});
+    this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
     // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
     // it should be done at planning stage.
