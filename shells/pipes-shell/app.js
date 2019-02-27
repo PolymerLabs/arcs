@@ -1,5 +1,7 @@
 import {Utils} from '../lib/utils.js';
+import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {now} from '../../build/platform/date-web.js';
+import {ArcHost} from '../lib/arc-host.js';
 
 let t0;
 
@@ -9,9 +11,34 @@ const log = (...args) => {
   //document.body.appendChild(document.createElement('div')).innerText = args.join();
 };
 
-export const App = async (composer, context, callback, json) => {
+let entityStore;
+
+export const initPipesArc = async storage => {
+  const composer = new RamSlotComposer();
+  const host = new ArcHost(null, storage, composer);
+  const manifest = `import 'https://$particles/Pipes/BackgroundPipes.recipes'`;
+  const arc = await host.spawn({id: 'pipes-arc', manifest});
+  entityStore = arc._stores[0];
+  if (!entityStore) {
+    console.log('failed to find entityStore');
+  }
+  return arc;
+};
+
+export const observeEntity = async data => {
+  if (entityStore) {
+    const entity = {
+      id: entityStore.generateID(),
+      rawData: data
+    };
+    await entityStore.store(entity, [entityStore.generateID()]);
+    console.log(await entityStore.toList());
+  }
+};
+
+export const App = async (composer, context, callback, storage, json) => {
   t0 = now();
-  const arc = await Utils.spawn({id: 'piping-arc', composer, context});
+  const arc = await Utils.spawn({id: 'piping-arc', composer, context/*, storage*/});
   log(`arc [${arc.id}]`);
   dispatch(extractType(json), arc, callback);
   return arc;
@@ -73,7 +100,7 @@ const com_google_android_apps_maps = async (arc, callback) => {
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
-    await dumpStores(arc.context.allStores);
+    await dumpStores(arc.context._stores);
     await dumpStores(arc._stores);
     const store = arc._stores[1];
     store.on('change', info => onChange(info, callback), arc);

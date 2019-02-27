@@ -101,7 +101,7 @@ export class AssignHandles extends Strategy {
       this.arc.findStoresByType(type, {tags, subtype}).forEach(store => stores.set(store, 'use'));
     }
     if (fate === 'map' || fate === 'copy' || fate === '?') {
-      this.arc.context.findStoreByType(type, {tags, subtype: true}).forEach(
+      this.arc.context.findStoresByType(type, {tags, subtype: true}).forEach(
           store => stores.set(store, fate === '?' ? (counts.out > 0 ? 'copy' : 'map') : fate));
     }
     return stores;

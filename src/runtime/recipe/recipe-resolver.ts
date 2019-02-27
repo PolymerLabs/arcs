@@ -43,7 +43,7 @@ export class ResolveWalker extends RecipeWalker {
           break;
         case 'map':
         case 'copy':
-          mappable = arc.context.findStoreByType(handle.type, {tags: handle.tags, subtype: true});
+          mappable = arc.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
         case '?':
