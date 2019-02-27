@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
-import {Loader} from '../loader.js';
-import {Manifest} from '../manifest.js';
-import {TestHelper} from '../testing/test-helper.js';
+import {assert} from '../platform/chai-web.js';
+import {Loader} from '../runtime/loader.js';
+import {Manifest} from '../runtime/manifest.js';
+import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 
 describe('demo flow', () => {
   it('can load the recipe manifest', async () => {
@@ -19,7 +19,7 @@ describe('demo flow', () => {
   });
 
   it.skip('flows like a demo', async () => {
-    const helper = await TestHelper.createAndPlan({
+    const helper = await PlanningTestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
       expectedNumPlans: 1,
       verify: plans => {

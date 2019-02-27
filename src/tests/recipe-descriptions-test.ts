@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
-import {DescriptionDomFormatter} from '../description-dom-formatter.js';
-import {Recipe} from '../recipe/recipe.js';
-import {StubLoader} from '../testing/stub-loader.js';
-import {TestHelper} from '../testing/test-helper.js';
+import {assert} from '../platform/chai-web.js';
+import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
+import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -84,7 +84,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const helper = await TestHelper.create({manifestString: options.manifestString || createManifestString(options), loader});
+    const helper = await PlanningTestHelper.create({manifestString: options.manifestString || createManifestString(options), loader});
     helper.arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
     await helper.makePlans(options);
     assert.lengthOf(helper.suggestions, 1);
@@ -231,7 +231,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('fails generating recipe description with duplicate particles', async () => {
-    await TestHelper.createAndPlan({manifestString: `
+    await PlanningTestHelper.createAndPlan({manifestString: `
       schema Foo
       particle ShowFoo in 'test.js'
         out Foo foo
@@ -272,7 +272,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('generates recipe description with duplicate particles', async () => {
-    const helper = await TestHelper.createAndPlan({manifestString: `
+    const helper = await PlanningTestHelper.createAndPlan({manifestString: `
       schema Foo
       particle ShowFoo in 'test.js'
         out Foo foo
@@ -301,7 +301,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     assert.equal('Show foo with dummy.', await helper.suggestions[0].descriptionText);
   });
   it('joins recipe descriptions', async () => {
-    const helper = await TestHelper.createAndPlan({manifestString: `
+    const helper = await PlanningTestHelper.createAndPlan({manifestString: `
       particle A in 'test.js'
       particle B in 'test.js'
       particle C in 'test.js'

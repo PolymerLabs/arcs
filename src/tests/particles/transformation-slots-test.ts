@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {TestHelper} from '../../testing/test-helper.js';
+import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
-    const helper = await TestHelper.createAndPlan({
-      manifestFilename: './src/runtime/test/particles/artifacts/provide-hosted-particle-slots.manifest',
+    const helper = await PlanningTestHelper.createAndPlan({
+      manifestFilename: './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest',
       expectedNumPlans: 1
     });
 

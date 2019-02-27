@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {Manifest} from '../../manifest.js';
-import {TestHelper} from '../../testing/test-helper.js';
+import {assert} from '../../platform/chai-web.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -65,8 +65,8 @@ describe('common particles test', () => {
 
 
   it('copy handle test', async () => {
-    const helper = await TestHelper.createAndPlan({
-      manifestFilename: './src/runtime/test/particles/artifacts/copy-collection-test.recipes',
+    const helper = await PlanningTestHelper.createAndPlan({
+      manifestFilename: './src/tests/particles/artifacts/copy-collection-test.recipes',
       expectedNumPlans: 1,
       expectedSuggestions: ['Copy all things!']
     });

@@ -13,7 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {MockSlotComposer} from '../../../runtime/testing/mock-slot-composer.js';
-import {TestHelper} from '../../../runtime/testing/test-helper.js';
+import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -37,7 +37,7 @@ async function storeResults(consumer, suggestions) {
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
-      const helper = await TestHelper.createAndPlan({
+      const helper = await PlanningTestHelper.createAndPlan({
         slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
         manifestString: `
 import './src/runtime/test/artifacts/Products/Products.recipes'
@@ -123,7 +123,7 @@ describe('plan consumer', () => {
     `).join('')}
         `;
       };
-      const helper = await TestHelper.create({
+      const helper = await PlanningTestHelper.create({
         slotComposer: new MockSlotComposer({
           modalityName,
           modalityHandler: PlanningModalityHandler.createHeadlessHandler()

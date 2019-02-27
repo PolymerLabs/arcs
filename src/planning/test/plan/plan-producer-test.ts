@@ -15,7 +15,7 @@ import {Recipe} from '../../../runtime/recipe/recipe.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {StorageProviderBase, VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
-import {TestHelper} from '../../../runtime/testing/test-helper.js';
+import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -81,7 +81,7 @@ class TestPlanProducer extends PlanProducer {
 ['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
   describe('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
-      const helper = await TestHelper.createAndPlan({
+      const helper = await PlanningTestHelper.createAndPlan({
         manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
         storageKey: 'firebase://xxx.firebaseio.com/yyy/serialization/zzz'
       });

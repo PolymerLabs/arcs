@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {TestHelper} from '../../testing/test-helper.js';
+import {assert} from '../../platform/chai-web.js';
+import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
 
 describe('products test', () => {
-  const manifestFilename = './src/runtime/test/particles/artifacts/products-test.recipes';
+  const manifestFilename = './src/tests/particles/artifacts/products-test.recipes';
 
   const verifyFilteredBook = async (handle) => {
     const list = await handle.toList();
@@ -21,7 +21,7 @@ describe('products test', () => {
   };
 
   it('filters', async () => {
-    const helper = await TestHelper.createAndPlan({manifestFilename});
+    const helper = await PlanningTestHelper.createAndPlan({manifestFilename});
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
 
@@ -29,7 +29,7 @@ describe('products test', () => {
   });
 
   it('filters and displays', async () => {
-    const helper = await TestHelper.createAndPlan({manifestFilename});
+    const helper = await PlanningTestHelper.createAndPlan({manifestFilename});
 
     helper.slotComposer
         .newExpectations()
