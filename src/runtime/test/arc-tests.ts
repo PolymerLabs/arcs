@@ -245,7 +245,7 @@ describe('Arc', () => {
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
     const loader = new Loader();
-    const manifest = await TestHelper.parseManifest(`
+    const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/test/artifacts/test-particles.manifest'
 
@@ -257,7 +257,7 @@ describe('Arc', () => {
           consume annotation as slot0
           list <- handle0
 
-    `, loader);
+    `, {loader, fileName: ''});
 
     const recipe = manifest.recipes[0];
 
@@ -294,43 +294,6 @@ describe('Arc', () => {
 
     await newArc.idle;
     assert.equal(slotsCreated, 1);
-  });
-
-  it('copies store tags', async () => {
-    const helper = await TestHelper.createAndPlan({
-      manifestString: `
-      schema Thing
-        Text name
-      particle P in 'p.js'
-        inout Thing thing
-      recipe
-        copy 'mything' as thingHandle
-        P
-          thing = thingHandle
-      resource ThingResource
-        start
-        [
-          {"name": "mything"}
-        ]
-      store ThingStore of Thing 'mything' #best in ThingResource
-      `,
-      loader: new StubLoader({
-        'p.js': `defineParticle(({Particle}) => class P extends Particle {
-          async setHandles(handles) {
-          }
-        });`
-      }),
-      expectedNumPlans: 1
-    });
-
-    assert.isEmpty(helper.arc.storesById);
-    assert.isEmpty(helper.arc.storeTags);
-
-    await helper.acceptSuggestion({particles: ['P']});
-
-    assert.equal(1, helper.arc.storesById.size);
-    assert.equal(1, helper.arc.storeTags.size);
-    assert.deepEqual(['best'], [...helper.arc.storeTags.get([...helper.arc.storesById.values()][0])]);
   });
 
   it('serialization roundtrip preserves data for volatile stores', async () => {

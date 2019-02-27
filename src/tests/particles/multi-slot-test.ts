@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {TestHelper} from '../../testing/test-helper.js';
+import {assert} from '../../platform/chai-web.js';
+import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
 
 describe('multi-slot test', () => {
   async function init() {
-    return await TestHelper.createAndPlan({
-      manifestFilename: './src/runtime/test/particles/artifacts/multi-slot-test.manifest',
+    return await PlanningTestHelper.createAndPlan({
+      manifestFilename: './src/tests/particles/artifacts/multi-slot-test.manifest',
       expectedNumPlans: 4,
       expectedSuggestions: ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.']
     });

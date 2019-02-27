@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {TestHelper} from '../../runtime/testing/test-helper.js';
+import {PlanningTestHelper} from '../testing/planning-test-helper.js';
 import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
 import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
@@ -29,7 +29,7 @@ describe('suggestion composer', () => {
       modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
     }).newExpectations('debug');
 
-    const helper = await TestHelper.createAndPlan({
+    const helper = await PlanningTestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
     });
@@ -69,7 +69,7 @@ describe('suggestion composer', () => {
       modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
     }).newExpectations('debug');
 
-    const helper = await TestHelper.createAndPlan({
+    const helper = await PlanningTestHelper.createAndPlan({
       manifestFilename: './src/runtime/test/artifacts/suggestions/Cakes.recipes',
       slotComposer
     });

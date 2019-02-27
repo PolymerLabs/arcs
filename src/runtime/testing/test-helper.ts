@@ -8,9 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Suggestion} from '../../planning/plan/suggestion.js';
-import {Planner} from '../../planning/planner.js';
-import {RecipeIndex} from '../../planning/recipe-index.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
@@ -19,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {InterfaceType} from '../type.js';
 
-type TestHelperOptions = {
+export type TestHelperOptions = {
   slotComposerStrict?: boolean,
   slotComposer?: MockSlotComposer,
   logging?: boolean
@@ -30,29 +27,40 @@ type TestHelperOptions = {
   storageKey?: string
 };
 
-type TestHelperPlanOptions = TestHelperOptions & {
-  expectedNumPlans?: number;
-  expectedSuggestions?;
-  includeInnerArcs?: boolean;
-  verify?;
-};
-
-/**
- * Helper class to recipe instantiation and replanning.
- * Usage example:
- *   let helper = await TestHelper.createAndPlan({manifestFilename: 'my.manifest'});
- *   await helper.acceptSuggestion({particles: ['MyParticle1', 'MyParticle2']});
- *   await helper.verifyData('MyParticle1', 'myHandle1', async (handle) => { ... });
- */
 export class TestHelper {
   logging?: boolean;
   loader?: Loader;
   timeout;
-  // TODO(lindner): adding types here causes many compilation errors.
-  suggestions;
+  // TODO(lindner): adding the type here causes many compilation errors.
   arc;
   slotComposer: MockSlotComposer;
-  recipeIndex: RecipeIndex;
+
+  static async setupOptions(options: TestHelperOptions): Promise<void> {
+    const loader = options.loader || new Loader();
+    options.loader = loader;
+    if (options.manifestFilename) {
+      assert(!options.context, 'context should not be provided if manifestFilename is given');
+      options.context = await Manifest.load(options.manifestFilename, loader);
+    }
+    if (options.manifestString) {
+      assert(!options.context, 'context should not be provided if manifestString is given');
+      options.context = await TestHelper.parseManifest(options.manifestString, loader);
+    }
+  }
+
+  static setupHelper(options: TestHelperOptions, helper: TestHelper): void {
+    helper.slotComposer = options.slotComposer || new MockSlotComposer({strict: options.slotComposerStrict, logging: options.logging});
+    helper.loader = options.loader;
+    helper.arc = new Arc({
+      id: 'demo',
+      slotComposer: helper.slotComposer,
+      loader: helper.loader,
+      context: options.context,
+      storageKey: options.storageKey
+    });
+    helper.slotComposer.pec = helper.arc.pec;
+    helper.logging = options.logging;
+  }
 
   /**
    * Initializes a single arc using a mock slot composer.
@@ -65,45 +73,15 @@ export class TestHelper {
    *   - manifestString: a string with content of the manifest to load as the context.
    */
   static async create(options: TestHelperOptions = {}): Promise<TestHelper> {
-    const loader = options.loader || new Loader();
-    if (options.manifestFilename) {
-      assert(!options.context, 'context should not be provided if manifestFilename is given');
-      options.context = await Manifest.load(options.manifestFilename, loader);
-    }
-    if (options.manifestString) {
-      assert(!options.context, 'context should not be provided if manifestString is given');
-      options.context = await TestHelper.parseManifest(options.manifestString, loader);
-    }
-
+    await TestHelper.setupOptions(options);
     // Explicitly not using a constructor to force using this factory method.
     const helper = new TestHelper();
-    helper.slotComposer = options.slotComposer || new MockSlotComposer({strict: options.slotComposerStrict, logging: options.logging});
-    helper.loader = loader;
-    helper.arc = new Arc({
-      id: 'demo',
-      slotComposer: helper.slotComposer,
-      loader: helper.loader,
-      context: options.context,
-      storageKey: options.storageKey
-    });
-    helper.slotComposer.pec = helper.arc.pec;
-    helper.recipeIndex = RecipeIndex.create(helper.arc);
-    helper.logging = options.logging;
-
+    TestHelper.setupHelper(options, helper);
     return helper;
   }
 
   static async parseManifest(manifestString: string, loader) : Promise<Manifest> {
     return await Manifest.parse(manifestString, {loader, fileName: ''});
-  }
-
-  /**
-   * Creates a Test Helper instances and triggers planning .
-   */
-  static async createAndPlan(options: TestHelperPlanOptions): Promise<TestHelper> {
-    const helper = await TestHelper.create(options);
-    await helper.makePlans(options);
-    return helper;
   }
 
   setTimeout(timeout: number): void {
@@ -116,101 +94,6 @@ export class TestHelper {
 
   get envOptions() {
     return {context: this.arc.context, loader: this.arc.loader};
-  }
-
-  /**
-   * Generates suggestions for the arc.
-   * |options| contains possible verifications to be performed on the generated plans:
-   *   - expectedNumPlans: (optional) number of expected number of generated suggestions to verify.
-   *   - expectedSuggestions: (optional) list of expected description texts representing the generated suggestion.
-   *   - verify: a handler method to be called to verify the resulting suggestions.
-   */
-  async makePlans(options?: TestHelperPlanOptions): Promise<TestHelper> {
-    const planner = new Planner();
-    planner.init(this.arc, {strategyArgs: {recipeIndex: this.recipeIndex}});
-    this.suggestions = await planner.suggest();
-    if (options && options.includeInnerArcs) {
-      for (const innerArc of this.arc.innerArcs) {
-        const innerPlanner = new Planner();
-        innerPlanner.init(innerArc, {strategyArgs: {recipeIndex: this.recipeIndex}});
-        this.suggestions = this.suggestions.concat(await innerPlanner.suggest());
-      }
-    }
-    if (options) {
-      if (options.expectedNumPlans) {
-        assert.lengthOf(this.suggestions, options.expectedNumPlans);
-      }
-      if (options.expectedSuggestions) {
-        const suggestions = this.suggestions.map(s => s.descriptionText);
-        const missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
-        const unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
-        const errors = [];
-        if (missingSuggestions.length > 0) {
-          errors.push(`Missing suggestions:\n\t ${missingSuggestions.join('\n\t')}`);
-        }
-        if (unexpectedSuggestions.length > 0) {
-          errors.push(`Unexpected suggestions:\n\t ${unexpectedSuggestions.join('\n\t')}`);
-        }
-        assert.equal(0, missingSuggestions.length + unexpectedSuggestions.length, errors.join('\n'));
-      }
-      if (options.verify) {
-        await options.verify(this.suggestions);
-      }
-    }
-    this.log(`Made ${this.suggestions.length} plans.`);
-    return this;
-  }
-
-  /**
-   * Accepts a suggestion. |options| may provide the exact list of particles representing the
-   * suggestion to accept. Otherwise, fallback to a single generated suggestion, if appropriate.
-   */
-  async acceptSuggestion(options?: {hostedParticles?: string[], particles?: string[], descriptionText?: string}): Promise<void> {
-    let suggestion;
-    if (options) {
-      if (options.particles) {
-        let suggestions = this.findSuggestionByParticleNames(options.particles);
-        if (options.hostedParticles) {
-          suggestions = suggestions.filter(p => {
-            return options.hostedParticles.every(hosted => {
-              const interfaceHandles = p.plan.handles.filter(h => h.type instanceof InterfaceType);
-              return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name === hosted);
-            });
-          });
-        }
-        assert.lengthOf(suggestions, 1);
-        suggestion = suggestions[0];
-      } else if (options.descriptionText) {
-        suggestion = this.suggestions.find(p => p.descriptionText === options.descriptionText);
-      }
-    }
-    if (!suggestion) {
-      assert.lengthOf(this.suggestions, 1);
-      suggestion = this.suggestions[0];
-    }
-    this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(suggestion.descriptionText)}'`);
-    await this.instantiateSuggestion(suggestion);
-  }
-
-  findSuggestionByParticleNames(particlesNames: string[]) {
-    return this.suggestions.filter(p => {
-      const planParticles = p.plan.particles.map(particle => particle.name);
-      return planParticles.length === particlesNames.length && planParticles.every(p => particlesNames.includes(p));
-    });
-  }
-
-  async instantiateSuggestion(suggestion: Suggestion) {
-    assert(suggestion, `Cannot accept suggestion, no plan could be selected.`);
-    await suggestion.instantiate(this.arc);
-    await this.idle();
-  }
-
-  /**
-   * Getter for a single available suggestion plan (fails, if there is more than one).
-   */
-  get plan() {
-    assert.lengthOf(this.suggestions, 1);
-    return this.suggestions[0].plan;
   }
 
   /**
