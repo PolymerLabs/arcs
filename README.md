@@ -5,24 +5,23 @@
 
 # arcs
 
-Particle developers should visit our [particle developer
-website](https://polymerlabs.github.io/arcs-live/shell/docs/). This document is
-targeted at Arcs core system developers.
-
-
 A hosted version of Arcs is available in both tagged and bleeding edge forms.
 Neither is stable -- the runtime, database and front-end are all iterating rapidly.
 
+[TypeDoc](https://polymerlabs.github.io/arcs-live/dist/apidocs/)
+generated documentation is available for Arcs Runtime.
+
+## Tagged Releases
 
 Tagged release URLs have the form
-`https://cdn.rawgit.com/PolymerLabs/arcs-live/<release_number>/shell/apps/web/index.html`
+`https://cdn.rawgit.com/PolymerLabs/arcs-live/<release_number>/shells/web-shell`
 (the list of releases is
-[here](https://github.com/PolymerLabs/arcs-live/releases)). A recent version
-(latest as of this writing) is
+[here](https://github.com/PolymerLabs/arcs-live/releases)). A tagged release (with an older
+path due to a previous version of shell code) is
 [v0.4.1](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.4.1/shell/apps/web/index.html).
 
 Bleeding edge often works and is available via github pages:
-https://polymerlabs.github.io/arcs-live/shell/apps/web/.
+https://polymerlabs.github.io/arcs-live/shells/web-shell
 
 
 
@@ -101,16 +100,12 @@ start` will block, so you'll have to run the second command in a new shell):
 $ npm start
 ```
 
-Then open `http://localhost:8080/shell/apps/web/index.html` in a web browser
-(or, on MacOS, use `open 'http://localhost:8080/shell/apps/web/index.html'`).
+Then open `http://localhost:8080/shells/web-shell` in a web browser
+(or, on MacOS, use `open 'http://localhost:8080/shells/web-shell`).
 
 ## Subprojects
 Subcomponents have more detailed descriptions. Particularly the extensions
 also have individual installation steps.
-
-### Shell
-
-For more information on the shell, see [shell](shell/README.md).
 
 ### Chrome Extension
 
@@ -183,7 +178,7 @@ Through npm: `npm run test-wdio-shells --wdio-debug=true` (or `npm test
 --wdio-debug=true shell/test/wdio.conf.js`.
 
 Webdriver takes screenshots of failures, which are saved to the
-`./shell/test/errorShots/` directory. When running on Travis, the screenshots
+`./shells/test/errorShots/` directory. When running on Travis, the screenshots
 are uploaded to the `Arcs Webdriver Screenshots` team drive.
 
 #### Graphical (non-headless)
@@ -195,8 +190,8 @@ allow you to see what's happening on the screen, and will give you enough time
 to debug the situation.
 
 ```
-arcs/shell> vi test/wdio.conf.js
-arcs/shell> git diff test/wdio.conf.js
+arcs/shells> vi test/wdio.conf.js
+arcs/shells> git diff test/wdio.conf.js
 diff --git a/test/wdio.conf.js b/test/wdio.conf.js
 index 0e36452..8ecf3d6 100644
 --- a/test/wdio.conf.js
@@ -241,7 +236,7 @@ It's likely that you'll still want to have increased the `mochaTimeout` and to
 be running graphically, so those are in the example as well:
 
 ```
-arcs/shell> git diff test/wdio.conf.js
+arcs/shells> git diff test/wdio.conf.js
 diff --git a/test/wdio.conf.js b/test/wdio.conf.js
 index 0e36452..4240c0a 100644
 --- a/test/wdio.conf.js
