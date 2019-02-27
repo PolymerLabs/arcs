@@ -829,7 +829,7 @@ describe('particle-api', () => {
     assert.lengthOf(arc.activeRecipe.particles, 1);
     const [transformationParticle] = arc.activeRecipe.particles;
 
-    assert.lengthOf(arc.recipes, 1);
+    assert.lengthOf(arc.recipeDeltas, 1);
     const [innerArc] = arc.findInnerArcs(transformationParticle);
 
     assert.equal(innerArc.activeRecipe.toString(), `recipe

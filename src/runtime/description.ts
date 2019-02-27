@@ -25,7 +25,7 @@ export class Description {
 
   static async create(arc: Arc, relevance?: Relevance): Promise<Description> {
     const particleDescriptions = await Description.initDescriptionHandles(arc, relevance);
-    return new Description(particleDescriptions, Description._getStoreDescById(arc), arc.activeRecipe.name, arc.recipes);
+    return new Description(particleDescriptions, Description._getStoreDescById(arc), arc.activeRecipe.name, arc.recipeDeltas);
   }
  
   getArcDescription(formatterClass = DescriptionFormatter) : Promise<string> {
