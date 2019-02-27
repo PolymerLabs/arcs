@@ -118,10 +118,6 @@ export class Arc {
     return this._loader;
   }
 
-  get stores() {
-    return this._stores;
-  }
-  
   get modality(): Modality {
     if (this.pec.slotComposer && this.pec.slotComposer.modality) {
       return this.pec.slotComposer.modality;

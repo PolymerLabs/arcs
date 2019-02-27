@@ -20,8 +20,9 @@ import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
 //import {Stores} from '../../lib/stores.js';
 import {Utils} from '../../lib/utils.js';
 //import {Schemas} from '../schemas.js';
-import {App, initPipesArc, observeEntity} from '../app.js';
+import {App, observeEntity} from '../app.js';
 import {SyntheticStores} from '../../lib/synthetic-stores.js';
+import {Context} from '../context.js';
 
 console.log(`version: feb-26.0`);
 
@@ -37,19 +38,19 @@ window.ShellApi = {
   receiveEntity(json) {
     console.log('received entity...');
     testMode = !json;
-    run(json);
+    receiveJsonEntity(json);
     return true;
   },
   async observeEntity(json) {
-    console.log('observing entity...');
+    //console.log('observing entity...');
     let rawData;
     try {
       rawData = JSON.parse(json);
-      console.log(rawData);
+      //console.log(rawData);
     } catch (x) {
       return false;
     }
-    observeEntity(rawData);
+    observeEntity(userContext.entityStore, rawData);
     //const store = context.findStoreById('addresses');
     //await store.store({id: store.generateID(), rawData: {address: rawData.name}}, ['oogabooga']);
     //console.log(await store.toList());
@@ -59,18 +60,22 @@ window.ShellApi = {
 
 const storage = 'pouchdb://local/arcs/';
 
-// not sure why
+// TODO(sjmiles): why not automatic?
 SyntheticStores.init();
 
 // configure arcs environment
 Utils.init(window.envPaths.root, window.envPaths.map);
+
+// configure context
+const userContext = new Context(storage);
+window.userContext = userContext;
 
 let testMode;
 const callback = text => {
   if (testMode) {
     console.log(`foundSuggestions (testMode): "${text}"`);
   } else {
-    console.log(`invoking window.DeviceClient.foundSuggestions("${text}")`);
+    console.warn(`invoking window.DeviceClient.foundSuggestions("${text}")`);
     //console.log(window.DeviceClient.foundSuggestions.toString());
     if (window.DeviceClient) {
       window.DeviceClient.foundSuggestions(text);
@@ -78,39 +83,44 @@ const callback = text => {
   }
 };
 
-let context;
-const initContext = async () => {
-  context = await Utils.parse('');
-  await initAddressStore(context);
-  return context;
-};
+// let context;
+// const initContext = async () => {
+//   context = await Utils.parse('');
+//   await initAddressStore(context);
+//   return context;
+// };
 
-const initAddressStore = async context => {
-  // const store = await Stores.create(context, {
-  //   name: 'addresses',
-  //   id: 'addresses',
-  //   schema: Schemas.Address,
-  //   isCollection: true,
-  //   tags: null,
-  //   storageKey: null
-  // });
-  // console.log(store);
-  window.ShellApi.observeEntity(`{"type": "address", "name": "North Pole"}`);
-  window.ShellApi.observeEntity(`{"type": "address", "name": "South Pole"}`);
-};
+// const initAddressStore = async context => {
+//   // const store = await Stores.create(context, {
+//   //   name: 'addresses',
+//   //   id: 'addresses',
+//   //   schema: Schemas.Address,
+//   //   isCollection: true,
+//   //   tags: null,
+//   //   storageKey: null
+//   // });
+//   // console.log(store);
+//   const type = 'address';
+//   const source = 'com.weaseldev.fortunecookies';
+//   const count = 1;
+//   window.ShellApi.observeEntity(JSON.stringify({type, name: 'North Pole', source, timestamp: Date.now(), count}));
+//   window.ShellApi.observeEntity(JSON.stringify({type, name: 'South Pole', source, timestamp: Date.now(), count}));
+// };
 
-let pipesArc;
+// let pipesArc;
 
-const run = async json => {
+const receiveJsonEntity = async json => {
   try {
-    if (!pipesArc) {
-      pipesArc = await initPipesArc(storage);
+    if (userContext.pipesArc) {
+      // if (!pipesArc) {
+      //   window.pipesArc = await initPipesArc(storage);
+      // }
+      // if (!context) {
+      //   //await initContext();
+      // }
+      const composer = new RamSlotComposer();
+      window.arc = await App(composer, userContext.context, callback, storage, json);
     }
-    if (!context) {
-      //await initContext();
-    }
-    const composer = new RamSlotComposer();
-    window.arc = await App(composer, pipesArc, callback, storage, json);
   } catch (x) {
     console.error(x);
   }

@@ -1,10 +1,15 @@
 export const Schemas = {
-  Address: {
+  PipeEntity: {
     tag: 'Entity',
     data: {
-      names: ['Address'],
+      names: ['PipeEntity'],
       fields: {
-        address: 'Text'
+        id: 'Text',
+        type: 'Text',
+        name: 'Text',
+        timestamp: 'Number',
+        count: 'Number',
+        source: 'Text',
       }
     }
   }

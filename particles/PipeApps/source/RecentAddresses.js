@@ -24,19 +24,8 @@ defineParticle(({DomParticle, html, log}) => {
     query(entities) {
       const addresses = entities.filter(entity => entity.rawData.type === 'address');
       const sorted = addresses.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
-      const result = sorted[0];
-      return JSON.stringify(result);
-      //const sliced = addresses.slice(0, 1);
-      // return JSON.stringify(sliced.map(e => e.rawData));
-      // if (addresses.length) {
-      //   const address = addresses[addresses.length-1];
-      //   const result = {
-      //     type: 'address',
-      //     name: address.rawData.address,
-      //     source: 'com.weaseldev.fortunecookies'
-      //   };
-      //   return JSON.stringify(result);
-      // }
+      const result = sorted[0] || Object;
+      return JSON.stringify(result.rawData);
     }
   };
 });

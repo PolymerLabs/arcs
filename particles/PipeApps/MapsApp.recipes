@@ -8,7 +8,7 @@ particle RecentAddresses in './source/RecentAddresses.js'
   out Address address
 
 recipe RecentAddresses
-  map #pipeEntities as recentEntities
+  map 'pipe-entities' as recentEntities
   create as address
   RecentAddresses
     recentEntities = recentEntities

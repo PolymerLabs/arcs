@@ -1,7 +1,6 @@
 import {Utils} from '../lib/utils.js';
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {now} from '../../build/platform/date-web.js';
-import {ArcHost} from '../lib/arc-host.js';
+import {generateId} from '../../modalities/dom/components/generate-id.js';
 
 let t0;
 
@@ -11,28 +10,19 @@ const log = (...args) => {
   //document.body.appendChild(document.createElement('div')).innerText = args.join();
 };
 
-let entityStore;
-
-export const initPipesArc = async storage => {
-  const composer = new RamSlotComposer();
-  const host = new ArcHost(null, storage, composer);
-  const manifest = `import 'https://$particles/Pipes/BackgroundPipes.recipes'`;
-  const arc = await host.spawn({id: 'pipes-arc', manifest});
-  entityStore = arc._stores[0];
-  if (!entityStore) {
-    console.log('failed to find entityStore');
-  }
-  return arc;
-};
-
-export const observeEntity = async data => {
-  if (entityStore) {
+export const observeEntity = async (store, data) => {
+  console.log('app::observeEntity', store, data);
+  if (store) {
+    if (!data.timestamp) {
+      data.timestamp = Date.now();
+      data.source = 'com.unknown';
+    }
     const entity = {
-      id: entityStore.generateID(),
+      id: generateId(), //store.generateID(),
       rawData: data
     };
-    await entityStore.store(entity, [entityStore.generateID()]);
-    console.log(await entityStore.toList());
+    await store.store(entity, [now()/*generateId()*/]);
+    dumpStores([store]);
   }
 };
 
@@ -76,15 +66,13 @@ const com_music_spotify = async (arc, callback) => {
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
   await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/Glitch/custom.recipes'`);
+    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
     // accrete recipe
-    await instantiateRecipe(arc, manifest, 'RandomArtist');
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'SuggestForSpotify');
+    await instantiateRecipe(arc, manifest, 'ArtistAutofill');
     // wait for data to appear
     const store = arc._stores[2];
-    store.on('change', info => onChange(info, callback), arc);
-    //dumpStores(arc._stores);
+    oneChange(store, callback, arc);
+    //await dumpStores(arc._stores);
   })();
 };
 
@@ -100,10 +88,10 @@ const com_google_android_apps_maps = async (arc, callback) => {
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
-    await dumpStores(arc.context._stores);
-    await dumpStores(arc._stores);
     const store = arc._stores[1];
-    store.on('change', info => onChange(info, callback), arc);
+    oneChange(store, callback, arc);
+    //await dumpStores(arc.context._stores);
+    //await dumpStores(arc._stores);
   })();
 };
 
@@ -130,6 +118,14 @@ const instantiateRecipe = async (arc, manifest, name) => {
     // TODO(sjmiles): necessary for iOS (!?)
     //await logArc(arc);
   }
+};
+
+const oneChange = (store, callback, arc) => {
+  const cb = info => {
+    onChange(info, callback);
+    store.off('change', cb);
+  };
+  store.on('change', cb, arc);
 };
 
 const onChange = (change, callback) => {
@@ -165,14 +161,16 @@ recipe Pipe
 `;
 
 const dumpStores = async stores => {
-  log(`stores dump, length = ${stores.length}`);
+  console.log(`stores dump, length = ${stores.length}`);
   await Promise.all(stores.map(async (store, i) => {
     if (store) {
-      if (store.get) {
-        log(`store #${i}:`, store.id, await store.get());
-      } else if (store.toList) {
-        log(`store #${i}:`, store.id, await store.toList());
+      let value;
+      if (store.type.isCollection) {
+        value = await store.toList();
+      } else {
+        value = await store.get();
       }
+      console.log(`store #${i}:`, store.id, value);
     }
   }));
 };

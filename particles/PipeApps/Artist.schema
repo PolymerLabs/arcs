@@ -1,0 +1,4 @@
+schema Artist
+  Text type
+  Text name
+  Text source

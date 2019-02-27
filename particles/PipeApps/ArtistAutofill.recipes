@@ -1,0 +1,9 @@
+import './Artist.schema'
+
+particle RandomArtist in './source/RandomArtist.js'
+  out Artist artist
+
+recipe ArtistAutofill
+  create as artist
+  RandomArtist
+    artist = artist
