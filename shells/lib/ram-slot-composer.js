@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlanningModalityHandler} from '../../build/planning/planning-modality-handler.js';
+import {PlanningModalityHandler} from '../../build/planning/arcs-planning.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 
 export class RamSlotComposer extends SlotComposer {
