@@ -7,7 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlanningModalityHandler} from '../../build/planning/arcs-planning.js';
+// TODO(sjmiles): planning-modality-handler is a fancy version of modality-handler that includes
+// support for suggestion-slots which brings in all the planner functionality.
+//import {PlanningModalityHandler} from '../../build/planning/planning-modality-handler.js';
+import {ModalityHandler} from '../../build/runtime/modality-handler.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 
 export class RamSlotComposer extends SlotComposer {
@@ -15,7 +18,7 @@ export class RamSlotComposer extends SlotComposer {
     super({
       rootContainer: options.rootContainer || {'root': 'root-context'},
       modalityName: options.modalityName,
-      modalityHandler: PlanningModalityHandler.createHeadlessHandler()
+      modalityHandler: ModalityHandler.createHeadlessHandler()
     });
   }
 
