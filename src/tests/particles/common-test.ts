@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {

@@ -11,7 +11,7 @@
 import {assert} from '../platform/chai-web.js';
 import {Loader} from '../runtime/loader.js';
 import {Manifest} from '../runtime/manifest.js';
-import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('demo flow', () => {
   it('can load the recipe manifest', async () => {

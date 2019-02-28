@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PlanningTestHelper} from '../../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper} from '../../planning/testing/arcs-planning-testing.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {

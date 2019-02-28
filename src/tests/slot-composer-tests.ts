@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Planner} from '../planning/planner.js';
-import {StrategyTestHelper} from '../planning/test/strategies/strategy-test-helper.js';
+import {Planner} from '../planning/arcs-planning.js';
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
@@ -19,7 +18,7 @@ import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {TestHelper} from '../runtime/testing/test-helper.js';
-import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper, StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new MockSlotComposer().newExpectations();

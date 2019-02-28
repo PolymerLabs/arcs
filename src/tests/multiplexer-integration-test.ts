@@ -15,7 +15,7 @@ import {HostedSlotContext} from '../runtime/slot-context.js';
 import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
 import {CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
-import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
