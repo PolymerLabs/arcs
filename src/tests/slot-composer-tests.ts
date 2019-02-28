@@ -207,7 +207,7 @@ recipe
     await slotComposer.expectationsCompleted();
   });
 
-  it('renders inner slots in transformations without intercepting', async () => {
+  it.skip('renders inner slots in transformations without intercepting', async () => {
     Random.seedForTests();
     const slotComposer = new MockSlotComposer().newExpectations()
       .expectRenderSlot('A', 'content', {'contentTypes': ['template', 'model', 'templateName']})
