@@ -18,7 +18,6 @@ describe('OuterPortAttachment', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
   it('produces PEC Log messages on devtools channel', async () => {
-    Random.seedForTests();
     const testHelper = await TestHelper.create({
       manifestString: `
         schema Foo
@@ -55,9 +54,8 @@ describe('OuterPortAttachment', () => {
     delete instantiateParticleCall.pecMsgBody.spec.args[0].type;
 
     assert.deepEqual(instantiateParticleCall.pecMsgBody, {
-      // IDs are stable thanks to Random.seedForTests().
-      id: '!85915497922560:demo:particle1',
-      identifier: '!85915497922560:demo:particle1',
+      id: `!${arc.id.currentSession}:demo:particle1`,
+      identifier: `!${arc.id.currentSession}:demo:particle1`,
       handles: {
         foo: 'fooStore'
       },

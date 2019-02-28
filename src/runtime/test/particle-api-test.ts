@@ -770,7 +770,6 @@ describe('particle-api', () => {
   });
 
   it('loadRecipe returns ids of provided slots', async () => {
-    Random.seedForTests();
     const {arc} = await TestHelper.create({
       manifestString: `
         particle TransformationParticle in 'TransformationParticle.js'
@@ -833,8 +832,8 @@ describe('particle-api', () => {
     const [innerArc] = arc.findInnerArcs(transformationParticle);
 
     assert.equal(innerArc.activeRecipe.toString(), `recipe
-  slot '!878110499405824:demo:inner2:1' as slot0
-  slot 'slotid-!878110499405824:demo:inner2:2' as slot1
+  slot '!${innerArc.id.currentSession}:demo:inner2:1' as slot0
+  slot 'slotid-!${innerArc.id.currentSession}:demo:inner2:2' as slot1
   A as particle0
     consume content as slot0
       provide detail as slot1

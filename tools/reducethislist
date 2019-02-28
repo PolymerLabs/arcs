@@ -50,8 +50,6 @@ src/platform/firebase-web.js
 src/platform/firebase-node.js
 src/platform/pouchdb-web.js
 src/platform/pouchdb-node.js
-src/platform/mersenne-twister-web.js
-src/platform/mersenne-twister-node.js
 
 src/tracelib/options.js
 src/tracelib/trace.js

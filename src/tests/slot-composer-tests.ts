@@ -208,7 +208,6 @@ recipe
   });
 
   it.skip('renders inner slots in transformations without intercepting', async () => {
-    Random.seedForTests();
     const slotComposer = new MockSlotComposer().newExpectations()
       .expectRenderSlot('A', 'content', {'contentTypes': ['template', 'model', 'templateName']})
       .expectRenderSlot('TransformationParticle', 'root', {'contentTypes': ['template', 'model', 'templateName']})
@@ -312,7 +311,7 @@ recipe
     assert.deepEqual(rootSlotConsumer._content, {
       model: {
         a: 'A content/intercepted-model',
-        '$detail': 'slotid-!493604905418752:demo:inner2:2'
+        '$detail': `slotid-!${detailSlotConsumer.arc.id.currentSession}:demo:inner2:2`
       },
       template: `<div>intercepted-template<div><span>{{a}}</span><div slotid$="{{$detail}}"></div></div></div>`,
       templateName: 'A::content::default/intercepted'
