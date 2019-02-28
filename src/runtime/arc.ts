@@ -74,7 +74,6 @@ export class Arc {
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
   readonly storageKey: string;
-  readonly arcId: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
   public storeTags = new Map<StorageProviderBase, Set<string>>();
@@ -109,7 +108,6 @@ export class Arc {
     const innerPecPort = this.pecFactory(pecId);
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
-    this.arcId = this.storageKey ? this.storageProviderFactory.parseStringAsKey(this.storageKey).arcId : '';
     this.listenerClasses = listenerClasses;
     this.debugHandler = new ArcDebugHandler(this, listenerClasses);
   }

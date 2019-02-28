@@ -83,7 +83,7 @@ class TestPlanProducer extends PlanProducer {
     async function createProducer(manifestFilename) {
       const helper = await PlanningTestHelper.createAndPlan({
         manifestFilename: './src/runtime/test/artifacts/Products/Products.recipes',
-        storageKey: 'firebase://xxx.firebaseio.com/yyy/serialization/zzz'
+        storageKey: 'firebase://xxx.firebaseio.com/yyy/serialization/demo'
       });
       const store = await Planificator['_initSuggestStore'](helper.arc, /* userid= */ 'TestUser', storageKeyBase);
       assert.isNotNull(store);
@@ -154,7 +154,7 @@ describe('plan producer - search', () => {
     }
 
     setNextSearch(search: string) {
-      this.searchStore.set([{arc: this.arc.arcId, search}]);
+      this.searchStore.set([{arc: this.arc.id.idTreeAsString(), search}]);
       return this.onSearchChanged();
     }
   }

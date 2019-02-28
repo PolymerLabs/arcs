@@ -83,7 +83,7 @@ export class PlanProducer {
 
   async onSearchChanged() {
     const values = await this.searchStore.get() || [];
-    const arcId = this.arc.arcId;
+    const arcId = this.arc.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);
     if (!value) {
       return;
@@ -154,7 +154,7 @@ export class PlanProducer {
     time = ((now() - time) / 1000).toFixed(2);
 
     if (suggestions) {
-      log(`[${this.arc.arcId}] Produced ${suggestions.length} suggestions [elapsed=${time}s].`);
+      log(`[${this.arc.id.idTreeAsString()}] Produced ${suggestions.length} suggestions [elapsed=${time}s].`);
       this.isPlanning = false;
 
       if (this.result.merge({

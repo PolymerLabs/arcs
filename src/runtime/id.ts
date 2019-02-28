@@ -10,6 +10,7 @@
 
 import {Random} from './random.js';
 
+// Id consists of 2 component: a session and an idTree.
 export class Id {
   // Session at which a logical object (e.g. an Arc) got created.
   // Part of the stable, permanent ID of this object.
@@ -50,12 +51,13 @@ export class Id {
     return newId;
   }
 
+  // Returns the full Id string.
   toString(): string {
     return `!${this.session}:${this.components.join(':')}`;
   }
 
-  // Only use this for testing!
-  toStringWithoutSessionForTesting(): string {
+  // Returns the idTree as string (without the session component).
+  idTreeAsString(): string {
     return this.components.join(':');
   }
 
