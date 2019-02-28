@@ -1,9 +1,0 @@
-import './schema/boilerplate.schema'
-import './schema/Artist.schema'
-
-particle ArtistAutofill in './source/ArtistAutofill.js'
-  in PipeEntity currentApp
-  in Artist artist
-  out SuggestionText artistSuggestion
-  consume app
-    provide assistance

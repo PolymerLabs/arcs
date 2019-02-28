@@ -1,13 +1,15 @@
+import '../Pipes/PipeEntity.schema'
+
 schema Address
   Text address
 
 particle RecentAddresses in './source/RecentAddresses.js'
-  in [Address] recentAddresses
+  in [PipeEntity] recentEntities
   out Address address
 
 recipe RecentAddresses
+  map 'pipe-entities' as recentEntities
   create as address
-  map 'addresses' as recentAddresses
   RecentAddresses
+    recentEntities = recentEntities
     address = address
-    recentAddresses = recentAddresses

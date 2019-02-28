@@ -1,4 +1,4 @@
-/*
+/**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
@@ -7,10 +7,16 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-window.envPaths = {
-  root: '.',
-  map: {
-    'https://$build/': `../lib/build/`,
-    'https://$particles/': `../../particles/`
-  }
-};
+
+'use strict';
+
+defineParticle(({DomParticle}) => {
+  return class extends DomParticle {
+    update({artist}) {
+      if (artist) {
+        const json = JSON.stringify(artist.rawData);
+        this.updateVariable('suggestion', {json});
+      }
+    }
+  };
+});

@@ -34,9 +34,9 @@ export class ArcHost {
     log('spawning arc', config);
     this.config = config;
     const context = this.context || await Utils.parse(``);
-    const serialization = this.serialization = await this.computeSerialization(config, this.storage);
-    this.arc = await this._spawn(context, this.composer, this.storage, config.id, serialization);
-    if (config.manifest && !serialization) {
+    this.serialization = await this.computeSerialization(config, this.storage);
+    this.arc = await this._spawn(context, this.composer, this.storage, config.id, this.serialization);
+    if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
     if (this.pendingPlan) {
@@ -80,7 +80,7 @@ export class ArcHost {
       const recipe = manifest.allRecipes[0];
       const plan = await Utils.resolve(arc, recipe);
       if (plan) {
-        this.instantiatePlan(arc, plan);
+        await this.instantiatePlan(arc, plan);
       }
     } catch (x) {
       error(x);
@@ -105,6 +105,7 @@ export class ArcHost {
     const key = `${storage}/${arcid}/arc-info`;
     const store = await SyntheticStores.providerFactory.connect('id', new ArcType(), key);
     if (store) {
+      log('loading stored serialization');
       const info = await store.get();
       return info && info.serialization;
     }

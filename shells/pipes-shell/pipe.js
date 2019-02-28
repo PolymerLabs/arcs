@@ -1,4 +1,6 @@
 import {Utils} from '../lib/utils.js';
+import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {generateId} from '../../modalities/dom/components/generate-id.js';
 import {now} from '../../build/platform/date-web.js';
 
 let t0;
@@ -9,13 +11,41 @@ const log = (...args) => {
   //document.body.appendChild(document.createElement('div')).innerText = args.join();
 };
 
-export const App = async (composer, context, callback, json) => {
-  t0 = now();
-  const arc = await Utils.spawn({id: 'piping-arc', composer, context});
-  window.arc = arc;
-  log(`arc [${arc.id}]`);
-  dispatch(extractType(json), arc, callback);
-  return arc;
+export const Pipe = {
+  async observeEntity(store, json) {
+    console.log('Pipe::observeEntity', store, json);
+    const data = fromJson(json);
+    if (store && data) {
+      if (!data.timestamp) {
+        data.timestamp = Date.now();
+        data.source = 'com.unknown';
+      }
+      const entity = {
+        id: generateId(),
+        rawData: data
+      };
+      await store.store(entity, [now()]);
+      dumpStores([store]);
+    }
+  },
+  async receiveEntity(context, callback, json) {
+    console.log('Pipe::receiveEntity', json);
+    t0 = now();
+    const data = fromJson(json);
+    const composer = new RamSlotComposer();
+    const arc = await Utils.spawn({id: 'piping-arc', composer, context});
+    log(`arc [${arc.id}]`);
+    dispatch(extractType(json), arc, callback);
+    return arc;
+  }
+};
+
+const fromJson = json => {
+  try {
+    return JSON.parse(json);
+  } catch (x) {
+    return null;
+  }
 };
 
 const extractType = json => {
@@ -50,15 +80,13 @@ const com_music_spotify = async (arc, callback) => {
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
   await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/Glitch/custom.recipes'`);
+    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
     // accrete recipe
-    await instantiateRecipe(arc, manifest, 'RandomArtist');
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'SuggestForSpotify');
+    await instantiateRecipe(arc, manifest, 'ArtistAutofill');
     // wait for data to appear
     const store = arc._stores[2];
-    store.on('change', info => onChange(info, callback), arc);
-    //dumpStores(arc._stores);
+    watchOneChange(store, callback, arc);
+    //await dumpStores(arc._stores);
   })();
 };
 
@@ -69,15 +97,14 @@ const com_google_android_apps_maps = async (arc, callback) => {
     await instantiateRecipe(arc, manifest, 'Pipe');
   })();
   await (async () => {
-    //const manifest = await Utils.parse(`import 'https://$particles/Apps/MapQuery.recipes'`);
     const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsApp.recipes'`);
     // accrete recipe
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
-    await dumpStores(arc.context.allStores);
-    await dumpStores(arc._stores);
     const store = arc._stores[1];
-    store.on('change', info => onChange(info, callback), arc);
+    watchOneChange(store, callback, arc);
+    //await dumpStores(arc.context._stores);
+    //await dumpStores(arc._stores);
   })();
 };
 
@@ -106,10 +133,21 @@ const instantiateRecipe = async (arc, manifest, name) => {
   }
 };
 
+const watchOneChange = (store, callback, arc) => {
+  const cb = info => {
+    onChange(info, callback);
+    store.off('change', cb);
+    arc.dispose();
+  };
+  store.on('change', cb, arc);
+};
+
 const onChange = (change, callback) => {
   //log(change, callback.toString());
+  log(change);
   if (change.data) {
-    const text = change.data.rawData.text || change.data.rawData.address;
+    const data = change.data.rawData;
+    const text = data.json || data.text || data.address;
     callback(text);
     //log(text);
     const dt = now() - t0;
@@ -139,14 +177,16 @@ recipe Pipe
 `;
 
 const dumpStores = async stores => {
-  log(`stores dump, length = ${stores.length}`);
+  console.log(`stores dump, length = ${stores.length}`);
   await Promise.all(stores.map(async (store, i) => {
     if (store) {
-      if (store.get) {
-        log(`store #${i}:`, store.id, await store.get());
-      } else if (store.toList) {
-        log(`store #${i}:`, store.id, await store.toList());
+      let value;
+      if (store.type.isCollection) {
+        value = await store.toList();
+      } else {
+        value = await store.get();
       }
+      console.log(`store #${i}:`, store.id, value);
     }
   }));
 };

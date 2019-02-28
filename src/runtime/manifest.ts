@@ -695,8 +695,8 @@ ${e.message}
     };
 
 
-    // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item). 
-    // A recipe should not use both methods. 
+    // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item).
+    // A recipe should not use both methods.
     assert(!(items.handles.length > 0 && items.requireHandles.length > 0), `Inconsistent handle definitions`);
     const itemHandles = items.handles.length > 0 ? items.handles : items.requireHandles;
     for (const item of itemHandles) {
@@ -845,7 +845,7 @@ ${e.message}
             throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
           }
           if (recipe instanceof RequireSection) {
-            // replace provided slot if it already exist in recipe. 
+            // replace provided slot if it already exist in recipe.
             const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.name);
             if (existingSlot !== undefined) {
               slotConn.providedSlots[ps.param] = existingSlot;
@@ -1010,7 +1010,7 @@ ${e.message}
           assert(targetSlot === items.byName.get(slotConnectionItem.name),
                  `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
         } else if (slotConnectionItem.name) {
-          // if this is a require section, check if slot exists in recipe. 
+          // if this is a require section, check if slot exists in recipe.
           if (recipe instanceof RequireSection) {
             targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.name);
             if (targetSlot !== undefined) {

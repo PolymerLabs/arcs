@@ -1,0 +1,23 @@
+schema Artist
+  Text type
+  Text name
+  Text source
+
+schema Json
+  Text json
+
+particle RandomArtist in './source/RandomArtist.js'
+  out Artist artist
+
+particle SuggestArtist in './source/SuggestArtist.js'
+  in Artist artist
+  out Json suggestion
+
+recipe ArtistAutofill
+  create as artist
+  create as suggestion
+  RandomArtist
+    artist = artist
+  SuggestArtist
+    artist = artist
+    suggestion = suggestion

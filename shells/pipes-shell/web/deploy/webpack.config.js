@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 //const Visualizer = require('webpack-visualizer-plugin');
 
@@ -39,5 +40,10 @@ module.exports = {
     // new Visualizer({
     //   filename: '../webpack-stats.html'
     // })
+    new webpack.NormalModuleReplacementPlugin(
+      // use deployment configuration
+      /config.js/,
+      resource =>  resource.request = './deploy/source/config.js'
+    )
   ]
 };

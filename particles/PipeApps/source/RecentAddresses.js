@@ -15,25 +15,17 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return html`<div slotid="assistance"></div>`;
     }
-    update({recentAddresses}, state) {
-      if (recentAddresses) {
-        const address = this.query(recentAddresses);
+    update({recentEntities}, state) {
+      if (recentEntities) {
+        const address = this.query(recentEntities);
         this.updateVariable('address', {address});
       }
     }
-    query(addresses) {
-      //const sorted = addresses.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
-      // const sliced = addresses.slice(0, 3);
-      // return JSON.stringify(sliced.map(e => e.rawData));
-      if (addresses.length) {
-        const address = addresses[addresses.length-1];
-        const result = {
-          type: 'address',
-          name: address.rawData.address,
-          source: 'com.weaseldev.fortunecookies'
-        };
-        return JSON.stringify(result);
-      }
+    query(entities) {
+      const addresses = entities.filter(entity => entity.rawData.type === 'address');
+      const sorted = addresses.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+      const result = sorted[0] || Object;
+      return JSON.stringify(result.rawData);
     }
   };
 });

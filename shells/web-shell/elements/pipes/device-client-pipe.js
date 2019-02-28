@@ -112,10 +112,12 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   update({userid, context, suggestions, arc, pipearc}, state) {
     if (pipearc && !state.pipeStore) {
       state.pipeStore = pipearc._stores[0];
-      log('got pipeStore', state.pipeStore);
-      // retry
       if (!state.pipeStore) {
+        // retry
+        log('looking for pipestore...');
         setTimeout(() => this._invalidate(), 50);
+      } else {
+        log('got pipeStore', state.pipeStore);
       }
     }
     if (!state.registered && state.pipeStore) {
