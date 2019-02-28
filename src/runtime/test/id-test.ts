@@ -14,20 +14,20 @@ import {Random} from '../random.js';
 
 describe('Id', () => {
   it('parses id from string representation', async () => {
-    Random.seedForTests();
-
     const initialId = Id.newSessionId().fromString('test');
+    const session = initialId.currentSession;
 
-    assert.equal('!85915497922560:test', initialId.toString(),
+    assert.equal(`!${session}:test`, initialId.toString(),
         'Both Session ID and the component should be part of the serialized ID');
-    assert.equal('!85915497922560:test:0', initialId.createId().toString(),
+    assert.equal(`!${session}:test:0`, initialId.createId().toString(),
         'Session ID should remain the same in the newly created sub-ID');
 
     const deserializedInNewSession = Id.newSessionId().fromString(initialId.toString());
     
-    assert.equal('!85915497922560:test', deserializedInNewSession.toString(),
+    assert.equal(`!${session}:test`, deserializedInNewSession.toString(),
         'Original session ID should be present in the serialized form of a deserialized ID');
-    assert.equal('!255961043304448:test:0', deserializedInNewSession.createId().toString(),
+    assert.notEqual(session, deserializedInNewSession.currentSession);
+    assert.equal(`!${deserializedInNewSession.currentSession}:test:0`, deserializedInNewSession.createId().toString(),
         'Sub-ID created inside a new session should be serialized with a new Session ID');
   });
 });

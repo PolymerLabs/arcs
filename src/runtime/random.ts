@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {MersenneTwister} from '../platform/mersenne-twister-web.js';
-
 abstract class RNG {
   abstract next() : number;
 }
@@ -23,26 +21,11 @@ class MathRandomRNG extends RNG {
   }
 }
 
-/**
- * Provides a deterministic Random Number Generator for Tests
- */
-class SeededRNG extends RNG {
-  private generator = new MersenneTwister(7);
-  next(): number {
-    return this.generator.random();
-  }
-}
-
 // Singleton Pattern
-let random: RNG = new MathRandomRNG();
+const random: RNG = new MathRandomRNG();
 
 export class Random {
   static next() : number {
     return random.next();
-  }
-
-  // TODO: remove test code and allow for injectable implementations.
-  static seedForTests() : void {
-    random = new SeededRNG();
   }
 }

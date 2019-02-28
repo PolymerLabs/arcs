@@ -13,10 +13,10 @@ import {Random} from './random.js';
 export class Id {
   // Session at which a logical object (e.g. an Arc) got created.
   // Part of the stable, permanent ID of this object.
-  private session: string;
+  session: string;
   // Current session. E.g. In which an Arc got deserialized and inflated.
   // This is used to spawn new ids based on this instance.
-  private readonly currentSession: string;
+  readonly currentSession: string;
   private nextIdComponent = 0;
   private readonly components: string[] = [];
 
