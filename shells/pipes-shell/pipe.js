@@ -85,7 +85,7 @@ const com_music_spotify = async (arc, callback) => {
     await instantiateRecipe(arc, manifest, 'ArtistAutofill');
     // wait for data to appear
     const store = arc._stores[2];
-    oneChange(store, callback, arc);
+    watchOneChange(store, callback, arc);
     //await dumpStores(arc._stores);
   })();
 };
@@ -102,7 +102,7 @@ const com_google_android_apps_maps = async (arc, callback) => {
     await instantiateRecipe(arc, manifest, 'RecentAddresses');
     // wait for data to appear
     const store = arc._stores[1];
-    oneChange(store, callback, arc);
+    watchOneChange(store, callback, arc);
     //await dumpStores(arc.context._stores);
     //await dumpStores(arc._stores);
   })();
@@ -133,7 +133,7 @@ const instantiateRecipe = async (arc, manifest, name) => {
   }
 };
 
-const oneChange = (store, callback, arc) => {
+const watchOneChange = (store, callback, arc) => {
   const cb = info => {
     onChange(info, callback);
     store.off('change', cb);

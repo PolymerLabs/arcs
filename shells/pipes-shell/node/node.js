@@ -36,8 +36,8 @@ Utils.init(global.envPaths.root, global.envPaths.map);
 
 // test it
 
-setTimeout(() => {
-  global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
-  global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
-  global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
-}, 500);
+// setTimeout(() => {
+//   global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
+//   global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
+//   global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
+// }, 500);
