@@ -154,7 +154,7 @@ describe('plan producer - search', () => {
     }
 
     setNextSearch(search: string) {
-      this.searchStore.set([{arc: this.arc.id.toStringWithoutSession(), search}]);
+      this.searchStore.set([{arc: this.arc.id.idTreeAsString(), search}]);
       return this.onSearchChanged();
     }
   }

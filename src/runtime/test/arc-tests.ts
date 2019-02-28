@@ -213,7 +213,7 @@ describe('Arc', () => {
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
     assert.equal(newArc._stores.length, 0);
     assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
-    assert.equal(newArc.id.toStringWithoutSession(), 'test');
+    assert.equal(newArc.id.idTreeAsString(), 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
@@ -593,7 +593,7 @@ describe('Arc', () => {
       const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
       assert.equal(newArc._stores.length, 1);
       assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
-      assert.equal(newArc.id.toStringWithoutSession(), 'test');
+      assert.equal(newArc.id.idTreeAsString(), 'test');
     });
   });  // end forEach(storageKeyPrefix)
 });
