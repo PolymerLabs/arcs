@@ -22,7 +22,7 @@ class MathRandomRNG extends RNG {
 }
 
 // Singleton Pattern
-let random: RNG = new MathRandomRNG();
+const random: RNG = new MathRandomRNG();
 
 export class Random {
   static next() : number {
