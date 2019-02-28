@@ -11,7 +11,7 @@
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {PlanningTestHelper} from '../planning/testing/planning-test-helper.js';
+import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
 describe('Arc integration', () => {
   it('copies store tags', async () => {

@@ -1,5 +1,5 @@
 import {Modality} from '../../build/runtime/modality.js';
-import {PlanningModalityHandler} from '../../build/planning/planning-modality-handler.js';
+import {PlanningModalityHandler} from '../../build/planning/arcs-planning.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 
 const domModality = {

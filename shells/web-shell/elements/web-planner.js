@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {Xen} from '../../lib/xen.js';
-import {Planificator} from '../../../build/planning/plan/planificator.js';
+import {Planificator} from '../../../build/planning/arcs-planning.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
