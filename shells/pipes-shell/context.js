@@ -33,7 +33,6 @@ export const Context = class {
     const manifest = `import 'https://$particles/Pipes/BackgroundPipes.recipes'`;
     const composer = new RamSlotComposer();
     const host = new ArcHost(null, storage, composer);
-    debugger;
     this.pipesArc = await host.spawn({id, manifest});
     // TODO(sjmiles): findById would be better,
     // but I can't get the id to materialize via manifest
