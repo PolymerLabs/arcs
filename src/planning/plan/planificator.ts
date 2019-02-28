@@ -193,7 +193,7 @@ export class Planificator {
 
   async _storeSearch(): Promise<void> {
     const values = await this.searchStore.get() || [];
-    const arcKey = this.arc.arcId;
+    const arcKey = this.arc.id.toStringWithoutSession();
     const newValues = [];
     for (const {arc, search} of values) {
       if (arc === arcKey) {

@@ -54,8 +54,7 @@ export class Id {
     return `!${this.session}:${this.components.join(':')}`;
   }
 
-  // Only use this for testing!
-  toStringWithoutSessionForTesting(): string {
+  toStringWithoutSession(): string {
     return this.components.join(':');
   }
 

@@ -168,8 +168,8 @@ describe('Handle', () => {
     schema Bar
       Text value
     `);
-    const arc = new Arc({id: 'test', storageKey: 'pouchdb://memory/yyy/', context: manifest, loader: new Loader()});
+    const arc = new Arc({id: 'test', storageKey: 'pouchdb://memory/yyy/test', context: manifest, loader: new Loader()});
     const variable = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as VariableStorageProvider;
-    assert.equal(variable.storageKey, 'pouchdb://memory/yyy/handles/test1');
+    assert.equal(variable.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });
 });

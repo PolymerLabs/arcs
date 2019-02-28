@@ -18,7 +18,7 @@ import {PlanningResult} from '../../plan/planning-result.js';
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const helper = await PlanningTestHelper.create(
-      {storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/testuser--LT97ssVNw_ttCZtjlMT'});
+      {storageKey: 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'});
     const arc = helper.arc;
 
     const verifySuggestion = (storageKeyBase) => {
