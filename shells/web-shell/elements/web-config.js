@@ -19,18 +19,9 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   }
   _update({userid, arckey}, state, oldProps) {
     if (!state.config) {
-      state.config = this._configure();
-      if (!state.config.storage || state.config.storage === 'firebase') {
-        state.config.storage = Const.defaultFirebaseStorageKey;
-      }
-      if (!state.config.storage || state.config.storage === 'default') {
-        state.config.storage = Const.defaultStorageKey;
-      }
-      localStorage.setItem(Const.LOCALSTORAGE.storage, state.config.storage);
-      if (!state.config.userid) {
-        state.config.userid = Const.defaultUserId;
-      }
-      this._fire('config', state.config);
+      const config = this.updateConfig();
+      this._fire('config', config);
+      state.config = config;
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     // ... but not having it makes it hard to test multi-user scenarios
@@ -47,7 +38,24 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     //   ArcUtils.setUrlParam('search', search);
     // }
   }
-  _configure() {
+  updateConfig() {
+    const config = this.basicConfig();
+    if (config.storage === 'firebase') {
+      config.storage = Const.defaultFirebaseStorageKey;
+    }
+    if (config.storage === 'pouchdb') {
+      config.storage = Const.defaultPouchdbStorageKey;
+    }
+    if (!config.storage || config.storage === 'default') {
+      config.storage = Const.defaultStorageKey;
+    }
+    localStorage.setItem(Const.LOCALSTORAGE.storage, config.storage);
+    if (!config.userid) {
+      config.userid = Const.defaultUserId;
+    }
+    return config;
+  }
+  basicConfig() {
     const params = (new URL(document.location)).searchParams;
     return {
       //modality: 'dom',
