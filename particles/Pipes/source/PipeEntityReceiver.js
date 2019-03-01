@@ -12,8 +12,8 @@
 
 defineParticle(({DomParticle}) => {
   return class extends DomParticle {
-    get template() {
-      return '<div slotid="app"></div>';
-    }
+    // get template() {
+    //   return '<div slotid="app"></div>';
+    // }
   };
 });

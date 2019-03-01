@@ -1,11 +1,10 @@
 import 'PipeEntity.schema'
 
-particle PipeEntityReceiver in './source/PipeEntityReceiver.js'
-  in PipeEntity pipe
-  consume root
-    provide pipes
-
 particle Trigger in './source/PipeEntityReceiver.js'
   in PipeEntity pipe
-  consume root
-    provide app
+
+// particle PipeEntityReceiver in './source/PipeEntityReceiver.js'
+//   in PipeEntity pipe
+//   consume root
+//     provide pipes
+

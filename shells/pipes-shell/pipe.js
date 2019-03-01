@@ -49,11 +49,11 @@ const fromJson = json => {
 
 const extractType = json => {
   const entity = fromJson(json);
-  return entity ? entity.type : 'com.music.spotify';
+  return (entity ? entity.type : 'com.music.spotify').replace(/\./g, '_');
 };
 
 const dispatch = async (type, arc, callback) => {
-  await instantiatePipeRecipe('com_music_spotify');
+  await instantiatePipeRecipe(arc, type);
   switch (type) {
     case 'com_google_android_apps_maps':
       await com_google_android_apps_maps(arc, callback);
@@ -77,11 +77,11 @@ const com_music_spotify = async (arc, callback) => {
   })();
 };
 
-const com_google_android_apps_maps = async (type, arc, callback) => {
+const com_google_android_apps_maps = async (arc, callback) => {
   await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsApp.recipes'`);
+    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
     // accrete recipe
-    await instantiateRecipe(arc, manifest, 'RecentAddresses');
+    await instantiateRecipe(arc, manifest, 'SuggestAddress');
     // wait for data to appear
     const store = arc._stores[1];
     watchOneChange(store, callback, arc);
@@ -150,7 +150,16 @@ const onChange = (change, callback) => {
 };
 
 const buildEntityManifest = entity => `
-import 'https://$particles/Pipes/Pipes.recipes'
+schema PipeEntity
+  Text id
+  Text type
+  Text name
+  Number timestamp
+  Number count
+  Text source
+
+particle Trigger in 'https://$particles/Pipes/source/PipeEntityReceiver.js'
+  in PipeEntity pipe
 
 resource PipeEntityResource
   start
