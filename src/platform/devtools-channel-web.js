@@ -12,6 +12,7 @@
 import {offerWebRtcSignal} from '../../devtools/shared/web-rtc-signalling.js';
 import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
+import {database} from '../../shells/lib/firebase.js';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
@@ -58,7 +59,7 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
       // indicates all candidates have been generated.
       if (e.candidate) return;
       offerWebRtcSignal(
-          window.firebase,
+          database,
           remoteExploreKey,
           btoa(JSON.stringify(connection.localDescription)),
           signal => connection.setRemoteDescription(JSON.parse(atob(signal))).catch(e => console.error(e)));

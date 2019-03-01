@@ -13,6 +13,8 @@ import './elements/web-shell.js';
 
 import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.js';
 (async () => {
+  // TODO(sjmiles): this is config work, it can be done in web-config.js which
+  // already blocks web-shell
   const params = (new URL(document.location)).searchParams;
   if (params.has('remote-explore-key')) {
     // Wait for the remote Arcs Explorer to connect before starting the Shell.
@@ -21,11 +23,4 @@ import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.
   }
   // Shell blocks until root is provided
   document.querySelector('web-shell').root = '../..';
-  /*
-  document.querySelector('body').appendChild(document.createElement('web-shell'));
-  // configure root path
-  Object.assign(document.querySelector('web-shell'), {
-    root: '../..' // path to arcs/
-  });
-  */
 })();
