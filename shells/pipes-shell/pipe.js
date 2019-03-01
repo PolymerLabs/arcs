@@ -66,28 +66,24 @@ const dispatch = async (type, arc, callback) => {
 };
 
 const com_music_spotify = async (arc, callback) => {
-  await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'ArtistAutofill');
-    // wait for data to appear
-    const store = arc._stores[2];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc._stores);
-  })();
+  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+  // accrete recipe
+  await instantiateRecipe(arc, manifest, 'ArtistAutofill');
+  // wait for data to appear
+  const store = arc._stores[2];
+  watchOneChange(store, callback, arc);
+  //await dumpStores(arc._stores);
 };
 
 const com_google_android_apps_maps = async (arc, callback) => {
-  await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'SuggestAddress');
-    // wait for data to appear
-    const store = arc._stores[1];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc.context._stores);
-    //await dumpStores(arc._stores);
-  })();
+  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
+  // accrete recipe
+  await instantiateRecipe(arc, manifest, 'MapsAutofill');
+  // wait for data to appear
+  const store = arc._stores[2];
+  watchOneChange(store, callback, arc);
+  //await dumpStores(arc.context._stores);
+  //await dumpStores(arc._stores);
 };
 
 const instantiatePipeRecipe = async (arc, type) => {
@@ -150,16 +146,7 @@ const onChange = (change, callback) => {
 };
 
 const buildEntityManifest = entity => `
-schema PipeEntity
-  Text id
-  Text type
-  Text name
-  Number timestamp
-  Number count
-  Text source
-
-particle Trigger in 'https://$particles/Pipes/source/PipeEntityReceiver.js'
-  in PipeEntity pipe
+import 'https://$particles/PipeApps/Trigger.recipes'
 
 resource PipeEntityResource
   start

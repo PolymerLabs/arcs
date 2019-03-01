@@ -12,6 +12,7 @@ particle RandomArtist in './source/RandomArtist.js'
 particle SuggestArtist in './source/SuggestArtist.js'
   in Artist artist
   out Json suggestion
+  consume app
 
 recipe ArtistAutofill
   create as artist
