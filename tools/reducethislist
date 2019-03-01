@@ -27,6 +27,7 @@ src/platform/deviceinfo-node.js
 src/platform/deviceinfo-web.js
 src/platform/devtools-channel-node.js
 src/platform/devtools-channel-web.js
+src/platform/devtools-channel-stub.js
 src/platform/digest-node.js
 src/platform/digest-web.js
 src/platform/fetch-node.js
