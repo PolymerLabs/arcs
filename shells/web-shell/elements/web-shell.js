@@ -126,9 +126,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.spawnNullArc(state.userid);
     }
     // spin up pipesArc
-    if (!state.pipesConfig && state.context && state.userid) {
-      this.spawnPipesArc(state.userid);
-    }
+    // if (!state.pipesConfig && state.context && state.userid) {
+    //   this.spawnPipesArc(state.userid);
+    // }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
@@ -224,13 +224,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       nullConfig: this.configureBgArc(userid, 'null')
     };
   }
-  spawnPipesArc(userid) {
-    const pipesConfig = this.configureBgArc(userid, 'pipes');
-    pipesConfig.manifest = manifests.pipes;
-    this.state = {
-      pipesConfig
-    };
-  }
+  // spawnPipesArc(userid) {
+  //   const pipesConfig = this.configureBgArc(userid, 'pipes');
+  //   pipesConfig.manifest = manifests.pipes;
+  //   this.state = {
+  //     pipesConfig
+  //   };
+  // }
   configureBgArc(userid, name)  {
     const key = `${userid}-${name.toLowerCase()}`;
     this.recordArcMeta({
@@ -307,9 +307,9 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   onNullArc(e, nullArc) {
     this.state = {nullArc};
   }
-  onPipesArc(e, pipesArc) {
-    this.state = {pipesArc};
-  }
+  // onPipesArc(e, pipesArc) {
+  //   this.state = {pipesArc};
+  // }
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
     this.state = {suggestion};
