@@ -22,7 +22,7 @@ Also inside each platform folder is a deploy folder that contains tools for buil
 
 ### Flags
 
-pipes-shell/web/index.html?log[=[0..2]]
+pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]
 
 - log[=level]
   - controls logging verbosity
@@ -31,3 +31,6 @@ pipes-shell/web/index.html?log[=[0..2]]
     - 2 logging form Particles and Shell
   - if `level` is ommitted, it defaults to `log=2`
   - if `log` is ommitted, it defaults to `log=0`
+
+- remote-explore-key
+  - used to connect to remote devtools (aka Arcs Explorer)
