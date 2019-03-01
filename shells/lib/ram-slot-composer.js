@@ -7,9 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-// TODO(sjmiles): planning-modality-handler is a fancy version of modality-handler that includes
-// support for suggestion-slots which brings in all the planner functionality.
-//import {PlanningModalityHandler} from '../../build/planning/planning-modality-handler.js';
 import {ModalityHandler} from '../../build/runtime/modality-handler.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 
@@ -21,13 +18,10 @@ export class RamSlotComposer extends SlotComposer {
       modalityHandler: ModalityHandler.createHeadlessHandler()
     });
   }
-
   sendEvent(particleName, slotName, event, data) {
     const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
-    assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
-
   renderSlot(particle, slotName, content) {
     super.renderSlot(particle, slotName, content);
     const slotConsumer = this.getSlotConsumer(particle, slotName);
