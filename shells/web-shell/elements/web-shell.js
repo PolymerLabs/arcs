@@ -19,7 +19,7 @@ import './user-context.js';
 import './web-launcher.js';
 import './web-planner.js';
 import './ui/web-shell-ui.js';
-import './pipes/device-client-pipe.js';
+//import './pipes/device-client-pipe.js';
 
 const manifests = {
   context: `
@@ -69,7 +69,7 @@ const template = Xen.Template.html`
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- background arcs -->
     <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc>
+    <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
     <!-- user arc -->
     <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
