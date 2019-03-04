@@ -204,7 +204,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.getContainedType();
   }
 
   clone() {
@@ -301,7 +301,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
 
     const item = {value, keys, effective: undefined};
     if (this.referenceMode) {
-      const referredType = this.type.primitiveType();
+      const referredType = this.type.getContainedType();
 
       const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType);
 
@@ -533,7 +533,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
   }
 
   backingType() {
-    return this.type.primitiveType();
+    return this.type.getContainedType();
   }
 
   async get(id: string) {

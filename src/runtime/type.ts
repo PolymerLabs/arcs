@@ -121,10 +121,6 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
-  primitiveType() {
-    return null;
-  }
-
   getContainedType() {
     return null;
   }
@@ -402,18 +398,13 @@ export class CollectionType<T extends Type> extends Type {
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>): CollectionType<Type> {
-    const primitiveType = this.collectionType;
-    const result = primitiveType.mergeTypeVariablesByName(variableMap);
-    return (result === primitiveType) ? this : result.collectionOf();
+    const collectionType = this.collectionType;
+    const result = collectionType.mergeTypeVariablesByName(variableMap);
+    return (result === collectionType) ? this : result.collectionOf();
   }
 
   _applyExistenceTypeTest(test: (type: Type) => boolean): boolean {
     return this.collectionType._applyExistenceTypeTest(test);
-  }
-
-  // TODO: remove this in favor of a renamed collectionType
-  primitiveType(): T {
-    return this.collectionType;
   }
 
   getContainedType(): T {
@@ -425,9 +416,9 @@ export class CollectionType<T extends Type> extends Type {
   }
 
   resolvedType(): CollectionType<Type> {
-    const primitiveType = this.collectionType;
-    const resolvedPrimitiveType = primitiveType.resolvedType();
-    return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.collectionOf() : this;
+    const collectionType = this.collectionType;
+    const resolvedCollectionType = collectionType.resolvedType();
+    return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.collectionOf() : this;
   }
 
   _canEnsureResolved() {
@@ -486,9 +477,9 @@ export class BigCollectionType<T extends Type> extends Type {
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>): BigCollectionType<Type> {
-    const primitiveType = this.bigCollectionType;
-    const result = primitiveType.mergeTypeVariablesByName(variableMap);
-    return (result === primitiveType) ? this : result.bigCollectionOf();
+    const collectionType = this.bigCollectionType;
+    const result = collectionType.mergeTypeVariablesByName(variableMap);
+    return (result === collectionType) ? this : result.bigCollectionOf();
   }
 
   _applyExistenceTypeTest(test): boolean {
@@ -504,9 +495,9 @@ export class BigCollectionType<T extends Type> extends Type {
   }
 
   resolvedType(): BigCollectionType<Type> {
-    const primitiveType = this.bigCollectionType;
-    const resolvedPrimitiveType = primitiveType.resolvedType();
-    return (primitiveType !== resolvedPrimitiveType) ? resolvedPrimitiveType.bigCollectionOf() : this;
+    const collectionType = this.bigCollectionType;
+    const resolvedCollectionType = collectionType.resolvedType();
+    return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.bigCollectionOf() : this;
   }
 
   _canEnsureResolved() {
@@ -733,9 +724,9 @@ export class ReferenceType extends Type {
   }
 
   resolvedType() {
-    const primitiveType = this.referredType;
-    const resolvedPrimitiveType = primitiveType.resolvedType();
-    return (primitiveType !== resolvedPrimitiveType) ? new ReferenceType(resolvedPrimitiveType) : this;
+    const referredType = this.referredType;
+    const resolvedReferredType = referredType.resolvedType();
+    return (referredType !== resolvedReferredType) ? new ReferenceType(resolvedReferredType) : this;
   }
 
   _canEnsureResolved() {

@@ -671,23 +671,23 @@ describe('recipe', () => {
     const verifyRecipe = (recipe, errorPrefix) => {
       const errors = [];
       const resolvedType = recipe.handleConnections[0].type.resolvedType();
-      if (resolvedType !== recipe.handleConnections[1].type.primitiveType().resolvedType()) {
+      if (resolvedType !== recipe.handleConnections[1].type.getContainedType().resolvedType()) {
         errors.push(`${errorPrefix}: handle connection types mismatch`);
       }
       if (resolvedType !== recipe.handles[0].type.resolvedType()) {
         errors.push(`${errorPrefix}: handle0 type mismatch with handle-connection`);
       }
-      if (resolvedType !== recipe.handles[1].type.primitiveType().resolvedType()) {
+      if (resolvedType !== recipe.handles[1].type.getContainedType().resolvedType()) {
         errors.push(`${errorPrefix}: handle1 type mismatch with handle-connection`);
       }
-      if (recipe.handles[0].type.resolvedType() !== recipe.handles[1].type.primitiveType().resolvedType()) {
+      if (recipe.handles[0].type.resolvedType() !== recipe.handles[1].type.getContainedType().resolvedType()) {
         errors.push(`${errorPrefix}: handles type mismatch`);
       }
       assert.lengthOf(errors, 0, `\ndetailed errors: [\n${errors.join('\n')}\n]\n`);
       return resolvedType;
     };
     assert.isTrue(recipe.normalize());
-    assert.equal(recipe.handleConnections[0].type, recipe.handleConnections[1].type.primitiveType());
+    assert.equal(recipe.handleConnections[0].type, recipe.handleConnections[1].type.getContainedType());
     const recipeResolvedType = verifyRecipe(recipe, 'recipe');
     const type = recipe.handleConnections[0].type;
 
