@@ -17,7 +17,7 @@ defineParticle(({Particle}) => {
       this._products = null;
       this._hostedParticle = null;
       this._resultsHandle = handles.get('results');
-      this._productType = handles.get('products').type.primitiveType();
+      this._productType = handles.get('products').type.getContainedType();
       this._arc = await this.constructInnerArc();
     }
     async onHandleSync(handle, model) {
