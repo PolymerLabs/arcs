@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js'
+import {Recipe} from '../../../runtime/recipe/recipe.js';
 import {FlowConfig} from '../flowconfig.js';
 import {FlowChecker} from '../flowchecker.js';
 
