@@ -1,12 +1,9 @@
 import 'PipeEntity.schema'
 
-particle BackgroundPipes in './source/BackgroundProcess.js'
+particle BackgroundPipes in './source/Noop.js'
   in [PipeEntity] entities
-  consume root
-    provide pipes
 
 recipe BackgroundPipes
   create #pipeEntities as entities
-  slot 'rootslotid-root' as root
   BackgroundPipes
     entities = entities

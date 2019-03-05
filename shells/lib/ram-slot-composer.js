@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {PlanningModalityHandler} from '../../build/planning/arcs-planning.js';
+import {ModalityHandler} from '../../build/runtime/modality-handler.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 
 export class RamSlotComposer extends SlotComposer {
@@ -15,16 +15,13 @@ export class RamSlotComposer extends SlotComposer {
     super({
       rootContainer: options.rootContainer || {'root': 'root-context'},
       modalityName: options.modalityName,
-      modalityHandler: PlanningModalityHandler.createHeadlessHandler()
+      modalityHandler: ModalityHandler.createHeadlessHandler()
     });
   }
-
   sendEvent(particleName, slotName, event, data) {
     const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
-    assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
     this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
-
   renderSlot(particle, slotName, content) {
     super.renderSlot(particle, slotName, content);
     const slotConsumer = this.getSlotConsumer(particle, slotName);

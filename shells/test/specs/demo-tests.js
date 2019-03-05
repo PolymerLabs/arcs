@@ -11,31 +11,31 @@
 /* global browser */
 /* eslint-disable no-invalid-this */
 
-const {seconds, waitFor, click, keys, openNewArc} = require('../utils.js');
+const {/*seconds,*/waitFor, click, keys, openNewArc} = require('../utils.js');
 
 const searchFor = text => keys('input[search]', text);
 
-const receiveEntity = async entity =>
-  browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
+//const receiveEntity = async entity =>
+//  browser.execute(json => window.ShellApi.receiveEntity(json), JSON.stringify(entity));
 
-['pouchdb', 'firebase'].forEach(async (storage) => {
-  describe('pipes ' + storage, () => {
-    it('searches', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
-      // TODO(sjmiles): wait for context to prepare, need a signal instead
-      await browser.pause(seconds(5));
-      await receiveEntity({type: 'search', query: 'restaurants'});
-      //await waitFor(findRestaurants);
-    });
-    it('receives', async function() {
-      await openNewArc(this.test.fullTitle(), undefined, storage);
-      const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
-      // TODO(sjmiles): wait for context to prepare, need a signal instead
-      await browser.pause(seconds(5));
-      await receiveEntity({type: 'tv_show', name: 'bodyguard'});
-      await waitFor(bodyguardIsOn);
-    });
-  });
+['pouchdb', 'firebase'].forEach(async storage => {
+  //describe('pipes ' + storage, () => {
+  //   it('searches', async function() {
+  //     await openNewArc(this.test.fullTitle(), undefined, storage);
+  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
+  //     await browser.pause(seconds(5));
+  //     await receiveEntity({type: 'search', query: 'restaurants'});
+  //     //await waitFor(findRestaurants);
+  //   });
+  //   it('receives', async function() {
+  //     await openNewArc(this.test.fullTitle(), undefined, storage);
+  //     const bodyguardIsOn = `[title^="Bodyguard is on BBC One"]`;
+  //     // TODO(sjmiles): wait for context to prepare, need a signal instead
+  //     await browser.pause(seconds(5));
+  //     await receiveEntity({type: 'tv_show', name: 'bodyguard'});
+  //     await waitFor(bodyguardIsOn);
+  //   });
+  // });
 
   describe('demo ' + storage, () => {
     it('restaurants', async function() {

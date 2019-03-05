@@ -27,8 +27,6 @@ const database = app && app.database();
 // firebase storage (for file upload, e.g.)
 const storage = app && app.storage();
 
-window.firebase = database;
-
 export {
   firebase,
   app,

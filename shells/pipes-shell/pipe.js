@@ -31,11 +31,10 @@ export const Pipe = {
   async receiveEntity(context, callback, json) {
     console.log('Pipe::receiveEntity', json);
     t0 = now();
-    const data = fromJson(json);
     const composer = new RamSlotComposer();
     const arc = await Utils.spawn({id: 'piping-arc', composer, context});
     log(`arc [${arc.id}]`);
-    dispatch(extractType(json), arc, callback);
+    await dispatch(extractType(json), arc, callback);
     return arc;
   }
 };
@@ -49,63 +48,48 @@ const fromJson = json => {
 };
 
 const extractType = json => {
-  let type = 'com.music.spotify';
-  if (json) {
-    try {
-      const entity = JSON.parse(json) || Object;
-      type = entity.type;
-    } catch (x) {
-      //
-    }
-  }
-  return type;
+  const entity = fromJson(json);
+  return (entity ? entity.type : 'com.music.spotify').replace(/\./g, '_');
 };
 
-const dispatch = (type, arc, callback) => {
+const dispatch = async (type, arc, callback) => {
+  await instantiatePipeRecipe(arc, type);
   switch (type) {
-    case 'com.google.android.apps.maps':
-      com_google_android_apps_maps(arc, callback);
+    case 'com_google_android_apps_maps':
+      await com_google_android_apps_maps(arc, callback);
       break;
-    case 'com.music.spotify':
     default:
-      com_music_spotify(arc, callback);
+    case 'com_music_spotify':
+      await com_music_spotify(arc, callback);
       break;
   }
 };
 
 const com_music_spotify = async (arc, callback) => {
-  await (async () => {
-    const manifestContent = buildEntityManifest({type: 'com_music_spotify'});
-    const manifest = await Utils.parse(manifestContent);
-    await instantiateRecipe(arc, manifest, 'Pipe');
-  })();
-  await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'ArtistAutofill');
-    // wait for data to appear
-    const store = arc._stores[2];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc._stores);
-  })();
+  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+  // accrete recipe
+  await instantiateRecipe(arc, manifest, 'ArtistAutofill');
+  // wait for data to appear
+  const store = arc._stores[2];
+  watchOneChange(store, callback, arc);
+  //await dumpStores(arc._stores);
 };
 
 const com_google_android_apps_maps = async (arc, callback) => {
-  await (async () => {
-    const manifestContent = buildEntityManifest({type: 'com_google_android_apps_maps'});
-    const manifest = await Utils.parse(manifestContent);
-    await instantiateRecipe(arc, manifest, 'Pipe');
-  })();
-  await (async () => {
-    const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsApp.recipes'`);
-    // accrete recipe
-    await instantiateRecipe(arc, manifest, 'RecentAddresses');
-    // wait for data to appear
-    const store = arc._stores[1];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc.context._stores);
-    //await dumpStores(arc._stores);
-  })();
+  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
+  // accrete recipe
+  await instantiateRecipe(arc, manifest, 'MapsAutofill');
+  // wait for data to appear
+  const store = arc._stores[2];
+  watchOneChange(store, callback, arc);
+  //await dumpStores(arc.context._stores);
+  //await dumpStores(arc._stores);
+};
+
+const instantiatePipeRecipe = async (arc, type) => {
+  const manifestContent = buildEntityManifest({type});
+  const manifest = await Utils.parse(manifestContent);
+  await instantiateRecipe(arc, manifest, 'Pipe');
 };
 
 const logArc = async arc => {
@@ -162,7 +146,7 @@ const onChange = (change, callback) => {
 };
 
 const buildEntityManifest = entity => `
-import 'https://$particles/Pipes/Pipes.recipes'
+import 'https://$particles/PipeApps/Trigger.recipes'
 
 resource PipeEntityResource
   start

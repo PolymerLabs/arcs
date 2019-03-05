@@ -63,9 +63,9 @@ const template = Xen.Template.html`
           <div tab="Launcher">
             <store-explorer arc="{{launcherarc}}"></store-explorer>
           </div>
-          <div tab="Pipes">
+          <!-- <div tab="Pipes">
             <store-explorer arc="{{pipesarc}}"></store-explorer>
-          </div>
+          </div> -->
         </simple-tabs>
       </div>
       <div tab="Xen Explorer">

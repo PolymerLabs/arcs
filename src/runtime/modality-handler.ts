@@ -21,7 +21,10 @@ export class ModalityHandler {
     return new ModalityHandler(HeadlessSlotDomConsumer);
   }
 
+  static readonly headlessHandler : ModalityHandler = new ModalityHandler(HeadlessSlotDomConsumer);
+
   static readonly domHandler : ModalityHandler = new ModalityHandler(
     SlotDomConsumer,
-    DescriptionDomFormatter);
+    DescriptionDomFormatter
+  );
 }

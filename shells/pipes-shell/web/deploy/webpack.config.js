@@ -14,8 +14,8 @@ module.exports = {
          terserOptions: {
           mangle: false, // Note `mangle.properties` is `false` by default.
         }
-      }),
-    ],
+      })
+    ]
   },
   entry: {
     shell: `../web.js`
@@ -27,14 +27,14 @@ module.exports = {
   module: {
     rules: [{
       test: /\.mjs$/,
-      type: 'javascript/auto',
+      type: 'javascript/auto'
     }]
   },
   stats: {
-    //modulesSort: '!size',
-    maxModules: 300,
-    exclude: false,
-    excludeModules: false
+    modulesSort: '!size',
+    //maxModules: 300,
+    //exclude: false,
+    //excludeModules: false
   },
   plugins: [
     // new Visualizer({

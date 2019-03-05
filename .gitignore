@@ -27,3 +27,4 @@ build
 .vscode
 devtools/build
 server/log.txt
+pack-stats.json

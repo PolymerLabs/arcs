@@ -1,0 +1,16 @@
+import './PipeEntity.schema'
+
+schema Json
+  Text json
+
+particle SuggestAddress in './source/SuggestAddress.js'
+  in [PipeEntity] recentEntities
+  out Json suggestion
+  consume app
+
+recipe MapsAutofill
+  map 'pipe-entities' as recentEntities
+  create as suggestion
+  SuggestAddress
+    recentEntities = recentEntities
+    suggestion = suggestion

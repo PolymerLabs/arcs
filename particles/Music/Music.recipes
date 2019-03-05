@@ -1,3 +1,2 @@
 import 'Playlist.recipe'
 import 'Artist.recipes'
-import 'ArtistPipe.recipes'
