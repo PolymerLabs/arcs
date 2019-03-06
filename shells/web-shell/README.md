@@ -12,15 +12,15 @@ Setting Storage Provider
   * arcs-owned firebase instance, e.g. firebase://arcs-storage.firebaseio.com...
 * storage=default
   * use the default (currently `pouchdb`)
-* storage=<storage-key>
+* storage=[storage-key]
   * use `storage-key`
 
 User
 
 * no flag
-  * use the same storage as last time, otherwise `user`
-* user=<user>
-  * use `<user>`, created as needed
+  * use the same user as last time, otherwise `user`
+* user=[user]
+  * use `[user]`, created as needed
 
 
 Logging
@@ -29,6 +29,11 @@ Logging
   * set logging level to 0
 * log
   * set logging level to 2
-* log=<level>
-  * set logging level to <level>
-  
+* log=[level]
+  * set logging level to [level]
+
+Log Levels
+
+* 0 = no logging
+* 1 = particles/runtime-logging only
+* 2 = add shell logging
