@@ -172,6 +172,12 @@ export class HandleConnection {
     let parent;
     if (this.spec && this.spec.parentConnection) {
       parent = this.particle.connections[this.spec.parentConnection.name];
+      if (!parent || !parent.handle) {
+        if (options) {
+          options.details = 'parent connection missing handle';
+        }
+        return false;
+      }
     }
 
     if (parent && !parent.handle) {
@@ -189,15 +195,6 @@ export class HandleConnection {
         options.details = 'missing handle';
       }
       return false;
-    }
-
-    if (this.spec) {
-      if (this.spec.parentConnection && (!parent || !parent.handle)) {
-        if (options) {
-          options.details = 'parent connection missing handle';
-        }
-        return false;
-      }
     }
 
     if (!this.direction) {
