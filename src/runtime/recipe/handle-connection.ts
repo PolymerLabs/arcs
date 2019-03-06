@@ -180,11 +180,6 @@ export class HandleConnection {
       }
     }
 
-    if (parent && !parent.handle) {
-      // Our parent doesn't resolve, we don't need to resolve.
-      return true;
-    }
-
     if(!this.handle) {
       if(this.isOptional) {
         // We're optional we don't need to resolve.

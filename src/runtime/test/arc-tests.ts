@@ -306,7 +306,7 @@ describe('Arc', () => {
     /.*unresolved handle-connection: parent connection missing handle/)
   );
 
-  it('optional provided handles are not required to resolve with depedencies', async () => {
+  it('optional provided handles are not required to resolve with dependencies', async () => {
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -353,7 +353,7 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it('required provided handles must resolve with depedencies', async () =>
+  it('required provided handles must resolve with dependencies', async () =>
     await assertThrowsAsync(async () => {
       const loader = new Loader();
       const manifest = await Manifest.parse(`
