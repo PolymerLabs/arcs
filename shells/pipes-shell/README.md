@@ -34,3 +34,11 @@ pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]
 
 - remote-explore-key
   - used to connect to remote devtools (aka Arcs Explorer)
+
+## Glitch Support
+
+- pipes-shell imports `custom.recipes` from https://thorn-egret.glitch.me/
+- `ShellApi.flush()` available clear caches (let changes to the glitch go into effect)
+- tries to fail gracefully if `ArtistAutofill` isn't available
+
+Note that the files in the glitch are copies of files in `particles/PipesApps` folder in the main repository (iow, they won't get lost if the glitch is blown up).
