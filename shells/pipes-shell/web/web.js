@@ -18,7 +18,7 @@ import '../../lib/firebase-support.js';
 
 import {Utils} from '../../lib/utils.js';
 import {DeviceApiFactory} from '../device.js';
-import {DevtoolsConnection} from '../../../build/runtime/debug/devtools-connection.js';
+import {devtools} from './devtools.js';
 
 // usage:
 //
@@ -29,25 +29,18 @@ import {DevtoolsConnection} from '../../../build/runtime/debug/devtools-connecti
 //
 // results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
 
-console.log(`version: feb-27.0`);
+const storage = `pouchdb://local/arcs/`;
+const version = `version: mar-06`;
 
- // TODO(sjmiles): move into a module?
-const devToolsHandshake = async () => {
-  const params = (new URL(document.location)).searchParams;
-  if (params.has('remote-explore-key')) {
-    // Wait for the remote Arcs Explorer to connect before starting the Shell.
-    DevtoolsConnection.ensure();
-    await DevtoolsConnection.onceConnected;
-  }
-};
+console.log(version);
 
 (async () => {
   // if remote DevTools are requested, wait for connect
-  await devToolsHandshake();
+  await devtools();
   // configure arcs environment
   Utils.init(window.envPaths.root, window.envPaths.map);
   // configure ShellApi (window.DeviceClient is bound in by outer process, otherwise undefined)
-  window.ShellApi = DeviceApiFactory('pouchdb://local/arcs/', window.DeviceClient);
+  window.ShellApi = await DeviceApiFactory(storage, window.DeviceClient);
   // for testing
   window.onclick = () => {
     window.ShellApi.receiveEntity();
