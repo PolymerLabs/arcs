@@ -30,6 +30,16 @@ const deviceApi = {
   flush() {
     console.log('flushing caches...');
     Utils.env.loader.flushCaches();
+  },
+  async test() {
+    const manifest = await Utils.parse(`
+import 'https://thorn-egret.glitch.me/ArtistAutofill.recipes'
+import 'https://$particles/PipeApps/MapsAutofill.recipes'
+    `);
+    const recipes = manifest.findRecipesByVerb('autofill');
+    const names = recipes.map(recipe => recipe.name.toLowerCase());
+    console.log('autofill recipes: ', names);
+    return manifest;
   }
 };
 

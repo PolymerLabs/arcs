@@ -14,3 +14,10 @@ recipe MapsAutofill
   SuggestAddress
     recentEntities = recentEntities
     suggestion = suggestion
+
+recipe Com_google_android_apps_maps &autofill
+  map 'pipe-entities' as recentEntities
+  create as suggestion
+  SuggestAddress
+    recentEntities = recentEntities
+    suggestion = suggestion
