@@ -3,6 +3,7 @@
   "include": [
     "src/runtime/**/*.ts",
     "src/planning/**/*.ts",
+    "src/dataflow/**/*.ts",
     "src/tests/**/*.ts",
   ],
   "compilerOptions": {
