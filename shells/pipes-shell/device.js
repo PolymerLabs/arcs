@@ -1,6 +1,7 @@
 import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {Context} from './context.js';
 import {Pipe} from './pipe.js';
+import {Utils} from '../lib/utils.js';
 
 // TODO(sjmiles): why not automatic?
 SyntheticStores.init();
@@ -12,18 +13,24 @@ let testMode;
 export const DeviceApiFactory = (storage, deviceClient) => {
   client = deviceClient;
   userContext = new Context(storage);
-  return {
-    receiveEntity(json) {
-      console.log('received entity...');
-      receiveJsonEntity(json);
-      return true;
-    },
-    observeEntity(json) {
-      console.log('observing entity...');
-      observeJsonEntity(json);
-      return true;
-    }
-  };
+  return deviceApi;
+};
+
+const deviceApi = {
+  receiveEntity(json) {
+    console.log('received entity...');
+    receiveJsonEntity(json);
+    return true;
+  },
+  observeEntity(json) {
+    console.log('observing entity...');
+    observeJsonEntity(json);
+    return true;
+  },
+  flush() {
+    console.log('flushing caches...');
+    Utils.env.loader.flushCaches();
+  }
 };
 
 const callback = text => {

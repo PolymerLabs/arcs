@@ -17,12 +17,15 @@ import {logFactory} from '../platform/log-web.js';
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
-const dumbCache = {};
+let dumbCache = {};
 
 export class PlatformLoader extends Loader {
   constructor(urlMap) {
     super();
     this._urlMap = urlMap || [];
+  }
+  flushCaches() {
+    dumbCache = {};
   }
   _loadURL(url) {
     const resolved = this._resolve(url);

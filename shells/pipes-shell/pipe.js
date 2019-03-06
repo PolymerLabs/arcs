@@ -3,13 +3,9 @@ import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {generateId} from '../../modalities/dom/components/generate-id.js';
 import {now} from '../../build/platform/date-web.js';
 
-let t0;
+const log = console.log.bind(console);
 
-const log = (...args) => {
-  //console.log(args.join(' '));
-  console.log(...args);
-  //document.body.appendChild(document.createElement('div')).innerText = args.join();
-};
+let t0;
 
 export const Pipe = {
   async observeEntity(store, json) {
@@ -52,38 +48,38 @@ const extractType = json => {
   return (entity ? entity.type : 'com.music.spotify').replace(/\./g, '_');
 };
 
+const pipeHandlers = {};
+
 const dispatch = async (type, arc, callback) => {
-  await instantiatePipeRecipe(arc, type);
-  switch (type) {
-    case 'com_google_android_apps_maps':
-      await com_google_android_apps_maps(arc, callback);
-      break;
-    default:
-    case 'com_music_spotify':
-      await com_music_spotify(arc, callback);
-      break;
+  const handler = pipeHandlers[type];
+  if (handler) {
+    await instantiatePipeRecipe(arc, type);
+    await handler(arc, callback);
   }
 };
 
-const com_music_spotify = async (arc, callback) => {
-  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+pipeHandlers.com_music_spotify = async (arc, callback) => {
+  //const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+  const manifest = await Utils.parse(`import 'https://thorn-egret.glitch.me/ArtistAutofill.recipes'`);
   // accrete recipe
-  await instantiateRecipe(arc, manifest, 'ArtistAutofill');
-  // wait for data to appear
-  const store = arc._stores[2];
-  watchOneChange(store, callback, arc);
-  //await dumpStores(arc._stores);
+  if (await instantiateRecipe(arc, manifest, 'ArtistAutofill')) {
+    // wait for data to appear
+    const store = arc._stores[2];
+    watchOneChange(store, callback, arc);
+    //await dumpStores(arc._stores);
+  }
 };
 
-const com_google_android_apps_maps = async (arc, callback) => {
+pipeHandlers.com_google_android_apps_maps = async (arc, callback) => {
   const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
   // accrete recipe
-  await instantiateRecipe(arc, manifest, 'MapsAutofill');
-  // wait for data to appear
-  const store = arc._stores[2];
-  watchOneChange(store, callback, arc);
-  //await dumpStores(arc.context._stores);
-  //await dumpStores(arc._stores);
+  if (await instantiateRecipe(arc, manifest, 'MapsAutofill')) {
+    // wait for data to appear
+    const store = arc._stores[2];
+    watchOneChange(store, callback, arc);
+    //await dumpStores(arc.context._stores);
+    //await dumpStores(arc._stores);
+  }
 };
 
 const instantiatePipeRecipe = async (arc, type) => {
@@ -114,6 +110,7 @@ const instantiateRecipe = async (arc, manifest, name) => {
     await arc.instantiate(plan);
     // TODO(sjmiles): necessary for iOS (!?)
     //await logArc(arc);
+    return true;
   }
 };
 
