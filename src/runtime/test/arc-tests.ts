@@ -23,6 +23,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {assertThrowsAsync} from '../testing/test-util.js';
 import * as util from '../testing/test-util.js';
 import {ArcType} from '../type.js';
 
@@ -47,7 +48,7 @@ async function setup() {
   };
 }
 
-async function setupWithOptional(cProvided, dProvided) {
+async function setupWithOptional(cProvided, dProvided, dRequiredIfC) {
   const loader = new Loader();
   const manifest = await Manifest.parse(`
     schema Thing
@@ -58,7 +59,7 @@ async function setupWithOptional(cProvided, dProvided) {
       in Thing a
         out Thing b
       in? Thing c
-        out? Thing d
+        out${dRequiredIfC ? '' : '?'} Thing d
 
     recipe TestRecipe
       use as thingA
@@ -168,9 +169,9 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
-  it('optional handles aren\'t required to resolve', async () => {
+  it('optional provided handles do not resolve without parent', async () => {
     const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-      = await setupWithOptional(false, false);
+    = await setupWithOptional(/*cProvided*/ false, /*dProvided*/ false, /*dRequiredIfC*/ false );
 
     // NOTE: handleFor using incompatible types
     // tslint:disable-next-line: no-any
@@ -181,9 +182,32 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it('optional provided handles aren\'t required to resolve', async () => {
+  it('required provided handles do not resolve without parent', async () => {
     const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-      = await setupWithOptional(true, false);
+    = await setupWithOptional(/*cProvided*/ false, /*dProvided*/ false, /*dRequiredIfC*/ true );
+
+    // NOTE: handleFor using incompatible types
+    // tslint:disable-next-line: no-any
+    await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(cStore as any).set(new thingClass({value: 'from_c'}));
+    await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
+    await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
+  });
+
+  it('optional provided handles cannot resolve without parent', async () => {
+    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ false, /*dProvided*/ true, /*dRequiredIfC*/ false ),
+        /.*unresolved handle-connection: parent connection missing handle/);
+  });
+
+  it('required provided handles cannot resolve without parent', async () => {
+    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ false, /*dProvided*/ true, /*dRequiredIfC*/ true ),
+        /.*unresolved handle-connection: parent connection missing handle/);
+  });
+
+  it('optional provided handles are not required to resolve with depedencies', async () => {
+    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
+    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/false, /*dRequiredIfC*/ false);
 
     // tslint:disable-next-line: no-any
     await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
@@ -193,9 +217,26 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it('optional provided handles resolve when provided', async () => {
+  it('required provided handles must resolve with depedencies', async () => {
+    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ true, /*dProvided*/ false, /*dRequiredIfC*/ true ),
+        /.*unresolved particle: unresolved connections/);
+  });
+
+  it('optional provided handles can resolve with parent', async () => {
     const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-      = await setupWithOptional(true, true);
+    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/true, /*dRequiredIfC*/ false);
+
+    // tslint:disable-next-line: no-any
+    await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
+    // tslint:disable-next-line: no-any
+    await handleFor(cStore as any).set(new thingClass({value: 'from_c'}));
+    await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
+    await util.assertSingletonWillChangeTo(arc, dStore, 'value', 'from_c1');
+  });
+
+  it('required provided handles can resolve with parent', async () => {
+    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
+    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/true, /*dRequiredIfC*/ true);
 
     // tslint:disable-next-line: no-any
     await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
