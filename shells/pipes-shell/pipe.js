@@ -59,7 +59,8 @@ const dispatch = async (type, arc, callback) => {
 };
 
 pipeHandlers.com_music_spotify = async (arc, callback) => {
-  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+  //const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
+  const manifest = await Utils.parse(`import 'https://thorn-egret.glitch.me/ArtistAutofill.recipes'`);
   // accrete recipe
   if (await instantiateRecipe(arc, manifest, 'ArtistAutofill')) {
     // wait for data to appear

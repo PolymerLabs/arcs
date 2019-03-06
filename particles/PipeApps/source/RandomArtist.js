@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
