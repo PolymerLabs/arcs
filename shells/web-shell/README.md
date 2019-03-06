@@ -22,7 +22,6 @@ User
 * user=[user]
   * use `[user]`, created as needed
 
-
 Logging
 
 * no flag
