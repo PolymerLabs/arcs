@@ -71,7 +71,9 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       config.storage = Const.defaultStorageKey;
     }
     localStorage.setItem(Const.LOCALSTORAGE.storage, config.storage);
-    localStorage.setItem(Const.LOCALSTORAGE.plannerStorage, config.plannerStorage);
+    if (config.plannerStorage) {
+      localStorage.setItem(Const.LOCALSTORAGE.plannerStorage, config.plannerStorage);
+    }
     return config;
   }
   updateUserConfig(config) {
