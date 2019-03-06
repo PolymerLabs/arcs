@@ -1,8 +1,8 @@
-WebShell Flags
+## web-shell Flags
 
 e.g. https://polymerlabs.github.io/arcs-live/shells/web-shell/?storage=pouchdb&user=barney
 
-Setting Storage Provider
+### Setting Storage Provider
 
 * no flag
   * use the same storage as last time, otherwise `default`
@@ -15,14 +15,14 @@ Setting Storage Provider
 * storage=[storage-key]
   * use `storage-key`
 
-User
+### User
 
 * no flag
   * use the same user as last time, otherwise `user`
 * user=[user]
   * use `[user]`, created as needed
 
-Logging
+### Logging
 
 * no flag
   * set logging level to 0
@@ -31,7 +31,7 @@ Logging
 * log=[level]
   * set logging level to [level]
 
-Log Levels
+#### Log Levels
 
 * 0 = no logging
 * 1 = particles/runtime-logging only
