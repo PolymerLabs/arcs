@@ -12,7 +12,8 @@ export const Const = {
   launcherSuffix: `-launcher`,
   LOCALSTORAGE: {
     user: `${version}-user`,
-    storage: `${version}-storage`
+    storage: `${version}-storage`,
+    plannerStorage: `${version}-plannerStorage`
   },
   SHARE: {
     private: 1,
