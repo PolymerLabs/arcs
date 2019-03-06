@@ -420,19 +420,10 @@ ${this.activeRecipe.toString()}`;
     this.particleHandleMaps.set(recipeParticle.id, handleMap);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
-      if (!connection.handle) {
-        assert(connection.isOptional);
-        continue;
-      }
       const handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
       this._connectParticleToHandle(recipeParticle, name, handle);
     }
-
-    // At least all non-optional connections must be resolved
-    assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
-           `Not all mandatory connections are resolved for {$particle}`);
-
     this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
   }
 
