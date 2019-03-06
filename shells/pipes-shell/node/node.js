@@ -27,12 +27,12 @@ import {DeviceApiFactory} from '../device.js';
 //
 // results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
 
-global.ShellApi = DeviceApiFactory(`volatile://`, global.DeviceClient);
-
-console.log(`version: feb-27.0`);
-
-// configure arcs environment
-Utils.init(global.envPaths.root, global.envPaths.map);
+(async () => {
+  console.log(`version: feb-27.0`);
+  global.ShellApi = await DeviceApiFactory(`volatile://`, global.DeviceClient);
+  // configure arcs environment
+  Utils.init(global.envPaths.root, global.envPaths.map);
+})();
 
 // test it
 
