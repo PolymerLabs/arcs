@@ -19,18 +19,11 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   }
   _update({userid, arckey}, state, oldProps) {
     if (!state.config) {
-      state.config = this._configure();
-      if (!state.config.storage || state.config.storage === 'firebase') {
-        state.config.storage = Const.defaultFirebaseStorageKey;
-      }
-      if (!state.config.storage || state.config.storage === 'default') {
-        state.config.storage = Const.defaultStorageKey;
-      }
-      localStorage.setItem(Const.LOCALSTORAGE.storage, state.config.storage);
-      if (!state.config.userid) {
-        state.config.userid = Const.defaultUserId;
-      }
-      this._fire('config', state.config);
+      const config = this.basicConfig();
+      this.updateUserConfig(config);
+      this.updateStorageConfig(config);
+      this._fire('config', config);
+      state.config = config;
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     // ... but not having it makes it hard to test multi-user scenarios
@@ -47,7 +40,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     //   ArcUtils.setUrlParam('search', search);
     // }
   }
-  _configure() {
+  basicConfig() {
     const params = (new URL(document.location)).searchParams;
     return {
       //modality: 'dom',
@@ -59,13 +52,32 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       arckey: params.get('arc'),
       search: params.get('search') || '',
-      plannerStorage: params.get('plannerStorage'),
+      plannerStorage: params.get('plannerStorage') || localStorage.getItem(Const.LOCALSTORAGE.plannerStorage),
       plannerDebug: !params.has('plannerNoDebug'),
       plannerOnlyConsumer: params.has('plannerOnlyConsumer'),
       //urls: window.shellUrls || {},
       //useStorage: !params.has('legacy') && !params.has('legacy-store'),
       //useSerialization: !params.has('legacy')
     };
+  }
+  updateStorageConfig(config) {
+    if (config.storage === 'firebase') {
+      config.storage = Const.defaultFirebaseStorageKey;
+    }
+    if (config.storage === 'pouchdb') {
+      config.storage = Const.defaultPouchdbStorageKey;
+    }
+    if (!config.storage || config.storage === 'default') {
+      config.storage = Const.defaultStorageKey;
+    }
+    localStorage.setItem(Const.LOCALSTORAGE.storage, config.storage);
+    localStorage.setItem(Const.LOCALSTORAGE.plannerStorage, config.plannerStorage);
+    return config;
+  }
+  updateUserConfig(config) {
+    if (!config.userid) {
+      config.userid = Const.defaultUserId;
+    }
   }
   setUrlParam(name, value) {
     // TODO(sjmiles): memoize url
