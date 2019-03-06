@@ -48,49 +48,6 @@ async function setup() {
   };
 }
 
-async function setupWithOptional(cProvided, dProvided, dRequiredIfC) {
-  const loader = new Loader();
-  const manifest = await Manifest.parse(`
-    schema Thing
-      Text value
-
-    particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
-      description \`particle a two required handles and two optional handles\`
-      in Thing a
-        out Thing b
-      in? Thing c
-        out${dRequiredIfC ? '' : '?'} Thing d
-
-    recipe TestRecipe
-      use as thingA
-      use as thingB
-      use as maybeThingC
-      use as maybeThingD
-      TestParticle
-        a <- thingA
-        b -> thingB
-        ${cProvided ? 'c <- maybeThingC' : ''}
-        ${dProvided ? 'd -> maybeThingD' : ''}
-  `, {loader, fileName: process.cwd() + '/input.manifest'});
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
-
-  const thingClass = manifest.findSchemaByName('Thing').entityClass();
-  const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
-  const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
-  const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
-  const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
-
-  const recipe = manifest.recipes[0];
-  recipe.handles[0].mapToStorage(aStore);
-  recipe.handles[1].mapToStorage(bStore);
-  recipe.handles[2].mapToStorage(cStore); // These might not be needed?
-  recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-  recipe.normalize();
-  await arc.instantiate(recipe);
-
-  return {arc, recipe, thingClass, aStore, bStore, cStore, dStore};
-}
-
 async function setupSlandlesWithOptional(cProvided, dProvided) {
   const loader = new Loader();
   const manifest = await Manifest.parse(`
@@ -170,8 +127,42 @@ describe('Arc', () => {
   });
 
   it('optional provided handles do not resolve without parent', async () => {
-    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-    = await setupWithOptional(/*cProvided*/ false, /*dProvided*/ false, /*dRequiredIfC*/ false );
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text value
+
+      particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+        description \`particle a two required handles and two optional handles\`
+        in Thing a
+          out Thing b
+        in? Thing c
+          out? Thing d
+
+      recipe TestRecipe
+        use as thingA
+        use as thingB
+        use as maybeThingC
+        use as maybeThingD
+        TestParticle
+          a <- thingA
+          b -> thingB
+    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(aStore);
+    recipe.handles[1].mapToStorage(bStore);
+    recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+    recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+    recipe.normalize();
+    await arc.instantiate(recipe);
 
     // NOTE: handleFor using incompatible types
     // tslint:disable-next-line: no-any
@@ -183,8 +174,42 @@ describe('Arc', () => {
   });
 
   it('required provided handles do not resolve without parent', async () => {
-    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-    = await setupWithOptional(/*cProvided*/ false, /*dProvided*/ false, /*dRequiredIfC*/ true );
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text value
+
+      particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+        description \`particle a two required handles and two optional handles\`
+        in Thing a
+          out Thing b
+        in? Thing c
+          out Thing d
+
+      recipe TestRecipe
+        use as thingA
+        use as thingB
+        use as maybeThingC
+        use as maybeThingD
+        TestParticle
+          a <- thingA
+          b -> thingB
+    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(aStore);
+    recipe.handles[1].mapToStorage(bStore);
+    recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+    recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+    recipe.normalize();
+    await arc.instantiate(recipe);
 
     // NOTE: handleFor using incompatible types
     // tslint:disable-next-line: no-any
@@ -196,18 +221,129 @@ describe('Arc', () => {
   });
 
   it('optional provided handles cannot resolve without parent', async () => {
-    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ false, /*dProvided*/ true, /*dRequiredIfC*/ false ),
-        /.*unresolved handle-connection: parent connection missing handle/);
+    await assertThrowsAsync(async () => {
+      const loader = new Loader();
+      const manifest = await Manifest.parse(`
+        schema Thing
+          Text value
+
+        particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+          description \`particle a two required handles and two optional handles\`
+          in Thing a
+            out Thing b
+          in? Thing c
+            out? Thing d
+
+        recipe TestRecipe
+          use as thingA
+          use as thingB
+          use as maybeThingC
+          use as maybeThingD
+          TestParticle
+            a <- thingA
+            b -> thingB
+            d -> maybeThingD
+      `, {loader, fileName: process.cwd() + '/input.manifest'});
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+      const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+      const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+      const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+      const recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(aStore);
+      recipe.handles[1].mapToStorage(bStore);
+      recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+      recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+      recipe.normalize();
+      await arc.instantiate(recipe);
+    },
+    /.*unresolved handle-connection: parent connection missing handle/);
   });
 
-  it('required provided handles cannot resolve without parent', async () => {
-    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ false, /*dProvided*/ true, /*dRequiredIfC*/ true ),
-        /.*unresolved handle-connection: parent connection missing handle/);
-  });
+  it('required provided handles cannot resolve without parent', async () =>
+    await assertThrowsAsync(async () => {
+      const loader = new Loader();
+      const manifest = await Manifest.parse(`
+        schema Thing
+          Text value
+
+        particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+          description \`particle a two required handles and two optional handles\`
+          in Thing a
+            out Thing b
+          in? Thing c
+            out Thing d
+
+        recipe TestRecipe
+          use as thingA
+          use as thingB
+          use as maybeThingC
+          use as maybeThingD
+          TestParticle
+            a <- thingA
+            b -> thingB
+            d -> maybeThingD
+      `, {loader, fileName: process.cwd() + '/input.manifest'});
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+      const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+      const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+      const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+      const recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(aStore);
+      recipe.handles[1].mapToStorage(bStore);
+      recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+      recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+      recipe.normalize();
+      await arc.instantiate(recipe);
+    },
+    /.*unresolved handle-connection: parent connection missing handle/)
+  );
 
   it('optional provided handles are not required to resolve with depedencies', async () => {
-    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/false, /*dRequiredIfC*/ false);
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text value
+
+      particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+        description \`particle a two required handles and two optional handles\`
+        in Thing a
+          out Thing b
+        in? Thing c
+          out? Thing d
+
+      recipe TestRecipe
+        use as thingA
+        use as thingB
+        use as maybeThingC
+        use as maybeThingD
+        TestParticle
+          a <- thingA
+          b -> thingB
+          c <- maybeThingC
+    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(aStore);
+    recipe.handles[1].mapToStorage(bStore);
+    recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+    recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+    recipe.normalize();
+    await arc.instantiate(recipe);
 
     // tslint:disable-next-line: no-any
     await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
@@ -217,14 +353,88 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it('required provided handles must resolve with depedencies', async () => {
-    await assertThrowsAsync(async () => await setupWithOptional(/*cProvided*/ true, /*dProvided*/ false, /*dRequiredIfC*/ true ),
-        /.*unresolved particle: unresolved connections/);
-  });
+  it('required provided handles must resolve with depedencies', async () =>
+    await assertThrowsAsync(async () => {
+      const loader = new Loader();
+      const manifest = await Manifest.parse(`
+        schema Thing
+          Text value
+
+        particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+          description \`particle a two required handles and two optional handles\`
+          in Thing a
+            out Thing b
+          in? Thing c
+            out Thing d
+
+        recipe TestRecipe
+          use as thingA
+          use as thingB
+          use as maybeThingC
+          use as maybeThingD
+          TestParticle
+            a <- thingA
+            b -> thingB
+            c <- maybeThingC
+      `, {loader, fileName: process.cwd() + '/input.manifest'});
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+      const thingClass = manifest.findSchemaByName('Thing').entityClass();
+      const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+      const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+      const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+      const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+      const recipe = manifest.recipes[0];
+      recipe.handles[0].mapToStorage(aStore);
+      recipe.handles[1].mapToStorage(bStore);
+      recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+      recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+      recipe.normalize();
+      await arc.instantiate(recipe);
+    },
+        /.*unresolved particle: unresolved connections/)
+  );
 
   it('optional provided handles can resolve with parent', async () => {
-    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/true, /*dRequiredIfC*/ false);
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text value
+
+      particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+        description \`particle a two required handles and two optional handles\`
+        in Thing a
+          out Thing b
+        in? Thing c
+          out? Thing d
+
+      recipe TestRecipe
+        use as thingA
+        use as thingB
+        use as maybeThingC
+        use as maybeThingD
+        TestParticle
+          a <- thingA
+          b -> thingB
+          c <- maybeThingC
+          d -> maybeThingD
+    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(aStore);
+    recipe.handles[1].mapToStorage(bStore);
+    recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+    recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+    recipe.normalize();
+    await arc.instantiate(recipe);
 
     // tslint:disable-next-line: no-any
     await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
@@ -235,8 +445,44 @@ describe('Arc', () => {
   });
 
   it('required provided handles can resolve with parent', async () => {
-    const {arc, recipe, thingClass, aStore, bStore, cStore, dStore}
-    = await setupWithOptional(/*cProvided*/ true,  /*dProvided*/true, /*dRequiredIfC*/ true);
+    const loader = new Loader();
+    const manifest = await Manifest.parse(`
+      schema Thing
+        Text value
+
+      particle TestParticle in 'src/runtime/test/artifacts/test-dual-input-particle.js'
+        description \`particle a two required handles and two optional handles\`
+        in Thing a
+          out Thing b
+        in? Thing c
+          out Thing d
+
+      recipe TestRecipe
+        use as thingA
+        use as thingB
+        use as maybeThingC
+        use as maybeThingD
+        TestParticle
+          a <- thingA
+          b -> thingB
+          c <- maybeThingC
+          d -> maybeThingD
+    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test'});
+
+    const thingClass = manifest.findSchemaByName('Thing').entityClass();
+    const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
+    const bStore = await arc.createStore(thingClass.type, 'bStore', 'test:2');
+    const cStore = await arc.createStore(thingClass.type, 'cStore', 'test:3');
+    const dStore = await arc.createStore(thingClass.type, 'dStore', 'test:4');
+
+    const recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(aStore);
+    recipe.handles[1].mapToStorage(bStore);
+    recipe.handles[2].mapToStorage(cStore); // These might not be needed?
+    recipe.handles[3].mapToStorage(dStore); // These might not be needed?
+    recipe.normalize();
+    await arc.instantiate(recipe);
 
     // tslint:disable-next-line: no-any
     await handleFor(aStore as any).set(new thingClass({value: 'from_a'}));
