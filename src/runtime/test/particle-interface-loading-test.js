@@ -141,4 +141,22 @@ describe('particle interface loading', function() {
 
     await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });
+
+  it('updates transformation particle on inner handle', async () => {
+    const loader = new Loader();
+    const manifest = await Manifest.load('./src/runtime/test/artifacts/test-hosted-particles.manifest', loader);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+
+    const arc = new Arc({id: 'test', context: manifest, loader});
+    const fooType = manifest.findTypeByName('Foo');
+    const fooStore = await arc.createStore(fooType);
+    recipe.handles[0].mapToStorage(fooStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    await arc.instantiate(recipe);
+    await util.assertSingletonWillChangeTo(arc, fooStore, 'value', 'hello world!!!');
+  });
 });
