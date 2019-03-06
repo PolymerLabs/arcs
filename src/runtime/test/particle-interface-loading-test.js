@@ -141,4 +141,76 @@ describe('particle interface loading', function() {
 
     await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });
+
+  it('updates transformation particle on inner handle', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        Text value
+      particle UpdatingParticle in 'updating-particle.js'
+        out Foo innerFoo
+      interface TestInterface
+        out Foo *
+      particle MonitoringParticle in 'monitoring-particle.js'
+        host TestInterface hostedParticle
+        out Foo foo
+      recipe
+        use as h0
+        MonitoringParticle
+          foo = h0
+          hostedParticle = UpdatingParticle
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new StubLoader({
+      'monitoring-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.arc = await this.constructInnerArc();
+              this.fooHandle = handles.get('foo');
+              this.innerFooHandle = await this.arc.createHandle(this.fooHandle.type, 'innerFoo', this);
+            }
+            async onHandleSync(handle, model) {
+              if (handle.name === 'hostedParticle') {
+                await this.arc.loadRecipe(Particle.buildManifest\`
+                  \${model}
+                  recipe
+                    use \${this.innerFooHandle} as h0
+                    \${model.name}
+                      innerFoo = h0
+                \`);
+              }
+            }
+            onHandleUpdate(handle, update) {
+              if (handle.name === 'innerFoo') {
+                this.fooHandle.set(new this.fooHandle.entityClass({value: \`\${update.data.value}!!!\`}));
+              }
+            }
+          };
+        });
+      `,
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            setHandles(handles) {
+              this.innerFooHandle = handles.get('innerFoo');
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world'}));
+            }
+          };
+        });
+      `
+    });
+    const arc = new Arc({id: 'test', context: manifest, loader});
+    const fooType = manifest.findTypeByName('Foo');
+    const fooStore = await arc.createStore(fooType);
+    recipe.handles[0].mapToStorage(fooStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    await arc.instantiate(recipe);
+    await util.assertSingletonWillChangeTo(arc, fooStore, 'value', 'hello world!!!');
+  });
 });
