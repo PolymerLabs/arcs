@@ -37,6 +37,7 @@ module.exports = {
     "comma-dangle": "off",
     "linebreak-style": "off",
     "no-multi-spaces": "off",
+    "keyword-spacing": [1, {"before": true, "after": true}]
   },
   env: {
     browser: true,
