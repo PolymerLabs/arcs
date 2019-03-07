@@ -49,7 +49,7 @@ export class HeadlessSlotDomConsumer extends SlotDomConsumer {
   }
 
   getInnerContainer(slotId) {
-    const model = this.renderings.map(([subId, {model}]) => model)[0];
+    const model = Array.from(this.renderings, ([_, {model}]) => model)[0];
     const providedContext = this.findProvidedContext(ctx => ctx.id === slotId);
     if (!providedContext) {
       console.warn(`Cannot find provided spec for ${slotId} in ${this.consumeConn.getQualifiedName()}`);

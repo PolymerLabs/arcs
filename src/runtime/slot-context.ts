@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {ProvidedSlotSpec} from './particle-spec.js';
 import {Handle} from './recipe/handle.js';
-import {SlotConsumer} from './slot-consumer.js';
+import {SlotConsumer, Content} from './slot-consumer.js';
 
 /**
  * Represents a single slot in the rendering system.
@@ -38,7 +38,7 @@ export abstract class SlotContext {
     this.slotConsumers.length = 0;
   }
 
-  abstract onRenderSlot(consumer: SlotConsumer, content, handler);
+  abstract onRenderSlot(consumer: SlotConsumer, content: Content, handler);
   abstract get containerAvailable(): boolean;
 }
 
@@ -69,12 +69,12 @@ export class HostedSlotContext extends SlotContext {
     transformationSlotConsumer.addHostedSlotContexts(this);
   }
 
-  onRenderSlot(consumer: SlotConsumer, content, handler) {
+  onRenderSlot(consumer: SlotConsumer, content: Content, handler) {
     this.sourceSlotConsumer.arc.pec.innerArcRender(
         this.sourceSlotConsumer.consumeConn.particle,
         this.sourceSlotConsumer.consumeConn.name,
         this.id,
-        consumer.formatHostedContent(content));    
+        consumer.formatHostedContent(content));
   }
 
   addSlotConsumer(consumer: SlotConsumer) {
@@ -132,7 +132,7 @@ export class ProvidedSlotContext extends SlotContext {
       : [];
   }
 
-  onRenderSlot(consumer: SlotConsumer, content, handler) {
+  onRenderSlot(consumer: SlotConsumer, content: Content, handler) {
     consumer.setContent(content, handler);
   }
 

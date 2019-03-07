@@ -15,7 +15,7 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {Description} from './description.js';
 import {SlotConnection} from './recipe/slot-connection.js';
-import {SlotConsumer} from './slot-consumer.js';
+import {SlotConsumer, Content} from './slot-consumer.js';
 import {ProvidedSlotContext} from './slot-context.js';
 
 const templateByName = new Map();
@@ -71,10 +71,10 @@ export class SlotDomConsumer extends SlotConsumer {
     }
   }
 
-  formatContent(content, subId): object {
+  formatContent(content: Content, subId: string): Content | undefined {
     assert(this.slotContext instanceof ProvidedSlotContext, 'Content formatting can only be done for provided SlotContext');
     const contextSpec = (this.slotContext as ProvidedSlotContext).spec;
-    const newContent: {model?: string | {}, templateName?: string | {}, template?: string | {}} = {};
+    const newContent: Content = {};
 
     // Format model.
     if (Object.keys(content).indexOf('model') >= 0) {
@@ -88,7 +88,7 @@ export class SlotDomConsumer extends SlotConsumer {
         } else {
           formattedModel = this._modelForSingletonSlot(content.model, subId);
         }
-        if (!formattedModel) return null;
+        if (!formattedModel) return undefined;
 
         // Merge descriptions into model.
         newContent.model = {...formattedModel, ...content.descriptions};
@@ -124,7 +124,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return subId === model.subId ? model : null;
   }
 
-  setContainerContent(rendering, content, subId) {
+  setContainerContent(rendering, content: Content, subId) {
     if (!rendering.container) {
       return;
     }
@@ -331,7 +331,7 @@ export class SlotDomConsumer extends SlotConsumer {
     });
   }
 
-  formatHostedContent(content): {} {
+  formatHostedContent(content: Content): {} {
     if (content.templateName) {
       if (typeof content.templateName === 'string') {
         content.templateName = `${this.consumeConn.getQualifiedName()}::${content.templateName}`;

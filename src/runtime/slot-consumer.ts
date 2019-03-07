@@ -15,6 +15,23 @@ import {Description} from './description.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 
+export interface Model {
+  id: string;
+}
+
+export interface Content {
+  templateName?: string | Map<string, string>;
+  model?: {models: Model, hash: string};
+  descriptions?: Map<string, Description>;
+  template?: string | Map<string, {}>;
+}
+
+export interface Render {
+  container?: {};
+  model?: {items: {models: Model[]}, subId: {}, message: {}};
+  templateName?: string;
+}
+
 export class SlotConsumer {
   public readonly consumeConn?: SlotConnection;
   slotContext: SlotContext;
@@ -26,7 +43,7 @@ export class SlotConsumer {
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string|undefined, {container?: {}, model?, templateName?: string}> = new Map();
+  private _renderingBySubId: Map<string|undefined, Render> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
   private _description: Description;
@@ -42,9 +59,9 @@ export class SlotConsumer {
     this._description = await Description.create(this.arc);
   }
 
-  getRendering(subId?) { return this._renderingBySubId.get(subId); }
-  get renderings() { return [...this._renderingBySubId.entries()]; }
-  addRenderingBySubId(subId: string|undefined, rendering) {
+  getRendering(subId?): Render { return this._renderingBySubId.get(subId); }
+  get renderings(): [string, Render][] { return [...this._renderingBySubId.entries()]; }
+  addRenderingBySubId(subId: string|undefined, rendering: Render) {
     this._renderingBySubId.set(subId, rendering);
   }
 
@@ -143,7 +160,7 @@ export class SlotConsumer {
     }
   }
 
-  setContent(content, handler) {
+  setContent(content: Content, handler) {
     if (content && Object.keys(content).length > 0 && this.description) {
       content.descriptions = this.populateHandleDescriptions();
     }
@@ -153,9 +170,9 @@ export class SlotConsumer {
     }
   }
 
-  populateHandleDescriptions() {
-    if (!this.consumeConn) return null;
-    const descriptions = {};
+  populateHandleDescriptions(): Map<string, Description> {
+    if (!this.consumeConn) return null; // TODO: remove null ability
+    const descriptions: Map<string, Description> = new Map();
     Object.values(this.consumeConn.particle.connections).map(handleConn => {
       if (handleConn.handle) {
         descriptions[`${handleConn.name}.description`] =
@@ -200,8 +217,8 @@ export class SlotConsumer {
   createNewContainer(contextContainer, subId): {} { return null; }
   deleteContainer(container) {}
   clearContainer(rendering) {}
-  setContainerContent(rendering, content, subId) {}
-  formatContent(content, subId): object { return null; }
-  formatHostedContent(content): {} { return null; }
+  setContainerContent(rendering, content: Content, subId) {}
+  formatContent(content: Content, subId): Content { return null; }
+  formatHostedContent(content: Content): {} { return null; }
   static clear(container) {}
 }
