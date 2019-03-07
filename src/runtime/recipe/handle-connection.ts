@@ -169,13 +169,34 @@ export class HandleConnection {
   isResolved(options?): boolean {
     assert(Object.isFrozen(this));
 
-    if (this.isOptional) {
-      return true;
-    }
-
     let parent;
     if (this.spec && this.spec.parentConnection) {
       parent = this.particle.connections[this.spec.parentConnection.name];
+      if (!parent || !parent.handle) {
+        if (options) {
+          options.details = 'parent connection missing handle';
+        }
+        return false;
+      }
+    }
+
+    if (!this.handle) {
+      if (this.isOptional) {
+        // We're optional we don't need to resolve.
+        return true;
+      }
+      // We're not optional we do need to resolve.
+      if (options) {
+        options.details = 'missing handle';
+      }
+      return false;
+    }
+
+    if (!this.direction) {
+      if (options) {
+        options.details = 'missing direction';
+      }
+      return false;
     }
 
     // TODO: This should use this._type, or possibly not consider type at all.
@@ -184,28 +205,6 @@ export class HandleConnection {
         options.details = 'missing type';
       }
       return false;
-    }
-    if (!this.direction) {
-      if (options) {
-        options.details = 'missing direction';
-      }
-      return false;
-    }
-    if (!this.handle) {
-      if (parent && parent.isOptional && !parent.handle) {
-        return true;
-      }
-      if (options) {
-        options.details = 'missing handle';
-      }
-      return false;
-    } else if (this.spec) {
-      if (this.spec.parentConnection && (!parent || !parent.handle)) {
-        if (options) {
-          options.details = 'parent connection missing handle';
-        }
-        return false;
-      }
     }
     return true;
   }
