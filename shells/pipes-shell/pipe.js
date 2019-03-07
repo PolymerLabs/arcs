@@ -24,14 +24,16 @@ export const Pipe = {
       dumpStores([store]);
     }
   },
-  async receiveEntity(context, callback, json) {
+  async receiveEntity(context, recipes, callback, json) {
     console.log('Pipe::receiveEntity', json);
     t0 = now();
-    const composer = new RamSlotComposer();
-    const arc = await Utils.spawn({id: 'piping-arc', composer, context});
-    log(`arc [${arc.id}]`);
-    await dispatch(extractType(json), arc, callback);
-    return arc;
+    const type = extractType(json);
+    const recipe = recipeForType(type, recipes);
+    if (recipe) {
+      return instantiateAutofillArc(context, type, recipe, callback);
+    } else {
+      log(`found no autofill recipe for type [${type}]`);
+    }
   }
 };
 
@@ -48,44 +50,33 @@ const extractType = json => {
   return (entity ? entity.type : 'com.music.spotify').replace(/\./g, '_');
 };
 
-const pipeHandlers = {};
-
-const dispatch = async (type, arc, callback) => {
-  const handler = pipeHandlers[type];
-  if (handler) {
-    await instantiatePipeRecipe(arc, type);
-    await handler(arc, callback);
-  }
+const recipeForType = (type, recipes) => {
+  return recipes.find(recipe => recipe.name.toLowerCase() === type);
 };
 
-pipeHandlers.com_music_spotify = async (arc, callback) => {
-  //const manifest = await Utils.parse(`import 'https://$particles/PipeApps/ArtistAutofill.recipes'`);
-  const manifest = await Utils.parse(`import 'https://thorn-egret.glitch.me/ArtistAutofill.recipes'`);
-  // accrete recipe
-  if (await instantiateRecipe(arc, manifest, 'ArtistAutofill')) {
-    // wait for data to appear
-    const store = arc._stores[2];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc._stores);
-  }
+const instantiateAutofillArc = async (context, type, recipe, callback) => {
+  const arc = await Utils.spawn({id: 'piping-arc', composer: new RamSlotComposer(), context});
+  log(`arc [${arc.id}]`);
+  await instantiatePipeRecipe(arc, type);
+  // TODO(sjmiles): `clone()` because recipe cannot `normalize()` twice
+  await instantiateAutofillRecipe(arc, recipe.clone(), callback);
+  return arc;
 };
 
-pipeHandlers.com_google_android_apps_maps = async (arc, callback) => {
-  const manifest = await Utils.parse(`import 'https://$particles/PipeApps/MapsAutofill.recipes'`);
-  // accrete recipe
-  if (await instantiateRecipe(arc, manifest, 'MapsAutofill')) {
-    // wait for data to appear
-    const store = arc._stores[2];
-    watchOneChange(store, callback, arc);
-    //await dumpStores(arc.context._stores);
-    //await dumpStores(arc._stores);
-  }
+const instantiateAutofillRecipe = async (arc, recipe, callback) => {
+  await instantiateRecipe(arc, recipe);
+  // wait for data to appear
+  // TODO(sjmiles): find a better way to locate the important store
+  const store = arc._stores[2];
+  watchOneChange(store, callback, arc);
+  //await dumpStores(arc._stores);
 };
 
 const instantiatePipeRecipe = async (arc, type) => {
   const manifestContent = buildEntityManifest({type});
   const manifest = await Utils.parse(manifestContent);
-  await instantiateRecipe(arc, manifest, 'Pipe');
+  const recipe = recipeByName(manifest, 'Pipe');
+  await instantiateRecipe(arc, recipe);
 };
 
 const logArc = async arc => {
@@ -95,23 +86,13 @@ const logArc = async arc => {
   log(`==================================`);
 };
 
-const recipeByName = (manifest, name) => {
-  return manifest.allRecipes.find(recipe => recipe.name === name);
+const instantiateRecipe = async (arc, recipe) => {
+  const plan = await Utils.resolve(arc, recipe);
+  await arc.instantiate(plan);
 };
 
-const instantiateRecipe = async (arc, manifest, name) => {
-  const recipe = recipeByName(manifest, name);
-  if (!recipe) {
-    log(`couldn't find recipe "${name}" in manifest`);
-  } else {
-    //log(`recipe [${recipe.name}]`);
-    //log(String(recipe));
-    const plan = await Utils.resolve(arc, recipe);
-    await arc.instantiate(plan);
-    // TODO(sjmiles): necessary for iOS (!?)
-    //await logArc(arc);
-    return true;
-  }
+const recipeByName = (manifest, name) => {
+  return manifest.allRecipes.find(recipe => recipe.name === name);
 };
 
 const watchOneChange = (store, callback, arc) => {

@@ -6,14 +6,25 @@ import {Utils} from '../lib/utils.js';
 // TODO(sjmiles): why not automatic?
 SyntheticStores.init();
 
-let userContext;
+let recipes;
 let client;
+let userContext;
 let testMode;
 
-export const DeviceApiFactory = (storage, deviceClient) => {
+export const DeviceApiFactory = async (storage, deviceClient) => {
+  recipes = await marshalRecipeContext();
+  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
   client = deviceClient;
   userContext = new Context(storage);
   return deviceApi;
+};
+
+const marshalRecipeContext = async () => {
+  const recipeManifest = await Utils.parse(`
+import 'https://thorn-egret.glitch.me/custom.recipes'
+import 'https://$particles/PipeApps/MapsAutofill.recipes'
+  `);
+  return recipeManifest.findRecipesByVerb('autofill');
 };
 
 const deviceApi = {
@@ -48,7 +59,7 @@ const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      return await Pipe.receiveEntity(userContext.context, callback, json);
+      return await Pipe.receiveEntity(userContext.context, recipes, callback, json);
     }
   } catch (x) {
     console.error(x);

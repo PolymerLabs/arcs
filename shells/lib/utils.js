@@ -37,7 +37,9 @@ const parse = async (content, options) => {
 };
 
 const resolve = async (arc, recipe) =>{
-  if (recipe.normalize()) {
+  if (!recipe.normalize()) {
+    warn('failed to normalize:\n', recipe.toString());
+  } else {
     let plan = recipe;
     if (!plan.isResolved()) {
       const resolver = new RecipeResolver(arc);

@@ -29,10 +29,9 @@ export const Context = class {
   }
   async initPipesArc(storage) {
     console.log('Context::initPipesArc');
+    const host = new ArcHost(null, storage, new RamSlotComposer());
     const id = 'pipes-arc';
     const manifest = `import 'https://$particles/PipeApps/BackgroundPipes.recipes'`;
-    const composer = new RamSlotComposer();
-    const host = new ArcHost(null, storage, composer);
     this.pipesArc = await host.spawn({id, manifest});
     // TODO(sjmiles): findById would be better,
     // but I can't get the id to materialize via manifest
