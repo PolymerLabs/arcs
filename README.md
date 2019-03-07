@@ -74,6 +74,16 @@ $ ./tools/sigh
 re-run infrequently as new dependencies are included, and usually a build
 failure will be the signal for that.
 
+## Git Setup
+
+You may also find it helpful to have sigh lint and type check your work locally
+before you commit it. To do this, you can setup git to run presubmit checks
+using:
+
+```
+$ git config core.hooksPath tools/hooks
+```
+
 ### Windows Installation Notes
 
 - [Git for Windows](https://git-scm.com/downloads) is one of many Git options.
