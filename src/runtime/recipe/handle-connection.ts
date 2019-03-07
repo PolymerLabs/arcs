@@ -180,8 +180,8 @@ export class HandleConnection {
       }
     }
 
-    if(!this.handle) {
-      if(this.isOptional) {
+    if (!this.handle) {
+      if (this.isOptional) {
         // We're optional we don't need to resolve.
         return true;
       }
