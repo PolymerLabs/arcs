@@ -54,11 +54,17 @@ const template = Xen.Template.html`
       transform: translate3d(0, 0, 0);
     }
     [bar][state="over"] {
-      /* --suggestion-wrap: normal; */
       --content-overflow: auto;
       transform: translate3d(0, 0, 0);
-      /* transform: translate3d(0, calc(100% - var(--bar-over-height)), 0); */
     }
+    /* alternate 'over' (only show search) */
+    /*
+    [bar][state="over"] {
+      --content-overflow: auto;
+      --suggestion-wrap: normal;
+      transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
+    }
+    */
     [bar][state="open"] {
       --suggestion-wrap: normal;
       --content-overflow: auto;
