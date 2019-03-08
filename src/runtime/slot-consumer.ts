@@ -17,6 +17,7 @@ import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-contex
 
 export interface Content {
   templateName?: string | Map<string, string>;
+  // tslint:disable-next-line: no-any
   model?: {models: any, hash: string};
   descriptions?: Map<string, Description>;
   template?: string | Map<string, string>;
