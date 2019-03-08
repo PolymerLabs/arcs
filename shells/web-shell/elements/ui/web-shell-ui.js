@@ -64,7 +64,7 @@ const template = Xen.Template.html`
   <!-- -->
   <slot></slot>
   <!-- -->
-  <system-ui open="{{system}}" on-open="onSystemUiOpen" search="{{search}}" on-search="onForward">
+  <system-ui open="{{systemui}}" on-open="onSystemUiOpen" search="{{search}}" on-search="onForward" showhint="{{showhint}}">
     <slot name="suggestions"></slot>
   </system-ui>
   <!-- -->
@@ -73,25 +73,30 @@ const template = Xen.Template.html`
 
 const log = Xen.logFactory('WebShellUi', '#9690cc');
 
+// implements a scrim that is enabled if (state.systemui || state.tools)
+// (those states are set by child-events)
+// clicking the scrim disables it (and notifies children)
+
 export class WebShellUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['arc', 'context', 'nullarc', 'launcherarc', 'pipesarc', 'search'];
+    return ['arc', 'context', 'nullarc', 'launcherarc', 'pipesarc', 'search', 'showhint'];
   }
   get template() {
     return template;
   }
   render(props, state) {
     const renderModel = {
-      scrim: Boolean(state.tools || state.system)
+      scrim: Boolean(state.tools || state.systemui)
     };
     return [props, state, renderModel];
   }
   onScrimClick() {
-    this.state = {tools: false, system: false};
+    this.state = {tools: false, systemui: false};
   }
-  onSystemUiOpen(e, system) {
-    this.state = {system};
+  onSystemUiOpen(e, systemui) {
+    this.state = {systemui};
   }
+  // forward `search` to owner
   onForward(e, data) {
     this.fire(e.type, data);
   }

@@ -49,11 +49,20 @@ const template = Xen.Template.html`
       transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);
     }
     [bar][state="hint"] {
+      --suggestion-wrap: normal;
+      --content-overflow: auto;
       transform: translate3d(0, 0, 0);
     }
     [bar][state="over"] {
+      --content-overflow: auto;
+      transform: translate3d(0, 0, 0);
+    }
+    /* alternate 'over' (only show search) */
+    /*
+    [bar][state="over"] {
       transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
+    */
     [bar][state="open"] {
       --suggestion-wrap: normal;
       --content-overflow: auto;
@@ -86,42 +95,65 @@ const template = Xen.Template.html`
 
 const log = Xen.logFactory('SystemUi', '#b6b0ec');
 
+// barStates
+//   peek: tiny bit peeking out (collapsed)
+//   over: temporary mini-view when hovered
+//   hint: temporary mini-view (requested by parent when new suggestions are available)
+//   open: fully expanded and modal (parent scrim is active)
+
+// barState logic
+//   `props.open` going false indicates user clicked outside the system-ui area
+//   which is a collapse-signal
+
+// props
+//   `search` is forwarded to panel-ui
+//   `open` true if parent is providing a scrim
+
 export class SystemUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['open', 'search'];
+    return ['open', 'search', 'showhint'];
   }
   get template() {
     return template;
   }
   _getInitialState() {
     return {
-      showHintFor: 2500,
-      intent: 'start',
+      showHintFor: 4000,
       barState: 'peek'
     };
   }
-  render(props, state, lastProps, lastState) {
+  render(props, state) {
+    if (props.open && state.pendingBarState) {
+      this.state = {barState: state.pendingBarState};
+    }
     if (!props.open && state.barState === 'open') {
       this.state = {barState: 'peek'};
+    }
+    // TODO(sjmiles): owner is expected to latch showHint
+    // to false shortly after setting it true
+    // Probably we should handshake hint state instead
+    if (props.showhint && state.barState !== 'hint') {
+      this.setBarState('hint');
     }
     return [props, state];
   }
   collapseBar() {
     this.setBarState('peek');
-    this.state = {intent: 'auto'};
   }
+  // TODO(sjmiles): do this work in render
   setBarState(barState) {
-    // TODO(sjmiles): props.open and state.barState are in a race
-    // props.open needs to win or state.barState will get clobbered
-    // in render()
-    // firing the event first seems to do the right thing, but this
-    // is brittle and should be fixed properly
-    this.fire('open', barState === 'open');
-    this.state = {barState};
-    this.debounceHintHide(barState);
+    if (barState === 'open') {
+      // request open system ui
+      this.fire('open', true);
+      // when/if request is satisfied, set this barState
+      this.state = {pendingBarState: 'open'};
+    } else {
+      this.state = {barState};
+      this.debounceHintHide(barState);
+    }
   }
   debounceHintHide(barState) {
-    // if action is null, debounce is turned off
+    // if action is null, any pending debounce is turned off
     let action = null;
     if (barState === 'hint') {
       // only leave hint open for a short time, then hide it automagically
@@ -133,20 +165,15 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
     }
     this._debounce('hintDebounce', action, this.state.showHintFor);
   }
-  // onBarClick(e) {
-  //   const wasAnchorClick = e.composedPath().find(n => n.localName === 'a');
-  //   this.setBarState(wasAnchorClick ? 'peek' : 'open');
-  // }
+  // implements mouse-over view
   onBarEnter(e) {
     if (this.state.barState === 'peek') {
-      let barState = 'over';
-      if (this.props.showhint && this.state.toolState === 'main') {
-        barState = 'hint';
-      }
-      this.setBarState(barState);
+      this.setBarState('over');
     }
   }
   onBarLeave(e) {
+    // don't effect a `leave` if the pointer went off the bottom of the page
+    // TODOS(sjmiles): can lead to sticky bar if the pointer re-enters outside bar
     if ((window.innerHeight - e.clientY) > 10) {
       switch (this.state.barState) {
         case 'over':
@@ -156,11 +183,13 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
       }
     }
   }
+  // request from child element to open panel
   onPanelOpen(e, open) {
     this.setBarState(open ? 'open' : 'peek');
   }
   onContentsClick(e) {
-    // empty space below panel-ui, assuming panel-ui does stopPropagation()
+    // `contents` is explicitly empty space below panel-ui
+    // (i.e. if panel-ui does stopPropagation())
     this.collapseBar();
   }
   onForward(e, data) {
