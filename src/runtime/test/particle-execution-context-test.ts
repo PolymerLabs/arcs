@@ -22,7 +22,7 @@ describe('Particle Execution Context', () => {
           consume root
             provide detail
             provide annotation
-    
+
         recipe
           slot 'rootslotid-root' as slot0
           A
@@ -47,7 +47,7 @@ describe('Particle Execution Context', () => {
 
     await slotConsumer.contentAvailable;
     assert.deepEqual(
-        `<div><div slotid$="{{$detail}}"></div><div slotid$="{{$annotation}}"></div></div>`,
+        `<div><div slotid$="{{$detail}}"></div><div slotname="annotation" slotid$="{{$annotation}}"></div></div>`,
         slotConsumer._content.template);
     assert.deepEqual({
       '$annotation': annotationContext.id,
