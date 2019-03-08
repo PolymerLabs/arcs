@@ -60,8 +60,6 @@ const template = Xen.Template.html`
     /* alternate 'over' (only show search) */
     /*
     [bar][state="over"] {
-      --content-overflow: auto;
-      --suggestion-wrap: normal;
       transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
     */
