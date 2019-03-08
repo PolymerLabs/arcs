@@ -173,8 +173,7 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
   }
   onBarLeave(e) {
     // don't effect a `leave` if the pointer went off the bottom of the page
-    // TODOS(sjmiles): can lead to sticky bar if the pointer re-enters
-    // the page from another x-position)
+    // TODOS(sjmiles): can lead to sticky bar if the pointer re-enters outside bar
     if ((window.innerHeight - e.clientY) > 10) {
       switch (this.state.barState) {
         case 'over':
