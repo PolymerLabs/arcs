@@ -15,20 +15,23 @@ import {Description} from './description.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
 
-export interface Model {
-  id: string;
-}
-
 export interface Content {
   templateName?: string | Map<string, string>;
-  model?: {models: Model, hash: string};
+  model?: {models: any, hash: string};
   descriptions?: Map<string, Description>;
-  template?: string | Map<string, {}>;
+  template?: string | Map<string, string>;
 }
 
-export interface Render {
-  container?: {};
-  model?: {items: {models: Model[]}, subId: {}, message: {}};
+export interface Rendering {
+  // The 'parent' or owning object in the UI.
+  // TODO(jopra): At some point we should write an interface for this.
+  // tslint:disable-next-line: no-any
+  container?: any;
+  // The data to be used in templating.
+  // tslint:disable-next-line: no-any
+  model?: any;
+  // Specifies a particular template from the set of templates available to the
+  // slot.
   templateName?: string;
 }
 
@@ -43,7 +46,7 @@ export class SlotConsumer {
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string|undefined, Render> = new Map();
+  private _renderingBySubId: Map<string|undefined, Rendering> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
   private _description: Description;
@@ -59,9 +62,9 @@ export class SlotConsumer {
     this._description = await Description.create(this.arc);
   }
 
-  getRendering(subId?): Render { return this._renderingBySubId.get(subId); }
-  get renderings(): [string, Render][] { return [...this._renderingBySubId.entries()]; }
-  addRenderingBySubId(subId: string|undefined, rendering: Render) {
+  getRendering(subId?): Rendering { return this._renderingBySubId.get(subId); }
+  get renderings(): [string, Rendering][] { return [...this._renderingBySubId.entries()]; }
+  addRenderingBySubId(subId: string|undefined, rendering: Rendering) {
     this._renderingBySubId.set(subId, rendering);
   }
 
