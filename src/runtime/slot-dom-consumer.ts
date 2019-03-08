@@ -15,8 +15,12 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {Description} from './description.js';
 import {SlotConnection} from './recipe/slot-connection.js';
-import {SlotConsumer, Content} from './slot-consumer.js';
+import {SlotConsumer, Content, Rendering} from './slot-consumer.js';
 import {ProvidedSlotContext} from './slot-context.js';
+
+export interface DomRendering extends Rendering {
+  liveDom?: Template;
+}
 
 const templateByName = new Map();
 
@@ -124,7 +128,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return subId === model.subId ? model : null;
   }
 
-  setContainerContent(rendering, content: Content, subId) {
+  setContainerContent(rendering: DomRendering, content: Content, subId) {
     if (!rendering.container) {
       return;
     }
@@ -141,7 +145,7 @@ export class SlotDomConsumer extends SlotConsumer {
     this._onUpdate(rendering);
   }
 
-  clearContainer(rendering) {
+  clearContainer(rendering: DomRendering) {
     if (rendering.liveDom) {
       rendering.liveDom.root.textContent = '';
     }
@@ -183,7 +187,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return this.consumeConn.getQualifiedName();
   }
 
-  _setTemplate(rendering, templatePrefix, templateName, template) {
+  _setTemplate(rendering: DomRendering, templatePrefix, templateName, template) {
     if (templateName) {
       rendering.templateName = [templatePrefix, templateName].filter(s => s).join('::');
       if (template) {
@@ -197,7 +201,7 @@ export class SlotDomConsumer extends SlotConsumer {
     }
   }
 
-  _onUpdate(rendering) {
+  _onUpdate(rendering: DomRendering) {
     this._observe(rendering.container);
 
     if (rendering.templateName) {
@@ -221,7 +225,7 @@ export class SlotDomConsumer extends SlotConsumer {
     }
   }
 
-  _stampTemplate(rendering, template) {
+  _stampTemplate(rendering: DomRendering, template) {
     if (!rendering.liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
       rendering.container._eventMapper = this._eventMapper.bind(this, this.eventHandler);
@@ -232,7 +236,7 @@ export class SlotDomConsumer extends SlotConsumer {
     }
   }
 
-  _updateModel(rendering) {
+  _updateModel(rendering: DomRendering) {
     if (rendering.liveDom) {
       rendering.liveDom.set(rendering.model);
     }
