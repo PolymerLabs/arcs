@@ -61,9 +61,9 @@ const template = Xen.Template.html`
   <!-- context feed -->
   <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></user-context>
   <!-- web planner -->
-  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onState"></web-planner>
+  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
-  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState">
+  <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
     <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
@@ -94,11 +94,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this[n] = value;
   }
   // TODO(sjmiles): only dev-time stuff in this override
-  async _update(props, state) {
+  async _update(props, state, oldProps, oldState) {
     // globals stored for easy console access
     window.shell = this;
     window.arc = state.arc;
-    super._update(props, state);
+    super._update(props, state, oldProps, oldState);
   }
   async update({root}, state) {
     // new config?
@@ -310,6 +310,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   // onPipesArc(e, pipesArc) {
   //   this.state = {pipesArc};
   // }
+  onSuggestions(e, suggestions) {
+    this.state = {suggestions, showHint: true};
+    // latch showHint
+    // TODO(sjmiles): needs debouncing
+    // TODO(sjmiles): logic in handler is a bad practice
+    setTimeout(() => this.state = {showHint: false}, 0);
+  }
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);
     this.state = {suggestion};

@@ -17,6 +17,9 @@ const template = Xen.Template.html`
       flex: 1;
       display: flex;
       flex-direction: column;
+      /* TODO(sjmiles): prevents over width, haven't root-caused why flex doesn't do this,
+         flex-grow: 0; did nothing */
+      max-width: 100%;
     }
     ${IconStyle}
     a {
@@ -106,6 +109,8 @@ const template = Xen.Template.html`
 
 const log = Xen.logFactory('PanelUi', '#c6c0fc');
 
+const searchDebounceMs = 300;
+
 export class PanelUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['open', 'search'];
@@ -153,7 +158,7 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   onSearchChange(e) {
     const search = e.target.value;
     // don't re-plan until typing has stopped for this length of time
-    this._debounce(`searchDebounce`, () => this.commitSearch(search), 300);
+    this._debounce(`searchDebounce`, () => this.commitSearch(search), searchDebounceMs);
   }
   onClearSearch(e) {
     this.commitSearch('');
