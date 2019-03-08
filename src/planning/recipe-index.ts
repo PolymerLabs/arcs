@@ -95,7 +95,7 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  constructor(arc: Arc, {reportGenerations = true} = {}) {
+  constructor(arc: Arc, {reportGenerations = false} = {}) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
       id: 'index-stub',
