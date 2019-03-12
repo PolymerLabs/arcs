@@ -1,5 +1,12 @@
+/*
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import {now} from '../../build/platform/date-web.js';
-//import {generateId} from '../../modalities/dom/components/generate-id.js';
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {Utils} from '../lib/utils.js';
 import {ArcHost} from '../lib/arc-host.js';
@@ -58,7 +65,7 @@ export const Context = class {
   async cloneStoreChange(change, store) {
     if (store && change.add) {
       await Promise.all(change.add.map(async add => {
-        await store.store(add.value, [now()/*generateId()*/]);
+        await store.store(add.value, [now()]);
       }));
     }
   }
