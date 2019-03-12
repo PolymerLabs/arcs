@@ -10,8 +10,8 @@
 
 import {Arc} from '../runtime/arc.js';
 import {Modality} from '../runtime/modality.js';
-import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
-
+import {SlotDomConsumer, DomRendering} from '../runtime/slot-dom-consumer.js';
+import {Content} from '../runtime/slot-consumer.js';
 import {Suggestion} from './plan/suggestion.js';
 
 export class SuggestDomConsumer extends SlotDomConsumer {
@@ -34,7 +34,7 @@ export class SuggestDomConsumer extends SlotDomConsumer {
     return 'suggest';
   }
 
-  formatContent(content) {
+  formatContent(content: Content): Content | undefined {
     return {
       template: `<suggestion-element inline key="{{hash}}" on-click="">${content.template}</suggestion-element>`,
       templateName: 'suggestion',
@@ -61,7 +61,7 @@ export class SuggestDomConsumer extends SlotDomConsumer {
     }
     const suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan: suggestion});
     container.appendChild(suggestionContainer, container.firstElementChild);
-    const rendering = {container: suggestionContainer, model: content.model};
+    const rendering: DomRendering = {container: suggestionContainer, model: content.model};
     const consumer = new SlotDomConsumer(arc);
     consumer.addRenderingBySubId(undefined, rendering);
     consumer.eventHandler = (() => {});
