@@ -9,8 +9,6 @@
 
 import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
 
-//const stores = {};
-
 export class SyntheticStores {
   static init() {
     // if (!SyntheticStores.providerFactory) {
@@ -23,8 +21,8 @@ export class SyntheticStores {
     }
     return SyntheticStores._providerFactory;
   }
-  static async getArcsStore(storage, name) {
-    const handleStore = await SyntheticStores.getStore(storage, name);
+  static async getArcsStore(storage, arcid) {
+    const handleStore = await SyntheticStores.getStore(storage, arcid);
     if (handleStore) {
       const handles = await handleStore.toList();
       const handle = handles[0];
@@ -33,10 +31,8 @@ export class SyntheticStores {
       }
     }
   }
-  static async getStore(storage, id) {
-    // cached stores can be incorrect?
-    //return stores[id] || (stores[id] = await SyntheticStores.syntheticConnectKind('handles', storage, id));
-    return await SyntheticStores.connectToKind('handles', storage, id);
+  static async getStore(storage, arcid) {
+    return await SyntheticStores.connectToKind('handles', storage, arcid);
   }
   static async connectToKind(kind, storage, arcid) {
     return SyntheticStores.storeConnect(null, `synthetic://arc/${kind}/${storage}/${arcid}`);
@@ -54,3 +50,5 @@ export class SyntheticStores {
     return key.split('/').pop();
   }
 }
+
+SyntheticStores.init();
