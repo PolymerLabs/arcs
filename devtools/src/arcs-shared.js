@@ -27,18 +27,18 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         align-items: center;
         background-color: var(--light-gray);
         border-bottom: 1px solid var(--mid-gray);
-        padding: 1px;
+        height: 26px;
         line-height: 0;
       }
       header.header > [section] {
         display: flex;
         align-items: center;
+        height: 26px;
       }
       header.header iron-icon {
         display: inline-block;
         width: 28px;
         height: 24px;
-        vertical-align: unset;
         color: rgb(110, 110, 110);
       }
       header.header iron-icon:not([disabled]):not([active]):hover {
@@ -90,31 +90,6 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
       }
       [expanded].triangle {
         -webkit-mask-position: -80px 30px;
-      }
-      .nav-list {
-        margin: 10px 0;
-        display: block;
-      }
-      .nav-list a {
-        display: block;
-        padding: 0 16px;
-        text-decoration: none;
-        line-height: 20px;
-        color: rgb(90, 90, 90);
-        font-size: 12px;
-      }
-      [nav-narrow] .nav-list a {
-        padding: 0 6px;
-      }
-      [nav-narrow] .nav-list a label {
-        display: none;
-      }
-      .nav-list a.iron-selected {
-        color: #fff;
-        background-color: var(--highlight-blue);
-      }
-      .nav-list a iron-icon {
-        margin-right: 3px;
       }
       vaadin-split-layout {
         height: 100%;
