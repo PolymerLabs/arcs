@@ -60,18 +60,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         messageBody: startupTime
       }]);
       break;
-    case 'illuminate': {
-      const shell = document.getElementsByTagName('app-shell')[0];
-      switch (message.messageBody) {
-        case 'on':
-          shell.setAttribute('illuminate', '');
-          break;
-        case 'off':
-          shell.removeAttribute('illuminate');
-          break;
-      }
-      break;
-    }
     default:
       document.dispatchEvent(new CustomEvent('arcs-debug-in', {detail: message}));
   }

@@ -33,28 +33,49 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         height: 100vh;
         display: grid;
         grid-template-rows: auto 1fr;
-        grid-template-columns: 200px 1fr;
+        grid-template-columns: 1fr;
         grid-template-areas:
-          "header header"
-          "sidebar main";
-      }
-      #container[nav-narrow] {
-        grid-template-columns: 36px 1fr;
+          "header"
+          "main";
       }
       header {
+        min-width: max-content;
         grid-area: header;
       }
-      .nav-toggle {
-        -webkit-mask-position: -112px 192px;
+      iron-selector {
+        width: max-content;
+        height: 27px;
       }
-      #container[nav-narrow] .nav-toggle {
-        -webkit-mask-position: -167px 120px;
-      }
-      nav {
-        grid-area: sidebar;
-        background-color: var(--light-gray);
-        border-right: 1px solid var(--mid-gray);
+      iron-selector a {
+        display: inline-block;
+        height: 100%;
+        color: #666;
+        text-decoration: none;
+        line-height: 24px;
+        padding: 0 8px;
         box-sizing: border-box;
+        vertical-align: bottom;
+        border-bottom: 1px solid var(--mid-gray);
+      }
+      .header iron-selector a iron-icon {
+        display: none;
+      }
+      iron-selector a.iron-selected {
+        color: #444;
+        border-color: #03a9f4;
+      }
+      iron-selector a:not(.iron-selected):hover {
+        background-color: #eaeaea;
+      }
+      @media (max-width: 800px) {
+        .header iron-selector a {
+          font-size: 0;
+          padding: 0;
+        }
+        .header iron-selector a iron-icon {
+          display: inline-block;
+          margin: 0;
+        }
       }
       iron-pages {
         grid-area: main;
@@ -86,7 +107,7 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
         display: none;
       }
     </style>
-    <div id="container" nav-narrow="">
+    <div id="container">
       <arcs-communication-channel></arcs-communication-channel>
       <app-location route="{{route}}" query-params="{{queryParams}}" use-hash-as-path="">
       </app-location>
@@ -94,28 +115,24 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
       </app-route>
       <header class="header">
         <div section>
-          <div class="devtools-icon nav-toggle" on-click="toggleNav"></div>
-          <iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon>
-          <div divider></div>
           <arcs-notifications></arcs-notifications><div divider></div>
           <arcs-selector active-page="[[routeData.page]]"></arcs-selector>
+          <div divider></div>
+          <iron-selector selected="[[routeData.page]]" attr-for-selected="name" role="navigation">
+            <a name="overview" href="#overview"><iron-icon icon="timeline" title="Overview"></iron-icon>Overview</a>
+            <a name="stores" href="#stores"><iron-icon icon="device:sd-storage" title="Storage"></iron-icon>Storage</label></a>
+            <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz" title="Execution Log"></iron-icon>Execution Log</a>
+            <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications" title="Strategizer"></iron-icon>Strategizer</a>
+            <a name="planning" href="#planning"><iron-icon icon="line-weight" title="Planner"></iron-icon>Planner</a>
+            <a name="traces" href="#traces"><iron-icon icon="communication:clear-all" title="Tracing"></iron-icon>Tracing</a>
+            <a name="recipeEditor" href="#recipeEditor"><iron-icon icon="image:edit" title="Editor"></iron-icon>Editor</a>
+          </iron-selector>
           <div divider></div>
           <input placeholder="Filter" id="search" value="{{searchTextInput::input}}" title="Focus: ctrl+f, Clear: ctrl+esc, Regex: ctrl+x">
           <input type="checkbox" id="regex" checked="{{searchRegexInput::change}}">
           <label for="regex">Regex</label>
         </div>
       </header>
-      <nav>
-        <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
-          <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon><label>Overview</label></a>
-          <a name="stores" href="#stores"><iron-icon icon="device:sd-storage"></iron-icon><label>Stores Explorer</label></a>
-          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
-          <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz"></iron-icon><label>PEC Channel Log</label></a>
-          <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
-          <a name="planning" href="#planning"><iron-icon icon="line-weight"></iron-icon><label>Planning</label></a>
-          <a name="recipeEditor" href="#recipeEditor"><iron-icon icon="image:edit"></iron-icon><label>Recipe Editor</label></a>
-        </iron-selector>
-      </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
         <arcs-stores name="stores" search-params="[[searchParams]]"></arcs-stores>
@@ -154,30 +171,8 @@ class ArcsDevtoolsApp extends mixinBehaviors([IronA11yKeysBehavior], MessengerMi
 
   ready() {
     super.ready();
-    if (!chrome.devtools || !chrome.devtools.inspectedWindow || !chrome.devtools.inspectedWindow.tabId) {
-      // Illuminate doesn't make sense if working with Arcs in NodeJS.
-      this.$.illuminateToggle.style.display = 'none';
-    }
     if (!this.routeData.page) {
       this.set('routeData.page', 'overview');
-    }
-  }
-
-  toggleNav() {
-    if (this.$.container.hasAttribute('nav-narrow')) {
-      this.$.container.removeAttribute('nav-narrow');
-    } else {
-      this.$.container.setAttribute('nav-narrow', '');
-    }
-  }
-
-  toggleIlluminate() {
-    if (this.$.illuminateToggle.hasAttribute('active')) {
-      this.$.illuminateToggle.removeAttribute('active');
-      this.send({messageType: 'illuminate', messageBody: 'off'});
-    } else {
-      this.$.illuminateToggle.setAttribute('active', '');
-      this.send({messageType: 'illuminate', messageBody: 'on'});
     }
   }
 
