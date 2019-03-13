@@ -22,7 +22,13 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         border-radius: 20px;
       }
       [selector] [name] {
+        display: inline-block;
         margin-left: 6px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
       }
       [selector] [name][none] {
         font-style: italic;
@@ -124,15 +130,15 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         case 'arc-available': {
           const id = msg.meta.arcId;
           const name = id.substring(id.indexOf(':') + 1);
-          if (name.lastIndexOf(':inner') > 0) {
-            break; // skip inner arcs.
-          }
           const speculative = msg.messageBody.speculative;
           const item = {id, name, speculative};
           if (name.endsWith('-null')) item.annotation = '(Planning)';
           if (!this.messages.has(id)) this.messages.set(id, []);
           this.push('arcs', item);
-          if (!speculative) this._select(item);
+          if (!speculative && name.lastIndexOf(':inner') === -1) {
+            this._select(item);
+            messagesToForward.length = 0;
+          }
           break;
         }
         case 'arc-description': {
