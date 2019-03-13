@@ -26,6 +26,7 @@ enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
 build
+src/gen
 coverage
 .vscode
 devtools/build

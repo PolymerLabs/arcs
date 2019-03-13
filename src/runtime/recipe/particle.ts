@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec, ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType, Type} from '../type.js';
@@ -313,7 +313,17 @@ export class Particle {
   }
 
   getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
-    return this.spec && this.spec.slotConnections.get(name);
+    if(!this.spec) return undefined;
+    const slot = this.spec.slotConnections.get(name);
+    if(slot) return slot;
+
+    // TODO(jopra): Provided slots should always be listed in the particle spec.
+    for (const slot of this.spec.slotConnections.values()) {
+      for(const provided of slot.provideSlotConnections) {
+        if(provided.name === name) return provided;
+      }
+    }
+    return undefined;
   }
 
   getSlotConnectionByName(name: string) : SlotConnection {

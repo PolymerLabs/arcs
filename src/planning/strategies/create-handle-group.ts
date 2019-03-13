@@ -53,19 +53,19 @@ export class CreateHandleGroup extends Strategy {
           }
         }
 
-        if (maximalGroup) {
-          return recipe => {
-            const newHandle = recipe.newHandle();
-            newHandle.fate = 'create';
-            for (const {particle, connSpec} of maximalGroup) {
-              const cloneParticle = recipe.updateToClone({particle}).particle;
-              const conn = cloneParticle.addConnectionName(connSpec.name);
-              conn.connectToHandle(newHandle);
-            }
-            return 0;
-          };
+        if (!maximalGroup) {
+          return undefined;
         }
-        return undefined;
+        return (recipe: Recipe) => {
+          const newHandle = recipe.newHandle();
+          newHandle.fate = 'create';
+          for (const {particle, connSpec} of maximalGroup) {
+            const cloneParticle = recipe.updateToClone({particle}).particle;
+            const conn = cloneParticle.addConnectionName(connSpec.name);
+            conn.connectToHandle(newHandle);
+          }
+          return 0;
+        };
       }
     }(StrategizerWalker.Independent), this);
   }
