@@ -1,0 +1,84 @@
+<!doctype html>
+
+<script type="module">
+  import '../../lib/firebase-support.js';
+  import {Utils} from '../../lib/utils.js';
+  import {Stores} from '../../lib/stores.js';
+  import {SyntheticStores} from '../../lib/synthetic-stores.js';
+  import {Const} from '../../configuration/constants.js';
+
+  // UserObserver (user)
+  // 0: key
+  //   ArcObserver (key/user-launcher)
+  //     0: Arcid store
+  //        0: ArcObserver
+  //          0: user store
+  //          n: user store
+  //        n: ArccObserver
+  //        ...
+  // 1: key
+  //   ArcObserver (key/user-launcher)
+  // ...
+
+  // thing observer
+  //   0: sub-thing
+  //     0: sub-sub-thing
+
+  // for user Foo
+  //   shared handle: add/remove/change
+
+  class StoreObserver {
+    constructor(store, onadd) {
+      this.connect(store, onadd);
+    }
+    async connect(store, onadd) {
+      const onchange = change => this.onchange(change);
+      this.dispose = () => store.off(onchange);
+      store.on('change', onchange, this);
+      // TODO(sjmiles): assumes Collection
+      this.data = await store.toList();
+      this.data.forEach(datum => onadd(datum));
+    }
+    onchange(change) {
+      console.log(change);
+    }
+  }
+
+  class HandleObserver {
+    constructor(handle, onadd) {
+      (async () => {
+        const store = await SyntheticStores.getHandleStore(handle);
+        this.observer = new StoreObserver(store, onadd)
+      })();
+    }
+  }
+
+  class ArcObserver {
+    constructor(storage, id) {
+      // maps handle keys to observers
+      this.handles = {};
+      this.connect(storage, id);
+    }
+    async connect(storage, id) {
+      // list of stores in the arc
+      const store = await SyntheticStores.getStore(storage, id);
+      this.observer = new StoreObserver(store, this.onAddHandle.bind(this));
+    }
+    onAddHandle(handle) {
+      console.log(handle);
+      console.log('ArcObserver::onAddHandle: ', handle.storageKey.split('/').pop());
+      const onchange = change => this.onAddHandleData(handle, change);
+      this.handles[handle.storageKey] = new HandleObserver(handle, onchange);
+    }
+    onAddHandleData(handle, datum) {
+      const meta = datum.rawData;
+      if (!meta.deleted) {
+        console.log(`ArcObserver::onAdd: [${handle.type.toPrettyString()}] "${datum.rawData.description}"`);
+      }
+    }
+  }
+
+  (async () => {
+    const userOb = new ArcObserver(Const.defaultFirebaseStorageKey, 'user-launcher');
+  })();
+</script>

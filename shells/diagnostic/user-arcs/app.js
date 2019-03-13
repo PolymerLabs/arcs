@@ -24,6 +24,8 @@ export const App = async () => {
 
 const user = async () => {
   //const storage = 'volatile://';
+  const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0`;
+  const userid = 'user'; //'testuserray';
   report(storage, userid);
   //
   spawnSharesArc(storage);
