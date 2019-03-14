@@ -27,10 +27,6 @@ const sources = {
   },
 };
 
-// Files to be deleted by clean, if they aren't in one of the cleanDirs.
-const cleanFiles = ['manifest-railroad.html'];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
-
 const steps = {
   peg: [peg, railroad],
   railroad: [railroad],
@@ -48,6 +44,10 @@ const steps = {
 };
 
 const eslintCache = '.eslint_sigh_cache';
+// Files to be deleted by clean, if they aren't in one of the cleanDirs.
+const cleanFiles = ['manifest-railroad.html', eslintCache];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
+
 
 const linklist = './tools/reducethislist';
 
