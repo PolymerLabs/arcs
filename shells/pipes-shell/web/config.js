@@ -20,6 +20,8 @@ Xen.Debug.level = logLevel;
 
 window.logLevel = logLevel;
 
+if (params.has('solo')) window.manifest = `import '${params.get('solo')}'`;
+
 export const paths = {
   root: '.',
   map: {

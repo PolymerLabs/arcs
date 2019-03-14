@@ -28,11 +28,12 @@ export const DeviceApiFactory = async (storage, deviceClient) => {
 };
 
 const marshalRecipeContext = async () => {
-  const recipeManifest = await Utils.parse(`
+  const manifestText = (typeof window !== 'undefined' && window.manifest) || `
 import 'https://thorn-egret.glitch.me/custom.recipes'
 import 'https://$particles/PipeApps/MapsAutofill.recipes'
-  `);
-  return recipeManifest.findRecipesByVerb('autofill');
+  `;
+  const manifest = await Utils.parse(manifestText);
+  return manifest.findRecipesByVerb('autofill');
 };
 
 const deviceApi = {
