@@ -13,14 +13,33 @@ import {FlowAssertion} from './flow-assertion.js';
 /**
  * A FlowConfig is a set of assertions used to configure a FlowChecker,
  * along with any assertion-related metadata. The language for specifying
- * the assertions is parsed in the constructor, or, if we choose to have
- * a FlowAssertion class, each assertion is parsed in the FlowAssertion
- * constructor.
+ * the assertions is parsed in the constructor.
  */
 export class FlowConfig {
   public assertions : (FlowAssertion[]);  // parsed assertions usable by FlowChecker
 
-  constructor(input : string[]) { // input is raw set of assertions, e.g. contents of a file
-    this.assertions = input.map(i => FlowAssertion.instantiate(i));
+  // Input is the contents of a fcfg file, consisting of comments, blank lines, 
+  // whatever configuration parameters we may decide to include in the future,
+  // and a set of assertions to test. The assertions are expressed in the 
+  // syntax defined in 
+  // https://docs.google.com/document/d/1sQPYE4GEZKrIgMwvcs6Od3C-kBc8bhALY-xwz8bwimU/edit#
+  // In addition to the syntactic contraints specified by the grammar, the set
+  // of assertions in any one configuration may not contain duplicate names.
+  // Throws an exception if the input is invalid.
+  //
+  constructor(input : string) {
+    // There are currenlty no configuration parameters, so the entire file is
+    // just comments, blanks, or assertions. 
+    const lines = input.split('\n');
+    for (l of lines) {
+      const line = l.trim();
+        if ((line.length === 0) && (line.startswith("//")) {
+          continue;
+        }
+        // This will throw if the line does not parse
+        let numAssertions = this.assertions.push(new FlowAssertion(line));
+        // TODO Check that this Assertion doesn't have the same name as any of the
+        // Ones that already exist. If so, throw.
+    }
   }
 }

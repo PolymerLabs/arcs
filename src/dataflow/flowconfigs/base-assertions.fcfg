@@ -1,0 +1,22 @@
+// This is a configuration file for the Arcs dataflow analyzer. The .fcfg file
+// suffix is short for FlowConfig. At present a configuration consists only of a
+// set of dataflow assertions.
+//
+// This specific set is the set of assertions used to develop and test the
+// assertion language.
+//
+noTrustWrite: 0 : trusted particles : write to : any : particle
+piiOnlyToTrusted: all : sensitive data : is seen by : 0 : untrusted particles
+piiOnlyToTrustedAlt: 0 : untrusted particles : see : any : sensitive data
+trustedDontWrite: all : trusted particles that see : any : sensitive data : do not write
+resolvesExact: any : recipe : resolves exactly
+onlyTrustedDontResolve: 0 : untrusted particles : do not resolve
+onlyTrustedDontResolveAlt: all : untrusted particles : resolve
+noSideChannels: 0 : side channels : exist
+seesSensitive: any : recipe : sees : any: sensitive data
+seesSensitiveAlt: any : particle : sees : any: sensitive data
+oneParticlePerHandle: all : handles that are written : are written to by : 1 : particle
+noUntrustedReadsTrusted: 0 : untrusted particle : reads : any : handle that is written to by : any : trusted particle
+noUntrustedReachableFromTrusted: 0 : untrusted particle : is reachable from : any : trusted particle
+noTrustedSideChanneltoUntrusted: 0 : trusted particle : writes to : any : side channel that writes to : any : untrusted particle
+

@@ -18,9 +18,15 @@ import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
     return;
   }
 
-  // read the config file
-  // read the manifest file
-  // build the FlowConfig
-  // build the FlowChecker
-  // run the checker. Will need a facility for outputing lots more than just the boolean result
+  // Check that the config file exists
+
+  try {
+    config = new FlowConfig(fs.readFileSync(configFile, 'utf8'));
+    // read the manifest file
+  } catch (e) {
+    // Log the error as appropriate and exit
+  }
+  // build the FlowChecker and run the check. 
+  // On failure, log the reason.
+  // On success, log success.
 })();
