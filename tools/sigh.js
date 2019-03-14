@@ -25,15 +25,11 @@ const sources = {
     output: 'build/runtime/manifest-parser.js',
     railroad: 'manifest-railroad.html',
   },
-  pack: [{
-    buildDir: 'shell/build',
-  }, {
-    buildDir: 'shells/lib/build'
-  }],
-  ts: {
-    buildDir: 'build'
-  }
 };
+
+// Files to be deleted by clean, if they aren't in one of the cleanDirs.
+const cleanFiles = ['manifest-railroad.html'];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
 
 const steps = {
   peg: [peg, railroad],
@@ -125,7 +121,7 @@ function check() {
 }
 
 function clean() {
-  for (const file of [sources.peg.output, sources.peg.railroad, eslintCache]) {
+  for (const file of cleanFiles) {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
       console.log('Removed', file);
@@ -143,7 +139,7 @@ function clean() {
     }
     fs.rmdirSync(dir);
   };
-  for (const buildDir of [sources.pack.buildDir, sources.ts.buildDir]) {
+  for (const buildDir of cleanDirs) {
     if (fs.existsSync(buildDir)) {
       recursiveDelete(buildDir);
       console.log('Removed', buildDir);
