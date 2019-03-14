@@ -64,14 +64,17 @@ const template = Xen.Template.html`
   <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
-    <!-- launcher -->
-    <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
-    <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
-    <!-- background arcs -->
-    <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
-    <!-- user arc -->
-    <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
+    <div>
+      <!-- launcher -->
+      <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
+      <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
+      <!-- background arcs -->
+      <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
+      <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc>
+      <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
+      <!-- user arc -->
+      <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
+    </div>
     <!-- suggestions -->
     <div slot="suggestions" suggestions>
       <div slotid="suggestions" on-plan-choose="onChooseSuggestion"></div>

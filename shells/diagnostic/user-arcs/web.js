@@ -1,41 +1,42 @@
-import '../../lib/build/pouchdb.js';
-import '../../../build/runtime/storage/pouchdb/pouchdb-provider.js';
-import '../../lib/build/firebase.js';
-import '../../../build/runtime/storage/firebase/firebase-provider.js';
+import '../../lib/pouchdb-support.js';
+import '../../lib/firebase-support.js';
+import '../../lib/loglevel-web.js';
 //import '../../configuration/whitelisted.js';
-
-import {Xen} from '../../lib/xen.js';
-const params = (new URL(document.location)).searchParams;
-const logLevel = params.get('logLevel') || (params.has('log') ? 2 : Xen.Debug.level);
-window.debugLevel = Xen.Debug.level = logLevel;
-
+import {now} from '../../../build/platform/date-web.js';
 import {Utils} from '../../lib/utils.js';
-//import {RamSlotComposer} from '../../lib/ram-slot-composer.js';
-import {App} from './app.js';
+import {UserArcs} from '../../lib/user-arcs.js';
+import {UserContext} from '../../lib/user-context.js';
+import {ObserverTable} from './observer-table.js';
 
-const elt = (container, tag, props) => container.appendChild(Object.assign(document.createElement(tag), props));
+const t0 = now();
 
-const msg = msg => elt(document.body, 'div', {innerHTML: msg});
-
-const addRow = (tableId, key, cols) => {
-  const table = document.querySelector(`#${tableId} tbody`);
-  const html = cols.map(msg => `<td>${msg}</td>`).join('');
-  const node = elt(table, 'tr', {innerHTML: html});
-  node.id = key;
+const user = async () => {
+  //const storage = 'volatile://';
+  const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0`;
+  const userid = 'testuserray';
+  report(storage, userid);
+  //
+  const context = await Utils.parse('');
+  const userContext = new UserContext();
+  userContext.init(storage, userid, context);
+  //
+  const ot = new ObserverTable('arcs');
+  const onChange = change => {
+    ot.onChange(change, Math.floor(now() - t0));
+    userContext.onArc(change);
+  };
+  const userArcs = new UserArcs(storage, userid);
+  userArcs.subscribe(onChange);
 };
 
-const callback = (change, dt) => {
-  console.log(change, `${dt}ms`);
-  if (change.add) {
-    const data = change.add.rawData;
-    addRow('arcs', data.key, [data.key, data.description]);
-    //msg(`add: ${change.add.rawData.description}`);
-  } else if (change.remove) {
-    const data = change.remove.rawData;
-    const node = document.querySelector(`#${data.key}`);
-    node.style.backgroundColor = '#FFC8C8';
-    //msg(`remove: ${change.remove.rawData.description}`);
-  }
+const report = (storage, userid) => {
+  const table = document.body.querySelector(`#user tbody`);
+  table.appendChild(Object.assign(document.createElement('tr'), {
+    innerHTML: `<tr><th>storage</th><td>${storage}</td>`
+  }));
+  table.appendChild(Object.assign(document.createElement('tr'), {
+    innerHTML: `<tr><th>userid</th><td>${userid}</td>`
+  }));
 };
 
 // run
@@ -43,11 +44,10 @@ const callback = (change, dt) => {
   try {
     // configure arcs environment
     Utils.init('../../..');
-    // create a composer configured for node
+    // create a composer
     //const composer = new RamSlotComposer();
     // run app
-    //window.arc = await App(composer);
-    await App(callback);
+    await user();
   } catch (x) {
     console.error(x);
   }

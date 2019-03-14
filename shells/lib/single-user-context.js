@@ -8,8 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {SyntheticStores} from './runtime/synthetic-stores.js';
+import {SyntheticStores} from './synthetic-stores.js';
 import {logFactory} from '../../build/platform/log-web.js';
+//import {UserArcs} from './user-arcs.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');
 const warn = logFactory('SingleUserContext', '#f2ce14', 'warn');
@@ -31,10 +32,10 @@ export const SingleUserContext = class {
     // promises for async store marshaling
     this.pendingStores = [];
     if (arcstore) {
-      this.attachArcStore(storage, arcstore);
+      this.observeArcStore(storage, arcstore);
     }
   }
-  async attachArcStore(storage, arcstore) {
+  async observeArcStore(storage, arcstore) {
     this.observeStore(arcstore, arcstore.id, info => {
       log('arcstore::observer', info);
       if (info.add) {

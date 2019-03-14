@@ -50,11 +50,11 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
     return template;
   }
   _didMount() {
-    this.containers = {
-      toproot: this.host.querySelector('[slotid="toproot"]'),
-      root: this.host.querySelector('[slotid="root"]'),
-      modal: this.host.querySelector('[slotid="modal"]')
-    };
+    const slots = ['toproot', 'root', 'modal'];
+    this.containers = {};
+    slots.forEach(slot => {
+      this.containers[slot] = this.host.querySelector(`[slotid="${slot}"]`);
+    });
   }
   update(props, state) {
     const {storage, config, manifest, plan} = props;

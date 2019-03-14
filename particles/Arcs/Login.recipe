@@ -5,17 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema UserName
-  Text username
+schema StorageKey
+  Text key
 
 particle Login in 'source/Login.js'
-  out UserName username
+  out StorageKey key
   consume root
 
 recipe Login &login
-  create as username
+  create as key
   slot 'rootslotid-root' as root
   Login
-    username = username
+    key = key
     consume root as root
   description `user sign in`
