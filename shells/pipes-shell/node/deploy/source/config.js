@@ -1,10 +1,7 @@
-const g = global;
-
-g.envPaths = {
+export const paths = {
   root: '.',
   map: {
-    'https://$build/': `./`,
+    'https://$build/': `./`
   }
 };
 
-g.logLevel = 2;
