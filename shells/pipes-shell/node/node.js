@@ -8,7 +8,7 @@
 * http://polymer.github.io/PATENTS.txt
 */
 
-import './config.js';
+import {paths} from './config.js';
 
 // optional
 //import '../../lib/pouchdb-support.js';
@@ -31,7 +31,7 @@ import {DeviceApiFactory} from '../device.js';
   console.log(`version: feb-27.0`);
   global.ShellApi = await DeviceApiFactory(`volatile://`, global.DeviceClient);
   // configure arcs environment
-  Utils.init(global.envPaths.root, global.envPaths.map);
+  Utils.init(paths.root, paths.map);
 })();
 
 // test it
