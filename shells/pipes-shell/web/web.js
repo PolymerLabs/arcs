@@ -10,7 +10,8 @@
 
  // configure
 import '../../lib/loglevel-web.js';
-import {paths, manifest} from './config.js';
+import {paths} from './paths.js';
+import {manifest} from './config.js';
 
 // optional
 import '../../lib/pouchdb-support.js';

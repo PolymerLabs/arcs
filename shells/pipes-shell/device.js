@@ -23,11 +23,12 @@ let recipes;
 let client;
 let userContext;
 let testMode;
+let recipeManifest;
 
 export const DeviceApiFactory = async (storage, manifest, deviceClient) => {
+  recipeManifest = manifest || defaultManifest;
   client = deviceClient;
-  recipes = await marshalRecipeContext(manifest || defaultManifest);
-  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
+  await marshalRecipeContext();
   userContext = new Context(storage);
   await signalClientWhenReady(deviceClient);
   return deviceApi;
@@ -42,9 +43,10 @@ const signalClientWhenReady = async client => {
   }
 };
 
-const marshalRecipeContext = async manifest => {
-  const recipeManifest = await Utils.parse(manifest);
-  return recipeManifest.findRecipesByVerb('autofill');
+const marshalRecipeContext = async () => {
+  const manifest = await Utils.parse(recipeManifest);
+  recipes = manifest.findRecipesByVerb('autofill');
+  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
 };
 
 const deviceApi = {
@@ -61,6 +63,7 @@ const deviceApi = {
   flush() {
     console.log('flushing caches...');
     Utils.env.loader.flushCaches();
+    marshalRecipeContext();
   }
 };
 
