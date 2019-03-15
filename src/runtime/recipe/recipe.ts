@@ -166,7 +166,7 @@ export class Recipe {
   }
 
   get modality(): Modality {
-    return this.particles.filter(p => Boolean(p.spec && p.spec.slots.size > 0)).map(p => p.spec.modality)
+    return this.particles.filter(p => Boolean(p.spec && p.spec.slotConnections.size > 0)).map(p => p.spec.modality)
       .reduce((modality, total) => modality.intersection(total), Modality.all);
   }
 
@@ -174,18 +174,18 @@ export class Recipe {
     // All required slots and at least one consume slot for each particle must be present in order for the 
     // recipe to be considered resolved. 
     for (const particle of this.particles) {
-      if (particle.spec.slots.size === 0) {
+      if (particle.spec.slotConnections.size === 0) {
         continue;
       }
 
       let atLeastOneSlotConnection = false;
-      for (const [name, slotSpec] of particle.spec.slots) {
+      for (const [name, slotSpec] of particle.spec.slotConnections) {
         if (slotSpec.isRequired && !particle.consumedSlotConnections[name]) {
           return false;
         }
         // required provided slots are only required when the corresponding consume slot connection is present
         if (particle.consumedSlotConnections[name]) {
-          for (const providedSlotSpec of slotSpec.providedSlots) {
+          for (const providedSlotSpec of slotSpec.provideSlotConnections) {
             if (providedSlotSpec.isRequired && !particle.getProvidedSlotByName(name, providedSlotSpec.name)) {
               return false;
             }
@@ -630,8 +630,8 @@ export class Recipe {
 
   get allSpecifiedConnections(): {particle: Particle, connSpec: HandleConnectionSpec}[] {
     return [].concat(...
-        this.particles.filter(p => p.spec && p.spec.connections.length > 0)
-                      .map(particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
+        this.particles.filter(p => p.spec && p.spec.handleConnections.length > 0)
+                      .map(particle => particle.spec.handleConnections.map(connSpec => ({particle, connSpec}))));
   }
 
   getFreeConnections(type?: Type): {particle: Particle, connSpec: HandleConnectionSpec}[] {

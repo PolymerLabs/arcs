@@ -120,7 +120,7 @@ export class HandleConnection {
     if (this.particle.spec == null) {
       return null;
     }
-    return this.particle.spec.connectionMap.get(this.name);
+    return this.particle.spec.handleConnectionMap.get(this.name);
   }
 
   get isOptional(): boolean {
@@ -254,7 +254,7 @@ export class HandleConnection {
 
   // TODO: the logic is wrong :)
   findSpecsForUnnamedHandles() {
-    return this.particle.spec.connections.filter(specConn => {
+    return this.particle.spec.handleConnections.filter(specConn => {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
                  this.handle.type.equals(specConn.type) &&

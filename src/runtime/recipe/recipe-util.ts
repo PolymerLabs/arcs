@@ -93,7 +93,7 @@ export class RecipeUtil {
         if (!recipeParticle.spec) {
           continue;
         }
-        for (const recipeConnSpec of recipeParticle.spec.connections) {
+        for (const recipeConnSpec of recipeParticle.spec.handleConnections) {
         // TODO are there situations where multiple handleConnections should
         // be allowed to point to the same one in the recipe?
         if (reverse.has(recipeConnSpec)) {

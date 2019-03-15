@@ -182,7 +182,7 @@ export class ParticleExecutionContext {
     };
   }
 
-  async _instantiateParticle(id, spec, proxies) {
+  async _instantiateParticle(id, spec: ParticleSpec, proxies) {
     const name = spec.name;
     let resolve : () => void = null;
     const p = new Promise<void>(res => resolve = res);
@@ -197,7 +197,7 @@ export class ParticleExecutionContext {
     const handleMap = new Map();
     const registerList = [];
     proxies.forEach((proxy, name) => {
-      const connSpec = spec.connectionMap.get(name);
+      const connSpec = spec.handleConnectionMap.get(name);
       const handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
       handleMap.set(name, handle);
 

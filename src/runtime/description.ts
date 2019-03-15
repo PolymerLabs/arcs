@@ -89,7 +89,7 @@ export class Description {
     pDesc = {...pDesc, ...descByName};
     pDesc.pattern = pDesc.pattern || particle.spec.pattern;
     for (const handleConn of Object.values(particle.connections)) {
-      const specConn = particle.spec.connectionMap.get(handleConn.name);
+      const specConn = particle.spec.handleConnectionMap.get(handleConn.name);
       const pattern = descByName[handleConn.name] || specConn.pattern;
       const store = arc.findStoreById(handleConn.handle.id);
       pDesc._connections[handleConn.name] = {

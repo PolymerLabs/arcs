@@ -39,7 +39,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // arc multiple times unnecessarily.
       otherMappedHandles.push(
           `use '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
-      const hostedOtherConnection = hostedParticle.connections.find(
+      const hostedOtherConnection = hostedParticle.handleConnections.find(
           conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
         otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
@@ -87,6 +87,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this.relevance = 0.1;
     }
 
+    console.log(list);
+
     for (const [index, item] of this.getListEntries(list)) {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
@@ -122,8 +124,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
                 this.handles,
                 arc);
       }
-      const hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
-      const slotName = [...this.spec.slots.values()][0].name;
+      const hostedSlotName = [...resolvedHostedParticle.slotConnections.keys()][0];
+      const slotName = [...this.spec.slotConnections.values()][0].name;
       const slotId = await arc.createSlot(this, slotName, itemHandle._id);
 
       if (!slotId) {
@@ -131,6 +133,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
 
       this._itemSubIdByHostedSlotId.set(slotId, item.id);
+
+      console.log('~~~', otherConnections, otherMappedHandles);
 
       try {
         const recipe = this.constructInnerRecipe(

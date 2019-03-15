@@ -59,7 +59,7 @@ export class GroupHandleConnections extends Strategy {
 
           let iteration = 0;
           while (allTypeHandleConnections.length > 0) {
-            for (const connSpec of particleWithMostConnectionsOfType.spec.connections) {
+            for (const connSpec of particleWithMostConnectionsOfType.spec.handleConnections) {
               if (!type.equals(connSpec.type)) {
                 continue;
               }

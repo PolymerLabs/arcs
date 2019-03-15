@@ -75,7 +75,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       handleNames: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
-      slotNames: [...this.spec.slots.values()].map(s => s.name)
+      slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
     };
   }
   // affordances for aliasing methods to remove `_`
@@ -118,6 +118,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._invalidate();
   }
   async onHandleSync(handle, model) {
+    console.log('dom-particle', JSON.stringify(model));
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size == 0) {
       await this._handlesToProps();

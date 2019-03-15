@@ -138,7 +138,7 @@ export class SlotConnection {
 
     if (this.getSlotSpec() == undefined) return true;
 
-    return this.getSlotSpec().providedSlots.every(providedSlot => {
+    return this.getSlotSpec().provideSlotConnections.every(providedSlot => {
       if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length === 0) {
         if (options) {
           options.details = 'missing consuming slot';
