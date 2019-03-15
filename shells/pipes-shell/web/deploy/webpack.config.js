@@ -42,8 +42,8 @@ module.exports = {
     // })
     new webpack.NormalModuleReplacementPlugin(
       // use deployment configuration
-      /config.js/,
-      resource =>  resource.request = './deploy/source/config.js'
+      /paths.js/,
+      resource =>  resource.request = './deploy/source/paths.js'
     )
   ]
 };
