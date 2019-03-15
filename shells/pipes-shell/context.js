@@ -15,12 +15,14 @@ import {Schemas} from './schemas.js';
 
 export const Context = class {
   constructor(storage) {
+    this.isReady = new Promise((resolve, reject) => this.readyResolver = resolve);
     this.initContext(storage);
   }
   async initContext(storage) {
     this.context = await Utils.parse('');
     await this.initAddressStore(this.context);
     await this.initPipesArc(storage);
+    this.readyResolver();
   }
   async initAddressStore(context) {
     const store = await Stores.create(context, {
@@ -58,7 +60,7 @@ export const Context = class {
     return change;
   }
   async entityStoreChange(change) {
-    console.log(change);
+    //console.log(change);
     await this.cloneStoreChange(change, this.contextEntityStore);
     dumpStores([this.contextEntityStore]);
   }

@@ -8,8 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// paths, logging, etc.
-import {paths} from './config.js';
+ // configure
+import '../../lib/loglevel-web.js';
+import {paths} from './paths.js';
+import {manifest} from './config.js';
 
 // optional
 import '../../lib/pouchdb-support.js';
@@ -18,7 +20,7 @@ import '../../lib/firebase-support.js';
 
 import {Utils} from '../../lib/utils.js';
 import {DeviceApiFactory} from '../device.js';
-import {devtools} from './devtools.js';
+import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // usage:
 //
@@ -29,21 +31,33 @@ import {devtools} from './devtools.js';
 //
 // results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
 
+// can be used for testing:
+//
+// window.DeviceClient = {
+//   shellReady() {
+//     console.warn('context is ready!');
+//   },
+//   foundSuggestions(json) {
+//   }
+// };
+  window.onclick = () => {
+    if (window.ShellApi) {
+      window.ShellApi.receiveEntity();
+    }
+  };
+//
+
 const storage = `pouchdb://local/arcs/`;
-const version = `version: mar-06`;
+const version = `version: mar-14`;
 
 console.log(version);
 
 (async () => {
   // if remote DevTools are requested, wait for connect
-  await devtools();
+  await DevtoolsSupport();
   // configure arcs environment
   Utils.init(paths.root, paths.map);
   // configure ShellApi (window.DeviceClient is bound in by outer process, otherwise undefined)
-  window.ShellApi = await DeviceApiFactory(storage, window.DeviceClient);
-  // for testing
-  window.onclick = () => {
-    window.ShellApi.receiveEntity();
-  };
+  window.ShellApi = await DeviceApiFactory(storage, manifest, window.DeviceClient);
 })();
 

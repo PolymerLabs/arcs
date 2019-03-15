@@ -6,8 +6,16 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export let manifest;
+
+let logLevel = 0;
 const params = (new URL(document.location)).searchParams;
-if (params.has('solo')) {
-  manifest = `import '${params.get('solo')}'`;
+if (params.has('log')) {
+  const log = params.get('log');
+  logLevel = log === '' ? 2 : (Number(log) || 0);
+  console.log(`setting logLevel = ${logLevel}`);
 }
+window.logLevel = logLevel;
+
+import {Xen} from './xen.js';
+Xen.Debug.level = logLevel;
+

@@ -11,6 +11,11 @@ import {Context} from './context.js';
 import {Pipe} from './pipe.js';
 import {Utils} from '../lib/utils.js';
 
+const defaultManifest = `
+import 'https://thorn-egret.glitch.me/custom.recipes'
+import 'https://$particles/PipeApps/MapsAutofill.recipes'
+`;
+
 // TODO(sjmiles): why not automatic?
 SyntheticStores.init();
 
@@ -18,21 +23,30 @@ let recipes;
 let client;
 let userContext;
 let testMode;
+let recipeManifest;
 
-export const DeviceApiFactory = async (storage, deviceClient) => {
-  recipes = await marshalRecipeContext();
-  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
+export const DeviceApiFactory = async (storage, manifest, deviceClient) => {
+  recipeManifest = manifest || defaultManifest;
   client = deviceClient;
+  await marshalRecipeContext();
   userContext = new Context(storage);
+  await signalClientWhenReady(deviceClient);
   return deviceApi;
 };
 
+const signalClientWhenReady = async client => {
+  // inform client when shell is ready
+  const ready = client && client.shellReady;
+  if (ready) {
+    await userContext.isReady;
+    ready.call(client);
+  }
+};
+
 const marshalRecipeContext = async () => {
-  const recipeManifest = await Utils.parse(`
-import 'https://thorn-egret.glitch.me/custom.recipes'
-import 'https://$particles/PipeApps/MapsAutofill.recipes'
-  `);
-  return recipeManifest.findRecipesByVerb('autofill');
+  const manifest = await Utils.parse(recipeManifest);
+  recipes = manifest.findRecipesByVerb('autofill');
+  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
 };
 
 const deviceApi = {
@@ -49,6 +63,7 @@ const deviceApi = {
   flush() {
     console.log('flushing caches...');
     Utils.env.loader.flushCaches();
+    marshalRecipeContext();
   }
 };
 

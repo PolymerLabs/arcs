@@ -7,10 +7,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {DevtoolsConnection} from '../../../build/runtime/debug/devtools-connection.js';
+import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.js';
 
-// TODO(sjmiles): move into a module?
-export const devtools = async () => {
+export const DevtoolsSupport = async () => {
   const params = (new URL(document.location)).searchParams;
   if (params.has('remote-explore-key')) {
     // Wait for the remote Arcs Explorer to connect before starting the Shell.
