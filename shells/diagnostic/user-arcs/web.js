@@ -16,15 +16,17 @@ const user = async () => {
   const userid = 'testuserray';
   report(storage, userid);
   //
-  const context = await Utils.parse('');
-  const userContext = new UserContext();
-  userContext.init(storage, userid, context);
+  // const context = await Utils.parse('');
+  // const userContext = new UserContext();
+  // userContext.init(storage, userid, context);
   //
   const ot = new ObserverTable('arcs');
   const onChange = change => {
+    //console.log(`seein' them arcs: `, change.add.rawData.description);
     ot.onChange(change, Math.floor(now() - t0));
-    userContext.onArc(change);
+    //userContext.onArc(change);
   };
+  //
   const userArcs = new UserArcs(storage, userid);
   userArcs.subscribe(onChange);
 };
