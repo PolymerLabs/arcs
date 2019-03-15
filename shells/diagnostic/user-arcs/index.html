@@ -19,6 +19,9 @@ http://polymer.github.io/PATENTS.txt
   <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700"> -->
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body, button, input {
       font-family: 'Google Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -29,6 +32,7 @@ http://polymer.github.io/PATENTS.txt
       overflow: auto;
     }
     table {
+      width: 660px;
       font-size: 80%;
       border: 1px solid #000000;
       text-align: left;
@@ -45,6 +49,30 @@ http://polymer.github.io/PATENTS.txt
     td {
       font-size: 90%;
     }
+    td, th {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #user th {
+      width: 100px;
+    }
+    #arcs, #arcs_h {
+      --cell-0-width: 260px;
+      --cell-1-width: 400px;
+    }
+    #arcs_h th:nth-of-type(1) {
+      width: var(--cell-0-width);
+    }
+    #arcs td:nth-of-type(1) {
+      width: var(--cell-0-width);
+    }
+    #arcs_h th:nth-of-type(2) {
+      width: var(--cell-1-width);
+    }
+    #arcs td:nth-of-type(2) {
+      width: calc(var(--cell-1-width) - 1px);
+    }
   </style>
 
   <script src="../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script>
@@ -55,7 +83,7 @@ http://polymer.github.io/PATENTS.txt
 
   <table id="user">
     <thead>
-      <tr><th colspan="1">User</th><th></th></tr>
+      <tr><th>User</th></tr>
     </thead>
     <tbody>
     </tbody>
@@ -63,12 +91,12 @@ http://polymer.github.io/PATENTS.txt
 
   <br>
 
+  <table id="arcs_h">
+    <tr><th>Arcs</th></tr>
+    <tr><th>Id</th><th>Description</th></tr>
+  </table>
   <div scroller>
     <table id="arcs">
-      <thead>
-        <tr><th colspan="2">Arcs</th></tr>
-        <tr><th>Id</th><th>Description</th></tr>
-      </thead>
       <tbody>
       </tbody>
     </table>

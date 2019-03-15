@@ -13,9 +13,15 @@ import {StorageProviderFactory} from '../../../build/runtime/storage/storage-pro
 
 export class SyntheticStores {
   static init() {
-    if (!SyntheticStores.providerFactory) {
-      SyntheticStores.providerFactory = new StorageProviderFactory('shell');
+    // if (!SyntheticStores.providerFactory) {
+    //   SyntheticStores.providerFactory = new StorageProviderFactory('shell');
+    // }
+  }
+  static get providerFactory() {
+    if (!SyntheticStores._providerFactory) {
+      SyntheticStores._providerFactory = new StorageProviderFactory('shell');
     }
+    return SyntheticStores._providerFactory;
   }
   static async getArcsStore(storage, name) {
     const handleStore = await SyntheticStores.getStore(storage, name);
