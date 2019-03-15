@@ -19,13 +19,13 @@ import {InterfaceType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
-type SerializedConnectionSpec = {
+type SerializedHandleConnectionSpec = {
   direction: Direction,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
   tags?: string[],
-  dependentConnections: SerializedConnectionSpec[]
+  dependentConnections: SerializedHandleConnectionSpec[]
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -36,18 +36,18 @@ function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
   return (t instanceof Type) ? t.toLiteral() : t;
 }
 
-export class ConnectionSpec {
-  rawData: SerializedConnectionSpec;
+export class HandleConnectionSpec {
+  rawData: SerializedHandleConnectionSpec;
   direction: Direction;
   name: string;
   type: Type;
   isOptional: boolean;
   tags: string[];
-  dependentConnections: ConnectionSpec[];
+  dependentConnections: HandleConnectionSpec[];
   pattern: string;
-  parentConnection: ConnectionSpec | null = null;
+  parentConnection: HandleConnectionSpec | null = null;
 
-  constructor(rawData: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
+  constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -80,24 +80,24 @@ export class ConnectionSpec {
   }
 }
 
-type SerializedSlotSpec = {
+type SerializedConsumeSlotConnectionSpec = {
   name: string,
   isRequired: boolean,
   isSet: boolean,
   tags: string[],
   formFactor: string,
-  providedSlots: SerializedProvidedSlotSpec[]
+  providedSlots: SerializedProvideSlotConnectionSpec[]
 };
 
-export class SlotSpec {
+export class ConsumeSlotConnectionSpec {
   name: string;
   isRequired: boolean;
   isSet: boolean;
   tags: string[];
   formFactor: string;
-  providedSlots: ProvidedSlotSpec[];
+  providedSlots: ProvideSlotConnectionSpec[];
 
-  constructor(slotModel: SerializedSlotSpec) {
+  constructor(slotModel: SerializedConsumeSlotConnectionSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
@@ -108,16 +108,16 @@ export class SlotSpec {
       return;
     }
     slotModel.providedSlots.forEach(ps => {
-      this.providedSlots.push(new ProvidedSlotSpec(ps));
+      this.providedSlots.push(new ProvideSlotConnectionSpec(ps));
     });
   }
 
-  getProvidedSlotSpec(name): ProvidedSlotSpec {
+  getProvidedSlotSpec(name): ProvideSlotConnectionSpec {
     return this.providedSlots.find(ps => ps.name === name);
   }
 }
 
-type SerializedProvidedSlotSpec = {
+type SerializedProvideSlotConnectionSpec = {
   name: string,
   isRequired?: boolean,
   isSet?: boolean,
@@ -126,7 +126,7 @@ type SerializedProvidedSlotSpec = {
   handles?: string[]
 };
 
-export class ProvidedSlotSpec {
+export class ProvideSlotConnectionSpec {
   name: string;
   isRequired: boolean;
   isSet: boolean;
@@ -134,7 +134,7 @@ export class ProvidedSlotSpec {
   formFactor: string;
   handles: string[];
 
-  constructor(slotModel: SerializedProvidedSlotSpec) {
+  constructor(slotModel: SerializedProvideSlotConnectionSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired || false;
     this.isSet = slotModel.isSet || false;
@@ -148,25 +148,25 @@ type SerializedParticleSpec = {
   name: string,
   id?: string,
   verbs: string[],
-  args: SerializedConnectionSpec[],
+  args: SerializedHandleConnectionSpec[],
   description: {pattern?: string},
   implFile: string,
   modality: string[],
-  slots: SerializedSlotSpec[]
+  slots: SerializedConsumeSlotConnectionSpec[]
 };
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
   name: string;
   verbs: string[];
-  connections: ConnectionSpec[];
-  connectionMap: Map<string, ConnectionSpec>;
-  inputs: ConnectionSpec[];
-  outputs: ConnectionSpec[];
+  connections: HandleConnectionSpec[];
+  connectionMap: Map<string, HandleConnectionSpec>;
+  inputs: HandleConnectionSpec[];
+  outputs: HandleConnectionSpec[];
   pattern: string;
   implFile: string;
   modality: Modality;
-  slots: Map<string, SlotSpec>;
+  slots: Map<string, ConsumeSlotConnectionSpec>;
 
   constructor(model : SerializedParticleSpec) {
     this.model = model;
@@ -192,7 +192,7 @@ export class ParticleSpec {
     this.modality = Modality.create(model.modality || []);
     this.slots = new Map();
     if (model.slots) {
-      model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
+      model.slots.forEach(s => this.slots.set(s.name, new ConsumeSlotConnectionSpec(s)));
     }
     // Verify provided slots use valid handle connection names.
     this.slots.forEach(slot => {
@@ -202,8 +202,8 @@ export class ParticleSpec {
     });
   }
 
-  createConnection(arg: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
-    const connection = new ConnectionSpec(arg, typeVarMap);
+  createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
+    const connection = new HandleConnectionSpec(arg, typeVarMap);
     this.connections.push(connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
@@ -219,7 +219,7 @@ export class ParticleSpec {
     return false;
   }
 
-  getConnectionByName(name: string): ConnectionSpec {
+  getConnectionByName(name: string): HandleConnectionSpec {
     return this.connectionMap.get(name);
   }
 
@@ -237,7 +237,7 @@ export class ParticleSpec {
 
   toLiteral() : SerializedParticleSpec {
     const {args, name, verbs, description, implFile, modality, slots} = this.model;
-    const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec =
+    const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
     return {args: argsLiteral, name, verbs, description, implFile, modality, slots};

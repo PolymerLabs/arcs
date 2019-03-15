@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Description} from './description.js';
-import {ProvidedSlotSpec} from './particle-spec.js';
+import {ProvideSlotConnectionSpec} from './particle-spec.js';
 import {Handle} from './recipe/handle.js';
 import {SlotConsumer, Content} from './slot-consumer.js';
 
@@ -107,10 +107,10 @@ export class ProvidedSlotContext extends SlotContext {
   readonly name: string;
   readonly tags: string[] = [];
   private _container: HTMLElement; // eg div element.
-  spec: ProvidedSlotSpec;
+  spec: ProvideSlotConnectionSpec;
   handles: Handle[];
 
-  constructor(id: string, name: string, tags: string[], container: HTMLElement, spec: ProvidedSlotSpec, sourceSlotConsumer: SlotConsumer = null) {
+  constructor(id: string, name: string, tags: string[], container: HTMLElement, spec: ProvideSlotConnectionSpec, sourceSlotConsumer: SlotConsumer = null) {
     super(id, sourceSlotConsumer);
     assert(Boolean(container) !== Boolean(spec), `Exactly one of either container or slotSpec may be set`);
     assert(Boolean(spec) === Boolean(spec), `Spec and source slot can only be set together`);
@@ -122,7 +122,7 @@ export class ProvidedSlotContext extends SlotContext {
 
     // The context's accompanying ProvidedSlotSpec (see particle-spec.js).
     // Initialized to a default spec, if the container is one of the shell provided top root-contexts.
-    this.spec = spec || new ProvidedSlotSpec({name});
+    this.spec = spec || new ProvideSlotConnectionSpec({name});
     if (this.sourceSlotConsumer) {
       this.sourceSlotConsumer.directlyProvidedSlotContexts.push(this);
     }

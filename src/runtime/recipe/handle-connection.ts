@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ConnectionSpec} from '../particle-spec.js';
+import {HandleConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
 
 import {Handle} from './handle.js';
@@ -116,7 +116,7 @@ export class HandleConnection {
     this._resetHandleType();
   }
 
-  get spec(): ConnectionSpec {
+  get spec(): HandleConnectionSpec {
     if (this.particle.spec == null) {
       return null;
     }

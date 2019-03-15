@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ConnectionSpec, ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType, Type} from '../type.js';
@@ -307,11 +307,11 @@ export class Particle {
     this.recipe.removeParticle(this);
   }
 
-  getSlotConnectionBySpec(spec: SlotSpec) {
+  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec) {
     return Object.values(this._consumedSlotConnections).find(slotConn => slotConn.getSlotSpec() === spec);
   }
 
-  getSlotSpecByName(name: string) : SlotSpec {
+  getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
     return this.spec && this.spec.slots.get(name);
   }
 
@@ -323,7 +323,7 @@ export class Particle {
     return this.consumedSlotConnections[consumeName] && this.consumedSlotConnections[consumeName].providedSlots[name];
   }
 
-  getSlotSpecs() : Map<string,SlotSpec> {
+  getSlotSpecs() : Map<string,ConsumeSlotConnectionSpec> {
     if (this.spec) return this.spec.slots;
     return new Map();
   }

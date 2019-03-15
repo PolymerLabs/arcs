@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
 import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';
@@ -50,7 +50,7 @@ export class SlotUtils {
   }
 
   // Returns all possible slot candidates, sorted by "quality"
-  static findAllSlotCandidates(particle: Particle, slotSpec: SlotSpec, arc) {
+  static findAllSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, arc) {
     const slotConn = particle.getSlotConnectionByName(slotSpec.name);
     return {
       // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
@@ -62,7 +62,7 @@ export class SlotUtils {
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  static _findSlotCandidates(particle: Particle, slotSpec: SlotSpec, slots) {
+  static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots) {
     const possibleSlots = slots.filter(s => this.slotMatches(particle, slotSpec, s));
     possibleSlots.sort((slot1, slot2) => {
         // TODO: implement.
@@ -72,7 +72,7 @@ export class SlotUtils {
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static slotMatches(particle: Particle, slotSpec: SlotSpec, slot) {
+  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot) {
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }
@@ -107,7 +107,7 @@ export class SlotUtils {
     });
   }
 
-  static tagsOrNameMatch(consumeSlotSpec: SlotSpec, provideSlotSpec: ProvidedSlotSpec, consumeSlotConn: SlotConnection = undefined, provideSlot: Slot = undefined) {
+  static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn: SlotConnection = undefined, provideSlot: Slot = undefined) {
     const consumeTags = [].concat(
       consumeSlotSpec.tags || [], 
       consumeSlotConn ? consumeSlotConn.tags : [], 

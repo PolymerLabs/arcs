@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Particle} from '../../runtime/recipe/particle.js';
@@ -110,7 +110,7 @@ export class MatchRecipeByVerb extends Strategy {
             }
 
             function tryApplyHandleConstraint(
-                name: string, connSpec: ConnectionSpec, particle: Particle, constraint, handle) {
+                name: string, connSpec: HandleConnectionSpec, particle: Particle, constraint, handle) {
               let connection = particle.connections[name];
               if (connection && connection.handle != null) {
                 return false;
@@ -230,7 +230,7 @@ export class MatchRecipeByVerb extends Strategy {
     return false;
   }
 
-  static connectionSpecMatchesConstraint(connSpec: ConnectionSpec, handleData): boolean {
+  static connectionSpecMatchesConstraint(connSpec: HandleConnectionSpec, handleData): boolean {
     if (connSpec.direction !== handleData.direction) {
       return false;
     }

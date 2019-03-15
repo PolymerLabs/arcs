@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ProvidedSlotSpec, SlotSpec} from '../../runtime/particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
@@ -19,7 +19,7 @@ export class MapSlots extends Strategy {
     const arc = this.arc;
 
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
+      onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
         const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc); 
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
@@ -31,7 +31,7 @@ export class MapSlots extends Strategy {
         // Strategies should be responsible for making all possible recipes. Ranking of 
         // recipes is done later. 
         const slotList = local.length > 0 ? local : remote;
-        return slotList.map(slot => ((recipe: Recipe, particle: Particle, slotSpec: SlotSpec) => {
+        return slotList.map(slot => ((recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) => {
           const newSlotConnection = particle.addSlotConnection(slotSpec.name);
           SlotUtils.connectSlotConnection(newSlotConnection, slot);
           return 1;

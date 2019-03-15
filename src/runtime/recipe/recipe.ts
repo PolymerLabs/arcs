@@ -8,7 +8,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
-import {ConnectionSpec} from '../particle-spec.js';
+import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
@@ -628,13 +628,13 @@ export class Recipe {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
-  get allSpecifiedConnections(): {particle: Particle, connSpec: ConnectionSpec}[] {
+  get allSpecifiedConnections(): {particle: Particle, connSpec: HandleConnectionSpec}[] {
     return [].concat(...
         this.particles.filter(p => p.spec && p.spec.connections.length > 0)
                       .map(particle => particle.spec.connections.map(connSpec => ({particle, connSpec}))));
   }
 
-  getFreeConnections(type?: Type): {particle: Particle, connSpec: ConnectionSpec}[] {
+  getFreeConnections(type?: Type): {particle: Particle, connSpec: HandleConnectionSpec}[] {
     return this.allSpecifiedConnections.filter(
         ({particle, connSpec}) => !connSpec.isOptional &&
                                   connSpec.name !== 'descriptions' &&
