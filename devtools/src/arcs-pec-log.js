@@ -1,32 +1,22 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 import '../deps/@polymer/iron-list/iron-list.js';
-import {ObjectExplorer} from './object-explorer.js';
+import {ObjectExplorer} from './common/object-explorer.js';
+import './common/filter-input.js';
 import {formatTime, MessengerMixin} from './arcs-shared.js';
 
 class ArcsPecLog extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
-    <style>
+    <style include="shared-styles">
       :host {
         display: block;
       }
-      iron-list {
-        height: calc(100vh - 27px);
-      }
       #download {
-        position: absolute;
-        top: 10px;
-        right: 20px;
-        z-index: 1;
-        color: rgb(200, 200, 200);
-        cursor: default;
-        --iron-icon-height: 32px;
-        --iron-icon-width: 32px;
+        height: 20px;
       }
-      #download[enabled] {
-        color: rgb(90, 90, 90);
-        cursor: pointer;
+      iron-list {
+        height: calc(100vh - 54px);
       }
       [noPointer] {
         cursor: default;
@@ -96,7 +86,13 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
         margin: 2px;
       }
     </style>
-    <iron-icon id="download" enabled$="{{downloadEnabled}}" icon="file-download" title="Download log" on-click="downloadLog"></iron-icon>
+    <header class="header">
+      <div section>
+        <iron-icon id="download" disabled$="{{!downloadEnabled}}" icon="file-download" title="Download log" on-click="downloadLog"></iron-icon>
+        <div divider></div>
+        <filter-input filter="{{searchParams}}"></filter-input>
+      </div>
+    </header>
     <iron-list id="list" items="{{filteredEntries}}">
       <template>
         <div entry>

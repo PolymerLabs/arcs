@@ -1,6 +1,6 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {formatTime, MessengerMixin} from './arcs-shared.js';
-import './object-explorer.js';
+import './common/object-explorer.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsPlanning extends MessengerMixin(PolymerElement) {

@@ -13,6 +13,7 @@ import './se-legend.js';
 import './se-recipe-view.js';
 import './se-stats.js';
 import './se-compare-populations.js';
+import '../common/filter-input.js';
 import {MessengerMixin} from '../arcs-shared.js';
 import '../../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {PolymerElement} from '../../deps/@polymer/polymer/polymer-element.js';
@@ -38,6 +39,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
         <se-explorer results="{{results}}"></se-explorer>
       </div>
       <aside style="flex: .3" class="paddedBlocks">
+        <filter-input filter="{{searchParams}}"></filter-input>
         <se-compare-populations results="{{results}}" id='compare'></se-compare-populations>
         <se-recipe-view></se-recipe-view>
         <!--<se-arc-view></se-arc-view> this is disconnected today, PRs welcome-->

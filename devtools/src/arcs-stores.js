@@ -1,6 +1,6 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import {MessengerMixin} from './arcs-shared.js';
-import './object-explorer.js';
+import './common/object-explorer.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsStores extends MessengerMixin(PolymerElement) {
@@ -14,10 +14,10 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         overflow-y: scroll;
       }
       .title {
-        background-color: var(--light-gray);
+        padding: 0 8px;
+        height: 26px;
         border-bottom: 1px solid var(--mid-gray);
-        padding: 0 4px;
-        vertical-align: middle;
+        background-color: var(--light-gray);
       }
       .refresh {
         -webkit-mask-position: -84px 48px;
@@ -29,7 +29,6 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         transform: rotate(1turn);
       }
       .content {
-        background-color: white;
         border-bottom: 1px solid var(--mid-gray);
         display: flex;
         flex-direction: column;
@@ -61,11 +60,15 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
         display: none;
       }
     </style>
-    <template is="dom-repeat" items="{{storeGroups}}">
-      <div class="title">
-        {{item.label}}
+    <header class="header">
+      <div section>
         <span class="devtools-icon refresh" on-click="_fetchStores"></span>
+        <div divider></div>
+        <filter-input filter="{{searchParams}}"></filter-input>
       </div>
+    </header>
+    <template is="dom-repeat" items="{{storeGroups}}">
+      <div class="title">{{item.label}}</div>
       <div class="content">
         <template is="dom-repeat" items="{{item.items}}">
           <object-explorer object="{{item}}">

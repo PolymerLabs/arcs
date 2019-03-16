@@ -1,5 +1,5 @@
-import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
-import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
+import {PolymerElement} from '../../deps/@polymer/polymer/polymer-element.js';
+import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 /**
  * ..:: Read Before Modifying ::..
