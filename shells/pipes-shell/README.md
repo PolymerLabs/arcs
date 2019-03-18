@@ -33,9 +33,7 @@ Results are returned via `DeviceClient.foundSuggestions(json)` (if it exists). R
 
 `{"type":"address","name":"East Pole","timestamp":1552937651253,"source":"com.unknown"}`
 
-
-
-Example of implementing the exit points for testing:
+Example of implementing exit points for testing:
 ```
   window.DeviceClient = {
     shellReady() {
