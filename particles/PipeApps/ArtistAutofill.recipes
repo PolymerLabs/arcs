@@ -14,7 +14,7 @@ particle SuggestArtist in './source/SuggestArtist.js'
   out Json suggestion
   consume app
 
-recipe ArtistAutofill
+recipe Com_music_spotify &autofill
   create as artist
   create as suggestion
   RandomArtist
