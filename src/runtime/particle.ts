@@ -26,10 +26,6 @@ export class Particle {
     public relevances: Relevance[] = [];
     public handles: Map<string, Handle>;
 
-    // TODO(mmandlis): add proper types
-    // tslint:disable-next-line: no-any
-    consumedSlotConnections: any[];
-    
     private _idle: Promise<void> = Promise.resolve();
     private _idleResolver: (() => void);
     private _busy = 0;
