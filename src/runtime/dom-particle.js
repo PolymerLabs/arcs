@@ -118,7 +118,6 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._invalidate();
   }
   async onHandleSync(handle, model) {
-    console.log('dom-particle', JSON.stringify(model));
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size == 0) {
       await this._handlesToProps();

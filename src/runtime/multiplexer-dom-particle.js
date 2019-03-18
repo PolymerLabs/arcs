@@ -86,9 +86,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     if (list.length > 0) {
       this.relevance = 0.1;
     }
-
-    console.log(list);
-
+  
     for (const [index, item] of this.getListEntries(list)) {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
@@ -133,8 +131,6 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
 
       this._itemSubIdByHostedSlotId.set(slotId, item.id);
-
-      console.log('~~~', otherConnections, otherMappedHandles);
 
       try {
         const recipe = this.constructInnerRecipe(

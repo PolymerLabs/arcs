@@ -19,7 +19,9 @@ defineParticle(({Particle}) => {
       if (handle.name === 'a') {
         this.bHandle.set(new this.bHandle.entityClass(newValue));
       } else if (handle.name === 'c') {
-        this.dHandle.set(new this.dHandle.entityClass(newValue));
+        if (this.dHandle) {
+          this.dHandle.set(new this.dHandle.entityClass(newValue));
+        }
       }
     }
   };

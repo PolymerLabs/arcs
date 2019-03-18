@@ -20,12 +20,10 @@ describe('products test', () => {
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 
-  it.only('filters', async () => {
+  it('filters', async () => {
     const helper = await PlanningTestHelper.createAndPlan({manifestFilename});
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
-
-    console.log(helper.arc.activeRecipe.toString());
 
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });

@@ -45,8 +45,8 @@ defineParticle(({Particle}) => {
             use '${productHandle._id}' as handle1
             use '${resultHandle._id}' as handle2
             ${this._hostedParticle.name}
-              ${this._hostedParticle.connections[0].name} <- handle1
-              ${this._hostedParticle.connections[1].name} -> handle2
+              ${this._hostedParticle.handleConnections[0].name} <- handle1
+              ${this._hostedParticle.handleConnections[1].name} -> handle2
           `;
 
         await this._arc.loadRecipe(recipe, this);

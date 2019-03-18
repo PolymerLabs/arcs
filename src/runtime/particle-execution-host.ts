@@ -57,7 +57,6 @@ export class ParticleExecutionHost {
 
       async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
         const data = await handle.modelForSynchronization();
-        console.log('oSP', handle.id, handle.storageKey, data);
         this.SimpleCallback(callback, data);
       }
 
@@ -65,7 +64,6 @@ export class ParticleExecutionHost {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
         const data = await (handle as any).get();
-        console.log(data);
         this.SimpleCallback(callback, data);
       }
 
@@ -73,7 +71,6 @@ export class ParticleExecutionHost {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
         const data = await (handle as any).toList();
-        console.log('oHTL', data);
         this.SimpleCallback(callback, data);
       }
 

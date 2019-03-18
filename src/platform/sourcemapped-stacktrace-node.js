@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 // This is only relevant in the web devtools.
-export const mapStackTrace = () => {};
+export const mapStackTrace = (x, f) => f([x]);
