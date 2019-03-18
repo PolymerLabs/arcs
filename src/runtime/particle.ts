@@ -34,7 +34,7 @@ export class Particle {
     private _idleResolver: (() => void);
     private _busy = 0;
     
-    protected slotletsByName: Map<string, SlotProxy> = new Map();
+    protected slotProxiesByName: Map<string, SlotProxy> = new Map();
     private capabilities: {constructInnerArc?: Function};
     
   constructor(capabilities?: {constructInnerArc?: Function}) {
@@ -146,22 +146,22 @@ export class Particle {
   }
 
   hasSlotProxy(name: string) {
-    return this.slotletsByName.has(name);
+    return this.slotProxiesByName.has(name);
   }
 
   addSlotProxy(slotlet: SlotProxy) {
-    this.slotletsByName.set(slotlet.slotName, slotlet);
+    this.slotProxiesByName.set(slotlet.slotName, slotlet);
   }
 
   removeSlotProxy(name: string) {
-    this.slotletsByName.delete(name);
+    this.slotProxiesByName.delete(name);
   }
 
   /**
    * Returns the slot with provided name.
    */
   getSlot(name) {
-    return this.slotletsByName.get(name);
+    return this.slotProxiesByName.get(name);
   }
 
   static buildManifest(strings: string[], ...bits): string {
