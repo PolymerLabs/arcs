@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
@@ -51,15 +51,15 @@ export class GroupHandleConnections extends Strategy {
           const particleWithMostConnectionsOfType = sortedParticles[0];
           const groups: {
             particle: Particle,
-            connSpec: ConnectionSpec,
-            group: {particle: Particle, connSpec: ConnectionSpec}[]
+            connSpec: HandleConnectionSpec,
+            group: {particle: Particle, connSpec: HandleConnectionSpec}[]
           }[] = [];
           let allTypeHandleConnections = recipe.getFreeConnections(type)
               .filter(c => c.particle !== particleWithMostConnectionsOfType);
 
           let iteration = 0;
           while (allTypeHandleConnections.length > 0) {
-            for (const connSpec of particleWithMostConnectionsOfType.spec.connections) {
+            for (const connSpec of particleWithMostConnectionsOfType.spec.handleConnections) {
               if (!type.equals(connSpec.type)) {
                 continue;
               }

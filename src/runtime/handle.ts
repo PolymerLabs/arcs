@@ -131,7 +131,12 @@ export class Collection extends Handle {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
-        particle.onHandleSync(this, this._restore(details));
+        try {
+          particle.onHandleSync(this, this._restore(details));
+        } catch (e) {
+          // TODO(shans): this should be a UserException, once we have those.
+          this.raiseSystemException(e, "onHandleSync");
+        }
         return;
       case 'update': {
         // tslint:disable-next-line: no-any

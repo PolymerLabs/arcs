@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {ConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
@@ -27,7 +27,7 @@ export class CreateDescriptionHandle extends Strategy {
         };
       }
 
-      onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
+      onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec) {
         if (connectionSpec.name !== 'descriptions') {
           return undefined;
         }

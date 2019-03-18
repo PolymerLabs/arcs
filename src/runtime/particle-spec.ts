@@ -19,13 +19,13 @@ import {InterfaceType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
-type SerializedConnectionSpec = {
+type SerializedHandleConnectionSpec = {
   direction: Direction,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
   tags?: string[],
-  dependentConnections: SerializedConnectionSpec[]
+  dependentConnections: SerializedHandleConnectionSpec[]
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -36,18 +36,18 @@ function asTypeLiteral(t: Type | TypeLiteral) : TypeLiteral {
   return (t instanceof Type) ? t.toLiteral() : t;
 }
 
-export class ConnectionSpec {
-  rawData: SerializedConnectionSpec;
+export class HandleConnectionSpec {
+  rawData: SerializedHandleConnectionSpec;
   direction: Direction;
   name: string;
   type: Type;
   isOptional: boolean;
   tags: string[];
-  dependentConnections: ConnectionSpec[];
+  dependentConnections: HandleConnectionSpec[];
   pattern: string;
-  parentConnection: ConnectionSpec | null = null;
+  parentConnection: HandleConnectionSpec | null = null;
 
-  constructor(rawData: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
+  constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
@@ -80,44 +80,44 @@ export class ConnectionSpec {
   }
 }
 
-type SerializedSlotSpec = {
+type SerializedConsumeSlotConnectionSpec = {
   name: string,
   isRequired: boolean,
   isSet: boolean,
   tags: string[],
   formFactor: string,
-  providedSlots: SerializedProvidedSlotSpec[]
+  provideSlotConnections: SerializedProvideSlotConnectionSpec[]
 };
 
-export class SlotSpec {
+export class ConsumeSlotConnectionSpec {
   name: string;
   isRequired: boolean;
   isSet: boolean;
   tags: string[];
   formFactor: string;
-  providedSlots: ProvidedSlotSpec[];
+  provideSlotConnections: ProvideSlotConnectionSpec[];
 
-  constructor(slotModel: SerializedSlotSpec) {
+  constructor(slotModel: SerializedConsumeSlotConnectionSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
     this.tags = slotModel.tags || [];
     this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
-    this.providedSlots = [];
-    if (!slotModel.providedSlots) {
+    this.provideSlotConnections = [];
+    if (!slotModel.provideSlotConnections) {
       return;
     }
-    slotModel.providedSlots.forEach(ps => {
-      this.providedSlots.push(new ProvidedSlotSpec(ps));
+    slotModel.provideSlotConnections.forEach(ps => {
+      this.provideSlotConnections.push(new ProvideSlotConnectionSpec(ps));
     });
   }
 
-  getProvidedSlotSpec(name): ProvidedSlotSpec {
-    return this.providedSlots.find(ps => ps.name === name);
+  getProvidedSlotSpec(name): ProvideSlotConnectionSpec {
+    return this.provideSlotConnections.find(ps => ps.name === name);
   }
 }
 
-type SerializedProvidedSlotSpec = {
+type SerializedProvideSlotConnectionSpec = {
   name: string,
   isRequired?: boolean,
   isSet?: boolean,
@@ -126,7 +126,7 @@ type SerializedProvidedSlotSpec = {
   handles?: string[]
 };
 
-export class ProvidedSlotSpec {
+export class ProvideSlotConnectionSpec {
   name: string;
   isRequired: boolean;
   isSet: boolean;
@@ -134,7 +134,7 @@ export class ProvidedSlotSpec {
   formFactor: string;
   handles: string[];
 
-  constructor(slotModel: SerializedProvidedSlotSpec) {
+  constructor(slotModel: SerializedProvideSlotConnectionSpec) {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired || false;
     this.isSet = slotModel.isSet || false;
@@ -148,63 +148,63 @@ type SerializedParticleSpec = {
   name: string,
   id?: string,
   verbs: string[],
-  args: SerializedConnectionSpec[],
+  args: SerializedHandleConnectionSpec[],
   description: {pattern?: string},
   implFile: string,
   modality: string[],
-  slots: SerializedSlotSpec[]
+  slotConnections: SerializedConsumeSlotConnectionSpec[]
 };
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
   name: string;
   verbs: string[];
-  connections: ConnectionSpec[];
-  connectionMap: Map<string, ConnectionSpec>;
-  inputs: ConnectionSpec[];
-  outputs: ConnectionSpec[];
+  handleConnections: HandleConnectionSpec[];
+  handleConnectionMap: Map<string, HandleConnectionSpec>;
+  inputs: HandleConnectionSpec[];
+  outputs: HandleConnectionSpec[];
   pattern: string;
   implFile: string;
   modality: Modality;
-  slots: Map<string, SlotSpec>;
+  slotConnections: Map<string, ConsumeSlotConnectionSpec>;
 
   constructor(model : SerializedParticleSpec) {
     this.model = model;
     this.name = model.name;
     this.verbs = model.verbs;
     const typeVarMap = new Map();
-    this.connections = [];
+    this.handleConnections = [];
     model.args.forEach(arg => this.createConnection(arg, typeVarMap));
-    this.connectionMap = new Map();
-    this.connections.forEach(a => this.connectionMap.set(a.name, a));
-    this.inputs = this.connections.filter(a => a.isInput);
-    this.outputs = this.connections.filter(a => a.isOutput);
+    this.handleConnectionMap = new Map();
+    this.handleConnections.forEach(a => this.handleConnectionMap.set(a.name, a));
+    this.inputs = this.handleConnections.filter(a => a.isInput);
+    this.outputs = this.handleConnections.filter(a => a.isOutput);
 
     // initialize descriptions patterns.
     model.description = model.description || {};
     this.validateDescription(model.description);
     this.pattern = model.description['pattern'];
-    this.connections.forEach(connectionSpec => {
+    this.handleConnections.forEach(connectionSpec => {
       connectionSpec.pattern = model.description[connectionSpec.name];
     });
 
     this.implFile = model.implFile;
     this.modality = Modality.create(model.modality || []);
-    this.slots = new Map();
-    if (model.slots) {
-      model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
+    this.slotConnections = new Map();
+    if (model.slotConnections) {
+      model.slotConnections.forEach(s => this.slotConnections.set(s.name, new ConsumeSlotConnectionSpec(s)));
     }
     // Verify provided slots use valid handle connection names.
-    this.slots.forEach(slot => {
-      slot.providedSlots.forEach(ps => {
-        ps.handles.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent handle constraint ', v));
+    this.slotConnections.forEach(slot => {
+      slot.provideSlotConnections.forEach(ps => {
+        ps.handles.forEach(v => assert(this.handleConnectionMap.has(v), 'Cannot provide slot for nonexistent handle constraint ', v));
       });
     });
   }
 
-  createConnection(arg: SerializedConnectionSpec, typeVarMap: Map<string, Type>) {
-    const connection = new ConnectionSpec(arg, typeVarMap);
-    this.connections.push(connection);
+  createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
+    const connection = new HandleConnectionSpec(arg, typeVarMap);
+    this.handleConnections.push(connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
   }
@@ -219,12 +219,12 @@ export class ParticleSpec {
     return false;
   }
 
-  getConnectionByName(name: string): ConnectionSpec {
-    return this.connectionMap.get(name);
+  getConnectionByName(name: string): HandleConnectionSpec {
+    return this.handleConnectionMap.get(name);
   }
 
   getSlotSpec(slotName: string) {
-    return this.slots.get(slotName);
+    return this.slotConnections.get(slotName);
   }
 
   get primaryVerb() {
@@ -232,23 +232,23 @@ export class ParticleSpec {
   }
 
   isCompatible(modality: Modality): boolean {
-    return this.slots.size === 0 || this.modality.intersection(modality).isResolved();
+    return this.slotConnections.size === 0 || this.modality.intersection(modality).isResolved();
   }
 
   toLiteral() : SerializedParticleSpec {
-    const {args, name, verbs, description, implFile, modality, slots} = this.model;
-    const connectionToLiteral : (input: SerializedConnectionSpec) => SerializedConnectionSpec =
+    const {args, name, verbs, description, implFile, modality, slotConnections} = this.model;
+    const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, implFile, modality, slots};
+    return {args: argsLiteral, name, verbs, description, implFile, modality, slotConnections};
   }
 
   static fromLiteral(literal: SerializedParticleSpec) {
-    let {args, name, verbs, description, implFile, modality, slots} = literal;
+    let {args, name, verbs, description, implFile, modality, slotConnections} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slots});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slotConnections});
   }
 
   // Note: this method shouldn't be called directly.
@@ -259,8 +259,8 @@ export class ParticleSpec {
   // Note: this method shouldn't be called directly (only as part of particle copying).
   cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
     const spec = this.clone();
-    this.connectionMap.forEach((conn, name) => {
-      spec.connectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
+    this.handleConnectionMap.forEach((conn, name) => {
+      spec.handleConnectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
     });
     return spec;
   }
@@ -271,13 +271,13 @@ export class ParticleSpec {
 
   validateDescription(description) {
     Object.keys(description || []).forEach(d => {
-      assert(['kind', 'location', 'pattern'].includes(d) || this.connectionMap.has(d), `Unexpected description for ${d}`);
+      assert(['kind', 'location', 'pattern'].includes(d) || this.handleConnectionMap.has(d), `Unexpected description for ${d}`);
     });
   }
 
   toInterface() {
     // TODO: wat do?
-    assert(!this.slots.size, 'please implement slots toInterface');
+    assert(!this.slotConnections.size, 'please implement slots toInterface');
     const handles = this.model.args.map(({type, name, direction}) => ({type: asType(type), name, direction}));
     const slots = [];
     return InterfaceType.make(this.name, handles, slots);
@@ -299,7 +299,7 @@ export class ParticleSpec {
       }
     };
 
-    for (const connection of this.connections) {
+    for (const connection of this.handleConnections) {
       if (connection.parentConnection) {
         continue;
       }
@@ -307,7 +307,7 @@ export class ParticleSpec {
     }
 
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
-    this.slots.forEach(s => {
+    this.slotConnections.forEach(s => {
       // Consume slot.
       const consume = [];
       if (s.isRequired) {
@@ -326,7 +326,7 @@ export class ParticleSpec {
         results.push(`    formFactor ${s.formFactor}`);
       }
       // Provided slots.
-      s.providedSlots.forEach(ps => {
+      s.provideSlotConnections.forEach(ps => {
         const provide = [];
         if (ps.isRequired) {
           provide.push('must');
@@ -349,7 +349,7 @@ export class ParticleSpec {
     // Description
     if (this.pattern) {
       results.push(`  description \`${this.pattern}\``);
-      this.connections.forEach(cs => {
+      this.handleConnections.forEach(cs => {
         if (cs.pattern) {
           results.push(`    ${cs.name} \`${cs.pattern}\``);
         }

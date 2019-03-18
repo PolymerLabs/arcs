@@ -320,7 +320,7 @@ export class Arc {
   }
 
   _serializeParticles() {
-    const particleSpecs = [];
+    const particleSpecs = <ParticleSpec[]>[];
     // Particles used directly.
     particleSpecs.push(...this._activeRecipe.particles.map(entry => entry.spec));
     // Particles referenced in an immediate mode.
@@ -330,7 +330,7 @@ export class Arc {
 
     const results = [];
     particleSpecs.forEach(spec => {
-      for (const connection of spec.connections) {
+      for (const connection of spec.handleConnections) {
         if (connection.type instanceof InterfaceType) {
           results.push(connection.type.interfaceInfo.toString());
         }
@@ -571,7 +571,7 @@ ${this.activeRecipe.toString()}`;
   _connectParticleToHandle(particle, name, targetHandle) {
     assert(targetHandle, 'no target handle provided');
     const handleMap = this.particleHandleMaps.get(particle.id);
-    assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
+    assert(handleMap.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
     handleMap.handles.set(name, targetHandle);
   }
 

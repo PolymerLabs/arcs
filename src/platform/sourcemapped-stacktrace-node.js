@@ -5,5 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// This is only relevant in the web devtools.
-export const mapStackTrace = () => {};
+// This is only relevant in the web devtools, but we need to
+// ensure that the stack trace is passed through on node
+// so that system exceptions are plumbed properly.
+export const mapStackTrace = (x, f) => f([x]);

@@ -53,8 +53,8 @@ export class DescriptionFormatter {
     let selectedDescriptions = this.particleDescriptions
       .filter(desc => (particlesSet.has(desc._particle) && this._isSelectedDescription(desc)));
     // Prefer particles that render UI, if any.
-    if (selectedDescriptions.find(desc => (desc._particle.spec.slots.size > 0))) {
-      selectedDescriptions = selectedDescriptions.filter(desc => (desc._particle.spec.slots.size > 0));
+    if (selectedDescriptions.find(desc => (desc._particle.spec.slotConnections.size > 0))) {
+      selectedDescriptions = selectedDescriptions.filter(desc => (desc._particle.spec.slotConnections.size > 0));
     }
     selectedDescriptions = selectedDescriptions.sort(DescriptionFormatter.sort);
 
@@ -468,11 +468,11 @@ export class DescriptionFormatter {
     }
   }
 
-  static sort(p1, p2) {
+  static sort(p1: ParticleDescription, p2: ParticleDescription) {
     const isRoot = (slotSpec) => slotSpec.name === 'root' || slotSpec.tags.includes('root');
     // Root slot comes first.
-    const hasRoot1 = Boolean([...p1._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
-    const hasRoot2 = Boolean([...p2._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
+    const hasRoot1 = Boolean([...p1._particle.spec.slotConnections.values()].find(slotSpec => isRoot(slotSpec)));
+    const hasRoot2 = Boolean([...p2._particle.spec.slotConnections.values()].find(slotSpec => isRoot(slotSpec)));
     if (hasRoot1 !== hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }
@@ -485,8 +485,8 @@ export class DescriptionFormatter {
     // Sort by number of singleton slots.
     let p1Slots = 0;
     let p2Slots = 0;
-    p1._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
-    p2._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
+    p1._particle.spec.slotConnections.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
+    p2._particle.spec.slotConnections.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
     return p2Slots - p1Slots;
   }
 }

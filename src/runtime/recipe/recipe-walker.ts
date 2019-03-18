@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {ConnectionSpec, SlotSpec} from '../particle-spec.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';
@@ -23,7 +23,7 @@ export class RecipeWalker extends Walker {
   // tslint:disable-next-line: no-any
   onHandle?(recipe: Recipe, handle: Handle): any;
   // tslint:disable-next-line: no-any
-  onPotentialHandleConnection?(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec): any;
+  onPotentialHandleConnection?(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec): any;
   // tslint:disable-next-line: no-any
   onHandleConnection?(recipe: Recipe, handleConnection: HandleConnection): any;
   // tslint:disable-next-line: no-any
@@ -31,7 +31,7 @@ export class RecipeWalker extends Walker {
   // tslint:disable-next-line: no-any
   onRecipe?(recipe: Recipe, result): any;
   // tslint:disable-next-line: no-any
-  onPotentialSlotConnection?(recipe: Recipe, particle: Particle, slotSpec: SlotSpec): any;
+  onPotentialSlotConnection?(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec): any;
   // tslint:disable-next-line: no-any
   onSlotConnection?(recipe: Recipe, slotConnection: SlotConnection): any;
   // tslint:disable-next-line: no-any
@@ -69,11 +69,11 @@ export class RecipeWalker extends Walker {
     if (this.onPotentialHandleConnection) {
       for (const particle of recipe.particles) {
         if (particle.spec) {
-          for (const connectionSpec of particle.spec.connections) {
+          for (const connectionSpec of particle.spec.handleConnections) {
             if (particle.connections[connectionSpec.name]) {
               continue;
             }
-            const context: [Particle, ConnectionSpec] = [particle, connectionSpec];
+            const context: [Particle, HandleConnectionSpec] = [particle, connectionSpec];
             const result = this.onPotentialHandleConnection(recipe, ...context);
             if (!this.isEmptyResult(result)) {
               updateList.push({continuation: result, context});
@@ -105,7 +105,7 @@ export class RecipeWalker extends Walker {
       for (const particle of recipe.particles) {
         for (const [name, slotSpec] of particle.getSlotSpecs()) {
           if (particle.getSlotConnectionByName(name)) continue;
-          const context: [Particle, SlotSpec] = [particle, slotSpec];
+          const context: [Particle, ConsumeSlotConnectionSpec] = [particle, slotSpec];
           const result = this.onPotentialSlotConnection(recipe, ...context);
           if (!this.isEmptyResult(result)) {
             updateList.push({continuation: result, context});

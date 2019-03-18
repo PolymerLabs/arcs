@@ -40,8 +40,8 @@ defineParticle(({TransformationDomParticle}) => {
         }
         const fooHandle = await arc.createHandle(type.getContainedType(), 'foo' + index);
         this._handleIds.add(foo.id);
-        const hostedSlotName = [...hostedParticle.slots.keys()][0];
-        const slotName = [...this.spec.slots.values()][0].name;
+        const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
+        const slotName = [...this.spec.slotConnections.values()][0].name;
         const slotId = await arc.createSlot(this, slotName);
         const recipe = `
           schema Foo

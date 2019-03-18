@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ConnectionSpec, ParticleSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
@@ -19,7 +19,7 @@ export class FindHostedParticle extends Strategy {
   async generate(inputParams) {
     const arc = this.arc;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: ConnectionSpec) {
+      onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec) {
         const matchingParticleSpecs = this._findMatchingParticleSpecs(
             arc, connectionSpec, connectionSpec.type);
         if (!matchingParticleSpecs) {
@@ -39,7 +39,7 @@ export class FindHostedParticle extends Strategy {
       }
 
       private _findMatchingParticleSpecs(
-          arc: Arc, connectionSpec: ConnectionSpec, connectionType: Type): ParticleSpec[] {
+          arc: Arc, connectionSpec: HandleConnectionSpec, connectionType: Type): ParticleSpec[] {
         if (!connectionSpec) {
           return undefined;
         }

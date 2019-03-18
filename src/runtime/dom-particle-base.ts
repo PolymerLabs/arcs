@@ -144,7 +144,7 @@ export class DomParticleBase extends Particle {
   }
 
   forceRenderTemplate(slotName: string) {
-    this.slotByName.forEach((slot, name) => {
+    this.slotProxiesByName.forEach((slot, name) => {
       if (!slotName || (name === slotName)) {
         slot.requestedContentTypes.add('template');
       }

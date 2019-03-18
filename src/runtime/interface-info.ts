@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable} from './type.js';
+import { ParticleSpec } from './particle-spec.js';
 
 function _fromLiteral(member) {
   if (!!member && !(member instanceof Type) && typeof member === 'object') {
@@ -359,15 +360,15 @@ ${this._slotsToManifestString()}
     return this._restrictThis(particleSpec);
   }
 
-  _restrictThis(particleSpec): boolean {
-    const handleMatches = this.handles.map(h => particleSpec.connections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
+  _restrictThis(particleSpec: ParticleSpec): boolean {
+    const handleMatches = this.handles.map(h => particleSpec.handleConnections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
                               .filter(a => a.result !== false)
     );
 
     const particleSlots: {}[] = [];
-    particleSpec.slots.forEach(consumedSlot => {
+    particleSpec.slotConnections.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
-      consumedSlot.providedSlots.forEach(providedSlot => {
+      consumedSlot.provideSlotConnections.forEach(providedSlot => {
         particleSlots.push({name: providedSlot.name, direction: 'provide', isRequired: false, isSet: providedSlot.isSet});
       });
     });

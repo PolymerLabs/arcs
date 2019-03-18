@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ConnectionSpec, ParticleSpec, ProvidedSlotSpec, SlotSpec} from '../particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec, ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {TypeVariableInfo} from '../type-variable-info.js';
 import {InterfaceType, Type} from '../type.js';
@@ -164,7 +164,7 @@ export class Particle {
       }
       return false;
     }
-    if (this.spec.slots.size > 0) {
+    if (this.spec.slotConnections.size > 0) {
       const fulfilledSlotConnections = Object.values(this.consumedSlotConnections).filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length === 0) {
         if (options && options.showUnresolved) {
@@ -263,7 +263,7 @@ export class Particle {
   }
 
   getUnboundConnections(type?: Type) {
-    return this.spec.connections.filter(
+    return this.spec.handleConnections.filter(
         connSpec => !connSpec.isOptional &&
                     !this.getConnectionByName(connSpec.name) &&
                     (!type || type.equals(connSpec.type)));
@@ -272,13 +272,13 @@ export class Particle {
 
   addSlotConnection(name: string) : SlotConnection {
     assert(!(name in this._consumedSlotConnections), "slot connection already exists");
-    assert(!this.spec || this.spec.slots.has(name), "slot connection not in particle spec");
+    assert(!this.spec || this.spec.slotConnections.has(name), "slot connection not in particle spec");
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
 
     const slotSpec = this.getSlotSpecByName(name);
     if (slotSpec) {
-      slotSpec.providedSlots.forEach(providedSlot => {
+      slotSpec.provideSlotConnections.forEach(providedSlot => {
         const slot = this.recipe.newSlot(providedSlot.name);
         slot.sourceConnection = slotConn;
         slotConn.providedSlots[providedSlot.name] = slot;
@@ -307,12 +307,12 @@ export class Particle {
     this.recipe.removeParticle(this);
   }
 
-  getSlotConnectionBySpec(spec: SlotSpec) {
+  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec) {
     return Object.values(this._consumedSlotConnections).find(slotConn => slotConn.getSlotSpec() === spec);
   }
 
-  getSlotSpecByName(name: string) : SlotSpec {
-    return this.spec && this.spec.slots.get(name);
+  getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
+    return this.spec && this.spec.slotConnections.get(name);
   }
 
   getSlotConnectionByName(name: string) : SlotConnection {
@@ -323,8 +323,8 @@ export class Particle {
     return this.consumedSlotConnections[consumeName] && this.consumedSlotConnections[consumeName].providedSlots[name];
   }
 
-  getSlotSpecs() : Map<string,SlotSpec> {
-    if (this.spec) return this.spec.slots;
+  getSlotSpecs() : Map<string,ConsumeSlotConnectionSpec> {
+    if (this.spec) return this.spec.slotConnections;
     return new Map();
   }
 
