@@ -9,7 +9,7 @@ import '../List/List.recipes'
 import '../Layout/Layout.recipes'
 import '../Events/Events.recipes'
 import '../Restaurants/Restaurant.schema'
-import '../Arcs/Description.schema'
+import '../Common/Description.schema'
 
 particle ReservationForm in 'source/ReservationForm.js'
   inout Event event

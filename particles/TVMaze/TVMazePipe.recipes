@@ -1,4 +1,4 @@
-import '../Arcs/Description.schema'
+import '../Common/Description.schema'
 import '../Pipes/PipeEntity.schema'
 import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'

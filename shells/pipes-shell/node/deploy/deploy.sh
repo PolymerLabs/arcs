@@ -8,8 +8,8 @@ cp -fR ../../../lib/build/worker.js dist/
 # particles
 mkdir dist/particles
 #
-mkdir dist/particles/Arcs
-cp -fR ../../../../particles/Arcs/Description.schema dist/particles/Arcs
+mkdir dist/particles/Common
+cp -fR ../../../../particles/Common/Description.schema dist/particles/Common
 #
 mkdir dist/particles/Pipes
 cp -fR ../../../../particles/Pipes/* dist/particles/Pipes
