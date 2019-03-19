@@ -237,8 +237,13 @@ export class ParticleExecutionHost {
       }
 
       onRaiseSystemException(exception: {}, methodName: string, particleId: string) {
-      const particle = pec.arc.particleHandleMaps.get(particleId).spec.name;
+        const particle = pec.arc.particleHandleMaps.get(particleId).spec.name;
         reportSystemException(exception, methodName, particle);
+      }
+
+      onRaiseUserException(exception: {}, methodName: string, particleId: string) {
+        // TODO: Handle UserExceptions differently.
+        this.onRaiseSystemException(exception, methodName, particleId);
       }
     }(port, arc);
   }

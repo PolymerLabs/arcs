@@ -450,6 +450,7 @@ export abstract class PECOuterPort extends APIPort {
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onRaiseSystemException(exception: {}, methodName: string, particleId: string);
+  abstract onRaiseUserException(exception: {}, methodName: string, particleId: string);
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
@@ -511,6 +512,7 @@ export abstract class PECInnerPort extends APIPort {
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: (data: {error?: string}) => void) {}
 
   RaiseSystemException(@Direct exception: {}, @Direct methodName: string, @Direct particleId: string) {}
+  RaiseUserException(@Direct exception: {}, @Direct methodName: string, @Direct particleId: string) {}
 
     // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
     // send it along with the message. We only want to do this after a DevTools connection has been detected, which

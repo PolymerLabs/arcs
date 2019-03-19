@@ -8,21 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const systemHandlers = [];
+type ExceptionHandler = (exception: {}, methodName: string, particle: string) => void;
 
-export function reportSystemException(exception, methodName, particle) {
+const systemHandlers = <ExceptionHandler[]>[];
+
+export function reportSystemException(exception: {}, methodName: string, particle: string) {
   for (const handler of systemHandlers) {
     handler(exception, methodName, particle);
   }
 }
 
-export function registerSystemExceptionHandler(handler) {
+export function registerSystemExceptionHandler(handler: ExceptionHandler) {
   if (!systemHandlers.includes(handler)) {
     systemHandlers.push(handler);
   }
 }
 
-export function removeSystemExceptionHandler(handler) {
+export function removeSystemExceptionHandler(handler: ExceptionHandler) {
   const idx = systemHandlers.indexOf(handler);
   if (idx > -1) {
     systemHandlers.splice(idx, 1);

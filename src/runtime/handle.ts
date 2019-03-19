@@ -71,6 +71,10 @@ export abstract class Handle {
     this._proxy.raiseSystemException(exception, method, this._particleId);
   }
 
+  raiseUserException(exception, method) {
+    this._proxy.raiseUserException(exception, method, this._particleId);
+  }
+
   // `options` may contain any of:
   // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
   // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
@@ -134,8 +138,7 @@ export class Collection extends Handle {
         try {
           particle.onHandleSync(this, this._restore(details));
         } catch (e) {
-          // TODO(shans): this should be a UserException, once we have those.
-          this.raiseSystemException(e, "onHandleSync");
+          this.raiseUserException(e, "onHandleSync");
         }
         return;
       case 'update': {
@@ -246,14 +249,14 @@ export class Variable extends Handle {
         try {
           await particle.onHandleSync(this, this._restore(details));
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleSync`);
+          this.raiseUserException(e, `${particle.spec.name}::onHandleSync`);
         }
         return;
       case 'update': {
         try {
           await particle.onHandleUpdate(this, {data: this._restore(details.data)});
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleUpdate`);
+          this.raiseUserException(e, `${particle.spec.name}::onHandleUpdate`);
         }
         return;
       }
@@ -261,7 +264,7 @@ export class Variable extends Handle {
         try {
           await particle.onHandleDesync(this);
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleDesync`);
+          this.raiseUserException(e, `${particle.spec.name}::onHandleDesync`);
         }
         return;
       default:

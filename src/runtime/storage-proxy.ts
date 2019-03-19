@@ -87,14 +87,22 @@ export abstract class StorageProxy {
   abstract _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean;
   abstract _processUpdate(update: {version: number}, apply?: boolean): {};
 
-  raiseSystemException(exception, methodName, particleId) {
+  raiseSystemException(exception, methodName: string, particleId: string) {
+    this._mapStackTrace(exception, mappedException => this.port.RaiseSystemException(mappedException, methodName, particleId));
+  }
+
+  raiseUserException(exception, methodName: string, particleId: string) {
+    this._mapStackTrace(exception, mappedException => this.port.RaiseUserException(mappedException, methodName, particleId));
+  }
+
+  /** Attempts to map the stack trace for a given exception. */
+  _mapStackTrace(exception, callback: (exception) => void) {
     // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
-    const {message, stack, name} = exception;
-    const raise = stack => this.port.RaiseSystemException({message, stack, name}, methodName, particleId);
-    if (!mapStackTrace) {
-      raise(stack);
+    if (mapStackTrace) {
+      const {message, name, stack} = exception;
+      mapStackTrace(stack, mappedStack => callback({message, name, stack: mappedStack.join('\n')}));
     } else {
-      mapStackTrace(stack, mappedStack => raise(mappedStack.join('\n')));
+      callback(exception);
     }
   }
 
