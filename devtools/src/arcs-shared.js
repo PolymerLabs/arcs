@@ -41,6 +41,9 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         height: 24px;
         color: rgb(110, 110, 110);
       }
+      header.header iron-icon[disabled] {
+        color: rgb(180, 180, 180);
+      }
       header.header iron-icon:not([disabled]):not([active]):hover {
         color: rgb(51, 51, 51);
       }
