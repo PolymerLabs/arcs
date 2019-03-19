@@ -20,9 +20,34 @@ Also inside each platform folder is a deploy folder that contains tools for buil
 
 `pack-stats.json` contains Webpack information that can be used in tools like [(Online) Webpack Visualizer](https://chrisbateman.github.io/webpack-visualizer/).
 
-### Flags
+## Usage
 
-pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]
+pipes-shell exposes JS entry/exit points designed to be bound into another process. These entry points can also be exercised via console. Here are some examples:
+
+```
+> ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
+> ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
+> ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
+```
+Results are returned via `DeviceClient.foundSuggestions(json)` (if it exists). Returned JSON depends on the type of entity that triggered the request. As of this writing, for `com.google.android.apps.maps` and `com.music.spotify`, the json encodes a single pipe-entity, e.g:
+
+`{"type":"address","name":"East Pole","timestamp":1552937651253,"source":"com.unknown"}`
+
+Example of implementing exit points for testing:
+```
+  window.DeviceClient = {
+    shellReady() {
+      console.warn('context is ready!');
+    },
+    foundSuggestions(json) {
+    }
+  };
+```
+Also, when run under headful chrome, clicking the display will run a test receive.
+
+## Flags
+
+pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]&solo=[manifest-url]
 
 - log[=level]
   - controls logging verbosity
@@ -34,6 +59,10 @@ pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]
 
 - remote-explore-key
   - used to connect to remote devtools (aka Arcs Explorer)
+
+- solo
+  - fetch manifest from [manifest-url] instead of the default
+  - if omitted, use default manifest
 
 ## Glitch Support
 
