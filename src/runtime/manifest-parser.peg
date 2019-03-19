@@ -69,10 +69,10 @@ Manifest
 
 ManifestItem
   = Recipe
-  / ParticleDefinition
+  / Particle
   / Import
-  / SchemaDefinition
-  / SchemaAliasDefinition
+  / Schema
+  / SchemaAlias
   / ManifestStorage
   / Interface
   / Meta
@@ -220,7 +220,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
   return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
 };
 
-ParticleDefinition
+Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = [];
@@ -560,7 +560,7 @@ Recipe
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
 RecipeItem
   = RecipeParticle
-  / RecipeHandle 
+  / RecipeHandle
   / RequireHandleSection
   / RecipeRequire
   / RecipeSlot
@@ -935,7 +935,7 @@ SchemaSpec
     };
   }
 
-SchemaAliasDefinition
+SchemaAlias
   = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return Object.assign(spec, {
@@ -946,7 +946,7 @@ SchemaAliasDefinition
     });
   }
 
-SchemaDefinition
+Schema
   = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return Object.assign(spec, {
