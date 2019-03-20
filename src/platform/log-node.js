@@ -12,6 +12,6 @@ const _logFactory = (preamble, color, log='log') => {
   return console[log].bind(console, `(${preamble})`);
 };
 
-const factory = global.debugLevel < 1 ? () => () => {} : _logFactory;
+const factory = global.logLevel < 1 ? () => () => {} : _logFactory;
 
 export const logFactory = (...args) => factory(...args);
