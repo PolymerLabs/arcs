@@ -48,26 +48,22 @@ const eslintCache = '.eslint_sigh_cache';
 const cleanFiles = ['manifest-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
 
-
-const linklist = './tools/reducethislist';
-
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party)\b/;
 
-function* findProjectFiles(exclude, dir, predicate) {
+function* findProjectFiles(dir, exclude, predicate) {
   const tests = [];
   for (const entry of fs.readdirSync(dir)) {
-    if (exclude.test(entry) ||
-        entry.startsWith('.')) {
+    if (entry.startsWith('.') || (exclude && exclude.test(entry))) {
       continue;
     }
 
     const fullPath = path.join(dir, entry);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
-      yield* findProjectFiles(exclude, fullPath, predicate);
+      yield* findProjectFiles(fullPath, exclude, predicate);
     } else if (predicate(fullPath)) {
       yield fullPath;
     }
@@ -150,92 +146,43 @@ function clean() {
 
 // Run unit tests on the parts of this tool itself.
 function unit() {
-  // Add more tests here.
-  return linkUnit();
-}
-
-function linkUnit() {
-  if (link(
-`
-# Just a comment; should be ok
-`
-    ) == false) {
-      console.error('Link file with just a comment did not succeed.');
-  }
-
-  if (link(
-`
-
-`
-    ) == false) {
-      console.error('Empty link file did not succeed.');
-  }
-
-  if (link(
-`
-bad/foo.js
-`
-    ) == true) {
-      console.error('File not beginning with src did succeed.');
-  }
-
   const dummySrc = 'src/foo.js';
   const dummyDest = 'build/foo.js';
-
-  if (link(
-`
-${dummySrc}
-`
-    ) == true) {
-      console.error('Non-existent file did succeed.');
+  const success = linkUnit(dummySrc, dummyDest);
+  if (fs.existsSync(dummySrc)) {
+    fs.unlinkSync(dummySrc);
   }
+  if (fs.existsSync(dummyDest)) {
+    fs.unlinkSync(dummyDest);
+  }
+  return success;
+}
 
+function linkUnit(dummySrc, dummyDest) {
   fs.writeFileSync(dummySrc, 'Just some nonsense');
 
-  if (link(
-`
-${dummySrc}
-`
-    ) == false) {
-      console.error('Dummy link failed when it should have succeeded.');
-      fs.unlinkSync(dummySrc);
-      return false;
+  if (!link([dummySrc])) {
+    console.error('Dummy link failed when it should have succeeded.');
+    return false;
   }
 
   if (!fs.existsSync(dummyDest)) {
     console.error('Dummy link succeeded, but new hard link does not exist.');
-    fs.unlinkSync(dummySrc);
     return false;
   }
 
-  if (link(
-`
-${dummySrc}
-`
-    ) == false) {
-      console.error('Attempted idempotent Dummy link failed when it should have succeeded.');
-      fs.unlinkSync(dummySrc);
-      return false;
+  if (!link([dummySrc])) {
+    console.error('Attempted idempotent link failed when it should have succeeded.');
+    return false;
   }
-
 
   fs.unlinkSync(dummyDest);
   fs.writeFileSync(dummyDest, 'Some different nonsense, a bit longer this time');
 
-  if (link(
-`
-${dummySrc}
-`
-    ) == false) {
+  if (!link([dummySrc])) {
     console.error('Differing destination exists, but link failed');
-    fs.unlinkSync(dummySrc);
-    fs.unlinkSync(dummyDest);
     return false;
   }
-
-  fs.unlinkSync(dummySrc);
-  fs.unlinkSync(dummyDest);
-  console.log('Above errors are expected! Link unit test passes!');
   return true;
 }
 
@@ -300,13 +247,13 @@ function railroad() {
   return true;
 }
 
-async function build() {
-  if (await tsc() == false) {
+function build() {
+  if (!tsc()) {
     console.log('build::tsc failed');
     return false;
   }
 
-  if (await link(fs.readFileSync(linklist, 'utf8')) == false) {
+  if (!link(findProjectFiles('src', null, fullPath => /\.js$/.test(fullPath)))) {
     console.log('build::link failed');
     return false;
   }
@@ -314,7 +261,7 @@ async function build() {
   return true;
 }
 
-async function tsc() {
+function tsc() {
   const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
   if (result.status) {
     console.log(result.stdout);
@@ -337,48 +284,30 @@ function makeLink(src, dest) {
   return true;
 }
 
-async function link(filecontents) {
-  let srcStats;
-  let destStats;
+function link(srcFiles) {
   let success = true;
-  for (const line of filecontents.split('\n')) {
-    const src = line.trim();
-    // skip blank lines and lines that begin with a #. Note that only full-line
-    // comments are supported.
-    if (src.length == 0 || src.startsWith('#')) {
-      continue;
-    }
-    if (!src.startsWith('src')) {
-      console.error(`Invalid source file: ${src} source files must begin with "src"`);
-      success = false;
-    }
-    try {
-      srcStats = fs.statSync(src);
-    } catch (err) {
-      console.error(`Error stating src file ${src} ${err.message} Perhaps you need to update tools/reducethislist?`);
-      success = false;
-    }
+  for (const src of srcFiles) {
+    const srcStats = fs.statSync(src);
     const dest = src.replace('src', 'build');
     try {
-      destStats = fs.statSync(dest);
+      const destStats = fs.statSync(dest);
       // This would have thrown if dest didn't exist, so it does.
       if (JSON.stringify(srcStats) !== JSON.stringify(destStats)) {
-        // They aren't the same. This is likely due to switching branches. Just
-        // Remove the destination and make the link.
+        // They aren't the same. This is likely due to switching branches.
+        // Just remove the destination and make the link.
         fs.unlinkSync(dest);
         if (!makeLink(src, dest)) {
           success = false;
         }
       }
     } catch (err) {
-      // if the error was that the dest does not exist, we make the link
+      // If the error was that the dest does not exist, we make the link.
       if (err.code === 'ENOENT') {
         if (!makeLink(src, dest)) {
           success = false;
         }
       } else {
-        // Unexpected error when checking for existence of dest
-        console.error(`Error stating ${dest} ${err.message}`);
+        console.error(`Unexpected stat error: ${err.message}`);
         success = false;
       }
     }
@@ -386,7 +315,7 @@ async function link(filecontents) {
   return success;
 }
 
-async function tslint(args) {
+function tslint(args) {
   const options = minimist(args, {
     boolean: ['fix'],
   });
@@ -400,14 +329,14 @@ async function tslint(args) {
   return result;
 }
 
-async function lint(args) {
+function lint(args) {
   const CLIEngine = require('eslint').CLIEngine;
 
   const options = minimist(args, {
     boolean: ['fix'],
   });
 
-  const jsSources = [...findProjectFiles(srcExclude, process.cwd(), fullPath => {
+  const jsSources = [...findProjectFiles(process.cwd(), srcExclude, fullPath => {
     if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
       return false;
     }
@@ -432,7 +361,7 @@ async function lint(args) {
   return report.errorCount == 0;
 }
 
-async function webpack() {
+function webpack() {
   const result = saneSpawnWithOutput('npm', ['run', 'build:webpack'], {});
   if (result.status) {
     console.log(result.stdout);
@@ -496,7 +425,7 @@ function test(args) {
     alias: {g: 'grep'},
   });
 
-  const testsInDir = dir => findProjectFiles(buildExclude, dir, fullPath => {
+  const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
@@ -606,7 +535,7 @@ function test(args) {
   return testResults;
 }
 
-async function importSpotify(args) {
+function importSpotify(args) {
   return saneSpawn('node', [
     '--experimental-modules',
     '--trace-warnings',
@@ -617,7 +546,7 @@ async function importSpotify(args) {
 }
 
 // Watches for file changes, then runs the `arg` steps.
-async function watch([arg, ...moreArgs]) {
+function watch([arg, ...moreArgs]) {
   const funs = steps[arg || 'webpack'];
   const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   const watcher = chokidar.watch('.', {
@@ -631,10 +560,10 @@ async function watch([arg, ...moreArgs]) {
       clearTimeout(timerId);
     }
     changes.add(path);
-    timerId = setTimeout(async () => {
+    timerId = setTimeout(() => {
       console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      await run(funsAndArgs);
+      run(funsAndArgs);
       timerId = 0;
     }, 500);
   });
@@ -650,13 +579,13 @@ async function watch([arg, ...moreArgs]) {
 
 // Runs a chain of `[[fun, args]]` by calling `fun(args)`, logs emoji, and returns whether
 // all the functions returned `true`.
-async function run(funsAndArgs) {
+function run(funsAndArgs) {
   console.log('😌');
   let result = false;
   try {
     for (const [fun, args] of funsAndArgs) {
       console.log(`🙋 ${fun.name} ${args.join(' ')}`);
-      if (!await fun(args)) {
+      if (!fun(args)) {
         console.log(`🙅 ${fun.name}`);
         return;
       }
@@ -671,19 +600,17 @@ async function run(funsAndArgs) {
   return result;
 }
 
-(async () => {
-  const command = process.argv[2] || 'default';
-  const funs = steps[command];
-  if (funs === undefined) {
-    console.log(`Unknown command: '${command}'`);
-    console.log('Available commands are:', Object.keys(steps).join(', '));
-    return;
-  }
+const command = process.argv[2] || 'default';
+const funs = steps[command];
+if (funs === undefined) {
+  console.log(`Unknown command: '${command}'`);
+  console.log('Available commands are:', Object.keys(steps).join(', '));
+  process.exit(2);
+}
 
-  // To avoid confusion, only the last step gets args.
-  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
-  const result = await run(funsAndArgs);
-  process.on('exit', function() {
-    process.exit(result ? 0 : 1);
-  });
-})();
+// To avoid confusion, only the last step gets args.
+const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
+const result = run(funsAndArgs);
+process.on('exit', function() {
+  process.exit(result ? 0 : 1);
+});
