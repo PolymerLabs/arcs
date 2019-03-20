@@ -21,7 +21,7 @@
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
     "build:typedoc": "typedoc --mode file --target ES2017 --downLevelIteration -out dist/apidocs",
-    "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install --no-package-lock && npm --prefix server install --package-lock-only && npm --prefix server run test",
+    "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install && npm --prefix server run test",
     "server:start": "npm --prefix server start",
     "test-shells": "run-p --print-name --race start s-test-shells",
     "s-test-shells": "run-s --print-name --continue-on-error test-wdio-shells",
@@ -99,6 +99,6 @@
   },
   "engines": {
     "node": ">= 10.13.0",
-    "npm": ">= 6.4.0"
+    "npm": ">= 6.9.0"
   }
 }
