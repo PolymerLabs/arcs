@@ -302,7 +302,7 @@ function railroad() {
 
 async function build() {
   if (await tsc() == false) {
-    console.log('build::twsc failed');
+    console.log('build::tsc failed');
     return false;
   }
 
