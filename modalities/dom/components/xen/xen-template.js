@@ -8,22 +8,6 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// HTMLImports compatibility stuff, delete soonish
-if (typeof document !== 'undefined' && !('currentImport' in document)) {
-  Object.defineProperty(document, 'currentImport', {
-    get() {
-      const script = this.currentScript;
-      let doc = script.ownerDocument || this;
-      // this code for CEv1 compatible HTMLImports polyfill (aka modern)
-      if (window['HTMLImports']) {
-        doc = window.HTMLImports.importForElement(script);
-        doc.URL = script.parentElement.href;
-      }
-      return doc;
-    }
-  });
-}
-
 /* Annotator */
 // tree walker that generates arbitrary data using visitor function `cb`
 // `cb` is called as `cb(node, key, notes)`
@@ -132,7 +116,8 @@ const annotateElementNode = function(node, key, notes) {
     for (let a$ = node.attributes, i = a$.length - 1, a; i >= 0 && (a = a$[i]); i--) {
       if (
         annotateEvent(node, key, notes, a.name, a.value) ||
-        annotateMustache(node, key, notes, a.name, a.value)
+        annotateMustache(node, key, notes, a.name, a.value) ||
+        annotateDirective(node, key, notes, a.name, a.value)
       ) {
         node.removeAttribute(a.name);
         noted = true;
@@ -170,6 +155,13 @@ const annotateEvent = function(node, key, notes, name, value) {
       );
     }
     takeNote(notes, key, 'events', name.slice(3), value);
+    return true;
+  }
+};
+
+const annotateDirective = function(node, key, notes, name, value) {
+  if (name === 'xen:forward') {
+    takeNote(notes, key, 'events', 'xen:forward', value);
     return true;
   }
 };
@@ -333,6 +325,9 @@ const stamp = function(template, opts) {
   // we could clone into an inert document (say a new template) and process the nodes
   // before importing if necessary.
   const root = document.importNode(template.content, true);
+  // templates don't require a single container element, but sometimes they do have one...
+  // capture the fire element, because it's harder to find after we insert the nodes into DOM
+  const firstElement = root.firstElementChild;
   // map DOM to keys
   const map = locateNodes(root, notes.locator);
   // return dom manager
@@ -340,6 +335,7 @@ const stamp = function(template, opts) {
     root,
     notes,
     map,
+    firstElement,
     $(slctr) {
       return this.root.querySelector(slctr);
     },
@@ -362,6 +358,19 @@ const stamp = function(template, opts) {
       }
       return this;
     },
+    // support event-forwarding when stamping descendent template DOM
+    // i.e. for objects (say, elements) that consume templates as input
+    // see also: support for `xen:forward` attribute above
+    forward: function() {
+      mapEvents(notes, map, (node, eventName, handlerName) => {
+        node.addEventListener(eventName, e => {
+          //console.log(`xen::forward: forwarding [${eventName}]`);
+          const wrapper = {eventName, handlerName, detail: e.detail, target: e.target};
+          fire(node, 'xen:forward', wrapper, {bubbles: true});
+        });
+      });
+      return this;
+    },
     appendTo: function(node) {
       if (this.root) {
         // TODO(sjmiles): assumes this.root is a fragment
@@ -376,6 +385,14 @@ const stamp = function(template, opts) {
   };
   //window.stampTime += performance.now() - startTime;
   return dom;
+};
+
+const fire = (node, eventName, detail, init) => {
+  const eventInit = init || {};
+  eventInit.detail = detail;
+  const event = new CustomEvent(eventName, eventInit);
+  node.dispatchEvent(event);
+  return event.detail;
 };
 
 const maybeStringToTemplate = template => {
