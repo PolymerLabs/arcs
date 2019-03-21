@@ -17,12 +17,13 @@ recipe RestaurantsDemo
   create as restaurants
   create #restaurant as selected
   create #event as event
-  create as descriptions
+  // ReservationForm no longer has descriptions handle connection.
+  // create as descriptions
   slot #toproot as toproot
   ReservationForm
     restaurant = selected
     event = event
-    descriptions = descriptions
+    // descriptions = descriptions
     consume action as toproot
   Geolocate
     location = location
@@ -44,10 +45,10 @@ recipe RestaurantsDemo
   RestaurantDetail
     restaurant = selected
     consume content
-      provide action as actionSlot
+      provide detailAction as actionSlot
   ReservationForm
     restaurant = selected
     event = event
-    descriptions = descriptions
+    // descriptions = descriptions
     consume action as actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`

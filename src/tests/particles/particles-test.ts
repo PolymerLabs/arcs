@@ -7,9 +7,7 @@ import { Loader } from '../../runtime/loader.js';
 // TODO: Figure out why.
 const FILES_TO_SKIP = new Set([
   'particles/Demo/PipeDemo.recipe',
-  'particles/Demo/RestaurantsDemo.recipes',
   'particles/Music/ArtistPipe.recipes',
-  'particles/TVMaze/TVMazePipe.recipes',
   'particles/TVMaze/TVMazePipe.recipes',
   'particles/Words/ShowSingleStats.manifest',
 ]);
