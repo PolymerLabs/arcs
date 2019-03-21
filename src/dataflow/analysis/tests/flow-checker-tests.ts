@@ -35,7 +35,7 @@ noTrustedSideChanneltoUntrusted: 0 : trusted particle : writes to : any : side c
 
 describe('Dataflow analysis', () => {
   it('An assertion parses and sets name and source', () => {
-    let a = baseAssertions.split('\n')[1];
+    const a = baseAssertions.split('\n')[1];
     let assertion;
     try {
       assertion = new FlowAssertion(a);
@@ -49,7 +49,7 @@ describe('Dataflow analysis', () => {
   it('Empty name fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion(': 0 : trusted particles : write to : any : particle');
+      const a = new FlowAssertion(': 0 : trusted particles : write to : any : particle');
     } catch (e) {
       threw = true;
     }
@@ -58,7 +58,7 @@ describe('Dataflow analysis', () => {
   it('Object without quantifier fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion('noTrustWrite : trusted particles : write to : any : particle');
+      const a = new FlowAssertion('noTrustWrite : trusted particles : write to : any : particle');
     } catch (e) {
       threw = true;
     }
@@ -67,7 +67,7 @@ describe('Dataflow analysis', () => {
   it('Object with incorrect quantifier fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion('noTrustWrite: O : trusted particles : write to : any : particle');
+      const a = new FlowAssertion('noTrustWrite: O : trusted particles : write to : any : particle');
     } catch (e) {
       threw = true;
     }
@@ -76,7 +76,7 @@ describe('Dataflow analysis', () => {
   it('Object with unknown name fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion('noTrustWrite: 0 : trusting particles : write to : any : particle');
+      const a = new FlowAssertion('noTrustWrite: 0 : trusting particles : write to : any : particle');
     } catch (e) {
       threw = true;
     }
@@ -85,7 +85,7 @@ describe('Dataflow analysis', () => {
   it('Object with incorrect filter predicate fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion('noUntrustedReadsTrusted: 0 : untrusted particle : reads : any : handle thet is written to by : any : trusted particle');
+      const a = new FlowAssertion('noUntrustedReadsTrusted: 0 : untrusted particle : reads : any : handle thet is written to by : any : trusted particle');
     } catch (e) {
       threw = true;
     }
@@ -94,7 +94,7 @@ describe('Dataflow analysis', () => {
   it('Object with incorrect negative fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion("onlyTrustedDontResolve: 0 : untrusted particles : don't resolve");
+      const a = new FlowAssertion("onlyTrustedDontResolve: 0 : untrusted particles : don't resolve");
     } catch (e) {
       threw = true;
     }
@@ -103,7 +103,7 @@ describe('Dataflow analysis', () => {
   it('Predicate with unknown name fails to parse', () => {
     let threw = false;
     try {
-      let config = new FlowAssertion('noTrustWrite: 0 : trusted particles : writer to : any : particle');
+      const a = new FlowAssertion('noTrustWrite: 0 : trusted particles : writer to : any : particle');
     } catch (e) {
       threw = true;
     }
@@ -113,7 +113,7 @@ describe('Dataflow analysis', () => {
   it('Empty config file throws', () => {
     let threw = false;
     try {
-      let config = new FlowConfig('  ');
+      const c = new FlowConfig('  ');
     } catch (e) {
       threw = true;
     }
@@ -122,7 +122,7 @@ describe('Dataflow analysis', () => {
   it('Comment-only config throws', () => {
     let threw = false;
     try {
-      let config = new FlowConfig('// This is a comment');
+      const c = new FlowConfig('// This is a comment');
     } catch (e) {
       threw = true;
     }
@@ -131,7 +131,7 @@ describe('Dataflow analysis', () => {
 
   it('FlowConfig parses base set of assertions', () => {
     try {
-      let config = new FlowConfig(baseAssertions);
+      const c = new FlowConfig(baseAssertions);
     } catch (e) {
       assert.fail(e);
     }
@@ -139,7 +139,7 @@ describe('Dataflow analysis', () => {
   it('Config with duplicate assertion names throws', () => {
     let threw = false;
     try {
-      let config = new FlowConfig(`
+      const c = new FlowConfig(`
 noTrustWrite: 0 : trusted particles : write to : any : particle
 noTrustWrite: 0 : trusted particles : write to : any : particle
 `);
@@ -153,9 +153,7 @@ noTrustWrite: 0 : trusted particles : write to : any : particle
   // the code currently always returns false. Once the test fails, it serves as
   // a reminder to write a real test.
   it('flowcheck fails', () => {
-    const fc = new FlowConfig(baseAssertions);
-    const checker = new FlowChecker(fc);
-    const recipe = new Recipe();
-    assert.equal(false, checker.flowcheck(recipe).result);
+    const checker = new FlowChecker(new FlowConfig(baseAssertions));
+    assert.equal(false, checker.flowcheck(new Recipe()).result);
   });
 });

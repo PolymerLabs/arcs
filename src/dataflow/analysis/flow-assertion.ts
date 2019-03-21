@@ -31,7 +31,7 @@ export class FlowAssertion {
   constructor(s : string) {
     // console.log('Parsing assertion <' + s + '>');
     // This will throw if it fails
-    let parsed = parser.parse(s);
+    const parsed = parser.parse(s);
     this.source = s;
     this.name = s.split(":")[0].trim();
     // TODO Post-parse processing of this assertion. Alternatively, put js into

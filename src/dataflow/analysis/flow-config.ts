@@ -16,7 +16,7 @@ import {FlowAssertion} from './flow-assertion.js';
  * configuration options. 
  */
 export class FlowConfig {
-  public assertions : FlowAssertion[] = [];;  // parsed assertions usable by FlowChecker
+  public assertions : FlowAssertion[] = [];  // parsed assertions usable by FlowChecker
 
   // Input is the contents of a fcfg file, consisting of comments, blank lines, 
   // whatever configuration parameters we may decide to include in the future,
@@ -34,14 +34,14 @@ export class FlowConfig {
     // There are currently no configuration parameters, so the entire file is
     // just comments, blanks, or assertions. 
     const lines = input.split('\n');
-    for (var l of lines) {
+    for (const l of lines) {
       const line = l.trim();
       if ((line.length === 0) || (line.startsWith("//"))) {
         continue;
       }
       // This will throw if the line does not parse; just let it propagate.
-      let newGuy = new FlowAssertion(line)
-      for (let old of this.assertions) {
+      const newGuy = new FlowAssertion(line);
+      for (const old of this.assertions) {
         if (old.name === newGuy.name) {
           throw new Error('Flow config error: Assertion with name <' 
                           + newGuy.name + '> defined more than once.' );

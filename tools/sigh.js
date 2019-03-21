@@ -24,7 +24,7 @@ const sources = {
     grammar: 'src/runtime/manifest-parser.peg',
     output: 'build/runtime/manifest-parser.js',
     railroad: 'manifest-railroad.html',
-  },{
+  }, {
     grammar: 'src/dataflow/analysis/assertion-parser.peg',
     output: 'build/dataflow/analysis/assertion-parser.js',
     railroad: 'flow-assertion-railroad.html',

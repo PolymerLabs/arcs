@@ -40,7 +40,7 @@ try {
   process.exit(1);
 }
 
-let flowchecker = new FlowChecker(config);
+const flowchecker = new FlowChecker(config);
 manifest.recipes().forEach(recipe => {
   console.log('Checking recipe ' + recipe.name());
   const res = flowchecker.flowcheck(recipe);
