@@ -15,7 +15,7 @@
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
-  function optional(result, extract, defaultValue) {
+  function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result != null) {
       const value = extract(result);
       if (value != null) {
@@ -58,13 +58,13 @@
 Manifest
   = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
   {
-    const result: Token.ManifestItem[] = items.map(item => {
+    const result: AstNode.ManifestItem[] = items.map(item => {
       const manifestItem = item[2];
       manifestItem.annotation = optional(item[0], a => a[1], null);
       return manifestItem;
     });
     checkNormal(result);
-    return result;
+    return result as AstNode.ManifestItem[];
   }
 
 ManifestItem
@@ -87,7 +87,7 @@ Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent
     name,
     data: body,
     location: location()
-  };
+  } as AstNode.Resource;
 }
 
 ResourceStart = 'start' eolWhiteSpace { startIndent = indent; }
@@ -117,7 +117,7 @@ ManifestStorage
       source: source.source,
       origin: source.origin,
       description: items.length > 0 ? items[0][2] : null
-    };
+    } as AstNode.ManifestStorage;
   }
 
 ManifestStorageType
@@ -127,13 +127,13 @@ ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return {origin: 'file', source }; }
+  = 'in' whiteSpace source:id { return {origin: 'file', source } as AstNode.ManifestStorageSource; }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:upperIdent { return {origin: 'resource', source }; }
+  = 'in' whiteSpace source:upperIdent { return {origin: 'resource', source } as AstNode.ManifestStorageSource; }
 
 ManifestStorageStorageSource
-  = 'at' whiteSpace source:id { return {origin: 'storage', source }; }
+  = 'at' whiteSpace source:id { return {origin: 'storage', source } as AstNode.ManifestStorageSource; }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -148,7 +148,7 @@ Import
       kind: 'import',
       location: location(),
       path,
-    };
+    } as AstNode.Import;
   }
 
 Interface "an interface"
@@ -160,7 +160,7 @@ Interface "an interface"
       name,
       args: optional(items, extractIndented, []).filter(item => item.kind == 'interface-argument'),
       slots: optional(items, extractIndented, []).filter(item => item.kind == 'interface-slot'),
-    };
+    } as AstNode.Interface;
   }
 
 InterfaceItem
@@ -170,12 +170,7 @@ InterfaceItem
 InterfaceArgument
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
-    if (direction) {
-      direction = direction[0]
-    }
-    if (type) {
-      type = type[0]
-    }
+    direction = optional(direction, dir => dir[0], null);
     if (direction == 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
     }
@@ -183,9 +178,9 @@ InterfaceArgument
       kind: 'interface-argument',
       location: location(),
       direction,
-      type,
+      type: optional(type, ty => ty[0], null),
       name,
-    };
+    } as AstNode.InterfaceArgument;
   }
 
 InterfaceSlot
@@ -198,26 +193,26 @@ InterfaceSlot
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       direction,
       isSet: !!isSet,
-    };
+    } as AstNode.InterfaceSlot;
   }
 
 Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
 {
   items = items ? extractIndented(items): [];
-  return {kind: 'meta', items: items, location: location()};
+  return {kind: 'meta', items: items, location: location()} as AstNode.Meta;
 }
 
 MetaItem = MetaStorageKey / MetaName
 
 MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 {
-  return { key: 'name', value: name, location: location(), kind: 'name' }
+  return { key: 'name', value: name, location: location(), kind: 'name' } as AstNode.MetaName;
 }
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
+  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' } as AstNode.MetaStorageKey;
 };
 
 Particle
@@ -229,25 +224,25 @@ Particle
     let description = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
-    items = items ? extractIndented(items) : [];
+    items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind == 'particle-interface') {
         if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
-        args = item.args;
+        args = item.args; // TODO(jopra): This should merge, not overwrite;
         hasParticleArgument = true;
       } else if (item.kind == 'particle-argument') {
         args.push(item);
       } else if (item.kind == 'particle-slot') {
         slots.push(item);
       } else if (item.kind == 'description') {
-        // TODO: Super hacks.
+        // TODO(jopra): FIXME
         description = {
           kind: 'description?',
           location: 'FIXME',
-        };
+        } // as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
       } else if (item.modality) {
         modality.push(item.modality)
@@ -271,7 +266,7 @@ Particle
       slots,
       description,
       hasParticleArgument
-    };
+    } as AstNode.Particle;
   }
 
 ParticleItem "a particle item"
@@ -285,7 +280,7 @@ ParticleHandle
   {
     dependentConnections = optional(dependentConnections, extractIndented, []);
     arg.dependentConnections = dependentConnections;
-    return arg;
+    return arg as AstNode.ParticleArgument;
   }
 
 ParticleArgument
@@ -300,7 +295,7 @@ ParticleArgument
       dependentConnections: [],
       name: nametag.name,
       tags: nametag.tags,
-    };
+    } as AstNode.ParticleArgument;
   }
 
 ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
@@ -325,7 +320,7 @@ CollectionType
       kind: 'collection-type',
       location: location(),
       type,
-    };
+    } as AstNode.CollectionType;
   }
 
 BigCollectionType
@@ -335,7 +330,7 @@ BigCollectionType
       kind: 'big-collection-type',
       location: location(),
       type,
-    };
+    } as AstNode.BigCollectionType;
   }
 
 ReferenceType
@@ -345,7 +340,7 @@ ReferenceType
       kind: 'reference-type',
       location: location(),
       type,
-    };
+    } as AstNode.ReferenceType;
   }
 
 TypeVariable "a type variable (e.g. ~foo)"
@@ -356,7 +351,7 @@ TypeVariable "a type variable (e.g. ~foo)"
       location: location(),
       name,
       constraint: optional(constraint, constraint => constraint[3], null),
-    };
+    } as AstNode.TypeVariable;
   }
 
 SlotType
@@ -371,7 +366,7 @@ SlotType
     kind: 'slot-type',
     location: location(),
     fields
-  };
+  } as AstNode.SlotType;
 }
 
 SlotField
@@ -382,7 +377,7 @@ SlotField
     location: location(),
     name,
     value
-  }
+  } as AstNode.SlotField;
 }
 
 TypeName
@@ -392,7 +387,7 @@ TypeName
       kind: 'type-name',
       location: location(),
       name,
-    };
+    } as AstNode.TypeName;
   }
 
 TypeVariableList
@@ -409,7 +404,7 @@ ParticleModality
       kind: 'particle-modality',
       location: location(),
       modality,
-    };
+    } as AstNode.ParticleModality;
   }
 
 Modality
@@ -449,7 +444,7 @@ ParticleSlot
       isSet: !!isSet,
       formFactor,
       providedSlots
-    };
+    } as AstNode.ParticleSlot;
   }
 
 ParticleSlotItem
@@ -463,7 +458,7 @@ SlotFormFactor
       kind: 'form-factor',
       location: location(),
       formFactor
-    };
+    } as AstNode.SlotFormFactor;
   }
 
 ParticleProvidedSlot
@@ -490,7 +485,7 @@ ParticleProvidedSlot
       isSet: !!isSet,
       formFactor,
       handles
-    };
+    } as AstNode.ParticleProvidedSlot
   }
 
 ParticleProvidedSlotItem
@@ -504,7 +499,7 @@ ParticleProvidedSlotHandle
       kind: 'particle-provided-slot-handle',
       location: location(),
       handle,
-    };
+    } as AstNode.ParticleProvidedSlotHandle;
   }
 
 Description
@@ -514,15 +509,16 @@ Description
     const patterns = [];
     if (pattern) {
       patterns.push(pattern);
-      handleDescriptions.filter(desc => desc.name == 'pattern').forEach(pattern => patterns.push(pattern));
-      handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
     }
+    handleDescriptions.filter(desc => desc.name == 'pattern').forEach(p => patterns.push(p));
+    handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
     return {
       kind: 'description',
       location: location(),
       description: [
         {
           // TODO: this should be stored in a different field.
+          // TODO: FIXME
           kind: 'default-description?',
           location: location(),
           name: 'pattern',
@@ -530,7 +526,7 @@ Description
         },
         ...handleDescriptions,
       ],
-    };
+    } as AstNode.Description;
   }
 
 ParticleHandleDescription
@@ -541,7 +537,7 @@ ParticleHandleDescription
       location: location(),
       name,
       pattern,
-    };
+    } as AstNode.ParticleHandleDescription;
   }
 
 Recipe
@@ -554,7 +550,7 @@ Recipe
       name: optional(name, name => name[1], null),
       verbs,
       items: optional(items, extractIndented, []),
-    };
+    } as AstNode.Recipe;
   }
 
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
@@ -601,7 +597,7 @@ RecipeParticle
       ref,
       connections: handleConnections,
       slotConnections: slotConnections,
-    };
+    } as AstNode.RecipeParticle;
   }
 
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
@@ -616,7 +612,7 @@ RecipeParticleConnection
       dir,
       target: optional(target, target => target[1], null),
       dependentConnections: optional(dependentConnections, extractIndented, []),
-    };
+    } as AstNode.RecipeParticleConnection;
   }
 
 ParticleConnectionTargetComponents
@@ -638,7 +634,7 @@ ParticleConnectionTargetComponents
       name,
       particle,
       tags: optional(tags, tags => tags, []),
-    }
+    } as AstNode.ParticleConnectionTargetComponents;
   }
 
 RecipeParticleSlotConnection
@@ -652,7 +648,7 @@ RecipeParticleSlotConnection
       tags: ref.tags,
       name: optional(name, name=>name[1], null),
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
-    };
+    } as AstNode.RecipeParticleSlotConnection;
   }
 
 RecipeSlotConnectionRef
@@ -663,7 +659,7 @@ RecipeSlotConnectionRef
       location: location(),
       param,
       tags,
-    };
+    } as AstNode.RecipeSlotConnectionRef;
   }
 
 SlotDirection
@@ -678,7 +674,7 @@ RecipeConnection
       direction,
       from,
       to,
-    };
+    } as AstNode.RecipeConnection;
   }
 
 RecipeSearch
@@ -690,7 +686,7 @@ RecipeSearch
       location: location(),
       phrase,
       tokens: optional(tokens, tokens => tokens[1][2].map(t => t[1]), null)
-    };
+    } as AstNode.RecipeSearch;
   }
 
 Direction
@@ -710,7 +706,7 @@ VerbConnectionTarget
       verbs,
       param,
       tags
-    }
+    } as AstNode.ConnectionTarget;
   }
 
 TagConnectionTarget
@@ -720,7 +716,7 @@ TagConnectionTarget
       location: location(),
       targetType: 'tag',
       tags
-    }
+    } as AstNode.ConnectionTarget;
   }
 
 NameConnectionTarget
@@ -734,7 +730,7 @@ NameConnectionTarget
       name,
       param,
       tags
-    }
+    } as AstNode.ConnectionTarget;
   }
 
 ParticleConnectionTarget
@@ -748,7 +744,7 @@ ParticleConnectionTarget
       particle,
       param,
       tags
-    }
+    } as AstNode.ConnectionTarget;
   }
 
 ConnectionTargetHandleComponents
@@ -769,7 +765,7 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = type:RecipeHandleFate ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
+  = type:RecipeHandleFate ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',
@@ -791,14 +787,14 @@ RecipeRequire
   }
 
 RequireHandleSection
-  = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleOrSlotRef)? eolWhiteSpace
+  = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
     return {
       kind: 'requireHandle',
       location: location(),
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null)
-    }
+    } as AstNode.RequireHandleSection;
   }
 
 Tag
@@ -829,21 +825,21 @@ NameAndTagList
      return {
        name: name,
        tags: tags = optional(tags, list => list[1], [])
-     }
+     } as AstNode.NameAndTagList;
    }
    / whiteSpace name:lowerIdent
    {
      return {
        name: name,
        tags: []
-     };
+     } as AstNode.NameAndTagList;
    }
    / whiteSpace tags:TagList
    {
       return {
         name: tags[0],
         tags: tags
-      }
+      } as AstNode.NameAndTagList;
    }
 
 ParticleRef
@@ -854,7 +850,7 @@ ParticleRef
       location: location(),
       name,
       verbs: [],
-    };
+    } as AstNode.ParticleRef;
   }
   / verb:Verb
   {
@@ -862,10 +858,10 @@ ParticleRef
       kind: 'particle-ref',
       location: location(),
       verbs: [verb],
-    };
+    } as AstNode.ParticleRef;
   }
 
-HandleOrSlotRef
+HandleRef
   = id:id tags:SpaceTagList?
   {
     return {
@@ -873,7 +869,7 @@ HandleOrSlotRef
       location: location(),
       id,
       tags: tags || [],
-    };
+    } as AstNode.HandleRef;
   }
   / name:upperIdent tags:SpaceTagList?
   {
@@ -882,7 +878,7 @@ HandleOrSlotRef
       location: location(),
       name,
       tags: tags || [],
-    };
+    } as AstNode.HandleRef;
   }
   / tags:TagList
   {
@@ -890,11 +886,11 @@ HandleOrSlotRef
       kind: 'handle-ref',
       location: location(),
       tags,
-    };
+    } as AstNode.HandleRef;
   }
 
 RecipeSlot
-  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
+  = 'slot' ref:(whiteSpace HandleRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'slot',
@@ -923,7 +919,7 @@ SchemaInlineField
       location: location(),
       name,
       type: optional(type, type => type[0], null),
-    };
+    } as AstNode.SchemaInlineField;
   }
 
 SchemaSpec
@@ -932,7 +928,7 @@ SchemaSpec
     return {
       names: names.map(name => name[1]).filter(name => name != '*'),
       parents: optional(parents, parents => parents, []),
-    };
+    } as AstNode.SchemaSpec;
   }
 
 SchemaAlias
@@ -943,7 +939,7 @@ SchemaAlias
       location: location(),
       items: optional(items, extractIndented, []),
       alias,
-    });
+    }) as AstNode.SchemaAlias;
   }
 
 Schema
@@ -953,17 +949,18 @@ Schema
       kind: 'schema',
       location: location(),
       items: optional(items, extractIndented, []),
-    });
+    }) as AstNode.Schema;
   }
 
 SchemaExtends
   = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
 {
+  // TODO: List comprehension.
   const list = [first];
   for (const item of rest) {
     list.push(item[3]);
   }
-  return list;
+  return list as string[];
 }
 
 SchemaItem
@@ -978,7 +975,7 @@ SchemaField
       location: location(),
       type,
       name,
-    };
+    } as AstNode.SchemaField;
   }
 
 SchemaType
@@ -999,7 +996,7 @@ SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) 
       kind: 'schema-reference',
       location: location(),
       schema
-    };
+    } as AstNode.SchemaReferenceType;
   }
 
 SchemaPrimitiveType
@@ -1012,7 +1009,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return {kind: 'schema-union', location: location(), types} as Token.SchemaUnionType;
+    return {kind: 'schema-union', location: location(), types} as AstNode.SchemaUnionType;
   }
 
 SchemaTupleType
@@ -1022,7 +1019,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return {kind: 'schema-tuple', location: location(), types} as Token.SchemaTupleType;
+    return {kind: 'schema-tuple', location: location(), types} as AstNode.SchemaTupleType;
   }
 
 Version "a version number (e.g. @012)"

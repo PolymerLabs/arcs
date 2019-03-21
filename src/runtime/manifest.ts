@@ -15,7 +15,7 @@ import {digest} from '../platform/digest-web.js';
 import {Id} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
-import * as Token from './manifest-tokens.js'
+import * as AstNode from './manifest-ast-nodes.js'
 import {ParticleSpec} from './particle-spec.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
@@ -394,9 +394,9 @@ ${e.message}
       return err;
     }
 
-    let items: Token.All[] = [];
+    let items: AstNode.All[] = [];
     try {
-      items = parse(content) as Token.All[];
+      items = parse(content) as AstNode.All[];
     } catch (e) {
       throw processError(e, true);
     }
@@ -413,7 +413,7 @@ ${e.message}
       // of resources over the network.
       await Promise.all(items.map(async item => {
         if (item.kind === 'import') {
-          // item is an Token.Import
+          // item is an AstNode.Import
           const path = loader.path(manifest.fileName);
           const target = loader.join(path, item.path);
           try {

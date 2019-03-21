@@ -8,10 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// pegjs uses interfaces that start with I
-// tslint:disable:interface-name
-// tslint:disable:no-any
-
 /**
  * Complete set of tokens used by `manifest-parser.peg`. To use this you
  * need to follow some simple guidelines:
@@ -23,26 +19,28 @@
  * You may need to check the generated output in runtime/ts/manifest-parser.ts to validate.
  */
 
-/**
- * A base token interface for theh `kind` and `location` entries.  This creates
- * a TypeScript Discriminated Union for most tokens.
- */
-interface BaseToken {
-  kind: string;
-  location: IFileRange;
-}
-
 // duplicate of definition from pegjs code to avoid circular dependencies
-interface IFilePosition extends BaseToken {
+interface SourcePosition {
   offset: number;
   line: number;
   column: number;
 }
 
 // duplicate of definition from pegjs code to avoid circular dependencies
-export interface IFileRange extends BaseToken {
-  start: IFilePosition;
-  end: IFilePosition;
+interface SourceLocation {
+  filename?: string;
+  start: SourcePosition;
+  end: SourcePosition;
+}
+
+/**
+ * A base token interface for theh `kind` and `location` entries.  This creates
+ * a TypeScript Discriminated Union for most tokens.
+ * TODO(jopra): s/Tokens/ASTNodes/ these are explicitly not tokens.
+ */
+interface BaseToken {
+  kind: string;
+  location: SourceLocation;
 }
 
 //  PARTICLE TYPES
@@ -61,7 +59,7 @@ export interface ReferenceType extends BaseToken {
   type: ParticleArgumentType;
 }
 
-export interface VariableType extends BaseToken {
+export interface TypeVariable extends BaseToken {
   kind: 'variable-type';
   name: string;
   constraint: ParticleArgument;
@@ -84,7 +82,7 @@ export interface HandleRef extends BaseToken {
   kind: 'handle-ref';
   id?: string;
   name?: string;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface Import extends BaseToken {
@@ -99,13 +97,12 @@ export interface ManifestStorage extends BaseToken {
   id: string|null;
   originalId: string|null;
   version: number;
-  tags: string[];
+  tags: TagList;
   source: string;
   origin: string;
   description: string|null;
 }
 
-// TODO no location
 export interface ManifestStorageSource {
   origin: string;
   source: string;
@@ -132,12 +129,11 @@ export interface Particle extends BaseToken {
   kind: 'particle';
   name: string;
   implFile?: string;          // not used in RecipeParticle
-  verbs?: string[];           // not used in RecipeParticle
+  verbs?: VerbList;           // not used in RecipeParticle
   args?: ParticleArgument[];  // not used in RecipeParticle
-  affordance?: string[];      // not used in RecipePartcile
-  slots?:
-      ParticleSlot[];    // TODO ParticleSlots, also not used in RecipeParticle
-  description?: string;  // not used in RecipeParticle
+  modality?: string[];      // not used in RecipePartcile
+  slots?: ParticleSlot[];    // not used in RecipeParticle
+  description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
 
   // fields in RecipeParticle only
@@ -147,9 +143,9 @@ export interface Particle extends BaseToken {
 }
 
 
-export interface ParticleAffordance extends BaseToken {
-  kind: 'particle-affordance';
-  affordance: string;
+export interface ParticleModality extends BaseToken {
+  kind: 'particle-modality';
+  modality: string;
 }
 
 export interface ParticleArgument extends BaseToken {
@@ -159,13 +155,12 @@ export interface ParticleArgument extends BaseToken {
   isOptional: boolean;
   dependentConnections: string[];
   name: string;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface ParticleHandleDescription extends BaseToken {
   kind: 'handle-description';
-  name;
-  string;
+  name: string;
   pattern: string;
 }
 
@@ -178,7 +173,7 @@ export interface ParticleInterface extends BaseToken {
 export interface ParticleSlot extends BaseToken {
   kind: 'particle-slot';
   name: string;
-  tags: string[];
+  tags: TagList;
   isRequired: boolean;
   isSet: boolean;
   formFactor: SlotFormFactor;
@@ -188,7 +183,7 @@ export interface ParticleSlot extends BaseToken {
 export interface ParticleProvidedSlot extends BaseToken {
   kind: 'provided-slot';
   name: string;
-  tags: string[];
+  tags: TagList;
   isRequired: boolean;
   isSet: boolean;
   formFactor: SlotFormFactor;
@@ -206,15 +201,36 @@ export interface ParticleProvidedSlotHandle extends BaseToken {
 export interface ParticleRef extends BaseToken {
   kind: 'particle-ref';
   name: string;
-  verbs: string[];
+  verbs: VerbList;
 }
 
 export interface Recipe extends BaseToken {
   kind: 'recipe';
   name: string;
-  verbs: string[];
-  items: any[];  // TODO RecipeItem
+  verbs: VerbList;
+  items: RecipeItem[];
 }
+
+export interface RecipeParticle extends BaseToken {
+  kind: 'particle';
+  name: string;
+  ref: ParticleRef;
+  connections: RecipeParticleConnection[];
+  slotConnections: RecipeParticleSlotConnection[];
+};
+
+export interface RequireHandleSection extends BaseToken {
+  kind: 'requireHandle';
+  name: string;
+  ref: HandleRef;
+};
+
+export interface RecipeRequire extends BaseToken {
+  kind: 'require';
+  items: RecipeItem;
+}
+
+export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
 export interface RecipeParticleConnection extends BaseToken {
   kind: 'handle-connection';
@@ -227,14 +243,14 @@ export interface ParticleConnectionTargetComponents extends BaseToken {
   kind: 'handle-connection-components';
   name: string|null;
   particle: string|null;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface ParticleConnnectionTargetComponents extends BaseToken {
   kind: 'hanlde-connection-components';
   name: string|null;
   particle: string|null;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface RecipeHandle extends BaseToken {
@@ -247,15 +263,15 @@ export interface RecipeHandle extends BaseToken {
 export interface RecipeParticleSlotConnection extends BaseToken {
   kind: 'slot-connection';
   param: string;
-  tags: string[];
+  tags: TagList;
   name: string;
-  providedSlots: any[];  // RecipeParticleProvidedSlot
+  dependentSlotConnections: RecipeParticleProvidedSlot[];
 }
 
 export interface RecipeSlotConnectionRef extends BaseToken {
   kind: 'slot-connection-ref';
   param: string;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface RecipeParticleProvidedSlot extends BaseToken {
@@ -290,14 +306,32 @@ export interface ConnectionTarget extends BaseToken {
   name?: string;      // Only in NameConnectionTarget
   particle?: string;  // Only in ParticleConnectionTarget
 
-  verbs?: string[];
+  verbs?: VerbList;
   param: string;    // from ConnectionTargetHandleComponents
-  tags?: string[];  // from ConnectionTargetHandleComponents
+  tags?: TagList;  // from ConnectionTargetHandleComponents
 }
 
-export interface ConnectionTargetHandleComponents {
+export interface VerbConnectionTarget extends BaseToken {
+  targetType: 'verb';
+}
+
+export interface TagConnectionTarget extends BaseToken {
+  targetType: 'tag';
+}
+
+export interface LocalNameConnectionTarget extends BaseToken {
+  name: string;
+  targetType: 'localName';
+}
+
+export interface ParticleConnectionTarget extends BaseToken {
+  particle: string;
+  targetType: 'particle';
+}
+
+export interface ConnectionTargetHandleComponents extends BaseToken {
   param: string;
-  tags: string[];
+  tags: TagList;
 }
 
 export interface Resource extends BaseToken {
@@ -308,7 +342,7 @@ export interface Resource extends BaseToken {
 
 export interface Schema extends BaseToken {
   kind: 'schema';
-  items: any[];  // TODO
+  items: SchemaItem[];
   alias?: string;
 }
 
@@ -320,12 +354,13 @@ export interface SchemaSection extends BaseToken {
 
 export interface SchemaField extends BaseToken {
   kind: 'schema-field';
-  type: any;  // SchemaType
+  type: SchemaType;
   name: string;
 }
 
 export type SchemaPrimitiveType =
     'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
 
@@ -361,38 +396,45 @@ export interface SchemaInlineField extends BaseToken {
   type: SchemaType;
 }
 
-export interface SchemaSpec {
+export interface SchemaSpec extends BaseToken {
   names: string[];
   parents: string[];
 }
 
+export type SchemaItem = SchemaField | Description;
 
-type SchemaType = any;
-
-export interface Shape extends BaseToken {
-  kind: 'shape';
-  name: string;
-  slots: ShapeSlot[];
-
-  interface?: ShapeInterface[];
-  args?: ShapeArgument[];
+export interface SchemaAlias extends BaseToken {
+  kind: 'schema';
+  items: SchemaItem[];
+  alias: string;
 }
 
-export interface ShapeArgument extends BaseToken {
-  kind: 'shape-argument';
+export interface Interface extends BaseToken {
+  kind: 'interface';
+  name: string;
+  slots: InterfaceSlot[];
+
+  interface?: InterfaceInterface[];
+  args?: InterfaceArgument[];
+}
+
+export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
+
+export interface InterfaceArgument extends BaseToken {
+  kind: 'interface-argument';
   direction: string;
   type: string;
   name: string;
 }
 
-export interface ShapeInterface extends BaseToken {
-  kind: 'shape-interface';
+export interface InterfaceInterface extends BaseToken {
+  kind: 'interface';
   verb: string;
-  args: ShapeArgument[];  // ShapeArgumentList?
+  args: InterfaceArgument[];  // InterfaceArgumentList?
 }
 
-export interface ShapeSlot extends BaseToken {
-  kind: 'shape-slot';
+export interface InterfaceSlot extends BaseToken {
+  kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
   direction: string;
@@ -415,18 +457,44 @@ export interface TypeName extends BaseToken {
   name: string;
 }
 
-export interface NameAndTag {
+export interface NameAndTagList {
   name: string;
-  tags: string[];
+  tags: TagList;
 }
 
-export type ParticleArgumentType = VariableType|CollectionType|
+// Aliases to simplify ts-pegjs returnTypes requirement in sigh.
+export type Annotation = string;
+export type Direction = string;
+export type LocalName = string;
+export type Manifest = ManifestStorageItem[];
+export type ManifestStorageItem = string;
+export type ParticleArgumentDirection = string;
+export type ResourceStart = string;
+export type ResourceBody = string;
+export type ResourceLine = string;
+export type SchemaExtends = string[];
+export type Tag = string;
+export type TagList = Tag[];
+export type TopLevelAlias = string;
+export type Verb = string;
+export type VerbList = Verb[];
+export type Version = number;
+export type backquotedString = string;
+export type id = string;
+export type upperIndent = string;
+export type lowerIndent = string;
+export type whiteSpace = string;
+export type eolWhiteSpace = string;
+export type eol = string;
+
+
+export type ParticleArgumentType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
 
 // Note that ManifestStorage* are not here, as they do not have 'kind'
 export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleArgument|
-    ParticleInterface|RecipeHandle|Resource|Shape|ShapeArgument|ShapeInterface|
-    ShapeSlot;
+    ParticleInterface|RecipeHandle|Resource|Interface|InterfaceArgument|InterfaceInterface|
+    InterfaceSlot;
 
 export type ManifestItem =
-    Recipe|Particle|Import|Schema|ManifestStorage|Shape|Meta|Resource;
+    Recipe|Particle|Import|Schema|ManifestStorage|Interface|Meta|Resource;
