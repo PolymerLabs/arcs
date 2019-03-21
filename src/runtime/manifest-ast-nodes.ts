@@ -190,7 +190,7 @@ export interface ParticleSlot extends BaseToken {
   isRequired: boolean;
   isSet: boolean;
   formFactor: SlotFormFactor;
-  providedSlots: ParticleProvidedSlot[];
+  provideSlotConnections: ParticleProvidedSlot[];
 }
 
 export interface ParticleProvidedSlot extends BaseToken {

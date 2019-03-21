@@ -310,7 +310,7 @@ ParticleArgument
 ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
-    return text();
+    return text() as string;
   }
 
 ParticleArgumentType
