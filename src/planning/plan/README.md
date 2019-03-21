@@ -1,7 +1,7 @@
 # Planning in the Shell
 
 By default plans are produced and consumed locally in the browser.
-When using [arcs-live](https://polymerlabs.github.io/arcs-live/shells/web-shell) by default both arcs and suggestions are serialized to Firebase.
+When using [arcs-live](https://polymerlabs.github.io/arcs-live/shells/web-shell) default suggestions storage is `volatile`.
 
 ## URL params
 Suggestions storage can be controlled by **plannerStorage** url param. 
