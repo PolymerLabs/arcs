@@ -25,7 +25,9 @@ enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
 build
+coverage
 .vscode
 devtools/build
 server/log.txt
 pack-stats.json
+default.profraw
