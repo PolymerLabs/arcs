@@ -4,14 +4,8 @@ import glob from 'glob';
 import { Loader } from '../../runtime/loader.js';
 
 // Skip these files, they do not compile successfully.
-// TODO: Figure out why.
 const FILES_TO_SKIP = new Set([
-  'particles/Demo/PipeDemo.recipe',
-  'particles/Demo/RestaurantsDemo.recipes',
-  'particles/Music/ArtistPipe.recipes',
-  'particles/TVMaze/TVMazePipe.recipes',
-  'particles/TVMaze/TVMazePipe.recipes',
-  'particles/Words/ShowSingleStats.manifest',
+  // this house is clean
 ]);
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
