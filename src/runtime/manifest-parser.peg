@@ -238,11 +238,10 @@ Particle
       } else if (item.kind == 'particle-slot') {
         slots.push(item);
       } else if (item.kind == 'description') {
-        // TODO(jopra): FIXME
         description = {
-          kind: 'description?',
-          location: 'FIXME',
-        } // as AstNode.Description;
+          kind: 'description',
+          location: location() // TODO: FIXME Get the locations of the item descriptions.
+        } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
       } else if (item.modality) {
         modality.push(item.modality)
