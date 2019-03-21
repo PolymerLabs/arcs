@@ -124,10 +124,8 @@ export class InterfaceInfo {
 
   _handlesToManifestString() {
     return this.handles
-      .map(handle => {
-        const type = handle.type.resolvedType();
-        return `  ${handle.direction ? handle.direction + ' ': ''}${type.toString()} ${handle.name ? handle.name : '*'}`;
-      }).join('\n');
+      .map(h => `  ${h.direction ? h.direction + ' ': ''}${h.type.toString()} ${h.name ? h.name : '*'}`)
+      .join('\n');
   }
 
   _slotsToManifestString() {
@@ -140,8 +138,7 @@ export class InterfaceInfo {
   toString() {
     return `interface ${this.name}
 ${this._handlesToManifestString()}
-${this._slotsToManifestString()}
-`;
+${this._slotsToManifestString()}`;
   }
 
   static fromLiteral(data) {

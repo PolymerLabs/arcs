@@ -292,6 +292,30 @@ describe('types', () => {
     });
   });
 
+  describe('serialization', () => {
+    it('serializes interfaces', () => {
+      const entity = EntityType.make(['Foo'], {value: 'Text'});
+      const variable = TypeVariable.make('a', null, null);
+      const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consume'}]);
+      assert.equal(iface.interfaceInfo.toString(),
+`interface i
+  Foo {Text value} foo
+  ~a *
+  consume x `);
+    });
+
+    // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
+    it('disregards type variable resolutions in interfaces', () => {
+      const variable = TypeVariable.make('a', null, null);
+      variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
+      const iface = InterfaceType.make('i', [{type: variable}], []);
+      assert.equal(iface.interfaceInfo.toString(),
+`interface i
+  ~a *
+`);
+    });
+  });
+
   describe('integration', () => {
     const manifestText = `
       schema Product
