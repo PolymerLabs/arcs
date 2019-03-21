@@ -127,13 +127,13 @@ ManifestStorageSource
   = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return {origin: 'file', source } as AstNode.ManifestStorageSource; }
+  = 'in' whiteSpace source:id { return {origin: 'file', source } as AstNode.ManifestStorageFileSource; }
 
 ManifestStorageResourceSource
-  = 'in' whiteSpace source:upperIdent { return {origin: 'resource', source } as AstNode.ManifestStorageSource; }
+  = 'in' whiteSpace source:upperIdent { return {origin: 'resource', source } as AstNode.ManifestStorageResourceSource; }
 
 ManifestStorageStorageSource
-  = 'at' whiteSpace source:id { return {origin: 'storage', source } as AstNode.ManifestStorageSource; }
+  = 'at' whiteSpace source:id { return {origin: 'storage', source } as AstNode.ManifestStorageStorageSource; }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -279,7 +279,7 @@ ParticleHandle
   {
     dependentConnections = optional(dependentConnections, extractIndented, []);
     arg.dependentConnections = dependentConnections;
-    return arg as AstNode.ParticleArgument;
+    return arg as AstNode.ParticleHandle;
   }
 
 ParticleArgument

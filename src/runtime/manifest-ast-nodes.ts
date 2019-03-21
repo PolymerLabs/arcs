@@ -75,7 +75,7 @@ export interface SlotType extends BaseToken {
 export interface Description extends BaseToken {
   kind: 'description';
   name: 'pattern';
-  description: any[];  // TODO ugh.
+  description: Description[];
 }
 
 export interface HandleRef extends BaseToken {
@@ -108,6 +108,18 @@ export interface ManifestStorageSource {
   source: string;
 }
 
+export interface ManifestStorageFileSource extends ManifestStorageSource {
+  origin: 'file';
+}
+
+export interface ManifestStorageResourceSource extends ManifestStorageSource {
+  origin: 'resource';
+}
+
+export interface ManifestStorageStorageSource extends ManifestStorageSource {
+  origin: 'storage';
+}
+
 export interface Meta extends BaseToken {
   kind: 'meta';
   items: (MetaName|MetaStorageKey)[];
@@ -137,7 +149,7 @@ export interface Particle extends BaseToken {
   hasParticleArgument?: boolean;  // not used in RecipeParticle
 
   // fields in RecipeParticle only
-  ref?: any;  // ParticleRef
+  ref?: ParticleRef | '*';
   connections?: RecipeParticleConnection[];
   slotConnections?: RecipeParticleSlotConnection[];
 }
@@ -157,6 +169,8 @@ export interface ParticleArgument extends BaseToken {
   name: string;
   tags: TagList;
 }
+
+export type ParticleHandle = ParticleArgument;
 
 export interface ParticleHandleDescription extends BaseToken {
   kind: 'handle-description';
