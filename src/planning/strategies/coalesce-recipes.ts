@@ -7,7 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {SlotSpec} from '../../runtime/particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
@@ -39,7 +39,7 @@ export class CoalesceRecipes extends Strategy {
     await index.ready;
 
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
+      onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
         const results = [];
         // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
         // these handles are coalescable? Add support for this.
@@ -52,7 +52,7 @@ export class CoalesceRecipes extends Strategy {
             continue;
           }
 
-          results.push((recipe:Recipe, particle:Particle, slotSpec:SlotSpec) => {
+          results.push((recipe:Recipe, particle:Particle, slotSpec:ConsumeSlotConnectionSpec) => {
             const otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
 
             const {cloneMap} = providedSlot.recipe.mergeInto(recipe);

@@ -27,14 +27,14 @@ schema MyThing extends YourThing
 
 ### Descriptions
 
-A schema can contain a description:, that will override the default representation of the schema in recipe descriptions.
+A schema can contain a description, which will override the default representation of the schema in recipe descriptions.
 ```
 schema USCity
   Text name
   Text state
   description `city` // used as singular type description
-    plural `cities` // used as plural type description, instead of the default 'city list`
-    value `${name}, ${state}` // used as the city value format, insted of the default ${name}.
+    plural `cities` // used as plural type description, instead of the default 'city list'
+    value `${name}, ${state}` // used as the city value format, instead of the default ${name}.
 ```
 
 ## Particles
@@ -44,7 +44,9 @@ that it provides and consumes and the location of the particle implementation.
 
 ```
 particle MyParticle in 'my-particle.js'
-  MyParticle(in MyThing myinthing, out [MyThing] myoutthing, inout [AnotherThing] anotherthing)
+  in MyThing myinthing
+  out [MyThing] myoutthing
+  inout [AnotherThing] anotherthing
 ```
 
 ### Slots
@@ -54,7 +56,8 @@ Particles that produce UI must define which slots they use for rendering. Slots 
 
 ```
 particle MyParticle in 'my-particle.js'
-  MyParticle(in MyThing myinthing, out [MyThing] myoutthing)
+  in MyThing myinthing
+  out [MyThing] myoutthing
   must consume mySlot
     provide innerSlot
     provide restrictedInnerSlot
@@ -66,12 +69,12 @@ particle MyParticle in 'my-particle.js'
 
 ```
 particle MySetParticle in 'my-set-particle.js'
-  MySetParticle(in [MyThing] mything)
+  in [MyThing] mything
   consume mySlot
     provide set of innerSlot
 
 particle MyItemParticle in 'my-item-particle.js'
-  MyItemParticle(in [MyThing] mythis)
+  in [MyThing] mythis
     consume set of innerSlot
 ```
 
@@ -80,9 +83,9 @@ Particle description defines how the Particle is represented in the recipe sugge
 
 ```
 particle MyParticle in ‘my-particle.js’
-  MyParticle(in MyThing mything)
-    consume main
-      provide secondary
+  in MyThing mything
+  consume main
+    provide secondary
   description `Do Something with ${mything}`
      mything `my special thing`
 ```
@@ -110,7 +113,7 @@ Handle descriptions may also be used in particles UI (including other particles 
 
 Stores contain entities of a particular Schema. Stores may contain a singleton or collection of Entities:
 
-* `store MyProduct of Product in 'my-products.json'`.
+* `store MyProduct of Product in 'my-products.json'`
 * `store MyProducts of [Product] in 'my-products.json'`
 
 Or they may contain particles:

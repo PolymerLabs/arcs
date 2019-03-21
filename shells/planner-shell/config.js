@@ -1,1 +1,1 @@
-global.debugLevel = 2;
+global.logLevel = 2;

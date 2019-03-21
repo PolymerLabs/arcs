@@ -19,7 +19,7 @@ recipe
   ${other.handles.join('\n')}
   slot '${slot.id}' as slot1
   ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- handle1
+    ${hostedParticle.handleConnections[0].name} <- handle1
     ${other.connections.join('\n')}
     consume ${slot.name} as slot1
   `;

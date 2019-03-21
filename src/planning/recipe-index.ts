@@ -14,7 +14,7 @@ import {Arc} from '../runtime/arc.js';
 import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/modality.js';
-import {ProvidedSlotSpec, SlotSpec} from '../runtime/particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/particle-spec.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
@@ -39,7 +39,7 @@ import * as Rulesets from './strategies/rulesets.js';
 
 type ConsumeSlotConnectionMatch = {
   recipeParticle: Particle,
-  slotSpec: SlotSpec,
+  slotSpec: ConsumeSlotConnectionSpec,
   matchingHandles: {handle:Handle, matchingConn: HandleConnection}[]
 };
 
@@ -235,7 +235,7 @@ export class RecipeIndex {
    * Given a particle and a slot spec for a slot that particle could provide, find consume slot connections that 
    * could be connected to the potential slot.
    */
-  findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvidedSlotSpec): ConsumeSlotConnectionMatch[] {
+  findConsumeSlotConnectionMatch(particle: Particle, providedSlotSpec: ProvideSlotConnectionSpec): ConsumeSlotConnectionMatch[] {
     this.ensureReady();
 
     const consumeConns = [];
@@ -247,7 +247,7 @@ export class RecipeIndex {
       }
       for (const recipeParticle of recipe.particles) {
         if (!recipeParticle.spec) continue;
-        for (const [name, slotSpec] of recipeParticle.spec.slots) {
+        for (const [name, slotSpec] of recipeParticle.spec.slotConnections) {
           const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
           if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)){
@@ -267,7 +267,7 @@ export class RecipeIndex {
     return consumeConns;
   }
   
-  findProvidedSlot(particle: Particle, slotSpec: SlotSpec): Slot[] {
+  findProvidedSlot(particle: Particle, slotSpec: ConsumeSlotConnectionSpec): Slot[] {
     this.ensureReady();
 
     const providedSlots: Slot[] = [];
@@ -288,7 +288,7 @@ export class RecipeIndex {
     return providedSlots;
   }
 
-  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvidedSlotSpec) {
+  private _getMatchingHandles(particle: Particle, providingParticle: Particle, providedSlotSpec: ProvideSlotConnectionSpec) {
     const matchingHandles = [];
     for (const slotHandleConnName of providedSlotSpec.handles) {
       const providedHandleConn = providingParticle.getConnectionByName(slotHandleConnName);

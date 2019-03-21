@@ -16,6 +16,7 @@ import {Id} from './id.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
+import {SlotProxy} from './slot-proxy.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 
@@ -91,60 +92,13 @@ export class ParticleExecutionContext {
       }
 
       onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]) {
-        const apiPort = this;
-        /**
-         * A representation of a consumed slot. Retrieved from a particle using
-         * particle.getSlot(name)
-         */
-        class Slotlet {
-          readonly slotName: string;
-          readonly particle: Particle;
-          readonly providedSlots: Map<string, string>;
-          private handlers = new Map<string, ((event: {}) => void)[]>();
-          private requestedContentTypes = new Set<string>();
-          private _isRendered = false;
-          constructor(particle: Particle, slotName: string, providedSlots: Map<string, string>) {
-            this.slotName = slotName;
-            this.particle = particle;
-            this.providedSlots = providedSlots;
-          }
-          get isRendered() { return this._isRendered; }
-          /**
-           * renders content to the slot.
-           */
-          render(content) {  
-            apiPort.Render(particle, slotName, content);
-  
-            Object.keys(content).forEach(key => { this.requestedContentTypes.delete(key); });
-            // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-            this._isRendered = this.requestedContentTypes.size === 0 && (Object.keys(content).length > 0);
-          }
-          /** @method registerEventHandler(name, f)
-           * registers a callback to be invoked when 'name' event happens.
-           */
-          registerEventHandler(name, f) {
-            if (!this.handlers.has(name)) {
-              this.handlers.set(name, []);
-            }
-            this.handlers.get(name).push(f);
-          }
-          clearEventHandlers(name) {
-            this.handlers.set(name, []);
-          }
-          fireEvent(event) {
-            for (const handler of this.handlers.get(event.handler) || []) {
-              handler(event);
-            }
-          }
-        }
-  
-        particle.slotByName.set(slotName, new Slotlet(particle, slotName, providedSlots));
+        particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
         particle.renderSlot(slotName, contentTypes);
       }
   
       onStopRender(particle: Particle, slotName: string) {
-        assert(particle.slotByName.has(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
-        particle.slotByName.delete(slotName);
+        assert(particle.hasSlotProxy(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
+        particle.removeSlotProxy(slotName);
       }
     }(port);
 
@@ -228,7 +182,7 @@ export class ParticleExecutionContext {
     };
   }
 
-  async _instantiateParticle(id, spec, proxies) {
+  async _instantiateParticle(id, spec: ParticleSpec, proxies) {
     const name = spec.name;
     let resolve : () => void = null;
     const p = new Promise<void>(res => resolve = res);
@@ -243,7 +197,7 @@ export class ParticleExecutionContext {
     const handleMap = new Map();
     const registerList = [];
     proxies.forEach((proxy, name) => {
-      const connSpec = spec.connectionMap.get(name);
+      const connSpec = spec.handleConnectionMap.get(name);
       const handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
       handleMap.set(name, handle);
 

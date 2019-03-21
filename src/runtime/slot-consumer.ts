@@ -137,7 +137,7 @@ export class SlotConsumer {
   }
 
   createProvidedContexts() {
-    return this.consumeConn.getSlotSpec().providedSlots.map(
+    return this.consumeConn.getSlotSpec().provideSlotConnections.map(
       spec => new ProvidedSlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
   }
 

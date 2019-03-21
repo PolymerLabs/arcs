@@ -11,8 +11,9 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
-import {ConnectionSpec, ParticleSpec} from './particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
+import {SlotProxy} from './slot-proxy.js';
 
 /**
  * A basic particle. For particles that provide UI, you may like to
@@ -25,17 +26,11 @@ export class Particle {
     public relevances: Relevance[] = [];
     public handles: Map<string, Handle>;
 
-    // TODO(mmandlis): add proper types
-    // tslint:disable-next-line: no-any
-    consumedSlotConnections: any[];
-    
     private _idle: Promise<void> = Promise.resolve();
     private _idleResolver: (() => void);
     private _busy = 0;
     
-    // Only used by a Slotlet class in particle-execution-context
-    // tslint:disable-next-line: no-any
-    slotByName: Map<string, any> = new Map();
+    protected slotProxiesByName: Map<string, SlotProxy> = new Map();
     private capabilities: {constructInnerArc?: Function};
     
   constructor(capabilities?: {constructInnerArc?: Function}) {
@@ -138,19 +133,31 @@ export class Particle {
     }
   }
 
-  inputs(): ConnectionSpec[] {
+  inputs(): HandleConnectionSpec[] {
     return this.spec.inputs;
   }
 
-  outputs(): ConnectionSpec[] {
+  outputs(): HandleConnectionSpec[] {
     return this.spec.outputs;
+  }
+
+  hasSlotProxy(name: string) {
+    return this.slotProxiesByName.has(name);
+  }
+
+  addSlotProxy(slotlet: SlotProxy) {
+    this.slotProxiesByName.set(slotlet.slotName, slotlet);
+  }
+
+  removeSlotProxy(name: string) {
+    this.slotProxiesByName.delete(name);
   }
 
   /**
    * Returns the slot with provided name.
    */
   getSlot(name) {
-    return this.slotByName.get(name);
+    return this.slotProxiesByName.get(name);
   }
 
   static buildManifest(strings: string[], ...bits): string {

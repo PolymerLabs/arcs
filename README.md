@@ -110,8 +110,8 @@ start` will block, so you'll have to run the second command in a new shell):
 $ npm start
 ```
 
-Then open `http://localhost:8080/shells/web-shell` in a web browser
-(or, on MacOS, use `open 'http://localhost:8080/shells/web-shell`).
+Then open `http://localhost:8786/shells/web-shell` in a web browser
+(or, on MacOS, use `open 'http://localhost:8786/shells/web-shell`).
 
 ## Subprojects
 Subcomponents have more detailed descriptions. Particularly the extensions
@@ -138,16 +138,20 @@ $ npm run test-with-start
 
 There are additional targets provided to run subsets of those commands.
 
-- `npm start`: spins up a server (and blocks), serving in port 8080.
-- `tools/sigh`: run a subset of tests and build packed artifacts.
+- `npm start`: spins up a server (and blocks), serving on port 8786.
+- `./tools/sigh`: run a subset of tests and build packed artifacts.
 - `npm test`: run all tests (using currently built artifacts) against an
-  already-running server (assumed to be port 8080).
+  already-running server (assumed to be port 8786).
 - `npm run test-no-web`: run all non-web tests.
 
 To run a specific Selenium test using Mocha's 'grep' capability:
 
 - In one terminal: `npm start`
 - In another: `npm run test-wdio-shells -- --mochaOpts.grep 'regex'`
+
+This also works for unit tests: `./tools/sigh test --grep 'regex'`. In addition,
+for unit tests you can run only a single test case by using `it.only()` instead
+of `it()`, or a single suite using `describe.only()` instead of `describe()`.
 
 ### Debugging tests
 
@@ -165,6 +169,20 @@ It may indicate that chromedriver hasn't been installed completely. Run the inst
 ```
 node node_modules\chromedriver\install.js
 ```
+
+#### Debugging unit tests in Chrome
+
+You can attach the Chrome debugger to debug your unit tests using the
+`--inspect` flag:
+
+```
+./tools/sigh test --inspect
+```
+
+It will wait for you to attach your debugger before running the tests. Open
+[chrome://inspect] and look for the "inspect" button under the "Remote Target"
+heading. You can use `Ctrl-P` to open files (you may need to add the `build`
+folder to your workspace first). Hit "resume" to start running the unit tests.
 
 ### Debugging Selenium Failures
 

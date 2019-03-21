@@ -230,7 +230,7 @@ Particle
   {
     let args = [];
     const modality = [];
-    const slots = [];
+    const slotConnections = [];
     let description = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -246,7 +246,7 @@ Particle
       } else if (item.kind == 'particle-argument') {
         args.push(item);
       } else if (item.kind == 'particle-slot') {
-        slots.push(item);
+        slotConnections.push(item);
       } else if (item.kind == 'description') {
         description = {
           kind: 'description',
@@ -272,7 +272,7 @@ Particle
       verbs,
       args,
       modality,
-      slots,
+      slotConnections,
       description,
       hasParticleArgument
     } as AstNode.Particle;
@@ -431,11 +431,11 @@ ParticleSlot
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
     let formFactor = null;
-    const providedSlots = [];
+    const provideSlotConnections = [];
     items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind == 'provided-slot') {
-        providedSlots.push(item);
+        provideSlotConnections.push(item);
       } else if (item.kind == 'form-factor') {
         if (formFactor)
           error('duplicate form factor for a slot');
@@ -452,7 +452,7 @@ ParticleSlot
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       isSet: !!isSet,
       formFactor,
-      providedSlots
+      provideSlotConnections
     } as AstNode.ParticleSlot;
   }
 

@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Arc} from '../arc.js';
-import {SlotSpec} from '../particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Handle} from '../recipe/handle';
 import {Particle} from '../recipe/particle.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
@@ -114,7 +114,7 @@ export class ResolveWalker extends RecipeWalker {
     };
   }
 
-  onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: SlotSpec) {
+  onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
     const arc = this.arc;
     const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
     const allSlots = [...local, ...remote];

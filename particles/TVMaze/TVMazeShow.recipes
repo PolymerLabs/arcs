@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Arcs/Description.schema'
+import '../Common/Description.schema'
 import 'TVMazeShow.schema'
 
 particle TVMazeShowTile in './source/TVMazeShowTile.js'

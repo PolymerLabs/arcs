@@ -660,7 +660,7 @@ recipe
       const recipe = manifest.recipes[0];
       const arc = createTestArc(recipe, manifest);
       const hostedParticle = manifest.findParticleByName('NoDescription');
-      const hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
+      const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type;
       const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as VariableStorageProvider;
       await newStore.set(hostedParticle.clone().toLiteral());
 

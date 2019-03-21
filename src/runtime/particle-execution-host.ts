@@ -70,7 +70,8 @@ export class ParticleExecutionHost {
       async onHandleToList(handle: StorageProviderBase, callback: number) {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
-        this.SimpleCallback(callback, await (handle as any).toList());
+        const data = await (handle as any).toList();
+        this.SimpleCallback(callback, data);
       }
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
