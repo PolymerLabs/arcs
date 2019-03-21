@@ -11,9 +11,9 @@
 import {FlowAssertion} from './flow-assertion.js';
 
 /**
- * A FlowConfig is a set of assertions used to configure a FlowChecker,
- * along with any assertion-related metadata. The language for specifying
- * the assertions is parsed in the constructor.
+ * A FlowConfig is a configuration of a dataflow analysis run. Currently this
+ * consists only of a set of assertions, although later it might include
+ * configuration options. 
  */
 export class FlowConfig {
   public assertions : (FlowAssertion[]);  // parsed assertions usable by FlowChecker
@@ -25,10 +25,10 @@ export class FlowConfig {
   // https://docs.google.com/document/d/1sQPYE4GEZKrIgMwvcs6Od3C-kBc8bhALY-xwz8bwimU/edit#
   // In addition to the syntactic contraints specified by the grammar, the set
   // of assertions in any one configuration may not contain duplicate names.
-  // Throws an exception if the input is invalid.
+  // Throws an exception if the input is invalid in any way.
   //
   constructor(input : string) {
-    // There are currenlty no configuration parameters, so the entire file is
+    // There are currently no configuration parameters, so the entire file is
     // just comments, blanks, or assertions. 
     const lines = input.split('\n');
     for (l of lines) {

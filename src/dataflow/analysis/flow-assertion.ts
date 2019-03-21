@@ -36,7 +36,7 @@ export class FlowAssertion {
     this.source = s;
     this.name = s.split(":")[0].trim();
     // TODO Post-parse processing of this assertion. Alternatively, put js into
-    // The peg file so that the parser returns the right stuff.
+    // the peg file so that the parser returns the right stuff.
   }
 
   check(graph : FlowGraph) : FlowAssertResult {
