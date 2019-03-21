@@ -230,13 +230,13 @@ export interface RecipeParticle extends BaseToken {
   ref: ParticleRef;
   connections: RecipeParticleConnection[];
   slotConnections: RecipeParticleSlotConnection[];
-};
+}
 
 export interface RequireHandleSection extends BaseToken {
   kind: 'requireHandle';
   name: string;
   ref: HandleRef;
-};
+}
 
 export interface RecipeRequire extends BaseToken {
   kind: 'require';
@@ -296,8 +296,8 @@ export interface RecipeParticleProvidedSlot extends BaseToken {
 export interface RecipeConnection extends BaseToken {
   kind: 'connection';
   direction: string;
-  from: any;  // ConnectionTarget
-  to: any;    // ConnectionTarget
+  from: ConnectionTarget;
+  to: ConnectionTarget;
 }
 
 export interface RecipeSearch extends BaseToken {
