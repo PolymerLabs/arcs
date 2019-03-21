@@ -22,7 +22,6 @@ recipe RestaurantsDemo
   ReservationForm
     restaurant = selected
     event = event
-    descriptions = descriptions
     consume action as toproot
   Geolocate
     location = location
@@ -44,10 +43,9 @@ recipe RestaurantsDemo
   RestaurantDetail
     restaurant = selected
     consume content
-      provide action as actionSlot
+      provide detailAction as actionSlot
   ReservationForm
     restaurant = selected
     event = event
-    descriptions = descriptions
     consume action as actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`

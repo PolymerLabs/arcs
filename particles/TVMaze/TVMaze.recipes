@@ -8,3 +8,5 @@
 
 import 'TVMazeShow.recipes'
 import 'TVMazeQuery.recipes'
+
+import 'TVMazePipe.recipes'
