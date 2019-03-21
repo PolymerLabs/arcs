@@ -5,6 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// TODO(jopra): This is just a list of the definitions from
+// './src/runtime/manifest-ast-node.js'
+// There should be a way to get this at build time.
 const AstNodeTypes = [
   'Annotation',
   'BigCollectionType',
