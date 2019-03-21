@@ -12,8 +12,6 @@ import {parser} from '../../../build/dataflow/analysis/assertion-parser.js';
 
 import {FlowGraph} from './flow-graph.js';
 
-import 
-
 export class FlowAssertResult {
   result : boolean;
   reason? : string; // undefined if result is true
@@ -31,6 +29,7 @@ export class FlowAssertion {
   
 
   constructor(s : string) {
+    // console.log('Parsing assertion <' + s + '>');
     // This will throw if it fails
     let parsed = parser.parse(s);
     this.source = s;
