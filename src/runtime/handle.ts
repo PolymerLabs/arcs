@@ -9,6 +9,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
+import {PropagatedException, SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
@@ -67,8 +68,12 @@ export abstract class Handle {
     };
   }
 
-  raiseSystemException(exception, method) {
-    this._proxy.raiseSystemException(exception, method, this._particleId);
+  protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
+    this._proxy.reportExceptionInHost(new UserException(exception, method, this._particleId, particle.spec.name));
+  }
+
+  protected reportSystemExceptionInHost(exception: Error, method: string) {
+    this._proxy.reportExceptionInHost(new SystemException(exception, method, this._particleId));
   }
 
   // `options` may contain any of:
@@ -86,7 +91,7 @@ export abstract class Handle {
       }
       Object.assign(this.options, options);
     } catch (e) {
-      this.raiseSystemException(e, 'Handle::configure');
+      this.reportSystemExceptionInHost(e, 'Handle::configure');
       throw e;
     }
   }
@@ -134,8 +139,7 @@ export class Collection extends Handle {
         try {
           particle.onHandleSync(this, this._restore(details));
         } catch (e) {
-          // TODO(shans): this should be a UserException, once we have those.
-          this.raiseSystemException(e, "onHandleSync");
+          this.reportUserExceptionInHost(e, particle, 'onHandleSync');
         }
         return;
       case 'update': {
@@ -246,14 +250,14 @@ export class Variable extends Handle {
         try {
           await particle.onHandleSync(this, this._restore(details));
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleSync`);
+          this.reportUserExceptionInHost(e, particle, 'onHandleSync');
         }
         return;
       case 'update': {
         try {
           await particle.onHandleUpdate(this, {data: this._restore(details.data)});
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleUpdate`);
+          this.reportUserExceptionInHost(e, particle, 'onHandleUpdate');
         }
         return;
       }
@@ -261,7 +265,7 @@ export class Variable extends Handle {
         try {
           await particle.onHandleDesync(this);
         } catch (e) {
-          this.raiseSystemException(e, `${particle.spec.name}::onHandleDesync`);
+          this.reportUserExceptionInHost(e, particle, 'onHandleDesync');
         }
         return;
       default:
@@ -311,7 +315,7 @@ export class Variable extends Handle {
       }
       return this._proxy.set(this._serialize(entity), this._particleId);
     } catch (e) {
-      this.raiseSystemException(e, 'Handle::set');
+      this.reportSystemExceptionInHost(e, 'Handle::set');
       throw e;
     }
   }
