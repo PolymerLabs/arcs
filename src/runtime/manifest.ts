@@ -15,7 +15,7 @@ import {digest} from '../platform/digest-web.js';
 import {Id} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
-import * as AstNode from './manifest-ast-nodes.js'
+import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
