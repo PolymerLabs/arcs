@@ -36,7 +36,6 @@ interface SourceLocation {
 /**
  * A base token interface for theh `kind` and `location` entries.  This creates
  * a TypeScript Discriminated Union for most tokens.
- * TODO(jopra): s/Tokens/ASTNodes/ these are explicitly not tokens.
  */
 interface BaseToken {
   kind: string;
