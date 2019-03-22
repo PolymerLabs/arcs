@@ -44,13 +44,15 @@ const steps = {
   clean: [clean],
   importSpotify: [build, importSpotify],
   unit: [unit],
+  health: [health],
   default: [check, peg, railroad, build, test, webpack, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
+const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
@@ -426,6 +428,7 @@ function test(args) {
     string: ['grep'],
     inspect: ['inspect'],
     explore: ['explore'],
+    coverage: ['coverage'],
     exceptions: ['exceptions'],
     boolean: ['manual', 'all'],
     repeat: ['repeat'],
@@ -516,8 +519,9 @@ function test(args) {
   const failedRuns = [];
   for (let i = 1; i < repeatCount + 1; i++) {
     console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
+    const coveragePrefix = options.coverage ? `NODE_V8_COVERAGE=${coverageDir} node_modules/.bin/c8 -r html` : '';
     const testResult = saneSpawn(
-        'node',
+        `${coveragePrefix} node`,
         [
           '--experimental-modules',
           '--trace-warnings',
@@ -539,6 +543,9 @@ function test(args) {
   if (failedRuns.length > 0) {
     console.log('Failed runs: ', failedRuns);
   }
+  if (options.coverage) {
+    console.log(`Visit 'file:///${process.cwd()}/coverage/index.html' in the browser for a coverage report.`);
+  }
   return testResults;
 }
 
@@ -554,8 +561,6 @@ function importSpotify(args) {
 
 // Watches for file changes, then runs the `arg` steps.
 function watch([arg, ...moreArgs]) {
-  const funs = steps[arg || 'webpack'];
-  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   const watcher = chokidar.watch('.', {
     ignored: new RegExp(`(node_modules|build/|.git|${eslintCache})`),
     persistent: true
@@ -570,7 +575,7 @@ function watch([arg, ...moreArgs]) {
     timerId = setTimeout(() => {
       console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      run(funsAndArgs);
+      runSteps(arg || 'webpack', moreArgs);
       timerId = 0;
     }, 500);
   });
@@ -584,9 +589,76 @@ function watch([arg, ...moreArgs]) {
   return new Promise(() => {});
 }
 
+function health(args) {
+
+  const options = minimist(args, {
+    migration: ['migration'],
+    types: ['types'],
+    tests: ['tests'],
+    points: ['points']
+  });
+
+  if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
+    console.error('Please select only one detailed report at a time');
+    return;
+  }
+
+  const migrationFiles = () => [...findProjectFiles(
+      'src', null, fullPath => fullPath.endsWith('.js')
+          && !fullPath.includes('/artifacts/')
+          && !fullPath.includes('/runtime/build/'))];
+
+  if (options.migration) {
+    console.log('JS files to migrate:\n');
+    return saneSpawn('node_modules/.bin/sloc', ['-details', '--keys source', ...migrationFiles()], {stdio: 'inherit'});
+  }
+
+  if (options.types) {
+    return saneSpawn('node_modules/.bin/type-coverage', ['--strict', '--detail'], {stdio: 'inherit'});
+  }
+
+  if (options.tests) {
+    runSteps('test', ['--coverage']);
+    return saneSpawn('node_modules/.bin/c8', ['report'], {stdio: 'inherit'});
+  }
+
+  // Generating coverage report from tests.
+  runSteps('test', ['--coverage']);
+
+  const line = () => console.log('-'.repeat(65));
+
+  line();
+  console.log('| Category\t\t| Result\t| Detailed report\t|');
+  line();
+
+  const slocOutput = saneSpawnWithOutput('node_modules/.bin/sloc', ['--detail', '--keys source', ...migrationFiles()]).stdout;
+  const jsLocCount = String(slocOutput).match(/Source *: *(\d+)/)[1];
+  console.log(`| JS LOC to migrate \t| ${jsLocCount} \t\t| health --migration\t|`);
+
+  const c8Output = saneSpawnWithOutput('node_modules/.bin/c8', ['report']).stdout;
+  const testCovPercent = String(c8Output).match(/All files *\| *([.\d]+)/)[1];
+  console.log(`| Test Coverage \t| ${testCovPercent}%\t| health --tests\t|`);
+
+  const typeCoverageOutput = saneSpawnWithOutput('node_modules/.bin/type-coverage', ['--strict']).stdout;
+  const typeCovPercent = String(typeCoverageOutput).match(/(\d+\.\d+)%/)[1];
+  console.log(`| Type Coverage \t| ${typeCovPercent}%\t| health --types\t|`);
+
+  line();
+
+  if (options.points) {
+    // For go/arcs-paydown, team tech-debt paydown exercise.
+    const points = (100 - Number(testCovPercent)) + (100 - Number(typeCovPercent)) + Number(jsLocCount) / 100;
+    console.log(`| Points available \t| ${points}\t\t| go/arcs-paydown \t|`);
+
+    line();
+  }
+
+  return true;
+}
+
 // Runs a chain of `[[fun, args]]` by calling `fun(args)`, logs emoji, and returns whether
 // all the functions returned `true`.
-function run(funsAndArgs) {
+function runFuns(funsAndArgs) {
   console.log('😌');
   let result = false;
   try {
@@ -607,17 +679,23 @@ function run(funsAndArgs) {
   return result;
 }
 
-const command = process.argv[2] || 'default';
-const funs = steps[command];
-if (funs === undefined) {
-  console.log(`Unknown command: '${command}'`);
-  console.log('Available commands are:', Object.keys(steps).join(', '));
-  process.exit(2);
+// Looks up steps for a given command and runs them one by one.
+// Only the last step gets args. E.g. runSteps('test', ['--inspect']);
+function runSteps(command, args) {
+  const funs = steps[command];
+  if (funs === undefined) {
+    console.log(`Unknown command: '${command}'`);
+    console.log('Available commands are:', Object.keys(steps).join(', '));
+    process.exit(2);
+  }
+  
+  // To avoid confusion, only the last step gets args.
+  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? args : []]);
+  const result = runFuns(funsAndArgs);
+  process.on('exit', function() {
+    process.exit(result ? 0 : 1);
+  });
+  return result;
 }
 
-// To avoid confusion, only the last step gets args.
-const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
-const result = run(funsAndArgs);
-process.on('exit', function() {
-  process.exit(result ? 0 : 1);
-});
+runSteps(process.argv[2] || 'default', process.argv.slice(3));
