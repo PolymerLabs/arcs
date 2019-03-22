@@ -520,7 +520,7 @@ function test(args) {
   for (let i = 1; i < repeatCount + 1; i++) {
     console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
     if (options.coverage) {
-      process.env.NODE_V8_COVERAGE='coverage';
+      process.env.NODE_V8_COVERAGE=coverageDir;
     }
     const coveragePrefix = options.coverage ? ` node_modules/.bin/c8 -r html` : '';
     const testResult = saneSpawn(
