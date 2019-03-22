@@ -9,7 +9,7 @@ import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceT
 
 interface TypeListInfo {
   type: Type;
-  direction: string;
+  direction?: string;
   connection?: {direction: string};
 }
 
