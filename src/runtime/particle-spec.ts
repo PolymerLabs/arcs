@@ -75,7 +75,7 @@ export class HandleConnectionSpec {
     return this.direction === 'out' || this.direction === 'inout';
   }
 
-  isCompatibleType(type) {
+  isCompatibleType(type: Type) {
     return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction});
   }
 }

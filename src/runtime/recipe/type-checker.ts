@@ -7,6 +7,12 @@
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
 
+interface TypeListInfo {
+  type: Type;
+  direction?: string;
+  connection?: {direction: string};
+}
+
 export class TypeChecker {
 
   // resolve a list of handleConnection types against a handle
@@ -19,14 +25,14 @@ export class TypeChecker {
   //
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
-  static processTypeList(baseType, list) {
+  static processTypeList(baseType: Type, list: TypeListInfo[]) {
     const newBaseType = TypeVariable.make('', null, null);
     if (baseType) {
       newBaseType.variable.resolution = baseType;
     }
     baseType = newBaseType;
 
-    const concreteTypes = [];
+    const concreteTypes: TypeListInfo[] = [];
 
     // baseType might be a variable (and is definitely a variable if no baseType was available).
     // Some of the list might contain variables too.
@@ -52,7 +58,7 @@ export class TypeChecker {
       }
     }
 
-    const getResolution = candidate => {
+    const getResolution = (candidate: Type) => {
       if (!(candidate instanceof TypeVariable)) {
         return candidate;
       }
@@ -70,11 +76,11 @@ export class TypeChecker {
 
     const candidate = baseType.resolvedType();
 
-    if (candidate instanceof CollectionType) {
+    if (candidate.isCollectionType()) {
       const resolution = getResolution(candidate.collectionType);
       return (resolution !== null) ? resolution.collectionOf() : null;
     }
-    if (candidate instanceof BigCollectionType) {
+    if (candidate.isBigCollectionType()) {
       const resolution = getResolution(candidate.bigCollectionType);
       return (resolution !== null) ? resolution.bigCollectionOf() : null;
     }
@@ -82,7 +88,7 @@ export class TypeChecker {
     return getResolution(candidate);
   }
 
-  static _tryMergeTypeVariable(base, onto) {
+  static _tryMergeTypeVariable(base: Type, onto: Type) {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
     if (primitiveBase instanceof TypeVariable) {
@@ -122,7 +128,7 @@ export class TypeChecker {
     throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
   }
 
-  static _tryMergeConstraints(handleType, {type, direction}) {
+  static _tryMergeConstraints(handleType: Type, {type, direction}: TypeListInfo) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType instanceof TypeVariable) {
       while (primitiveConnectionType.isTypeContainer()) {
@@ -146,6 +152,10 @@ export class TypeChecker {
 
         const unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         [primitiveHandleType, primitiveConnectionType] = unwrap;
+        if (!(primitiveHandleType instanceof TypeVariable)) {
+          // This should never happen, and the guard above is just here so we type-check.
+          throw new TypeError("unwrapping a wrapped TypeVariable somehow didn't become a TypeVariable");
+        }
       }
 
       if (direction === 'out' || direction === 'inout' || direction === '`provide') {
@@ -183,7 +193,7 @@ export class TypeChecker {
     return true;
   }
 
-  static _writeConstraintsApply(handleType, connectionType) {
+  static _writeConstraintsApply(handleType: Type, connectionType: Type) {
     // this connection wants to write to this handle. If the written type is
     // more specific than the canReadSubset then it isn't violating the maximal type
     // that can be read.
@@ -197,7 +207,7 @@ export class TypeChecker {
     return false;
   }
 
-  static _readConstraintsApply(handleType, connectionType) {
+  static _readConstraintsApply(handleType: Type, connectionType: Type) {
     // this connection wants to read from this handle. If the read type
     // is less specific than the canWriteSuperset, then it isn't violating
     // the maximum lower-bound read type.
@@ -218,7 +228,7 @@ export class TypeChecker {
   // then type resolution is guaranteed to fail.
   //
   // left, right: {type, direction, connection}
-  static compareTypes(left, right) {
+  static compareTypes(left: TypeListInfo, right: TypeListInfo) {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
