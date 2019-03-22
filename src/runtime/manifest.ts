@@ -359,7 +359,7 @@ export class Manifest {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
     let {session_id, fileName, loader, registry, context} = options;
     registry = registry || {};
-    const id = session_id.fromString(`manifest:${fileName}:`);
+    const id = `manifest:${fileName}:`;
 
     function dumpWarnings(manifest: Manifest) {
       for (const warning of manifest.warnings) {
@@ -423,7 +423,7 @@ ${e.message}
     } catch (e) {
       throw processError(e, true);
     }
-    const manifest = new Manifest(id);
+    const manifest = new Manifest({id});
     manifest._fileName = fileName;
 
     // TODO(sjmiles): optionally include pre-existing context
