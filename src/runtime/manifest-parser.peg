@@ -32,7 +32,7 @@
         return value;
       }
     }
-    return defaultValue == null ? null : defaultValue;
+    return defaultValue === null ? null : defaultValue;
   }
   function checkNormal(result) {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
@@ -168,8 +168,8 @@ Interface "an interface"
       kind: 'interface',
       location: location(),
       name,
-      args: optional(items, extractIndented, []).filter(item => item.kind == 'interface-argument'),
-      slots: optional(items, extractIndented, []).filter(item => item.kind == 'interface-slot'),
+      args: optional(items, extractIndented, []).filter(item => item.kind === 'interface-argument'),
+      slots: optional(items, extractIndented, []).filter(item => item.kind === 'interface-slot'),
     } as AstNode.Interface;
   }
 
@@ -181,7 +181,7 @@ InterfaceArgument
   = direction:(ParticleArgumentDirection whiteSpace)? type:(ParticleArgumentType whiteSpace)? name:(lowerIdent / '*') eolWhiteSpace
   {
     direction = optional(direction, dir => dir[0], null);
-    if (direction == 'host') {
+    if (direction === 'host') {
       error(`Interface cannot have arguments with a 'host' direction.`);
     }
     return {
@@ -200,7 +200,7 @@ InterfaceSlot
       kind: 'interface-slot',
       location: location(),
       name: optional(name, isRequired => name[1], null),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       direction,
       isSet: !!isSet,
     } as AstNode.InterfaceSlot;
@@ -236,18 +236,18 @@ Particle
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = optional(items, extractIndented, []);
     items.forEach(item => {
-      if (item.kind == 'particle-interface') {
+      if (item.kind === 'particle-interface') {
         if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
         args = item.args; // TODO(jopra): This should merge, not overwrite;
         hasParticleArgument = true;
-      } else if (item.kind == 'particle-argument') {
+      } else if (item.kind === 'particle-argument') {
         args.push(item);
-      } else if (item.kind == 'particle-slot') {
+      } else if (item.kind === 'particle-slot') {
         slotConnections.push(item);
-      } else if (item.kind == 'description') {
+      } else if (item.kind === 'description') {
         description = {
           kind: 'description',
           location: location() // TODO: FIXME Get the locations of the item descriptions.
@@ -259,7 +259,7 @@ Particle
         error(`Particle ${name} contains an unknown element: ${item.name}`);
       }
     });
-    if (modality.length == 0) {
+    if (modality.length === 0) {
       // Add default modality
       modality.push('dom');
     }
@@ -434,9 +434,9 @@ ParticleSlot
     const provideSlotConnections = [];
     items = optional(items, extractIndented, []);
     items.forEach(item => {
-      if (item.kind == 'provided-slot') {
+      if (item.kind === 'provided-slot') {
         provideSlotConnections.push(item);
-      } else if (item.kind == 'form-factor') {
+      } else if (item.kind === 'form-factor') {
         if (formFactor)
           error('duplicate form factor for a slot');
         formFactor = item.formFactor;
@@ -449,7 +449,7 @@ ParticleSlot
       location: location(),
       name,
       tags: optional(tags, tags => tags[1], []),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       isSet: !!isSet,
       formFactor,
       provideSlotConnections
@@ -477,7 +477,7 @@ ParticleProvidedSlot
     const handles = [];
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
-      if (item.kind == 'form-factor') {
+      if (item.kind === 'form-factor') {
         if (formFactor)
           error('duplicate form factor for a slot');
         formFactor = item.formFactor;
@@ -490,7 +490,7 @@ ParticleProvidedSlot
       location: location(),
       name,
       tags: optional(tags, tags => tags[1], []),
-      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isRequired: optional(isRequired, isRequired => isRequired[0] === 'must', false),
       isSet: !!isSet,
       formFactor,
       handles
@@ -519,7 +519,7 @@ Description
     if (pattern) {
       patterns.push(pattern);
     }
-    handleDescriptions.filter(desc => desc.name == 'pattern').forEach(p => patterns.push(p));
+    handleDescriptions.filter(desc => desc.name === 'pattern').forEach(p => patterns.push(p));
     handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
     return {
       kind: 'description',
@@ -593,7 +593,7 @@ RecipeParticle
     if (connections) {
       connections = extractIndented(connections);
       for (const conn of connections) {
-        if (conn.kind == 'handle-connection')
+        if (conn.kind === 'handle-connection')
           handleConnections.push(conn);
         else
           slotConnections.push(conn)
@@ -631,7 +631,7 @@ ParticleConnectionTargetComponents
     let name = null;
     let particle = null;
     if (param) {
-      if (param[0].toUpperCase() == param[0])
+      if (param[0].toUpperCase() === param[0])
         particle = param;
       else
         name = param;
