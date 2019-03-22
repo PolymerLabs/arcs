@@ -254,7 +254,7 @@ Particle
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
       } else if (item.modality) {
-        modality.push(item.modality)
+        modality.push(item.modality);
       } else {
         error(`Particle ${name} contains an unknown element: ${item.name}`);
       }
@@ -437,8 +437,9 @@ ParticleSlot
       if (item.kind === 'provided-slot') {
         provideSlotConnections.push(item);
       } else if (item.kind === 'form-factor') {
-        if (formFactor)
+        if (formFactor) {
           error('duplicate form factor for a slot');
+        }
         formFactor = item.formFactor;
       } else {
         error('Unsupported particle slot item ', item);
@@ -478,8 +479,9 @@ ParticleProvidedSlot
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
       if (item.kind === 'form-factor') {
-        if (formFactor)
+        if (formFactor) {
           error('duplicate form factor for a slot');
+        }
         formFactor = item.formFactor;
       } else {
         handles.push(item.handle);
@@ -494,7 +496,7 @@ ParticleProvidedSlot
       isSet: !!isSet,
       formFactor,
       handles
-    } as AstNode.ParticleProvidedSlot
+    } as AstNode.ParticleProvidedSlot;
   }
 
 ParticleProvidedSlotItem
@@ -593,10 +595,11 @@ RecipeParticle
     if (connections) {
       connections = extractIndented(connections);
       for (const conn of connections) {
-        if (conn.kind === 'handle-connection')
+        if (conn.kind === 'handle-connection') {
           handleConnections.push(conn);
-        else
-          slotConnections.push(conn)
+        } else {
+          slotConnections.push(conn);
+        }
       }
     }
     return {
@@ -631,10 +634,11 @@ ParticleConnectionTargetComponents
     let name = null;
     let particle = null;
     if (param) {
-      if (param[0].toUpperCase() === param[0])
+      if (param[0].toUpperCase() === param[0]) {
         particle = param;
-      else
+      } else {
         name = param;
+      }
     }
 
     return {
@@ -762,7 +766,7 @@ ConnectionTargetHandleComponents
     return {
       param: optional(param, param => param, null),
       tags: optional(tags, tags => tags[1], []),
-    }
+    } as AstNode.ConnectionTargetHandleComponents;
   }
 
 RecipeHandleFate
@@ -782,7 +786,7 @@ RecipeHandle
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null),
       fate: type
-    }
+    } as AstNode.RecipeHandle;
   }
 
 RecipeRequire
@@ -792,7 +796,7 @@ RecipeRequire
       kind: 'require',
       location: location(),
       items: extractIndented(items),
-    }
+    } as AstNode.RecipeRequire;
   }
 
 RequireHandleSection
@@ -906,7 +910,7 @@ RecipeSlot
       location: location(),
       ref: optional(ref, ref => ref[1], null),
       name: optional(name, name => name[1], '')
-    }
+    } as AstNode.RecipeSlot;
   }
 
 SchemaInline
@@ -917,7 +921,7 @@ SchemaInline
       location: location(),
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), []),
       fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
-    }
+    } as AstNode.SchemaInline;
   }
 
 SchemaInlineField
@@ -943,33 +947,30 @@ SchemaSpec
 SchemaAlias
   = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
-    return Object.assign(spec, {
+    return {
       kind: 'schema',
       location: location(),
       items: optional(items, extractIndented, []),
       alias,
-    }) as AstNode.SchemaAlias;
+      ...spec
+    } as AstNode.SchemaAlias;
   }
 
 Schema
   = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
-    return Object.assign(spec, {
+    return {
       kind: 'schema',
       location: location(),
       items: optional(items, extractIndented, []),
-    }) as AstNode.Schema;
+      ...spec
+    } as AstNode.Schema;
   }
 
 SchemaExtends
   = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
 {
-  // TODO: List comprehension.
-  const list = [first];
-  for (const item of rest) {
-    list.push(item[3]);
-  }
-  return list as string[];
+  return [first, ...(rest.map(item => item[3]))] as string[];
 }
 
 SchemaItem
@@ -996,7 +997,7 @@ SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
       kind: 'schema-collection',
       location: location(),
       schema
-    }
+    } as AstNode.SchemaCollectionType;
   }
 
 SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) whiteSpace* '>'
