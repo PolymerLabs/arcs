@@ -26,9 +26,9 @@
     return items[1].map(item => item[1]);
   }
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
-    if (result != null) {
+    if (result !== null) {
       const value = extract(result);
-      if (value != null) {
+      if (value !== null) {
         return value;
       }
     }
@@ -237,7 +237,7 @@ Particle
     items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind === 'particle-interface') {
-        if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
+        if (/[A-Z]/.test(item.verb[0]) && item.verb !== name) {
           error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
@@ -520,7 +520,7 @@ Description
       patterns.push(pattern);
     }
     handleDescriptions.filter(desc => desc.name === 'pattern').forEach(p => patterns.push(p));
-    handleDescriptions = handleDescriptions.filter(desc => desc.name != 'pattern');
+    handleDescriptions = handleDescriptions.filter(desc => desc.name !== 'pattern');
     return {
       kind: 'description',
       location: location(),
@@ -915,7 +915,7 @@ SchemaInline
     return {
       kind: 'schema-inline',
       location: location(),
-      names: optional(names, names => names.map(name => name[0]).filter(name => name != '*'), []),
+      names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), []),
       fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
     }
   }
@@ -935,7 +935,7 @@ SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
   {
     return {
-      names: names.map(name => name[1]).filter(name => name != '*'),
+      names: names.map(name => name[1]).filter(name => name !== '*'),
       parents: optional(parents, parents => parents, []),
     } as AstNode.SchemaSpec;
   }
