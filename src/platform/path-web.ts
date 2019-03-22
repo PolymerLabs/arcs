@@ -5,6 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-const local_path = undefined;
+const localPath = undefined;
 
-export {local_path as path};
+export {localPath as path};
