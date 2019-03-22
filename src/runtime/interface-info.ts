@@ -89,12 +89,15 @@ interface SlotLiteral {
   isSet?: boolean;
 }
 
-interface TypeVarReference {object: Handle|Slot, field: string};
+interface TypeVarReference {
+  object: Handle|Slot;
+  field: string;
+}
 
 export interface InterfaceInfoLiteral {
   name: string;
-  handles: HandleLiteral[],
-  slots: SlotLiteral[]
+  handles: HandleLiteral[];
+  slots: SlotLiteral[];
 }
 
 type MatchResult = {var: TypeVariable, value: Type, direction: string};
@@ -427,7 +430,7 @@ ${this._slotsToManifestString()}`;
 
     interface Match<T> {
       match: T;
-      result: boolean | MatchResult[]
+      result: boolean | MatchResult[];
     }
 
     // TODO: this probably doesn't deal with multiple match options.
@@ -444,7 +447,7 @@ ${this._slotsToManifestString()}`;
         newExclusions.push(connection.match);
         const constraints = choose(list, newExclusions);
         if (constraints !== false) {
-          if (typeof connection.result == 'boolean') {
+          if (typeof connection.result === 'boolean') {
             return constraints;
           }
           return constraints.concat(connection.result);
