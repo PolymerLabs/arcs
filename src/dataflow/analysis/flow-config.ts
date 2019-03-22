@@ -11,16 +11,46 @@
 import {FlowAssertion} from './flow-assertion.js';
 
 /**
- * A FlowConfig is a set of assertions used to configure a FlowChecker,
- * along with any assertion-related metadata. The language for specifying
- * the assertions is parsed in the constructor, or, if we choose to have
- * a FlowAssertion class, each assertion is parsed in the FlowAssertion
- * constructor.
+ * A FlowConfig is a configuration of a dataflow analysis run. Currently this
+ * consists only of a set of assertions, although later it might include
+ * configuration options. 
  */
 export class FlowConfig {
-  public assertions : (FlowAssertion[]);  // parsed assertions usable by FlowChecker
+  public assertions : FlowAssertion[] = [];  // parsed assertions usable by FlowChecker
 
-  constructor(input : string[]) { // input is raw set of assertions, e.g. contents of a file
-    this.assertions = input.map(i => FlowAssertion.instantiate(i));
+  // Input is the contents of a fcfg file, consisting of comments, blank lines, 
+  // whatever configuration parameters we may decide to include in the future,
+  // and a set of assertions to test. The assertions are expressed in the 
+  // syntax defined in 
+  // https://docs.google.com/document/d/1sQPYE4GEZKrIgMwvcs6Od3C-kBc8bhALY-xwz8bwimU/edit#
+  // In addition to the syntactic contraints specified by the grammar, the set
+  // of assertions in any one configuration may not contain duplicate names.
+  // Throws an exception if the input is invalid in any way.
+  //
+  constructor(input : string) {
+    if ((input === undefined) || (input.trim().length === 0)) {
+      throw new Error('Flow configuration is empty');
+    }
+    // There are currently no configuration parameters, so the entire file is
+    // just comments, blanks, or assertions. 
+    const lines = input.split('\n');
+    for (const l of lines) {
+      const line = l.trim();
+      if ((line.length === 0) || (line.startsWith("//"))) {
+        continue;
+      }
+      // This will throw if the line does not parse; just let it propagate.
+      const newGuy = new FlowAssertion(line);
+      for (const old of this.assertions) {
+        if (old.name === newGuy.name) {
+          throw new Error('Flow config error: Assertion with name <' 
+                          + newGuy.name + '> defined more than once.' );
+        }
+      }
+      this.assertions.push(newGuy);
+    }
+    if (this.assertions.length === 0) {
+      throw new Error('Flow configuration contains no assertions');
+    }
   }
 }

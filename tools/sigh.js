@@ -20,11 +20,15 @@ const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
 const sources = {
-  peg: {
+  peg: [{
     grammar: 'src/runtime/manifest-parser.peg',
     output: 'build/runtime/manifest-parser.js',
     railroad: 'manifest-railroad.html',
-  },
+  }, {
+    grammar: 'src/dataflow/analysis/assertion-parser.peg',
+    output: 'build/dataflow/analysis/assertion-parser.js',
+    railroad: 'flow-assertion-railroad.html',
+  }]
 };
 
 const steps = {
@@ -45,7 +49,7 @@ const steps = {
 
 const eslintCache = '.eslint_sigh_cache';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
-const cleanFiles = ['manifest-railroad.html', eslintCache];
+const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build'];
 
 // RE pattern to exclude when finding within project source files.
@@ -189,21 +193,23 @@ function linkUnit(dummySrc, dummyDest) {
 function peg() {
   const peg = require('pegjs');
 
-  if (targetIsUpToDate(sources.peg.output, [sources.peg.grammar])) {
-    return true;
-  }
+  for (const pegsrc of sources.peg) {
+    if (targetIsUpToDate(pegsrc.output, [pegsrc.grammar])) {
+      continue;
+    }
 
-  const source = peg.generate(readProjectFile(sources.peg.grammar), {
-    format: 'bare',
-    output: 'source',
-    trace: false
-  });
-  const outputFile = path.resolve(projectRoot, sources.peg.output);
-  const dir = path.dirname(outputFile);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, {recursive: true});
+    const source = peg.generate(readProjectFile(pegsrc.grammar), {
+      format: 'bare',
+      output: 'source',
+      trace: false
+    });
+    const outputFile = path.resolve(projectRoot, pegsrc.output);
+    const dir = path.dirname(outputFile);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, {recursive: true});
+    }
+    fs.writeFileSync(outputFile, 'export const parser = ' + source);
   }
-  fs.writeFileSync(outputFile, 'export const parser = ' + source);
   return true;
 }
 
@@ -216,34 +222,35 @@ function railroad() {
   const appStyle = 'node_modules/grammkit/app/app.css';
   const baseTemplate = 'node_modules/grammkit/template/viewer.html';
 
-  const deps = [sources.peg.grammar, diagramStyle, appStyle, baseTemplate];
-  if (targetIsUpToDate(sources.peg.railroad, deps)) {
-    return true;
-  }
-
-  const result = transform(readProjectFile(sources.peg.grammar));
-  const grammars = result.procesedGrammars.map(({rules, references, name}) => {
-    rules = rules.map(function(rule) {
-      const ref = references[rule.name] || {};
-      return {
-        name: rule.name,
-        diagram: rule.diagram,
-        usedBy: ref.usedBy,
-        references: ref.references
-      };
+  for (const pegsrc of sources.peg) {
+    const deps = [pegsrc.grammar, diagramStyle, appStyle, baseTemplate];
+    if (targetIsUpToDate(pegsrc.railroad, deps)) {
+      continue;
+    }
+  
+    const result = transform(readProjectFile(pegsrc.grammar));
+    const grammars = result.procesedGrammars.map(({rules, references, name}) => {
+      rules = rules.map(function(rule) {
+        const ref = references[rule.name] || {};
+        return {
+          name: rule.name,
+          diagram: rule.diagram,
+          usedBy: ref.usedBy,
+          references: ref.references
+        };
+      });
+  
+      return {name, rules};
     });
-
-    return {name, rules};
-  });
-
-  const data = {
-    title: `Railroad diagram for ${sources.peg.grammar}`,
-    style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
-    grammars: grammars
-  };
-  const template = handlebars.compile(readProjectFile(baseTemplate));
-  fs.writeFileSync(path.resolve(projectRoot, sources.peg.railroad), template(data));
-
+  
+    const data = {
+      title: `Railroad diagram for ${pegsrc.grammar}`,
+      style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
+      grammars: grammars
+    };
+    const template = handlebars.compile(readProjectFile(baseTemplate));
+    fs.writeFileSync(path.resolve(projectRoot, pegsrc.railroad), template(data));
+  }
   return true;
 }
 
