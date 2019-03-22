@@ -1,12 +1,7 @@
 {
   "extends": "./config/tsconfig.base.json",
   "include": [
-    "build/gen/**/*.ts",
-    "src/platform/**/*.ts",
-    "src/runtime/**/*.ts",
-    "src/planning/**/*.ts",
-    "src/dataflow/**/*.ts",
-    "src/tests/**/*.ts",
+    "src/**/*.ts",
   ],
   "compilerOptions": {
     "outDir": "build",

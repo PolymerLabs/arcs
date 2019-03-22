@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Tracing} from '../../tracelib/trace.js';
 import {Id} from '../id.js';
 import {compareNumbers, compareStrings} from '../recipe/util.js';
 import {Type} from '../type.js';
@@ -128,7 +127,6 @@ export abstract class StorageProviderBase {
   protected constructor(type: Type, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.toString(), name}});
     this._type = type;
     this.listeners = new Map();
     this.name = name;
@@ -137,7 +135,6 @@ export abstract class StorageProviderBase {
     this.source = null;
     this._storageKey = key;
     this.nextLocalID = 0;
-    trace.end();
   }
 
   enableReferenceMode(): void {
@@ -193,19 +190,15 @@ export abstract class StorageProviderBase {
       return;
     }
 
-    const trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this.type.tag,
-        name: this.name, listeners: listenerMap.size}});
-
     const callbacks:Callback[] = [];
     for (const [callback] of listenerMap.entries()) {
       callbacks.push(callback);
     }
     // Yield so that event firing is not re-entrant with mutation.
-    await trace.wait(0);
+    await 0;
     for (const callback of callbacks) {
       callback(details);
     }
-    trace.end();
   }
 
   _compareTo(other: StorageProviderBase) : number {

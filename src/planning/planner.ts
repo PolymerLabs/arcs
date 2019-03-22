@@ -161,7 +161,7 @@ export class Planner {
         const suggestion = await speculator.speculate(this._arc, plan, hash);
         if (!suggestion) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
-          planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
+          planTrace.end({name: '[Irrelevant suggestion]', args: {hash, groupIndex}});
           continue;
         }
         this._updateGeneration(generations, hash, async (g) => g.description = suggestion.descriptionText);
