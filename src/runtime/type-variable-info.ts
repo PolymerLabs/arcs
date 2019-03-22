@@ -54,14 +54,16 @@ export class TypeVariableInfo {
       // TODO: formFactor compatibility, etc.
       return true;
     }
+    if (this.canReadSubset instanceof EntityType) {
+      const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
+      if (!mergedSchema) {
+        return false;
+      }
 
-    const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
-    if (!mergedSchema) {
-      return false;
+      this.canReadSubset = new EntityType(mergedSchema);
+      return true;
     }
-
-    this.canReadSubset = new EntityType(mergedSchema);
-    return true;
+    return false;
   }
 
   /**
@@ -83,13 +85,16 @@ export class TypeVariableInfo {
       return true;
     }
 
-    const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
-    if (!mergedSchema) {
-      return false;
-    }
+    if (this.canWriteSuperset instanceof EntityType) {
+      const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+      if (!mergedSchema) {
+        return false;
+      }
 
-    this.canWriteSuperset = new EntityType(mergedSchema);
-    return true;
+      this.canWriteSuperset = new EntityType(mergedSchema);
+      return true;
+    }
+    return false;
   }
 
   isSatisfiedBy(type) {
@@ -140,7 +145,7 @@ export class TypeVariableInfo {
     this._canReadSubset = null;
   }
 
-  get canWriteSuperset() {
+  get canWriteSuperset(): Type | null {
     if (this._resolution) {
       assert(!this._canWriteSuperset);
       if (this._resolution instanceof TypeVariable) {
@@ -156,7 +161,7 @@ export class TypeVariableInfo {
     this._canWriteSuperset = value;
   }
 
-  get canReadSubset() {
+  get canReadSubset(): Type | null {
     if (this._resolution) {
       assert(!this._canReadSubset);
       if (this._resolution instanceof TypeVariable) {
