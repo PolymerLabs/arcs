@@ -57,7 +57,7 @@ describe('TypeChecker', () => {
     if (result.isBigCollectionType() && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
       assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
     } else {
-      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint')
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
   });
 
@@ -83,7 +83,7 @@ describe('TypeChecker', () => {
       assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
       assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
     } else {
-      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint')
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
   });
 
@@ -109,7 +109,7 @@ describe('TypeChecker', () => {
       assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
       assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
     } else {
-      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint')
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
   });
 
@@ -141,7 +141,7 @@ describe('TypeChecker', () => {
       assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
       assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
     } else {
-      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint') 
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
   });
 
@@ -169,7 +169,7 @@ describe('TypeChecker', () => {
       assert.include(result.bigCollectionType.canReadSubset.entitySchema.names, 'Thing');
       assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
     } else {
-      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint') 
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
   });
 
