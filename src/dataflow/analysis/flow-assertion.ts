@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parser} from '../../../build/dataflow/analysis/assertion-parser.js';
+import {parse} from '../../gen/dataflow/analysis/assertion-parser.js';
 
 import {FlowGraph} from './flow-graph.js';
 
@@ -31,7 +31,7 @@ export class FlowAssertion {
   constructor(s : string) {
     // console.log('Parsing assertion <' + s + '>');
     // This will throw if it fails
-    const parsed = parser.parse(s);
+    const parsed = parse(s);
     this.source = s;
     this.name = s.split(":")[0].trim();
     // TODO Post-parse processing of this assertion. Alternatively, put js into

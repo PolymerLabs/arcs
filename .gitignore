@@ -10,7 +10,8 @@
 .idea
 .rpt2_cache
 **/trace.json
-runtime/browser-test/browser-test-ified.js
+src/runtime/browser-test/browser-test-ified.js
+src/gen/**/*
 manifest-railroad.html
 flow-assertion-railroad.html
 **/*.code-workspace

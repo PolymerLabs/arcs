@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parser} from '../../../build/runtime/manifest-parser.js';
+import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
@@ -1023,7 +1023,7 @@ ${particleStr1}
         if (fs.existsSync(particleManifestFile)) {
           try {
             const data = fs.readFileSync(particleManifestFile, 'utf-8');
-            const model = parser.parse(data);
+            const model = parse(data);
             assert.isDefined(model);
           } catch (e) {
             console.log(`Failed parsing ${particleManifestFile}`);

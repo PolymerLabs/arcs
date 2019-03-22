@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {parser} from '../../build/runtime/manifest-parser.js';
+import {parse, SyntaxError} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
+import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
@@ -393,9 +394,9 @@ ${e.message}
       return err;
     }
 
-    let items = [];
+    let items: AstNode.All[] = [];
     try {
-      items = parser.parse(content);
+      items = parse(content) as AstNode.All[];
     } catch (e) {
       throw processError(e, true);
     }
@@ -410,14 +411,17 @@ ${e.message}
     try {
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
-      await Promise.all(items.filter(item => item.kind === 'import').map(async item => {
-        const path = loader.path(manifest.fileName);
-        const target = loader.join(path, item.path);
-        try {
-          manifest._imports.push(await Manifest.load(target, loader, {registry}));
-        } catch (e) {
-          manifest.warnings.push(e);
-          manifest.warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
+      await Promise.all(items.map(async item => {
+        if (item.kind === 'import') {
+          // item is an AstNode.Import
+          const path = loader.path(manifest.fileName);
+          const target = loader.join(path, item.path);
+          try {
+            manifest._imports.push(await Manifest.load(target, loader, {registry}));
+          } catch (e) {
+            manifest.warnings.push(e);
+            manifest.warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
+          }
         }
       }));
 
