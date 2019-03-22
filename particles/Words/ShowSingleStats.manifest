@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../People/Person.schema'
-import '../People/Avatar.schema'
+import '../Profile/Avatar.schema'
 import '../Social/Post.schema'
 import './Board.schema'
 import './Move.schema'

@@ -1,4 +1,4 @@
-import '../Pipes/PipeEntity.schema'
+import '../PipeApps/PipeEntity.schema'
 
 resource PipeEntityResource
   start
