@@ -12,9 +12,9 @@ import {Recipe} from '../../runtime/recipe/recipe.js';
 
 /**
  * Object derived from a Recipe that expresses the global graph of a Recipe in
- * a format suitable for use by data-flow analysis. This differs from a
+ * a format suitable for use by data-flow analysis. [This differs from a
  * RecipeWalker in that the RecipeWalker treats a Recipe as a tree defined by
- * the order of presentation rather than connectivity.  
+ * the order of presentation rather than connectivity.] IS THIS TRUE?  
  */
 export class FlowGraph {
   constructor(recipe : Recipe) {

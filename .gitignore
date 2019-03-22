@@ -13,6 +13,7 @@
 src/runtime/browser-test/browser-test-ified.js
 src/gen/**/*
 manifest-railroad.html
+flow-assertion-railroad.html
 **/*.code-workspace
 shell/build
 shell/test/errorShots

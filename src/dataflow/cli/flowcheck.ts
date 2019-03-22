@@ -8,19 +8,46 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
+import {FlowAssertResult, FlowConfig, FlowChecker} from '../arcs-dataflow.js';
+import {Loader} from '../../runtime/loader.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 
-(async () => {
-  const configFile = process.argv[1];
-  const manifestFile = process.argv[2];
-  if (configFile === undefined || manifestFile === undefined) {
-    console.log('Usage: flowcheck <config file> <manifest file>');
-    return;
+const fs = require('fs');
+
+// TODO make this a function and test it; it's big enough now
+
+const configFile = process.argv[1];
+const manifestFile = process.argv[2];
+if (configFile === undefined || manifestFile === undefined) {
+  console.error('Usage: flowcheck <config file> <manifest file>');
+  process.exit(1);
+}
+
+if (!fs.existsSync(configFile)) {
+  console.error('Configuration file ' + configFile + ' not found.');
+  process.exit(1);
+}
+
+let manifest;
+let config;
+
+try {
+  config = new FlowConfig(fs.readFileSync(configFile, 'utf8'));
+  manifest = Manifest.load(manifestFile, new Loader());
+} catch (e) {
+  console.error(e);
+  process.exit(1);
+}
+
+const flowchecker = new FlowChecker(config);
+manifest.recipes().forEach(recipe => {
+  console.log('Checking recipe ' + recipe.name());
+  const res = flowchecker.flowcheck(recipe);
+  if (!res.result) {
+    console.error("Data-flow check failed. Reason: " + res.reason);
+    process.exit(1);
+  } else {
+    console.log("Data-flow check passed");
   }
-
-  // read the config file
-  // read the manifest file
-  // build the FlowConfig
-  // build the FlowChecker
-  // run the checker. Will need a facility for outputing lots more than just the boolean result
-})();
+});
