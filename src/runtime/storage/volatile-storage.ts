@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {Tracing} from '../../tracelib/trace.js';
 import {Id} from '../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js';
 
@@ -297,12 +296,9 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
 
   async store(value, keys, originatorId: string = null) {
     assert(keys != null && keys.length > 0, 'keys required');
-    const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::store', args: {name: this.name}});
-
     const item = {value, keys, effective: undefined};
     if (this.referenceMode) {
       const referredType = this.type.getContainedType();
-
       const storageKey = this.backingStore ? this.backingStore.storageKey : this.storageEngine.baseStorageKey(referredType);
 
       // It's important to store locally first, as the upstream consumers
@@ -315,10 +311,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     }
 
     this.version++;
-
-    await trace.wait(
-        this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId})));
-    trace.end({args: {value}});
+    await this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
   }
 
   async removeMultiple(items, originatorId: string = null): Promise<void> {
@@ -340,7 +333,6 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {
-    const trace = Tracing.start({cat: 'handle', name: 'VolatileCollection::remove', args: {name: this.name}});
     if (keys.length === 0) {
       keys = this._model.getKeys(id);
     }
@@ -348,10 +340,8 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     if (value !== null) {
       const effective = this._model.remove(id, keys);
       this.version++;
-      await trace.wait(
-          this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId})));
+      await this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
     }
-    trace.end({args: {entity: value}});
   }
 
   clearItemsForTesting() {

@@ -13,7 +13,7 @@ let streamingToDevtools = false;
 
 export function enableTracingAdapter(devtoolsChannel) {
   if (!streamingToDevtools) {
-    if (!Tracing.enabled) Tracing.enable();
+    Tracing.enable();
 
     devtoolsChannel.send({
       messageType: 'trace-time-sync',

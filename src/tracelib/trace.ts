@@ -11,10 +11,58 @@
   limitations under the License.
 */
 
+// tslint:disable: no-any only-arrow-functions
+
+export type TraceInfo = {
+  cat?: string;
+  name?: string;
+  overview?: boolean;
+  sequence?: string;
+  args?: {[index: string]: any};
+};
+
+export type TraceEvent = {
+  pid?: number;
+  tid?: number;
+  ph: string;
+  bp?: string;
+  ts: number;
+  dur?: number;
+  cat: string;
+  name: string;
+  ov: boolean;
+  args: {[index: string]: any};
+  id?: number;
+  flowId?: number;
+  seq: string;
+};
+
+export interface Trace {
+  wait<T>(v: Promise<T>, info?: TraceInfo): T;
+  start(info?: TraceInfo);
+  addArgs(extraArgs: {[index: string]: any});
+  step(info?: TraceInfo);
+  end(info?: TraceInfo);
+  endWith(v, info?: TraceInfo);
+  id: () => number;
+}
+
+export interface TracingInterface {
+  enable(): void;
+  now: () => number;
+  wrap(info: TraceInfo, fn: Function): Function;
+  start(info: TraceInfo): Trace;
+  flow(info: TraceInfo): Trace;
+  save(): {traceEvents: TraceEvent[]};
+  download(): void;
+  stream(callback: (e: TraceEvent) => any, predicate?: (e: TraceEvent) => boolean): void;
+  __clearForTests(): void;
+}
+
 const events = [];
 let pid;
 let now;
-if (typeof document == 'object') {
+if (typeof document === 'object') {
   pid = 42;
   now = function() {
     return performance.now() * 1000;
@@ -33,7 +81,7 @@ function parseInfo(info) {
   if (!info) {
     return {};
   }
-  if (typeof info == 'function') {
+  if (typeof info === 'function') {
     return parseInfo(info());
   }
   if (info.toTraceInfo) {
@@ -64,45 +112,44 @@ function pushEvent(event) {
     });
 }
 
-const module_ = {exports: {}};
-export const Tracing = module_.exports;
+const module_: any = {exports: {}};
+// tslint:disable-next-line: variable-name
+export const Tracing: TracingInterface = module_.exports;
 module_.exports.enabled = false;
 module_.exports.enable = function() {
-  module_.exports.enabled = true;
-  init();
+  if (!module_.exports.enabled) {
+    module_.exports.enabled = true;
+    init();
+  }
 };
-
-// TODO: Add back support for options.
-//module_.exports.options = options;
-//var enabled = Boolean(options.traceFile);
 
 function init() {
   const result = {
-    wait: async function(v) {
+    async wait(v) {
       return v;
     },
-    start: function() {
+    start() {
       return this;
     },
-    end: function() {
+    end() {
       return this;
     },
-    step: function() {
+    step() {
       return this;
     },
-    addArgs: function() {
+    addArgs() {
     },
-    endWith: async function(v) {
+    async endWith(v) {
       return v;
     },
   };
   module_.exports.wrap = function(info, fn) {
     return fn;
   };
-  module_.exports.start = function(info, fn) {
+  module_.exports.start = function(info) {
     return result;
   };
-  module_.exports.flow = function(info, fn) {
+  module_.exports.flow = function(info) {
     return result;
   };
 
@@ -126,15 +173,15 @@ function init() {
     let args = info.args;
     const begin = now();
     return {
-      addArgs: function(extraArgs) {
-        args = Object.assign(args || {}, extraArgs);
+      addArgs(extraArgs) {
+        args = {...(args || {}), ...extraArgs};
       },
-      end: function(endInfo = {}, flow) {
+      end(endInfo: any = {}, flow) {
         endInfo = parseInfo(endInfo);
         if (endInfo.args) {
-          args = Object.assign(args || {}, endInfo.args);
+          args = {...(args || {}), ...endInfo.args};
         }
-        endInfo = Object.assign({}, info, endInfo);
+        endInfo = {...info, ...endInfo};
         this.endTs = now();
         pushEvent({
           ph: 'X',
@@ -143,14 +190,14 @@ function init() {
           cat: endInfo.cat,
           name: endInfo.name,
           ov: endInfo.overview,
-          args: args,
+          args,
           // Arcs Devtools Specific:
           flowId: flow && flow.id(),
           seq: endInfo.sequence
         });
       },
       beginTs: begin
-    };
+    } as any;
   }
   module_.exports.start = function(info) {
     let trace = startSyncTrace(info);
@@ -164,7 +211,7 @@ function init() {
         }
         trace.end(info, flow);
         if (flowExisted) {
-          flow.step(Object.assign({ts: trace.beginTs}, baseInfo));
+          flow.step({ts: trace.beginTs, ...baseInfo});
         } else {
           flow.start({ts: trace.endTs});
         }
@@ -186,7 +233,7 @@ function init() {
       },
       async endWith(v, endInfo) {
         if (Promise.resolve(v) === v) { // If v is a promise.
-          v = this.wait(v);
+          v = this.wait(v, null);
           try {
             return await v;
           } finally {
@@ -204,7 +251,7 @@ function init() {
     const id = flowId++;
     let started = false;
     return {
-      start: function(startInfo) {
+      start(startInfo) {
         const ts = (startInfo && startInfo.ts) || now();
         started = true;
         pushEvent({
@@ -214,13 +261,13 @@ function init() {
           name: info.name,
           ov: info.overview,
           args: info.args,
-          id: id,
+          id,
           seq: info.sequence
         });
         return this;
       },
-      end: function(endInfo) {
-        if (!started) return;
+      end(endInfo) {
+        if (!started) return this;
         const ts = (endInfo && endInfo.ts) || now();
         endInfo = parseInfo(endInfo);
         pushEvent({
@@ -231,13 +278,13 @@ function init() {
           name: info.name,
           ov: info.overview,
           args: endInfo && endInfo.args,
-          id: id,
+          id,
           seq: info.sequence
         });
         return this;
       },
-      step: function(stepInfo) {
-        if (!started) return;
+      step(stepInfo) {
+        if (!started) return this;
         const ts = (stepInfo && stepInfo.ts) || now();
         stepInfo = parseInfo(stepInfo);
         pushEvent({
@@ -247,7 +294,7 @@ function init() {
           name: info.name,
           ov: info.overview,
           args: stepInfo && stepInfo.args,
-          id: id,
+          id,
           seq: info.sequence
         });
         return this;

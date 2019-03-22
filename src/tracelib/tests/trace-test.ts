@@ -17,7 +17,15 @@ import {Tracing} from '../trace.js';
  * https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview.
  */
 
-describe('Tracing', function() {
+describe('Tracing', () => {
+
+  before(() => {
+    Tracing.enable();
+  });
+
+  beforeEach(() => {
+    Tracing.__clearForTests();
+  });
 
   function assertTimestampsIncreasing(...timestmaps) {
     for (let i = 1; i < timestmaps.length; i++) {
@@ -45,8 +53,6 @@ describe('Tracing', function() {
   }
 
   it('records progressing time - sanity check', async () => {
-    Tracing.enable();
-
     const one = Tracing.now();
     const two = Tracing.now();
     const three = Tracing.now();
@@ -55,9 +61,6 @@ describe('Tracing', function() {
   });
 
   it('traces a sync event', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const beginMicros = Tracing.now();
     const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing'});
     const sum = 2 + 2; // Doing some work.
@@ -81,9 +84,6 @@ describe('Tracing', function() {
   });
 
   it('sync event with endInfo', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const trace = Tracing.start({cat: 'Stuff'});
     const sum = 2 + 2; // Doing some work.
     trace.end({name: 'Thingy::thing', args: {content: 'yay'}});
@@ -100,10 +100,6 @@ describe('Tracing', function() {
   it('traces an asynchronous event', async () => {
     // Trace waits twice for an async operation. Visualizes as:
     // |---| → |---| → |---|
-
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const beginMicros = Tracing.now();
     const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', sequence: 'stream_1'});
     const insideFirstSync = Tracing.now();
@@ -167,9 +163,6 @@ describe('Tracing', function() {
   });
 
   it('traces an asynchronous event with endWith', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const beginMicros = Tracing.now();
     const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing'});
     const insideFirstSync = Tracing.now();
@@ -218,8 +211,6 @@ describe('Tracing', function() {
   });
 
   it('exports an overview attribute for overview traces', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
     {
       const trace = Tracing.start({cat: 'Stuff', name: 'Details'});
       await trace.wait(waitABit());
@@ -242,9 +233,6 @@ describe('Tracing', function() {
   });
 
   it('assembles args for sync event', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', args: {op: 'sum'}});
     const sum = 2 + 2;
     trace.end({args: {result: sum}});
@@ -257,9 +245,6 @@ describe('Tracing', function() {
   });
 
   it('assembles args for async event', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', args: {step: 1}});
     await trace.wait(waitABit(), {args: {addedWhen: 'in trace.wait(...)'}});
     trace.addArgs({step: 2});
@@ -287,9 +272,6 @@ describe('Tracing', function() {
   });
 
   it('allows streaming events', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const events = [];
     Tracing.stream(event => events.push(event));
 
@@ -311,9 +293,6 @@ describe('Tracing', function() {
   });
 
   it('allows filtering while streaming', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const events = [];
     Tracing.stream(event => events.push(event), event => event.name === 'I\'m Special');
 
@@ -333,9 +312,6 @@ describe('Tracing', function() {
   });
 
   it('traces flow events', async () => {
-    Tracing.enable();
-    Tracing.__clearForTests();
-
     const beginMicros = Tracing.now();
     const flow = Tracing.flow({cat: 'Stuff', name: 'Flowing'}).start();
     const betweenStartAndStepMicros = Tracing.now();
