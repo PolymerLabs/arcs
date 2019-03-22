@@ -648,7 +648,7 @@ function health(args) {
   if (options.points) {
     // For go/arcs-paydown, team tech-debt paydown exercise.
     const points = (100 - Number(testCovPercent)) + (100 - Number(typeCovPercent)) + Number(jsLocCount) / 100;
-    console.log(`| Points available \t| ${points}\t\t| go/arcs-paydown \t|`);
+    console.log(`| Points available \t| ${points.toFixed(2)}\t\t| go/arcs-paydown \t|`);
 
     line();
   }
