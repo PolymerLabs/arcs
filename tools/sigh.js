@@ -701,7 +701,6 @@ function health(args) {
     migration: ['migration'],
     types: ['types'],
     tests: ['tests'],
-    points: ['points']
   });
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
@@ -753,13 +752,11 @@ function health(args) {
 
   line();
 
-  if (options.points) {
-    // For go/arcs-paydown, team tech-debt paydown exercise.
-    const points = (100 - Number(testCovPercent)) + (100 - Number(typeCovPercent)) + Number(jsLocCount) / 100;
-    console.log(`| Points available \t| ${points.toFixed(2)}\t\t| go/arcs-paydown \t|`);
+  // For go/arcs-paydown, team tech-debt paydown exercise.
+  const points = (100 - Number(testCovPercent)) + (100 - Number(typeCovPercent)) + Number(jsLocCount) / 100;
+  console.log(`| Points available \t| ${points.toFixed(2)}\t\t| go/arcs-paydown \t|`);
 
-    line();
-  }
+  line();
 
   return true;
 }
