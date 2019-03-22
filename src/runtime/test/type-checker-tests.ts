@@ -12,8 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {EntityType, SlotType, TypeVariable} from '../type.js';
-
+import {EntityType, SlotType, TypeVariable, Type,CollectionType} from '../type.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -26,7 +25,12 @@ describe('TypeChecker', () => {
     assert.instanceOf(canWriteSuperset, EntityType);
     assert.equal(canWriteSuperset.entitySchema.name, 'Product');
     assert.equal(result.resolvedType().collectionType.canWriteSuperset.entitySchema.name, 'Product');
-    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    if (result.isCollectionType() && result.collectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    }
+    else {
+      assert.fail('result should be a collection of a typeVariable with an entity constraint');
+    }
   });
 
   it(`doesn't resolve a pair of inout [~a], inout ~a`, async () => {
@@ -50,9 +54,11 @@ describe('TypeChecker', () => {
     assert.instanceOf(canWriteSuperset, EntityType);
     assert.equal(canWriteSuperset.entitySchema.name, 'Product');
 
-    canWriteSuperset = result.bigCollectionType.canWriteSuperset as EntityType;
-    assert.instanceOf(canWriteSuperset, EntityType);
-    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
+    if (result.isBigCollectionType() && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
+    } else {
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of in [Thing], in [Thing], out [Product]', async () => {
@@ -60,8 +66,12 @@ describe('TypeChecker', () => {
     const b = EntityType.make(['Thing'], {}).collectionOf();
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a collection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of in BigCollection<Thing>, in BigCollection<Thing>, out BigCollection<Product>', async () => {
@@ -69,8 +79,12 @@ describe('TypeChecker', () => {
     const b = EntityType.make(['Thing'], {}).bigCollectionOf();
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of out [Product], in [Thing], in [Thing]', async () => {
@@ -78,8 +92,12 @@ describe('TypeChecker', () => {
     const b = EntityType.make(['Thing'], {}).collectionOf();
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'out'}, {type: a, direction: 'in'}, {type: b, direction: 'in'}]);
-    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a collection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of out BigCollection<Product>, in BigCollection<Thing>, in BigCollection<Thing>', async () => {
@@ -87,8 +105,12 @@ describe('TypeChecker', () => {
     const b = EntityType.make(['Thing'], {}).bigCollectionOf();
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'out'}, {type: a, direction: 'in'}, {type: b, direction: 'in'}]);
-    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of in [~a] (is Thing), in [~b] (is Thing), out [Product]', async () => {
@@ -99,8 +121,12 @@ describe('TypeChecker', () => {
     b.collectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a collection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a trio of in BigCollection<~a> (is Thing), in BigCollection<~b> (is Thing), out BigCollection<Product>', async () => {
@@ -111,8 +137,12 @@ describe('TypeChecker', () => {
     b.bigCollectionType.variable.resolution = resolution;
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
@@ -120,9 +150,13 @@ describe('TypeChecker', () => {
     a.collectionType.variable.resolution = EntityType.make(['Thing'], {});
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.include(result.collectionType.canReadSubset.entitySchema.names, 'Thing');
-    assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.include(result.collectionType.canReadSubset.entitySchema.names, 'Thing');
+      assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a collection of a typeVariable with an entity constraint');
+    }
   });
 
   it('resolves a pair of in BigCollection<~a> (is Thing), out BigCollection<Product>', async () => {
@@ -130,9 +164,13 @@ describe('TypeChecker', () => {
     a.bigCollectionType.variable.resolution = EntityType.make(['Thing'], {});
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
-    assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-    assert.include(result.bigCollectionType.canReadSubset.entitySchema.names, 'Thing');
-    assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
+      assert.equal(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.include(result.bigCollectionType.canReadSubset.entitySchema.names, 'Thing');
+      assert.equal(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
+    }
   });
 
   it(`doesn't resolve a pair of out [~a (is Thing)], in [Product]`, async () => {
@@ -202,13 +240,21 @@ describe('TypeChecker', () => {
     const b = EntityType.make(['Product', 'Thing'], {});
     const c = EntityType.make(['Thing'], {});
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
-    assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+    if (a.variable.canReadSubset instanceof EntityType && a.variable.canWriteSuperset instanceof EntityType) {
+      assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('a should be a type variable with EntityType constraints');
+    }
 
     a = TypeVariable.make('a');
     result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'in'}, {type: b, direction: 'out'}]);
-    assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
-    assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+    if (a.variable.canReadSubset instanceof EntityType && a.variable.canWriteSuperset instanceof EntityType) {
+      assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
+      assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+    } else {
+      assert.fail('a should be a type variable with EntityType constraints'); 
+    }
   });
 
   it('correctly applies then resolves a one-sided Entity constraint', async () => {
@@ -315,7 +361,7 @@ describe('TypeChecker', () => {
     const newType = Handle.effectiveType(baseType, [connection]);
     assert.notStrictEqual(baseType, newType);
     assert.isNull(baseType.variable.resolution);
-    assert.isNotNull(newType.variable.resolution);
+    assert.isNotNull(newType instanceof TypeVariable && newType.variable.resolution);
   });
 
   it('can compare a type variable with a Collection handle', async () => {

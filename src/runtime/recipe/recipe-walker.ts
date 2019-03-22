@@ -14,7 +14,7 @@ import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {Walker} from './walker.js';
+import {Walker, Descendant} from './walker.js';
 
 export class RecipeWalker extends Walker {
 
@@ -41,7 +41,7 @@ export class RecipeWalker extends Walker {
   // tslint:disable-next-line: no-any
   onRequiredParticle?(recipe: Recipe, particle: Particle): any;
 
-  onResult(result) {
+  onResult(result: Descendant) {
     super.onResult(result);
     const recipe: Recipe = result.result;
     const updateList = [];
@@ -156,7 +156,7 @@ export class RecipeWalker extends Walker {
     this._runUpdateList(recipe, updateList);
   }
 
-  createDescendant(recipe, score): void {
+  createDescendant(recipe: Recipe, score: number): void {
     const valid = recipe.normalize();
     const hash = valid ? recipe.digest() : null;
     super.createWalkerDescendant(recipe, score, hash, valid);

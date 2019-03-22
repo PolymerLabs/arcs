@@ -36,7 +36,18 @@ import {Arc} from '../arc.js';
 
 export enum WalkerTactic {Permuted='permuted', Independent='independent'}
 
-export interface Descendant {result; score: number; derivation; hash; valid: boolean; errors?; normalized?;}
+export interface Descendant {
+  result; // TODO: Make Walker genericly typed.
+  score: number;
+  derivation: {
+    parent: Descendant;
+    strategy: Action
+  }[];
+  hash: Promise<string> | string;
+  valid: boolean;
+  errors?;
+  normalized?;
+}
 
 /**
  * An Action generates the list of Descendants by walking the object with a 
@@ -71,11 +82,11 @@ export abstract class Walker {
   // tslint:disable-next-line: variable-name
   static Independent: WalkerTactic = WalkerTactic.Independent;
   descendants: Descendant[];
-  currentAction;
-  currentResult;
+  currentAction: Action;
+  currentResult: Descendant;
   tactic: WalkerTactic;
 
-  constructor(tactic) {
+  constructor(tactic: WalkerTactic) {
     this.descendants = [];
     assert(tactic);
     this.tactic = tactic;
@@ -85,7 +96,7 @@ export abstract class Walker {
     this.currentAction = action;
   }
 
-  onResult(result): void {
+  onResult(result: Descendant): void {
     this.currentResult = result;
   }
 
@@ -97,7 +108,7 @@ export abstract class Walker {
     this.currentAction = undefined;
   }
 
-  static walk(results, walker: Walker, action: Action): Descendant[] {
+  static walk(results: Descendant[], walker: Walker, action: Action): Descendant[] {
     walker.onAction(action);
     results.forEach(result => {
       walker.onResult(result);

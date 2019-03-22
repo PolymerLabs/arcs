@@ -622,7 +622,10 @@ function test(args) {
   const failedRuns = [];
   for (let i = 1; i < repeatCount + 1; i++) {
     console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
-    const coveragePrefix = options.coverage ? `NODE_V8_COVERAGE=${coverageDir} node_modules/.bin/c8 -r html` : '';
+    if (options.coverage) {
+      process.env.NODE_V8_COVERAGE=coverageDir;
+    }
+    const coveragePrefix = options.coverage ? ` node_modules/.bin/c8 -r html` : '';
     const testResult = saneSpawn(
         `${coveragePrefix} node`,
         [
@@ -709,6 +712,8 @@ function health(args) {
   const migrationFiles = () => [...findProjectFiles(
       'src', null, fullPath => fullPath.endsWith('.js')
           && !fullPath.includes('/artifacts/')
+          && !fullPath.includes('\\artifacts\\')
+          && !fullPath.includes('\\runtime\\build\\')
           && !fullPath.includes('/runtime/build/'))];
 
   if (options.migration) {

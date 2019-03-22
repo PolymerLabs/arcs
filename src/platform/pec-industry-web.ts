@@ -1,6 +1,6 @@
 const WORKER_PATH = `https://$build/worker.js`;
 
-export const PecIndustry = loader => {
+const pecIndustry = loader => {
   // worker paths are relative to worker location, remap urls from there to here
   const remap = _expandUrls(loader._urlMap);
   const workerFactory = workerIndustry(loader);
@@ -37,4 +37,4 @@ const workerIndustry = loader => {
   return () => new Worker(workerUrl);
 };
 
-
+export {pecIndustry as PecIndustry};

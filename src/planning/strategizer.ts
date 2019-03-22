@@ -7,20 +7,21 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
-import {Action, Descendant} from '../runtime/recipe/walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
+import {Action, Descendant} from '../runtime/recipe/walker.js';
 
 export class Strategizer {
   _strategies: Strategy[];
   _evaluators: Strategy[];
   _generation = 0;
-  _internalPopulation: {fitness: number, individual}[] = [];
-  _population = [];
-  _generated = [];
+  _internalPopulation: {fitness: number, individual: Descendant}[] = [];
+  _population: Descendant[] = [];
+  _generated: Descendant[] = [];
   _ruleset: Ruleset;
-  _terminal = [];
-  populationHash;
+  _terminal: Descendant[] = [];
+  populationHash: Map<string, Descendant>;
 
   constructor(strategies: Strategy[], evaluators: Strategy[], ruleset: Ruleset) {
     this._strategies = strategies;
@@ -54,7 +55,7 @@ export class Strategizer {
     // Generate
     const generation = this.generation + 1;
     const generatedResults = await Promise.all(this._strategies.map(strategy => {
-      const recipeFilter = recipe => this._ruleset.isAllowed(strategy, recipe);
+      const recipeFilter = (recipe: Descendant) => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
         generated: this.generated.filter(recipeFilter),
@@ -66,17 +67,17 @@ export class Strategizer {
     const record :
       {generation: number,
         sizeOfLastGeneration: number,
-        generatedDerivationsByStrategy,
+        generatedDerivationsByStrategy: {[index: string]: number},
         generatedDerivations?: number,
         nullDerivations?: number,
         invalidDerivations?: number,
         duplicateDerivations?: number,
         duplicateSameParentDerivations?: number;
-        nullDerivationsByStrategy?,
-        invalidDerivationsByStrategy?,
-        duplicateDerivationsByStrategy?,
-        duplicateSameParentDerivationsByStrategy?,
-        survivingDerivations?
+        nullDerivationsByStrategy?: {[index: string]: number},
+        invalidDerivationsByStrategy?: {[index: string]: number},
+        duplicateDerivationsByStrategy?: {[index: string]: number},
+        duplicateSameParentDerivationsByStrategy?: {[index: string]: number},
+        survivingDerivations?: number
       }
       = {
       generation,
@@ -88,7 +89,7 @@ export class Strategizer {
       record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generatedResults[i].length;
     }
 
-    let generated = [].concat(...generatedResults);
+    let generated: Descendant[] = [].concat(...generatedResults);
 
     // TODO: get rid of this additional asynchrony
     generated = await Promise.all(generated.map(async result => {
@@ -111,7 +112,7 @@ export class Strategizer {
     generated = generated.filter(result => {
       const strategy = result.derivation[0].strategy.constructor.name;
       if (result.hash) {
-        const existingResult = this.populationHash.get(result.hash);
+        const existingResult = this.populationHash.get(result.hash as string);
         if (existingResult) {
           if (result.derivation[0].parent === existingResult) {
             record.nullDerivations += 1;
@@ -132,11 +133,11 @@ export class Strategizer {
               record.duplicateDerivationsByStrategy[strategy] = 0;
             }
             record.duplicateDerivationsByStrategy[strategy]++;
-            this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
+            this.populationHash.get(result.hash as string).derivation.push(result.derivation[0]);
           }
           return false;
         }
-        this.populationHash.set(result.hash, result);
+        this.populationHash.set(result.hash as string, result);
       }
       if (result.valid === false) {
         record.invalidDerivations++;
@@ -146,7 +147,7 @@ export class Strategizer {
       return true;
     });
 
-    const terminalMap = new Map();
+    const terminalMap = new Map<Recipe, Descendant>();
     for (const candidate of this.generated) {
       terminalMap.set(candidate.result, candidate);
     }
@@ -197,9 +198,9 @@ export class Strategizer {
     return record;
   }
 
-  static _mergeEvaluations(evaluations, generated) {
+  static _mergeEvaluations(evaluations: number[][], generated: Descendant[]): number[] {
     const n = generated.length;
-    const mergedEvaluations = [];
+    const mergedEvaluations: number[] = [];
     for (let i = 0; i < n; i++) {
       let merged = NaN;
       for (const evaluation of evaluations) {
@@ -222,22 +223,21 @@ export class Strategizer {
     }
     return mergedEvaluations;
   }
-
 }
 
 export class StrategizerWalker extends RecipeWalker {
-  constructor(tactic) {
+  constructor(tactic: WalkerTactic) {
     super(tactic);
   }
 
-  createDescendant(recipe, score): void {
+  createDescendant(recipe: Recipe, score: number): void {
     assert(this.currentAction instanceof Strategy, 'no current strategy');
     // Note that the currentAction assertion in the superclass method is now
     // guaranteed to succeed.
     super.createDescendant(recipe, score);
   }
 
-  static over(results, walker: StrategizerWalker, strategy: Strategy): Descendant[] {
+  static over(results: Descendant[], walker: StrategizerWalker, strategy: Strategy): Descendant[] {
     return super.walk(results, walker, strategy);
   }
 }
@@ -248,14 +248,14 @@ export abstract class Strategy extends Action {
     super(arc, args);
   }
 
-  async activate(strategizer) {
+  async activate(strategizer: Strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
   }
 
-  async evaluate(strategizer, individuals) {
+  async evaluate(strategizer: Strategizer, individuals: Descendant[]): Promise<number[]> {
     return individuals.map(() => NaN);
   }
 }
@@ -266,10 +266,9 @@ type StrategyClass = typeof Strategy;
 export interface StrategyDerived extends StrategyClass {}
 
 export class RulesetBuilder {
-  _orderingRules;
+  _orderingRules: Map<StrategyDerived, Set<StrategyDerived>>;
 
   constructor() {
-    // Strategy -> [Strategy*]
     this._orderingRules = new Map();
   }
 
@@ -291,7 +290,7 @@ export class RulesetBuilder {
    * E.g. ([A, B], [C, D], E) is a shorthand for:
    * (A, C), (A, D), (B, C), (B, D), (C, E), (D, E).
    */
-  order(...strategiesOrGroups) {
+  order(...strategiesOrGroups: (StrategyDerived | StrategyDerived[])[]) {
     for (let i = 0; i < strategiesOrGroups.length - 1; i++) {
       const current = strategiesOrGroups[i];
       const next = strategiesOrGroups[i + 1];
@@ -310,19 +309,19 @@ export class RulesetBuilder {
 
   build(): Ruleset {
     // Making the ordering transitive.
-    const beingExpanded = new Set();
-    const alreadyExpanded = new Set();
+    const beingExpanded = new Set<StrategyDerived>();
+    const alreadyExpanded = new Set<StrategyDerived>();
     for (const strategy of this._orderingRules.keys()) {
       this._transitiveClosureFor(strategy, beingExpanded, alreadyExpanded);
     }
     return new Ruleset(this._orderingRules);
   }
 
-  _transitiveClosureFor(strategy, beingExpanded, alreadyExpanded) {
+  _transitiveClosureFor(strategy: StrategyDerived, beingExpanded: Set<StrategyDerived>, alreadyExpanded: Set<StrategyDerived>): Set<StrategyDerived> {
     assert(!beingExpanded.has(strategy), 'Detected a loop in the ordering rules');
 
     const followingStrategies = this._orderingRules.get(strategy);
-    if (alreadyExpanded.has(strategy)) return followingStrategies || [];
+    if (alreadyExpanded.has(strategy)) return followingStrategies || new Set();
 
     if (followingStrategies) {
       beingExpanded.add(strategy);
@@ -336,22 +335,22 @@ export class RulesetBuilder {
     }
     alreadyExpanded.add(strategy);
 
-    return followingStrategies || [];
+    return followingStrategies || new Set();
   }
 }
 
 export class Ruleset {
-  _orderingRules;
+  _orderingRules: Map<StrategyDerived, Set<StrategyDerived>>;
 
-  constructor(orderingRules) {
+  constructor(orderingRules: Map<StrategyDerived, Set<StrategyDerived>>) {
     this._orderingRules = orderingRules;
   }
 
-  isAllowed(strategy: Strategy, recipe): boolean {
-    const forbiddenAncestors = this._orderingRules.get(strategy.constructor);
+  isAllowed(strategy: Strategy, recipe: Descendant): boolean {
+    const forbiddenAncestors = this._orderingRules.get(strategy.constructor as StrategyDerived);
     if (!forbiddenAncestors) return true;
     // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.
-    return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor));
+    return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor as StrategyDerived));
   }
   // tslint:disable-next-line: variable-name
   static Builder = RulesetBuilder;

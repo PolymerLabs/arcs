@@ -54,7 +54,7 @@ export abstract class Type {
 
   abstract toLiteral() : TypeLiteral;
 
-  static unwrapPair(type1: Type, type2: Type) {
+  static unwrapPair(type1: Type, type2: Type): [Type, Type] {
     if (type1.tag === type2.tag) {
       const contained1 = type1.getContainedType();
       if (contained1 !== null) {
@@ -94,6 +94,20 @@ export abstract class Type {
     return true;
   }
 
+  // If you want to type-check fully, this is an improvement over just using
+  // this instaneceof CollectionType,
+  // because instanceof doesn't propagate generic restrictions.
+  isCollectionType<T extends Type>(): this is CollectionType<T> {
+    return this instanceof CollectionType;
+  }
+
+  // If you want to type-check fully, this is an improvement over just using
+  // this instaneceof BigCollectionType,
+  // because instanceof doesn't propagate generic restrictions.
+  isBigCollectionType<T extends Type>(): this is BigCollectionType<T> {
+    return this instanceof BigCollectionType;
+  }
+
   // TODO: update call sites to use the type checker instead (since they will
   // have additional information about direction etc.)
   equals(type) {
@@ -109,7 +123,7 @@ export abstract class Type {
     return this;
   }
 
-  _applyExistenceTypeTest(test) {
+  _applyExistenceTypeTest(test: (type: Type) => boolean) {
     return test(this);
   }
 
@@ -161,11 +175,11 @@ export abstract class Type {
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
-  isMoreSpecificThan(type) {
+  isMoreSpecificThan(type: Type) {
     return this.tag === type.tag && this._isMoreSpecificThan(type);
   }
 
-  protected _isMoreSpecificThan(type) {
+  protected _isMoreSpecificThan(type): boolean {
     throw new Error(`isMoreSpecificThan not implemented for ${this}`);
   }
 
