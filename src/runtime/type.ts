@@ -189,7 +189,7 @@ export abstract class Type {
    * before cloning should still be associated after cloning. To maintain this 
    * property, create a Map() and pass it into all clone calls in the group.
    */
-  clone(variableMap) {
+  clone(variableMap: Map<string, Type>) {
     return this.resolvedType()._clone(variableMap);
   }
 

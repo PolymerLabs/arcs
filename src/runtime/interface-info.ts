@@ -11,21 +11,51 @@
 import {assert} from '../platform/assert-web.js';
 
 import {TypeChecker} from './recipe/type-checker.js';
-import {Type, TypeVariable} from './type.js';
-import { ParticleSpec } from './particle-spec.js';
+import {Type, TypeVariable, TypeLiteral} from './type.js';
+import {ParticleSpec} from './particle-spec.js';
 
-function _fromLiteral(member) {
-  if (!!member && !(member instanceof Type) && typeof member === 'object') {
-    return Type.fromLiteral(member);
+function _typeFromLiteral(member: TypeLiteral): Type {
+  return Type.fromLiteral(member);
+}
+
+function _typeVarOrStringFromLiteral(member: TypeLiteral | string): TypeVariable | string {
+  if (typeof member === 'object') {
+    return _typeFromLiteral(member) as TypeVariable;
   }
   return member;
 }
 
-function _toLiteral(member) {
-  if (!!member && member.toLiteral) {
+function _HandleFromLiteral({type, name, direction}: HandleLiteral): Handle {
+  const typel = type ? _typeFromLiteral(type) : undefined;
+  const namel = name ?  _typeVarOrStringFromLiteral(name) : undefined;
+  return {type: typel, name: namel, direction};
+}
+
+function _SlotFromLiteral({name, direction, isRequired, isSet}: SlotLiteral): Slot {
+  const namel = name ? _typeVarOrStringFromLiteral(name) : undefined;
+  return {name: namel, direction, isRequired, isSet};
+}
+
+function _typeToLiteral(member: Type): TypeLiteral {
+  return member.toLiteral();
+}
+
+function _typeVarOrStringToLiteral(member: TypeVariable | string): TypeLiteral | string {
+  if (member instanceof TypeVariable) {
     return member.toLiteral();
   }
   return member;
+}
+
+function _HandleToLiteral({type, name, direction}: Handle): HandleLiteral {
+  const typel = type ? _typeToLiteral(type): undefined;
+  const namel = name ? _typeVarOrStringToLiteral(name): undefined;
+  return {type: typel, name: namel, direction};
+}
+
+function _SlotToLiteral({name, direction, isRequired, isSet}:Slot): SlotLiteral {
+  const namel = name ? _typeVarOrStringToLiteral(name): undefined;
+  return {name: namel, direction, isRequired, isSet};
 }
 
 const handleFields = ['type', 'name', 'direction'];
@@ -38,6 +68,12 @@ interface Handle {
   direction?: string;
 }
 
+interface HandleLiteral {
+  type?: TypeLiteral;
+  name?: string|TypeLiteral;
+  direction?: string;
+}
+
 // TODO(lindner) only tests use optional props
 interface Slot {
   name?: string|TypeVariable;
@@ -46,13 +82,33 @@ interface Slot {
   isSet?: boolean;
 }
 
+interface SlotLiteral {
+  name?: string|TypeLiteral;
+  direction?: string;
+  isRequired?: boolean;
+  isSet?: boolean;
+}
+
+interface TypeVarReference {
+  object: Handle|Slot;
+  field: string;
+}
+
+export interface InterfaceInfoLiteral {
+  name: string;
+  handles: HandleLiteral[];
+  slots: SlotLiteral[];
+}
+
+type MatchResult = {var: TypeVariable, value: Type, direction: string};
+
 export class InterfaceInfo {
   name: string;
   handles: Handle[];
   slots: Slot[];
 
   // TODO(lindner) only accessed in tests
-  public readonly typeVars: {object: Handle|Slot, field: string}[];
+  public readonly typeVars: TypeVarReference[];
 
   constructor(name: string, handles: Handle[], slots: Slot[]) {
     assert(name);
@@ -83,8 +139,8 @@ export class InterfaceInfo {
     return 'InterfaceInfo';
   }
 
-  mergeTypeVariablesByName(variableMap) {
-    this.typeVars.map(({object, field}) => object[field] = object[field].mergeTypeVariablesByName(variableMap));
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+    this.typeVars.map(({object, field}) => object[field] = (object[field] as Type).mergeTypeVariablesByName(variableMap));
   }
 
   get canReadSubset() {
@@ -95,7 +151,7 @@ export class InterfaceInfo {
     return this._cloneAndUpdate(typeVar => typeVar.canWriteSuperset);
   }
 
-  isMoreSpecificThan(other) {
+  isMoreSpecificThan(other: InterfaceInfo) {
     if (this.handles.length !== other.handles.length ||
         this.slots.length !== other.slots.length) {
       return false;
@@ -112,7 +168,7 @@ export class InterfaceInfo {
     return true;
   }
 
-  _applyExistenceTypeTest(test) {
+  _applyExistenceTypeTest(test: (t: TypeVarReference) => boolean) {
     for (const typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
@@ -141,29 +197,29 @@ ${this._handlesToManifestString()}
 ${this._slotsToManifestString()}`;
   }
 
-  static fromLiteral(data) {
-    const handles = data.handles.map(handle => ({type: _fromLiteral(handle.type), name: _fromLiteral(handle.name), direction: _fromLiteral(handle.direction)}));
-    const slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction), isRequired: _fromLiteral(slot.isRequired), isSet: _fromLiteral(slot.isSet)}));
+  static fromLiteral(data: InterfaceInfoLiteral) {
+    const handles = data.handles.map(_HandleFromLiteral);
+    const slots = data.slots.map(_SlotFromLiteral);
     return new InterfaceInfo(data.name, handles, slots);
   }
 
-  toLiteral() {
-    const handles = this.handles.map(handle => ({type: _toLiteral(handle.type), name: _toLiteral(handle.name), direction: _toLiteral(handle.direction)}));
-    const slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction), isRequired: _toLiteral(slot.isRequired), isSet: _toLiteral(slot.isSet)}));
+  toLiteral(): InterfaceInfoLiteral {
+    const handles = this.handles.map(_HandleToLiteral);
+    const slots = this.slots.map(_SlotToLiteral);
     return {name: this.name, handles, slots};
   }
 
-  clone(variableMap) : InterfaceInfo {
+  clone(variableMap: Map<string, Type>) : InterfaceInfo {
     const handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new InterfaceInfo(this.name, handles, slots);
   }
 
-  cloneWithResolutions(variableMap) {
+  cloneWithResolutions(variableMap: Map<string, Type>) {
     return this._cloneWithResolutions(variableMap);
   }
 
-  _cloneWithResolutions(variableMap) {
+  _cloneWithResolutions(variableMap: Map<string, Type>) {
     const handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type._cloneWithResolutions(variableMap) : undefined}));
     const slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new InterfaceInfo(this.name, handles, slots);
@@ -190,7 +246,7 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 
-  tryMergeTypeVariablesWith(other) {
+  tryMergeTypeVariablesWith(other: InterfaceInfo) {
     // Type variable enabled slot matching will Just Work when we
     // unify slots and handles.
     if (!this._equalItems(other.slots, this.slots, this._equalSlot)) {
@@ -202,7 +258,7 @@ ${this._slotsToManifestString()}`;
 
     const handles = new Set(this.handles);
     const otherHandles = new Set(other.handles);
-    const handleMap = new Map();
+    const handleMap = new Map<Handle, Handle>();
     let sizeCheck = handles.size;
     while (handles.size > 0) {
       const handleMatches = [...handles.values()].map(
@@ -229,7 +285,7 @@ ${this._slotsToManifestString()}`;
     const handleList: Handle[] = [];
     for (const handle of this.handles) {
       const otherHandle = handleMap.get(handle);
-      let resultType;
+      let resultType: Type;
       if (handle.type.hasVariable || otherHandle.type.hasVariable) {
         resultType = TypeChecker._tryMergeTypeVariable(handle.type, otherHandle.type);
         if (!resultType) {
@@ -248,7 +304,7 @@ ${this._slotsToManifestString()}`;
     return this._cloneAndUpdate(typeVar => typeVar.resolvedType());
   }
 
-  equals(other) {
+  equals(other: InterfaceInfo) {
     if (this.handles.length !== other.handles.length) {
       return false;
     }
@@ -264,15 +320,15 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 
-  _equalHandle(handle, otherHandle) {
+  _equalHandle(handle: Handle, otherHandle: Handle) {
     return handle.name === otherHandle.name && handle.direction === otherHandle.direction && handle.type.equals(otherHandle.type);
   }
 
-  _equalSlot(slot, otherSlot) {
+  _equalSlot(slot: Slot, otherSlot: Slot) {
     return slot.name === otherSlot.name && slot.direction === otherSlot.direction && slot.isRequired === otherSlot.isRequired && slot.isSet === otherSlot.isSet;
   }
 
-  _equalItems(otherItems, items, compareItem) {
+  _equalItems<T>(otherItems: T[], items: T[], compareItem: (a: T, b: T) => boolean) {
     for (const otherItem of otherItems) {
       let exists = false;
       for (const item of items) {
@@ -289,25 +345,25 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 
-  _cloneAndUpdate(update) {
+  _cloneAndUpdate(update: (t: Type) => Type) {
     const copy = this.clone(new Map());
     copy.typeVars.forEach(typeVar => InterfaceInfo._updateTypeVar(typeVar, update));
     return copy;
   }
 
-  static _updateTypeVar(typeVar, update): void {
+  static _updateTypeVar(typeVar: TypeVarReference, update: (t: Type) => Type): void {
     typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
   }
 
-  static isTypeVar(reference): boolean {
-    return (reference instanceof Type) && reference.hasProperty(r => r instanceof TypeVariable);
+  static isTypeVar(reference: TypeVariable | Type | string | boolean): boolean {
+    return reference instanceof TypeVariable || reference instanceof Type && reference.hasVariable;
   }
 
-  static mustMatch(reference): boolean {
+  static mustMatch(reference: TypeVariable | Type | string | boolean): boolean {
     return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
   }
 
-  static handlesMatch(interfaceHandle, particleHandle): boolean|{var, value, direction}[] {
+  static handlesMatch(interfaceHandle: Handle, particleHandle: Handle): boolean|MatchResult[] {
     if (InterfaceInfo.mustMatch(interfaceHandle.name) &&
         interfaceHandle.name !== particleHandle.name) {
       return false;
@@ -328,7 +384,7 @@ ${this._slotsToManifestString()}`;
     }
   }
 
-  static slotsMatch(interfaceSlot, particleSlot): boolean {
+  static slotsMatch(interfaceSlot: Slot, particleSlot: Slot): boolean {
     if (InterfaceInfo.mustMatch(interfaceSlot.name) &&
         interfaceSlot.name !== particleSlot.name) {
       return false;
@@ -348,34 +404,37 @@ ${this._slotsToManifestString()}`;
     return true;
   }
 
-  particleMatches(particleSpec): boolean {
+  particleMatches(particleSpec: ParticleSpec): boolean {
     const interfaceInfo = this.cloneWithResolutions(new Map());
     return interfaceInfo.restrictType(particleSpec) !== false;
   }
 
-  restrictType(particleSpec): boolean {
+  restrictType(particleSpec: ParticleSpec): boolean {
     return this._restrictThis(particleSpec);
   }
-
+  
   _restrictThis(particleSpec: ParticleSpec): boolean {
     const handleMatches = this.handles.map(h => particleSpec.handleConnections.map(c => ({match: c, result: InterfaceInfo.handlesMatch(h, c)}))
                               .filter(a => a.result !== false)
     );
 
-    const particleSlots: {}[] = [];
+    const particleSlots: Slot[] = [];
     particleSpec.slotConnections.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
       consumedSlot.provideSlotConnections.forEach(providedSlot => {
         particleSlots.push({name: providedSlot.name, direction: 'provide', isRequired: false, isSet: providedSlot.isSet});
       });
     });
-    let slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => InterfaceInfo.slotsMatch(slot, particleSlot)));
-    slotMatches = slotMatches.map(matchList => matchList.map(slot => ({match: slot, result: true})));
+    const slotsThatMatch = this.slots.map(slot => particleSlots.filter(particleSlot => InterfaceInfo.slotsMatch(slot, particleSlot)));
+    const slotMatches = slotsThatMatch.map(matchList => matchList.map(slot => ({match: slot, result: true})));
 
-    const exclusions = [];
+    interface Match<T> {
+      match: T;
+      result: boolean | MatchResult[];
+    }
 
     // TODO: this probably doesn't deal with multiple match options.
-    function choose(list, exclusions) {
+    function choose<T>(list: Match<T>[][], exclusions: T[]): false | MatchResult[] {
       if (list.length === 0) {
         return [];
       }
@@ -388,7 +447,10 @@ ${this._slotsToManifestString()}`;
         newExclusions.push(connection.match);
         const constraints = choose(list, newExclusions);
         if (constraints !== false) {
-          return connection.result.length ? constraints.concat(connection.result) : constraints;
+          if (typeof connection.result === 'boolean') {
+            return constraints;
+          }
+          return constraints.concat(connection.result);
         }
       }
 
