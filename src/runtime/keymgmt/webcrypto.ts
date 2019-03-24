@@ -134,7 +134,7 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
   }
 
   static hex(buffer: ArrayBuffer): string {
-    const hexCodes = <string[]>[];
+    const hexCodes: string[] = [];
     const view = new DataView(buffer);
     for (let i = 0; i < view.byteLength; i += 4) {
       // Using getUint32 reduces the number of iterations needed (we process 4 bytes each time)

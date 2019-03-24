@@ -39,7 +39,7 @@ for (let i = 0; i < 64; ++i) {
 
 export function encode(bytes: ArrayBuffer): string {
     const array = new Uint8Array(bytes);
-    const base64 = <string[]>[];
+    const base64: string[] = [];
     let index = 0;
     let quantum: number;
     let value: number;
