@@ -71,7 +71,7 @@ const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      const arc =  await Pipe.receiveEntity(userContext.context, recipes, callback, json);
+      const arc =  await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
       return String(arc.id);
     }
   } catch (x) {
@@ -79,9 +79,9 @@ const receiveJsonEntity = async json => {
   }
 };
 
-const callback = (arc, text) => {
+const foundSuggestions = (arc, text) => {
   if (testMode) {
-    console.log(`foundSuggestions (testMode): "${text}"`);
+    console.log(`[testMode] foundSuggestions("${String(arc.id)}", "${text}")`);
   } else {
     console.warn(`invoking DeviceClient.foundSuggestions("${String(arc.id)}", "${text}")`);
     if (client) {
