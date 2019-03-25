@@ -226,7 +226,7 @@ export class APIPort {
     this['before' + e.data.messageType](e.data.messageBody);
   }
 
-  send(name, args) {
+  send(name: string, args: {}) {
     const call = {messageType: name, messageBody: args, stack: this._attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
     if (this._debugAttachment) {

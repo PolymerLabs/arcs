@@ -108,9 +108,9 @@ class WebCryptoWrappedKey implements WrappedKey {
  * An implementation of PrivateKey using WebCrypto.
  */
 class WebCryptoPrivateKey extends WebCryptoStorableKey<CryptoKey> implements PrivateKey {
-    constructor(key) {
-        super(key);
-    }
+  constructor(key: CryptoKey) {
+    super(key);
+  }
 
     cryptoKey() {
         return this.storableKey();
@@ -121,8 +121,7 @@ class WebCryptoPrivateKey extends WebCryptoStorableKey<CryptoKey> implements Pri
  * An implementation of PublicKey using WebCrypto.
  */
 class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements PublicKey {
-
-  constructor(key) {
+  constructor(key: CryptoKey) {
     super(key);
   }
 
@@ -130,12 +129,12 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
     return this.storableKey();
   }
 
-  static digest(str): PromiseLike<string> {
+  static digest(str: string): PromiseLike<string> {
     return WebCryptoPublicKey.sha256(str);
   }
 
-  static hex(buffer): string {
-    const hexCodes = [];
+  static hex(buffer: ArrayBuffer): string {
+    const hexCodes: string[] = [];
     const view = new DataView(buffer);
     for (let i = 0; i < view.byteLength; i += 4) {
       // Using getUint32 reduces the number of iterations needed (we process 4 bytes each time)
@@ -152,7 +151,7 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
     return hexCodes.join("");
   }
 
-  static sha256(str): PromiseLike<string> {
+  static sha256(str: string): PromiseLike<string> {
     // We transform the string into an arraybuffer.
     const buffer = new Uint8Array(str.split('').map(x => x.charCodeAt(0)));
     return crypto.subtle.digest("SHA-256", buffer).then((hash) => WebCryptoPublicKey.hex(hash));
@@ -163,8 +162,6 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
       // Use the modulus 'n' as the fingerprint since 'e' is fixed
       .then(key => WebCryptoPublicKey.digest(key['n']));
   }
-
-
 }
 
 class WebCryptoSessionKey implements SessionKey, TestableKey {
@@ -342,12 +339,12 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
                     {keyPath: "keyFingerPrint"}));
 
             const tx = db.transaction(ARCS_CRYPTO_STORE_NAME, 'readwrite');
-            const store = tx.objectStore(ARCS_CRYPTO_STORE_NAME);
+            const store = tx.objectStore<KeyRecord, IDBValidKey>(ARCS_CRYPTO_STORE_NAME);
             const result = await fn(store);
             await tx.complete;
             db.close();
             return Promise.resolve(result);
-        } catch(e) {
+        } catch (e) {
             return Promise.reject(e);
         }
     }

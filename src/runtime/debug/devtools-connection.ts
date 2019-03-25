@@ -11,13 +11,12 @@
 import {DevtoolsBroker} from '../../../devtools/shared/devtools-broker.js';
 import {assert} from '../../platform/assert-web.js';
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
-
 import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
 
 let channel: DevtoolsChannel = null;
 let isConnected = false;
-let onceConnectedResolve = null;
-let onceConnected = new Promise(resolve => onceConnectedResolve = resolve);
+let onceConnectedResolve: DevtoolsChannel = null;
+let onceConnected: Promise<DevtoolsChannel> = new Promise(resolve => onceConnectedResolve = resolve);
 
 DevtoolsBroker.onceConnected.then(() => {
   DevtoolsConnection.ensure();
@@ -54,7 +53,7 @@ export class DevtoolsForTests {
     assert(channel);
     isConnected = false;
     onceConnectedResolve = null;
-    onceConnected = new Promise(resolve => onceConnectedResolve = resolve);
+    onceConnected = new Promise<DevtoolsChannel>(resolve => onceConnectedResolve = resolve);
     channel = null;
   }
 }

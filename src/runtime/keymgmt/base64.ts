@@ -39,10 +39,10 @@ for (let i = 0; i < 64; ++i) {
 
 export function encode(bytes: ArrayBuffer): string {
     const array = new Uint8Array(bytes);
-    const base64 = [];
+    const base64: string[] = [];
     let index = 0;
-    let quantum;
-    let value;
+    let quantum: number;
+    let value: number;
     /* tslint:disable:no-bitwise */
     // Grab as many sets of 3 bytes as we can, that form 24 bits.
     while (index + 2 < array.byteLength) {
@@ -108,7 +108,7 @@ export function decode(str: string): Uint8Array {
     const buffer = new Uint8Array(new ArrayBuffer(bytes));
     let index = 0;
     let bufferIndex = 0;
-    let quantum;
+    let quantum: number;
     if (numPad > 0) {
         size -= 4; // handle the last one specially
     }

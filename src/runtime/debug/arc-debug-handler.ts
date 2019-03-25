@@ -16,6 +16,8 @@ import {Particle} from '../recipe/particle.js';
 import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {enableTracingAdapter} from './tracing-adapter.js';
+import {Slot} from '../recipe/slot.js';
+import {stringify} from 'querystring';
 
 // Arc-independent handlers for devtools logic.
 DevtoolsConnection.onceConnected.then(devtoolsChannel => {
@@ -58,8 +60,9 @@ export class ArcDebugHandler {
   recipeInstantiated({particles}: {particles: Particle[]}) {
     if (!this.arcDevtoolsChannel) return;
 
-    const truncate = ({id, name}) => ({id, name});
-    const slotConnections = [];
+    type TruncatedSlot = {id: string, name: string};
+    const truncate = ({id, name}: Slot) => ({ id, name });
+    const slotConnections = <{particleId: string, consumed: TruncatedSlot, provided: TruncatedSlot[]}[]>[];
     particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
       if (cs.targetSlot) {
         slotConnections.push({
