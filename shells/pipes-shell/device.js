@@ -51,30 +51,19 @@ const marshalRecipeContext = async () => {
 
 const deviceApi = {
   receiveEntity(json) {
-    console.log('received entity...');
-    receiveJsonEntity(json);
-    return true;
+    const id = receiveJsonEntity(json);
+    console.log(`[${id}]: received entity`);
+    return id;
   },
   observeEntity(json) {
-    console.log('observing entity...');
+    console.log('observing entity');
     observeJsonEntity(json);
     return true;
   },
   flush() {
-    console.log('flushing caches...');
+    console.log('flushing caches');
     Utils.env.loader.flushCaches();
     marshalRecipeContext();
-  }
-};
-
-const callback = text => {
-  if (testMode) {
-    console.log(`foundSuggestions (testMode): "${text}"`);
-  } else {
-    console.warn(`invoking DeviceClient.foundSuggestions("${text}")`);
-    if (client) {
-      client.foundSuggestions(text);
-    }
   }
 };
 
@@ -82,10 +71,22 @@ const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      return await Pipe.receiveEntity(userContext.context, recipes, callback, json);
+      const arc =  await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
+      return String(arc.id);
     }
   } catch (x) {
     console.error(x);
+  }
+};
+
+const foundSuggestions = (arc, text) => {
+  if (testMode) {
+    console.log(`[testMode] foundSuggestions("${String(arc.id)}", "${text}")`);
+  } else {
+    console.warn(`invoking DeviceClient.foundSuggestions("${String(arc.id)}", "${text}")`);
+    if (client) {
+      client.foundSuggestions(String(arc.id), text);
+    }
   }
 };
 

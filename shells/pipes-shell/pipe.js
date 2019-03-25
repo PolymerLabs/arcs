@@ -105,27 +105,27 @@ const recipeByName = (manifest, name) => {
 
 const watchOneChange = (store, callback, arc) => {
   const cb = info => {
-    onChange(info, callback);
+    onChange(arc, info, callback);
     store.off('change', cb);
     arc.dispose();
   };
   store.on('change', cb, arc);
 };
 
-const onChange = (change, callback) => {
+const onChange = (arc, change, callback) => {
   //log(change, callback.toString());
   log(change);
   if (change.data) {
     const data = change.data.rawData;
     const text = data.json || data.text || data.address;
-    callback(text);
+    callback(arc, text);
     //log(text);
     const dt = now() - t0;
     //log(`dt = ${dt.toFixed(1)}ms`);
     if (typeof document != 'undefined') {
       document.body.appendChild(Object.assign(document.createElement('div'), {
         style: `padding: 16px;`,
-        innerText: `${text}\n\n${dt.toFixed(1)}ms`
+        innerText: `[${arc.id}] ${text}\n\n${dt.toFixed(1)}ms`
       }));
     }
   }
