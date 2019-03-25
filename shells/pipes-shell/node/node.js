@@ -21,11 +21,11 @@ import {DeviceApiFactory} from '../device.js';
 // usage:
 //
 // ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-// ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
+// [arcid =] ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
 //
-// ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
+// [arcid =] ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
 //
-// results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
+// results returned via `DeviceClient.foundSuggestions(arcid, json)` (if it exists)
 
 (async () => {
   console.log(`version: feb-27.0`);

@@ -25,11 +25,11 @@ import {DevtoolsSupport} from '../../lib/devtools-support.js';
 // usage:
 //
 // ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-// ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
+// [arcid =] ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
 //
-// ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
+// [arcid =] ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
 //
-// results returned via `DeviceClient.foundSuggestions(json)` (if it exists)
+// results returned via `DeviceClient.foundSuggestions(arcid, json)` (if it exists)
 
 // can be used for testing:
 //
@@ -37,7 +37,7 @@ import {DevtoolsSupport} from '../../lib/devtools-support.js';
 //   shellReady() {
 //     console.warn('context is ready!');
 //   },
-//   foundSuggestions(json) {
+//   foundSuggestions(arcid, json) {
 //   }
 // };
   window.onclick = () => {
@@ -50,7 +50,7 @@ import {DevtoolsSupport} from '../../lib/devtools-support.js';
 const storage = `pouchdb://local/arcs/`;
 const version = `version: mar-14`;
 
-console.log(version);
+console.log(`${version} -- ${storage}`);
 
 (async () => {
   // if remote DevTools are requested, wait for connect
