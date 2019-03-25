@@ -1,0 +1,29 @@
+<!doctype html>
+
+<script type="module">
+  import '../lib/build/firebase.js';
+  import {database} from '../lib/firebase.js'
+  import {xen} from '../lib/xen.js'
+  //
+  const itemTemplate = Xen.html`
+    <div><icon>+</icon><span>{{key}}</span></div>
+  `;
+  //
+  const snarfAll = async () => {
+    const ref = database.ref('0_6_0');
+    console.log('querying database...');
+    ref.once('value', snap => {
+      console.log('evaluating snapshot...');
+      const corpus = snap.val();
+      const prefixi = {};
+      Object.keys(corpus).forEach(key => {
+        const prefix = key.split('-').shift();
+        const group = prefixi[prefix] || (prefixi[prefix] = {});
+        group[key] = corpus[key];
+      });
+      console.log('dumping keys...');
+      Object.keys(prefixi).forEach(prefix => document.body.appendChild(Object.assign(document.createElement('div'), {innerText: prefix})));
+    });
+  }
+  snarfAll();
+</script>
