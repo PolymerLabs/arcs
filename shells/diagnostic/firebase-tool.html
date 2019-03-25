@@ -1,11 +1,17 @@
 <!doctype html>
 
+<style>
+  icon {
+    margin-right: 8px;
+  }
+</style>
+
 <script type="module">
   import '../lib/build/firebase.js';
   import {database} from '../lib/firebase.js'
-  import {xen} from '../lib/xen.js'
+  import {Xen} from '../lib/xen.js'
   //
-  const itemTemplate = Xen.html`
+  const itemTemplate = Xen.Template.html`
     <div><icon>+</icon><span>{{key}}</span></div>
   `;
   //
@@ -22,7 +28,10 @@
         group[key] = corpus[key];
       });
       console.log('dumping keys...');
-      Object.keys(prefixi).forEach(prefix => document.body.appendChild(Object.assign(document.createElement('div'), {innerText: prefix})));
+      Object.keys(prefixi).forEach(prefix => {
+        //document.body.appendChild(Object.assign(document.createElement('div'), {innerText: prefix}));
+        const dom = Xen.Template.stamp(itemTemplate).appendTo(document.body).set({key: prefix});
+      });
     });
   }
   snarfAll();
