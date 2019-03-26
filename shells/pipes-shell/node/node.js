@@ -8,7 +8,10 @@
 * http://polymer.github.io/PATENTS.txt
 */
 
-import {paths} from './config.js';
+ // configure
+import '../../lib/loglevel-node.js';
+import {paths} from './paths.js';
+import {manifest} from './config.js';
 
 // optional
 //import '../../lib/pouchdb-support.js';
@@ -27,17 +30,32 @@ import {DeviceApiFactory} from '../device.js';
 //
 // results returned via `DeviceClient.foundSuggestions(arcid, json)` (if it exists)
 
+//const storage = `pouchdb://local/arcs/`;
+const storage = `volatile://`;
+const version = `version: mar-26`;
+
+console.log(`${version} -- ${storage}`);
+
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err);
+  process.exit(1); //mandatory (as per the Node docs)
+});
+
 (async () => {
-  console.log(`version: feb-27.0`);
-  global.ShellApi = await DeviceApiFactory(`volatile://`, global.DeviceClient);
   // configure arcs environment
   Utils.init(paths.root, paths.map);
+  // configure ShellApi (DeviceClient is bound in by outer process, otherwise undefined)
+  global.ShellApi = await DeviceApiFactory(storage, manifest, global.DeviceClient);
 })();
 
-// test it
+if ('test' in global.params) {
+  setTimeout(() => test_on_start(), 1000);
+}
 
-// setTimeout(() => {
-//   global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
-//   global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
-//   global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
-// }, 500);
+const test_on_start = async () => {
+  global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
+  let id = global.ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`);
+  console.log('request id', id);
+  id = global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
+  console.log('request id', id);
+};

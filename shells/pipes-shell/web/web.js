@@ -48,7 +48,7 @@ import {DevtoolsSupport} from '../../lib/devtools-support.js';
 //
 
 const storage = `pouchdb://local/arcs/`;
-const version = `version: mar-14`;
+const version = `version: mar-26`;
 
 console.log(`${version} -- ${storage}`);
 

@@ -30,10 +30,10 @@ module.exports = {
     }]
   },
   stats: {
-    //modulesSort: '!size',
-    maxModules: 300,
-    exclude: false,
-    excludeModules: false
+    modulesSort: '!size',
+    //maxModules: 300,
+    //exclude: false,
+    //excludeModules: false
   },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
@@ -42,9 +42,9 @@ module.exports = {
       resource =>  resource.request = resource.request.replace(/-web/, `-node`)
     ),
     new webpack.NormalModuleReplacementPlugin(
-      // use -node versions from platform/*
-      /config.js/,
-      resource =>  resource.request = './deploy/source/config.js'
+      // use deployment configuration
+      /paths.js/,
+      resource =>  resource.request = './deploy/source/paths.js'
     )
   ],
 };

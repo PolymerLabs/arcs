@@ -26,10 +26,10 @@ pipes-shell exposes JS entry/exit points designed to be bound into another proce
 
 ```
 > ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`)
-> ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
-> ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
+> [transactionId] = ShellApi.receiveEntity(`{"type": "com.google.android.apps.maps"}`)
+> [transactionId] = ShellApi.receiveEntity(`{"type": "com.music.spotify"}`)
 ```
-Results are returned via `DeviceClient.foundSuggestions(json)` (if it exists). Returned JSON depends on the type of entity that triggered the request. As of this writing, for `com.google.android.apps.maps` and `com.music.spotify`, the json encodes a single pipe-entity, e.g:
+Results are returned via `DeviceClient.foundSuggestions(transactionId, json)` (if it exists). Returned JSON depends on the type of entity that triggered the request. As of this writing, for `com.google.android.apps.maps` and `com.music.spotify`, the json encodes a single pipe-entity, e.g:
 
 `{"type":"address","name":"East Pole","timestamp":1552937651253,"source":"com.unknown"}`
 
@@ -39,7 +39,7 @@ Example of implementing exit points for testing:
     shellReady() {
       console.warn('context is ready!');
     },
-    foundSuggestions(json) {
+    foundSuggestions(transactionId, json) {
     }
   };
 ```
@@ -47,7 +47,7 @@ Also, when run under headful chrome, clicking the display will run a test receiv
 
 ## Flags
 
-pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]&solo=[manifest-url]
+`pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]&solo=[manifest-url]`
 
 - log[=level]
   - controls logging verbosity
@@ -63,6 +63,23 @@ pipes-shell/web/index.html?log[=[0..2]]&remote-explore-key=[key]&solo=[manifest-
 - solo
   - fetch manifest from [manifest-url] instead of the default
   - if omitted, use default manifest
+
+`pipes-shell/node/serve.sh log[=[0..2]] solo=[manifest-url] test`
+
+- log[=level]
+  - controls logging verbosity
+    - 0 no logging
+    - 1 logging from Particles only
+    - 2 logging form Particles and Shell
+  - if `level` is ommitted, it defaults to `log=2`
+  - if `log` is ommitted, it defaults to `log=0`
+
+- solo
+  - fetch manifest from [manifest-url] instead of the default
+  - if omitted, use default manifest
+
+- test
+  - test each ShellApi invocation at startup
 
 ## Glitch Support
 

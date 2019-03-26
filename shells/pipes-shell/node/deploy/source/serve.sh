@@ -1,2 +1,2 @@
 #!/bin/sh
-node "$@" --no-warnings ./shell.js
+node --no-warnings ./shell.js "$@" 
