@@ -1,5 +1,6 @@
-// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the DomParticle library, which
-// is how particles that render to the DOM are defined.
+// The JavaScript code for the Hello World particle. This is mostly boilerplate for defining a new particle using the DomParticle class, which
+// is a subclass of Particle that provides convenient methods for rendering to the DOM. (There are other more basic ways to render to the DOM,
+// but DomParticle provides a nice abstraction for it, similar to React).
 defineParticle(({DomParticle, html}) => {
   return class extends DomParticle {
     // Getter function which returns static HTML to display. In later tutorials we'll see how to use the templating functionality this provides.
