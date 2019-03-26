@@ -5,16 +5,16 @@
 
 // Tutorial 1: Hello World
 // Create your first particle and recipe.
-import 'HelloWorld/HelloWorld.recipe'
+import '1_HelloWorld/HelloWorld.recipe'
 
 // Tutorial 2: Basic Templates
 // The very basics of templating.
-import 'BasicTemplates/BasicTemplates.recipe'
+import '2_BasicTemplates/BasicTemplates.recipe'
 
 // Tutorial 3: JSON Store
 // Adding a JSON data store.
-import 'JsonStore/JsonStore.recipe'
+import '3_JsonStore/JsonStore.recipe'
 
 // Tutorial 4: Render Slots
 // Connecting particles together with slots.
-import 'RenderSlots/RenderSlots.recipe'
+import '4_RenderSlots/RenderSlots.recipe'
