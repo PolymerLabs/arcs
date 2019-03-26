@@ -13,7 +13,7 @@ import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {Xen} from '../../lib/components/xen.js';
 import {Const} from '../../configuration/constants.js';
 import {Utils} from '../../lib/utils.js';
-import '../../lib/launcher-arc.js';
+import '../../elements/launcher-arc.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';
@@ -65,17 +65,16 @@ const template = Xen.Template.html`
   <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
-    <div>
-      <!-- launcher -->
-      <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
-      <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
-      <!-- background arcs -->
-      <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-      <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc>
-      <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
-      <!-- user arc -->
-      <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
-    </div>
+    <!-- launcher -->
+    <launcher-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></launcher-arc>
+    <!-- <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc> -->
+    <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
+    <!-- background arcs -->
+    <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
+    <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc>
+    <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
+    <!-- user arc -->
+    <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
     <div slot="suggestions" suggestions>
       <div slotid="suggestions" on-plan-choose="onChooseSuggestion"></div>
@@ -235,20 +234,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   //     pipesConfig
   //   };
   // }
-  configureBgArc(userid, name)  {
-    const key = `${userid}-${name.toLowerCase()}`;
-    this.recordArcMeta({
-      key: key,
-      href: `?arc=${key}`,
-      description: `${name} arc`,
-      color: 'silver',
-      touched: 0
-    });
-    return {
-      id: key,
-      suggestionContainer: this.getSuggestionSlot()
-    };
-  }
   spawnSerialization(key) {
     this.state = {
       search: '',
@@ -290,13 +275,26 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       manifest: null
     };
   }
+  configureBgArc(userid, name)  {
+    const key = `${userid}-${name.toLowerCase()}`;
+    this.recordArcMeta({
+      key: key,
+      href: `?arc=${key}`,
+      description: `${name} arc`,
+      color: 'silver',
+      touched: 0
+    });
+    return {
+      id: key,
+      suggestionContainer: this.getSuggestionSlot()
+    };
+  }
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
   async recordArcMeta(meta) {
-    const {store} = this._state;
-    if (store) {
-      await store.store({id: meta.key, rawData: meta}, [generateId()]);
+    if (this.state.store) {
+      await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
     }
   }
   openLauncher() {
