@@ -6,7 +6,7 @@ By convention a manifest is stored in a file with the `.manifest` extension.
 ## Schemas
 
 Schemas define the simple data structure of Entities that are passed via Handles to Stores
-as inputs and outputs of Particles.
+as inputs and outputs of Particles. See [schemas.md](../design/schemas.md) for more info.
 
 ```
 schema MyThing
