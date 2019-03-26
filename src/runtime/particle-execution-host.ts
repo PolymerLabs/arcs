@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort} from './api-channel.js';
-import {reportSystemException} from './arc-exceptions.js';
+import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {Manifest} from './manifest.js';
 import { Handle } from './recipe/handle.js';
@@ -236,9 +236,11 @@ export class ParticleExecutionHost {
         this.SimpleCallback(callback, error ? {error} : successResponse);
       }
 
-      onRaiseSystemException(exception: {}, methodName: string, particleId: string) {
-      const particle = pec.arc.particleHandleMaps.get(particleId).spec.name;
-        reportSystemException(exception, methodName, particle);
+      onReportExceptionInHost(exception: PropagatedException) {
+        if (!exception.particleName) {
+          exception.particleName = pec.arc.particleHandleMaps.get(exception.particleId).spec.name;
+        }
+        reportSystemException(exception);
       }
     }(port, arc);
   }

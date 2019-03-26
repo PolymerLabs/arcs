@@ -22,6 +22,7 @@ import {StorageProxy} from './storage-proxy.js';
 import { SerializedModelEntry } from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
+import { PropagatedException } from './arc-exceptions.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -449,7 +450,7 @@ export abstract class PECOuterPort extends APIPort {
   InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: {}) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
-  abstract onRaiseSystemException(exception: {}, methodName: string, particleId: string);
+  abstract onReportExceptionInHost(exception: PropagatedException);
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
@@ -510,7 +511,7 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: (data: {error?: string}) => void) {}
 
-  RaiseSystemException(@Direct exception: {}, @Direct methodName: string, @Direct particleId: string) {}
+  ReportExceptionInHost(@ByLiteral(PropagatedException) exception: PropagatedException) {}
 
     // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
     // send it along with the message. We only want to do this after a DevTools connection has been detected, which

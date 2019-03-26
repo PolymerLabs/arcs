@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 
 import {CursorNextValue, PECInnerPort} from './api-channel.js';
+import {PropagatedException, SystemException} from './arc-exceptions.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
@@ -87,14 +88,15 @@ export abstract class StorageProxy {
   abstract _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean;
   abstract _processUpdate(update: {version: number}, apply?: boolean): {};
 
-  raiseSystemException(exception, methodName, particleId) {
+  reportExceptionInHost(exception: PropagatedException) {
     // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
-    const {message, stack, name} = exception;
-    const raise = stack => this.port.RaiseSystemException({message, stack, name}, methodName, particleId);
-    if (!mapStackTrace) {
-      raise(stack);
+    if (mapStackTrace) {
+      mapStackTrace(exception.cause.stack, mappedStack => {
+        exception.cause.stack = mappedStack;
+        this.port.ReportExceptionInHost(exception);
+      });
     } else {
-      mapStackTrace(stack, mappedStack => raise(mappedStack.join('\n')));
+      this.port.ReportExceptionInHost(exception);
     }
   }
 
@@ -617,7 +619,7 @@ export class StorageProxyScheduler {
             handle._notify(...args);
           } catch (e) {
             console.error('Error dispatching to particle', e);
-            handle._proxy.raiseSystemException(e, 'StorageProxyScheduler::_dispatch', handle._particleId);
+            handle._proxy.reportExceptionInHost(new SystemException(e, handle._particleId, 'StorageProxyScheduler::_dispatch'));
           }
         }
       }
