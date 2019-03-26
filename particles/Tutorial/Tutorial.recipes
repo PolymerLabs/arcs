@@ -1,0 +1,20 @@
+// This file lists all of the available particle/recipe tutorials.
+// See tutorial.md for instructions on how to run them.
+// The tutorials are designed to be read in order, since each builds on the previous ones.
+// The .recipe file should be your "entry point" to each tutorial; start reading from there.
+
+// Tutorial 1: Hello World
+// Create your first particle and recipe.
+import '1_HelloWorld/HelloWorld.recipe'
+
+// Tutorial 2: Basic Templates
+// The very basics of templating.
+import '2_BasicTemplates/BasicTemplates.recipe'
+
+// Tutorial 3: JSON Store
+// Adding a JSON data store.
+import '3_JsonStore/JsonStore.recipe'
+
+// Tutorial 4: Render Slots
+// Connecting particles together with slots.
+import '4_RenderSlots/RenderSlots.recipe'
