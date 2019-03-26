@@ -64,7 +64,7 @@ Also, when run under headful chrome, clicking the display will run a test receiv
   - fetch manifest from [manifest-url] instead of the default
   - if omitted, use default manifest
 
-`pipes-shell/node/serve.sh log[=[0..2]] solo=[manifest-url]`
+`pipes-shell/node/serve.sh log[=[0..2]] solo=[manifest-url] test`
 
 - log[=level]
   - controls logging verbosity
@@ -77,6 +77,9 @@ Also, when run under headful chrome, clicking the display will run a test receiv
 - solo
   - fetch manifest from [manifest-url] instead of the default
   - if omitted, use default manifest
+
+- test
+  - test each ShellApi invocation at startup
 
 ## Glitch Support
 

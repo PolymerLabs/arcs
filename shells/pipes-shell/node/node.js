@@ -48,7 +48,9 @@ process.on('uncaughtException', (err) => {
   global.ShellApi = await DeviceApiFactory(storage, manifest, global.DeviceClient);
 })();
 
-setTimeout(() => test_on_start(), 1000);
+if ('test' in global.params) {
+  setTimeout(() => test_on_start(), 1000);
+}
 
 const test_on_start = async () => {
   global.ShellApi.observeEntity(`{"type": "address", "name": "East Mumbleton"}`);
