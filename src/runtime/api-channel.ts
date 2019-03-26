@@ -511,7 +511,7 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: (data: {error?: string}) => void) {}
 
-  ReportExceptionInHost(@Direct exception: PropagatedException) {}
+  ReportExceptionInHost(@ByLiteral(PropagatedException) exception: PropagatedException) {}
 
     // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
     // send it along with the message. We only want to do this after a DevTools connection has been detected, which

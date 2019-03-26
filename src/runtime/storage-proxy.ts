@@ -91,8 +91,8 @@ export abstract class StorageProxy {
   reportExceptionInHost(exception: PropagatedException) {
     // TODO: Encapsulate source-mapping of the stack trace once there are more users of the port.RaiseSystemException() call.
     if (mapStackTrace) {
-      mapStackTrace(exception.stack, mappedStack => {
-        exception.stack = mappedStack;
+      mapStackTrace(exception.cause.stack, mappedStack => {
+        exception.cause.stack = mappedStack;
         this.port.ReportExceptionInHost(exception);
       });
     } else {

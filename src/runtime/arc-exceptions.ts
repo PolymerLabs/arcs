@@ -10,11 +10,52 @@ import {Particle} from './particle';
  * http://polymer.github.io/PATENTS.txt
  */
 
+type SerializedPropagatedException = {
+  exceptionType: string,
+  cause: {name: string, message: string, stack: string},  // Serialized Error.
+  method: string,
+  particleId: string,
+  particleName: string,
+  stack: string,
+};
+
 /** An exception that is to be propagated back to the host. */
 export class PropagatedException extends Error {
   constructor(public cause: Error, public method: string, public particleId: string, public particleName?: string) {
     super();
-    this.stack = cause.stack;
+    this.stack += `\nCaused by: ${this.cause.stack}`;
+  }
+
+  toLiteral(): SerializedPropagatedException {
+    return {
+      exceptionType: this.constructor.name,  // The name of this exception's subclass.
+      cause: {
+        name: this.cause.name,
+        message: this.cause.message,
+        stack: this.cause.stack,
+      },
+      method: this.method,
+      particleId: this.particleId,
+      particleName: this.particleName,
+      stack: this.stack,
+    };
+  }
+
+  static fromLiteral(literal: SerializedPropagatedException) {
+    const cause = literal.cause as Error;
+    let exception: PropagatedException;
+    switch (literal.exceptionType) {
+      case SystemException.name:
+        exception = new SystemException(cause, literal.method, literal.particleId, literal.particleName);
+        break;
+      case UserException.name:
+        exception = new UserException(cause, literal.method, literal.particleId, literal.particleName);
+        break;
+      default:
+        throw new Error(`Unknown exception type: ${literal.exceptionType}`);
+    }
+    exception.stack = literal.stack;
+    return exception;
   }
 }
 
