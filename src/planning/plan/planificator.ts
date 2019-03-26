@@ -145,7 +145,7 @@ export class Planificator {
   private _listenToArcStores() {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.arc.context.allStores.forEach(store => {
-      if (store.on) { // #2141: some are StorageStubs.
+      if (store instanceof StorageProviderBase) {
         store.on('change', this.dataChangeCallback, this);
       }
     });
@@ -154,7 +154,7 @@ export class Planificator {
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
     this.arc.context.allStores.forEach(store => {
-      if (store.off) { // #2141: some are StorageStubs.
+      if (store instanceof StorageProviderBase) {
         store.off('change', this.dataChangeCallback);
       }
     });

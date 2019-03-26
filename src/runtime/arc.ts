@@ -70,15 +70,15 @@ export class Arc {
   public readonly _loader: Loader;
   private dataChangeCallbacks = new Map<object, () => void>();
   // All the stores, mapped by store ID
-  private storesById = new Map<string, StorageProviderBase>();
+  private storesById = new Map<string, StorageProviderBase | StorageStub>();
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
   readonly storageKey: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
-  public storeTags = new Map<StorageProviderBase, Set<string>>();
+  public storeTags = new Map<StorageProviderBase | StorageStub, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private storeDescriptions = new Map<StorageProviderBase, string>();
+  private storeDescriptions = new Map<StorageProviderBase | StorageStub, string>();
   private instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
@@ -86,7 +86,7 @@ export class Arc {
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
-  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
+  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase | StorageStub>}>();
   pec: ParticleExecutionHost;
 
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
@@ -211,7 +211,7 @@ export class Arc {
     return innerArc;
   }
 
-  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
+  async _serializeHandle(handle: StorageProviderBase | StorageStub, context: SerializeContext, id: string): Promise<void> {
     const type = handle.type.getContainedType() || handle.type;
     if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceInfo.toString() + '\n';
@@ -265,8 +265,10 @@ export class Arc {
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
-            await handle.ensureBackingStore();
-            await this._serializeHandle(handle.backingStore, context, storeId);
+            if(handle instanceof StorageProviderBase) {
+              await handle.ensureBackingStore();
+              await this._serializeHandle(handle.backingStore, context, storeId);
+            }
           }
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
@@ -431,7 +433,7 @@ ${this.activeRecipe.toString()}`;
     return this.id.createId(component).toString();
   }
 
-  get _stores(): StorageProviderBase[] {
+  get _stores(): (StorageProviderBase | StorageStub)[] {
     return [...this.storesById.values()];
   }
 
@@ -607,7 +609,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  _registerStore(store: StorageProviderBase, tags?) {
+  _registerStore(store: StorageProviderBase | StorageStub, tags?) {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -618,7 +620,9 @@ ${this.activeRecipe.toString()}`;
     this.storeTags.set(store, new Set(tags));
 
     this.storageKeys[store.id] = store.storageKey;
-    store.on('change', () => this._onDataChange(), this);
+    if(store instanceof StorageProviderBase) {
+      store.on('change', () => this._onDataChange(), this);
+    }
   }
 
   _tagStore(store: StorageProviderBase, tags) {
@@ -665,7 +669,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  findStoresByType(type: Type, options?): StorageProviderBase[] {
+  findStoresByType(type: Type, options?): (StorageProviderBase | StorageStub) [] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -697,7 +701,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id): StorageProviderBase {
+  findStoreById(id): StorageProviderBase | StorageStub {
     let store = this.storesById.get(id);
     if (store == null) {
       store = this._context.findStoreById(id);
@@ -705,14 +709,14 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store: StorageProviderBase) {
+  findStoreTags(store: StorageProviderBase | StorageStub) {
     if (this.storeTags.has(store)) {
       return this.storeTags.get(store);
     }
     return this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store: StorageProviderBase): string {
+  getStoreDescription(store: StorageProviderBase | StorageStub): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }
