@@ -63,22 +63,22 @@ the top left of the screen:
 
 ![Tutorial 1 image](screenshots/1-hello-world.png)
 
-Read it at: [1_HelloWorld/HelloWorld.recipe]()
+Read it at: [1_HelloWorld/HelloWorld.recipe]
 
 ## Tutorial 2: Basic Templates
 
-This tutorial demonstrates how to render data in a template:  [2_BasicTemplates/BasicTemplates.recipe]()
+This tutorial demonstrates how to render data in a template:  [2_BasicTemplates/BasicTemplates.recipe]
 
 ![Tutorial 2 image](screenshots/2-basic-template.png)
 
 ## Tutorial 3: JSON Store
 
-This tutorial defines a new entity schema, and adds a data store backed by a JSON file: [3_JsonStore/JsonStore.recipe]()
+This tutorial defines a new entity schema, and adds a data store backed by a JSON file: [3_JsonStore/JsonStore.recipe]
 
 ![Tutorial 3 image](screenshots/3-json-store.png)
 
 ## Tutorial 4: Render Slots
 
-This tutorial combines two particles using render slots: [4_RenderSlots/RenderSlots.recipe]()
+This tutorial combines two particles using render slots: [4_RenderSlots/RenderSlots.recipe]
 
 ![Tutorial 4 image](screenshots/4-render-slots.png)
