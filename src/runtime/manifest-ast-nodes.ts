@@ -14,7 +14,6 @@
  *
  * - Most interfaces should extend `BaseToken`
  * - When returning data add `as Token.NewTypeName` to validate your return types.
- * - Add an entry to tools/sigh.js to map the rule to it's output type.
  *
  * You may need to check the generated output in runtime/ts/manifest-parser.ts to validate.
  */
@@ -34,7 +33,7 @@ interface SourceLocation {
 }
 
 /**
- * A base token interface for theh `kind` and `location` entries.  This creates
+ * A base token interface for the `kind` and `location` entries. This creates
  * a TypeScript Discriminated Union for most tokens.
  */
 interface BaseToken {
@@ -321,7 +320,7 @@ export interface ConnectionTarget extends BaseToken {
 
   verbs?: VerbList;
   param: string;    // from ConnectionTargetHandleComponents
-  tags?: TagList;  // from ConnectionTargetHandleComponents
+  tags?: TagList;   // from ConnectionTargetHandleComponents
 }
 
 export interface VerbConnectionTarget extends BaseToken {

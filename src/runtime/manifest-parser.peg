@@ -10,8 +10,7 @@
 
 // WARNING: To ensure that the typechecking is valid the types and the list of
 // checked parsers must be kept up to date.
-// These can be found in src/runtime/manifest-ast-nodes.ts and the AstNodeTypes
-// list in tools/sigh.js.
+// These can be found in src/runtime/manifest-ast-nodes.ts.
 // Pegjs (with ts-pegjs) use these to transpile this file into TypeScript in
 // src/gen/runtime/manifest-parser.ts and then into JavaScript in
 // build/gen/runtime/manifest-parser.js.
