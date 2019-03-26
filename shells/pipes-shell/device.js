@@ -10,6 +10,10 @@ import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {Context} from './context.js';
 import {Pipe} from './pipe.js';
 import {Utils} from '../lib/utils.js';
+import {logFactory} from '../../build/platform/log-web.js';
+
+const log = logFactory('Device');
+const warn = logFactory('Device', null, 'warn');
 
 const defaultManifest = `
 import 'https://thorn-egret.glitch.me/custom.recipes'
@@ -46,32 +50,49 @@ const signalClientWhenReady = async client => {
 const marshalRecipeContext = async () => {
   const manifest = await Utils.parse(recipeManifest);
   recipes = manifest.findRecipesByVerb('autofill');
-  console.log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
+  log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
 };
 
 const deviceApi = {
   receiveEntity(json) {
-    const id = receiveJsonEntity(json);
-    console.log(`[${id}]: received entity`);
+    const id = trackTransactionId(() => receiveJsonEntity(json));
+    log(`[${id}]: received entity`, json);
     return id;
   },
   observeEntity(json) {
-    console.log('observing entity');
+    log('observing entity', json);
     observeJsonEntity(json);
     return true;
   },
   flush() {
-    console.log('flushing caches');
+    log('flushing caches');
     Utils.env.loader.flushCaches();
     marshalRecipeContext();
   }
+};
+
+const transactionIds = [];
+
+const trackTransactionId = async => {
+  const id = transactionIds.push(0);
+  async().then(arcid => transactionIds[id-1] = arcid);
+  return id;
+};
+
+const recoverTransactionId = arc => {
+  const arcid = String(arc.id);
+  return transactionIds.findIndex(id => id === arcid) + 1;
+};
+
+const observeJsonEntity = async json => {
+  Pipe.observeEntity(userContext.entityStore, json);
 };
 
 const receiveJsonEntity = async json => {
   try {
     testMode = !json;
     if (userContext.pipesArc) {
-      const arc =  await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
+      const arc = await Pipe.receiveEntity(userContext.context, recipes, foundSuggestions, json);
       return String(arc.id);
     }
   } catch (x) {
@@ -80,16 +101,14 @@ const receiveJsonEntity = async json => {
 };
 
 const foundSuggestions = (arc, text) => {
+  const id = recoverTransactionId(arc);
   if (testMode) {
-    console.log(`[testMode] foundSuggestions("${String(arc.id)}", "${text}")`);
+    console.log(`[testMode] foundSuggestions("${id}", "${text}")`);
   } else {
-    console.warn(`invoking DeviceClient.foundSuggestions("${String(arc.id)}", "${text}")`);
+    console.warn(`invoking DeviceClient.foundSuggestions("${id}", "${text}")`);
     if (client) {
-      client.foundSuggestions(String(arc.id), text);
+      client.foundSuggestions(id, text);
     }
   }
 };
 
-const observeJsonEntity = async json => {
-  Pipe.observeEntity(userContext.entityStore, json);
-};

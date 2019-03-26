@@ -12,6 +12,9 @@ import {Utils} from '../lib/utils.js';
 import {ArcHost} from '../lib/arc-host.js';
 import {Stores} from '../lib/stores.js';
 import {Schemas} from './schemas.js';
+import {logFactory} from '../../build/platform/log-web.js';
+
+const log = logFactory('Context');
 
 export const Context = class {
   constructor(storage) {
@@ -37,7 +40,7 @@ export const Context = class {
     //console.log(store);
   }
   async initPipesArc(storage) {
-    console.log('Context::initPipesArc');
+    log('initPipesArc');
     const host = new ArcHost(null, storage, new RamSlotComposer());
     const id = 'pipes-arc';
     const manifest = `import 'https://$particles/PipeApps/BackgroundPipes.recipes'`;
@@ -49,9 +52,9 @@ export const Context = class {
       await this.entityStoreChange(await this.getInitialChange(this.entityStore));
       this.entityStore.on('change', info => this.entityStoreChange(info), this);
     } else {
-      console.log('Context::initPipesArc: failed to find entityStore');
+      log('initPipesArc: failed to find entityStore');
     }
-    dumpStores([this.entityStore]);
+    //dumpStores([this.entityStore]);
   }
   async getInitialChange(store) {
     const change = {add: []};
@@ -62,7 +65,7 @@ export const Context = class {
   async entityStoreChange(change) {
     //console.log(change);
     await this.cloneStoreChange(change, this.contextEntityStore);
-    dumpStores([this.contextEntityStore]);
+    //dumpStores([this.contextEntityStore]);
   }
   async cloneStoreChange(change, store) {
     if (store && change.add) {
@@ -79,7 +82,7 @@ const dumpStores = async stores => {
     if (store) {
       const accessor = store.type.isCollection ? 'toList' : 'get';
       const value = await store[accessor]();
-      console.log(`store #${i}:`, store.id, value);
+      log(`store #${i}:`, store.id, value);
     }
   }));
 };

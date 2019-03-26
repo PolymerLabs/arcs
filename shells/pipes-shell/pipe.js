@@ -10,14 +10,15 @@ import {Utils} from '../lib/utils.js';
 import {RamSlotComposer} from '../lib/ram-slot-composer.js';
 import {generateId} from '../../modalities/dom/components/generate-id.js';
 import {now} from '../../build/platform/date-web.js';
+import {logFactory} from '../../build/platform/log-web.js';
 
-const log = console.log.bind(console);
+const log = logFactory('Pipe');
 
 let t0;
 
 export const Pipe = {
   async observeEntity(store, json) {
-    console.log('Pipe::observeEntity', store, json);
+    //log('observeEntity', Boolean(store), json);
     const data = fromJson(json);
     if (store && data) {
       if (!data.timestamp) {
@@ -29,11 +30,11 @@ export const Pipe = {
         rawData: data
       };
       await store.store(entity, [now()]);
-      dumpStores([store]);
+      //dumpStores([store]);
     }
   },
   async receiveEntity(context, recipes, callback, json) {
-    console.log('Pipe::receiveEntity', json);
+    //log('receiveEntity', json);
     t0 = now();
     const type = extractType(json);
     const recipe = recipeForType(type, recipes);
@@ -113,8 +114,7 @@ const watchOneChange = (store, callback, arc) => {
 };
 
 const onChange = (arc, change, callback) => {
-  //log(change, callback.toString());
-  log(change);
+  //log(change);
   if (change.data) {
     const data = change.data.rawData;
     const text = data.json || data.text || data.address;
@@ -147,7 +147,7 @@ recipe Pipe
 `;
 
 const dumpStores = async stores => {
-  console.log(`stores dump, length = ${stores.length}`);
+  log(`stores dump, length = ${stores.length}`);
   await Promise.all(stores.map(async (store, i) => {
     if (store) {
       let value;
@@ -156,7 +156,7 @@ const dumpStores = async stores => {
       } else {
         value = await store.get();
       }
-      console.log(`store #${i}:`, store.id, value);
+      log(`store #${i}:`, store.id, value);
     }
   }));
 };
