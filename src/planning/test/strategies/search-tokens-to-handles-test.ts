@@ -14,6 +14,7 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
 
 import {StrategyTestHelper} from './strategy-test-helper.js';
+import {StorageProviderBase} from '../../../runtime/storage/storage-provider-base.js';
 
 describe('SearchTokensToHandles', () => {
   it('finds local handle by tags', async () => {
@@ -34,7 +35,7 @@ describe('SearchTokensToHandles', () => {
     `));
 
     const arc = StrategyTestHelper.createTestArc(manifest);
-    arc._registerStore(arc.context.stores[0], ['mything']);
+    arc._registerStore(arc.context.stores[0] as StorageProviderBase, ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

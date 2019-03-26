@@ -93,7 +93,7 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags, counts): Map<StorageProviderBase | StorageStub , string> {
+  getMappableStores(fate, type, tags, counts): Map<StorageProviderBase | StorageStub, string> {
     const stores: Map<StorageProviderBase | StorageStub, string> = new Map();
 
     if (fate === 'use' || fate === '?') {

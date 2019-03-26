@@ -70,15 +70,15 @@ export class Arc {
   public readonly _loader: Loader;
   private dataChangeCallbacks = new Map<object, () => void>();
   // All the stores, mapped by store ID
-  private storesById = new Map<string, StorageProviderBase | StorageStub>();
+  private storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
   readonly storageKey: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
-  public storeTags = new Map<StorageProviderBase | StorageStub, Set<string>>();
+  public storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private storeDescriptions = new Map<StorageProviderBase | StorageStub, string>();
+  private storeDescriptions = new Map<StorageProviderBase, string>();
   private instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
   private debugHandler: ArcDebugHandler;
@@ -86,7 +86,7 @@ export class Arc {
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
-  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase | StorageStub>}>();
+  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
@@ -211,7 +211,7 @@ export class Arc {
     return innerArc;
   }
 
-  async _serializeHandle(handle: StorageProviderBase | StorageStub, context: SerializeContext, id: string): Promise<void> {
+  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
     const type = handle.type.getContainedType() || handle.type;
     if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceInfo.toString() + '\n';
@@ -433,7 +433,7 @@ ${this.activeRecipe.toString()}`;
     return this.id.createId(component).toString();
   }
 
-  get _stores(): (StorageProviderBase | StorageStub)[] {
+  get _stores(): (StorageProviderBase)[] {
     return [...this.storesById.values()];
   }
 
@@ -519,7 +519,13 @@ ${this.activeRecipe.toString()}`;
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
-          const copiedStore = this.findStoreById(recipeHandle.id);
+          const copiedStoreRef = this.findStoreById(recipeHandle.id);
+          let copiedStore;
+          if (copiedStoreRef instanceof StorageStub) {
+            copiedStore = await copiedStoreRef.inflate();
+          } else {
+            copiedStore = copiedStoreRef;
+          }
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
@@ -609,7 +615,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  _registerStore(store: StorageProviderBase | StorageStub, tags?) {
+  _registerStore(store: StorageProviderBase, tags?) {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -620,9 +626,7 @@ ${this.activeRecipe.toString()}`;
     this.storeTags.set(store, new Set(tags));
 
     this.storageKeys[store.id] = store.storageKey;
-    if(store instanceof StorageProviderBase) {
-      store.on('change', () => this._onDataChange(), this);
-    }
+    store.on('change', () => this._onDataChange(), this);
   }
 
   _tagStore(store: StorageProviderBase, tags) {
@@ -669,7 +673,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  findStoresByType(type: Type, options?): (StorageProviderBase | StorageStub) [] {
+  findStoresByType(type: Type, options?): StorageProviderBase[] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -704,19 +708,19 @@ ${this.activeRecipe.toString()}`;
   findStoreById(id): StorageProviderBase | StorageStub {
     let store = this.storesById.get(id);
     if (store == null) {
-      store = this._context.findStoreById(id);
+      return this._context.findStoreById(id);
     }
     return store;
   }
 
-  findStoreTags(store: StorageProviderBase | StorageStub) {
+  findStoreTags(store: StorageProviderBase) {
     if (this.storeTags.has(store)) {
       return this.storeTags.get(store);
     }
     return this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store: StorageProviderBase | StorageStub): string {
+  getStoreDescription(store: StorageProviderBase): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

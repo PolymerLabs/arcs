@@ -39,6 +39,8 @@ class ManifestError extends Error {
   }
 }
 
+// TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
+// deflated rather than requiring this stub.
 export class StorageStub {
   type: Type;
   id: string;
@@ -74,6 +76,29 @@ export class StorageStub {
 
   toLiteral() {
     return undefined; // Fake to match StorageProviderBase;
+  }
+
+  toString(handleTags: string[]): string {
+    const results: string[] = [];
+    const handleStr: string[] = [];
+    handleStr.push(`store`);
+    if (this.name) {
+      handleStr.push(`${this.name}`);
+    }
+    handleStr.push(`of ${this.type.toString()}`);
+    if (this.id) {
+      handleStr.push(`'${this.id}'`);
+    }
+    if (handleTags && handleTags.length) {
+      handleStr.push(`${handleTags.join(' ')}`);
+    }
+    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
+    // serialized here too - could it ever be part of StorageStub?
+    results.push(handleStr.join(' '));
+    if (this.description) {
+      results.push(`  description \`${this.description}\``);
+    }
+    return results.join('\n');
   }
 
   _compareTo(other: StorageProviderBase) : number {

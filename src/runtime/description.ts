@@ -15,6 +15,7 @@ import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './des
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
+import {StorageProviderBase} from './storage/storage-provider-base.js';
 
 export class Description {
   private constructor(private readonly particleDescriptions = <ParticleDescription[]>[],
@@ -60,7 +61,7 @@ export class Description {
     const storeDescById = {};
     for (const {id} of arc.activeRecipe.handles) {
       const store = arc.findStoreById(id);
-      if (store) {
+      if (store && store instanceof StorageProviderBase) {
         storeDescById[id] = arc.getStoreDescription(store);
       }
     }
