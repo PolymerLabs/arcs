@@ -10,6 +10,7 @@ import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {StorageStub} from '../../runtime/manifest.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {
@@ -92,8 +93,8 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags, counts): Map<StorageProviderBase, string> {
-    const stores: Map<StorageProviderBase, string> = new Map();
+  getMappableStores(fate, type, tags, counts): Map<StorageProviderBase | StorageStub, string> {
+    const stores: Map<StorageProviderBase | StorageStub, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
       const subtype = counts.out === 0;

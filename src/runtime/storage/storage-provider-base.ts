@@ -10,6 +10,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
 import {compareNumbers, compareStrings} from '../recipe/util.js';
 import {Type} from '../type.js';
+import {StorageStub} from '../manifest.js';
 
 import {KeyBase} from './key-base.js';
 
@@ -57,7 +58,7 @@ export interface BigCollectionStorageProvider extends StorageProviderBase {
   cursorNext(cursorId: number);
   cursorClose(cursorId: number);
   cursorVersion(cursorId: number);
-  cloneFrom(handle);
+  cloneFrom(store: StorageProviderBase | StorageStub);
   clearItemsForTesting(): void;
 }
 
@@ -250,7 +251,7 @@ export abstract class StorageProviderBase {
    */
   abstract toLiteral();
 
-  abstract cloneFrom(store: StorageProviderBase);
+  abstract cloneFrom(store: StorageProviderBase | StorageStub);
 
   // TODO(shans): remove this when it's possible to.
   abstract ensureBackingStore();

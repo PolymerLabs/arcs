@@ -12,21 +12,21 @@
  * Complete set of tokens used by `manifest-parser.peg`. To use this you
  * need to follow some simple guidelines:
  *
- * - Most interfaces should extend `BaseToken`
+ * - Most interfaces should extend `BaseNode`
  * - When returning data add `as Token.NewTypeName` to validate your return types.
  *
  * You may need to check the generated output in runtime/ts/manifest-parser.ts to validate.
  */
 
 // duplicate of definition from pegjs code to avoid circular dependencies
-interface SourcePosition {
+export interface SourcePosition {
   offset: number;
   line: number;
   column: number;
 }
 
 // duplicate of definition from pegjs code to avoid circular dependencies
-interface SourceLocation {
+export interface SourceLocation {
   filename?: string;
   start: SourcePosition;
   end: SourcePosition;
@@ -36,59 +36,59 @@ interface SourceLocation {
  * A base token interface for the `kind` and `location` entries. This creates
  * a TypeScript Discriminated Union for most tokens.
  */
-interface BaseToken {
+export class BaseNode {
   kind: string;
   location: SourceLocation;
 }
 
 //  PARTICLE TYPES
-export interface BigCollectionType extends BaseToken {
+export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
   type: ParticleArgumentType;
 }
 
-export interface CollectionType extends BaseToken {
+export interface CollectionType extends BaseNode {
   kind: 'collection-type';
   type: ParticleArgumentType;
 }
 
-export interface ReferenceType extends BaseToken {
+export interface ReferenceType extends BaseNode {
   kind: 'reference-type';
   type: ParticleArgumentType;
 }
 
-export interface TypeVariable extends BaseToken {
+export interface TypeVariable extends BaseNode {
   kind: 'variable-type';
   name: string;
   constraint: ParticleArgument;
 }
 
-export interface SlotType extends BaseToken {
+export interface SlotType extends BaseNode {
   kind: 'slot-type';
   fields: SlotField[];
 }
 // END PARTICLE TYPES
 
 
-export interface Description extends BaseToken {
+export interface Description extends BaseNode {
   kind: 'description';
   name: 'pattern';
   description: Description[];
 }
 
-export interface HandleRef extends BaseToken {
+export interface HandleRef extends BaseNode {
   kind: 'handle-ref';
   id?: string;
   name?: string;
   tags: TagList;
 }
 
-export interface Import extends BaseToken {
+export interface Import extends BaseNode {
   kind: 'import';
   path: string;
 }
 
-export interface ManifestStorage extends BaseToken {
+export interface ManifestStorage extends BaseNode {
   kind: 'store';
   name: string;
   type: string;
@@ -118,24 +118,24 @@ export interface ManifestStorageStorageSource extends ManifestStorageSource {
   origin: 'storage';
 }
 
-export interface Meta extends BaseToken {
+export interface Meta extends BaseNode {
   kind: 'meta';
   items: (MetaName|MetaStorageKey)[];
 }
 
-export interface MetaName extends BaseToken {
+export interface MetaName extends BaseNode {
   kind: 'name';
   key: string;
   value: string;
 }
 
-export interface MetaStorageKey extends BaseToken {
+export interface MetaStorageKey extends BaseNode {
   key: 'storageKey';
   value: string;
   kind: 'storageKey';
 }
 
-export interface Particle extends BaseToken {
+export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
   implFile?: string;          // not used in RecipeParticle
@@ -153,12 +153,12 @@ export interface Particle extends BaseToken {
 }
 
 
-export interface ParticleModality extends BaseToken {
+export interface ParticleModality extends BaseNode {
   kind: 'particle-modality';
   modality: string;
 }
 
-export interface ParticleArgument extends BaseToken {
+export interface ParticleArgument extends BaseNode {
   kind: 'particle-argument';
   direction: string;
   type: ParticleArgumentType;
@@ -170,19 +170,19 @@ export interface ParticleArgument extends BaseToken {
 
 export type ParticleHandle = ParticleArgument;
 
-export interface ParticleHandleDescription extends BaseToken {
+export interface ParticleHandleDescription extends BaseNode {
   kind: 'handle-description';
   name: string;
   pattern: string;
 }
 
-export interface ParticleInterface extends BaseToken {
+export interface ParticleInterface extends BaseNode {
   kind: 'interface';
   verb: string;
   args: ParticleArgument[];
 }
 
-export interface ParticleSlot extends BaseToken {
+export interface ParticleSlot extends BaseNode {
   kind: 'particle-slot';
   name: string;
   tags: TagList;
@@ -192,7 +192,7 @@ export interface ParticleSlot extends BaseToken {
   provideSlotConnections: ParticleProvidedSlot[];
 }
 
-export interface ParticleProvidedSlot extends BaseToken {
+export interface ParticleProvidedSlot extends BaseNode {
   kind: 'provided-slot';
   name: string;
   tags: TagList;
@@ -205,25 +205,25 @@ export interface ParticleProvidedSlot extends BaseToken {
   param: string;
 }
 
-export interface ParticleProvidedSlotHandle extends BaseToken {
+export interface ParticleProvidedSlotHandle extends BaseNode {
   kind: 'particle-provided-slot-handle';
   handle: string;
 }
 
-export interface ParticleRef extends BaseToken {
+export interface ParticleRef extends BaseNode {
   kind: 'particle-ref';
   name: string;
   verbs: VerbList;
 }
 
-export interface Recipe extends BaseToken {
+export interface Recipe extends BaseNode {
   kind: 'recipe';
   name: string;
   verbs: VerbList;
   items: RecipeItem[];
 }
 
-export interface RecipeParticle extends BaseToken {
+export interface RecipeParticle extends BaseNode {
   kind: 'particle';
   name: string;
   ref: ParticleRef;
@@ -231,48 +231,48 @@ export interface RecipeParticle extends BaseToken {
   slotConnections: RecipeParticleSlotConnection[];
 }
 
-export interface RequireHandleSection extends BaseToken {
+export interface RequireHandleSection extends BaseNode {
   kind: 'requireHandle';
   name: string;
   ref: HandleRef;
 }
 
-export interface RecipeRequire extends BaseToken {
+export interface RecipeRequire extends BaseNode {
   kind: 'require';
   items: RecipeItem;
 }
 
 export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
-export interface RecipeParticleConnection extends BaseToken {
+export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
   dir: string;
   target: ParticleConnectionTargetComponents;
 }
 
-export interface ParticleConnectionTargetComponents extends BaseToken {
+export interface ParticleConnectionTargetComponents extends BaseNode {
   kind: 'handle-connection-components';
   name: string|null;
   particle: string|null;
   tags: TagList;
 }
 
-export interface ParticleConnnectionTargetComponents extends BaseToken {
+export interface ParticleConnnectionTargetComponents extends BaseNode {
   kind: 'hanlde-connection-components';
   name: string|null;
   particle: string|null;
   tags: TagList;
 }
 
-export interface RecipeHandle extends BaseToken {
+export interface RecipeHandle extends BaseNode {
   kind: 'handle';
   name: string|null;
   ref: string|null;
   fate: string;
 }
 
-export interface RecipeParticleSlotConnection extends BaseToken {
+export interface RecipeParticleSlotConnection extends BaseNode {
   kind: 'slot-connection';
   param: string;
   tags: TagList;
@@ -280,38 +280,38 @@ export interface RecipeParticleSlotConnection extends BaseToken {
   dependentSlotConnections: RecipeParticleProvidedSlot[];
 }
 
-export interface RecipeSlotConnectionRef extends BaseToken {
+export interface RecipeSlotConnectionRef extends BaseNode {
   kind: 'slot-connection-ref';
   param: string;
   tags: TagList;
 }
 
-export interface RecipeParticleProvidedSlot extends BaseToken {
+export interface RecipeParticleProvidedSlot extends BaseNode {
   kind: 'slot-connection-ref';
   param: string;
   name: string|null;
 }
 
-export interface RecipeConnection extends BaseToken {
+export interface RecipeConnection extends BaseNode {
   kind: 'connection';
   direction: string;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
 
-export interface RecipeSearch extends BaseToken {
+export interface RecipeSearch extends BaseNode {
   kind: 'search';
   phrase: string;
   tokens: string[];
 }
 
-export interface RecipeSlot extends BaseToken {
+export interface RecipeSlot extends BaseNode {
   kind: 'slot';
   ref: string|null;
   name: string|null;
 }
 
-export interface ConnectionTarget extends BaseToken {
+export interface ConnectionTarget extends BaseNode {
   kind: 'connection-target';
   targetType: 'verb'|'tag'|'localName'|'particle';
 
@@ -323,48 +323,48 @@ export interface ConnectionTarget extends BaseToken {
   tags?: TagList;   // from ConnectionTargetHandleComponents
 }
 
-export interface VerbConnectionTarget extends BaseToken {
+export interface VerbConnectionTarget extends BaseNode {
   targetType: 'verb';
 }
 
-export interface TagConnectionTarget extends BaseToken {
+export interface TagConnectionTarget extends BaseNode {
   targetType: 'tag';
 }
 
-export interface LocalNameConnectionTarget extends BaseToken {
+export interface LocalNameConnectionTarget extends BaseNode {
   name: string;
   targetType: 'localName';
 }
 
-export interface ParticleConnectionTarget extends BaseToken {
+export interface ParticleConnectionTarget extends BaseNode {
   particle: string;
   targetType: 'particle';
 }
 
-export interface ConnectionTargetHandleComponents extends BaseToken {
+export interface ConnectionTargetHandleComponents extends BaseNode {
   param: string;
   tags: TagList;
 }
 
-export interface Resource extends BaseToken {
+export interface Resource extends BaseNode {
   kind: 'resource';
   name: string;
   data: string;
 }
 
-export interface Schema extends BaseToken {
+export interface Schema extends BaseNode {
   kind: 'schema';
   items: SchemaItem[];
   alias?: string;
 }
 
-export interface SchemaSection extends BaseToken {
+export interface SchemaSection extends BaseNode {
   kind: 'schema-section';
   sectionType: string;
   fields: SchemaField[];
 }
 
-export interface SchemaField extends BaseToken {
+export interface SchemaField extends BaseNode {
   kind: 'schema-field';
   type: SchemaType;
   name: string;
@@ -376,52 +376,52 @@ export type SchemaPrimitiveType =
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
 
-export interface SchemaCollectionType extends BaseToken {
+export interface SchemaCollectionType extends BaseNode {
   kind: 'schema-collection';
   schema: SchemaType;
 }
 
-export interface SchemaReferenceType extends BaseToken {
+export interface SchemaReferenceType extends BaseNode {
   kind: 'schema-reference';
   schema: SchemaType;
 }
 
-export interface SchemaUnionType extends BaseToken {
+export interface SchemaUnionType extends BaseNode {
   kind: 'schema-union';
   types: string[];
 }
 
-export interface SchemaTupleType extends BaseToken {
+export interface SchemaTupleType extends BaseNode {
   kind: 'schema-tuple';
   types: string[];
 }
 
-export interface SchemaInline extends BaseToken {
+export interface SchemaInline extends BaseNode {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
 }
 
-export interface SchemaInlineField extends BaseToken {
+export interface SchemaInlineField extends BaseNode {
   kind: 'schema-inline-field';
   name: string;
   type: SchemaType;
 }
 
-export interface SchemaSpec extends BaseToken {
+export interface SchemaSpec extends BaseNode {
   names: string[];
   parents: string[];
 }
 
 export type SchemaItem = SchemaField | Description;
 
-export interface SchemaAlias extends BaseToken {
+export interface SchemaAlias extends BaseNode {
   kind: 'schema';
   items: SchemaItem[];
   alias: string;
 }
 
-export interface Interface extends BaseToken {
+export interface Interface extends BaseNode {
   kind: 'interface';
   name: string;
   slots: InterfaceSlot[];
@@ -432,20 +432,20 @@ export interface Interface extends BaseToken {
 
 export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 
-export interface InterfaceArgument extends BaseToken {
+export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
   direction: string;
   type: string;
   name: string;
 }
 
-export interface InterfaceInterface extends BaseToken {
+export interface InterfaceInterface extends BaseNode {
   kind: 'interface';
   verb: string;
   args: InterfaceArgument[];  // InterfaceArgumentList?
 }
 
-export interface InterfaceSlot extends BaseToken {
+export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
@@ -453,18 +453,18 @@ export interface InterfaceSlot extends BaseToken {
   isSet: boolean;
 }
 
-export interface SlotField extends BaseToken {
+export interface SlotField extends BaseNode {
   kind: 'slot-field';
   name: string;
   value: string;
 }
 
-export interface SlotFormFactor extends BaseToken {
+export interface SlotFormFactor extends BaseNode {
   kind: 'form-factor';
   formFactor: string;
 }
 
-export interface TypeName extends BaseToken {
+export interface TypeName extends BaseNode {
   kind: 'type-name';
   name: string;
 }

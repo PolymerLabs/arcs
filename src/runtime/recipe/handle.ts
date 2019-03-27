@@ -161,7 +161,7 @@ export class Handle {
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value) { this._immediateValue = value; }
 
-  static effectiveType(handleType, connections) {
+  static effectiveType(handleType: Type, connections: {type: Type, direction: string}[]) {
     const variableMap = new Map();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
@@ -169,7 +169,7 @@ export class Handle {
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType, connections) {
+  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]) {
     const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);
   }

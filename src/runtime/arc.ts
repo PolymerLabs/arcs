@@ -265,8 +265,10 @@ export class Arc {
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
-            await handle.ensureBackingStore();
-            await this._serializeHandle(handle.backingStore, context, storeId);
+            if(handle instanceof StorageProviderBase) {
+              await handle.ensureBackingStore();
+              await this._serializeHandle(handle.backingStore, context, storeId);
+            }
           }
           const storeId = context.dataResources.get(storageKey);
           serializedData.forEach(a => {a.storageKey = storeId;});
@@ -431,7 +433,7 @@ ${this.activeRecipe.toString()}`;
     return this.id.createId(component).toString();
   }
 
-  get _stores(): StorageProviderBase[] {
+  get _stores(): (StorageProviderBase)[] {
     return [...this.storesById.values()];
   }
 
@@ -517,7 +519,13 @@ ${this.activeRecipe.toString()}`;
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
-          const copiedStore = this.findStoreById(recipeHandle.id);
+          const copiedStoreRef = this.findStoreById(recipeHandle.id);
+          let copiedStore;
+          if (copiedStoreRef instanceof StorageStub) {
+            copiedStore = await copiedStoreRef.inflate();
+          } else {
+            copiedStore = copiedStoreRef;
+          }
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
@@ -697,10 +705,10 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id): StorageProviderBase {
-    let store = this.storesById.get(id);
+  findStoreById(id): StorageProviderBase | StorageStub {
+    const store = this.storesById.get(id);
     if (store == null) {
-      store = this._context.findStoreById(id);
+      return this._context.findStoreById(id);
     }
     return store;
   }

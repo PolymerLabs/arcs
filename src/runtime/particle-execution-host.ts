@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
-import {Manifest} from './manifest.js';
+import {Manifest, StorageStub} from './manifest.js';
 import { Handle } from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -221,7 +221,13 @@ export class ParticleExecutionHost {
               if (recipe0.isResolved()) {
                 // TODO: pass tags through too, and reconcile with similar logic
                 // in Arc.deserialize.
-                manifest.stores.forEach(store => pec.arc._registerStore(store, []));
+                manifest.stores.forEach(async store => {
+                  if (store instanceof StorageStub) {
+                    pec.arc._registerStore(await store.inflate(), []);
+                  } else {
+                    pec.arc._registerStore(store, []);
+                  }
+                });
                 arc.instantiate(recipe0);
               } else {
                 error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;

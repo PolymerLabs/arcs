@@ -9,6 +9,8 @@ import {Arc} from '../../runtime/arc.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
+import {StorageStub} from '../../runtime/manifest.js';
 
 export class SearchTokensToHandles extends Strategy {
 
@@ -18,7 +20,8 @@ export class SearchTokensToHandles extends Strategy {
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
-      let stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
+      let stores: (StorageProviderBase | StorageStub)[];
+      stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
       let fate = 'use';
       if (stores.length === 0) {
         stores = arc.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});

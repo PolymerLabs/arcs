@@ -17,6 +17,7 @@ import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
+import {Loader} from '../runtime/loader.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
@@ -27,30 +28,43 @@ import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
+import {compareNumbers, compareStrings} from './recipe/util.js';
 
 class ManifestError extends Error {
-  location: {offset: number, line: number, column: number};
+  location: AstNode.SourceLocation;
   key: string;
-  constructor(location, message) {
+  constructor(location: AstNode.SourceLocation, message: string) {
     super(message);
     this.location = location;
   }
 }
 
+// TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
+// deflated rather than requiring this stub.
 export class StorageStub {
   type: Type;
   id: string;
-  originalId: string;
   name: string;
   storageKey: string;
   storageProviderFactory: StorageProviderFactory;
-  constructor(type, id, name, storageKey, storageProviderFactory, originalId) {
+  referenceMode = false;
+  originalId: string;
+
+  constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string) {
     this.type = type;
     this.id = id;
-    this.originalId = originalId;
     this.name = name;
     this.storageKey = storageKey;
     this.storageProviderFactory = storageProviderFactory;
+    this.originalId = originalId;
+  }
+
+  get version() {
+    return undefined; // Fake to match StorageProviderBase.
+  }
+
+  get description() {
+    return undefined; // Fake to match StorageProviderBase;
   }
 
   async inflate() {
@@ -59,18 +73,54 @@ export class StorageStub {
     store.originalId = this.originalId;
     return store;
   }
+
+  toLiteral() {
+    return undefined; // Fake to match StorageProviderBase;
+  }
+
+  toString(handleTags: string[]): string {
+    const results: string[] = [];
+    const handleStr: string[] = [];
+    handleStr.push(`store`);
+    if (this.name) {
+      handleStr.push(`${this.name}`);
+    }
+    handleStr.push(`of ${this.type.toString()}`);
+    if (this.id) {
+      handleStr.push(`'${this.id}'`);
+    }
+    if (handleTags && handleTags.length) {
+      handleStr.push(`${handleTags.join(' ')}`);
+    }
+    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
+    // serialized here too - could it ever be part of StorageStub?
+    results.push(handleStr.join(' '));
+    if (this.description) {
+      results.push(`  description \`${this.description}\``);
+    }
+    return results.join('\n');
+  }
+
+  _compareTo(other: StorageProviderBase) : number {
+    let cmp;
+    cmp = compareStrings(this.name, other.name);
+    if (cmp !== 0) return cmp;
+    cmp = compareStrings(this.id, other.id);
+    if (cmp !== 0) return cmp;
+    return 0;
+  }
 }
 
 /**
  * Calls `this.visit()` for each node in a manfest AST, parents before children.
  */
 class ManifestVisitor {
-  traverse(ast) {
+  traverse(ast: AstNode.BaseNode) {
     if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
       return;
     }
-    if (Array.isArray(ast)) {
-      for (const item of ast) {
+    if (ast instanceof Array) {
+      for (const item of ast as AstNode.BaseNode[]) {
         this.traverse(item);
       }
       return;
@@ -96,11 +146,11 @@ class ManifestVisitor {
 
   // Parents are visited before children, but an implementation can force
   // children to be visted by calling `visitChildren()`.
-  visit(node, visitChildren) {
+  visit(node: AstNode.BaseNode, visitChildren: () => void) {
   }
 }
 
-const globalWarningKeys = new Set();
+const globalWarningKeys: Set<string> = new Set();
 
 type ManifestFinder<a> = (manifest: Manifest) => a;
 type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) | ((manifest: Manifest) => a[]);
@@ -112,9 +162,9 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: {[index: string]: ParticleSpec} = {};
   private _schemas: {[index: string]: Schema} = {};
-  private _stores = <StorageProviderBase[]>[];
+  private _stores = <(StorageProviderBase|StorageStub)[]>[];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<StorageProviderBase, string[]> = new Map();
+  storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
@@ -187,7 +237,7 @@ export class Manifest {
   get resources() {
     return this._resources;
   }
-  applyMeta(section) {
+  applyMeta(section: { name: string }&{key: string, value:string}[]) {
     if (this._storageProviderFactory !== undefined) {
       assert(
           section.name === this._meta.name || section.name == undefined,
@@ -197,7 +247,7 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type, name, id, tags, storageKey?) {
+  async createStore(type: Type, name: string, id: string, tags: string[], storageKey?: string) {
     const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
     assert(store.version !== null);
     store.name = name;
@@ -205,13 +255,13 @@ export class Manifest {
     return this._addStore(store, tags);
   }
 
-  _addStore(store, tags) {
+  _addStore(store: StorageProviderBase | StorageStub, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
   }
 
-  newStorageStub(type, name, id, storageKey, tags, originalId) {
+  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string) {
     return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId), tags);
   }
 
@@ -237,7 +287,7 @@ export class Manifest {
     return this._find(manifest => manifest._schemas[name]);
   }
 
-  findTypeByName(name) {
+  findTypeByName(name: string): EntityType | InterfaceType | undefined {
     const schema = this.findSchemaByName(name);
     if (schema) {
       return new EntityType(schema);
@@ -246,30 +296,30 @@ export class Manifest {
     if (iface) {
       return new InterfaceType(iface);
     }
-    return null;
+    return undefined;
   }
-  findParticleByName(name) {
+  findParticleByName(name: string) {
     return this._find(manifest => manifest._particles[name]);
   }
-  findParticlesByVerb(verb) {
+  findParticlesByVerb(verb: string) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb === verb))];
   }
-  findStoreByName(name) {
+  findStoreByName(name: string) {
     return this._find(manifest => manifest._stores.find(store => store.name === name));
   }
-  findStoreById(id) {
+  findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store) {
+  findStoreTags(store: StorageProviderBase | StorageStub ) {
     return this._find(manifest => manifest.storeTags.get(store));
   }
-  findManifestUrlForHandleId(id) {
+  findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): StorageProviderBase[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): (StorageProviderBase | StorageStub)[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store) {
+    function typePredicate(store: StorageProviderBase | StorageStub) {
       const resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
         return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
@@ -286,8 +336,8 @@ export class Manifest {
 
       return store.type.equals(type);
     }
-    function tagPredicate(manifest: Manifest, handle) {
-      return tags.filter(tag => !manifest.storeTags.get(handle).includes(tag)).length === 0;
+    function tagPredicate(manifest: Manifest, store: StorageProviderBase | StorageStub) {
+      return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
 
     const stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
@@ -297,10 +347,10 @@ export class Manifest {
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
-  findInterfaceByName(name) {
+  findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
-  findRecipesByVerb(verb) {
+  findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
   // TODO: Unify ID handling to use ID instances, not strings. Change return type here to ID.
@@ -308,7 +358,7 @@ export class Manifest {
     return this.id.createId().toString();
   }
 
-  static async load(fileName: string, loader, options?): Promise<Manifest> {
+  static async load(fileName: string, loader: {loadResource}, options?): Promise<Manifest> {
     options = options || {};
     let {registry, id} = options;
     registry = registry || {};
@@ -324,7 +374,6 @@ export class Manifest {
         fileName,
         loader,
         registry,
-        position: {line: 1, column: 0}
       });
     })();
     return await registry[fileName];
@@ -333,10 +382,9 @@ export class Manifest {
   static async parse(content: string, options?): Promise<Manifest> {
     options = options || {};
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {id, fileName, position, loader, registry, context} = options;
+    let {session_id, fileName, loader, registry, context} = options;
     registry = registry || {};
-    position = position || {line: 1, column: 0};
-    id = `manifest:${fileName}:`;
+    const id = `manifest:${fileName}:`;
 
     function dumpWarnings(manifest: Manifest) {
       for (const warning of manifest.warnings) {

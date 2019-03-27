@@ -18,7 +18,7 @@ export class ManifestMeta {
     this.name = null;
   }
 
-  apply(items) {
+  apply(items: {key: string, value: string}[]) {
     items.forEach(item => { this[item.key] = item.value; });
   }
 }
