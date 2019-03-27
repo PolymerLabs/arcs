@@ -1,26 +1,36 @@
 defineParticle(({DomParticle, html}) => {   
   return class extends DomParticle {
     get template() {
-      // TODO: Update this tutorial to show how to output a list of things in a template.
-      return html`Hello <span>{{allNames}}</span>. Your combined age is <span>{{totalAge}}</span>.`;
+      // This template defines a subtemplate called "person". By filling in the "people" placeholder with a special construction given below in
+      // the render() method, we can apply the "person" template on every element in our input list (which here turns it into an <li> element).
+      return html`
+        Hello to everyone:
+        <ul>{{people}}</ul>
+      
+        <template person>
+          <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
+          <li>Hello <span>{{name}}</span>, age <span>{{age}}</span>!</li>
+        </template>
+      `;
     }
 
     shouldRender(props) {
       return props && props.inputData;
     }
 
-    // inputData is a list of PersonDetails objects. We concatenate all the names together, and sum all the ages.
+    // inputData is a list of PersonDetails objects.
     render({inputData}) {
-      let allNames = '';
-      let totalAge = 0;
-      inputData.forEach(({name, age}, index) => {
-        if (index != 0) {
-          allNames += ', ';
+      return {
+        // This will fill in the "people" placeholder in the template above. We construct an object with special properties named "$template"
+        // and "models", which defines how to render each item in the list.
+        people: {
+          // $template gives the name of the template to use to render each element.
+          $template: 'person',
+          // Each model in this list will get passed into the person template. The template can access the properties in this model (here, name
+          // and age) via placeholders.
+          models: inputData.map(personDetails => ({name: personDetails.name, age: personDetails.age})),
         }
-        allNames += name;
-        totalAge += age;
-      });
-      return {allNames, totalAge};
+      };
     }
   };
 });

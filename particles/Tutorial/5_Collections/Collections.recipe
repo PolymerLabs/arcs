@@ -14,7 +14,7 @@ resource PeopleData
     {"name": "Jen", "age": 50}
   ]
 
-// This data store contains a list of entities rather than a single entity, and is backed by the PeoplePdata resource defined above.
+// This data store contains a list of entities rather than a single entity, and is backed by the PeopleData resource defined above.
 store PeopleToGreetStore of [PersonDetails] in PeopleData
 
 particle CollectionParticle in 'collections.js'
