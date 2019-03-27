@@ -20,7 +20,7 @@ import {resetStorageForTesting} from '../build/runtime/storage/firebase/firebase
 (async () => {
   const usage = 'Usage: importSpotify [--clear] <json-files>\n' +
               '       importSpotify --list';
-  const schemaFile = 'artifacts/Music/Playlist.schema';
+  const schemaFile = 'particles/Music/Playlist.schema';
   const baseUrl = 'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/bigCollections';
 
   async function showPlaylists(collection) {
