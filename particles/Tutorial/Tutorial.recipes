@@ -18,3 +18,7 @@ import '3_JsonStore/JsonStore.recipe'
 // Tutorial 4: Render Slots
 // Connecting particles together with slots.
 import '4_RenderSlots/RenderSlots.recipe'
+
+// Tutorial 5: Collections
+// Collections of entities, and data stores defined in the manifest.
+import '5_Collections/Collections.recipe'
