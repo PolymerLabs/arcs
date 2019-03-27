@@ -21,9 +21,9 @@ export const ArcComponentMixin = Base => class extends Base {
   propChanged(name) {
     return (this.props[name] !== this._lastProps[name]);
   }
-  fire(name, value) {
+  //fire(name, value) {
     // TODO(sjmiles): Implement generic event thingie here? Maybe build into XenState? A different mixin? Be abstract?
-  }
+  //}
   update(props, {host, arc}) {
     if (props.changed('config')) {
       if (host) {

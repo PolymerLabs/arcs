@@ -9,10 +9,6 @@ import {SyntheticStores} from '../../lib/synthetic-stores.js';
 
 const t0 = now();
 
-const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0`;
-const userid = 'testuserray';
-const otherUserid = 'user';
-
 export const App = async () => {
   try {
     await user();
@@ -23,9 +19,10 @@ export const App = async () => {
 };
 
 const user = async () => {
-  //const storage = 'volatile://';
   const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0`;
-  const userid = 'user'; //'testuserray';
+  const userid = 'testuserray';
+  const otherUserid = 'user';
+  //
   report(storage, userid);
   //
   spawnSharesArc(storage);
@@ -57,19 +54,19 @@ const report = (storage, userid) => {
   }));
 };
 
-const spawnLauncherArc = async (user, storage) => {
+const spawnLauncherArc = async (userid, storage) => {
   // prepare rendering surface
   const composer = new RamSlotComposer();
   // prepare context
   const context = await Utils.parse('');
   // spawn arc via host (manages serialization)
   const host = new ArcHost(context, storage, composer);
-  const arc = await host.spawn({id: `${user}-launcher`});
+  const arc = await host.spawn({id: `${userid}-launcher`});
   console.log(arc._stores);
   return arc;
 };
 
-const fetchUserArcsStore = async (user, storage) => {
+const fetchUserArcsStore = async (userid, storage) => {
   const store = await SyntheticStores.getArcsStore(storage, `${userid}-launcher`);
   console.log(store);
   return store;
@@ -87,5 +84,4 @@ const spawnSharesArc = async (storage) => {
   const meta = {description: 'shares arc', color: 'silver', key: 'shares-arc'};
   const store = await fetchUserArcsStore('user', storage);
   await store.store({id: 'shares-arc', rawData: meta}, [now()]);
-
 };

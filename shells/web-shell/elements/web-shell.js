@@ -71,7 +71,7 @@ const template = Xen.Template.html`
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- background arcs -->
     <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc>
+    <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
     <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
     <!-- user arc -->
     <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
@@ -124,18 +124,18 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (!state.launcherConfig && state.env && state.userid) {
       this.spawnLauncher(state.userid);
     }
+    // poll for arcs-store
+    if (!state.store && state.launcherArc) {
+      this.waitForStore(10);
+    }
     // spin up nullArc
-    if (!state.nullConfig && state.context && state.userid) {
+    if (!state.nullConfig && state.context && state.userid && state.store) {
       this.spawnNullArc(state.userid);
     }
     // spin up pipesArc
     // if (!state.pipesConfig && state.context && state.userid) {
     //   this.spawnPipesArc(state.userid);
     // }
-    // poll for arcs-store
-    if (!state.store && state.launcherArc) {
-      this.waitForStore(10);
-    }
     // consume a suggestion
     if (state.suggestion && state.context) {
       if (!this.state.arckey) {
@@ -295,6 +295,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   async recordArcMeta(meta) {
     if (this.state.store) {
       await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
+    } else {
+      log('failed to record arc metadata: no store');
     }
   }
   openLauncher() {

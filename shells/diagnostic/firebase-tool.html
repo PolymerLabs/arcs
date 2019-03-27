@@ -32,10 +32,14 @@
   }
 </style>
 
+<img id="busygif" src="./loading.gif">
+
 <script type="module">
+  import {Xen} from '../lib/xen.js'
   import '../lib/build/firebase.js';
   import {database} from '../lib/firebase.js'
-  import {Xen} from '../lib/xen.js'
+  //
+  const version = '0_7_0';
   //
   const itemTemplate = Xen.Template.html`
     <div>
@@ -51,9 +55,10 @@
   `;
   //
   const snarfAll = async () => {
-    const ref = database.ref('0_6_0');
+    const ref = database.ref(version);
     console.log('querying database...');
     ref.once('value', snap => {
+      busygif.style.display = 'none';
       console.log('evaluating snapshot...');
       const corpus = snap.val();
       const prefixi = {};
