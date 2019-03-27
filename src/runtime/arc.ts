@@ -706,7 +706,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   findStoreById(id): StorageProviderBase | StorageStub {
-    let store = this.storesById.get(id);
+    const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);
     }
