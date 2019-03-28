@@ -82,3 +82,9 @@ This tutorial defines a new entity schema, and adds a data store backed by a JSO
 This tutorial combines two particles using render slots: [4_RenderSlots/RenderSlots.recipe]
 
 ![Tutorial 4 image](screenshots/4-render-slots.png)
+
+## Tutorial 5: Collections
+
+This tutorial shows how to use lists, and how to store data inline inside a manifest file: [5_Collections/Collections.recipe]
+
+![Tutorial 5 image](screenshots/5-collections.png)
