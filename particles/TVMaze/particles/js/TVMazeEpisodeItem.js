@@ -43,7 +43,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
         //log('rendering', episode.name);
         const model = episode.dataClone();
         if (!model.image) {
-          model.image = resolver('TVMazeEpisodeItem/../TV.png');
+          model.image = resolver('TVMazeEpisodeItem/../assets/TV.png');
         }
         return model;
       }

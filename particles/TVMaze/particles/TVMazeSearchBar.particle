@@ -1,0 +1,5 @@
+import '../schemas/TVMazeQuery.schema'
+
+particle TVMazeSearchBar in './js/TVMazeSearchBar.js'
+  out TVMazeQuery query
+  consume toproot
