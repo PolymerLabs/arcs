@@ -1,0 +1,2 @@
+schema Friend
+  Text publicKey

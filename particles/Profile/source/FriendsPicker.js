@@ -117,7 +117,7 @@ defineParticle(({DomParticle, html, resolver}) => {
         return {
           key: i,
           value: p.id,
-          name: name ? name.userName : p.id,
+          name: name ? name.userName : '(anon)', //p.id,
           url: resolver && resolver(url),
           selected: true
         };

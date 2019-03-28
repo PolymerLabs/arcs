@@ -11,23 +11,20 @@ export const ObserverTable = class {
   onChange(change, dt) {
     //console.log(change, `${dt}ms`);
     if (change.add) {
-      this.onAdd(change.add);
+      this.onAdd(change.add.rawData);
     } else if (change.remove) {
-      this.onRemove(change.remove);
+      this.onRemove(change.remove.rawData);
     }
   }
-  onAdd({rawData}) {
-    const node = this.addRow(rawData.key, [rawData.key, rawData.description]);
-    if (rawData.deleted) {
+  onAdd({key, description, deleted}) {
+    const node = this.addRow(key, [key, description]);
+    if (deleted) {
       node.style = 'color: red;';
     }
-    //console.log(rawData);
-    //msg(`add: ${change.add.rawData.description}`);
   }
-  onRemove({rawData}) {
-    const node = document.querySelector(`#${rawData.key}`);
+  onRemove({key}) {
+    const node = document.querySelector(`#${key}`);
     node.style.backgroundColor = '#FFC8C8';
-    //msg(`remove: ${rawData.description}`);
   }
 };
 

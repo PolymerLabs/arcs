@@ -5,6 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import 'Friend.schema'
+
+store DefaultFriends of [Friend] in 'friends.json'
+
 import 'UserName.schema'
 
 particle UserNameForm in 'source/UserNameForm.js'
@@ -16,7 +20,7 @@ import 'User.schema'
 
 particle FriendsPicker in 'source/FriendsPicker.js'
   in User user
-  inout [User] friends
+  inout [Friend] friends
   in [Avatar] avatars
   in [UserName] userNames
   consume friends
@@ -34,7 +38,8 @@ recipe BasicProfile
   map 'BOXED_userName' as userNames
   create #avatar as avatar
   create #userName as userName
-  create #friends as friends
+  //create #friends as friends
+  copy DefaultFriends as friends
   BasicProfile
     avatar = avatar
   UserNameForm

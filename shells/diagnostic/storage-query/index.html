@@ -1,11 +1,84 @@
 <!doctype html>
 
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body, button, input {
+    font-family: 'Google Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  [scroller] {
+    display: inline-block;
+    max-height: 400px;
+    overflow: auto;
+  }
+  table {
+    width: 660px;
+    font-size: 80%;
+    border: 1px solid #000000;
+    text-align: left;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  td, th {
+    border: 1px solid #000000;
+    padding: 6px 8px;
+  }
+  th {
+    background-color: #eeeeee;
+  }
+  td {
+    font-size: 90%;
+  }
+  td, th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #user th {
+    width: 100px;
+  }
+  #arcs, #arcs_h {
+    --cell-0-width: 260px;
+    --cell-1-width: 400px;
+  }
+  #arcs_h th:nth-of-type(1) {
+    width: var(--cell-0-width);
+  }
+  #arcs td:nth-of-type(1) {
+    width: var(--cell-0-width);
+  }
+  #arcs_h th:nth-of-type(2) {
+    width: var(--cell-1-width);
+  }
+  #arcs td:nth-of-type(2) {
+    width: calc(var(--cell-1-width) - 1px);
+  }
+</style>
+
+<table id="arcs_h">
+  <tr><th>Arcs</th></tr>
+  <tr><th>Id</th><th>Description</th></tr>
+</table>
+<div scroller>
+  <table id="arcs">
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
 <script type="module">
   import '../../lib/firebase-support.js';
+  import '../../lib/loglevel-web.js';
+  import {logFactory} from '../../../build/platform/log-web.js';
   import {Utils} from '../../lib/utils.js';
   import {Stores} from '../../lib/stores.js';
   import {SyntheticStores} from '../../lib/synthetic-stores.js';
   import {Const} from '../../configuration/constants.js';
+  import {ObserverTable} from '../user-arcs//observer-table.js';
+
+  const table = new ObserverTable('arcs');
 
   // UserObserver (user)
   // 0: key
@@ -27,58 +100,136 @@
   // for user Foo
   //   shared handle: add/remove/change
 
-  class StoreObserver {
-    constructor(store, onadd) {
-      this.connect(store, onadd);
+  class AbstractEventer {
+    constructor(listener) {
+      this.listener = listener;
     }
-    async connect(store, onadd) {
-      const onchange = change => this.onchange(change);
-      this.dispose = () => store.off(onchange);
-      store.on('change', onchange, this);
+    fire(name, data) {
+      if (this.listener) {
+        return this.listener.dispatch(name, data);
+      }
+    }
+    dispatch(name, data) {
+      const handler = this.vtable ? this.vtable[name] : name;
+      if (handler) {
+        return this[handler](data);
+      }
+    }
+  }
+
+  class StoreObserver extends AbstractEventer {
+    constructor(store, listener) {
+      super(listener);
+      const key = store.storageKey.split('/')[3];
+      this.log = logFactory(`StoreObserver[${key}::${store.id}]`, 'green');
+      this.store = store;
+      this.connect(store);
+    }
+    async connect(store) {
+      if (store.toList) {
+        await this.notifyInitialPopulation(store);
+        const onchange = change => this.onChange(change);
+        this.dispose = () => store.off(onchange);
+        store.on('change', onchange, this);
+      }
+    }
+    async notifyInitialPopulation(store) {
+      // process initial data
+      this.log('initial population');
       // TODO(sjmiles): assumes Collection
-      this.data = await store.toList();
-      this.data.forEach(datum => onadd(datum));
+      const data = await store.toList();
+      data.forEach(value => this.onAdd(value));
     }
-    onchange(change) {
-      console.log(change);
+    onAdd(data) {
+      this.fire('add', data)
     }
-  }
-
-  class HandleObserver {
-    constructor(handle, onadd) {
-      (async () => {
-        const store = await SyntheticStores.getHandleStore(handle);
-        this.observer = new StoreObserver(store, onadd)
-      })();
+    onChange({add, remove}) {
+      this.log('onChange', add, remove);
+      //console.log({add, remove});
+      if (add) {
+        add.forEach(({value}) => this.onAdd(value));
+      }
     }
   }
 
-  class ArcObserver {
-    constructor(storage, id) {
+  class ArcObserver extends AbstractEventer {
+    constructor(storage, id, listener) {
+      super(listener);
+      this.log = logFactory(`ArcObserver[${id}]`, 'blue');
+      this.vtable = {'add': 'onAddHandle', 'add-handle-data': 'onAddHandleData'};
       // maps handle keys to observers
       this.handles = {};
       this.connect(storage, id);
     }
     async connect(storage, id) {
-      // list of stores in the arc
+      this.log('connecting');
+      // store of handles
       const store = await SyntheticStores.getStore(storage, id);
-      this.observer = new StoreObserver(store, this.onAddHandle.bind(this));
+      if (!store) {
+        console.warn(`ArcObserver: failed to access store for [${storage}/${id}]`);
+      } else {
+        // each observable item is a handle
+        this.observer = new StoreObserver(store, this);
+      }
     }
     onAddHandle(handle) {
-      console.log(handle);
+      //console.log(handle);
       console.log('ArcObserver::onAddHandle: ', handle.storageKey.split('/').pop());
-      const onchange = change => this.onAddHandleData(handle, change);
-      this.handles[handle.storageKey] = new HandleObserver(handle, onchange);
+      this.handles[handle.storageKey] = new HandleObserver(handle, this);
     }
-    onAddHandleData(handle, datum) {
-      const meta = datum.rawData;
-      if (!meta.deleted) {
-        console.log(`ArcObserver::onAdd: [${handle.type.toPrettyString()}] "${datum.rawData.description}"`);
+    onAddHandleData(data) {
+      //console.log(`ArcObserver::onAdd: [${handle.type.toPrettyString()}] "${meta.description}"`);
+      this.fire('add-handle-data', data)
+    }
+  }
+
+  class HandleObserver extends AbstractEventer {
+    constructor(handle, listener) {
+      super(listener);
+      this.handle = handle;
+      this.connect(handle);
+    }
+    async connect(handle) {
+      const store = await SyntheticStores.getHandleStore(handle);
+      if (!store) {
+        console.warn(`HandleObserver: failed to access store for`, handle);
+      } else {
+        this.observer = new StoreObserver(store, this);
+      }
+    }
+    add(data) {
+      this.fire('add-handle-data', {handle: this.handle, data});
+    }
+  }
+
+  class ShareObserver extends AbstractEventer {
+    constructor(storage) {
+      super();
+      this.storage = storage;
+      this.vtable = {'add-handle-data': 'onAddHandleData'};
+      this.arcObs = {};
+      const userArcsOb = new ArcObserver(storage, 'user-launcher', this);
+    }
+    onAddHandleData({handle, data: {id, rawData: meta}}) {
+      if (meta && !meta.deleted) {
+        //console.log(`ShareObserver::onAddHandleData: [${handle.type.toPrettyString()}] "${meta.description}"`);
+        console.log(`ShareObserver::onAddHandleData: "${meta.description}"`);
+        if (meta.shared || true) {
+          //const node = this.addRow(key, [key, description]);
+          console.log(meta);
+          table.onAdd(meta);
+          const listener = new AbstractEventer();
+          listener['add-handle-data'] = ({handle, data}) => {
+            console.log('share-data', data);
+          };
+          this.arcObs[meta.key] = new ArcObserver(this.storage, meta.key, listener);
+        }
       }
     }
   }
 
   (async () => {
-    const userOb = new ArcObserver(Const.defaultFirebaseStorageKey, 'user-launcher');
+    const key = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`
+    const shareOb = new ShareObserver(key);
   })();
 </script>

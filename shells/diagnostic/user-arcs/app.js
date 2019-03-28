@@ -19,13 +19,16 @@ export const App = async () => {
 };
 
 const user = async () => {
-  const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0`;
-  const userid = 'testuserray';
-  const otherUserid = 'user';
+  const user = {
+    publicKey: `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`,
+    persona: 'user'
+  };
   //
-  report(storage, userid);
+  report(user.publicKey, user.persona);
   //
-  spawnSharesArc(storage);
+  spawnSharesArc(user);
+  spawnFriendsArc(user);
+  //
   // const context = await Utils.parse('');
   // const userContext = new UserContext();
   // userContext.init(storage, userid, context);
@@ -37,11 +40,11 @@ const user = async () => {
     //userContext.onArc(change);
   };
   //
-  const userArcs = new UserArcs(storage, userid);
+  const userArcs = new UserArcs(user.publicKey, user.persona);
   userArcs.subscribe(onChange);
   //
-  const otherUserArcs = new UserArcs(storage, otherUserid);
-  otherUserArcs.subscribe(onChange);
+  // const otherUserArcs = new UserArcs(storage, otherUserid);
+  // otherUserArcs.subscribe(onChange);
 };
 
 const report = (storage, userid) => {
@@ -54,34 +57,49 @@ const report = (storage, userid) => {
   }));
 };
 
-const spawnLauncherArc = async (userid, storage) => {
+const spawnLauncherArc = async user => {
   // prepare rendering surface
   const composer = new RamSlotComposer();
   // prepare context
   const context = await Utils.parse('');
   // spawn arc via host (manages serialization)
-  const host = new ArcHost(context, storage, composer);
-  const arc = await host.spawn({id: `${userid}-launcher`});
+  const host = new ArcHost(context, user.publicKey, composer);
+  const arc = await host.spawn({id: `${user.persona}-launcher`});
   console.log(arc._stores);
   return arc;
 };
 
-const fetchUserArcsStore = async (userid, storage) => {
-  const store = await SyntheticStores.getArcsStore(storage, `${userid}-launcher`);
+const fetchUserArcsStore = async user => {
+  const store = await SyntheticStores.getArcsStore(user.publicKey, `${user.persona}-launcher`);
   console.log(store);
   return store;
 };
 
-const spawnSharesArc = async (storage) => {
-  //const launcher = spawnLauncherArc('user', storage);
+const spawnSharesArc = async user => {
   // prepare rendering surface
   const composer = new RamSlotComposer();
   // prepare context
   const context = await Utils.parse('');
   // spawn arc
-  const arc = await Utils.spawn({id: 'shares-arc', composer, context, storage});
+  const id = `${user.persona}-shares`;
+  /*const arc =*/ await Utils.spawn({id, composer, context, storage: user.publicKey});
   // record metadata
-  const meta = {description: 'shares arc', color: 'silver', key: 'shares-arc'};
-  const store = await fetchUserArcsStore('user', storage);
-  await store.store({id: 'shares-arc', rawData: meta}, [now()]);
+  recordArcMeta(user, {description: 'shares arc', color: 'silver', key: id});
+};
+
+const spawnFriendsArc = async user => {
+  // prepare rendering surface
+  const composer = new RamSlotComposer();
+  // prepare context
+  const context = await Utils.parse('');
+  // spawn arc
+  const id = `${user.persona}-friends`;
+  const arc = await Utils.spawn({id, composer, context, storage: user.publicKey});
+  // record metadata
+  recordArcMeta(user, {description: 'friends arc', color: 'silver', key: id});
+};
+
+const recordArcMeta = async (user, meta) => {
+  const store = await fetchUserArcsStore(user);
+  await store.store({id: meta.key, rawData: meta}, [now()]);
 };
