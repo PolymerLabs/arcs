@@ -26,7 +26,7 @@ export type DevtoolsMessage = {
 export class AbstractDevtoolsChannel {
   debouncedMessages: DevtoolsMessage[] = [];
   messageListeners: Map<string, DevtoolsListener[]> = new Map();
-  timer: NodeJS.Timeout = null;
+  timer = null;
   
   constructor() {
   }

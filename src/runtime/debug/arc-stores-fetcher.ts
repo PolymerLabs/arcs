@@ -57,10 +57,10 @@ export class ArcStoresFetcher extends ArcDebugListener {
     for (const [store, tags] of stores) {
       // tslint:disable-next-line: no-any
       let value: any;
-      if ((store as VariableStorageProvider).get) {
-        value = await (store as VariableStorageProvider).get();
-      } else if ((store as CollectionStorageProvider).toList) {
+      if ((store as CollectionStorageProvider).toList) {
         value = await (store as CollectionStorageProvider).toList();
+      } else if ((store as VariableStorageProvider).get) {
+        value = await (store as VariableStorageProvider).get();
       } else {
         value = `(don't know how to dereference)`;
       }

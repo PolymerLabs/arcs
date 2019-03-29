@@ -1,5 +1,5 @@
-import { AbstractDevtoolsChannel, DevtoolsMessage, DevtoolsListener } from "../abstract-devtools-channel";
-import { Arc } from "../../arc";
+import {AbstractDevtoolsChannel, DevtoolsMessage, DevtoolsListener} from '../abstract-devtools-channel';
+import {Arc} from '../../arc';
 
 /**
  * @license
@@ -11,11 +11,10 @@ import { Arc } from "../../arc";
  * http://polymer.github.io/PATENTS.txt
  */
 
-export class DevtoolsChannelStub extends AbstractDevtoolsChannel {
+export class DevtoolsChannelStub {
   _messages: DevtoolsMessage[];
 
   constructor() {
-    super();
     this._messages = [];
   }
 
