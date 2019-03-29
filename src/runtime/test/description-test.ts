@@ -19,7 +19,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
 import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import { EntityType } from '../type.js';
+import {EntityType} from '../type.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
