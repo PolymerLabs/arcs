@@ -8,10 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Tracing} from '../../tracelib/trace.js';
+import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 
 let streamingToDevtools = false;
 
-export function enableTracingAdapter(devtoolsChannel) {
+export function enableTracingAdapter(devtoolsChannel: ArcDevtoolsChannel) {
   if (!streamingToDevtools) {
     Tracing.enable();
 
