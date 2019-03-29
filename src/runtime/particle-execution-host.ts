@@ -14,12 +14,12 @@ import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
 import {Manifest, StorageStub} from './manifest.js';
-import { Handle } from './recipe/handle.js';
+import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import { Type } from './type.js';
+import {Type} from './type.js';
 
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;
@@ -244,7 +244,7 @@ export class ParticleExecutionHost {
 
       onReportExceptionInHost(exception: PropagatedException) {
         if (!exception.particleName) {
-          exception.particleName = pec.arc.particleHandleMaps.get(exception.particleId).spec.name;
+          exception.particleName = pec.arc.loadedParticleInfo.get(exception.particleId).spec.name;
         }
         reportSystemException(exception);
       }
@@ -274,20 +274,21 @@ export class ParticleExecutionHost {
     this._apiPort.UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle, spec, handles) {
-    handles.forEach(handle => {
-      this._apiPort.DefineHandle(handle, handle.type.resolvedType(), handle.name);
+  instantiate(particle: Particle, stores: Map<string, StorageProviderBase>) {
+    stores.forEach((store, name) => {
+      this._apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
-
-    this._apiPort.InstantiateParticle(particle, particle.id, spec, handles);
-    return particle;
+    this._apiPort.InstantiateParticle(particle, particle.id, particle.spec, stores);
   }
+
   startRender({particle, slotName, providedSlots, contentTypes}: {particle: Particle, slotName: string, providedSlots: {[index: string]: string}, contentTypes: string[]}) {
     this._apiPort.StartRender(particle, slotName, providedSlots, contentTypes);
   }
+
   stopRender({particle, slotName}: {particle: Particle, slotName: string}) {
     this._apiPort.StopRender(particle, slotName);
   }
+
   innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content) {
     this._apiPort.InnerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content);
   }

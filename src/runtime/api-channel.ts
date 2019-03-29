@@ -19,10 +19,10 @@ import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
-import { SerializedModelEntry } from './storage/crdt-collection-model.js';
+import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
-import { PropagatedException } from './arc-exceptions.js';
+import {PropagatedException} from './arc-exceptions.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -409,15 +409,15 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer handle: Handle, @ByLiteral(Type) type: Type, @Direct name: string) {}
-  InstantiateParticle(@Initializer particle: ParticleSpec, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) handles: {[index: string]: Handle}) {}
-  
+  DefineHandle(@RedundantInitializer store: StorageProviderBase, @ByLiteral(Type) type: Type, @Direct name: string) {}
+  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, StorageProviderBase>) {}
+
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
   StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
-  
+
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: string);
   abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
   abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
@@ -436,7 +436,7 @@ export abstract class PECOuterPort extends APIPort {
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
   GetBackingStoreCallback(@Initializer store: StorageProviderBase, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
-  
+
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
@@ -467,10 +467,10 @@ export abstract class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
   }
-   
+
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string);
-  abstract onInstantiateParticle(id: string, spec: ParticleSpec, handles: {[index: string]: Handle});
+  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
 
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
   abstract onSimpleCallback(callback: (data: {}) => void, data: {});
@@ -513,12 +513,10 @@ export abstract class PECInnerPort extends APIPort {
 
   ReportExceptionInHost(@ByLiteral(PropagatedException) exception: PropagatedException) {}
 
-    // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
-    // send it along with the message. We only want to do this after a DevTools connection has been detected, which
-    // we can't directly detect inside a worker context, so the PECOuterPort will send an API message instead.
-
+  // To show stack traces for calls made inside the context, we need to capture the trace at the call point and
+  // send it along with the message. We only want to do this after a DevTools connection has been detected, which
+  // we can't directly detect inside a worker context, so the PECOuterPort will send an API message instead.
   onDevToolsConnected() {
     this._attachStack = true;
-  }  
-
+  }
 }

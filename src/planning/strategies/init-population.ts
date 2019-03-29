@@ -25,7 +25,7 @@ export class InitPopulation extends Strategy {
     super(arc, {contextual});
     this._contextual = contextual;
     this._recipeIndex = recipeIndex;
-    this._loadedParticles = new Set(this.arc.loadedParticles().map(spec => spec.implFile));
+    this._loadedParticles = new Set(this.arc.loadedParticleSpecs().map(spec => spec.implFile));
   }
 
   async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {

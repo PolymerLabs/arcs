@@ -86,7 +86,7 @@ export class Arc {
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
-  particleHandleMaps = new Map<string, {spec: ParticleSpec, handles: Map<string, StorageProviderBase>}>();
+  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
@@ -412,21 +412,22 @@ ${this.activeRecipe.toString()}`;
   get recipes() { return [this.activeRecipe]; }
   get recipeDeltas() { return this._recipeDeltas; }
 
-  loadedParticles() {
-    return [...this.particleHandleMaps.values()].map(({spec}) => spec);
+  loadedParticleSpecs() {
+    return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
   _instantiateParticle(recipeParticle : Particle) {
     recipeParticle.id = this.generateID('particle');
-    const handleMap = {spec: recipeParticle.spec, handles: new Map()};
-    this.particleHandleMaps.set(recipeParticle.id, handleMap);
+    const info = {spec: recipeParticle.spec, stores: new Map()};
+    this.loadedParticleInfo.set(recipeParticle.id, info);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
-      const handle = this.findStoreById(connection.handle.id);
-      assert(handle, `can't find handle of id ${connection.handle.id}`);
-      this._connectParticleToHandle(recipeParticle, name, handle);
+      const store = this.findStoreById(connection.handle.id);
+      assert(store, `can't find store of id ${connection.handle.id}`);
+      assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
+      info.stores.set(name, store);
     }
-    this.pec.instantiate(recipeParticle, handleMap.spec, handleMap.handles);
+    this.pec.instantiate(recipeParticle, info.stores);
   }
 
   generateID(component: string = '') {
@@ -455,12 +456,11 @@ ${this.activeRecipe.toString()}`;
         arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
       }
     }
-    this.particleHandleMaps.forEach((value, key) => {
-      arc.particleHandleMaps.set(key, {
-        spec: value.spec,
-        handles: new Map()
-      });
-      value.handles.forEach(handle => arc.particleHandleMaps.get(key).handles.set(handle.name, storeMap.get(handle)));
+
+    this.loadedParticleInfo.forEach((info, id) => {
+      const stores = new Map();
+      info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
+      arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
 
     const {cloneMap} = this._activeRecipe.mergeInto(arc._activeRecipe);
@@ -574,13 +574,6 @@ ${this.activeRecipe.toString()}`;
     }
 
     this.debugHandler.recipeInstantiated({particles});
-  }
-
-  _connectParticleToHandle(particle, name, targetHandle) {
-    assert(targetHandle, 'no target handle provided');
-    const handleMap = this.particleHandleMaps.get(particle.id);
-    assert(handleMap.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-    handleMap.handles.set(name, targetHandle);
   }
 
   async createStore(type: Type, name?, id?: string, tags?, storageKey:string = undefined) {
