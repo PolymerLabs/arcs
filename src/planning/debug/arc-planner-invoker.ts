@@ -27,7 +27,7 @@ class InitialRecipe extends Strategy {
     this.recipe = recipe;
   }
 
-  async generate({generation}: {generation: number}): Promise<Descendant[]> {
+  async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {
     if (generation !== 0) {
       return [];
     }
@@ -124,7 +124,7 @@ export class ArcPlannerInvoker extends ArcDebugListener {
     return new strategyClass(this.arc, {recipeIndex: this.recipeIndex});
   }
 
-  processStrategyOutput(inputs: Descendant[]) {
+  processStrategyOutput(inputs: Descendant<Recipe>[]) {
     return {results: inputs.map(result => {
       const recipe = result.result;
 
@@ -148,7 +148,7 @@ export class ArcPlannerInvoker extends ArcDebugListener {
     })};
   }
 
-  extractDerivation(result: Descendant): string[] {
+  extractDerivation(result: Descendant<Recipe>): string[] {
     const found: string[] = [];
     for (const deriv of result.derivation || []) {
       if (!deriv.parent && deriv.strategy.constructor !== InitialRecipe) { 

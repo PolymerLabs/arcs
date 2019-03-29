@@ -16,7 +16,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {Walker, Descendant} from './walker.js';
 
-export class RecipeWalker extends Walker {
+export class RecipeWalker extends Walker<Recipe> {
 
   // Optional lifecycle events
 
@@ -41,7 +41,7 @@ export class RecipeWalker extends Walker {
   // tslint:disable-next-line: no-any
   onRequiredParticle?(recipe: Recipe, particle: Particle): any;
 
-  onResult(result: Descendant) {
+  onResult(result: Descendant<Recipe>) {
     super.onResult(result);
     const recipe: Recipe = result.result;
     const updateList = [];

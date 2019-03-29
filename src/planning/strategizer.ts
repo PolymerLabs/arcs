@@ -16,12 +16,12 @@ export class Strategizer {
   _strategies: Strategy[];
   _evaluators: Strategy[];
   _generation = 0;
-  _internalPopulation: {fitness: number, individual: Descendant}[] = [];
-  _population: Descendant[] = [];
-  _generated: Descendant[] = [];
+  _internalPopulation: {fitness: number, individual: Descendant<Recipe>}[] = [];
+  _population: Descendant<Recipe>[] = [];
+  _generated: Descendant<Recipe>[] = [];
   _ruleset: Ruleset;
-  _terminal: Descendant[] = [];
-  populationHash: Map<string, Descendant>;
+  _terminal: Descendant<Recipe>[] = [];
+  populationHash: Map<string, Descendant<Recipe>>;
 
   constructor(strategies: Strategy[], evaluators: Strategy[], ruleset: Ruleset) {
     this._strategies = strategies;
@@ -55,7 +55,7 @@ export class Strategizer {
     // Generate
     const generation = this.generation + 1;
     const generatedResults = await Promise.all(this._strategies.map(strategy => {
-      const recipeFilter = (recipe: Descendant) => this._ruleset.isAllowed(strategy, recipe);
+      const recipeFilter = (recipe: Descendant<Recipe>) => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
         generated: this.generated.filter(recipeFilter),
@@ -89,7 +89,7 @@ export class Strategizer {
       record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generatedResults[i].length;
     }
 
-    let generated: Descendant[] = [].concat(...generatedResults);
+    let generated: Descendant<Recipe>[] = [].concat(...generatedResults);
 
     // TODO: get rid of this additional asynchrony
     generated = await Promise.all(generated.map(async result => {
@@ -147,7 +147,7 @@ export class Strategizer {
       return true;
     });
 
-    const terminalMap = new Map<Recipe, Descendant>();
+    const terminalMap = new Map<Recipe, Descendant<Recipe>>();
     for (const candidate of this.generated) {
       terminalMap.set(candidate.result, candidate);
     }
@@ -198,7 +198,7 @@ export class Strategizer {
     return record;
   }
 
-  static _mergeEvaluations(evaluations: number[][], generated: Descendant[]): number[] {
+  static _mergeEvaluations(evaluations: number[][], generated: Descendant<Recipe>[]): number[] {
     const n = generated.length;
     const mergedEvaluations: number[] = [];
     for (let i = 0; i < n; i++) {
@@ -237,13 +237,13 @@ export class StrategizerWalker extends RecipeWalker {
     super.createDescendant(recipe, score);
   }
 
-  static over(results: Descendant[], walker: StrategizerWalker, strategy: Strategy): Descendant[] {
+  static over(results: Descendant<Recipe>[], walker: StrategizerWalker, strategy: Strategy): Descendant<Recipe>[] {
     return super.walk(results, walker, strategy);
   }
 }
 
 // TODO: Doc call convention, incl strategies are stateful.
-export abstract class Strategy extends Action {
+export abstract class Strategy extends Action<Recipe> {
   constructor(arc?: Arc, args?) {
     super(arc, args);
   }
@@ -255,7 +255,7 @@ export abstract class Strategy extends Action {
     return {generate: 0, evaluate: 0};
   }
 
-  async evaluate(strategizer: Strategizer, individuals: Descendant[]): Promise<number[]> {
+  async evaluate(strategizer: Strategizer, individuals: Descendant<Recipe>[]): Promise<number[]> {
     return individuals.map(() => NaN);
   }
 }
@@ -346,7 +346,7 @@ export class Ruleset {
     this._orderingRules = orderingRules;
   }
 
-  isAllowed(strategy: Strategy, recipe: Descendant): boolean {
+  isAllowed(strategy: Strategy, recipe: Descendant<Recipe>): boolean {
     const forbiddenAncestors = this._orderingRules.get(strategy.constructor as StrategyDerived);
     if (!forbiddenAncestors) return true;
     // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.

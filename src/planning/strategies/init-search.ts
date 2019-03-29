@@ -18,7 +18,7 @@ export class InitSearch extends Strategy {
     this._search = search;
   }
 
-  async generate({generation}): Promise<Descendant[]> {
+  async generate({generation}): Promise<Descendant<Recipe>[]> {
     if (this._search == null || generation !== 0) {
       return [];
     }
