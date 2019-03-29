@@ -9,7 +9,13 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Schema} from './schema.js';
-import {EntityType, SlotType, Type, TypeVariable} from './type.js';
+import {EntityType, SlotType, Type, TypeVariable, TypeLiteral} from './type.js';
+
+interface TypeVariableInfoLiteral {
+  name: string;
+  canWriteSuperset?: TypeLiteral;
+  canReadSubset?: TypeLiteral;
+}
 
 export class TypeVariableInfo {
   name: string;
@@ -40,7 +46,7 @@ export class TypeVariableInfo {
    * Merge a type variable's read subset (upper bound) constraints into this variable.
    * This is used to accumulate read constraints when resolving a handle's type.
    */
-  maybeMergeCanReadSubset(constraint): boolean {
+  maybeMergeCanReadSubset(constraint: Type): boolean {
     if (constraint == null) {
       return true;
     }
@@ -54,7 +60,7 @@ export class TypeVariableInfo {
       // TODO: formFactor compatibility, etc.
       return true;
     }
-    if (this.canReadSubset instanceof EntityType) {
+    if (this.canReadSubset instanceof EntityType && constraint instanceof EntityType) {
       const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
         return false;
@@ -70,7 +76,7 @@ export class TypeVariableInfo {
    * merge a type variable's write superset (lower bound) constraints into this variable.
    * This is used to accumulate write constraints when resolving a handle's type.
    */
-  maybeMergeCanWriteSuperset(constraint): boolean {
+  maybeMergeCanWriteSuperset(constraint: Type): boolean {
     if (constraint == null) {
       return true;
     }
@@ -85,7 +91,7 @@ export class TypeVariableInfo {
       return true;
     }
 
-    if (this.canWriteSuperset instanceof EntityType) {
+    if (this.canWriteSuperset instanceof EntityType && constraint instanceof EntityType) {
       const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
         return false;
@@ -97,7 +103,7 @@ export class TypeVariableInfo {
     return false;
   }
 
-  isSatisfiedBy(type) {
+  isSatisfiedBy(type: Type) {
     const constraint = this._canWriteSuperset;
     if (!constraint) {
       return true;
@@ -156,7 +162,7 @@ export class TypeVariableInfo {
     return this._canWriteSuperset;
   }
 
-  set canWriteSuperset(value) {
+  set canWriteSuperset(value: Type) {
     assert(!this._resolution);
     this._canWriteSuperset = value;
   }
@@ -172,7 +178,7 @@ export class TypeVariableInfo {
     return this._canReadSubset;
   }
 
-  set canReadSubset(value) {
+  set canReadSubset(value: Type) {
     assert(!this._resolution);
     this._canReadSubset = value;
   }
@@ -211,7 +217,7 @@ export class TypeVariableInfo {
     return this.toLiteralIgnoringResolutions();
   }
 
-  toLiteralIgnoringResolutions() {
+  toLiteralIgnoringResolutions(): TypeVariableInfoLiteral {
     return {
       name: this.name,
       canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
@@ -219,7 +225,7 @@ export class TypeVariableInfo {
     };
   }
 
-  static fromLiteral(data) {
+  static fromLiteral(data: TypeVariableInfoLiteral) {
     return new TypeVariableInfo(
         data.name,
         data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
@@ -230,3 +236,4 @@ export class TypeVariableInfo {
     return (this._resolution && this._resolution.isResolved());
   }
 }
+

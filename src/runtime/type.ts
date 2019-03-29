@@ -135,7 +135,7 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
-  getContainedType() {
+  getContainedType(): Type {
     return null;
   }
 
