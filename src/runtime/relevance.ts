@@ -56,7 +56,7 @@ export class Relevance {
   }
 
   // Returns false, if at least one of the particles relevance lists ends with a negative score.
-  isRelevant(plan) {
+  isRelevant(plan: Recipe) {
     const hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
     let rendersUi = false;
 
@@ -73,7 +73,7 @@ export class Relevance {
     return hasUi === rendersUi;
   }
 
-  static scaleRelevance(relevance) {
+  static scaleRelevance(relevance: number) {
     if (relevance == undefined) {
       relevance = 5;
     }
@@ -82,7 +82,7 @@ export class Relevance {
     return relevance / 5;
   }
 
-  static particleRelevance(relevanceList) {
+  static particleRelevance(relevanceList: number[]) {
     let relevance = 1;
     let hasNegative = false;
     relevanceList.forEach(r => {

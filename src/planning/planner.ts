@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {Arc} from '../runtime/arc.js';
@@ -36,7 +37,20 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
-import {Strategizer, Strategy, StrategyDerived} from './strategizer.js';
+import {Strategizer, StrategyDerived, GenerationRecord} from './strategizer.js';
+import {Descendant} from '../runtime/recipe/walker.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
+
+interface AnnotatedDescendant extends Descendant<Recipe> {
+  active?: boolean;
+  irrelevant?: boolean;
+  description?: string;
+}
+
+interface Generation {
+  generated: AnnotatedDescendant[];
+  record: GenerationRecord;
+}
 
 export class Planner {
   private _arc: Arc;
@@ -54,10 +68,10 @@ export class Planner {
   }
 
   // Specify a timeout value less than zero to disable timeouts.
-  async plan(timeout?: number, generations = []) {
+  async plan(timeout?: number, generations: Generation[] = []) {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
-    const allResolved = [];
+    const allResolved: Recipe[] = [];
     const start = now();
     do {
       const record = await trace.wait(this.strategizer.generate());
@@ -113,8 +127,8 @@ export class Planner {
     return Math.max(minCores, Math.min(maxThreadsByMemory, maxThreadsByCores));
   }
 
-  _splitToGroups(items, groupCount: number) {
-    const groups = [];
+  _splitToGroups(items: Recipe[], groupCount: number) {
+    const groups: Recipe[][] = [];
     if (!items || items.length === 0) return groups;
     const groupItemSize = Math.max(1, Math.floor(items.length / groupCount));
     let startIndex = 0;
@@ -129,10 +143,9 @@ export class Planner {
     return groups;
   }
 
-  async suggest(timeout?: number, generations: {}[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
+  async suggest(timeout?: number, generations: Generation[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     const plans = await trace.wait(this.plan(timeout, generations));
-    const suggestions = [];
     speculator = speculator || new Speculator();
     // We don't actually know how many threads the VM will decide to use to
     // handle the parallel speculation, but at least we know we won't kick off
@@ -142,7 +155,7 @@ export class Planner {
     const threadCount = this._speculativeThreadCount();
     const planGroups = this._splitToGroups(plans, threadCount);
     let results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
-      const results = [];
+      const results: Suggestion[] = [];
       for (const plan of group) {
         const hash = ((hash) => hash.substring(hash.length - 4))(await plan.digest());
 
@@ -178,11 +191,12 @@ export class Planner {
     return trace.endWith(results);
   }
 
-  _updateGeneration(generations, hash: string, handler) {
+  _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {
     if (generations) {
       generations.forEach(g => {
         g.generated.forEach(gg => {
-          if (gg.hash.endsWith(hash)) {
+          assert(typeof gg.hash === 'string');
+          if (typeof gg.hash === 'string' && gg.hash.endsWith(hash)) {
             handler(gg);
           }
         });
