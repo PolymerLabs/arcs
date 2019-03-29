@@ -33,11 +33,6 @@ recipe TVMazeShowTiles
     hostedParticle = TVMazeShowTile
     consume tile
     list = shows
-  ActionMultiplexer
-    consume action as action
-    hostedParticle = TVMazeShowActions
-    list = shows
-    //shows = myshows
   description `show information about ${SelectableTiles.list}`
 
 recipe TVMazeShowPanel
