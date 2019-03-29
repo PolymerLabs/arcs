@@ -65,7 +65,7 @@ export class Loader {
     return this._loadFile(file);
   }
 
-  _loadFile(file: string) {
+  _loadFile(file: string): Promise<string> {
     return new Promise((resolve, reject) => {
       fs.readFile(file, (err, data) => {
         if (err) {

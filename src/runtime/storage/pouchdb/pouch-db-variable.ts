@@ -288,7 +288,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   private async getStored(): Promise<ValueStorage> {
     try {
-      const result = await this.db.get(this.pouchDbKey.location);
+      // tslint:disable-next-line: no-any
+      const result: any = await this.db.get(this.pouchDbKey.location);
 
       // compare revisions
       if (this._rev !== result._rev) {

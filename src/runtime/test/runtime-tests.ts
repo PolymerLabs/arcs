@@ -21,7 +21,7 @@ describe('Runtime', () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader: new Loader(),
                          context: new Manifest({id: 'test'})});
     const description = await Description.create(arc);
-    const expected = description.getArcDescription();
+    const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);
     assert.equal(expected, actual);
   });
