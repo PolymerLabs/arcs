@@ -20,6 +20,12 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from './util.js';
 
+export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection;
+export type CloneMap = Map<RecipeComponent, RecipeComponent>;
+
+export type IsValidOptions = {errors: Map<RecipeComponent, string>};
+export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean};
+
 export class Recipe {
   private _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
@@ -27,7 +33,7 @@ export class Recipe {
   private _slots: Slot[] = [];
   private _name: string | undefined;
   private _localName: string | undefined = undefined;
-  private _cloneMap: Map<{}, {}>;
+  private _cloneMap: CloneMap;
 
   annotation: string | undefined = undefined;
 
