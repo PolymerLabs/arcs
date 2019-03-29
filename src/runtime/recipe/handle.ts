@@ -12,9 +12,10 @@ import {TypeVariableInfo} from '../type-variable-info.js';
 import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {Recipe} from './recipe.js';
+import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './util.js';
+import { StorageProviderBase } from '../storage/storage-provider-base.js';
 
 type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
@@ -42,8 +43,8 @@ export class Handle {
     this._recipe = recipe;
   }
 
-  _copyInto(recipe: Recipe, cloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
-    let handle = undefined;
+  _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>) {
+    let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
     }
@@ -69,7 +70,7 @@ export class Handle {
   }
 
   // Merges `this` recipe handle into `handle`
-  mergeInto(handle) {
+  mergeInto(handle: Handle) {
     assert(this.recipe === handle.recipe, 'Cannot merge handles from different recipes.');
     while (this.connections.length > 0) {
       const [connection] = this.connections;
@@ -82,7 +83,7 @@ export class Handle {
     handle.fate = this._mergedFate([this.fate, handle.fate]);
   }
 
-  _mergedFate(fates) {
+  _mergedFate(fates: Fate[]) {
     assert(fates.length > 0, `Cannot merge empty fates list`);
     // Merging handles only used in coalesce-recipe strategy, which is only done for use/create/? fates.
     assert(!fates.includes('map') && !fates.includes('copy'), `Merging map/copy not supported yet`);
@@ -105,7 +106,7 @@ export class Handle {
     Object.freeze(this);
   }
 
-  _compareTo(other) {
+  _compareTo(other: Handle) {
     let cmp;
     if ((cmp = compareStrings(this._id, other._id)) !== 0) return cmp;
     if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
@@ -120,7 +121,7 @@ export class Handle {
 
   // a resolved Handle has either an id or create=true
   get fate() { return this._fate || '?'; }
-  set fate(fate) {
+  set fate(fate: Fate) {
     if (this._originalFate == null) {
       this._originalFate = this._fate;
     }
@@ -139,7 +140,7 @@ export class Handle {
     }
     this._id = id;
   }
-  mapToStorage(storage) {
+  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string}) {
     if(!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
@@ -150,16 +151,16 @@ export class Handle {
     this._storageKey = storage.storageKey;
   }
   get localName() { return this._localName; }
-  set localName(name) { this._localName = name; }
+  set localName(name: string) { this._localName = name; }
   get connections() { return this._connections; } // HandleConnection*
   get storageKey() { return this._storageKey; }
-  set storageKey(key) { this._storageKey = key; }
+  set storageKey(key: string) { this._storageKey = key; }
   get pattern() { return this._pattern; }
-  set pattern(pattern) { this._pattern = pattern; }
+  set pattern(pattern: string) { this._pattern = pattern; }
   get mappedType() { return this._mappedType; }
   set mappedType(mappedType: Type) { this._mappedType = mappedType; }
   get immediateValue() { return this._immediateValue; }
-  set immediateValue(value) { this._immediateValue = value; }
+  set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
 
   static effectiveType(handleType: Type, connections: {type: Type, direction: string}[]) {
     const variableMap = new Map();
@@ -174,7 +175,7 @@ export class Handle {
     return TypeChecker.processTypeList(handleType, typeSet);
   }
 
-  _isValid(options) {
+  _isValid(options: IsValidOptions) {
     const tags = new Set();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
@@ -251,7 +252,7 @@ export class Handle {
     return resolved;
   }
 
-  toString(nameMap, options) {
+  toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions) {
     if (this._immediateValue) {
       // Immediate Value handles are only rendered inline with particle connections.
       // E.g. hostedParticle = ShowProduct
