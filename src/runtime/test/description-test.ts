@@ -31,7 +31,7 @@ function createTestArc(recipe: Recipe, manifest: Manifest) {
 
 type VerifySuggestionOptions = {
   arc: Arc;
-  relevance?;
+  relevance?: Relevance;
 };
 
 const tests = [

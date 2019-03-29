@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
 import {Arc} from '../runtime/arc.js';
 import {DevtoolsConnection} from '../runtime/debug/devtools-connection.js';
 import {Description} from '../runtime/description.js';
@@ -70,7 +69,7 @@ export class Speculator {
     return suggestion;
   }
 
-  async awaitCompletion(relevance, speculativeArc) {
+  async awaitCompletion(relevance: Relevance, speculativeArc: Arc) {
     const messageCount = speculativeArc.pec.messageCount;
     relevance.apply(await speculativeArc.pec.idle);
 

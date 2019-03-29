@@ -12,6 +12,22 @@ import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
 import {Action, Descendant} from '../runtime/recipe/walker.js';
 
+export interface GenerationRecord {
+  generation: number;
+  sizeOfLastGeneration: number;
+  generatedDerivationsByStrategy: {[index: string]: number};
+  generatedDerivations?: number;
+  nullDerivations?: number;
+  invalidDerivations?: number;
+  duplicateDerivations?: number;
+  duplicateSameParentDerivations?: number;
+  nullDerivationsByStrategy?: {[index: string]: number};
+  invalidDerivationsByStrategy?: {[index: string]: number};
+  duplicateDerivationsByStrategy?: {[index: string]: number};
+  duplicateSameParentDerivationsByStrategy?: {[index: string]: number};
+  survivingDerivations?: number;
+}
+
 export class Strategizer {
   _strategies: Strategy[];
   _evaluators: Strategy[];
@@ -64,22 +80,7 @@ export class Strategizer {
       });
     }));
 
-    const record :
-      {generation: number,
-        sizeOfLastGeneration: number,
-        generatedDerivationsByStrategy: {[index: string]: number},
-        generatedDerivations?: number,
-        nullDerivations?: number,
-        invalidDerivations?: number,
-        duplicateDerivations?: number,
-        duplicateSameParentDerivations?: number;
-        nullDerivationsByStrategy?: {[index: string]: number},
-        invalidDerivationsByStrategy?: {[index: string]: number},
-        duplicateDerivationsByStrategy?: {[index: string]: number},
-        duplicateSameParentDerivationsByStrategy?: {[index: string]: number},
-        survivingDerivations?: number
-      }
-      = {
+    const record : GenerationRecord = {
       generation,
       sizeOfLastGeneration: this.generated.length,
       generatedDerivationsByStrategy: {}
