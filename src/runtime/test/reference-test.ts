@@ -315,12 +315,12 @@ describe('references', () => {
     await fooStore.set({id: 'id:1', rawData: {result: null, shortForm: 'a'}});
 
     const inputStore = arc._stores[1] as CollectionStorageProvider;
-    assert.equal(inputStore.type.getContainedType().entitySchema.name, 'Result');
+    assert.equal((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     await inputStore.store({id: 'id:a', rawData: {value: 'this is an a'}}, ['a']);
     await inputStore.store({id: 'id:b', rawData: {value: 'this is a b'}}, ['a']);
 
     const outputStore = arc._stores[2] as CollectionStorageProvider;
-    assert.equal(outputStore.type.getContainedType().entitySchema.name, 'Foo');
+    assert.equal((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Foo');
     await outputStore.store({id: 'id:2', rawData: {result: null, shortForm: 'b'}}, ['a']);
 
     await arc.idle;
@@ -399,7 +399,7 @@ describe('references', () => {
 
     await arc.idle;
     const outputStore = arc._stores[0] as CollectionStorageProvider;
-    assert.equal(outputStore.type.getContainedType().entitySchema.name, 'Result');
+    assert.equal((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const values = await outputStore.toList();
     assert.equal(values.length, 2);
     assert.equal(values[0].rawData.value, 'what a result!');
@@ -471,7 +471,7 @@ describe('references', () => {
     await arc.instantiate(recipe);
 
     const inputStore = arc._stores[0] as CollectionStorageProvider;
-    assert.equal(inputStore.type.getContainedType().entitySchema.name, 'Result');
+    assert.equal((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     await inputStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await inputStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
