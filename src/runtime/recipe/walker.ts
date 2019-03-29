@@ -36,12 +36,16 @@ import {Arc} from '../arc.js';
 
 export enum WalkerTactic {Permuted='permuted', Independent='independent'}
 
-export interface Descendant {
-  result; // TODO: Make Walker genericly typed.
+interface Cloneable {
+  clone(map: Map<object, object>): this;
+}
+
+export interface Descendant<T extends Cloneable> {
+  result: T; // TODO: Make Walker genericly typed.
   score: number;
   derivation: {
-    parent: Descendant;
-    strategy: Action
+    parent: Descendant<T>;
+    strategy: Action<T>
   }[];
   hash: Promise<string> | string;
   valid: boolean;
@@ -53,7 +57,7 @@ export interface Descendant {
  * An Action generates the list of Descendants by walking the object with a 
  * Walker.
  */
-export abstract class Action {
+export abstract class Action<T extends Cloneable> {
   private readonly _arc?: Arc;
   private _args?;
 
@@ -70,20 +74,19 @@ export abstract class Action {
     return inputParams.generated;
   }
 
-  async generate(inputParams): Promise<Descendant[]> {
+  async generate(inputParams): Promise<Descendant<T>[]> {
     return [];
   }
-
 }
 
-export abstract class Walker {
+export abstract class Walker<T extends Cloneable> {
   // tslint:disable-next-line: variable-name
   static Permuted: WalkerTactic = WalkerTactic.Permuted;
   // tslint:disable-next-line: variable-name
   static Independent: WalkerTactic = WalkerTactic.Independent;
-  descendants: Descendant[];
-  currentAction: Action;
-  currentResult: Descendant;
+  descendants: Descendant<T>[];
+  currentAction: Action<T>;
+  currentResult: Descendant<T>;
   tactic: WalkerTactic;
 
   constructor(tactic: WalkerTactic) {
@@ -92,11 +95,11 @@ export abstract class Walker {
     this.tactic = tactic;
   }
 
-  onAction(action: Action) {
+  onAction(action: Action<T>) {
     this.currentAction = action;
   }
 
-  onResult(result: Descendant): void {
+  onResult(result: Descendant<T>): void {
     this.currentResult = result;
   }
 
@@ -108,7 +111,7 @@ export abstract class Walker {
     this.currentAction = undefined;
   }
 
-  static walk(results: Descendant[], walker: Walker, action: Action): Descendant[] {
+  static walk<T extends Cloneable>(results: Descendant<T>[], walker: Walker<T>, action: Action<T>): Descendant<T>[] {
     walker.onAction(action);
     results.forEach(result => {
       walker.onResult(result);
@@ -118,7 +121,7 @@ export abstract class Walker {
     return walker.descendants;
   }
 
-  _runUpdateList(start, updateList) {
+  _runUpdateList(start: T, updateList) {
     const updated = [];
     if (updateList.length) {
       switch (this.tactic) {
@@ -195,9 +198,9 @@ export abstract class Walker {
   // This function must be overriden to generate hash and valid values for the
   // kind of result being processed, and then call createWalkerDescendant,
   // below. See RecipeWalker for an example.
-  abstract createDescendant(result, score): void;
+  abstract createDescendant(result: T, score: number): void;
 
-  createWalkerDescendant(item, score, hash, valid): void {
+  createWalkerDescendant(item: T, score: number, hash: Promise<string> | string, valid: boolean): void {
     assert(this.currentResult, 'no current result');
     assert(this.currentAction, 'no current action');
     if (this.currentResult.score) {

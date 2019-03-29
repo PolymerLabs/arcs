@@ -63,7 +63,7 @@ class RelevantContextRecipes extends Strategy {
     }
   }
 
-  async generate({generation}: {generation: number}): Promise<Descendant[]> {
+  async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {
     if (generation !== 0) {
       return [];
     }

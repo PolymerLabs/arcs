@@ -28,7 +28,7 @@ export class InitPopulation extends Strategy {
     this._loadedParticles = new Set(this.arc.loadedParticles().map(spec => spec.implFile));
   }
 
-  async generate({generation}: {generation: number}): Promise<Descendant[]> {
+  async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {
     if (generation !== 0) {
       return [];
     }

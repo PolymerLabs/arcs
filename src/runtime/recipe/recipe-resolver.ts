@@ -150,7 +150,7 @@ export class ResolveWalker extends RecipeWalker {
   }
 }
 
-export class ResolveRecipeAction extends Action {
+export class ResolveRecipeAction extends Action<Recipe> {
 
   async generate(inputParams) {
     return ResolveWalker.walk(this.getResults(inputParams),
