@@ -1,0 +1,11 @@
+import './PipeEntity.schema'
+
+schema Json
+  Text json
+
+recipe Com_google_android_gm &autofill
+  map 'pipe-entities' as recentEntities
+  create as suggestion
+  SuggestPerson
+    recentEntities = recentEntities
+    suggestion = suggestion
