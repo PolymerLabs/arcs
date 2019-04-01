@@ -17,7 +17,7 @@ const warn = logFactory('Device', null, 'warn');
 
 const defaultManifest = `
 import 'https://thorn-egret.glitch.me/custom.recipes'
-import 'https://$particles/PipeApps/MapsAutofill.recipes'
+import 'https://$particles/PipeApps/canonical.recipes'
 `;
 
 // TODO(sjmiles): why not automatic?
