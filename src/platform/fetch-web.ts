@@ -9,4 +9,4 @@
 // 'export {fetch}' doesn't work because 'fetch' is just a name in that context and is not defined.
 // So we need to use an expression to find the global fetch function then map that for export.
 const localFetch = fetch;
-export { localFetch as fetch };
+export {localFetch as fetch};
