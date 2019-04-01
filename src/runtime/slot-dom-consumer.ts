@@ -23,6 +23,9 @@ export interface DomRendering extends Rendering {
 
 const templateByName = new Map();
 
+// this style sheet is installed in every particle shadow-root
+const commonStyleTemplate = Template.createTemplate(`<style>${IconStyles}</style>`);
+
 export class SlotDomConsumer extends SlotConsumer {
   private readonly _observer: MutationObserver;
 
@@ -60,9 +63,6 @@ export class SlotDomConsumer extends SlotConsumer {
 
     // TODO(sjmiles): introduce tree scope
     newContainer.attachShadow({mode: `open`});
-    // provision basic stylesheet
-    Template.stamp(`<style>${IconStyles}</style>`).appendTo(newContainer.shadowRoot);
-    // TODO(sjmiles): maybe inject boilerplate styles
     return newContainer.shadowRoot;
   }
 
@@ -226,6 +226,8 @@ export class SlotDomConsumer extends SlotConsumer {
 
   _stampTemplate(rendering: DomRendering, template) {
     if (!rendering.liveDom) {
+      // provision common stylesheet
+      Template.stamp(commonStyleTemplate).appendTo(rendering.container);
       const mapper = this._eventMapper.bind(this, this.eventHandler);
       rendering.liveDom = Template
           .stamp(template)
