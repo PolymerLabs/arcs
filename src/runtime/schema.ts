@@ -48,7 +48,7 @@ export class Schema {
     };
     for (const key of Object.keys(this.fields)) {
       fields[key] = updateField(this.fields[key]);
-    } 
+    }
 
     return {names: this.names, fields, description: this.description};
   }

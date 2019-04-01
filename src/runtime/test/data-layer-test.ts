@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {handleFor} from '../handle.js';
+import {handleFor, Variable, Collection} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
@@ -30,7 +30,7 @@ describe('entity', async () => {
     // Get around incompatible types for handleFor()
     let storage;
     storage = await arc.createStore(collectionType);
-    const handle = handleFor(storage);
+    const handle = handleFor(storage) as Collection;
     await handle.store(entity);
 
     const collection = arc.findStoresByType(collectionType)[0] as CollectionStorageProvider;

@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Description} from '../description.js';
-import {handleFor} from '../handle.js';
+import {handleFor, Collection} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
@@ -793,7 +793,7 @@ recipe
       recipe,
       fooStore,
       DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionStoreProxy)
+      descriptionHandle: handleFor(descriptionStoreProxy) as Collection,
     };
   }
 
