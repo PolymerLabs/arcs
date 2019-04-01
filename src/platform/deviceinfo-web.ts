@@ -15,14 +15,3 @@ export class DeviceInfo {
         return navigator['deviceMemory'];
     }
 }
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map
-//# sourceMappingURL=deviceinfo-web.js.map

@@ -17,14 +17,3 @@ export class DeviceInfo {
         return os.totalmem() / Math.pow(1024, 3);
     }
 }
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map
-//# sourceMappingURL=deviceinfo-node.js.map

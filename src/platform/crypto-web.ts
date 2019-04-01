@@ -5,14 +5,3 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 export const crypto = window.crypto;
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map
-//# sourceMappingURL=crypto-web.js.map

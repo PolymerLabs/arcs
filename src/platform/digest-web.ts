@@ -9,14 +9,3 @@ export async function digest(str) {
     const digest = await crypto.subtle.digest('SHA-1', buffer);
     return Array.from(new Uint8Array(digest)).map(x => ('00' + x.toString(16)).slice(-2)).join('');
 }
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map
-//# sourceMappingURL=digest-web.js.map

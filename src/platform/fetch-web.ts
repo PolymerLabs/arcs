@@ -10,14 +10,3 @@
 // So we need to use an expression to find the global fetch function then map that for export.
 const localFetch = fetch;
 export { localFetch as fetch };
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
-//# sourceMappingURL=fetch-web.js.map
