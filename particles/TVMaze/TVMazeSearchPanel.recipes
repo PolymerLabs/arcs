@@ -41,33 +41,4 @@ recipe TVMazeShowPanel
   TVMazeShowPanel
     show = show
     descriptions = descriptions
-  //description `${TVMazeShowPanel}`
-
-
-//recipe TVMazeSearchPanel
-//  //recipe TVMazeSearchBar
-//  create as query
-//  TVMazeSearchBar
-//    query = query
-//  //
-//  //recipe TVMazeSearchShows
-//  //use as query
-//  create #tiles #shows as shows
-//  TVMazeSearchShows
-//    query = query
-//    shows = shows
-//  description `find out about ${TVMazeSearchShows.query} (from TVMaze)`
-//  //
-//  //recipe TVMazeShowTiles
-//  //use as shows
-//  SelectableTiles
-//    consume root
-//      provide tile
-//      provide annotation
-//    list = shows
-//    selected = selected
-//  TileMultiplexer
-//    hostedParticle = TVMazeShowTile
-//    consume tile
-//    list = shows
 
