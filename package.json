@@ -39,7 +39,6 @@
     "@types/pouchdb-core": "^7.0.1",
     "c8": "^3.4.0",
     "chai": "^4.2.0",
-    "chokidar": "^2.1.0",
     "chromedriver": "^2.46.0",
     "clang-format": "^1.2.4",
     "concurrently": "^4.1.0",

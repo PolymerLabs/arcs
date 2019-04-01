@@ -12,8 +12,16 @@ const path = require('path');
 // Use saneSpawn or saneSpawnWithOutput instead, this is not cross-platform.
 const _DO_NOT_USE_spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
-const chokidar = require('chokidar');
+const chokidar = try_require('chokidar');
 const semver = require('semver');
+
+function try_require(dep) {
+  try {
+    return require(dep);
+  } catch (e) {
+    return null;
+  }
+}
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
@@ -605,6 +613,10 @@ function importSpotify(args) {
 
 // Watches for file changes, then runs the `arg` steps.
 function watch([arg, ...moreArgs]) {
+  if (chokidar == null) {
+    console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
+    return false;
+  }
   const watcher = chokidar.watch('.', {
     ignored: new RegExp(`(node_modules|build/|.git|${eslintCache})`),
     persistent: true
