@@ -121,7 +121,6 @@ recipe TVMazeApp
     selected = selected
   TVMazeShowPanel
     show = selected
-    //shows = myshows
     alsoWatch = alsoWatch
   //
   description `${TVMazeAppShell}`
