@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
-import {ArcDebugListener, ArcDebugListenerDerived, ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
+import {ArcDebugListener, ArcDebugListenerDerived, ArcDevtoolsChannel, DevtoolsMessage} from '../../runtime/debug/abstract-devtools-channel.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
@@ -55,7 +55,7 @@ export class ArcPlannerInvoker extends ArcDebugListener {
       messageBody: Planner.AllStrategies.map(s => s.name)
     }));
 
-    arcDevtoolsChannel.listen('invoke-planner', async msg => arcDevtoolsChannel.send({
+    arcDevtoolsChannel.listen('invoke-planner', async (msg: DevtoolsMessage) => arcDevtoolsChannel.send({
       messageType: 'invoke-planner-result',
       messageBody: await this.invokePlanner(msg.messageBody.manifest, msg.messageBody.method),
       requestId: msg.requestId

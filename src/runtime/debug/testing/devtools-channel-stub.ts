@@ -1,3 +1,6 @@
+import {AbstractDevtoolsChannel, DevtoolsMessage, DevtoolsListener} from '../abstract-devtools-channel';
+import {Arc} from '../../arc';
+
 /**
  * @license
  * Copyright (c) 2018 Google Inc. All rights reserved.
@@ -9,7 +12,8 @@
  */
 
 export class DevtoolsChannelStub {
-  _messages;
+  _messages: DevtoolsMessage[];
+
   constructor() {
     this._messages = [];
   }
@@ -18,17 +22,19 @@ export class DevtoolsChannelStub {
     return this._messages;
   }
 
-  send(message) {
+  send(message: DevtoolsMessage) {
     this._messages.push(JSON.parse(JSON.stringify(message)));
   }
 
-  listen(arcOrId, messageType, callback) { /* No-op */ }
+  listen(arcOrId: Arc | string, messageType: string, listener: DevtoolsListener) {
+    // No-op.
+  }
 
   clear() {
     this._messages.length = 0;
   }
 
-  forArc(arc) {
+  forArc(arc: Arc) {
     return this;
   }
 }

@@ -63,7 +63,7 @@ export class StorageStub {
     return undefined; // Fake to match StorageProviderBase.
   }
 
-  get description() {
+  get description(): string {
     return undefined; // Fake to match StorageProviderBase;
   }
 

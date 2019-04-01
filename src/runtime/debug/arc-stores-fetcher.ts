@@ -9,13 +9,26 @@
  */
 
 import {Arc} from '../arc.js';
+import {ArcDebugListener, ArcDevtoolsChannel} from './abstract-devtools-channel.js';
+import {Manifest, StorageStub} from '../manifest.js';
+import {StorageProviderBase, VariableStorageProvider, CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {Type} from '../type.js';
 
-import {ArcDebugListener} from './abstract-devtools-channel.js';
+type Result = {
+  name: string,
+  tags: string[],
+  id: string,
+  storage: string,
+  type: Type,
+  description: string,
+  // tslint:disable-next-line: no-any
+  value: any,
+};
 
 export class ArcStoresFetcher extends ArcDebugListener {
   private arc: Arc;
   
-  constructor(arc, arcDevtoolsChannel) {
+  constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
     super(arc, arcDevtoolsChannel);    
     this.arc = arc;
 
@@ -26,7 +39,7 @@ export class ArcStoresFetcher extends ArcDebugListener {
   }
 
   async _listStores() {
-    const find = manifest => {
+    const find = (manifest: Manifest): [StorageProviderBase | StorageStub, string[]][] => {
       let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
@@ -34,22 +47,27 @@ export class ArcStoresFetcher extends ArcDebugListener {
       return tags;
     };
     return {
-      arcStores: await this._digestStores(this.arc.storeTags),
+      arcStores: await this._digestStores([...this.arc.storeTags]),
       contextStores: await this._digestStores(find(this.arc.context))
     };
   }
 
-  async _digestStores(stores) {
-    const result = [];
+  async _digestStores(stores: [StorageProviderBase | StorageStub, string[] | Set<string>][]) {
+    const result: Result[] = [];
     for (const [store, tags] of stores) {
-      let value = `(don't know how to dereference)`;
-      if (store.toList) {
-        value = await store.toList();
-      } else if (store.get) {
-        value = await store.get();
+      // tslint:disable-next-line: no-any
+      let value: any;
+      if ((store as CollectionStorageProvider).toList) {
+        value = await (store as CollectionStorageProvider).toList();
+      } else if ((store as VariableStorageProvider).get) {
+        value = await (store as VariableStorageProvider).get();
+      } else {
+        value = `(don't know how to dereference)`;
       }
       // TODO: Fix issues with WebRTC message splitting.
-      if (JSON.stringify(value).length > 50000) value = 'too large for WebRTC';
+      if (JSON.stringify(value).length > 50000) {
+        value = 'too large for WebRTC';
+      }
       result.push({
         name: store.name,
         tags: tags ? [...tags] : [],

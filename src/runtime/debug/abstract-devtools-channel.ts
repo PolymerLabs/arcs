@@ -11,15 +11,27 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../arc.js';
 
+export type DevtoolsListener = (msg: DevtoolsMessage) => void;
+export type DevtoolsMessage = {
+  arcId?: string,
+  requestId?: string,
+  messageType: string,
+  // tslint:disable-next-line: no-any
+  messageBody: any,
+  meta?: {
+    arcId: string,
+  }
+};
+
 export class AbstractDevtoolsChannel {
-  debouncedMessages = [];
-  messageListeners = new Map();
+  debouncedMessages: DevtoolsMessage[] = [];
+  messageListeners: Map<string, DevtoolsListener[]> = new Map();
   timer = null;
   
   constructor() {
   }
 
-  send(message) {
+  send(message: DevtoolsMessage) {
     this.ensureNoCycle(message);
     this.debouncedMessages.push(message);
     // Temporary workaround for WebRTC slicing messages above 2^18 characters.
@@ -33,26 +45,30 @@ export class AbstractDevtoolsChannel {
     }
   }
 
-  listen(arcOrId, messageType, callback) {
+  listen(arcOrId : Arc | string, messageType: string, listener: DevtoolsListener) {
     assert(messageType);
     assert(arcOrId);
     const arcId = typeof arcOrId === 'string' ? arcOrId : arcOrId.id.toString();
     const key = `${arcId}/${messageType}`;
     let listeners = this.messageListeners.get(key);
-    if (!listeners) this.messageListeners.set(key, listeners = []);
-    listeners.push(callback);
+    if (!listeners) {
+      this.messageListeners.set(key, listeners = []);
+    }
+    listeners.push(listener);
   }
 
-  forArc(arc) {
+  forArc(arc: Arc): ArcDevtoolsChannel | AbstractDevtoolsChannel {
     return new ArcDevtoolsChannel(arc, this);
   }
 
-  _handleMessage(msg) {
+  _handleMessage(msg: DevtoolsMessage) {
     const listeners = this.messageListeners.get(`${msg.arcId}/${msg.messageType}`);
     if (!listeners) {
       console.warn(`No one is listening to ${msg.messageType} message`);
     } else {
-      for (const listener of listeners) listener(msg);
+      for (const listener of listeners) {
+        listener(msg);
+      }
     }
   }
 
@@ -63,11 +79,12 @@ export class AbstractDevtoolsChannel {
     this.timer = null;
   }
 
-  _flush(messages) {
+  _flush(_messages: DevtoolsMessage[]) {
     throw new Error('Not implemented in an abstract class');
   }
 
-  ensureNoCycle(object, objectPath = []) {
+  // tslint:disable-next-line: no-any
+  ensureNoCycle(object: any, objectPath: {}[] = []) {
     if (!object || typeof object !== 'object') return;
     assert(objectPath.indexOf(object) === -1, 'Message cannot contain a cycle');
 
@@ -87,14 +104,14 @@ export class ArcDevtoolsChannel {
     this.arcId = arc.id.toString();
   }
 
-  send(message) {
+  send(message: DevtoolsMessage) {
     this.channel.send({
       meta: {arcId: this.arcId},
       ...message
     });
   }
 
-  listen(messageType, callback) {
+  listen(messageType: string, callback: DevtoolsListener) {
     this.channel.listen(this.arcId, messageType, callback);
   }
 
@@ -106,7 +123,7 @@ export class ArcDevtoolsChannel {
 }
 
 export abstract class ArcDebugListener {
-  constructor(arc: Arc, channel: ArcDevtoolsChannel) {}
+  constructor(_arc: Arc, _channel: ArcDevtoolsChannel) {}
 }
 type ArcDebugListenerClass = typeof ArcDebugListener;
 export interface ArcDebugListenerDerived extends ArcDebugListenerClass {}
