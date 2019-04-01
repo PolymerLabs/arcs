@@ -614,7 +614,7 @@ function importSpotify(args) {
 // Watches for file changes, then runs the `arg` steps.
 function watch([arg, ...moreArgs]) {
   if (chokidar == null) {
-    console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install chokidar\' then try again\n');
+    console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
     return false;
   }
   const watcher = chokidar.watch('.', {
