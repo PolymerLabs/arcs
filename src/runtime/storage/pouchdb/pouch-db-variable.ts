@@ -35,6 +35,12 @@ interface VariableStorage {
   referenceMode: boolean;
 }
 
+interface StoredVariable extends PouchDB.Core.IdMeta, PouchDB.Core.GetMeta {
+  value: ValueStorage;
+  referenceMode: boolean;
+  version: number;
+}
+
 /**
  * The PouchDB-based implementation of a Variable.
  */
@@ -288,8 +294,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   private async getStored(): Promise<ValueStorage> {
     try {
-      // tslint:disable-next-line: no-any
-      const result: any = await this.db.get(this.pouchDbKey.location);
+      const result: StoredVariable = await this.db.get(this.pouchDbKey.location);
 
       // compare revisions
       if (this._rev !== result._rev) {

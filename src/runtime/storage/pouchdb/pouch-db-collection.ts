@@ -19,7 +19,7 @@ interface CrdtCollectionModelMutator {
  * Contains the data that is stored within Pouch
  */
 interface CollectionStorage {
-  model: CrdtCollectionModel | SerializedModelEntry[];
+  model: SerializedModelEntry[];
   version: number;
   referenceMode: boolean;
   type: TypeLiteral;
@@ -334,8 +334,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     // Keep retrying the operation until it succeeds.
     while (1) {
       // TODO(lindner): add backoff and error out if this goes on for too long
-      // tslint:disable-next-line: no-any
-      let doc: any;
+      let doc: PouchDB.Core.ExistingDocument<CollectionStorage>;
 
       let notFound = false;
       try {
@@ -362,6 +361,9 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
           _id: this.pouchDbKey.location,
           referenceMode: this.referenceMode,
           type: this.type.toLiteral(),
+          model: null,
+          version: null,
+          _rev: null,
         };
       }
 
