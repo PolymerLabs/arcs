@@ -4,15 +4,14 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-
 // Provides access to device hardware resource metrics for a web browser.
 export class DeviceInfo {
-  // Returns the number of logical cores.
-  static hardwareConcurrency() {
-    return navigator.hardwareConcurrency;
-  }
-  // Returns the device memory in gigabytes.
-  static deviceMemory() {
-    return navigator.deviceMemory;
-  }
+    // Returns the number of logical cores.
+    static hardwareConcurrency() {
+        return navigator.hardwareConcurrency;
+    }
+    // Returns the device memory in gigabytes.
+    static deviceMemory() {
+        return navigator['deviceMemory'];
+    }
 }

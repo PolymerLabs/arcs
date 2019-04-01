@@ -1,7 +1,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {Type, TypeLiteral} from '../../type.js';
-import {CrdtCollectionModel} from '../crdt-collection-model.js';
+import {CrdtCollectionModel, SerializedModelEntry} from '../crdt-collection-model.js';
 import {ChangeEvent, CollectionStorageProvider} from '../storage-provider-base.js';
 
 import {PouchDbStorage} from './pouch-db-storage';
@@ -11,7 +11,6 @@ import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
  * Defines a callback interface to allow for modifying a
  * CrdtCollectionModel during a get/modify/set cycle.
  */
-
 interface CrdtCollectionModelMutator {
   (crdt: CrdtCollectionModel): CrdtCollectionModel;
 }
@@ -20,7 +19,7 @@ interface CrdtCollectionModelMutator {
  * Contains the data that is stored within Pouch
  */
 interface CollectionStorage {
-  model: CrdtCollectionModel;
+  model: SerializedModelEntry[];
   version: number;
   referenceMode: boolean;
   type: TypeLiteral;
@@ -361,7 +360,10 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
         doc = {
           _id: this.pouchDbKey.location,
           referenceMode: this.referenceMode,
-          type: this.type.toLiteral()
+          type: this.type.toLiteral(),
+          model: null,
+          version: null,
+          _rev: null,
         };
       }
 
