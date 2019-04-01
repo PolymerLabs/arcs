@@ -107,7 +107,8 @@ export abstract class Handle {
     if (!entity.isIdentified()) {
       entity.createIdentity(this._proxy.generateIDComponents());
     }
-    const id = entity.id;
+    // tslint:disable-next-line: no-any
+    const id = entity[Symbols.identifier as any];
     const rawData = entity.dataClone();
     return {
       id,

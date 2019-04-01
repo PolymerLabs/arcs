@@ -17,8 +17,7 @@ type EntityIdComponents = {
   component: () => number,
 };
 
-// tslint:disable-next-line: no-any
-export type EntityRawData = any;
+export type EntityRawData = {};
 
 /**
  * Regular interface for Entities.
@@ -29,6 +28,7 @@ export interface EntityInterface {
   identify(identifier: string): void;
   createIdentity(components: EntityIdComponents): void;
   toLiteral(): EntityRawData;
+  dataClone();
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
@@ -102,4 +102,6 @@ export abstract class Entity implements EntityInterface {
   toLiteral(): EntityRawData {
     return this.rawData;
   }
+
+  abstract dataClone(): EntityRawData;
 }
