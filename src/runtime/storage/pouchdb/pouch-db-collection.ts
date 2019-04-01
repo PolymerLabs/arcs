@@ -125,7 +125,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
       const retrieveItem = async item => {
         const ref = item.value;
-        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
+        const backedValue = await this.backingStore.get(ref.id);
+        return {id: ref.id, value: backedValue, keys: item.keys};
       };
 
       return await Promise.all(items.map(retrieveItem));
@@ -171,15 +172,20 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   async get(id: string) {
     if (this.referenceMode) {
       const ref = (await this.getModel()).getValue(id);
-      if (ref == null) {
-        return null;
-      }
+      // NOTE(wkorman): Firebase returns null if ref is null, but it's not clear
+      // that we ever want to return a null value for a get, so for Pouch we
+      // choose to assert instead at least for the time being.
+      assert(ref !== null, `no reference for id [id=${id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
       await this.ensureBackingStore();
-      return await this.backingStore.get(ref.id);
+      const backedValue = await this.backingStore.get(ref.id);
+      assert(backedValue !== null, `should never return a null entity value [ref.id=${ref.id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
+      return backedValue;
     }
 
     const model = await this.getModel();
-    return model.getValue(id);
+    const modelValue = model.getValue(id);
+    assert(modelValue !== null, `should never return a null entity value [id=${id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
+    return modelValue;
   }
 
   /**
