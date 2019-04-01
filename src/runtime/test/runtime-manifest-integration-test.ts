@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {handleFor} from '../handle.js';
+import {handleFor, Variable} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {StorageProxy} from '../storage-proxy.js';
@@ -30,10 +30,10 @@ describe('runtime manifest integration', () => {
     // TODO(lindner): mismatched type..
     const proxy = store as StorageProxy;
     
-    const handle = handleFor(proxy);
+    const handle = handleFor(proxy) as Variable;
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();
-    assert.equal(result.value, 'Hello, world!');
+    assert.equal(result['value'], 'Hello, world!');
   });
 });

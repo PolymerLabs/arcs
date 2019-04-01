@@ -10,10 +10,10 @@
 'use strict';
 
 import {assert} from '../../platform/chai-web.js';
-import {handleFor} from '../handle.js';
+import {handleFor, Handle, Variable, Collection} from '../handle.js';
 import {Id} from '../id.js';
 import {Schema} from '../schema.js';
-import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, VariableProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
@@ -211,7 +211,7 @@ class TestEngine {
     return new TestParticle('P' + this._idCounters[0]++, x => this._events.push(x));
   }
 
-  newProxy(store) {
+  newProxy(store): CollectionProxy | BigCollectionProxy | VariableProxy {
     let id = 0;
 
     // tslint:disable-next-line: no-any
@@ -222,13 +222,8 @@ class TestEngine {
     return StorageProxy.newProxy('X' + this._idCounters[1]++, store.type, this as any, pec, this._scheduler, store.name);
   }
 
-  newHandle(store, proxy, particle, canRead, canWrite) {
+  newHandle(store, proxy, particle, canRead, canWrite): Handle {
     return handleFor(proxy, store.name, particle.id, canRead, canWrite);
-  }
-
-  newProxyAndHandle(store, particle, canRead, canWrite) {
-    const proxy = this.newProxy(store);
-    return [proxy, this.newHandle(store, proxy, particle, canRead, canWrite)];
   }
 
   newEntity(value) {
@@ -375,8 +370,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, !CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE);
 
     fooProxy.register(particle, fooHandle);
     barProxy.register(particle, barHandle);
@@ -400,8 +397,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, !CAN_WRITE);
 
     fooStore.set(engine.newEntity('well'));
     barStore.store('i1', engine.newEntity('hi'));
@@ -428,7 +427,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const fooStore = engine.newVariable('foo');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, !CAN_WRITE);
 
     fooHandle.configure({notifyDesync: true});
     fooProxy.register(particle, fooHandle);
@@ -450,7 +450,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, !CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
@@ -472,7 +473,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
@@ -505,7 +507,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
@@ -535,8 +538,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, !CAN_WRITE);
 
     fooHandle.configure({keepSynced: false, notifyUpdate: true});
     barHandle.configure({keepSynced: false, notifyUpdate: true});
@@ -563,8 +568,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, !CAN_READ, CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, !CAN_READ, CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, !CAN_READ, CAN_WRITE) as Variable;
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, !CAN_READ, CAN_WRITE) as Collection;
 
     // No InitializeProxy or SynchronizeProxy calls.
     fooProxy.register(particle, fooHandle);
@@ -587,8 +594,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, !CAN_WRITE) as Variable;
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, !CAN_WRITE) as Collection;
 
     fooProxy.register(particle, fooHandle);
     barProxy.register(particle, barHandle);
@@ -609,8 +618,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE) as Variable;
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE) as Collection;
 
     // Don't send the initial sync responses so the proxies stay desynchronized.
     fooProxy.register(particle, fooHandle);
@@ -629,8 +640,10 @@ describe('storage-proxy', () => {
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE) as Variable;
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE) as Collection;
 
     fooHandle.configure({keepSynced: false});
     barHandle.configure({keepSynced: false});
@@ -648,7 +661,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();
-    const [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    const barProxy = engine.newProxy(barStore);
+    const barHandle = engine.newHandle(barStore, barProxy, particle, CAN_READ, CAN_WRITE);
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
     await engine.verify(
@@ -676,7 +690,8 @@ describe('storage-proxy', () => {
     const engine = new TestEngine('arc-id');
     const fooStore = engine.newVariable('foo');
     const particle = engine.newParticle();
-    const [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
+    const fooProxy = engine.newProxy(fooStore);
+    const fooHandle = engine.newHandle(fooStore, fooProxy, particle, CAN_READ, CAN_WRITE) as Variable;
   
     // Set up sync with an initial value.
     fooStore.set(engine.newEntity('start'));
@@ -704,7 +719,7 @@ describe('storage-proxy', () => {
     await engine.verify();
 
     // Commit the change to the backing store, and reflect the barrier.
-    fooStore.set(changed, {barrier: fooProxy.barrier});
+    fooStore.set(changed, {barrier: fooProxy['barrier']});
     await engine.verify();
 
     // Subsequent updates should be visible in the handle.
@@ -817,8 +832,8 @@ describe('storage-proxy', () => {
 
     const particle1 = engine.newParticle();
     const particle2 = engine.newParticle();
-    const barHandle1 = engine.newHandle(barStore, barProxy, particle1, CAN_READ, CAN_WRITE);
-    const barHandle2 = engine.newHandle(barStore, barProxy, particle2, CAN_READ, CAN_WRITE);
+    const barHandle1 = engine.newHandle(barStore, barProxy, particle1, CAN_READ, CAN_WRITE) as Collection;
+    const barHandle2 = engine.newHandle(barStore, barProxy, particle2, CAN_READ, CAN_WRITE) as Collection;
 
     barProxy.register(particle1, barHandle1);
     barProxy.register(particle2, barHandle2);

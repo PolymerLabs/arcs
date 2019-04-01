@@ -12,16 +12,23 @@ import {Schema} from './schema.js';
 import {Symbols} from './symbols.js';
 import {Type} from './type.js';
 
+type EntityIdComponents = {
+  base: string,
+  component: () => number,
+};
+
+export type EntityRawData = {};
+
 /**
  * Regular interface for Entities.
  */
 export interface EntityInterface {
   isIdentified(): boolean;
-  data;
-  id;
-  identify(identifier);
-  createIdentity(components);
-  toLiteral();
+  id: string;
+  identify(identifier: string): void;
+  createIdentity(components: EntityIdComponents): void;
+  toLiteral(): EntityRawData;
+  dataClone();
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
@@ -50,17 +57,12 @@ export type EntityClass = (new (data, userIDComponent?: string) => EntityInterfa
 export abstract class Entity implements EntityInterface {
   private userIDComponent?: string;
 
-  // tslint:disable-next-line: no-any
-  protected rawData: any;
+  protected rawData: EntityRawData;
 
   protected constructor(userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
     this[Symbols.identifier] = undefined;
     this.userIDComponent = userIDComponent;
-  }
-
-  get data() {
-    return undefined;
   }
 
   getUserID(): string {
@@ -77,7 +79,7 @@ export abstract class Entity implements EntityInterface {
     return this[Symbols.identifier];
   }
 
-  identify(identifier) {
+  identify(identifier: string) {
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;
     const components = identifier.split(':');
@@ -86,9 +88,9 @@ export abstract class Entity implements EntityInterface {
     }
   }
 
-  createIdentity(components) {
+  createIdentity(components: EntityIdComponents) {
     assert(!this.isIdentified());
-    let id;
+    let id: string;
     if (this.userIDComponent) {
       id = `${components.base}:uid:${this.userIDComponent}`;
     } else {
@@ -97,7 +99,9 @@ export abstract class Entity implements EntityInterface {
     this[Symbols.identifier] = id;
   }
 
-  toLiteral() {
+  toLiteral(): EntityRawData {
     return this.rawData;
   }
+
+  abstract dataClone(): EntityRawData;
 }

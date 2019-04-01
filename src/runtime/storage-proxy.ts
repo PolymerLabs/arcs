@@ -462,7 +462,7 @@ export class VariableProxy extends StorageProxy {
     }
   }
 
-  set(entity, particleId) {
+  set(entity, particleId: string) {
     assert(entity !== undefined);
     if (JSON.stringify(this.model) === JSON.stringify(entity)) {
       return;

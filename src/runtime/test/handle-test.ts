@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {handleFor} from '../handle.js';
+import {handleFor, Collection, Variable} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
@@ -84,7 +84,7 @@ describe('Handle', () => {
     const Foo = manifest.schemas.Foo.entityClass();
     // TODO handleFor incompatibility
     // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any);
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any) as Collection;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
@@ -100,7 +100,7 @@ describe('Handle', () => {
     const Foo = manifest.schemas.Foo.entityClass();
     // TODO handleFor incompatibility
     // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any);
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any) as Collection;
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
@@ -116,12 +116,12 @@ describe('Handle', () => {
 
     // TODO handleFor incompatibility
     // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type) as any);
+    const fooHandle = handleFor(await arc.createStore(Foo.type) as any) as Variable;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));
     const stored = await fooHandle.get();
-    assert.equal(stored.value, '2');
+    assert.equal(stored['value'], '2');
   });
 
   it('remove entry from store', async () => {
