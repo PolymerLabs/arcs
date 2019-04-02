@@ -13,6 +13,13 @@ import {Const} from '../../configuration/constants.js';
 const log = Xen.logFactory('WebConfig', '#60ac66');
 
 const configOptions = {
+  //configPropertyName: {
+  //  aliases: [...] // parameter aliases for configPropertyName
+  //  default: ... // default value
+  //  map: { ... } // map human parameter names to actual config values
+  //  localStorageKey: "..." // key for persisting to/from localStorage
+  //  persistToUrl: <Boolean> // whether parameter should be written into URL
+  //},
   storage: {
     aliases: ['storageKey'],
     default: Const.DEFAULT.storageKey,
@@ -23,16 +30,15 @@ const configOptions = {
       'volatile': Const.DEFAULT.volatileStorageKey,
       'default': Const.DEFAULT.storageKey
     },
-    localStorageKey: Const.LOCALSTORAGE.storage,
-    //stripFromURL: false,
-    //persistToURL: false
+    localStorageKey: Const.LOCALSTORAGE.storage
   },
   userid: {
     aliases: ['user'],
     localStorageKey: Const.LOCALSTORAGE.user
   },
   arckey: {
-    aliases: ['arc']
+    aliases: ['arc'],
+    persistToUrl: true
   },
   search: {
   },
@@ -40,8 +46,10 @@ const configOptions = {
     localStorageKey: Const.LOCALSTORAGE.plannerStorage,
   },
   plannerNoDebug: {
+    boolean: true
   },
   plannerOnlyConsumer: {
+    boolean: true
   }
 };
 
@@ -50,92 +58,69 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     return ['userid', 'arckey'];
   }
   update({userid, arckey}, state, oldProps) {
-    this.processConfig(configOptions);
     if (!state.config) {
-      const config = this.basicConfig();
-      this.updateUserConfig(config);
-      this.updateStorageConfig(config);
-      this._fire('config', config);
-      state.config = config;
+      state.config = this.processConfig(configOptions);
+      this._fire('config', state.config);
     }
-    // TODO(sjmiles): persisting user makes it hard to share by copying URL
-    // ... but not having it makes it hard to test multi-user scenarios
-    //this.setUrlParam('user', null);
     if (userid) {
-      localStorage.setItem(Const.LOCALSTORAGE.user, userid);
+      state.config.userid = userid;
     }
-    if (arckey != null) {
-      this.setUrlParam('arc', arckey);
+    if (arckey) {
+      state.config.arckey = arckey;
     }
-    // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
-    //this.setUrlParam('search', null);
-    // if (search && search !== oldProps.search) {
-    //   ArcUtils.setUrlParam('search', search);
-    // }
-  }
-  basicConfig() {
-    const params = (new URL(document.location)).searchParams;
-    return {
-      storage: params.get('storage') || localStorage.getItem(Const.LOCALSTORAGE.storage),
-      userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
-      arckey: params.get('arc'),
-      search: params.get('search') || '',
-      plannerStorage: params.get('plannerStorage') || localStorage.getItem(Const.LOCALSTORAGE.plannerStorage),
-      plannerDebug: !params.has('plannerNoDebug'),
-      plannerOnlyConsumer: params.has('plannerOnlyConsumer'),
-    };
-  }
-  updateStorageConfig(config) {
-    if (config.storage === 'firebase') {
-      config.storage = Const.DEFAULT.firebaseStorageKey;
-    }
-    if (config.storage === 'pouchdb') {
-      config.storage = Const.DEFAULT.pouchdbStorageKey;
-    }
-    if (config.storage === 'volatile') {
-      config.storage = Const.DEFAULT.volatileStorageKey;
-    }
-    if (!config.storage || config.storage === 'default') {
-      config.storage = Const.DEFAULT.storageKey;
-    }
-    localStorage.setItem(Const.LOCALSTORAGE.storage, config.storage);
-    if (!config.plannerStorage || config.plannerStorage === 'default') {
-      config.plannerStorage = Const.DEFAULT.plannerStorageKey;
-    }
-    localStorage.setItem(Const.LOCALSTORAGE.plannerStorage, config.plannerStorage);
-    return config;
-  }
-  updateUserConfig(config) {
-    if (!config.userid) {
-      config.userid = Const.DEFAULT.userId;
-    }
+    this.persistParams(configOptions, state.config);
   }
   processConfig(options) {
     const config = {};
     const params = (new URL(document.location)).searchParams;
     Object.keys(options).forEach(key => config[key] = this.processConfigOption(params, key, options[key]));
     log(config);
+    return config;
   }
   processConfigOption(params, name, option) {
     let names = [name];
     if (option.aliases) {
       names = names.concat(option.aliases);
     }
-    const param = names.find(name => params.has(name));
-    //
     let value;
+    if (option.boolean) {
+      value = false;
+    }
+    // use URL param if available
+    const param = names.find(name => params.has(name));
     if (param) {
-      // use user-supplied value if available
-      value = params.get(param);
+      const paramValue = params.get(param);
+      // normally, simple existence of a parameter makes it true,
+      // but we'll also handle folks doing `booleanParameter=false`
+      value = option.boolean ? paramValue !== 'false' : paramValue;
     } else {
       // use local storage value if available
       if (option.localStorageKey) {
         value = localStorage.getItem(option.localStorageKey);
       }
       // otherwise use default value
-      if (!value) {
+      if (!value && ('default' in option)) {
         value = option.default;
       }
+    }
+    // map shorthand names to longform values
+    if (option.map) {
+      const mapValue = option.map[value];
+      if (mapValue !== undefined) {
+        value = mapValue;
+      }
+    }
+    return value;
+  }
+  persistParams(options, config) {
+    Object.keys(options).forEach(key => this.persistParam(key, options[key], config[key]));
+  }
+  persistParam(name, {localStorageKey, persistToUrl}, value) {
+    if (localStorageKey) {
+      localStorage.setItem(localStorageKey, value);
+    }
+    if (persistToUrl) {
+      this.setUrlParam(name, value);
     }
   }
   setUrlParam(name, value) {
