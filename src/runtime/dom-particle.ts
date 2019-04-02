@@ -168,7 +168,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // other types (e.g. BigCollections) map to the handle itself
     return handle;
   }
-  fireEvent(slotName, { handler, data }) {
+  fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);

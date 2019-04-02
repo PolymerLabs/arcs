@@ -68,7 +68,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     });
     super.setHandles(handles);
   }
-  async willReceiveProps({ list }, { arc, type, hostedParticle, otherMappedHandles, otherConnections }) {
+  async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}) {
     if (list.length > 0) {
       this.relevance = 0.1;
     }
@@ -129,7 +129,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     else {
       items.push(item);
     }
-    this._setState({ renderModel: { items } });
+    this._setState({renderModel: {items}});
   }
   combineHostedTemplate(slotName, hostedSlotId, content) {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
