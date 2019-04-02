@@ -101,13 +101,9 @@ const log = Xen.logFactory('SystemUi', '#b6b0ec');
 //   hint: temporary mini-view (requested by parent when new suggestions are available)
 //   open: fully expanded and modal (parent scrim is active)
 
-// barState logic
-//   `props.open` going false indicates user clicked outside the system-ui area
-//   which is a collapse-signal
-
 // props
 //   `search` is forwarded to panel-ui
-//   `open` true if parent is providing a scrim
+//   `open` owner control over barState `open`
 
 export class SystemUi extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
@@ -123,16 +119,20 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
     };
   }
   render(props, state) {
-    if (props.open && state.pendingBarState) {
-      this.state = {barState: state.pendingBarState};
+    if (!props.open) {
+      if (state.pendingBarState) {
+        this.state = {barState: state.pendingBarState, pendingBarState: null};
+      } else if (state.barState === 'open') {
+        this.state = {barState: 'peek'};
+      }
     }
-    if (!props.open && state.barState === 'open') {
-      this.state = {barState: 'peek'};
+    if (props.open) {
+      this.state = {barState: 'open'};
     }
     // TODO(sjmiles): owner is expected to latch showHint
     // to false shortly after setting it true
     // Probably we should handshake hint state instead
-    if (props.showhint && state.barState !== 'hint') {
+    if (props.showhint && state.barState !== 'hint' && state.barState !== 'open') {
       this.setBarState('hint');
     }
     return [props, state];
@@ -142,11 +142,12 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
   }
   // TODO(sjmiles): do this work in render
   setBarState(barState) {
-    if (barState === 'open') {
-      // request open system ui
+    // `open` barState is controlled by owner, we have to request changes
+    if (!this.props.open && barState === 'open') {
       this.fire('open', true);
-      // when/if request is satisfied, set this barState
-      this.state = {pendingBarState: 'open'};
+    } else if (this.props.open && barState !== 'open') {
+      this.fire('open', false);
+      this.state = {pendingBarState: barState};
     } else {
       this.state = {barState};
       this.debounceHintHide(barState);
@@ -167,8 +168,11 @@ export class SystemUi extends Xen.Debug(Xen.Async, log) {
   }
   // implements mouse-over view
   onBarEnter(e) {
-    if (this.state.barState === 'peek') {
-      this.setBarState('over');
+    switch (this.state.barState) {
+      case 'peek':
+      case 'hint':
+        this.setBarState('over');
+        break;
     }
   }
   onBarLeave(e) {

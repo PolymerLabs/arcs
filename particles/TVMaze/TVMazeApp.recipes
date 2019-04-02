@@ -1,82 +1,14 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
+import 'particles/TVMazeSearchBar.particle'
+import 'particles/TVMazeSearchShows.particle'
+import 'particles/TVMazeShowTile.particle'
+import 'particles/TVMazeShowPanel.particle'
+import 'particles/TVMazeShowActions.particle'
+import 'particles/TVMazeDeduplicate.particle'
+import 'particles/TVMazeAppShell.particle'
 import '../List/List.recipes'
-import '../Layout/Layout.recipes'
-import '../Common/Description.schema'
-import '../Profile/User.schema'
-import '../Profile/UserName.schema'
+import '../Layout/Detail.recipes'
 
-import '../TVMaze/TVMazeShow.recipes'
-import '../TVMaze/TVMazeQuery.recipes'
-
-schema TVMazeShowAction
-  Text showid
-  Boolean favorite
-  Boolean delete
-
-particle TVMazeShowActions in '../TVMaze/source/TVMazeShowActions.js'
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  consume action
-
-interface HostedActionParticleInterface
-  in TVMazeShow show
-  inout [TVMazeShow] shows
-  consume action
-
-particle ActionMultiplexer in '../List/source/Multiplexer.js'
-  host HostedActionParticleInterface hostedParticle
-  in [~a] list
-  in [TVMazeShow] shows
-  consume set of action
-
-particle TVMazeDemoShell in '../TVMaze/source/TVMazeDemoShell.js'
-  in [TVMazeShow] recentShows
-  inout TVMazeShow selected
-  in User user
-  in [TVMazeShow] boxedShows
-  in [TVMazeShow] foundShows
-  in [User] friends
-  in [UserName] boxedUserNames
-  inout [User] watchers
-  out Text watcherText
-  out [Description] descriptions
-  consume root
-    provide shows
-    provide recommended
-    provide searchbar
-    provide search
-  // TODO: add better description,
-  // or fix recipe description to not crash if one is missing.
-  description `[demo] TV shows`
-
-particle TVMazeSearchBarRoot in '../TVMaze/source/TVMazeSearchBar.js'
-  out TVMazeQuery query
-  consume root
-
-schema Text
-  Text text
-
-particle TVMazeShowMultiPanel in '../TVMaze/source/TVMazeShowPanel.js'
-  in TVMazeShow show
-  in [TVMazeShow] shows
-  in Text alsoWatch
-  consume content
-    provide action
-    provide items
-  description `${show} details`
-
-particle TVMazeDeduplicate in '../TVMaze/source/TVMazeDeduplicate.js'
-  in [TVMazeShow] shows
-  inout [TVMazeShow] uniqueShows
-
-recipe TVMazeDemo
+recipe TVMazeApp
   // all shows shared with me
   map 'BOXED_shows-tiles' as boxedShows
   // filter out 'my' shows from boxedShows using user.id
@@ -105,7 +37,7 @@ recipe TVMazeDemo
   // internal description storage
   create #volatile as descriptions
   //
-  TVMazeDemoShell
+  TVMazeAppShell
     user = user
     boxedShows = boxedShows
     selected = selected
@@ -162,8 +94,8 @@ recipe TVMazeDemo
   //
   // slot `search` contains search ui
   create #volatile #query as query
-  TVMazeSearchBarRoot
-    consume root as searchbar
+  TVMazeSearchBar
+    consume toproot as searchbar
     query = query
   TVMazeSearchShows
     query = query
@@ -187,9 +119,8 @@ recipe TVMazeDemo
   // standard slot 'modal' holds detail view
   DetailSlider
     selected = selected
-  TVMazeShowMultiPanel
+  TVMazeShowPanel
     show = selected
-    shows = myshows
     alsoWatch = alsoWatch
   //
-  description `${TVMazeDemoShell}`
+  description `${TVMazeAppShell}`

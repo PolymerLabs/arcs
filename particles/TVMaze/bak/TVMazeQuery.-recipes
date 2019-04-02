@@ -18,14 +18,6 @@ particle TVMazeSearchShows in './source/TVMazeSearchShows.js'
   //consume root
   //description `find out about ${query.query} (from TVMaze)`
 
-recipe TVMazeSearchShows
-  copy as query
-  create #tiles #shows as shows
-  TVMazeSearchShows
-    query = query
-    shows = shows
-  description `find out about ${TVMazeSearchShows.query} (from TVMaze)`
-
 schema Description
   Text key
   Text value
@@ -37,7 +29,6 @@ schema TVMazeFind
 particle TVMazeFindShow in './source/TVMazeFindShow.js'
   in [TVMazeFind] find
   out TVMazeShow show
-  //out [Description] descriptions
   consume root
   description `find out about ${find.name} (from TVMaze)`
 
@@ -54,13 +45,5 @@ particle TVMazeSearchBar in './source/TVMazeSearchBar.js'
   out TVMazeQuery query
   consume toproot
   //description `enter TV search terms` //find tv shows (using TvMaze)`
-
-// Hide TVMazeSearchBar from coalescer for now
-
-//recipe TVMazeSearchBar
-//  create as query
-//  TVMazeSearchBar
-//    query = query
-//  create #tiles #shows as shows
 
 

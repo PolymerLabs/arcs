@@ -115,7 +115,11 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // _handlesToProps will ever be called. If we wait we can avoid an extra
     // invalidation, but then we potentially waste cycles.
     //setTimeout(() => !this._hasProps && this._invalidate(), 20);
-    this._invalidate();
+    //this._invalidate();
+    // TODO(sjmiles): let's assume we will miss _handlesToProps if handlesToSync is empty
+    if (!this._handlesToSync.length) {
+      this._invalidate();
+    }
   }
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);
@@ -132,24 +136,22 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._debounce('handleUpdateDebounce', work, 300);
   }
   async _handlesToProps() {
-    const config = this.config;
-    // acquire (async) list data from handles; BigCollections map to the handle itself
-    const data = await Promise.all(
-      config.handleNames
-      .map(name => this.handles.get(name))
-      .map(handle => {
-        if (handle.toList) return handle.toList();
-        if (handle.get) return handle.get();
-        return handle;
-      })
-    );
     // convert handle data (array) into props (dictionary)
     const props = Object.create(null);
-    config.handleNames.forEach((name, i) => {
-      props[name] = data[i];
-    });
+    // acquire list data from handles
+    const {handleNames} = this.config;
+    // data-acquisition is async
+    await Promise.all(handleNames.map(name => this._getNamedHandleData(props, name)));
     this._hasProps = true;
     this._setProps(props);
+  }
+  async _getNamedHandleData(dictionary, handleName) {
+    const handle = this.handles.get(handleName);
+    if (handle) {
+      // BigCollections map to the handle itself
+      const data = handle.toList ? await handle.toList() : handle.get ? await handle.get() : handle;
+      dictionary[handleName] = data;
+    }
   }
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {

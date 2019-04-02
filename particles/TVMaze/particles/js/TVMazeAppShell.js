@@ -36,6 +36,9 @@ defineParticle(({DomParticle, html, log}) => {
           align-items: center;
           padding-left: 16px;
         }
+        [banner][hidden] {
+          display: none;
+        }
         [banner] icon {
           margin: -2px 0 0 -2px;
         }
@@ -63,13 +66,13 @@ defineParticle(({DomParticle, html, log}) => {
       <div banner><icon on-click="toggleSearch">add</icon> Search</div> -->
       <div search open$="{{searchOpen}}">
         <div slotid="searchbar"></div>
-        <div banner hidden="{{emptySearchResults}}">Search Results</div>
+        <!-- <div banner hidden="{{emptySearchResults}}">Search Results</div> -->
         <div slotid="search"></div>
       </div>
       <div main open$="{{mainOpen}}">
         <!-- <div banner>My Shows</div> -->
         <div slotid="shows"></div>
-        <div banner>Recommendations</div>
+        <div banner hidden="{{emptyRecommendations}}">Recommendations</div>
         <div slotid="recommended"></div>
       </div>
     </div>
@@ -93,11 +96,12 @@ defineParticle(({DomParticle, html, log}) => {
         user = {id: 'gomer'};
       }
     }
-    render({foundShows}, {tab}) {
+    render({recentShows}, {tab}) {
       return {
         mainOpen: !tab,
         searchOpen: tab === 1,
-        emptySearchResults: !foundShows || !foundShows.length
+        //emptySearchResults: !foundShows || !foundShows.length
+        emptyRecommendations: !recentShows || !recentShows.length
       };
     }
     onTabSelect(e) {

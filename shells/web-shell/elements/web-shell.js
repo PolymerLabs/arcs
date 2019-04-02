@@ -311,11 +311,14 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   //   this.state = {pipesArc};
   // }
   onSuggestions(e, suggestions) {
-    this.state = {suggestions, showHint: true};
-    // latch showHint
-    // TODO(sjmiles): needs debouncing
-    // TODO(sjmiles): logic in handler is a bad practice
-    setTimeout(() => this.state = {showHint: false}, 0);
+    const showHint = Boolean(suggestions.length);
+    this.state = {suggestions, showHint};
+    if (showHint) {
+      // latch showHint
+      // TODO(sjmiles): needs debouncing
+      // TODO(sjmiles): logic in handler is a bad practice
+      setTimeout(() => this.state = {showHint: false}, 0);
+    }
   }
   onChooseSuggestion(e, suggestion) {
     log('onChooseSuggestion', suggestion);

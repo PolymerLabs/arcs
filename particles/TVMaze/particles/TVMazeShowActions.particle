@@ -1,0 +1,17 @@
+import '../schemas/TVMazeShow.schema'
+
+particle TVMazeShowActions in './js/TVMazeShowActions.js'
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+interface HostedActionParticleInterface
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  consume action
+
+particle ActionMultiplexer in '../../List/source/Multiplexer.js'
+  host HostedActionParticleInterface hostedParticle
+  in [~a] list
+  in [TVMazeShow] shows
+  consume set of action
