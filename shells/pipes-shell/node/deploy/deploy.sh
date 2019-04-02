@@ -3,14 +3,10 @@
 mkdir dist
 # sources
 cp -fR source/serve.sh dist/
-# worker build
-cp -fR ../../../lib/build/worker.js dist/
 # particles
 mkdir dist/particles
-#
 mkdir dist/particles/Common
 cp -fR ../../../../particles/Common/Description.schema dist/particles/Common
-#
 mkdir dist/particles/PipeApps
 cp -fR ../../../../particles/PipeApps/* dist/particles/PipeApps
 # collate sources
