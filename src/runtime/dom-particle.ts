@@ -8,19 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 'use strict';
+
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase} from './dom-particle-base.js';
+import {Collection, Variable} from './handle.js';
 
 interface StatefulDomParticle extends DomParticleBase {
-  // types go here
+  // types go here?
 }
-const statefulDomParticle = XenStateMixin(DomParticleBase);
+
+export interface DomParticle extends StatefulDomParticle {
+  // types go here?
+};
 
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
-export class DomParticle extends statefulDomParticle {
+export class DomParticle extends XenStateMixin(DomParticleBase) {
   constructor() {
     super();
     // alias properties to remove `_`
@@ -141,17 +146,27 @@ export class DomParticle extends statefulDomParticle {
     // acquire list data from handles
     const {handleNames} = this.config;
     // data-acquisition is async
-    await Promise.all(handleNames.map(name => this._getNamedHandleData(props, name)));
+    await Promise.all(handleNames.map(name => this._addNamedHandleData(props, name)));
     // initialize properties
     this._setProps(props);
   }
-  async _getNamedHandleData(dictionary, handleName) {
+  async _addNamedHandleData(dictionary, handleName) {
     const handle = this.handles.get(handleName);
     if (handle) {
       // BigCollections map to the handle itself
-      const data = handle.toList ? await handle.toList() : handle.get ? await handle.get() : handle;
+      const data = this._getHandleData(handle);
       dictionary[handleName] = data;
     }
+  }
+  async _getHandleData(handle) {
+    if (handle instanceof Collection) {
+      return await (handle as Collection).toList();
+    }
+    if (handle instanceof Variable) {
+      return await (handle as Variable).get();
+    }
+    // other types (e.g. BigCollections) map to the handle itself
+    return handle;
   }
   fireEvent(slotName, { handler, data }) {
     if (this[handler]) {
