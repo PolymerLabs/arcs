@@ -23,7 +23,7 @@ export class Particle {
     public static spec: ParticleSpec;
     public spec: ParticleSpec;
     public extraData: boolean;
-    public relevances: (Relevance | Number)[] = [];
+    public relevances: (Relevance | number)[] = [];
     public handles: Map<string, Handle>;
 
     private _idle: Promise<void> = Promise.resolve();
@@ -115,7 +115,7 @@ export class Particle {
     return this._idle;
   }
 
-  set relevance(r: Relevance | Number) {
+  set relevance(r: Relevance | number) {
     this.relevances.push(r);
   }
 

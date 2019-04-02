@@ -19,7 +19,7 @@ interface StatefulDomParticle extends DomParticleBase {
 
 export interface DomParticle extends StatefulDomParticle {
   // types go here?
-};
+}
 
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system
