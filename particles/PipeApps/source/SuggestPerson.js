@@ -11,21 +11,21 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
-        return class extends DomParticle {
-            get template() {
-                return html`<div slotid="assistance"></div>`;
-            }
-            update({recentEntities}, state) {
-                if (recentEntities) {
-                    const json = this.query(recentEntities);
-                    this.updateVariable('suggestion', {json});
-                }
-            }
-            query(entities) {
-                const people = entities.filter(entity => entity.rawData.type === 'people');
-                const sorted = people.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
-                const result = sorted[0] || Object;
-                return JSON.stringify(result.rawData);
-            }
-        };
-    });
+  return class extends DomParticle {
+    get template() {
+      return html`<div slotid="assistance"></div>`;
+    }
+    update({recentEntities}, state) {
+      if (recentEntities) {
+        const json = this.query(recentEntities);
+        this.updateVariable('suggestion', {json});
+      }
+    }
+    query(entities) {
+      const people = entities.filter(entity => entity.rawData.type === 'people');
+      const sorted = people.sort((a, b) => (b.rawData.timestamp || 0) - (a.rawData.timestamp || 0));
+      const result = sorted[0] || Object;
+      return JSON.stringify(result.rawData);
+    }
+  };
+});
