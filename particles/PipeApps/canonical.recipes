@@ -1,2 +1,1 @@
-import 'MapsAutofill.recipes'
-import 'PeopleAutofill.recipes'
+import 'PipeApps.recipes'
