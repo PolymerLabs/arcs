@@ -1,7 +1,10 @@
 import './PipeEntity.schema'
+import './Json.schema'
 
-schema Json
-  Text json
+particle SuggestPerson in './source/SuggestAddress.js'
+  in [PipeEntity] recentEntities
+  out Json suggestion
+  consume app
 
 recipe Com_google_android_gm &autofill
   map 'pipe-entities' as recentEntities
