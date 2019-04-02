@@ -14,7 +14,6 @@ import {DomParticleBase} from './dom-particle-base.js';
 interface StatefulDomParticle extends DomParticleBase {
   // types go here
 }
-
 const StatefulDomParticle = XenStateMixin(DomParticleBase);
 
 /** @class DomParticle
