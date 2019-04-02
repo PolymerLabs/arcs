@@ -169,7 +169,7 @@ describe('remote planificator', () => {
       await verifyConsumerResults(5);
     });
   });
-  it(`merges remotely produced suggestions`, async () => {
+  it.skip(`merges remotely produced suggestions`, async () => {
     const userid = 'test-user';
     const storageKey = 'volatile://!123:demo^^abcdef';
 
