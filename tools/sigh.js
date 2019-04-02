@@ -67,7 +67,7 @@ const steps = {
   tslint: [peg, build, tslint],
   check: [check],
   clean: [clean],
-  importSpotify: [build, importSpotify],
+  importSpotify: [peg, build, importSpotify],
   unit: [unit],
   health: [health],
   default: [check, peg, railroad, build, test, webpack, lint, tslint],
@@ -384,7 +384,8 @@ function tslint(args) {
   if (result.status) {
     console.log(result.stdout);
   }
-  return result;
+
+  return result == false ? result : result.status;
 }
 
 function lint(args) {
@@ -424,7 +425,7 @@ function webpack() {
   if (result.status) {
     console.log(result.stdout);
   }
-  return result;
+  return result == false ? result : result.status;
 }
 
 function spawnWasSuccessful(result) {
@@ -641,8 +642,7 @@ function watch([arg, ...moreArgs]) {
     setTimeout(forever, 60 * 60 * 1000);
   };
   forever();
-  // Never resolved.
-  return new Promise(() => {});
+  return true;
 }
 
 function health(args) {
@@ -721,7 +721,12 @@ function runFuns(funsAndArgs) {
   try {
     for (const [fun, args] of funsAndArgs) {
       console.log(`🙋 ${fun.name} ${args.join(' ')}`);
-      if (!fun(args)) {
+      const result = fun(args);
+      if (typeof(result) !== 'boolean') {
+        console.log(`🤮 ${fun.name} must return boolean status to indicate pass/fail`);
+        return;
+      } 
+      if (!result) {
         console.log(`🙅 ${fun.name}`);
         return;
       }
