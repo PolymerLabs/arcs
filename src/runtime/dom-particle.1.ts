@@ -12,11 +12,16 @@
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase} from './dom-particle-base.js';
 
+type Constructor<T> = new(...args: any[]) => T;
+function StateMixin<T extends Constructor<{}>>(Base) {
+  return XenStateMixin(Base);
+}
+
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
-export class DomParticle extends XenStateMixin(DomParticleBase) {
+export class DomParticle extends StateMixin(DomParticleBase) {
   constructor() {
     super();
     // alias properties to remove `_`
@@ -72,10 +77,10 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
-      handleNames: this.spec.inputs.map(i => i.name),
-      // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
-      // .manifest files, instead of .ptcl ones.
-      slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
+        handleNames: this.spec.inputs.map(i => i.name),
+        // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
+        // .manifest files, instead of .ptcl ones.
+        slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
     };
   }
   // affordances for aliasing methods to remove `_`
@@ -85,7 +90,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   _update(...args) {
     this.update(...args);
     if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
-      this.relevance = 1; // TODO: improve relevance signal.
+        this.relevance = 1; // TODO: improve relevance signal.
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
@@ -106,10 +111,10 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this.handles = handles;
     this._handlesToSync = new Set();
     for (const name of this.config.handleNames) {
-      const handle = handles.get(name);
-      if (handle && handle.options.keepSynced && handle.options.notifySync) {
-        this._handlesToSync.add(name);
-      }
+        const handle = handles.get(name);
+        if (handle && handle.options.keepSynced && handle.options.notifySync) {
+            this._handlesToSync.add(name);
+        }
     }
     // TODO(sjmiles): we must invalidate at least once, but we don't know if
     // _handlesToProps will ever be called. If we wait we can avoid an extra
@@ -124,14 +129,14 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size == 0) {
-      await this._handlesToProps();
+        await this._handlesToProps();
     }
   }
   async onHandleUpdate(handle, update) {
     // TODO(sjmiles): debounce handles updates
     const work = () => {
-      //console.warn(handle, update);
-      this._handlesToProps();
+        //console.warn(handle, update);
+        this._handlesToProps();
     };
     this._debounce('handleUpdateDebounce', work, 300);
   }
@@ -155,20 +160,21 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
-      // TODO(sjmiles): remove `this._state` parameter
-      this[handler]({data}, this._state);
+        // TODO(sjmiles): remove `this._state` parameter
+        this[handler]({ data }, this._state);
     }
   }
   _debounce(key, func, delay) {
     const subkey = `_debounce_${key}`;
     if (!this._state[subkey]) {
-      this.startBusy();
+        this.startBusy();
     }
     const idleThenFunc = () => {
-      this.doneBusy();
-      func();
-      this._state[subkey] = null;
+        this.doneBusy();
+        func();
+        this._state[subkey] = null;
     };
     super._debounce(key, idleThenFunc, delay);
   }
 }
+//# sourceMappingURL=dom-particle.js.map
