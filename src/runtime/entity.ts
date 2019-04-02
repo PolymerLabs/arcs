@@ -11,9 +11,9 @@ import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Symbols} from './symbols.js';
 import {Type, ReferenceType, EntityType} from './type.js';
-import { ParticleExecutionContext } from './particle-execution-context.js';
-import { Reference } from './reference.js';
-import { TypeChecker } from './recipe/type-checker.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
+import {Reference} from './reference.js';
+import {TypeChecker} from './recipe/type-checker.js';
 
 type EntityIdComponents = {
   base: string,
