@@ -14,13 +14,13 @@ import {DomParticleBase} from './dom-particle-base.js';
 interface StatefulDomParticle extends DomParticleBase {
   // types go here
 }
-const StatefulDomParticle = XenStateMixin(DomParticleBase);
+const statefulDomParticle = XenStateMixin(DomParticleBase);
 
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
-export class DomParticle extends StatefulDomParticle {
+export class DomParticle extends statefulDomParticle {
   constructor() {
     super();
     // alias properties to remove `_`
@@ -115,15 +115,15 @@ export class DomParticle extends StatefulDomParticle {
         this._handlesToSync.add(name);
       }
     }
-    // TODO(sjmiles): we must invalidate at least once, but we don't know if
-    // _handlesToProps will ever be called. If we wait we can avoid an extra
-    // invalidation, but then we potentially waste cycles.
-    //setTimeout(() => !this._hasProps && this._invalidate(), 20);
-    this._invalidate();
+    // TODO(sjmiles): we must invalidate at least once,
+    // let's assume we will miss _handlesToProps if handlesToSync is empty
+    if (!this._handlesToSync.length) {
+      this._invalidate();
+    }
   }
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);
-    if (this._handlesToSync.size == 0) {
+    if (this._handlesToSync.size === 0) {
       await this._handlesToProps();
     }
   }
@@ -136,24 +136,22 @@ export class DomParticle extends StatefulDomParticle {
     this._debounce('handleUpdateDebounce', work, 300);
   }
   async _handlesToProps() {
-    const config = this.config;
-    // acquire (async) list data from handles; BigCollections map to the handle itself
-    const data = await Promise.all(config.handleNames
-      .map(name => this.handles.get(name))
-      .map(handle => {
-      if (handle.toList)
-        return handle.toList();
-      if (handle.get)
-        return handle.get();
-      return handle;
-    }));
     // convert handle data (array) into props (dictionary)
     const props = Object.create(null);
-    config.handleNames.forEach((name, i) => {
-      props[name] = data[i];
-    });
-    this._hasProps = true;
+    // acquire list data from handles
+    const {handleNames} = this.config;
+    // data-acquisition is async
+    await Promise.all(handleNames.map(name => this._getNamedHandleData(props, name)));
+    // initialize properties
     this._setProps(props);
+  }
+  async _getNamedHandleData(dictionary, handleName) {
+    const handle = this.handles.get(handleName);
+    if (handle) {
+      // BigCollections map to the handle itself
+      const data = handle.toList ? await handle.toList() : handle.get ? await handle.get() : handle;
+      dictionary[handleName] = data;
+    }
   }
   fireEvent(slotName, { handler, data }) {
     if (this[handler]) {
