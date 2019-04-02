@@ -32,7 +32,7 @@ import {DeviceApiFactory} from '../device.js';
 
 //const storage = `pouchdb://local/arcs/`;
 const storage = `volatile://`;
-const version = `version: mar-26`;
+const version = `version: apr-2`;
 
 console.log(`${version} -- ${storage}`);
 
@@ -59,3 +59,6 @@ const test_on_start = async () => {
   id = global.ShellApi.receiveEntity(`{"type": "com.music.spotify"}`);
   console.log('request id', id);
 };
+
+// keep alive ... forever
+setInterval(() => true, 1000);
