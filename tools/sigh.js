@@ -598,7 +598,7 @@ function test(args) {
   if (options.coverage) {
     console.log(`Visit 'file:///${process.cwd()}/coverage/index.html' in the browser for a coverage report.`);
   }
-  return testResults;
+  return testResults.filter(x => !x).length == 0;
 }
 
 function importSpotify(args) {
