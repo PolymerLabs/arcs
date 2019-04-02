@@ -24,7 +24,7 @@ export interface DomRendering extends Rendering {
 const templateByName = new Map();
 
 // this style sheet is installed in every particle shadow-root
-const commonStyleTemplate = Template.createTemplate(`<style>${IconStyles}</style>`);
+let commonStyleTemplate;
 
 export class SlotDomConsumer extends SlotConsumer {
   private readonly _observer: MutationObserver;
@@ -226,6 +226,12 @@ export class SlotDomConsumer extends SlotConsumer {
 
   _stampTemplate(rendering: DomRendering, template) {
     if (!rendering.liveDom) {
+      // TODO(sjmiles): normally I would create this template as part of module startup,
+      // but this file is node-test-dependency, and `createTemplate` requires `document`
+      // see https://github.com/PolymerLabs/arcs/issues/2827
+      if (!commonStyleTemplate) {
+        commonStyleTemplate = Template.createTemplate(`<style>${IconStyles}</style>`);
+      }
       // provision common stylesheet
       Template.stamp(commonStyleTemplate).appendTo(rendering.container);
       const mapper = this._eventMapper.bind(this, this.eventHandler);
