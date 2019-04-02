@@ -1,7 +1,5 @@
 import './PipeEntity.schema'
-
-schema Json
-  Text json
+import './Json.schema'
 
 particle SuggestAddress in './source/SuggestAddress.js'
   in [PipeEntity] recentEntities
