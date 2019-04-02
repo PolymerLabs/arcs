@@ -157,7 +157,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   // arc for each item. Subclasses should override this method as by default
   // it does nothing and so no recipe will be returned and content will not
   // be loaded successfully into the inner arc.
-  constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) { 
+  constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
   }
   // Called with the list of items and by default returns the direct result of
   // `Array.entries()`. Subclasses can override this method to alter the item

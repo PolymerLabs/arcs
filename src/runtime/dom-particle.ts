@@ -153,9 +153,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   async _addNamedHandleData(dictionary, handleName) {
     const handle = this.handles.get(handleName);
     if (handle) {
-      // BigCollections map to the handle itself
-      const data = this._getHandleData(handle);
-      dictionary[handleName] = data;
+      dictionary[handleName] = await this._getHandleData(handle);
     }
   }
   async _getHandleData(handle) {
