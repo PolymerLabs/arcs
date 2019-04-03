@@ -65,6 +65,9 @@ export abstract class Entity implements EntityInterface {
   private schema: Schema;
   protected rawData: EntityRawData;
 
+  // Currently we need a ParticleExecutionContext to be injected here in order to construct entity References (done in the sanitizeEntry
+  // function below).
+  // TODO(shans): Remove this dependency on ParticleExecutionContext, so that you can construct entities without one.
   protected constructor(data: EntityRawData, schema: Schema, context: ParticleExecutionContext, userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
     this[Symbols.identifier] = undefined;
@@ -138,6 +141,48 @@ export abstract class Entity implements EntityInterface {
       }
     }
     return clone;
+  }
+
+  /** Dynamically constructs a new JS class for the entity type represented by the given schema. */
+  static createEntityClass(schema: Schema, context: ParticleExecutionContext): EntityClass {
+    // Create a new class which extends the Entity base class, and implement all of the required static methods/properties.
+    const clazz = class extends Entity {
+      constructor(data: EntityRawData, userIDComponent?: string) {
+        super(data, schema, context, userIDComponent);
+      }
+
+      static get type(): Type {
+        // TODO: should the entity's key just be its type?
+        // Should it just be called type in that case?
+        return new EntityType(schema);
+      }
+
+      static get key() {
+        return {tag: 'entity', schema};
+      }
+
+      static get schema() {
+        return schema;
+      }
+    };
+
+    // Override the name property to use the name of the entity given in the schema.
+    Object.defineProperty(clazz, 'name', {value: schema.name});
+
+    // Add convenience properties for all of the entity's fields. These just proxy everything to the rawData proxy, but offer a nice API for
+    // getting/setting fields.
+    // TODO: add query / getter functions for user properties
+    for (const name of Object.keys(schema.fields)) {
+      Object.defineProperty(clazz.prototype, name, {
+        get() {
+          return this.rawData[name];
+        },
+        set(v) {
+          this.rawData[name] = v;
+        }
+      });
+    }
+    return clazz;
   }
 }
 
@@ -293,46 +338,4 @@ function createRawDataProxy(schema: Schema) {
       return true;
     }
   });
-}
-
-/** Dynamically constructs a new JS class for the entity type represented by the given schema. */
-export function createEntityClass(schema: Schema, context: ParticleExecutionContext): EntityClass {
-  // Create a new class which extends the Entity base class, and implement all of the required static methods/properties.
-  const clazz = class extends Entity {
-    constructor(data: EntityRawData, userIDComponent?: string) {
-      super(data, schema, context, userIDComponent);
-    }
-
-    static get type(): Type {
-      // TODO: should the entity's key just be its type?
-      // Should it just be called type in that case?
-      return new EntityType(schema);
-    }
-
-    static get key() {
-      return {tag: 'entity', schema};
-    }
-
-    static get schema() {
-      return schema;
-    }
-  };
-
-  // Override the name property to use the name of the entity given in the schema.
-  Object.defineProperty(clazz, 'name', {value: schema.name});
-
-  // Add convenience properties for all of the entity's fields. These just proxy everything to the rawData proxy, but offer a nice API for
-  // getting/setting fields.
-  // TODO: add query / getter functions for user properties
-  for (const name of Object.keys(schema.fields)) {
-    Object.defineProperty(clazz.prototype, name, {
-      get() {
-        return this.rawData[name];
-      },
-      set(v) {
-        this.rawData[name] = v;
-      }
-    });
-  }
-  return clazz;
 }

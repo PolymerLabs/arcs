@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {EntityClass, createEntityClass} from './entity.js';
+import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {EntityType, Type} from './type.js';
 
@@ -168,7 +168,7 @@ export class Schema {
   }
 
   entityClass(context: ParticleExecutionContext = null): EntityClass {
-    return createEntityClass(this, context);
+    return Entity.createEntityClass(this, context);
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
