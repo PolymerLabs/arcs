@@ -48,6 +48,7 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
+// Functions for steps
 const steps = {
   peg: [peg, railroad],
   railroad: [railroad],
