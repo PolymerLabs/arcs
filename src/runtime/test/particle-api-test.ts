@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Random} from '../random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
@@ -93,9 +92,9 @@ describe('particle-api', () => {
     await fooStore.set({id: 'id2', rawData: {value: 'v2'}});
     fooStore._fire = fireFn;
     await fooStore.set({id: 'id3', rawData: {value: 'v3'}});
-    await inspector.verify('update:{"data":{"rawData":{"value":"v1"}}}',
+    await inspector.verify('update:{"data":{"value":"v1"}}',
                            'desync',
-                           'sync:{"rawData":{"value":"v3"}}');
+                           'sync:{"value":"v3"}');
 
     await fooStore.clear();
     await inspector.verify('update:{"data":null}');
