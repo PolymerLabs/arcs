@@ -13,7 +13,6 @@ import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {Loader} from '../runtime/loader.js';
-import {Random} from '../runtime/random.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';

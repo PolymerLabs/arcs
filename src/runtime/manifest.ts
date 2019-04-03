@@ -12,7 +12,7 @@ import {parse, SyntaxError} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
-import {Id} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -167,6 +167,7 @@ export class Manifest {
   storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
+  private readonly _idGenerator: IdGenerator = IdGenerator.newSession();
   private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
@@ -187,7 +188,7 @@ export class Manifest {
   }
   get id() {
     if (this._meta.name) {
-      return Id.newSessionId().fromString(this._meta.name);
+      return Id.fromString(this._meta.name);
     }
     return this._id;
   }
@@ -355,7 +356,7 @@ export class Manifest {
   }
   // TODO: Unify ID handling to use ID instances, not strings. Change return type here to ID.
   generateID(): string {
-    return this.id.createId().toString();
+    return this._idGenerator.createChildId(this.id).toString();
   }
 
   static async load(fileName: string, loader: {loadResource}, options?): Promise<Manifest> {

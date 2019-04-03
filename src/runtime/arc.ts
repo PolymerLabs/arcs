@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {FakePecFactory} from './fake-pec-factory.js';
-import {Id} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {Loader} from './loader.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
@@ -86,6 +86,7 @@ export class Arc {
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
+  private readonly idGenerator: IdGenerator = IdGenerator.newSession();
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
@@ -96,7 +97,7 @@ export class Arc {
     this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
 
     // for now, every Arc gets its own session
-    this.id = Id.newSessionId().fromString(id);
+    this.id = Id.fromString(id);
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
@@ -105,7 +106,7 @@ export class Arc {
     this.storageKey = storageKey;
 
     const pecId = this.generateID();
-    const innerPecPort = this.pecFactory(pecId);
+    const innerPecPort = this.pecFactory(pecId.toString());
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.listenerClasses = listenerClasses;
@@ -416,7 +417,7 @@ ${this.activeRecipe.toString()}`;
     return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle : Particle) {
+  _instantiateParticle(recipeParticle: Particle) {
     recipeParticle.id = this.generateID('particle');
     const info = {spec: recipeParticle.spec, stores: new Map()};
     this.loadedParticleInfo.set(recipeParticle.id, info);
@@ -430,8 +431,8 @@ ${this.activeRecipe.toString()}`;
     this.pec.instantiate(recipeParticle, info.stores);
   }
 
-  generateID(component: string = '') {
-    return this.id.createId(component).toString();
+  generateID(component: string = ''): string {
+    return this.idGenerator.createChildId(this.id, component).toString();
   }
 
   get _stores(): (StorageProviderBase)[] {

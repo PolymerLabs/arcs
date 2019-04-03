@@ -8,71 +8,87 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Random} from './random.js';
+import {random, RNG} from './random.js';
+import {assert} from '../platform/chai-web.js';
 
-// Id consists of 2 component: a session and an idTree.
-export class Id {
-  // Session at which a logical object (e.g. an Arc) got created.
-  // Part of the stable, permanent ID of this object.
-  session: string;
-  // Current session. E.g. In which an Arc got deserialized and inflated.
-  // This is used to spawn new ids based on this instance.
-  readonly currentSession: string;
-  private nextIdComponent = 0;
-  private readonly components: string[] = [];
+/**
+ * Generates new IDs which are rooted in the current session. Only one IdGenerator should be instantiated for each running Arc, and all of the
+ * IDs created should be created using that same IdGenerator instance.
+ */
+export class IdGenerator {
+  private readonly _currentSessionId: string;
+  private _nextComponentId = 0;
 
-  constructor(currentSession: string, components: string[] = []) {
-    this.session = currentSession;
-    this.currentSession = currentSession;
-    this.components = components;
+  /** Use the newGenerator factory method instead. */
+  private constructor(currentSessionId: string) {
+    this._currentSessionId = currentSessionId;
   }
 
-  static newSessionId() {
-    const session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
-    return new Id(session);
+  /** Generates a new random session ID to use when creating new IDs. */
+  static newSession() {
+    const sessionId = Math.floor(random.next() * Math.pow(2, 50)) + '';
+    return new IdGenerator(sessionId);
+  }
+
+  /** For testing only. Lets you specify the session ID manually. */
+  static createWithSessionIdForTesting(sessionId: string) {
+    return new IdGenerator(sessionId);
   }
 
   /**
-   * When used in the following way:
-   *   const id = Id.newSessionId().fromString(stringId);
-   * 
-   * The resulting id will receive a newly generated session id in the currentSession field,
-   * while maintaining an original session from the string representation in the session field.
+   * Creates a new ID, as a child of the given parentId. The given subcomponent will be appended to the component hierarchy of the given ID, but
+   * the generator's random session ID will be used as the ID's root.
    */
-  fromString(str: string): Id {
-    const newId = new Id(this.currentSession);
+  createChildId(parentId: Id, subcomponent: string = '') {
+    // Append (and increment) a counter to the subcomponent, to ensure that it is unique.
+    subcomponent += this._nextComponentId;
+    return new Id(this._currentSessionId, [...parentId.idTree, subcomponent]);
+  }
+}
 
-    let components = str.split(':');
-    if (components[0][0] === '!') {
-      newId.session = components[0].slice(1);
-      components = components.slice(1);
-    }
-    newId.components.push(...components);
-    return newId;
+/**
+ * An Id is an immutable object consisting of two components: a root, and an idTree. The root is the session ID from the particular session
+ * in which the ID was constructed (see the IdGenerator class). The idTree is a list of subcomponents, forming a hierarchy of IDs (child IDs are
+ * created by appending subcomponents to their parent ID's idTree).
+ */
+export class Id {
+
+  /** The Session ID of the session during which the ID got created. See IdGenerator class. */
+  readonly root: string;
+
+  /** The components of the idTree. */
+  readonly idTree: string[] = [];
+
+  constructor(root: string, idTree: string[] = []) {
+    this.root = root;
+    this.idTree = idTree;
   }
 
-  // Returns the full Id string.
+  static fromString(str: string): Id {
+    const bits = str.split(':');
+    assert(bits[0].startsWith('!'), `IDs must start with an !, received '${str}'.`);
+    
+    const root = bits[0].slice(1);
+    const idTree = bits.slice(1);
+    return new Id(root, idTree);  
+  }
+
+  /** Returns the full ID string. */
   toString(): string {
-    return `!${this.session}:${this.components.join(':')}`;
+    return `!${this.root}:${this.idTree.join(':')}`;
   }
 
-  // Returns the idTree as string (without the session component).
+  /** Returns the idTree as as string (without the root). */
   idTreeAsString(): string {
-    return this.components.join(':');
-  }
-
-  createId(component = ''): Id {
-    const id = new Id(this.currentSession, this.components.slice());
-    id.components.push(component + this.nextIdComponent++);
-    return id;
+    return this.idTree.join(':');
   }
 
   equal(id: Id): boolean {
-    if (id.session !== this.session || id.components.length !== this.components.length) {
+    if (id.root !== this.root || id.idTree.length !== this.idTree.length) {
       return false;
     }
-    for (let i = 0; i < id.components.length; i++) {
-      if (id.components[i] !== this.components[i]) {
+    for (let i = 0; i < id.idTree.length; i++) {
+      if (id.idTree[i] !== this.idTree[i]) {
         return false;
       }
     }
