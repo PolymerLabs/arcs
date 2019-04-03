@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({DomParticle, html, resolver, log}) => {
 
   const template = html`
 
@@ -69,6 +69,9 @@ defineParticle(({DomParticle, html, resolver}) => {
     right: 16px;
     margin-top: 16px;
   }
+  model-input {
+    display: block;
+  }
   input {
     border: none;
     background-color: inherit;
@@ -81,7 +84,7 @@ defineParticle(({DomParticle, html, resolver}) => {
 <template friend-avatars>
   <div item>
     <model-img src="{{url}}">
-      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-click="onSelectAvatar">
+      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dbl-click="onSelectAvatar">
     </model-img>
     <br>
     <span>{{name}}</span>
@@ -104,32 +107,31 @@ defineParticle(({DomParticle, html, resolver}) => {
     get template() {
       return template;
     }
-    render(props, state) {
-      const user = props.user || {};
-      const friends = props.friends || [];
-      const others = friends.filter(p => p.id !== user.id);
-      const names = props.userNames || [];
-      const avatars = props.avatars || [];
-      const avatarModels = others.map((p, i) => {
-        const avatar = this.boxQuery(avatars, p.id)[0];
-        const name = this.boxQuery(names, p.id)[0];
-        const url = (avatar && avatar.url) || `https://$shells/assets/avatars/user%20(0).png`;
+    render({friends}, state) {
+      //const user = props.user || {};
+      //const others = friends.filter(p => p.id !== user.id);
+      //const names = props.userNames || [];
+      //const avatars = props.avatars || [];
+      const avatars = {$template: 'friend-avatars'};
+      avatars.models = (friends || []).map((friend, i) => {
+        //log(friend);
+        //const avatar = this.boxQuery(avatars, p.id)[0];
+        //const name = this.boxQuery(names, p.id)[0] || p.id.split('/');
+        //const url = (avatar && avatar.url) ||
+        const url = resolver(`FriendsPicker/../assets/user.png`);
+        const name = friend.publicKey.split('/').pop();
         return {
           key: i,
-          value: p.id,
-          name: name ? name.userName : '(anon)', //p.id,
-          url: resolver && resolver(url),
-          selected: true
+          value: friend.publicKey,
+          name,
+          url
         };
       });
       return {
-        showPopup: state.showPopup,
-        popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`,
+        avatars,
         newFriendName: '',
-        avatars: {
-          $template: 'friend-avatars',
-          models: avatarModels
-        }
+        showPopup: state.showPopup,
+        popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`
       };
     }
     onAddFriend(e) {
@@ -141,17 +143,18 @@ defineParticle(({DomParticle, html, resolver}) => {
     onNameInputChange({data: {value}}) {
       this.setState({showPopup: false});
       if (value) {
-        const friend = this.props.friends.find(f => f.id === value);
+        const friend = this.props.friends.find(f => f.publicKey === value);
         if (!friend) {
-          this.appendRawDataToHandle('friends', [{id: value}]);
+          this.appendRawDataToHandle('friends', [{publicKey: value}]);
         }
       }
     }
     onSelectAvatar(e, state) {
       const selectedId = e.data.value;
-      const friend = this._props.friends.find(f => f.id === selectedId);
+      const friend = this._props.friends.find(f => f.publicKey === selectedId);
       const friendsHandle = this.handles.get('friends');
       if (friend) {
+        //log('ready to remove a friend (but not doing it)', friend);
         friendsHandle.remove(friend);
       }
     }

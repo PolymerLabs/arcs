@@ -133,6 +133,13 @@
         store.on('change', onchange, this);
       }
     }
+    onChange({add, remove}) {
+      this.log('onChange', add, remove);
+      //console.log({add, remove});
+      if (add) {
+        add.forEach(({value}) => this.onAdd(value));
+      }
+    }
     async notifyInitialPopulation(store) {
       // process initial data
       this.log('initial population');
@@ -142,13 +149,6 @@
     }
     onAdd(data) {
       this.fire('add', data)
-    }
-    onChange({add, remove}) {
-      this.log('onChange', add, remove);
-      //console.log({add, remove});
-      if (add) {
-        add.forEach(({value}) => this.onAdd(value));
-      }
     }
   }
 
@@ -168,6 +168,7 @@
       if (!store) {
         console.warn(`ArcObserver: failed to access store for [${storage}/${id}]`);
       } else {
+        console.log(`ArcObserver: accessed store for [${storage}/${id}]`);
         // each observable item is a handle
         this.observer = new StoreObserver(store, this);
       }
@@ -205,22 +206,25 @@
   class ShareObserver extends AbstractEventer {
     constructor(storage) {
       super();
-      this.storage = storage;
       this.vtable = {'add-handle-data': 'onAddHandleData'};
+      this.storage = storage;
       this.arcObs = {};
-      const userArcsOb = new ArcObserver(storage, 'user-launcher', this);
+      /*const userArcsOb =*/ new ArcObserver(storage, 'user-launcher', this);
     }
     onAddHandleData({handle, data: {id, rawData: meta}}) {
       if (meta && !meta.deleted) {
         //console.log(`ShareObserver::onAddHandleData: [${handle.type.toPrettyString()}] "${meta.description}"`);
-        console.log(`ShareObserver::onAddHandleData: "${meta.description}"`);
+        //console.log(`ShareObserver::onAddHandleData: "${meta.description}"`);
         if (meta.shared || true) {
           //const node = this.addRow(key, [key, description]);
-          console.log(meta);
+          console.log(`ShareObserver::onAddHandleData`, meta);
           table.onAdd(meta);
           const listener = new AbstractEventer();
           listener['add-handle-data'] = ({handle, data}) => {
-            console.log('share-data', data);
+            // not really a user-name in general, only used for debugging
+            const user = this.storage.split('/').pop();
+            const type = handle.type.getEntitySchema().names[0];
+            console.log(`[${user}] shared [${type}]`, data.rawData);
           };
           this.arcObs[meta.key] = new ArcObserver(this.storage, meta.key, listener);
         }
