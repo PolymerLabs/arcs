@@ -1,10 +1,11 @@
 import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
 import {MessageChannel} from '../runtime/message-channel.js';
+import {Id, IdGenerator} from '../runtime/id.js';
 
 const pecIndustry = loader => {
-  return id => {
+  return (pecId: Id, idGenerator: IdGenerator) => {
     const channel = new MessageChannel();
-    const _throwAway = new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
+    const _throwAway = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader);
     return channel.port2;
   };
 };

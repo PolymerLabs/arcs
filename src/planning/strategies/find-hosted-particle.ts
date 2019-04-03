@@ -8,7 +8,6 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/particle-spec.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
@@ -30,7 +29,7 @@ export class FindHostedParticle extends Strategy {
           results.push((recipe, particle, connectionSpec) => {
             const handleConnection = particle.addConnectionName(connectionSpec.name);
             const handle = RecipeUtil.constructImmediateValueHandle(
-                handleConnection, particleSpec, arc.generateID());
+                handleConnection, particleSpec, arc.generateID().toString());
             assert(handle); // Type matching should have been ensure by the checks above;
             handleConnection.connectToHandle(handle);
           });

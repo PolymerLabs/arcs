@@ -66,9 +66,10 @@ export class Id {
 
   static fromString(str: string): Id {
     const bits = str.split(':');
-    assert(bits[0].startsWith('!'), `IDs must start with an !, received '${str}'.`);
     
-    const root = bits[0].slice(1);
+    let root = bits[0];
+    // Drop the ! prefix from root.
+    root = root.startsWith('!') ? root.slice(1) : root;
     const idTree = bits.slice(1);
     return new Id(root, idTree);  
   }
