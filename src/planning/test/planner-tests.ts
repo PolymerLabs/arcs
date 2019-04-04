@@ -17,6 +17,7 @@ import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
 
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
+import {Id} from '../../runtime/id.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -73,7 +74,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const loadedManifest = await Manifest.load('manifest', loader, {registry});
   manifestLoadedCallback(loadedManifest);
 
-  const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, loader});
+  const arc = new Arc({id: new Id('test-plan-arc'), context: loadedManifest, loader});
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);

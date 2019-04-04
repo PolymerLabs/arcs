@@ -36,6 +36,7 @@ import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
+import {Id} from '../runtime/id.js';
 
 type ConsumeSlotConnectionMatch = {
   recipeParticle: Particle,
@@ -98,8 +99,8 @@ export class RecipeIndex {
   constructor(arc: Arc, {reportGenerations = false} = {}) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const arcStub = new Arc({
-      id: 'index-stub',
-      context: new Manifest({id: 'empty-context'}),
+      id: new Id('index-stub'),
+      context: new Manifest({id: new Id('empty-context')}),
       loader: arc.loader,
       slotComposer: new SlotComposer({
         modalityHandler: PlanningModalityHandler.createHeadlessHandler(),

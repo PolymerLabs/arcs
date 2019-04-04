@@ -16,6 +16,7 @@ import {VolatileStorage} from '../storage/volatile-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
 import {EntityType, ReferenceType} from '../type.js';
+import {Id} from '../id.js';
 
 describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {
@@ -90,7 +91,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -149,7 +150,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
 
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
@@ -208,7 +209,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -304,7 +305,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -381,7 +382,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -464,7 +465,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: 'test:0', loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];    
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());

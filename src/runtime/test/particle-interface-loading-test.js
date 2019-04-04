@@ -16,8 +16,8 @@ import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType} from '../type.js';
-import {InterfaceInfo} from '../interface-info.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {Id} from '../id.js';
 
 describe('particle interface loading', function() {
 
@@ -59,7 +59,7 @@ describe('particle interface loading', function() {
             };
           });`});
 
-    const arc = new Arc({id: 'test', loader});
+    const arc = new Arc({id: new Id('test'), loader});
 
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -125,7 +125,7 @@ describe('particle interface loading', function() {
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: 'test', context: manifest});
+    const arc = new Arc({id: new Id('test'), context: manifest});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');
@@ -202,7 +202,7 @@ describe('particle interface loading', function() {
         });
       `
     });
-    const arc = new Arc({id: 'test', context: manifest, loader});
+    const arc = new Arc({id: new Id('test'), context: manifest, loader});
     const fooType = manifest.findTypeByName('Foo');
     const fooStore = await arc.createStore(fooType);
     recipe.handles[0].mapToStorage(fooStore);

@@ -32,7 +32,7 @@ import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, 
 import {PecFactory} from './particle-execution-context.js';
 
 type ArcOptions = {
-  id: string;
+  id: Id;
   context: Manifest;
   pecFactory?: PecFactory;
   slotComposer?: SlotComposer;
@@ -97,7 +97,7 @@ export class Arc {
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
 
-    this.id = Id.fromString(id);
+    this.id = id;
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
@@ -201,7 +201,7 @@ export class Arc {
   }
 
   createInnerArc(transformationParticle: Particle): Arc {
-    const id = this.generateID('inner').toString();
+    const id = this.generateID('inner');
     const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, listenerClasses: this.listenerClasses});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
@@ -382,7 +382,7 @@ ${this.activeRecipe.toString()}`;
   static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, listenerClasses}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
-      id: manifest.meta.name,
+      id: Id.fromString(manifest.meta.name),
       storageKey: manifest.meta.storageKey,
       slotComposer,
       pecFactory,
@@ -442,7 +442,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    const arc = new Arc({id: this.generateID().toString(),
+    const arc = new Arc({id: this.generateID(),
                          pecFactory: this.pecFactory,
                          context: this.context,
                          loader: this._loader,

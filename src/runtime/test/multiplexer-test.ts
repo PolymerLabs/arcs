@@ -11,11 +11,10 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
-import {HostedSlotContext} from '../slot-context.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
+import {Id} from '../id.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
@@ -47,7 +46,7 @@ describe('Multiplexer', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: 'test', context: manifest, slotComposer, loader: new Loader()});
+    const arc = new Arc({id: new Id('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize());

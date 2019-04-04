@@ -15,6 +15,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer';
+import {Id} from '../id.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -30,8 +31,8 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader: new Loader(),
-                         context: new Manifest({id: 'test'})});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: new Id('test'), loader: new Loader(),
+                         context: new Manifest({id: new Id('test')})});
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);
