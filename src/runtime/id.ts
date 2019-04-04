@@ -72,7 +72,7 @@ export class Id {
 
     if (bits[0].startsWith('!')) {
       const root = bits[0].slice(1);
-      const idTree = bits.slice(1);
+      const idTree = bits.slice(1).filter(component => component.length > 0);
       return new Id(root, idTree);
     } else {
       return new Id('', bits);
