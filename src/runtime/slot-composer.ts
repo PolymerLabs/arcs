@@ -11,13 +11,12 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
-import {Description} from './description.js';
 import {ModalityHandler} from './modality-handler.js';
 import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
-import { SlotDomConsumer } from './slot-dom-consumer.js';
+import {SlotDomConsumer} from './slot-dom-consumer.js';
 
 export type SlotComposerOptions = {
   modalityName?: string;
@@ -113,7 +112,7 @@ export class SlotComposer {
     assert(transformationSlotConsumer,
         `Transformation particle ${transformationParticle.name} with consumed ${transformationSlotName} not found`);
     
-    const hostedSlotId = innerArc.generateID();
+    const hostedSlotId = innerArc.generateID().toString();
     this._contexts.push(new HostedSlotContext(hostedSlotId, transformationSlotConsumer, storeId));
     return hostedSlotId;
   }

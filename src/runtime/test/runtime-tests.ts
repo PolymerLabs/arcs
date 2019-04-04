@@ -16,6 +16,18 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer';
 
+// tslint:disable-next-line: no-any
+function unsafe<T>(value: T): any { return value; }
+
+function assertManifestsEqual(actual: Manifest, expected: Manifest) {
+  // Delete the IdGenerator before comparing that the manifests are the same, since the IdGenerator will contain a different random session ID
+  // for each Manifest instantiation.
+  unsafe(expected)._idGenerator = null;
+  unsafe(actual)._idGenerator = null;
+
+  assert.deepEqual(expected, actual);
+}
+
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader: new Loader(),
@@ -39,13 +51,13 @@ describe('Runtime', () => {
         text -> handleA`;
     const expected = await Manifest.parse(content);
     const actual = await Runtime.parseManifest(content);
-    assert.deepEqual(expected, actual);
+    assertManifestsEqual(actual, expected);
   });
   it('loads a Manifest', async () => {
     const registry = {};
     const loader = new Loader();
     const expected = await Manifest.load('./src/runtime/test/artifacts/test.manifest', loader, registry);
     const actual = await Runtime.loadManifest('./src/runtime/test/artifacts/test.manifest', loader, registry);
-    assert.deepEqual(expected, actual);
+    assertManifestsEqual(actual, expected);
   });
 });

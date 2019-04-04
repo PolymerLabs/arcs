@@ -10,9 +10,9 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {DevtoolsForTests} from '../../debug/devtools-connection.js';
-import {Random} from '../../random.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {TestHelper} from '../../testing/test-helper.js';
+import {Arc} from '../../arc.js';
 
 describe('OuterPortAttachment', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -37,7 +37,7 @@ describe('OuterPortAttachment', () => {
         });`
       })
     });
-    const arc = testHelper.arc;
+    const arc = testHelper.arc as Arc;
 
     const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
@@ -53,9 +53,11 @@ describe('OuterPortAttachment', () => {
     // Type is a complex object to reproduce, let's skip asserting on it.
     delete instantiateParticleCall.pecMsgBody.spec.args[0].type;
 
+    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
+
     assert.deepEqual(instantiateParticleCall.pecMsgBody, {
-      id: `!${arc.id.currentSession}:demo:particle1`,
-      identifier: `!${arc.id.currentSession}:demo:particle1`,
+      id: `!${sessionId}:demo:particle1`,
+      identifier: `!${sessionId}:demo:particle1`,
       stores: {
         foo: 'fooStore'
       },

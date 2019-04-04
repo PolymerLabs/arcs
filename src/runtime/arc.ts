@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {FakePecFactory} from './fake-pec-factory.js';
-import {Id} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {Loader} from './loader.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
@@ -29,11 +29,12 @@ import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
+import {PecFactory} from './particle-execution-context.js';
 
 type ArcOptions = {
   id: string;
   context: Manifest;
-  pecFactory?: (id: string) => PECInnerPort;
+  pecFactory?: PecFactory;
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: string;
@@ -46,7 +47,7 @@ type ArcOptions = {
 
 type DeserializeArcOptions = {
   serialization: string;
-  pecFactory?: (id: string) => PECInnerPort;
+  pecFactory?: PecFactory;
   slotComposer?: SlotComposer;
   loader: Loader;
   fileName: string;
@@ -60,7 +61,7 @@ type SerializeContext = {handles: string, resources: string, interfaces: string,
 
 export class Arc {
   private readonly _context: Manifest;
-  private readonly pecFactory: (id: string) => PECInnerPort;
+  private readonly pecFactory: PecFactory;
   public readonly isSpeculative: boolean;
   public readonly isInnerArc: boolean;
   public readonly isStub: boolean;
@@ -86,6 +87,7 @@ export class Arc {
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
+  private readonly idGenerator: IdGenerator = IdGenerator.newSession();
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   pec: ParticleExecutionHost;
 
@@ -95,8 +97,7 @@ export class Arc {
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
 
-    // for now, every Arc gets its own session
-    this.id = Id.newSessionId().fromString(id);
+    this.id = Id.fromString(id);
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
@@ -105,12 +106,13 @@ export class Arc {
     this.storageKey = storageKey;
 
     const pecId = this.generateID();
-    const innerPecPort = this.pecFactory(pecId);
+    const innerPecPort = this.pecFactory(pecId, this.idGenerator);
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
     this.listenerClasses = listenerClasses;
     this.debugHandler = new ArcDebugHandler(this, listenerClasses);
   }
+
   get loader(): Loader {
     return this._loader;
   }
@@ -416,8 +418,8 @@ ${this.activeRecipe.toString()}`;
     return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle : Particle) {
-    recipeParticle.id = this.generateID('particle');
+  _instantiateParticle(recipeParticle: Particle) {
+    recipeParticle.id = this.generateID('particle').toString();
     const info = {spec: recipeParticle.spec, stores: new Map()};
     this.loadedParticleInfo.set(recipeParticle.id, info);
 
@@ -430,8 +432,8 @@ ${this.activeRecipe.toString()}`;
     this.pec.instantiate(recipeParticle, info.stores);
   }
 
-  generateID(component: string = '') {
-    return this.id.createId(component).toString();
+  generateID(component: string = ''): Id {
+    return this.idGenerator.createChildId(this.id, component);
   }
 
   get _stores(): (StorageProviderBase)[] {
@@ -494,7 +496,7 @@ ${this.activeRecipe.toString()}`;
 
     // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
     // it should be done at planning stage.
-    slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
+    slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
 
     for (const recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
@@ -506,7 +508,7 @@ ${this.activeRecipe.toString()}`;
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const newStore = await this.createStore(type, /* name= */ null, this.generateID(),
+        const newStore = await this.createStore(type, /* name= */ null, this.generateID().toString(),
             recipeHandle.tags, recipeHandle.immediateValue ? 'volatile' : null);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
@@ -584,7 +586,7 @@ ${this.activeRecipe.toString()}`;
     }
 
     if (id == undefined) {
-      id = this.generateID();
+      id = this.generateID().toString();
     }
 
     if (storageKey == undefined && this.storageKey) {
@@ -752,5 +754,9 @@ ${this.activeRecipe.toString()}`;
 
   get apiChannelMappingId() {
     return this.id.toString();
+  }
+
+  get idGeneratorForTesting() {
+    return this.idGenerator;
   }
 }

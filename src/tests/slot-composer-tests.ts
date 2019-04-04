@@ -13,7 +13,6 @@ import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {Loader} from '../runtime/loader.js';
-import {Random} from '../runtime/random.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
@@ -310,7 +309,7 @@ recipe
     assert.deepEqual(rootSlotConsumer._content, {
       model: {
         a: 'A content/intercepted-model',
-        '$detail': `slotid-!${detailSlotConsumer.arc.id.currentSession}:demo:inner2:2`
+        '$detail': `slotid-!${detailSlotConsumer.arc.id.root}:demo:inner2:2`
       },
       template: `<div>intercepted-template<div><span>{{a}}</span><div slotid$="{{$detail}}"></div></div></div>`,
       templateName: 'A::content::default/intercepted'
