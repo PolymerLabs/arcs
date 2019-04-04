@@ -96,11 +96,12 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
 
     if (this.referenceMode && literal.model.length > 0) {
       // cloneFrom the backing store data by reading the model and writing it out.
-      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
+      const [backingStore, handleBackingStore] = await Promise.all(
+        [this.ensureBackingStore(), handle.ensureBackingStore()]);
 
-      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
-      const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
-      await this.backingStore.storeMultiple(underlying, [this.storageKey]);
+      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: backingStore.storageKey}}));
+      const underlying = await handleBackingStore.getMultiple(literal.model.map(({id}) => id));
+      await backingStore.storeMultiple(underlying, [this.storageKey]);
     }
 
     await this.fromLiteral(literal);
@@ -123,8 +124,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     const value = await this.getStored();
 
     if (this.referenceMode && value !== null) {
-      await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
+      const backingStore = await this.ensureBackingStore();
+      const result = await backingStore.get(value.id);
       return {
         version: this.version,
         model: [{id: value.id, value: result}]
@@ -142,11 +143,12 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     await this.initialized;
     const value = await this.getStored();
 
-    let model = [];
+    let model: SerializedModelEntry[] = [];
     if (value != null) {
       model = [
         {
           id: value.id,
+          keys: [],
           value
         }
       ];
@@ -183,8 +185,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       let value = await this.getStored();
 
       if (this.referenceMode && value) {
-        await this.ensureBackingStore();
-        value = await this.backingStore.get(value.id);
+        const backingStore = await this.ensureBackingStore();
+        value = await backingStore.get(value.id);
       }
       // logging goes here
 
@@ -215,13 +217,13 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
 
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
 
-      await this.ensureBackingStore();
+      const backingStore = await this.ensureBackingStore();
 
       // TODO(shans): mutating the storageKey here to provide unique keys is
       // a hack that can be removed once entity mutation is distinct from collection
       // updates. Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
-      await this.backingStore.store(value, [this.storageKey + this.localKeyId++]);
+      await backingStore.store(value, [this.storageKey + this.localKeyId++]);
 
       // Store the indirect pointer to the storageKey
       // Do this *after* the write to backing store, otherwise null responses could occur
@@ -254,7 +256,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         });
       }
     }
-    this.version++;
+    this.bumpVersion();
 
     const data = this.referenceMode ? value : this._stored;
     await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
@@ -332,7 +334,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         // If the item was removed from storage empty out our local storage and bump the version.
         this._stored = null;
         this._rev = undefined;
-        this.version++;
+        this.bumpVersion();
       } else {
         console.warn('PouchDbVariable.getStored err=', err);
         throw err;

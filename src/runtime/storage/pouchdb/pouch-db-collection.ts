@@ -130,6 +130,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
   private async _toList(): Promise<SerializedModelEntry[]> {
     if (this.referenceMode) {
+      const retval: SerializedModelEntry[] = [];
       const items = (await this.getModel()).toLiteral();
       if (items.length === 0) {
         return [];
@@ -139,14 +140,13 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       assert(refSet.size === 1, `multiple storageKeys in reference set of collection not yet supported.`);
       const ref = refSet.values().next().value;
 
-      await this.ensureBackingStore();
+      const backingStore = await this.ensureBackingStore();
 
       // Get id strings and corresponding backingStore values
       const ids = items.map(item => item.value.id);
-      const backingStoreValues = await this.backingStore.getMultiple(ids);
+      const backingStoreValues = await backingStore.getMultiple(ids);
 
       // merge items/backingStoreValues into retval
-      const retval = [];
       for (const item of items) {
         // backingStoreValues corresponds to each
         const backingStoreValue = backingStoreValues.shift();
@@ -206,8 +206,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       // that we ever want to return a null value for a get, so for Pouch we
       // choose to assert instead at least for the time being.
       assert(ref !== null, `no reference for id [id=${id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
-      await this.ensureBackingStore();
-      const backedValue = await this.backingStore.get(ref.id);
+      const backingStore = await this.ensureBackingStore();
+      const backedValue = await backingStore.get(ref.id);
       assert(backedValue !== null, `should never return a null entity value [ref.id=${ref.id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
       return backedValue;
     }
@@ -244,8 +244,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
         return crdtmodel;
       });
 
-      await this.ensureBackingStore();
-      await this.backingStore.store(value, keys);
+      const backingStore = await this.ensureBackingStore();
+      backingStore.store(value, keys);
     } else {
       await this.getModelAndUpdate(crdtmodel => {
         // check for existing keys?
@@ -254,7 +254,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       });
     }
 
-    this.version++;
+    this.bumpVersion();
 
     // Notify Listeners
     this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
@@ -299,7 +299,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       if (value !== null) {
         const effective = crdtmodel.remove(id, keys);
         // TODO(lindner): isolate side effects...
-        this.version++;
+        this.bumpVersion();
         this._fire('change', new ChangeEvent({remove: [{value, keys, effective}], version: this.version, originatorId}));
       }
       return crdtmodel;
@@ -407,7 +407,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
           referenceMode: this.referenceMode,
           type: this.type.toLiteral(),
           model: null,
-          version: null,
+          version: 0,
           _rev: null,
         };
       }
@@ -419,6 +419,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       // Check if the mutator made any changes..
       // TODO(lindner): consider changing the api to let the mutator tell us if changes were made.
       if (!notFound && JSON.stringify(this._model.toLiteral()) === JSON.stringify(newModel.toLiteral())) {
+
         // mutator didn't make any changes.
         return this._model;
       }

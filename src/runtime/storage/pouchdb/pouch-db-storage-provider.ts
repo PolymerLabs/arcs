@@ -64,9 +64,9 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
 
   /**
    * Increments the local version to be one more than the maximum of
-   * the local and remove versions.
+   * the local and remote versions.
    */
-  public bumpVersion(otherVersion: number): void {
+  public bumpVersion(otherVersion: number = 0): void {
     this.version = Math.max(this.version, otherVersion) + 1;
   }
 }
