@@ -15,7 +15,7 @@ import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
-import { Id } from '../../../runtime/id.js';
+import {Id} from '../../../runtime/id.js';
 
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;

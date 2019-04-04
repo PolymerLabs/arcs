@@ -99,7 +99,6 @@ export abstract class Entity implements EntityInterface {
   }
 
   identify(identifier: string) {
-    assert(typeof identifier === 'string', `ID is not a string!!! It is ${JSON.stringify(identifier)}`);
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;
     const components = identifier.split(':');
