@@ -8,18 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export interface RNG {
-  next() : number;
+abstract class RNG {
+  abstract next() : number;
 }
 
 /**
  * A basic random number generator using Math.random();
  */
-class MathRandomRNG implements RNG {
+class MathRandomRNG extends RNG {
   next() : number {
     return Math.random();
   }
 }
 
 // Singleton Pattern
-export const random: RNG = new MathRandomRNG();
+const random: RNG = new MathRandomRNG();
+
+export class Random {
+  static next() : number {
+    return random.next();
+  }
+}

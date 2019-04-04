@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {random, RNG} from './random.js';
-import {assert} from '../platform/chai-web.js';
+import {Random} from './random.js';
 
 /**
  * Generates new IDs which are rooted in the current session. Only one IdGenerator should be instantiated for each running Arc, and all of the
@@ -19,14 +18,14 @@ export class IdGenerator {
   private readonly _currentSessionId: string;
   private _nextComponentId = 0;
 
-  /** Use the newGenerator factory method instead. */
+  /** Use the newSession factory method instead. */
   private constructor(currentSessionId: string) {
     this._currentSessionId = currentSessionId;
   }
 
   /** Generates a new random session ID to use when creating new IDs. */
   static newSession() {
-    const sessionId = Math.floor(random.next() * Math.pow(2, 50)) + '';
+    const sessionId = Math.floor(Random.next() * Math.pow(2, 50)) + '';
     return new IdGenerator(sessionId);
   }
 
@@ -51,9 +50,9 @@ export class IdGenerator {
 }
 
 /**
- * An Id is an immutable object consisting of two components: a root, and an idTree. The root is the session ID from the particular session
- * in which the ID was constructed (see the IdGenerator class). The idTree is a list of subcomponents, forming a hierarchy of IDs (child IDs are
- * created by appending subcomponents to their parent ID's idTree).
+ * An immutable object consisting of two components: a root, and an idTree. The root is the session ID from the particular session in which the
+ * ID was constructed (see the IdGenerator class). The idTree is a list of subcomponents, forming a hierarchy of IDs (child IDs are created by
+ * appending subcomponents to their parent ID's idTree).
  */
 export class Id {
 
@@ -78,12 +77,6 @@ export class Id {
     } else {
       return new Id('', bits);
     }
-    
-    // let root = bits[0];
-    // // Drop the ! prefix from root.
-    // // root = root.startsWith('!') ? root.slice(1) : root;
-    // const idTree = bits.slice(1);
-    // return new Id(root, idTree);  
   }
 
   /** Returns the full ID string. */

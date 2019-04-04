@@ -13,7 +13,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import * as util from '../testing/test-util.js';
-import { Arc } from '../arc.js';
+import {Arc} from '../arc.js';
 
 async function loadFilesIntoNewArc(fileMap) {
   const testHelper = await TestHelper.create({
