@@ -21,7 +21,7 @@ interface CrdtCollectionModelMutator {
 interface CollectionStorage {
   model: SerializedModelEntry[];
   version: number;
-  referenceMode: boolean;
+  referenceMode: boolean|null;
   type: TypeLiteral;
 }
 
@@ -57,9 +57,10 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
         this.db.put({
           _id: this.pouchDbKey.location,
           model: this._model.toLiteral(),
-          referenceMode: this.referenceMode,
+          referenceMode: null, // defer until 1st write.
           type: this.type.toLiteral()
         }).then(() => {
+          this.version = 0;
           this.resolveInitialized();
         }).catch((e) => {
           // should throw something?
@@ -83,18 +84,28 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     return handle;
   }
 
+  // TODO(lindner): this should be a static constructor
+  // TODO(lindner): don't allow this to run on items with data...
   async cloneFrom(handle): Promise<void> {
     await this.initialized;
 
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
+
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
       literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
       const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
     }
-    this.fromLiteral(literal);
+
+    const updatedCrdtModel = new CrdtCollectionModel(literal.model);
+
+    await this.getModelAndUpdate(crdtmodel => updatedCrdtModel);
+
+    const updatedCrdtModelLiteral = updatedCrdtModel.toLiteral();
+    const dataToFire = updatedCrdtModelLiteral.length === 0 ? null : updatedCrdtModelLiteral[0].value;
+    this._fire('change', new ChangeEvent({data: dataToFire, version: this.version}));
   }
 
   /** @inheritDoc */
@@ -116,15 +127,6 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       version: this.version,
       model: (await this.getModel()).toLiteral()
     };
-  }
-
-  /**
-   * Populate this collection with a provided version/model
-   */
-  fromLiteral({version, model}): void {
-    this.version = version;
-    // TODO(lindner): this might not be initialized yet...
-    this._model = new CrdtCollectionModel(model);
   }
 
   private async _toList() {
@@ -187,6 +189,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       values.map(value => crdtmodel.add(value.id, value, keys));
       return crdtmodel;
     });
+    // fire?
   }
 
   /**
@@ -386,7 +389,10 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
           // remote revision is different, update local copy.
           this._model = new CrdtCollectionModel(doc.model);
           this._rev = doc._rev;
-          this.referenceMode = doc.referenceMode;
+          // referenceMode is set to null for stub entries.
+          if (doc.referenceMode != null) {
+            this.referenceMode = doc.referenceMode;
+          }
           this.bumpVersion(doc.version);
 
           // TODO(lindner): fire change events here?
