@@ -755,4 +755,8 @@ ${this.activeRecipe.toString()}`;
   get apiChannelMappingId() {
     return this.id.toString();
   }
+
+  get idGeneratorForTesting() {
+    return this.idGenerator;
+  }
 }

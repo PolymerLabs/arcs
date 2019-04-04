@@ -17,7 +17,6 @@ import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {Loader} from '../runtime/loader.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
@@ -167,6 +166,7 @@ export class Manifest {
   storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
+  // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   private readonly _idGenerator: IdGenerator = IdGenerator.newSession();
   private _storageProviderFactory: StorageProviderFactory|undefined = undefined;
   private _meta = new ManifestMeta();
@@ -1267,5 +1267,9 @@ ${e.message}
     });
 
     return results.join('\n');
+  }
+
+  get idGeneratorForTesting(): IdGenerator {
+    return this._idGenerator;
   }
 }

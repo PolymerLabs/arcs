@@ -41,8 +41,12 @@ export class IdGenerator {
    */
   createChildId(parentId: Id, subcomponent: string = '') {
     // Append (and increment) a counter to the subcomponent, to ensure that it is unique.
-    subcomponent += this._nextComponentId;
+    subcomponent += this._nextComponentId++;
     return new Id(this._currentSessionId, [...parentId.idTree, subcomponent]);
+  }
+
+  get currentSessionIdForTesting() {
+    return this._currentSessionId;
   }
 }
 
@@ -66,12 +70,20 @@ export class Id {
 
   static fromString(str: string): Id {
     const bits = str.split(':');
+
+    if (bits[0].startsWith('!')) {
+      const root = bits[0].slice(1);
+      const idTree = bits.slice(1);
+      return new Id(root, idTree);
+    } else {
+      return new Id('', bits);
+    }
     
-    let root = bits[0];
-    // Drop the ! prefix from root.
-    root = root.startsWith('!') ? root.slice(1) : root;
-    const idTree = bits.slice(1);
-    return new Id(root, idTree);  
+    // let root = bits[0];
+    // // Drop the ! prefix from root.
+    // // root = root.startsWith('!') ? root.slice(1) : root;
+    // const idTree = bits.slice(1);
+    // return new Id(root, idTree);  
   }
 
   /** Returns the full ID string. */
