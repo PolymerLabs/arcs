@@ -29,7 +29,10 @@ export class IdGenerator {
     return new IdGenerator(sessionId);
   }
 
-  /** For testing only. Lets you specify the session ID manually. */
+  /**
+   * Intended only for testing the IdGenerator class itself. Lets you specify the session ID manually. Prefer using the real
+   * IdGenerator.newSession() method when testing other classes.
+   */
   static createWithSessionIdForTesting(sessionId: string) {
     return new IdGenerator(sessionId);
   }
