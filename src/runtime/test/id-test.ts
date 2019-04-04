@@ -9,25 +9,69 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Id} from '../id.js';
-import {Random} from '../random.js';
+import {Id, IdGenerator} from '../id.js';
+import { Random } from '../random.js';
+
+describe('IdGenerator', () => {
+  describe('#newSession', () => {
+    it('should generate a random session ID', () => {
+      const oldRandom = Random;
+      Random.next = () => 123;
+  
+      const idGenerator = IdGenerator.newSession();
+  
+      const sessionId = 123 * 2 ** 50 + '';
+      assert.equal(idGenerator.currentSessionIdForTesting, sessionId);
+    });
+  });
+
+  describe('#createChildId', () => {
+    let idGenerator: IdGenerator;
+
+    beforeEach(() => {
+      idGenerator = IdGenerator.createWithSessionIdForTesting('sessionId');
+    });
+
+    it('creates child IDs using its session ID', () => {
+      const parentId = new Id('root');
+      const childId = idGenerator.createChildId(parentId);
+      assert.equal(childId.root, 'sessionId');
+    });
+    
+    it('appends subcomponents when creating child IDs', () => {
+      const parentId = new Id('root', ['x', 'y']);
+      const childId = idGenerator.createChildId(parentId, 'z');
+      assert.deepEqual(childId.idTree, ['x', 'y', 'z0']);
+    });
+
+    it('increments its counter', () => {
+      const parentId = new Id('root', ['x', 'y']);
+      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z0']);
+      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z1']);
+      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
+    });
+  });
+});
 
 describe('Id', () => {
-  it('parses id from string representation', async () => {
-    const initialId = Id.newSessionId().fromString('test');
-    const session = initialId.currentSession;
+  it('parses IDs from strings with exclamation marks', () => {
+    assert.deepEqual(Id.fromString('!root'), new Id('root'));
+    assert.deepEqual(Id.fromString('!root:'), new Id('root'));
+    assert.deepEqual(Id.fromString('!root:x:y'), new Id('root', ['x', 'y']));
+  });
 
-    assert.equal(`!${session}:test`, initialId.toString(),
-        'Both Session ID and the component should be part of the serialized ID');
-    assert.equal(`!${session}:test:0`, initialId.createId().toString(),
-        'Session ID should remain the same in the newly created sub-ID');
+  it('parses IDs from strings without exclamation marks', () => {
+    assert.deepEqual(Id.fromString('x'), new Id('',['x']));
+    assert.deepEqual(Id.fromString('x:y'), new Id('', ['x', 'y']));
+  });
 
-    const deserializedInNewSession = Id.newSessionId().fromString(initialId.toString());
-    
-    assert.equal(`!${session}:test`, deserializedInNewSession.toString(),
-        'Original session ID should be present in the serialized form of a deserialized ID');
-    assert.notEqual(session, deserializedInNewSession.currentSession);
-    assert.equal(`!${deserializedInNewSession.currentSession}:test:0`, deserializedInNewSession.createId().toString(),
-        'Sub-ID created inside a new session should be serialized with a new Session ID');
+  it('encodes to a string', () => {
+    assert.equal(new Id('root').toString(), '!root:');
+    assert.equal(new Id('root', ['x', 'y']).toString(), '!root:x:y');
+  });
+
+  it('encodes its ID tree', () => {
+    assert.equal(new Id('root').idTreeAsString(), '');
+    assert.equal(new Id('root', ['x', 'y']).idTreeAsString(), 'x:y');
   });
 });

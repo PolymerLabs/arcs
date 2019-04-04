@@ -12,24 +12,28 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
 import {Handle, handleFor} from './handle.js';
-import {Id} from './id.js';
+import {Id, IdGenerator} from './id.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
+import {MessagePort} from './message-channel.js';
+
+export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
 export class ParticleExecutionContext {
   private apiPort : PECInnerPort;
   private particles = <Particle[]>[];
-  private idBase: Id;
+  private readonly pecId: Id;
+  private readonly idGenerator: IdGenerator;
   private loader: Loader;
   private pendingLoads = <Promise<void>[]>[]; 
   private scheduler: StorageProxyScheduler = new StorageProxyScheduler();
   private keyedProxies: { [index: string]: StorageProxy | Promise<StorageProxy>} = {};
 
-  constructor(port, idBase: string, loader: Loader) {
+  constructor(port, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
 
     this.apiPort = new class extends PECInnerPort {
@@ -102,7 +106,8 @@ export class ParticleExecutionContext {
       }
     }(port);
 
-    this.idBase = Id.newSessionId().fromString(idBase);
+    this.pecId = pecId;
+    this.idGenerator = idGenerator;
     this.loader = loader;
     loader.setParticleExecutionContext(this);
 
@@ -119,7 +124,7 @@ export class ParticleExecutionContext {
   }
 
   generateID() {
-    return this.idBase.createId().toString();
+    return this.idGenerator.createChildId(this.pecId).toString();
   }
 
   innerArcHandle(arcId: string, particleId: string) {

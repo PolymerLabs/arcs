@@ -13,6 +13,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import * as util from '../testing/test-util.js';
+import {Arc} from '../arc.js';
 
 async function loadFilesIntoNewArc(fileMap) {
   const testHelper = await TestHelper.create({
@@ -769,7 +770,7 @@ describe('particle-api', () => {
   });
 
   it('loadRecipe returns ids of provided slots', async () => {
-    const {arc} = await TestHelper.create({
+    const {arc}: {arc: Arc} = await TestHelper.create({
       manifestString: `
         particle TransformationParticle in 'TransformationParticle.js'
           consume root
@@ -830,9 +831,10 @@ describe('particle-api', () => {
     assert.lengthOf(arc.recipeDeltas, 1);
     const [innerArc] = arc.findInnerArcs(transformationParticle);
 
+    const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
     assert.equal(innerArc.activeRecipe.toString(), `recipe
-  slot '!${innerArc.id.currentSession}:demo:inner2:1' as slot0
-  slot 'slotid-!${innerArc.id.currentSession}:demo:inner2:2' as slot1
+  slot '!${sessionId}:demo:inner2:1' as slot0
+  slot 'slotid-!${sessionId}:demo:inner2:2' as slot1
   A as particle0
     consume content as slot0
       provide detail as slot1
