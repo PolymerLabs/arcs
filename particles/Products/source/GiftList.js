@@ -34,7 +34,9 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    shouldRender({person}) { return Boolean(person); }
+    shouldRender({person}) {
+      return Boolean(person);
+    }
     render({person}) {
       const name = (person && person.name) || 'n/a';
       const occasion = (person && person.occasion) || 'n/a';
