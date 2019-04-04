@@ -1,2 +1,2 @@
 #!/bin/sh
-exec node ./build/dataflow/cli/flowcheck.js "$@"
+exec node --experimental-modules ./build/dataflow/cli/flowcheck.js "$@"
