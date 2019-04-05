@@ -21,7 +21,7 @@ export class SearchTokensToHandles extends Strategy {
     const findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
       let stores: (StorageProviderBase | StorageStub)[];
-      stores = arc.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});
+      stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';
       if (stores.length === 0) {
         stores = arc.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.out === 0});

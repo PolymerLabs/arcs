@@ -157,7 +157,7 @@ describe('Handle', () => {
     // tslint:disable-next-line: no-any
     await assertThrowsAsync(async () => await (arc as any)['createStore']('not a type'), /isn't a Type/);
 
-    await arc.createStore(Bar.type, 'name', 'id1', '#sufficient');
+    await arc.createStore(Bar.type, 'name', 'id1', ['#sufficient']);
     await arc.createStore(Bar.type, 'name', 'id2', ['#valid']);
     await arc.createStore(Bar.type, 'name', 'id3', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>

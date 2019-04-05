@@ -39,7 +39,7 @@ export class ResolveWalker extends RecipeWalker {
       const counts = RecipeUtil.directionCounts(handle);
       switch (handle.fate) {
         case 'use':
-          mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out === 0});
+          mappable = arc.findStoresByType(handle.type, {tags: handle.tags});
           break;
         case 'map':
         case 'copy':
