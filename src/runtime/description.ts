@@ -15,7 +15,9 @@ import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './des
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageStub} from './manifest.js';
+import {Handle} from './recipe/handle.js';
 
 export class Description {
   private constructor(private readonly particleDescriptions = <ParticleDescription[]>[],
@@ -29,10 +31,10 @@ export class Description {
     return new Description(particleDescriptions, Description._getStoreDescById(arc), arc.activeRecipe.name, arc.recipeDeltas);
   }
  
-  getArcDescription(formatterClass = DescriptionFormatter) : Promise<string> {
+  getArcDescription(formatterClass = DescriptionFormatter) {
     const desc = new (formatterClass)(this.particleDescriptions, this.storeDescById).getDescription({
-      patterns: [].concat.apply([], this.arcRecipes.map(recipe => recipe.patterns)),
-      particles: [].concat.apply([], this.arcRecipes.map(recipe => recipe.particles))
+      patterns: <string[]>[].concat(...this.arcRecipes.map(recipe => recipe.patterns)),
+      particles: <Particle[]>[].concat(...this.arcRecipes.map(recipe => recipe.particles))
     });
 
     if (desc) {
@@ -50,7 +52,7 @@ export class Description {
     return formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription);
   }
 
-  getHandleDescription(recipeHandle) {
+  getHandleDescription(recipeHandle: Handle) {
     assert(recipeHandle.connections.length > 0, 'handle has no connections?');
     const formatter = new DescriptionFormatter(this.particleDescriptions, this.storeDescById);
     formatter.excludeValues = true;
@@ -68,9 +70,9 @@ export class Description {
     return storeDescById;
   }
 
-  static async initDescriptionHandles(arc: Arc, relevance?: Relevance) {
-    const particleDescriptions = [];
-    const allParticles = [].concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
+  static async initDescriptionHandles(arc: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
+    const particleDescriptions: ParticleDescription[] = [];
+    const allParticles = <Particle[]>[].concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
     await Promise.all(allParticles.map(async particle => {
       particleDescriptions.push(await this._createParticleDescription(particle, arc, relevance));
     }));
@@ -109,7 +111,7 @@ export class Description {
       if (descHandle) {
         // TODO(shans): fix this mess when there's a unified Collection class or interface.
         const descList = await (<unknown>descHandle as {toList: () => Promise<{rawData: {key: string, value: string}}[]>}).toList();
-        const descByName = {};
+        const descByName: {[key: string]: string} = {};
         descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
         return descByName;
       }
@@ -117,29 +119,33 @@ export class Description {
     return undefined;
   }
 
-  static async _prepareStoreValue(store): Promise<DescriptionValue> {
+  static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue> {
     if (!store) {
       return undefined;
     }
     if (store.type instanceof CollectionType) {
-      const values = await store.toList();
+      const collectionStore = store as CollectionStorageProvider;
+      const values = await collectionStore.toList();
       if (values && values.length > 0) {
         return {collectionValues: values};
       }
     } else if (store.type instanceof BigCollectionType) {
-      const cursorId = await store.stream(1);
-      const {value, done} = await store.cursorNext(cursorId);
-      store.cursorClose(cursorId);
+      const bigCollectionStore = store as BigCollectionStorageProvider;
+      const cursorId = await bigCollectionStore.stream(1);
+      const {value, done} = await bigCollectionStore.cursorNext(cursorId);
+      bigCollectionStore.cursorClose(cursorId);
       if (!done && value[0].rawData.name) {
         return {bigCollectionValues: value[0]};
       }
     } else if (store.type instanceof EntityType) {
-      const value = await store.get();
+      const variableStore = store as VariableStorageProvider;
+      const value = await variableStore.get();
       if (value && value['rawData']) {
         return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
       }
     } else if (store.type instanceof InterfaceType) {
-      const interfaceValue = await store.get();
+      const variableStore = store as VariableStorageProvider;
+      const interfaceValue = await variableStore.get();
       if (interfaceValue) {
         return {interfaceValue};
       }
