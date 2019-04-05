@@ -146,7 +146,7 @@ export class PouchDbStorage extends StorageBase {
   }
 
   /** Creates a new Variable or Collection given basic parameters */
-  newProvider(type: Type, name, id, key): PouchDbStorageProvider {
+  newProvider(type: Type, name: string, id: string, key: string): PouchDbStorageProvider {
     if (type instanceof CollectionType) {
       return new PouchDbCollection(type, this, name, id, key);
     }
@@ -157,7 +157,7 @@ export class PouchDbStorage extends StorageBase {
   }
 
   /** Removes everything that a test could have created. */
-  static async resetPouchDbStorageForTesting() {
+  static async resetPouchDbStorageForTesting(): Promise<void> {
     for (const db of PouchDbStorage.dbLocationToInstance.values()) {
       await db
         .allDocs({include_docs: true})

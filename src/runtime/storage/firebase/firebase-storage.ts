@@ -1098,7 +1098,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     return ids.map(id => this.model.getValue(id));
   }
 
-  async storeMultiple(values, keys: string[], originatorId=null) {
+  async storeMultiple(values, keys: string[], originatorId=null): Promise<void> {
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
     values.map(value => {
       this.model.add(value.id, value, keys);
@@ -1500,7 +1500,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     await this.storeSingle(value, keys);
   }
 
-  async storeMultiple(values, keys: string[]) {
+  async storeMultiple(values, keys: string[]): Promise<void> {
     while (values.length > 0) {
       const chunk = values.splice(0, this.maxConcurrentRequests);
       await Promise.all(chunk.map(value => this.storeSingle(value, keys)));

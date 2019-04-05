@@ -1,7 +1,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {Type, TypeLiteral} from '../../type.js';
-import {CrdtCollectionModel, SerializedModelEntry} from '../crdt-collection-model.js';
+import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';
 import {ChangeEvent, CollectionStorageProvider} from '../storage-provider-base.js';
 
 import {PouchDbStorage} from './pouch-db-storage';
@@ -122,7 +122,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   /** @inheritDoc */
   // Returns {version, model: [{id, value, keys: []}]}
   // TODO(lindner): this is async, but the base class isn't....
-  async toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     return {
       version: this.version,
@@ -130,7 +130,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     };
   }
 
-  private async _toList() {
+  private async _toList(): Promise<SerializedModelEntry[]> {
     if (this.referenceMode) {
       const items = (await this.getModel()).toLiteral();
       if (items.length === 0) {
@@ -171,7 +171,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @param ids items to fetch from the underlying CRDT model.
    * @return an array of values from the underlying CRDT
    */
-  async getMultiple(ids: string[]) {
+  async getMultiple(ids: string[]): Promise<ModelValue[]>  {
     await this.initialized;
     assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
     const model = await this.getModel();
@@ -182,7 +182,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * Store multiple values with the given keys in the Collection.
    * TODO(lindner): document originatorId, which is unused.
    */
-  async storeMultiple(values, keys, originatorId = null) {
+  async storeMultiple(values, keys, originatorId = null): Promise<void> {
     await this.initialized;
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
 

@@ -72,15 +72,15 @@ export class PouchDbKey extends KeyBase {
     return this.buildChildKey('arc-info');
   }
 
-  childKeyForSuggestions(userId, arcId): KeyBase {
+  childKeyForSuggestions(userId: string, arcId: string): KeyBase {
     return this.buildChildKey(`${userId}/suggestions/${arcId}`);
   }
 
-  childKeyForSearch(userId): KeyBase {
+  childKeyForSearch(userId: string): KeyBase {
     return this.buildChildKey(`${userId}/search`);
   }
 
-  private buildChildKey(leaf) {
+  private buildChildKey(leaf: string) {
     let location = '';
     if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
