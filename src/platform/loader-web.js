@@ -66,8 +66,8 @@ export class PlatformLoader extends Loader {
   loadWrappedParticle(url) {
     // load wrapped particle
     const result = [];
-    // MUST be synchronous from here until
-    // deletion self.defineParticle because we share this
+    // MUST be synchronous from here until deletion
+    // of self.defineParticle because we share this
     // scope with other particles
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
