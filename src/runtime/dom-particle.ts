@@ -14,11 +14,12 @@ import {DomParticleBase} from './dom-particle-base.js';
 import {Collection, Variable} from './handle.js';
 
 interface StatefulDomParticle extends DomParticleBase {
-  // types go here?
+  // add type info for XenState members here
+  _invalidate(): void;
 }
 
+// binds XenStateMixin(DomParticleBase) to interface above
 export interface DomParticle extends StatefulDomParticle {
-  // types go here?
 }
 
 /** @class DomParticle
