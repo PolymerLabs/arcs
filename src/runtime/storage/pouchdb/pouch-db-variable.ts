@@ -50,16 +50,17 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   // All public methods must call `await initialized` to avoid race
   // conditions on initialization.
   private readonly initialized: Promise<void>;
-  private resolveInitialized: () => void;
 
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, storageEngine, name, id, key);
+    let resolveInitialized: () => void;
+    this.initialized = new Promise(resolve => resolveInitialized = resolve);
+
     this.backingStore = null;
-    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     // Insure that there's a value stored.
     this.db.get(this.pouchDbKey.location).then(() => {
-      this.resolveInitialized();
+      resolveInitialized();
     }).catch((err) => {
       if (err.name === 'not_found') {
         this.db.put({
@@ -68,7 +69,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
           version: 0,
           referenceMode: this.referenceMode
         }).then(() => {
-          this.resolveInitialized();
+          resolveInitialized();
         }).catch((e) => {
           console.log('error init', e);
         });
