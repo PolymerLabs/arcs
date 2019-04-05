@@ -64,7 +64,6 @@ export class PlatformLoader extends Loader {
     return this.unwrapParticle(particles[0], this.provisionLogger(fileName));
   }
   loadWrappedParticle(url) {
-    // load wrapped particle
     const result = [];
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
