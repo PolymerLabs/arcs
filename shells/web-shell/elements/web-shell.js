@@ -224,7 +224,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnNullArc(userid) {
     this.state = {
-      nullConfig: this.configureBgArc(userid, 'null')
+      nullConfig: this.configureBgArc(userid, 'planning')
     };
   }
   // spawnPipesArc(userid) {
@@ -277,13 +277,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   configureBgArc(userid, name)  {
     const key = `${userid}-${name.toLowerCase()}`;
-    this.recordArcMeta({
-      key: key,
-      href: `?arc=${key}`,
-      description: `${name} arc`,
-      color: 'silver',
-      touched: 0
-    });
+    // this.recordArcMeta({
+    //   key: key,
+    //   href: `?arc=${key}`,
+    //   description: `${name} arc`,
+    //   color: 'silver',
+    //   touched: 0
+    // });
     return {
       id: key,
       suggestionContainer: this.getSuggestionSlot()
