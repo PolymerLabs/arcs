@@ -99,7 +99,6 @@ export class Arc {
 
     if (typeof id === 'string') {
       // TODO(csilvestrini): Replace this warning with an exception.
-      debugger;
       console.error(
           `Arc created with string ID ${id}!!! This should be an object of type Id instead. This warning will turn into an ` +
           `exception soon (end of April 2019).`);
