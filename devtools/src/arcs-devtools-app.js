@@ -44,30 +44,42 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       }
       iron-selector {
         width: max-content;
-        height: 27px;
+        height: 26px;
       }
       iron-selector a {
         display: inline-block;
         height: 100%;
         color: #666;
         text-decoration: none;
-        line-height: 24px;
         padding: 0 8px;
-        box-sizing: border-box;
-        vertical-align: bottom;
-        border-bottom: 1px solid var(--mid-gray);
+        position: relative;
       }
       .header iron-selector a iron-icon {
         display: none;
       }
       iron-selector a.iron-selected {
         color: #444;
-        border-color: rgb(26, 115, 232);
+      }
+      iron-selector a.iron-selected::after {
+        content: ' ';
+        display: block;
+        background-color: rgb(26, 115, 232);
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 2px;
+      }
+      @media (-webkit-min-device-pixel-ratio: 1.5) {
+        iron-selector a.iron-selected::after {
+          transform: scaleY(0.75);
+          transform-origin: 0 100%;
+        }
       }
       iron-selector a:not(.iron-selected):hover {
         background-color: #eaeaea;
       }
-      @media (max-width: 600px) {
+      @media (max-width: 650px) {
         .header iron-selector a {
           font-size: 0;
           padding: 0;
