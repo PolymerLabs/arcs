@@ -15,6 +15,9 @@ import {MultiplexerDomParticle} from '../runtime/multiplexer-dom-particle.js';
 import {TransformationDomParticle} from '../runtime/transformation-dom-particle.js';
 import {logFactory} from '../platform/log-web.js';
 
+const log = logFactory('loader-web', 'green');
+const warn = logFactory('loader-web', 'green', 'warn');
+
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 let dumbCache = {};
@@ -58,18 +61,22 @@ export class PlatformLoader extends Loader {
     this.mapParticleUrl(fileName);
     // determine URL to load fileName
     const url = this._resolve(fileName);
-    // load wrapped particle(s)
-    const particles = this.loadWrappedParticle(url);
+    // load wrapped particle
+    const particle = this.loadWrappedParticle(url);
     // execute particle wrapper (only the first one)
-    return this.unwrapParticle(particles[0], this.provisionLogger(fileName));
+    return this.unwrapParticle(particle, this.provisionLogger(fileName));
   }
   loadWrappedParticle(url) {
-    const result = [];
+    let result;
     // MUST be synchronous from here until deletion
     // of self.defineParticle because we share this
     // scope with other particles
     self.defineParticle = function(particleWrapper) {
-      result.push(particleWrapper);
+      if (result) {
+        warn('multiple particles not supported, last particle wins');
+      }
+      // multiple particles not supported: last particle wins
+      result = particleWrapper;
     };
     // import particle code
     importScripts(url);
