@@ -58,7 +58,7 @@ export class StorageStub {
     this.originalId = originalId;
   }
 
-  get version() {
+  get version(): number {
     return undefined; // Fake to match StorageProviderBase.
   }
 

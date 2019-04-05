@@ -22,7 +22,7 @@ import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
-import {Recipe} from './recipe/recipe.js';
+import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/util.js';
 import {SlotComposer} from './slot-composer.js';
@@ -30,6 +30,7 @@ import {StorageProviderBase, VariableStorageProvider} from './storage/storage-pr
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
+import {InterfaceInfo} from './interface-info.js';
 
 type ArcOptions = {
   id: Id;
@@ -227,7 +228,7 @@ export class Arc {
       context.interfaces += type.interfaceInfo.toString() + '\n';
     }
     const key = this.storageProviderFactory.parseStringAsKey(handle.storageKey);
-    const tags = this.storeTags.get(handle) || [];
+    const tags: Set<string> = this.storeTags.get(handle) || new Set();
     const handleTags = [...tags].map(a => `#${a}`).join(' ');
 
     const actualHandle = this.activeRecipe.findHandle(handle.id);
@@ -245,7 +246,7 @@ export class Arc {
       case 'volatile': {
         // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
         const volatile = handleTags.includes('volatile');
-        let serializedData = [];
+        let serializedData: {storageKey: string}[] | null = [];
         if (!volatile) {
           // TODO: include keys in serialized [big]collections?
           serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
@@ -300,11 +301,11 @@ export class Arc {
   }
 
   async _serializeHandles() {
-    const context = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
+    const context: SerializeContext = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
 
     let id = 0;
-    const importSet = new Set();
-    const handlesToSerialize = new Set();
+    const importSet: Set<string> = new Set();
+    const handlesToSerialize: Set<string> = new Set();
     const contextSet = new Set(this.context.stores.map(store => store.id));
     for (const handle of this._activeRecipe.handles) {
       if (handle.fate === 'map') {
@@ -340,7 +341,7 @@ export class Arc {
         .filter(h => h.immediateValue)
         .map(h => h.immediateValue));
 
-    const results = [];
+    const results: string[] = [];
     particleSpecs.forEach(spec => {
       for (const connection of spec.handleConnections) {
         if (connection.type instanceof InterfaceType) {
@@ -407,7 +408,7 @@ ${this.activeRecipe.toString()}`;
       arc._registerStore(store, tags);
     }));
     const recipe = manifest.activeRecipe.clone();
-    const options = {errors: new Map()};
+    const options: IsValidOptions = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
     return arc;
@@ -428,14 +429,14 @@ ${this.activeRecipe.toString()}`;
 
   _instantiateParticle(recipeParticle: Particle) {
     recipeParticle.id = this.generateID('particle').toString();
-    const info = {spec: recipeParticle.spec, stores: new Map()};
+    const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id, info);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       const store = this.findStoreById(connection.handle.id);
       assert(store, `can't find store of id ${connection.handle.id}`);
       assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-      info.stores.set(name, store);
+      info.stores.set(name, store as StorageProviderBase);
     }
     this.pec.instantiate(recipeParticle, info.stores);
   }
@@ -457,7 +458,7 @@ ${this.activeRecipe.toString()}`;
                          speculative: true,
                          innerArc: this.isInnerArc,
                          listenerClasses: this.listenerClasses});
-    const storeMap = new Map();
+    const storeMap: Map<StorageProviderBase, StorageProviderBase> = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
       await clone.cloneFrom(store);
@@ -468,7 +469,7 @@ ${this.activeRecipe.toString()}`;
     }
 
     this.loadedParticleInfo.forEach((info, id) => {
-      const stores = new Map();
+      const stores: Map<string, StorageProviderBase> = new Map();
       info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
       arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
@@ -530,7 +531,7 @@ ${this.activeRecipe.toString()}`;
           await (newStore as any).set(particleClone);
         } else if (recipeHandle.fate === 'copy') {
           const copiedStoreRef = this.findStoreById(recipeHandle.id);
-          let copiedStore;
+          let copiedStore: StorageProviderBase;
           if (copiedStoreRef instanceof StorageStub) {
             copiedStore = await copiedStoreRef.inflate();
           } else {
@@ -586,7 +587,7 @@ ${this.activeRecipe.toString()}`;
     this.debugHandler.recipeInstantiated({particles});
   }
 
-  async createStore(type: Type, name?, id?: string, tags?, storageKey:string = undefined) {
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined) {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {
@@ -605,7 +606,7 @@ ${this.activeRecipe.toString()}`;
     }
 
     // TODO(sjmiles): use `volatile` for volatile stores
-    const hasVolatileTag = tags => tags && ((Array.isArray(tags) && tags.includes('volatile')) || tags === 'volatile');
+    const hasVolatileTag = (tags: string[]) => tags && tags.includes('volatile');
     if (storageKey == undefined || hasVolatileTag(tags)) {
       storageKey = 'volatile';
     }
@@ -618,7 +619,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  _registerStore(store: StorageProviderBase, tags?) {
+  _registerStore(store: StorageProviderBase, tags?: string[]) {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -632,10 +633,10 @@ ${this.activeRecipe.toString()}`;
     store.on('change', () => this._onDataChange(), this);
   }
 
-  _tagStore(store: StorageProviderBase, tags) {
+  _tagStore(store: StorageProviderBase, tags: Set<string>) {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
-    (tags || []).forEach(tag => storeTags.add(tag));
+    (tags || []).forEach((tag: string) => storeTags.add(tag));
   }
 
   _onDataChange() {
@@ -644,11 +645,11 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  onDataChange(callback, registration) {
+  onDataChange(callback: () => void, registration: object) {
     this.dataChangeCallbacks.set(registration, callback);
   }
 
-  clearDataChange(registration) {
+  clearDataChange(registration: object) {
     this.dataChangeCallbacks.delete(registration);
   }
 
@@ -658,7 +659,7 @@ ${this.activeRecipe.toString()}`;
   // TODO: we should be testing the schemas for compatiblity instead of using just the name.
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
-  static _typeToKey(type: Type) {
+  static _typeToKey(type: Type): string | InterfaceInfo | null {
     const elementType = type.getContainedType();
     if (elementType) {
       const key = this._typeToKey(elementType);
@@ -674,9 +675,10 @@ ${this.activeRecipe.toString()}`;
     } else if (type instanceof TypeVariable && type.isResolved()) {
       return Arc._typeToKey(type.resolvedType());
     }
+    return null;
   }
 
-  findStoresByType(type: Type, options?): StorageProviderBase[] {
+  findStoresByType(type: Type, options?: {tags: string[]}): StorageProviderBase[] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -708,7 +710,7 @@ ${this.activeRecipe.toString()}`;
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
   }
 
-  findStoreById(id): StorageProviderBase | StorageStub {
+  findStoreById(id: string): StorageProviderBase | StorageStub {
     const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);
@@ -716,11 +718,11 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  findStoreTags(store: StorageProviderBase) {
+  findStoreTags(store: StorageProviderBase): Set<string> {
     if (this.storeTags.has(store)) {
       return this.storeTags.get(store);
     }
-    return this._context.findStoreTags(store);
+    return new Set(this._context.findStoreTags(store));
   }
 
   getStoreDescription(store: StorageProviderBase): string {
@@ -743,8 +745,8 @@ ${this.activeRecipe.toString()}`;
     return this.storageKeys[id];
   }
 
-  toContextString(options): string {
-    const results = [];
+  toContextString(): string {
+    const results: string[] = [];
     const stores = [...this.storesById.values()].sort(compareComparables);
     stores.forEach(store => {
       results.push(store.toString([...this.storeTags.get(store)]));

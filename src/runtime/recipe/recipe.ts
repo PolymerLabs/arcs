@@ -23,7 +23,7 @@ import {compareComparables} from './util.js';
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 
-export type IsValidOptions = {errors: Map<RecipeComponent, string>};
+export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
 export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean};
 
 export class Recipe {
@@ -208,7 +208,7 @@ export class Recipe {
     return true;
   }
 
-  _findDuplicate(items, options) {
+  _findDuplicate(items, options: IsValidOptions) {
     const seenHandles = new Set();
     const duplicateHandle = items.find(handle => {
       if (handle.id) {
@@ -224,7 +224,7 @@ export class Recipe {
     return duplicateHandle;
   }
 
-  _isValid(options = undefined) {
+  _isValid(options: IsValidOptions = undefined) {
     return !this._findDuplicate(this._handles, options)
         && !this._findDuplicate(this._slots, options)
         && this._handles.every(handle => handle._isValid(options))
@@ -330,7 +330,7 @@ export class Recipe {
     return digest(this.toString());
   }
 
-  normalize(options?) {
+  normalize(options?: IsValidOptions) {
     if (Object.isFrozen(this)) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');
