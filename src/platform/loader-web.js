@@ -1,6 +1,5 @@
 /**
- * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -17,10 +16,12 @@ import {logFactory} from '../platform/log-web.js';
 
 const log = logFactory('loader-web', 'green');
 const warn = logFactory('loader-web', 'green', 'warn');
+const error = logFactory('loader-web', 'green', 'error');
 
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
-let dumbCache = {};
+// mono-state data (module scope)
+let simpleCache = {};
 
 export class PlatformLoader extends Loader {
   constructor(urlMap) {
@@ -28,13 +29,13 @@ export class PlatformLoader extends Loader {
     this._urlMap = urlMap || [];
   }
   flushCaches() {
-    dumbCache = {};
+    simpleCache = {};
   }
   _loadURL(url) {
     const resolved = this._resolve(url);
     const cacheKey = this.normalizeDots(url);
-    const resource = dumbCache[cacheKey];
-    return resource || (dumbCache[cacheKey] = super._loadURL(resolved));
+    const resource = simpleCache[cacheKey];
+    return resource || (simpleCache[cacheKey] = super._loadURL(resolved));
   }
   loadResource(name) {
     // subclass impl differentiates paths and URLs,
@@ -51,7 +52,7 @@ export class PlatformLoader extends Loader {
       }
     }
     url = url || path;
-    //console.log(`loader-web: resolve(${path}) = ${url}`);
+    //log(`resolve(${path}) = ${url}`);
     return url;
   }
   // Below here invoked from inside Worker
@@ -63,8 +64,10 @@ export class PlatformLoader extends Loader {
     const url = this._resolve(fileName);
     // load wrapped particle
     const particle = this.loadWrappedParticle(url);
-    // execute particle wrapper (only the first one)
-    return this.unwrapParticle(particle, this.provisionLogger(fileName));
+    // execute particle wrapper, if we have one
+    if (particle) {
+      return this.unwrapParticle(particle, this.provisionLogger(fileName));
+    }
   }
   loadWrappedParticle(url) {
     let result;
@@ -78,22 +81,15 @@ export class PlatformLoader extends Loader {
       // multiple particles not supported: last particle wins
       result = particleWrapper;
     };
-    // import particle code
-    importScripts(url);
+    try {
+    // import (execute) particle code
+      importScripts(url);
+    } catch (x) {
+      error(x);
+    }
     // clean up
     delete self.defineParticle;
     return result;
-  }
-  mapParticleUrl(fileName) {
-    const path = this._resolve(fileName);
-    const parts = path.split('/');
-    const suffix = parts.pop();
-    const folder = parts.join('/');
-    const name = suffix.split('.').shift();
-    this._urlMap[name] = folder;
-  }
-  provisionLogger(fileName) {
-    return logFactory(fileName.split('/').pop(), '#1faa00');
   }
   unwrapParticle(particleWrapper, log) {
     const resolver = this._resolve.bind(this);
@@ -107,5 +103,19 @@ export class PlatformLoader extends Loader {
       log,
       html
     });
+  }
+  mapParticleUrl(fileName) {
+    const path = this._resolve(fileName);
+    const parts = path.split('/');
+    const suffix = parts.pop();
+    const folder = parts.join('/');
+    const name = suffix.split('.').shift();
+    this.mapUrl(name, folder);
+  }
+  mapUrl(prefix, url) {
+    this._urlMap[prefix] = url;
+  }
+  provisionLogger(fileName) {
+    return logFactory(fileName.split('/').pop(), '#1faa00');
   }
 }
