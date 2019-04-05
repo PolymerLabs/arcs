@@ -247,7 +247,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
                 });
               }
 
-              for (const [name, id] of Object.entries(m.pecMsgBody.handles)) {
+              for (const [name, id] of Object.entries(m.pecMsgBody.stores)) {
                 this._handles.set(id, {
                   id: id,
                   label: `"${name}"`,
