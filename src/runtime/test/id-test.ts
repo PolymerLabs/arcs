@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../../platform/chai-web.js';
 import {Id, IdGenerator} from '../id.js';
 import { Random } from '../random.js';
 
