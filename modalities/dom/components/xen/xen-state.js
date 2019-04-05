@@ -93,10 +93,6 @@ const XenStateMixin = Base => class extends Base {
       return true;
     }
   }
-  // TODO(sjmiles): deprecated
-  _setIfDirty(object) {
-    return this._setState(object);
-  }
   _async(fn) {
     return Promise.resolve().then(fn.bind(this));
     //return setTimeout(fn.bind(this), 10);

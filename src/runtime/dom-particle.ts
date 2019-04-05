@@ -63,11 +63,6 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   setState(state) {
     return this._setState(state);
   }
-  // TODO(sjmiles): deprecated, just use setState
-  setIfDirty(state) {
-    console.warn('DomParticle: `setIfDirty` is deprecated, please use `setState` instead');
-    return this._setState(state);
-}
   /** @method configureHandles(handles)
    * This is called once during particle setup. Override to control sync and update
    * configuration on specific handles (via their configure() method).
@@ -167,13 +162,13 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // other types (e.g. BigCollections) map to the handle itself
     return handle;
   }
-  fireEvent(slotName, {handler, data}) {
+  fireEvent(slotName: string, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
   }
-  _debounce(key, func, delay) {
+  _debounce(key: string, func: Function, delay: number) {
     const subkey = `_debounce_${key}`;
     if (!this._state[subkey]) {
       this.startBusy();
