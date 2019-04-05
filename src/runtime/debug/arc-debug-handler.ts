@@ -54,6 +54,8 @@ export class ArcDebugHandler {
           speculative: arc.isSpeculative
         }
       });
+
+      this.sendEnvironmentMessage(arc);
     });
   }
 
@@ -75,6 +77,31 @@ export class ArcDebugHandler {
     this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
       messageBody: {slotConnections}
+    });
+  }
+
+  sendEnvironmentMessage(arc: Arc) {
+    const allManifests = [];
+
+    (function traverse(manifest) {
+      allManifests.push(manifest);
+      manifest.imports.forEach(traverse);
+    })(arc.context);
+
+    this.arcDevtoolsChannel.send({
+      messageType: 'arc-environment',
+      messageBody: {
+        recipes: arc.context.allRecipes.map(r => ({
+          name: r.name,
+          text: r.toString(),
+          file: allManifests.find(m => m.recipes.includes(r)).fileName
+        })),
+        particles: arc.context.allParticles.map(p => ({
+          name: p.name,
+          spec: p.toString(),
+          file: allManifests.find(m => m.particles.includes(p)).fileName
+        }))
+      }
     });
   }
 }
