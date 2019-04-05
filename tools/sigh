@@ -1,2 +1,2 @@
 #!/bin/sh
-exec node $(dirname $0)/sigh.js "$@"
+node_modules/.bin/tsc -p tools && exec node build/sigh.js "$@"
