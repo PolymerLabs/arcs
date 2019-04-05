@@ -47,20 +47,31 @@ interface StoredVariable extends PouchDB.Core.IdMeta, PouchDB.Core.GetMeta {
 export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
   private _stored: ValueStorage | null = null;
   private localKeyId = 0;
+  // All public methods must call `await initialized` to avoid race
+  // conditions on initialization.
+  private readonly initialized: Promise<void>;
+  private resolveInitialized: () => void;
 
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, storageEngine, name, id, key);
     this.backingStore = null;
+    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     // Insure that there's a value stored.
-    this.db.get(this.pouchDbKey.location).catch((err) => {
+    this.db.get(this.pouchDbKey.location).then(() => {
+      this.resolveInitialized();
+    }).catch((err) => {
       if (err.name === 'not_found') {
         this.db.put({
           _id: this.pouchDbKey.location,
           value: null,
           version: 0,
           referenceMode: this.referenceMode
-        }).catch((e) => {console.log('error init', e);});
+        }).then(() => {
+          this.resolveInitialized();
+        }).catch((e) => {
+          console.log('error init', e);
+        });
       }
     });
   }
@@ -69,13 +80,15 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     return this.type;
   }
 
-  clone(): PouchDbVariable {
+  async clone(): Promise<PouchDbVariable> {
     const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null);
-    variable.cloneFrom(this);
+    await variable.cloneFrom(this);
     return variable;
   }
 
   async cloneFrom(handle): Promise<void> {
+    await this.initialized;
+    
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
 
@@ -104,6 +117,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * the API channel (i.e. between execution host and context).
    */
   async modelForSynchronization() {
+    await this.initialized;
     const value = await this.getStored();
 
     if (this.referenceMode && value !== null) {
@@ -123,6 +137,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * {version, model: [{id, value}]}
    */
   async toLiteral(): Promise<{version: number; model: {}[]}> {
+    await this.initialized;
     const value = await this.getStored();
 
     let model = [];
@@ -145,6 +160,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * the data in the underlying Pouch Database.
    */
   async fromLiteral({version, model}): Promise<void> {
+    await this.initialized;
     const value = model.length === 0 ? null : model[0].value;
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
@@ -160,13 +176,16 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @return a promise containing the variable value or null if it does not exist.
    */
   async get(): Promise<ValueStorage> {
+    await this.initialized;
     try {
-      const value = await this.getStored();
+      let value = await this.getStored();
 
       if (this.referenceMode && value) {
         await this.ensureBackingStore();
-        return await this.backingStore.get(value.id);
+        value = await this.backingStore.get(value.id);
       }
+      // logging goes here
+
       return value;
     } catch (err) {
       // TODO(plindner): caught for compatibility: pouchdb layer can throw, firebase layer never does
@@ -183,6 +202,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   async set(value: {}, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
+    await this.initialized;
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have
@@ -244,6 +264,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param barrier TBD
    */
   async clear(originatorId: string = null, barrier: string = null): Promise<void> {
+    await this.initialized;
     await this.set(null, originatorId, barrier);
   }
 

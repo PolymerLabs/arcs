@@ -21,11 +21,16 @@ interface CrdtCollectionModelMutator {
 interface CollectionStorage {
   model: SerializedModelEntry[];
   version: number;
-  referenceMode: boolean;
+  referenceMode: boolean|null;
   type: TypeLiteral;
 }
 
 export class PouchDbCollection extends PouchDbStorageProvider implements CollectionStorageProvider {
+  // All public methods must call `await initialized` to avoid race
+  // conditions on initialization.
+  private readonly initialized: Promise<void>;
+  private resolveInitialized: () => void;
+
   /** The local synced model */
   private _model: CrdtCollectionModel; // NOTE: Private, but outside code accesses this :(
 
@@ -42,16 +47,25 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     super(type, storageEngine, name, id, key);
 
     this._model = new CrdtCollectionModel();
+    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     // Ensure that the underlying database item is created.
-    this.db.get(this.pouchDbKey.location).catch((err) => {
+    this.db.get(this.pouchDbKey.location).then(() => {
+      this.resolveInitialized();
+    }).catch((err) => {
       if (err.name === 'not_found') {
         this.db.put({
           _id: this.pouchDbKey.location,
           model: this._model.toLiteral(),
-          referenceMode: this.referenceMode,
+          referenceMode: null, // defer until 1st write.
           type: this.type.toLiteral()
-        }).catch((e) => {console.warn('error init', e);});
+        }).then(() => {
+          this.version = 0;
+          this.resolveInitialized();
+        }).catch((e) => {
+          // should throw something?
+          console.warn('error init', e);
+        });
       }
     });
 
@@ -66,24 +80,37 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   // TODO(lindner): write tests
   clone(): PouchDbCollection {
     const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
-    handle.cloneFrom(this);
+    handle.cloneFrom(this); // async?
     return handle;
   }
 
+  // TODO(lindner): this should be a static constructor
+  // TODO(lindner): don't allow this to run on items with data...
   async cloneFrom(handle): Promise<void> {
+    await this.initialized;
+
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
+
     if (this.referenceMode && literal.model.length > 0) {
       await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
       literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
       const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
       await this.backingStore.storeMultiple(underlying, [this.storageKey]);
     }
-    this.fromLiteral(literal);
+
+    const updatedCrdtModel = new CrdtCollectionModel(literal.model);
+
+    await this.getModelAndUpdate(crdtmodel => updatedCrdtModel);
+
+    const updatedCrdtModelLiteral = updatedCrdtModel.toLiteral();
+    const dataToFire = updatedCrdtModelLiteral.length === 0 ? null : updatedCrdtModelLiteral[0].value;
+    this._fire('change', new ChangeEvent({data: dataToFire, version: this.version}));
   }
 
   /** @inheritDoc */
   async modelForSynchronization() {
+    await this.initialized;
     // TODO(lindner): should this change for reference mode??
     return {
       version: this.version,
@@ -95,22 +122,14 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   // Returns {version, model: [{id, value, keys: []}]}
   // TODO(lindner): this is async, but the base class isn't....
   async toLiteral() {
+    await this.initialized;
     return {
       version: this.version,
       model: (await this.getModel()).toLiteral()
     };
   }
 
-  /**
-   * Populate this collection with a provided version/model
-   */
-  fromLiteral({version, model}): void {
-    this.version = version;
-    // TODO(lindner): this might not be initialized yet...
-    this._model = new CrdtCollectionModel(model);
-  }
-
-  async _toList() {
+  private async _toList() {
     if (this.referenceMode) {
       const items = (await this.getModel()).toLiteral();
       if (items.length === 0) {
@@ -123,18 +142,25 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
       await this.ensureBackingStore();
 
-      const retrieveItem = async item => {
-        const ref = item.value;
-        const backedValue = await this.backingStore.get(ref.id);
-        return {id: ref.id, value: backedValue, keys: item.keys};
-      };
+      // Get id strings and corresponding backingStore values
+      const ids = items.map(item => item.value.id);
+      const backingStoreValues = await this.backingStore.getMultiple(ids);
 
-      return await Promise.all(items.map(retrieveItem));
+      // merge items/backingStoreValues into retval
+      const retval = [];
+      for (const item of items) {
+        // backingStoreValues corresponds to each
+        const backingStoreValue = backingStoreValues.shift();
+        retval.push({id: item.value.id, value: backingStoreValue, keys: item.keys});
+      }
+      return retval;
     }
+    // !this.referenceMode
     return (await this.getModel()).toLiteral();
   }
 
   async toList() {
+    await this.initialized;
     return (await this._toList()).map(item => item.value);
   }
 
@@ -145,6 +171,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @return an array of values from the underlying CRDT
    */
   async getMultiple(ids: string[]) {
+    await this.initialized;
     assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
     const model = await this.getModel();
     return ids.map(id => model.getValue(id));
@@ -155,12 +182,14 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * TODO(lindner): document originatorId, which is unused.
    */
   async storeMultiple(values, keys, originatorId = null) {
+    await this.initialized;
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
 
     this.getModelAndUpdate(crdtmodel => {
       values.map(value => crdtmodel.add(value.id, value, keys));
       return crdtmodel;
     });
+    // fire?
   }
 
   /**
@@ -170,6 +199,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * used in the constructor.
    */
   async get(id: string) {
+    await this.initialized;
+
     if (this.referenceMode) {
       const ref = (await this.getModel()).getValue(id);
       // NOTE(wkorman): Firebase returns null if ref is null, but it's not clear
@@ -196,9 +227,12 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @param originatorId TBD passed to event listeners
    */
   async store(value, keys: string[], originatorId = null): Promise<void> {
+    await this.initialized;
+
     assert(keys != null && keys.length > 0, 'keys required');
     const id = value.id;
 
+    // item contains data that is passed to _fire
     const item = {value, keys, effective: false};
 
     if (this.referenceMode) {
@@ -228,6 +262,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   async removeMultiple(items, originatorId=null) {
+    await this.initialized;
+
     await this.getModelAndUpdate(crdtmodel => {
       if (items.length === 0) {
         items = crdtmodel.toList().map(item => ({id: item.id, keys: []}));
@@ -254,6 +290,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @param originatorId TBD passed to event listeners.
    */
   async remove(id: string, keys: string[] = [], originatorId: string = null) {
+    await this.initialized;
     await this.getModelAndUpdate(crdtmodel => {
       if (keys.length === 0) {
         keys = crdtmodel.getKeys(id);
@@ -352,7 +389,10 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
           // remote revision is different, update local copy.
           this._model = new CrdtCollectionModel(doc.model);
           this._rev = doc._rev;
-          this.referenceMode = doc.referenceMode;
+          // referenceMode is set to null for stub entries.
+          if (doc.referenceMode != null) {
+            this.referenceMode = doc.referenceMode;
+          }
           this.bumpVersion(doc.version);
 
           // TODO(lindner): fire change events here?
@@ -416,6 +456,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * Remove this item from the database for testing purposes.
    */
   async clearItemsForTesting(): Promise<void> {
+    await this.initialized;
     // Remove the Pouch Document
     // TODO(lindner): does this need to work with reference mode?
     try {
