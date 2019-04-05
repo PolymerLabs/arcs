@@ -32,18 +32,18 @@ export class TransformationDomParticle extends DomParticle {
   shouldRender(props, state) {
     return Boolean((state.template || state.templateName) && state.renderModel);
   }
-
   renderHostedSlot(slotName, hostedSlotId, content) {
     this.combineHostedTemplate(slotName, hostedSlotId, content);
     this.combineHostedModel(slotName, hostedSlotId, content);
   }
-
   // abstract
-  combineHostedTemplate(slotName, hostedSlotId, content) {}
-  combineHostedModel(slotName, hostedSlotId, content) {}
-
+  combineHostedTemplate(slotName, hostedSlotId, content) { 
+  }
+  combineHostedModel(slotName, hostedSlotId, content) {
+  }
   // Helper methods that may be reused in transformation particles to combine hosted content.
   static propsToItems(propsValues) {
-    return propsValues ? propsValues.map(({rawData, id}) => Object.assign({}, rawData, {subId: id})) : [];
+    return propsValues ? propsValues.map(({rawData, id}) => ({...rawData, subId: id })) : [];
   }
 }
+//# sourceMappingURL=transformation-dom-particle.js.map

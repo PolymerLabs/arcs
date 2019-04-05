@@ -23,16 +23,16 @@ export class Particle {
     public static spec: ParticleSpec;
     public spec: ParticleSpec;
     public extraData: boolean;
-    public relevances: Relevance[] = [];
+    public relevances: (Relevance | number)[] = [];
     public handles: Map<string, Handle>;
 
     private _idle: Promise<void> = Promise.resolve();
     private _idleResolver: (() => void);
     private _busy = 0;
-    
+
     protected slotProxiesByName: Map<string, SlotProxy> = new Map();
     private capabilities: {constructInnerArc?: Function};
-    
+
   constructor(capabilities?: {constructInnerArc?: Function}) {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
@@ -53,7 +53,7 @@ export class Particle {
    */
   setHandles(handles: Map<string, Handle>) {
   }
-  
+
   /**
    * This method is deprecated. Use setHandles instead.
    */
@@ -115,7 +115,7 @@ export class Particle {
     return this._idle;
   }
 
-  set relevance(r: Relevance) {
+  set relevance(r: Relevance | number) {
     this.relevances.push(r);
   }
 
@@ -125,7 +125,7 @@ export class Particle {
     }
     this._busy++;
   }
-  
+
   doneBusy(): void {
     this._busy--;
     if (this._busy === 0) {

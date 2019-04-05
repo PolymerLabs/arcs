@@ -11,6 +11,16 @@
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase} from './dom-particle-base.js';
+import {Collection, Variable} from './handle.js';
+
+interface StatefulDomParticle extends DomParticleBase {
+  // add type info for XenState members here
+  _invalidate(): void;
+}
+
+// binds XenStateMixin(DomParticleBase) to interface above
+export interface DomParticle extends StatefulDomParticle {
+}
 
 /** @class DomParticle
  * Particle that interoperates with DOM and uses a simple state system
@@ -26,24 +36,24 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   /** @method willReceiveProps(props, state, oldProps, oldState)
    * Override if necessary, to do things when props change.
    */
-  willReceiveProps() {
+  willReceiveProps(...args) {
   }
   /** @method update(props, state, oldProps, oldState)
    * Override if necessary, to modify superclass config.
    */
-  update() {
+  update(...args) {
   }
   /** @method shouldRender(props, state, oldProps, oldState)
    * Override to return false if the Particle won't use
    * it's slot.
    */
-  shouldRender() {
+  shouldRender(...args) {
     return true;
   }
   /** @method render(props, state, oldProps, oldState)
    * Override to return a dictionary to map into the template.
    */
-  render() {
+  render(...args) {
     return {};
   }
   /** @method setState(state)
@@ -51,11 +61,6 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
    * triggering an update cycle unless currently updating.
    */
   setState(state) {
-    return this._setState(state);
-  }
-  // TODO(sjmiles): deprecated, just use setState
-  setIfDirty(state) {
-    console.warn('DomParticle: `setIfDirty` is deprecated, please use `setState` instead');
     return this._setState(state);
   }
   /** @method configureHandles(handles)
@@ -111,19 +116,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
         this._handlesToSync.add(name);
       }
     }
-    // TODO(sjmiles): we must invalidate at least once, but we don't know if
-    // _handlesToProps will ever be called. If we wait we can avoid an extra
-    // invalidation, but then we potentially waste cycles.
-    //setTimeout(() => !this._hasProps && this._invalidate(), 20);
-    //this._invalidate();
-    // TODO(sjmiles): let's assume we will miss _handlesToProps if handlesToSync is empty
+    // TODO(sjmiles): we must invalidate at least once,
+    // let's assume we will miss _handlesToProps if handlesToSync is empty
     if (!this._handlesToSync.length) {
       this._invalidate();
     }
   }
   async onHandleSync(handle, model) {
     this._handlesToSync.delete(handle.name);
-    if (this._handlesToSync.size == 0) {
+    if (this._handlesToSync.size === 0) {
       await this._handlesToProps();
     }
   }
@@ -141,25 +142,33 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // acquire list data from handles
     const {handleNames} = this.config;
     // data-acquisition is async
-    await Promise.all(handleNames.map(name => this._getNamedHandleData(props, name)));
-    this._hasProps = true;
+    await Promise.all(handleNames.map(name => this._addNamedHandleData(props, name)));
+    // initialize properties
     this._setProps(props);
   }
-  async _getNamedHandleData(dictionary, handleName) {
+  async _addNamedHandleData(dictionary, handleName) {
     const handle = this.handles.get(handleName);
     if (handle) {
-      // BigCollections map to the handle itself
-      const data = handle.toList ? await handle.toList() : handle.get ? await handle.get() : handle;
-      dictionary[handleName] = data;
+      dictionary[handleName] = await this._getHandleData(handle);
     }
   }
-  fireEvent(slotName, {handler, data}) {
+  async _getHandleData(handle) {
+    if (handle instanceof Collection) {
+      return await (handle as Collection).toList();
+    }
+    if (handle instanceof Variable) {
+      return await (handle as Variable).get();
+    }
+    // other types (e.g. BigCollections) map to the handle itself
+    return handle;
+  }
+  fireEvent(slotName: string, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
   }
-  _debounce(key, func, delay) {
+  _debounce(key: string, func: Function, delay: number) {
     const subkey = `_debounce_${key}`;
     if (!this._state[subkey]) {
       this.startBusy();
@@ -172,3 +181,4 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     super._debounce(key, idleThenFunc, delay);
   }
 }
+//# sourceMappingURL=dom-particle.js.map

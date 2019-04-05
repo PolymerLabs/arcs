@@ -9,7 +9,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {PropagatedException, SystemException, UserException} from './arc-exceptions.js';
+import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
@@ -215,7 +215,7 @@ export class Collection extends Handle {
   }
 
   /**
-   * Removes all known entities from the Handle. 
+   * Removes all known entities from the Handle.
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
