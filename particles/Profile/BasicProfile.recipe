@@ -49,4 +49,4 @@ recipe BasicProfile
     friends = friends
     avatars = avatars
     userNames = userNames
-  description `Edit user profile (name, avatar, and friends)`
+  description `edit user profile (name, avatar, and friends)`
