@@ -123,7 +123,6 @@ export class CrdtCollectionModel {
     return effective;
   }
 
-  // Serialized ModelEntry is [{id, value, keys: []}]
   toLiteral(): SerializedModelEntry[] {
     const result: SerializedModelEntry[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
