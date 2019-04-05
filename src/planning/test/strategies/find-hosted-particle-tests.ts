@@ -18,6 +18,7 @@ import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 
 import {StrategyTestHelper} from './strategy-test-helper.js';
+import {Id} from '../../../runtime/id.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -156,7 +157,7 @@ describe('FindHostedParticle', () => {
           output = h0
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const arc = new Arc({id: 'test', context: manifest, loader});
+    const arc = new Arc({id: new Id('test'), context: manifest, loader});
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

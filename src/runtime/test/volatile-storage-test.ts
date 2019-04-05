@@ -16,6 +16,7 @@ import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorage
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {EntityType, ReferenceType} from '../type.js';
+import {Id} from '../id.js';
 
 // Resolves when the two stores are synchronzied with each other:
 // * same version
@@ -43,7 +44,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
@@ -58,7 +59,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const var1 = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
@@ -73,7 +74,7 @@ describe('volatile', () => {
           Text value
       `);
 
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
 
@@ -95,7 +96,7 @@ describe('volatile', () => {
           Text value
       `);
 
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
 
@@ -117,7 +118,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
@@ -135,7 +136,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
@@ -150,7 +151,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
@@ -168,7 +169,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
@@ -185,7 +186,7 @@ describe('volatile', () => {
           Text value
       `);
 
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
   
@@ -209,7 +210,7 @@ describe('volatile', () => {
         schema Bar
           Text value
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const collection = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
@@ -226,7 +227,7 @@ describe('volatile', () => {
           Text value
       `);
   
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
   
@@ -251,7 +252,7 @@ describe('volatile', () => {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as CollectionStorageProvider;
@@ -300,7 +301,7 @@ describe('volatile', () => {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test', loader: new Loader(), context: manifest});
+      const arc = new Arc({id: new Id('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;
@@ -343,7 +344,7 @@ describe('volatile', () => {
         schema Bar
           Text data
       `);
-      const arc = new Arc({id: 'test', context: manifest, loader: new Loader()});
+      const arc = new Arc({id: new Id('test'), context: manifest, loader: new Loader()});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;

@@ -11,15 +11,14 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Recipe} from '../../../runtime/recipe/recipe.js';
-import {Relevance} from '../../../runtime/relevance.js';
-import {StorageProviderBase, VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
+import {VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {Id} from '../../../runtime/id.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -165,7 +164,7 @@ describe('plan producer - search', () => {
       schema Bar
         Text value
     `);
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: 'test',
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: new Id('test'),
                          storageKey: 'volatile://test^^123'});
     const searchStore = await Planificator['_initSearchStore'](arc, /* userid= */ 'TestUser');
 

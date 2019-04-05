@@ -19,6 +19,7 @@ import {CollectionStorageProvider, VariableStorageProvider} from '../storage/sto
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
+import {Id} from '../id.js';
 
 describe('Handle', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -33,7 +34,7 @@ describe('Handle', () => {
   const manifestFile = './src/runtime/test/artifacts/test-particles.manifest';
 
   it('clear singleton store', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: undefined, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: new Id('test'), context: undefined, loader: new Loader()});
     const barStore = await arc.createStore(Bar.type) as VariableStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
@@ -44,7 +45,7 @@ describe('Handle', () => {
     // NOTE: Until entity mutation is distinct from collection modification,
     // referenceMode stores *can't* ignore duplicate stores of the same
     // entity value.
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: undefined, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: undefined, loader: new Loader()});
     const store = await arc.createStore(Bar.type) as VariableStorageProvider;
     let version = 0;
     store.on('change', () => version++, {});
@@ -60,7 +61,7 @@ describe('Handle', () => {
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: undefined, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: undefined, loader: new Loader()});
     const barStore = await arc.createStore(Bar.type.collectionOf()) as CollectionStorageProvider;
     let version = 0;
     barStore.on('change', ({add: [{effective}]}) => {if (effective) version++;}, {});
@@ -78,7 +79,7 @@ describe('Handle', () => {
 
   it('dedupes common user-provided ids', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: manifest, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
@@ -94,7 +95,7 @@ describe('Handle', () => {
 
   it('allows updates with same user-provided ids but different value (collection)', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: manifest, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
@@ -110,7 +111,7 @@ describe('Handle', () => {
 
   it('allows updates with same user-provided ids but different value (variable)', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: manifest, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
 
@@ -125,7 +126,7 @@ describe('Handle', () => {
   });
 
   it('remove entry from store', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', loader: new Loader(), context: undefined});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), loader: new Loader(), context: undefined});
     const barStore = await arc.createStore(Bar.type.collectionOf()) as CollectionStorageProvider;
     const bar = new Bar({id: 0, value: 'a Bar'});
     barStore.store(bar, ['key1']);
@@ -135,7 +136,7 @@ describe('Handle', () => {
 
   it('can store a particle in an interface store', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: manifest, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
 
     const iface = InterfaceType.make('Test', [
       {type: new EntityType(manifest.schemas.Foo)},
@@ -150,7 +151,7 @@ describe('Handle', () => {
 
   it('createHandle only allows valid tags & types in stores', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: 'test', context: manifest, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
 
     // contrived test since this is now caught at compile time
     // tslint:disable-next-line: no-any
@@ -168,7 +169,7 @@ describe('Handle', () => {
     schema Bar
       Text value
     `);
-    const arc = new Arc({id: 'test', storageKey: 'pouchdb://memory/yyy/test', context: manifest, loader: new Loader()});
+    const arc = new Arc({id: Id.fromString('test'), storageKey: 'pouchdb://memory/yyy/test', context: manifest, loader: new Loader()});
     const variable = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as VariableStorageProvider;
     assert.equal(variable.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });
