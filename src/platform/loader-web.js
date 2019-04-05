@@ -56,18 +56,27 @@ export class PlatformLoader extends Loader {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
     this.mapParticleUrl(fileName);
+    // determine URL to load fileName
+    const url = this._resolve(fileName);
+    // load wrapped particle(s)
+    const particles = this.loadWrappedParticle(url);
+    // execute particle wrapper (only the first one)
+    return this.unwrapParticle(particles[0], this.provisionLogger(fileName));
+  }
+  loadWrappedParticle(url) {
     // load wrapped particle
     const result = [];
+    // MUST be synchronous from here until
+    // deletion self.defineParticle because we share this
+    // scope with other particles
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
-    // determine URL to load fileName
-    const url = await this._resolve(fileName);
+    // import particle code
     importScripts(url);
     // clean up
     delete self.defineParticle;
-    // execute particle wrapper
-    return this.unwrapParticle(result[0], this.provisionLogger(fileName));
+    return result;
   }
   mapParticleUrl(fileName) {
     const path = this._resolve(fileName);
