@@ -682,23 +682,24 @@ function health(args) {
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
-  const line = () => console.log('-'.repeat(65));
+  const line = () => console.log('+---------------------+-----------+---------------------+');
+  const show = (a, b, c) => console.log(`| ${a.padEnd(20, ' ')}| ${b.padEnd(10, ' ')}| ${c.padEnd(20, ' ')}|`);
 
   line();
-  console.log('| Category\t\t| Result\t| Detailed report\t|');
+  show('Category', 'Result', 'Detailed report');
   line();
 
   const slocOutput = saneSpawnWithOutput('node_modules/.bin/sloc', ['--detail', '--keys source', ...migrationFiles()]).stdout;
   const jsLocCount = String(slocOutput).match(/Source *: *(\d+)/)[1];
-  console.log(`| JS LOC to migrate \t| ${jsLocCount} \t\t| health --migration\t|`);
+  show('JS LOC to migrate', jsLocCount, 'health --migration');
 
   const c8Output = saneSpawnWithOutput('node_modules/.bin/c8', ['report']).stdout;
   const testCovPercent = String(c8Output).match(/All files *\| *([.\d]+)/)[1];
-  console.log(`| Test Coverage \t| ${testCovPercent}%\t| health --tests\t|`);
+  show('Test Coverage', testCovPercent + '%', 'health --tests');
 
   const typeCoverageOutput = saneSpawnWithOutput('node_modules/.bin/type-coverage', ['--strict']).stdout;
   const typeCovPercent = String(typeCoverageOutput).match(/(\d+\.\d+)%/)[1];
-  console.log(`| Type Coverage \t| ${typeCovPercent}%\t| health --types\t|`);
+  show('Type Coverage', typeCovPercent + '%', 'health --types');
 
   line();
 
@@ -706,7 +707,7 @@ function health(args) {
   const points = (100 - Number(testCovPercent)) * 20
       + (100 - Number(typeCovPercent)) * 30
       + Number(jsLocCount) / 10;
-  console.log(`| Points available \t| ${points.toFixed(2)}\t| go/arcs-paydown \t|`);
+  show('Points available', points.toFixed(2), 'go/arcs-paydown');
 
   line();
 
