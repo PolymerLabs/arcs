@@ -97,7 +97,16 @@ export class Arc {
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this.pecFactory = pecFactory || FakePecFactory(loader).bind(null);
 
-    this.id = id;
+    if (typeof id === 'string') {
+      // TODO(csilvestrini): Replace this warning with an exception.
+      debugger;
+      console.error(
+          `Arc created with string ID ${id}!!! This should be an object of type Id instead. This warning will turn into an ` +
+          `exception soon (end of April 2019).`);
+      this.id = new Id(id);
+    } else {
+      this.id = id;
+    }
     this.isSpeculative = !!speculative; // undefined => false
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;

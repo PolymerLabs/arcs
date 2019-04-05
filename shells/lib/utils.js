@@ -4,6 +4,7 @@ import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../build/platform/loader-web.js';
 import {PecIndustry} from '../../build/platform/pec-industry-web.js';
 import {debugListeners} from './debug-listeners.js';
+import {Id} from '../../build/runtime/id.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
@@ -56,7 +57,7 @@ const resolve = async (arc, recipe) =>{
 
 const spawn = async ({id, serialization, context, composer, storage}) => {
   const params = {
-    id,
+    id: new Id(id),
     fileName: './serialized.manifest',
     serialization,
     context,
