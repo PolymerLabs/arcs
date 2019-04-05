@@ -197,7 +197,7 @@ export class ParticleSpec {
     // Verify provided slots use valid handle connection names.
     this.slotConnections.forEach(slot => {
       slot.provideSlotConnections.forEach(ps => {
-        ps.handles.forEach(v => assert(this.handleConnectionMap.has(v), 'Cannot provide slot for nonexistent handle constraint ', v));
+        ps.handles.forEach(v => assert(this.handleConnectionMap.has(v), 'Cannot provide slot for nonexistent handle constraint ' + v));
       });
     });
   }
