@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -e
+env
+echo
+set -xe
 if [ tools/sigh.ts -nt build/sigh.js ]; then
   echo 'Building sigh'
   node_modules/.bin/tsc -p tools
