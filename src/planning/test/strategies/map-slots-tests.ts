@@ -157,9 +157,9 @@ ${recipeManifest}
   it('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({
-      id: ArcId.newArcIdForTest('test-plan-arc'),
+      id: ArcId.newForTest('test-plan-arc'),
       loader: new Loader(),
-      context: new Manifest({id: ArcId.newArcIdForTest('test')}),
+      context: new Manifest({id: ArcId.newForTest('test')}),
       slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
     });
 

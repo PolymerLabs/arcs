@@ -164,7 +164,7 @@ describe('plan producer - search', () => {
       schema Bar
         Text value
     `);
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newArcIdForTest('test'),
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
                          storageKey: 'volatile://test^^123'});
     const searchStore = await Planificator['_initSearchStore'](arc, /* userid= */ 'TestUser');
 

@@ -21,7 +21,7 @@ describe('synthetic storage ', () => {
   });
 
   async function setup(serialization): Promise<{id: Id, targetStore: VariableStorageProvider, synth: CollectionStorageProvider}> {
-    const id = ArcId.newArcIdForTest('test');
+    const id = ArcId.newForTest('test');
     const storage = new StorageProviderFactory(id);
     const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
@@ -37,7 +37,7 @@ describe('synthetic storage ', () => {
   }
 
   it('invalid synthetic keys', async () => {
-    const storage = new StorageProviderFactory(ArcId.newArcIdForTest('test'));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
     check('simplistic://arc/handles/volatile', 'unknown storage protocol');
@@ -49,7 +49,7 @@ describe('synthetic storage ', () => {
   });
 
   it('non-existent target key', async () => {
-    const storage = new StorageProviderFactory(ArcId.newArcIdForTest('test'));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const synth = await storage.connect('id1', null, `synthetic://arc/handles/volatile://nope`);
     assert.isNull(synth);
   });

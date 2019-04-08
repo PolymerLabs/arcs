@@ -37,19 +37,18 @@ export class IdGenerator {
     return new IdGenerator(sessionId);
   }
   
-  /** Creates a new ArcId. */
-  createArcId(name: string): ArcId {
-    return ArcId._createArcIdInternal(this._currentSessionId, name);
+  newArcId(name: string): ArcId {
+    return ArcId._newArcIdInternal(this._currentSessionId, name);
   }
 
   /**
    * Creates a new ID, as a child of the given parentId. The given subcomponent will be appended to the component hierarchy of the given ID, but
    * the generator's random session ID will be used as the ID's root.
    */
-  createChildId(parentId: Id, subcomponent: string = '') {
+  newChildId(parentId: Id, subcomponent: string = '') {
     // Append (and increment) a counter to the subcomponent, to ensure that it is unique.
     subcomponent += this._nextComponentId++;
-    return Id._createIdInternal(this._currentSessionId, [...parentId.idTree, subcomponent]);
+    return Id._newIdInternal(this._currentSessionId, [...parentId.idTree, subcomponent]);
   }
 
   get currentSessionIdForTesting() {
@@ -77,7 +76,7 @@ export class Id {
   }
 
   /** Creates a new ID. Use IdGenerator to create new IDs instead. */
-  static _createIdInternal(root: string, idTree: string[] = []): Id {
+  static _newIdInternal(root: string, idTree: string[] = []): Id {
     return new Id(root, idTree);
   }
 
@@ -119,12 +118,12 @@ export class Id {
 
 export class ArcId extends Id {
   /** Creates a new Arc ID. Use IdGenerator to create new IDs instead. */
-  static _createArcIdInternal(root: string, name: string): ArcId {
+  static _newArcIdInternal(root: string, name: string): ArcId {
     return new ArcId(root, [name]);
   }
 
   /** Creates a new Arc ID with the given name. For convenience in unit testing only; otherwise use IdGenerator to create new IDs instead. */
-  static newArcIdForTest(id: string): ArcId {
-    return IdGenerator.newSession().createArcId(id);
+  static newForTest(id: string): ArcId {
+    return IdGenerator.newSession().newArcId(id);
   }
 }

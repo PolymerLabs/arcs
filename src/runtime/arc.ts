@@ -442,7 +442,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   generateID(component: string = ''): Id {
-    return this.idGenerator.createChildId(this.id, component);
+    return this.idGenerator.newChildId(this.id, component);
   }
 
   get _stores(): (StorageProviderBase)[] {

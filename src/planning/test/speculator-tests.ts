@@ -18,7 +18,7 @@ import {Id, ArcId} from '../../runtime/id.js';
 describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), loader, context: new Manifest({id: ArcId.newArcIdForTest('test')})});
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: new Manifest({id: ArcId.newForTest('test')})});
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

@@ -98,11 +98,10 @@ export class RecipeIndex {
 
   constructor(arc: Arc, {reportGenerations = false} = {}) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
-    // TODO: Inject an IdGenerator instead of starting a new session here.
     const idGenerator = IdGenerator.newSession();
     const arcStub = new Arc({
-      id: idGenerator.createArcId('index-stub'),
-      context: new Manifest({id: idGenerator.createArcId('empty-context')}),
+      id: idGenerator.newArcId('index-stub'),
+      context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
       slotComposer: new SlotComposer({
         modalityHandler: PlanningModalityHandler.createHeadlessHandler(),

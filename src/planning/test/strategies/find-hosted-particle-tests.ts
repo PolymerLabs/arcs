@@ -157,7 +157,7 @@ describe('FindHostedParticle', () => {
           output = h0
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

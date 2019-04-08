@@ -74,7 +74,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const loadedManifest = await Manifest.load('manifest', loader, {registry});
   manifestLoadedCallback(loadedManifest);
 
-  const arc = new Arc({id: ArcId.newArcIdForTest('test-plan-arc'), context: loadedManifest, loader});
+  const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: loadedManifest, loader});
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);

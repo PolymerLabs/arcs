@@ -13,7 +13,7 @@ import {Id, IdGenerator, ArcId} from '../id.js';
 import {Random} from '../random.js';
 
 // Alias for the Id factory method. IdGenerators should usually be used to create new IDs, but doing so in these tests is cumbersome.
-const createId = Id._createIdInternal;
+const createId = Id._newIdInternal;
 
 describe('IdGenerator', () => {
   describe('#newSession', () => {
@@ -28,7 +28,7 @@ describe('IdGenerator', () => {
     });
   });
 
-  describe('#createChildId', () => {
+  describe('#newChildId', () => {
     let idGenerator: IdGenerator;
 
     beforeEach(() => {
@@ -37,28 +37,28 @@ describe('IdGenerator', () => {
 
     it('creates child IDs using its session ID', () => {
       const parentId = createId('root');
-      const childId = idGenerator.createChildId(parentId);
+      const childId = idGenerator.newChildId(parentId);
       assert.equal(childId.root, 'sessionId');
     });
     
     it('appends subcomponents when creating child IDs', () => {
       const parentId = createId('root', ['x', 'y']);
-      const childId = idGenerator.createChildId(parentId, 'z');
+      const childId = idGenerator.newChildId(parentId, 'z');
       assert.deepEqual(childId.idTree, ['x', 'y', 'z0']);
     });
 
     it('increments its counter', () => {
       const parentId = createId('root', ['x', 'y']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z0']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z1']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z0']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z1']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
     });
   });
 
-  describe('#createArcId', () => {
+  describe('#newArcId', () => {
     it('creates a valid ArcId using its session ID', () => {
       const idGenerator = IdGenerator.createWithSessionIdForTesting('sessionId');
-      const arcId = idGenerator.createArcId('foo');
+      const arcId = idGenerator.newArcId('foo');
       assert(arcId instanceof ArcId);
       assert.equal(arcId.toString(), '!sessionId:foo');
     });

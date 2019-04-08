@@ -20,7 +20,7 @@ import {ArcId} from '../../../runtime/id.js';
 describe('ConvertConstraintsToConnections', async () => {
   const newArc = (manifest: Manifest) => {
     return new Arc({
-      id: ArcId.newArcIdForTest('test-plan-arc'),
+      id: ArcId.newForTest('test-plan-arc'),
       slotComposer: new FakeSlotComposer(),
       context: manifest,
       loader: new Loader()
@@ -300,7 +300,7 @@ describe('ConvertConstraintsToConnections', async () => {
     `);
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}]};
     const cctc = new ConvertConstraintsToConnections(new Arc({
-      id: ArcId.newArcIdForTest('test-plan-arc'),
+      id: ArcId.newForTest('test-plan-arc'),
       slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
       context: manifest,
       loader: new Loader()

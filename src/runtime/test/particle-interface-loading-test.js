@@ -59,7 +59,7 @@ describe('particle interface loading', function() {
             };
           });`});
 
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), loader});
 
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -125,7 +125,7 @@ describe('particle interface loading', function() {
           input <- h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), context: manifest});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');
@@ -202,7 +202,7 @@ describe('particle interface loading', function() {
         });
       `
     });
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
     const fooType = manifest.findTypeByName('Foo');
     const fooStore = await arc.createStore(fooType);
     recipe.handles[0].mapToStorage(fooStore);

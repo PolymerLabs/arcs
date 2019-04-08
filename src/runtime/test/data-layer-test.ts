@@ -22,7 +22,7 @@ describe('entity', async () => {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
 
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newArcIdForTest('test'), context: null, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: null, loader: new Loader()});
     const entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
 

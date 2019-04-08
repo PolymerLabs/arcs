@@ -46,7 +46,7 @@ describe('Multiplexer', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), context: manifest, slotComposer, loader: new Loader()});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize());

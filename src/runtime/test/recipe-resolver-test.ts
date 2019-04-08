@@ -24,7 +24,7 @@ describe('RecipeResolver', () => {
     return await Manifest.load('manifest', loader, {registry});
   };
 
-  const createArc = (manifest) => new Arc({id: ArcId.newArcIdForTest('test'), slotComposer: new FakeSlotComposer(), loader: new Loader(), context: manifest});
+  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'), slotComposer: new FakeSlotComposer(), loader: new Loader(), context: manifest});
 
   it('resolves a recipe', async () => {
     const manifest = await buildManifest({

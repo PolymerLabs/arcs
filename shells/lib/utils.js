@@ -56,7 +56,7 @@ const resolve = async (arc, recipe) =>{
 };
 
 const spawn = async ({id, serialization, context, composer, storage}) => {
-  const arcId = IdGenerator.newSession().createArcId(id);
+  const arcId = IdGenerator.newSession().newArcId(id);
   const params = {
     id: arcId,
     fileName: './serialized.manifest',

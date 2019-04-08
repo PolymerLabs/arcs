@@ -25,7 +25,7 @@ describe('RecipeIndex', () => {
     }
     const loader = new Loader();
     const arc = new Arc({
-      id: ArcId.newArcIdForTest('test-plan-arc'),
+      id: ArcId.newForTest('test-plan-arc'),
       context: manifest,
       loader,
       slotComposer: new MockSlotComposer()

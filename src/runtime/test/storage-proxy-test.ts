@@ -190,7 +190,7 @@ class TestEngine {
   _arcId: ArcId;
   
   constructor(arcId: string) {
-    this._arcId = ArcId.newArcIdForTest(arcId);
+    this._arcId = ArcId.newForTest(arcId);
   }
 
   newVariable(name) {
@@ -316,7 +316,7 @@ describe('storage-proxy', () => {
     // and TestVariable will need to be updated to match.
     const engine = new TestEngine('!arc-id');
     const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(ArcId.newArcIdForTest('arc-id'));
+    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
     let testEvent;
     let realEvent;
 
@@ -343,7 +343,7 @@ describe('storage-proxy', () => {
     // and TestCollection will need to be updated to match.
     const engine = new TestEngine('arc-id');
     const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(ArcId.newArcIdForTest('arc-id'));
+    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
     let testEvent;
     let realEvent;
 

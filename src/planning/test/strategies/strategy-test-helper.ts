@@ -21,7 +21,7 @@ import {Id, ArcId} from '../../../runtime/id.js';
 export class StrategyTestHelper {
   static createTestArc(context: Manifest, options: {arcId?: Id, modalityName?: string, loader?: Loader} = {}) {
     return new Arc({
-      id: options.arcId || ArcId.newArcIdForTest('test-arc'),
+      id: options.arcId || ArcId.newForTest('test-arc'),
       loader: options.loader || new Loader(),
       context,
       slotComposer: new FakeSlotComposer(options)

@@ -35,7 +35,7 @@ describe('particle interface loading with slots', function() {
       `, loader);
     const recipe = manifest.recipes[0];
 
-    const arc = new Arc({id: ArcId.newArcIdForTest('test'), slotComposer, context: manifest});
+    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest});
 
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);

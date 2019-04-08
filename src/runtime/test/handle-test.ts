@@ -34,7 +34,7 @@ describe('Handle', () => {
   const manifestFile = './src/runtime/test/artifacts/test-particles.manifest';
 
   it('clear singleton store', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newArcIdForTest('test'), context: undefined, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: undefined, loader: new Loader()});
     const barStore = await arc.createStore(Bar.type) as VariableStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();

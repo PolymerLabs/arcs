@@ -31,8 +31,8 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newArcIdForTest('test'), loader: new Loader(),
-                         context: new Manifest({id: ArcId.newArcIdForTest('test')})});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), loader: new Loader(),
+                         context: new Manifest({id: ArcId.newForTest('test')})});
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);

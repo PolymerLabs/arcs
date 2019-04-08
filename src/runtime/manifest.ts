@@ -183,7 +183,7 @@ export class Manifest {
       // from the file, this is the 'manifest' phrase.
       // TODO: Figure out if this is ok, and stop using internal Id APIs.
       const components = id.split(':');
-      this._id = Id._createIdInternal(components[0], components.slice(1));
+      this._id = Id._newIdInternal(components[0], components.slice(1));
     }
   }
   get id() {
@@ -356,7 +356,7 @@ export class Manifest {
   }
   // TODO: Unify ID handling to use ID instances, not strings. Change return type here to ID.
   generateID(): string {
-    return this._idGenerator.createChildId(this.id).toString();
+    return this._idGenerator.newChildId(this.id).toString();
   }
 
   static async load(fileName: string, loader: {loadResource}, options?): Promise<Manifest> {

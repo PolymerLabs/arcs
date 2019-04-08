@@ -40,7 +40,7 @@ async function init(options?) {
     schema Bar
       Text value
   `);
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newArcIdForTest('test')});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
 
   const producer = new TestPlanProducer(arc);
   const queue = new ReplanQueue(producer, options);

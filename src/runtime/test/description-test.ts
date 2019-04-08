@@ -24,7 +24,7 @@ import {Id, ArcId} from '../id.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
-  const arc = new Arc({slotComposer, id: ArcId.newArcIdForTest('test'), context: manifest, loader: new Loader()});
+  const arc = new Arc({slotComposer, id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});

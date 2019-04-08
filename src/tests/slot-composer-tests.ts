@@ -28,7 +28,7 @@ async function initSlotComposer(recipeStr) {
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
   const arc = new Arc({
-    id: ArcId.newArcIdForTest('test-plan-arc'),
+    id: ArcId.newForTest('test-plan-arc'),
     context: manifest,
     slotComposer,
     loader
