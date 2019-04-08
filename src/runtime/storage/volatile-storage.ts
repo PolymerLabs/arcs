@@ -212,7 +212,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return handle;
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {
@@ -234,7 +234,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return {version: this.version, model: this._model.toLiteral()};
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     this.version = version;
     this._model = new CrdtCollectionModel(model);
   }
@@ -272,7 +272,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return ids.map(id => this._model.getValue(id));
   }
 
-  async storeMultiple(values, keys: string[], originatorId: string = null) {
+  async storeMultiple(values, keys: string[], originatorId: string = null): Promise<void> {
     assert(!this.referenceMode, "storeMultiple not implemented for referenceMode stores");
     values.map(value => this._model.add(value.id, value, keys));
     this.version++;
@@ -369,7 +369,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
     return variable;
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     // TODO(shans): if the handle has local modifications then cloning can fail because
     // underlying backingStore data isn't yet available to be read. However, checking the
@@ -411,7 +411,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
     return {version: this.version, model};
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     const value = model.length === 0 ? null : model[0].value;
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
@@ -582,7 +582,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
     return cursor ? cursor.version : null;
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     // TODO: clone from non-volatile versions
     if (handle.items) {
       this.fromLiteral(handle.toLiteral());
@@ -598,7 +598,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
     return {version: this.version, model};
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     this.version = version;
     this.items.clear();
     for (const {id, index, value, keys} of model) {

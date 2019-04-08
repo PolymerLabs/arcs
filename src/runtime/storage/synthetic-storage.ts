@@ -188,7 +188,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     return this.toList();
   }
 
-  cloneFrom() {
+  cloneFrom(): Promise<void> {
     throw new Error('cloneFrom should never be called on SyntheticCollection!');
   }
 

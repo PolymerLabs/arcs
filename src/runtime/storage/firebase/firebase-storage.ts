@@ -552,7 +552,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     return this.set(null, originatorId, barrier);
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     const data = literal.model[0].value;
@@ -599,7 +599,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     return {version: this.version, model};
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     const value = model.length === 0 ? null : model[0].value;
     assert(value !== undefined);
     assert(this.referenceMode || !value.storageKey);
@@ -1098,7 +1098,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     return ids.map(id => this.model.getValue(id));
   }
 
-  async storeMultiple(values, keys: string[], originatorId=null) {
+  async storeMultiple(values, keys: string[], originatorId=null): Promise<void> {
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
     values.map(value => {
       this.model.add(value.id, value, keys);
@@ -1113,7 +1113,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void>{
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {
@@ -1147,7 +1147,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     };
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     this.version = version;
     this.model = new CrdtCollectionModel(model);
   }
@@ -1467,7 +1467,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
   // A cloned instance will probably need to reference the same Firebase URL but collect all
   // modifications locally for speculative execution.
 
-  async cloneFrom(handle) {
+  async cloneFrom(handle): Promise<void> {
     throw new Error('FirebaseBigCollection does not yet implement cloneFrom');
   }
 
@@ -1475,7 +1475,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
     throw new Error('FirebaseBigCollection does not yet implement toLiteral');
   }
 
-  fromLiteral({version, model}) {
+  private fromLiteral({version, model}) {
     throw new Error('FirebaseBigCollection does not yet implement fromLiteral');
   }
 
@@ -1500,7 +1500,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     await this.storeSingle(value, keys);
   }
 
-  async storeMultiple(values, keys: string[]) {
+  async storeMultiple(values, keys: string[]): Promise<void> {
     while (values.length > 0) {
       const chunk = values.splice(0, this.maxConcurrentRequests);
       await Promise.all(chunk.map(value => this.storeSingle(value, keys)));
@@ -1607,7 +1607,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 
-  cloneFrom(store: StorageProviderBase) {
+  cloneFrom(store: StorageProviderBase): Promise<void> {
     throw new Error('FirebaseBackingStore does not implement cloneFrom');
   }
 }

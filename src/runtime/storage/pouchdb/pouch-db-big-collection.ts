@@ -42,7 +42,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
     throw new Error('NotImplemented');
   }
 
-  cloneFrom() {
+  cloneFrom(): Promise<void> {
     throw new Error('NotImplemented');
   }
 

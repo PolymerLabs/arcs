@@ -37,7 +37,7 @@ interface ModelEntry {
 export class CrdtCollectionModel {
   private items: Map<string, ModelEntry>;
 
-  constructor(model = undefined) {
+  constructor(model?: SerializedModelEntry[]) {
     // id => {value, Set[keys]}
     this.items = new Map();
     if (model) {
@@ -49,12 +49,13 @@ export class CrdtCollectionModel {
       }
     }
   }
+
   /**
    * Adds membership, `keys`, of `value` indexed by `id` to this collection.
    * Returns whether the change is effective (`id` is new to the collection,
    * or `value` is different to the value previously stored).
    */
-  add(id: string, value, keys: string[]): boolean {
+  add(id: string, value: ModelValue, keys: string[]): boolean {
     // Ensure that keys is actually an array, not a single string.
     // TODO(shans): remove this when all callers are implemented in typeScript.
     assert(keys.length > 0 && typeof keys === 'object', 'add requires a list of keys');
@@ -81,7 +82,7 @@ export class CrdtCollectionModel {
     return effective;
   }
 
-  _equals(value1: string|{}, value2: string|{}) {
+  _equals(value1: string|{}, value2: string|{}): boolean {
     if (Boolean(value1) !== Boolean(value2)) {
       return false;
     }
@@ -122,16 +123,15 @@ export class CrdtCollectionModel {
     return effective;
   }
 
-  // [{id, value, keys: []}]
   toLiteral(): SerializedModelEntry[] {
-    const result: {id, value, keys}[] = [];
+    const result: SerializedModelEntry[] = [];
     for (const [id, {value, keys}] of this.items.entries()) {
       result.push({id, value, keys: [...keys]});
     }
     return result;
   }
 
-  toList() {
+  toList(): ModelValue[] {
     return [...this.items.values()].map(item => item.value);
   }
 
@@ -144,7 +144,7 @@ export class CrdtCollectionModel {
     return item ? [...item.keys] : [];
   }
 
-  getValue(id: string) {
+  getValue(id: string): ModelValue|null {
     const item = this.items.get(id);
     return item ? item.value : null;
   }
@@ -153,3 +153,4 @@ export class CrdtCollectionModel {
     return this.items.size;
   }
 }
+
