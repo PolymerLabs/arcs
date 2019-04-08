@@ -7,7 +7,7 @@
 
 import 'Friend.schema'
 
-store DefaultFriends of [Friend] in 'friends.json'
+//store DefaultFriends of [Friend] in 'friends.json'
 
 import 'UserName.schema'
 
@@ -38,8 +38,7 @@ recipe BasicProfile
   map 'BOXED_userName' as userNames
   create #avatar as avatar
   create #userName as userName
-  //create #friends as friends
-  copy DefaultFriends as friends
+  create #friends as friends
   BasicProfile
     avatar = avatar
   UserNameForm

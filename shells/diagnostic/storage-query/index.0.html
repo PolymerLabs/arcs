@@ -76,7 +76,7 @@
   import {Stores} from '../../lib/stores.js';
   import {SyntheticStores} from '../../lib/synthetic-stores.js';
   import {Const} from '../../configuration/constants.js';
-  import {ObserverTable} from '../user-arcs//observer-table.js';
+  import {ObserverTable} from '../user-arcs/observer-table.js';
 
   const table = new ObserverTable('arcs');
 
@@ -101,8 +101,9 @@
   //   shared handle: add/remove/change
 
   class AbstractEventer {
-    constructor(listener) {
+    constructor(listener, handlers) {
       this.listener = listener;
+      this.handlers = handlers;
     }
     fire(name, data) {
       if (this.listener) {
@@ -110,13 +111,16 @@
       }
     }
     dispatch(name, data) {
-      const handler = this.vtable ? this.vtable[name] : name;
+      const handler = this.handlers ? this.handlers[name] : name;
       if (handler) {
         return this[handler](data);
       }
     }
+    dispose() {
+    }
   }
 
+  // observe changes to the value(s) in a store
   class StoreObserver extends AbstractEventer {
     constructor(store, listener) {
       super(listener);
@@ -139,6 +143,9 @@
       if (add) {
         add.forEach(({value}) => this.onAdd(value));
       }
+      if (remove) {
+        remove.forEach(({value}) => this.onRemove(value));
+      }
     }
     async notifyInitialPopulation(store) {
       // process initial data
@@ -150,13 +157,20 @@
     onAdd(data) {
       this.fire('add', data)
     }
+    onRemove(data) {
+      this.fire('remove', data)
+    }
   }
 
   class ArcObserver extends AbstractEventer {
     constructor(storage, id, listener) {
-      super(listener);
+      super(listener, {
+        'add': 'onAddHandle',
+        'remove': 'onRemoveHandle',
+        'add-handle-data': 'onAddHandleData',
+        'remove-handle-data': 'onRemoveHandleData'
+      });
       this.log = logFactory(`ArcObserver[${id}]`, 'blue');
-      this.vtable = {'add': 'onAddHandle', 'add-handle-data': 'onAddHandleData'};
       // maps handle keys to observers
       this.handles = {};
       this.connect(storage, id);
@@ -178,9 +192,17 @@
       console.log('ArcObserver::onAddHandle: ', handle.storageKey.split('/').pop());
       this.handles[handle.storageKey] = new HandleObserver(handle, this);
     }
+    onRemoveHandle(handle) {
+      const observer = this.handles[handle.storageKey];
+      this.handles[handle.storageKey] = observer.dispose();
+    }
     onAddHandleData(data) {
       //console.log(`ArcObserver::onAdd: [${handle.type.toPrettyString()}] "${meta.description}"`);
       this.fire('add-handle-data', data)
+    }
+    onRemoveHandleData(data) {
+      //console.log(`ArcObserver::onAdd: [${handle.type.toPrettyString()}] "${meta.description}"`);
+      this.fire('remove-handle-data', data)
     }
   }
 
@@ -205,8 +227,7 @@
 
   class ShareObserver extends AbstractEventer {
     constructor(storage) {
-      super();
-      this.vtable = {'add-handle-data': 'onAddHandleData'};
+      super(null, {'add-handle-data': 'onAddHandleData'});
       this.storage = storage;
       this.arcObs = {};
       /*const userArcsOb =*/ new ArcObserver(storage, 'user-launcher', this);

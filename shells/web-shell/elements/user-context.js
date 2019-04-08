@@ -75,7 +75,7 @@ customElements.define('user-context', class extends Xen.Debug(Xen.Async, log) {
     if (!this.state.userContext && userid === this.state.userid) {
       const isProfile = true;
       this.state = {
-        userContext: new SingleUserContext(storage, context, userid, arcsStore, isProfile)
+        userContext: true //new SingleUserContext(storage, context, userid, arcsStore, isProfile)
       };
     }
   }
