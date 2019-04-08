@@ -108,6 +108,36 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         box-shadow: var(--drop-shadow);
         background-color: white;
       }
+      .material-icons {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;  /* Preferred icon size */
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+      
+        /* Support for all WebKit browsers. */
+        -webkit-font-smoothing: antialiased;
+        /* Support for Safari and Chrome. */
+        text-rendering: optimizeLegibility;
+      
+        /* Support for Firefox. */
+        -moz-osx-font-smoothing: grayscale;
+      
+        /* Support for IE. */
+        font-feature-settings: 'liga';
+      }
+      .empty-label {
+        text-align: center;
+        font-style: italic;
+        color: var(--mid-gray);
+        white-space: nowrap;
+      }
     </style>
   </template>
 </dom-module>`;

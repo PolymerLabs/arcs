@@ -32,12 +32,6 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
       [content] {
         border-bottom: 1px solid var(--mid-gray);
       }
-      [empty] {
-        text-align: center;
-        font-style: italic;
-        color: var(--mid-gray);
-        white-space: nowrap;
-      }
       object-explorer[find]:not([found-inside]) {
         display: none;
       }
@@ -55,7 +49,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!recipes.length}}">
-        <div empty>No recipes</div>
+        <div class="empty-label">No recipes</div>
       </template>
     </div>
     <div title>Particles</div>
@@ -66,7 +60,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!particles.length}}">
-        <div empty>No particles</div>
+        <div class="empty-label">No particles</div>
       </template>
     </div>`;
   }
