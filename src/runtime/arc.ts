@@ -636,7 +636,8 @@ ${this.activeRecipe.toString()}`;
   _tagStore(store: StorageProviderBase, tags: Set<string>) {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
-    (tags || []).forEach((tag: string) => storeTags.add(tag));
+    tags = tags || new Set();
+    tags.forEach(tag => storeTags.add(tag));
   }
 
   _onDataChange() {
