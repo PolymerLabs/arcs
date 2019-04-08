@@ -379,12 +379,15 @@ function tslint(args: string[]): boolean {
   });
 
   const fixArgs = options.fix ? ['--fix'] : [];
-
-  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...fixArgs]);
-  if (result.stdout) {
-    console.log(result.stdout);
+  let success = true;
+  for (const target of ['.', 'tools']) {
+    const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', target, ...fixArgs]);
+    if (result.stdout) {
+      console.log(result.stdout);
+    }
+    success = success && result.success;
   }
-  return result.success;
+  return success;
 }
 
 function lint(args: string[]): boolean {
