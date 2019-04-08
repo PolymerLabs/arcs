@@ -12,7 +12,7 @@ import {parse, SyntaxError} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
-import {Id, IdGenerator} from './id.js';
+import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -181,9 +181,9 @@ export class Manifest {
     } else {
       // We use the first component of an ID as a session ID, for manifests parsed
       // from the file, this is the 'manifest' phrase.
-      // TODO: Figure out if this is ok.
+      // TODO: Figure out if this is ok, and stop using internal Id APIs.
       const components = id.split(':');
-      this._id = new Id(components[0], components.slice(1));
+      this._id = Id._createIdInternal(components[0], components.slice(1));
     }
   }
   get id() {
