@@ -1,5 +1,6 @@
 #!/bin/sh
 
-set -e
-[ tools/sigh.ts -nt build/sigh.js ] && node_modules/.bin/tsc -p tools
+set -xe
+[ tools/sigh.ts -nt build/sigh.js ] && echo 'newer ts file detected, would rebuild'
+node_modules/.bin/tsc -p tools
 exec node build/sigh.js "$@"
