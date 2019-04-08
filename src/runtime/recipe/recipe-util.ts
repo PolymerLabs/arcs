@@ -37,7 +37,7 @@ class Shape {
 }
 type DirectionCounts = {in: number; out: number; inout: number; unknown: number;};
 
-export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: string}
+export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: string};
 
 type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 
@@ -53,7 +53,7 @@ export class RecipeUtil {
     handles.forEach(handle => hMap.set(handle, recipe.newHandle()));
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
-        let handle = map[key][name];
+        const handle = map[key][name];
         // NOTE: for now, '=' on the shape means "accept anything". This is going
         // to change when we redo capabilities; for now it's modeled by mapping '=' to
         // '=' rather than to 'inout'.
@@ -61,7 +61,7 @@ export class RecipeUtil {
         if (handle.direction) {
           direction = {'->': 'out', '<-': 'in', '=': '='}[handle.direction];
         }
-        let tags: string[] = handle.tags || [];
+        const tags: string[] = handle.tags || [];
         if (handle['localName']) {
           hMap.get(handle.handle).localName = handle.localName;
         }
