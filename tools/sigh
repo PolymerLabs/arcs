@@ -1,2 +1,5 @@
 #!/bin/sh
-node_modules/.bin/tsc -p tools && exec node build/sigh.js "$@"
+
+set -e
+[ tools/sigh.ts -nt build/sigh.js ] && node_modules/.bin/tsc -p tools
+exec node build/sigh.js "$@"
