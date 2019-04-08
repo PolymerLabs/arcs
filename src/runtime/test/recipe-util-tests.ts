@@ -29,7 +29,7 @@ describe('recipe-util', () => {
           b -> handle1`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
-      {'A': {'a': 'v'}, 'B': {'b': 'v'}});
+      {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, 0);
@@ -61,7 +61,7 @@ describe('recipe-util', () => {
           c -> handle2`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
-      {'A': {'a': 'v'}, 'B': {'b': 'v'}, 'C': {'c': 'v'}});
+      {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}, 'C': {'c': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 2);
     assert.equal(results[0].score, -1);
@@ -87,7 +87,7 @@ describe('recipe-util', () => {
         B`);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
-      {'A': {'a': 'v'}, 'B': {'b': 'v'}});
+      {'A': {'a': {handle: 'v'}}, 'B': {'b': {handle: 'v'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, -3);
@@ -111,7 +111,7 @@ describe('recipe-util', () => {
         `);
     const recipe = manifest.recipes[0];
     const shape = RecipeUtil.makeShape(['A', 'B'], ['h'],
-      {'A': {'a': 'h'}, 'B': {'b': 'h'}});
+      {'A': {'a': {handle: 'h'}}, 'B': {'b': {handle: 'h'}}});
     const results = RecipeUtil.find(recipe, shape);
     assert.lengthOf(results, 1);
     assert.equal(results[0].score, -1);
