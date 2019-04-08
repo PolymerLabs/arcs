@@ -19,7 +19,7 @@ import '../../lib/firebase-support.js';
 //import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
 import {Utils} from '../../lib/utils.js';
-import {DeviceApiFactory} from '../device.js';
+import {ShellApiFactory} from '../device.js';
 import {DevtoolsSupport} from '../../lib/devtools-support.js';
 
 // usage:
@@ -58,6 +58,6 @@ console.log(`${version} -- ${storage}`);
   // configure arcs environment
   Utils.init(paths.root, paths.map);
   // configure ShellApi (window.DeviceClient is bound in by outer process, otherwise undefined)
-  window.ShellApi = await DeviceApiFactory(storage, manifest, window.DeviceClient);
+  window.ShellApi = await ShellApiFactory(storage, manifest, window.DeviceClient);
 })();
 

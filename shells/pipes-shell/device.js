@@ -29,13 +29,13 @@ let userContext;
 let testMode;
 let recipeManifest;
 
-export const DeviceApiFactory = async (storage, manifest, deviceClient) => {
+export const ShellApiFactory = async (storage, manifest, deviceClient) => {
   recipeManifest = manifest || defaultManifest;
   client = deviceClient;
   await marshalRecipeContext();
   userContext = new Context(storage);
   await signalClientWhenReady(deviceClient);
-  return deviceApi;
+  return shellApi;
 };
 
 const signalClientWhenReady = async client => {
@@ -53,14 +53,14 @@ const marshalRecipeContext = async () => {
   const manifest = await Utils.parse(recipeManifest);
   recipes = manifest.findRecipesByVerb('autofill');
   const types = recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.'));
-  //log('supported types:', types);
-  log(`> DeviceClient.notifyAutofillTypes('${JSON.stringify(types)}')`);
+  const json = JSON.stringify(types);
+  log(`> DeviceClient.notifyAutofillTypes('${json}')`);
   if (client) {
-    client.notifyAutofillTypes(JSON.stringify(types));
+    client.notifyAutofillTypes(json);
   }
 };
 
-const deviceApi = {
+const shellApi = {
   receiveEntity(json) {
     const id = trackTransactionId(() => receiveJsonEntity(json));
     log(`[${id}]: received entity`, json);
