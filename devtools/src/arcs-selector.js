@@ -24,6 +24,7 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
       [selector] [name] {
         display: inline-block;
         margin-left: 6px;
+        padding-right: 5px;
         max-width: 150px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -38,31 +39,74 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
         margin-left: 12px;
       }
       iron-dropdown {
-        padding: 8px 0;
         min-width: 160px;
       }
-      [list] {
+      [dropdown] {
         /* Overrides attributes set by the iron-dropdown */
-        max-width: 80vw !important;
-        max-height: 80vh !important;
+        max-width: 90vw !important;
+        max-height: 90vh !important;
+      }
+      [list] {
+        min-width: 200px;
+        line-height: 24px;
+        max-height: 90vh;
+        overflow: scroll;
+      }
+      [list]:not([show-inner]) [inner]:not([speculative]) {
+        display: none;
+      }
+      [list]:not([show-speculative]) [speculative] {
+        display: none;
       }
       [entry] {
-        line-height: 20px;
         padding: 4px 12px;
         cursor: pointer;
+        border-bottom: 1px solid var(--light-gray);
       }
       [entry][active] [name] {
         font-weight: bold;
       }
-      [entry][speculative] {
-        padding-left: 20px;
+      [entry][speculative], [entry][inner] {
+        padding-left: 30px;
         position: relative;
       }
-      [entry][speculative]:before {
-        content: '?';
+      [entry][speculative]:before, [entry][inner]:before {
+        font-family: 'Material Icons';
+        font-size: 18px;
         position: absolute;
-        color: #666;
+        color: #444;
         left: 6px;
+      }
+      [entry][speculative]:before {
+        content: 'blur_on';
+      }
+      [entry][inner]:before {
+        content: 'radio_button_unchecked';
+      }
+      [entry][speculative][inner]:before {
+        content: 'blur_circular';
+      }
+      [option] {
+        border-top: 1px solid var(--light-gray);
+        vertical-align: middle;
+        padding: 0px 8px;
+        color: #444;
+        background-color: white;
+        line-height: 22px;
+      }
+      [option]:not(:last-child) {
+        box-shadow: 0px -2px 2px rgba(0,0,0,.3);
+      }
+      [option] i {
+        font-size: 18px;
+        vertical-align: middle;
+      }
+      [option] label {
+        display: inline-block;
+      }
+      [option] input {
+        vertical-align: top;
+        margin-top: 5px;
       }
       [desc] {
         font-style: italic;
@@ -88,14 +132,37 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
     </style>
     <div selector on-click="_openDropdown"><span count>[[arcs.length]]</span><span name none$="[[!active]]">[[_activeName(active)]]</span><span class="triangle devtools-small-icon" expanded></span></div>
     <iron-dropdown class="dropdown" id="dropdown" horizontal-align="left" horizontal-offset="-6" vertical-align="top" vertical-offset="23">
-      <div slot="dropdown-content" list>
-        <template is="dom-repeat" items="[[arcs]]">
-          <div entry active$=[[item.active]] on-click="_arcSelected" speculative$=[[item.speculative]]>
-            <div desc>[[item.description]]</div>
-            <div name>[[item.name]] <span annotation>[[item.annotation]]</span></div>
-            <div arcId>[[item.id]]</div>
-          </div>
-        </template>
+      <div slot="dropdown-content" dropdown>
+        <div list show-inner$=[[showInner]] show-speculative$=[[showSpeculative]]>
+          <template is="dom-repeat" items="[[arcs]]">
+            <div entry active$=[[item.active]] on-click="_arcSelected" speculative$=[[item.speculative]] inner$=[[item.inner]]>
+              <div desc>[[item.description]]</div>
+              <div name>[[item.name]] <span annotation>[[item.annotation]]</span></div>
+              <div arcId>[[item.id]]</div>
+            </div>
+          </template>
+          <template is="dom-if" if="[[!arcs.length]]">
+            <div class="empty-label">No arcs</div>
+          </template>
+        </div>
+        <div option>
+          <input type="checkbox" id="inner" checked="{{showInner::change}}">
+          <label for="inner">
+            <i class="material-icons">radio_button_unchecked</i>
+            Show inner arcs
+            ([[innerCount]])
+          </label>
+        </div>
+        <div option>
+          <input type="checkbox" id="speculative" checked="{{showSpeculative::change}}">
+          <label for="speculative">
+            <i class="material-icons">blur_on</i>
+            Show speculative arcs<br>
+            <i class="material-icons">blur_circular</i>
+            and their inner arcs
+            ([[speculativeCount]])
+          </label>
+        </div>
       </div>
     </iron-dropdown>`;
   }
@@ -105,6 +172,22 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
     return {
       activePage: {
         type: String
+      },
+      showInner: {
+        type: Boolean,
+        value: false
+      },
+      innerCount: {
+        type: Number,
+        computed: 'countInnerArcs(arcs.*)'
+      },
+      showSpeculative: {
+        type: Boolean,
+        value: false
+      },
+      speculativeCount: {
+        type: Number,
+        computed: 'countSpeculativeArcs(arcs.*)'
       }
     };
   }
@@ -129,13 +212,16 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
           break;
         case 'arc-available': {
           const id = msg.meta.arcId;
-          const name = id.substring(id.indexOf(':') + 1);
-          const speculative = msg.messageBody.speculative;
-          const item = {id, name, speculative};
-          if (name.endsWith('-null')) item.annotation = '(Planning)';
+          const item = {
+            id: id,
+            name: id.substring(id.indexOf(':') + 1),
+            speculative: msg.messageBody.speculative,
+            inner: msg.messageBody.inner
+          };
+          if (item.name.endsWith('-null')) item.annotation = '(Planning)';
           if (!this.messages.has(id)) this.messages.set(id, []);
           this.push('arcs', item);
-          if (!speculative && name.lastIndexOf(':inner') === -1) {
+          if (!item.speculative && !item.inner) {
             this._select(item);
             messagesToForward.length = 0;
           }
@@ -202,6 +288,14 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
 
   _activeName(active) {
     return active ? active.name : 'none';
+  }
+
+  countInnerArcs() {
+    return this.arcs.filter(a => a.inner && !a.speculative).length;
+  }
+
+  countSpeculativeArcs() {
+    return this.arcs.filter(a => a.speculative).length;
   }
 }
 
