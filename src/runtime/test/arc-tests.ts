@@ -721,7 +721,7 @@ describe('Arc', () => {
   });
 
 
-  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
     it('persist serialization for ' + storageKeyPrefix, async () => {
       const id = ArcId.newForTest('test');
       const manifest = await Manifest.parse(`
@@ -836,7 +836,7 @@ describe('Arc', () => {
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
-  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
     it('handles serialization/deserialization of empty arcs handles ' + storageKeyPrefix, async () => {
       const id = ArcId.newForTest('test');
       const loader = new Loader();

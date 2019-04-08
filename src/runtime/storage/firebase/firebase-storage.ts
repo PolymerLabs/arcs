@@ -136,7 +136,7 @@ export class FirebaseStorage extends StorageBase {
   }
 
   // Unit tests should call this in an 'after' block.
-  shutdown() {
+  async shutdown() {
     for (const entry of Object.values(this.apps)) {
       if (entry.owned) {
         entry.app.delete();

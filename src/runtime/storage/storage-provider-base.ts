@@ -88,7 +88,7 @@ export abstract class StorageBase {
   /**
    * Provides graceful shutdown for tests.
    */
-  shutdown() {}
+  async shutdown(): Promise<void> {}
 }
 
 // tslint:disable-next-line: no-any
