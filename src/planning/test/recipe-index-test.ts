@@ -15,7 +15,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestHelper} from '../../runtime/testing/test-helper.js';
 import {RecipeIndex} from '../recipe-index.js';
-import {Id} from '../../runtime/id.js';
+import {Id, ArcId} from '../../runtime/id.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
@@ -25,7 +25,7 @@ describe('RecipeIndex', () => {
     }
     const loader = new Loader();
     const arc = new Arc({
-      id: new Id('test-plan-arc'),
+      id: ArcId.newForTest('test-plan-arc'),
       context: manifest,
       loader,
       slotComposer: new MockSlotComposer()

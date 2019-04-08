@@ -15,7 +15,7 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {SlotDomConsumer} from '../slot-dom-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {ProvidedSlotContext, HostedSlotContext} from '../slot-context.js';
-import {Id} from '../id.js';
+import {ArcId} from '../id.js';
 
 describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
@@ -35,7 +35,7 @@ describe('particle interface loading with slots', function() {
       `, loader);
     const recipe = manifest.recipes[0];
 
-    const arc = new Arc({id: new Id('test'), slotComposer, context: manifest});
+    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest});
 
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);

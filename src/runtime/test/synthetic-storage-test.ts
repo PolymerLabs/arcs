@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/chai-web.js';
-import {Id} from '../id.js';
+import {Id, ArcId} from '../id.js';
 import {ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
@@ -21,7 +21,7 @@ describe('synthetic storage ', () => {
   });
 
   async function setup(serialization): Promise<{id: Id, targetStore: VariableStorageProvider, synth: CollectionStorageProvider}> {
-    const id = new Id('123', ['test']);
+    const id = ArcId.newForTest('test');
     const storage = new StorageProviderFactory(id);
     const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
@@ -37,7 +37,7 @@ describe('synthetic storage ', () => {
   }
 
   it('invalid synthetic keys', async () => {
-    const storage = new StorageProviderFactory(new Id('123', ['test']));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
     check('simplistic://arc/handles/volatile', 'unknown storage protocol');
@@ -49,7 +49,7 @@ describe('synthetic storage ', () => {
   });
 
   it('non-existent target key', async () => {
-    const storage = new StorageProviderFactory(new Id('123', ['test']));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const synth = await storage.connect('id1', null, `synthetic://arc/handles/volatile://nope`);
     assert.isNull(synth);
   });

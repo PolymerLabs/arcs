@@ -14,7 +14,7 @@ import {Loader} from '../loader.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {TestHelper} from '../testing/test-helper.js';
-import {Id} from '../id.js';
+import {Id, ArcId} from '../id.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
@@ -46,7 +46,7 @@ describe('Multiplexer', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: new Id('test'), context: manifest, slotComposer, loader: new Loader()});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize());

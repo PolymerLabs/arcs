@@ -19,7 +19,7 @@ import {CollectionStorageProvider, VariableStorageProvider} from '../storage/sto
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
-import {Id} from '../id.js';
+import {Id, ArcId} from '../id.js';
 
 describe('Handle', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -34,7 +34,7 @@ describe('Handle', () => {
   const manifestFile = './src/runtime/test/artifacts/test-particles.manifest';
 
   it('clear singleton store', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: new Id('test'), context: undefined, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: undefined, loader: new Loader()});
     const barStore = await arc.createStore(Bar.type) as VariableStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
