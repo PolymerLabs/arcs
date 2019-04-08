@@ -1,8 +1,7 @@
 #!/bin/sh
 
-set -e
-if [ tools/sigh.ts -nt build/sigh.js ]; then
+if [ ! -e build/sigh.js -o tools/sigh.ts -nt build/sigh.js ]; then
   echo 'Building sigh'
-  node_modules/.bin/tsc -p tools
+  node_modules/.bin/tsc -p tools || exit 1
 fi
 exec node build/sigh.js "$@"
