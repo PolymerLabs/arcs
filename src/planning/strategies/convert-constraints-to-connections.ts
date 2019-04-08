@@ -34,7 +34,6 @@ export class ConvertConstraintsToConnections extends Strategy {
         const handles = new Set<string>();
         // The map object tracks the connections between particles that need to be found/created.
         // It's another input to RecipeUtil.makeShape.
-        // tslint:disable-next-line: no-any
         const map: {[index: string]: {[index: string]: HandleRepr}} = {};
         const particlesByName: {[index: string]: ParticleSpec} = {};
 
