@@ -36,12 +36,6 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
       object-explorer {
         margin: 2px 4px;
       }
-      .empty {
-        text-align: center;
-        font-style: italic;
-        color: var(--mid-gray);
-        white-space: nowrap;
-      }
       [name]:not(:empty) {
         color: var(--devtools-purple);
         margin-right: 1ch;
@@ -79,7 +73,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
           </object-explorer>
         </template>
         <template is="dom-if" if="{{!item.items.length}}">
-          <div class="empty">No stores</div>
+          <div class="empty-label">No stores</div>
         </template>
       </div>
     </template>`;

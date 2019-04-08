@@ -11,7 +11,7 @@ import {Modality} from '../modality.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
-import {ConnectionConstraint} from './connection-constraint.js';
+import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -20,7 +20,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from './util.js';
 
-export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection;
+export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};

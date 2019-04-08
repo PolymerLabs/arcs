@@ -33,12 +33,6 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
       object-explorer {
         margin: 2px 4px;
       }
-      .empty {
-        text-align: center;
-        font-style: italic;
-        color: var(--mid-gray);
-        white-space: nowrap;
-      }
       .refresh {
         -webkit-mask-position: -165px 0px;
         cursor: pointer;
@@ -119,7 +113,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!lastPlanning.suggestions.length}}">
-        <div class="empty">No suggestions in last planning</div>
+        <div class="empty-label">No suggestions in last planning</div>
       </template>
     </div>
 
@@ -135,7 +129,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
         </object-explorer>
       </template>
       <template is="dom-if" if="{{!planningSessions.length}}">
-        <div class="empty">No planning sessions</div>
+        <div class="empty-label">No planning sessions</div>
       </template>
     </div>
 

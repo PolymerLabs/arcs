@@ -10,6 +10,7 @@ const os = require('os');
 const path = require('path');
 
 // Use saneSpawn or saneSpawnWithOutput instead, this is not cross-platform.
+// tslint:disable-next-line: variable-name
 const _DO_NOT_USE_spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
 const chokidar = try_require('chokidar');
@@ -56,10 +57,10 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
   }]
 };
 
-const steps = {
+const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, build, test],
+  test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
   build: [peg, build],
   watch: [watch],
@@ -67,10 +68,9 @@ const steps = {
   tslint: [peg, build, tslint],
   check: [check],
   clean: [clean],
-  importSpotify: [peg, build, importSpotify],
   unit: [unit],
   health: [health],
-  default: [check, peg, railroad, build, test, webpack, lint, tslint],
+  default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -84,7 +84,7 @@ const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
 // RE pattern to exclude when finding within project built files.
 const buildExclude = /\b(node_modules|deps|src|third_party)\b/;
 
-function* findProjectFiles(dir, exclude, predicate) {
+function* findProjectFiles(dir: string, exclude: RegExp|null, predicate: (path: string) => boolean): Iterable<string> {
   const tests = [];
   for (const entry of fs.readdirSync(dir)) {
     if (entry.startsWith('.') || (exclude && exclude.test(entry))) {
@@ -101,18 +101,18 @@ function* findProjectFiles(dir, exclude, predicate) {
   }
 }
 
-function readProjectFile(relativePath) {
+function readProjectFile(relativePath: string): string {
   return fs.readFileSync(path.resolve(projectRoot, relativePath), 'utf-8');
 }
 
-function fixPathForWindows(path) {
-  if (path[0] == '/') {
+function fixPathForWindows(path: string): string {
+  if (path[0] === '/') {
     return path;
   }
   return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
 }
 
-function targetIsUpToDate(relativeTarget, relativeDeps) {
+function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boolean {
   const target = path.resolve(projectRoot, relativeTarget);
   if (!fs.existsSync(target)) {
     return false;
@@ -130,7 +130,7 @@ function targetIsUpToDate(relativeTarget, relativeDeps) {
 }
 
 
-function check() {
+function check(): boolean {
   const nodeRequiredVersion = require('../package.json').engines.node;
   const npmRequiredVersion = require('../package.json').engines.npm;
 
@@ -147,7 +147,7 @@ function check() {
   return true;
 }
 
-function clean() {
+function clean(): boolean {
   for (const file of cleanFiles) {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
@@ -176,7 +176,7 @@ function clean() {
 }
 
 // Run unit tests on the parts of this tool itself.
-function unit() {
+function unit(): boolean {
   const dummySrc = 'src/foo.js';
   const dummyDest = 'build/foo.js';
   const success = linkUnit(dummySrc, dummyDest);
@@ -189,7 +189,7 @@ function unit() {
   return success;
 }
 
-function linkUnit(dummySrc, dummyDest) {
+function linkUnit(dummySrc: string, dummyDest: string): boolean {
   fs.writeFileSync(dummySrc, 'Just some nonsense');
 
   if (!link([dummySrc])) {
@@ -217,7 +217,7 @@ function linkUnit(dummySrc, dummyDest) {
   return true;
 }
 
-function peg() {
+function peg(): boolean {
   const peg = require('pegjs');
   const tsPegjsPlugin = require('ts-pegjs');
   const ts = require('typescript');
@@ -264,7 +264,7 @@ function peg() {
   return true;
 }
 
-function railroad() {
+function railroad(): boolean {
   // railroad rendering logic taken from GrammKit/cli.js
   const {transform} = require('grammkit/lib/util');
   const handlebars = require('handlebars');
@@ -281,7 +281,7 @@ function railroad() {
   
     const result = transform(readProjectFile(pegsrc.grammar));
     const grammars = result.procesedGrammars.map(({rules, references, name}) => {
-      rules = rules.map(function(rule) {
+      rules = rules.map(rule => {
         const ref = references[rule.name] || {};
         return {
           name: rule.name,
@@ -297,7 +297,7 @@ function railroad() {
     const data = {
       title: `Railroad diagram for ${pegsrc.grammar}`,
       style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
-      grammars: grammars
+      grammars
     };
     const template = handlebars.compile(readProjectFile(baseTemplate));
     fs.writeFileSync(path.resolve(projectRoot, pegsrc.railroad), template(data));
@@ -305,7 +305,7 @@ function railroad() {
   return true;
 }
 
-function build() {
+function build(): boolean {
   if (!tsc()) {
     console.log('build::tsc failed');
     return false;
@@ -319,15 +319,15 @@ function build() {
   return true;
 }
 
-function tsc() {
-  const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics'], {});
-  if (result.status) {
+function tsc(): boolean {
+  const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics']);
+  if (result.stdout) {
     console.log(result.stdout);
   }
-  return result;
+  return result.success;
 }
 
-function makeLink(src, dest) {
+function makeLink(src: string, dest: string): boolean {
   try {
     // First we have to ensure the entire path is there.
     const dir = path.dirname(dest);
@@ -342,7 +342,7 @@ function makeLink(src, dest) {
   return true;
 }
 
-function link(srcFiles) {
+function link(srcFiles: Iterable<string>): boolean {
   let success = true;
   for (const src of srcFiles) {
     const srcStats = fs.statSync(src);
@@ -373,22 +373,24 @@ function link(srcFiles) {
   return success;
 }
 
-function tslint(args) {
+function tslint(args: string[]): boolean {
   const options = minimist(args, {
     boolean: ['fix'],
   });
 
   const fixArgs = options.fix ? ['--fix'] : [];
-
-  const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', '.', ...fixArgs], {});
-  if (result.status) {
-    console.log(result.stdout);
+  let success = true;
+  for (const target of ['.', 'tools']) {
+    const result = saneSpawnWithOutput('node_modules/.bin/tslint', ['-p', target, ...fixArgs]);
+    if (result.stdout) {
+      console.log(result.stdout);
+    }
+    success = success && result.success;
   }
-
-  return result == false ? result : result.status;
+  return success;
 }
 
-function lint(args) {
+function lint(args: string[]): boolean {
   const CLIEngine = require('eslint').CLIEngine;
 
   const options = minimist(args, {
@@ -417,18 +419,35 @@ function lint(args) {
     CLIEngine.outputFixes(report);
   }
 
-  return report.errorCount == 0;
+  return report.errorCount === 0;
 }
 
-function webpack() {
-  const result = saneSpawnWithOutput('npm', ['run', 'build:webpack'], {});
-  if (result.status) {
+function webpack(): boolean {
+  const result = saneSpawnWithOutput('npm', ['run', 'build:webpack']);
+  if (result.stdout) {
     console.log(result.stdout);
   }
-  return result == false ? result : result.status;
+  return result.success;
 }
 
-function spawnWasSuccessful(result) {
+type SpawnOptions = {
+  shell?: boolean;
+  stdio?: string;
+};
+
+type RawSpawnResult = {
+  status: number;
+  stdout: Buffer;
+  stderr: Buffer;
+  error?: Error;
+};
+
+type SpawnResult = {
+  success: boolean;
+  stdout: string;
+};
+
+function spawnWasSuccessful(result: RawSpawnResult): boolean {
   if (result.status === 0 && !result.error) {
     return true;
   }
@@ -444,36 +463,29 @@ function spawnWasSuccessful(result) {
 }
 
 // make spawn work more or less the same way cross-platform
-function saneSpawn(cmd, args, opts) {
+function saneSpawn(cmd: string, args: string[], opts?: SpawnOptions): boolean {
   cmd = path.normalize(cmd);
   opts = opts || {};
   opts.shell = true;
   // it's OK, I know what I'm doing
-  const result = _DO_NOT_USE_spawn(cmd, args, opts);
+  const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   return spawnWasSuccessful(result);
 }
 
 // make spawn work more or less the same way cross-platform
-function saneSpawnWithOutput(cmd, args, opts) {
+function saneSpawnWithOutput(cmd: string, args: string[], opts?: SpawnOptions): SpawnResult {
   cmd = path.normalize(cmd);
   opts = opts || {};
   opts.shell = true;
   // it's OK, I know what I'm doing
-  const result = _DO_NOT_USE_spawn(cmd, args, opts);
+  const result: RawSpawnResult = _DO_NOT_USE_spawn(cmd, args, opts);
   if (!spawnWasSuccessful(result)) {
-    return false;
+    return {success: false, stdout: ''};
   }
-  return {status: result.status == 0, stdout: result.stdout.toString()};
+  return {success: true, stdout: result.stdout.toString()};
 }
 
-function rot13(str) {
-  const input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-  const output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-  const lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
-  return str.split('').map(x => lookup[x] || x).join('');
-}
-
-function test(args) {
+function runTests(args: string[]): boolean {
   const options = minimist(args, {
     string: ['grep'],
     inspect: ['inspect'],
@@ -497,7 +509,7 @@ function test(args) {
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
-    const isSelectedTest = options.all || (options.manual == fullPath.includes('manual_test'));
+    const isSelectedTest = options.all || (options.manual === fullPath.includes('manual_test'));
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 
@@ -564,11 +576,11 @@ function test(args) {
 
   const runner = buildTestRunner();
   // Spawn processes as needed to repeat tests specified by 'repeat' flag.
-  const repeatCount = parseInt(JSON.stringify(options.repeat || 1));
+  const repeatCount = Number(options.repeat) || 1;
   const testResults = [];
   const failedRuns = [];
   for (let i = 1; i < repeatCount + 1; i++) {
-    console.log('RUN %s STARTING [%s]:', i, (new Date).toLocaleTimeString());
+    console.log('RUN %s STARTING [%s]:', i, new Date().toLocaleTimeString());
     if (options.coverage) {
       process.env.NODE_V8_COVERAGE=coverageDir;
     }
@@ -581,7 +593,7 @@ function test(args) {
           '--no-deprecation',
           ...extraFlags,
           '--loader',
-          fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+          fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
           '-r',
           'source-map-support/register.js',
           runner
@@ -599,41 +611,32 @@ function test(args) {
   if (options.coverage) {
     console.log(`Visit 'file:///${process.cwd()}/coverage/index.html' in the browser for a coverage report.`);
   }
-  return testResults.filter(x => !x).length == 0;
+  return testResults.filter(x => !x).length === 0;
 }
 
-function importSpotify(args) {
-  return saneSpawn('node', [
-    '--experimental-modules',
-    '--trace-warnings',
-    '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-    './tools/spotify-importer.js',
-    ...args
-  ], {stdio: 'inherit'});
-}
-
-// Watches for file changes, then runs the `arg` steps.
-function watch([arg, ...moreArgs]) {
-  if (chokidar == null) {
+// Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
+function watch(args: string[]): boolean {
+  if (chokidar === null) {
     console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
     return false;
   }
+  const command = args.shift() || 'webpack';
   const watcher = chokidar.watch('.', {
     ignored: new RegExp(`(node_modules|build/|.git|${eslintCache})`),
     persistent: true
   });
-  let timerId = 0;
+  let timeout = null;
   const changes = new Set();
   watcher.on('change', path => {
-    if (timerId) {
-      clearTimeout(timerId);
+    if (timeout) {
+      clearTimeout(timeout);
     }
     changes.add(path);
-    timerId = setTimeout(() => {
+    timeout = setTimeout(() => {
       console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      runSteps(arg || 'webpack', moreArgs);
-      timerId = 0;
+      runSteps(command, args);
+      timeout = null;
     }, 500);
   });
 
@@ -645,8 +648,7 @@ function watch([arg, ...moreArgs]) {
   return true;
 }
 
-function health(args) {
-
+function health(args: string[]): boolean {
   const options = minimist(args, {
     migration: ['migration'],
     types: ['types'],
@@ -655,7 +657,7 @@ function health(args) {
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
     console.error('Please select only one detailed report at a time');
-    return;
+    return false;
   }
 
   const migrationFiles = () => [...findProjectFiles(
@@ -714,48 +716,34 @@ function health(args) {
   return true;
 }
 
-// Runs a chain of `[[fun, args]]` by calling `fun(args)`, logs emoji, and returns whether
-// all the functions returned `true`.
-function runFuns(funsAndArgs) {
+// Looks up the steps for `command` and runs each with `args`.
+function runSteps(command: string, args: string[]): boolean {
+  const funcs = steps[command];
+  if (funcs === undefined) {
+    console.log(`Unknown command: '${command}'`);
+    console.log('Available commands are:', Object.keys(steps).join(', '));
+    process.exit(2);
+  }
+
   console.log('😌');
   let result = false;
   try {
-    for (const [fun, args] of funsAndArgs) {
-      console.log(`🙋 ${fun.name} ${args.join(' ')}`);
-      const result = fun(args);
-      if (typeof(result) !== 'boolean') {
-        console.log(`🤮 ${fun.name} must return boolean status to indicate pass/fail`);
-        return;
-      } 
-      if (!result) {
-        console.log(`🙅 ${fun.name}`);
-        return;
+    for (const func of funcs) {
+      console.log(`🙋 ${func.name}`);
+      if (!func(args)) {
+        console.log(`🙅 ${func.name}`);
+        return false;
       }
-      console.log(`🙆 ${fun.name}`);
+      console.log(`🙆 ${func.name}`);
     }
     result = true;
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? `🎉  ${rot13('Nqinapr Nhfgenyvn!')} 🇳🇿` : '😱');
+    console.log(result ? '🎉' : '😱');
   }
-  return result;
-}
 
-// Looks up steps for a given command and runs them one by one.
-// Only the last step gets args. E.g. runSteps('test', ['--inspect']);
-function runSteps(command, args) {
-  const funs = steps[command];
-  if (funs === undefined) {
-    console.log(`Unknown command: '${command}'`);
-    console.log('Available commands are:', Object.keys(steps).join(', '));
-    process.exit(2);
-  }
-  
-  // To avoid confusion, only the last step gets args.
-  const funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? args : []]);
-  const result = runFuns(funsAndArgs);
-  process.on('exit', function() {
+  process.on('exit', () => {
     process.exit(result ? 0 : 1);
   });
   return result;

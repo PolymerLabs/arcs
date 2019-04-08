@@ -9,8 +9,11 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Id, IdGenerator} from '../id.js';
-import { Random } from '../random.js';
+import {Id, IdGenerator, ArcId} from '../id.js';
+import {Random} from '../random.js';
+
+// Alias for the Id factory method. IdGenerators should usually be used to create new IDs, but doing so in these tests is cumbersome.
+const createId = Id._newIdInternal;
 
 describe('IdGenerator', () => {
   describe('#newSession', () => {
@@ -25,7 +28,7 @@ describe('IdGenerator', () => {
     });
   });
 
-  describe('#createChildId', () => {
+  describe('#newChildId', () => {
     let idGenerator: IdGenerator;
 
     beforeEach(() => {
@@ -33,45 +36,54 @@ describe('IdGenerator', () => {
     });
 
     it('creates child IDs using its session ID', () => {
-      const parentId = new Id('root');
-      const childId = idGenerator.createChildId(parentId);
+      const parentId = createId('root');
+      const childId = idGenerator.newChildId(parentId);
       assert.equal(childId.root, 'sessionId');
     });
     
     it('appends subcomponents when creating child IDs', () => {
-      const parentId = new Id('root', ['x', 'y']);
-      const childId = idGenerator.createChildId(parentId, 'z');
+      const parentId = createId('root', ['x', 'y']);
+      const childId = idGenerator.newChildId(parentId, 'z');
       assert.deepEqual(childId.idTree, ['x', 'y', 'z0']);
     });
 
     it('increments its counter', () => {
-      const parentId = new Id('root', ['x', 'y']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z0']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z1']);
-      assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
+      const parentId = createId('root', ['x', 'y']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z0']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z1']);
+      assert.deepEqual(idGenerator.newChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
+    });
+  });
+
+  describe('#newArcId', () => {
+    it('creates a valid ArcId using its session ID', () => {
+      const idGenerator = IdGenerator.createWithSessionIdForTesting('sessionId');
+      const arcId = idGenerator.newArcId('foo');
+      assert(arcId instanceof ArcId);
+      assert.equal(arcId.toString(), '!sessionId:foo');
     });
   });
 });
 
 describe('Id', () => {
   it('parses IDs from strings with exclamation marks', () => {
-    assert.deepEqual(Id.fromString('!root'), new Id('root'));
-    assert.deepEqual(Id.fromString('!root:'), new Id('root'));
-    assert.deepEqual(Id.fromString('!root:x:y'), new Id('root', ['x', 'y']));
+    assert.deepEqual(Id.fromString('!root'), createId('root'));
+    assert.deepEqual(Id.fromString('!root:'), createId('root'));
+    assert.deepEqual(Id.fromString('!root:x:y'), createId('root', ['x', 'y']));
   });
 
   it('parses IDs from strings without exclamation marks', () => {
-    assert.deepEqual(Id.fromString('x'), new Id('',['x']));
-    assert.deepEqual(Id.fromString('x:y'), new Id('', ['x', 'y']));
+    assert.deepEqual(Id.fromString('x'), createId('',['x']));
+    assert.deepEqual(Id.fromString('x:y'), createId('', ['x', 'y']));
   });
 
   it('encodes to a string', () => {
-    assert.equal(new Id('root').toString(), '!root:');
-    assert.equal(new Id('root', ['x', 'y']).toString(), '!root:x:y');
+    assert.equal(createId('root').toString(), '!root:');
+    assert.equal(createId('root', ['x', 'y']).toString(), '!root:x:y');
   });
 
   it('encodes its ID tree', () => {
-    assert.equal(new Id('root').idTreeAsString(), '');
-    assert.equal(new Id('root', ['x', 'y']).idTreeAsString(), 'x:y');
+    assert.equal(createId('root').idTreeAsString(), '');
+    assert.equal(createId('root', ['x', 'y']).idTreeAsString(), 'x:y');
   });
 });

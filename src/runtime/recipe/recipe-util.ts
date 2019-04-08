@@ -6,19 +6,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
-import {HandleConnection} from './handle-connection.js';
+import {HandleConnection, Direction} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {Recipe} from './recipe.js';
+import {Recipe, RecipeComponent} from './recipe.js';
 
 class Shape {
   recipe: Recipe;
   particles: {[index: string]: Particle};
   handles: Map<string, Handle>;
-  reverse: Map<Handle | Particle | HandleConnection, string>;
+  reverse: Map<RecipeComponent, string>;
   constructor(recipe: Recipe, particles: {[index: string]: Particle}, handles: Map<string, Handle>, hcs: {[index: string]: HandleConnection}) {
     this.recipe = recipe;
     this.particles = particles;
@@ -37,47 +37,52 @@ class Shape {
 }
 type DirectionCounts = {in: number; out: number; inout: number; unknown: number;};
 
+export type HandleRepr = {localName?: string, handle: string, tags?: string[], direction?: string};
+
+type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
+
+type Match = {forward: Map<RecipeComponent, RecipeUtilComponent>, reverse: Map<RecipeUtilComponent, RecipeComponent>, score: number};
+
 export class RecipeUtil {
-  static makeShape(particles, handles, map, recipe?: Recipe) {
+  static makeShape(particles: string[], handles: string[], map: {[index: string]: {[index: string]: HandleRepr}}, recipe?: Recipe) {
     recipe = recipe || new Recipe();
-    const pMap = {};
-    const hMap = new Map();
-    const hcMap = {};
+    const pMap: {[index:string]: Particle} = {};
+    const hMap: Map<string, Handle> = new Map();
+    const hcMap: {[index: string]: HandleConnection} = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     handles.forEach(handle => hMap.set(handle, recipe.newHandle()));
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
-        let handle = map[key][name];
-        let direction = '=';
-        let tags = [];
-        if (handle.handle) {
+        const handle = map[key][name];
         // NOTE: for now, '=' on the shape means "accept anything". This is going
         // to change when we redo capabilities; for now it's modeled by mapping '=' to
         // '=' rather than to 'inout'.
-
+        let direction: Direction | '=' = '=';
+        if (handle.direction) {
           direction = {'->': 'out', '<-': 'in', '=': '='}[handle.direction];
-          tags = handle.tags || [];
-          handle = handle.handle;
         }
-        if (handle.localName) {
-          hMap.get(handle).localName = handle.localName;
+        const tags: string[] = handle.tags || [];
+        if (handle['localName']) {
+          hMap.get(handle.handle).localName = handle.localName;
         }
 
         const connection = pMap[key].addConnectionName(name);
-        connection.direction = direction;
-        hMap.get(handle).tags = tags;
-        connection.connectToHandle(hMap.get(handle));
+        // TODO(shans): work out a cleaner way to encode "accept anything" - 
+        // this is an abuse of the type system. 
+        connection.direction = direction as Direction;
+        hMap.get(handle.handle).tags = tags;
+        connection.connectToHandle(hMap.get(handle.handle));
         hcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
     return new Shape(recipe, pMap, hMap, hcMap);
   }
 
-  static recipeToShape(recipe) {
+  static recipeToShape(recipe: Recipe) {
     const particles = {};
     let id = 0;
     recipe.particles.forEach(particle => particles[particle.name] = particle);
-    const handles = new Map();
+    const handles = new Map<string, Handle>();
     recipe.handles.forEach(handle => handles.set('h' + id++, handle));
     const hcs = {};
     recipe.handleConnections.forEach(hc => hcs[hc.particle.name + ':' + hc.name] = hc);
@@ -86,7 +91,7 @@ export class RecipeUtil {
 
   static find(recipe: Recipe, shape: Shape) {
 
-    function _buildNewHCMatches(recipe: Recipe, shapeHC: HandleConnection, match, outputList) {
+    function _buildNewHCMatches(recipe: Recipe, shapeHC: HandleConnection, match: Match, outputList: Match[]) {
       const {forward, reverse, score} = match;
       let matchFound = false;
       for (const recipeParticle of recipe.particles) {
@@ -111,6 +116,7 @@ export class RecipeUtil {
 
         const acceptedDirections = {'in': ['in', 'inout'], 'out': ['out', 'inout'], '=': ['in', 'out', 'inout'], 'inout': ['inout'], 'host': ['host']};
         if (recipeConnSpec.direction) {
+          assert(Object.keys(acceptedDirections).includes(shapeHC.direction), `${shapeHC.direction} not in ${Object.keys(acceptedDirections)}`);
           if (!acceptedDirections[shapeHC.direction].includes(recipeConnSpec.direction)) {
             continue;
           }
@@ -199,7 +205,7 @@ export class RecipeUtil {
         }
         // The current handle connection from the shape doesn't match anything
         // in the recipe. Find (or create) a particle for it.
-        const newMatches = [];
+        const newMatches: Match[] = [];
         _buildNewParticleMatches(recipe, shapeHC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
           // the shape references a handle, might also need to create a recipe
@@ -215,7 +221,7 @@ export class RecipeUtil {
       }
     }
 
-    function _buildNewParticleMatches(recipe: Recipe, shapeParticle: Particle, match, newMatches) {
+    function _buildNewParticleMatches(recipe: Recipe, shapeParticle: Particle, match: Match, newMatches: Match[]) {
       const {forward, reverse, score} = match;
       let matchFound = false;
       for (const recipeParticle of recipe.particles) {
@@ -253,7 +259,7 @@ export class RecipeUtil {
         matchFound = true;
       }
       if (matchFound === false) {
-        const newMatch = {forward: new Map(), reverse: new Map(), score: 0};
+        const newMatch: Match = {forward: new Map(), reverse: new Map(), score: 0};
         forward.forEach((value, key) => {
           assert(!newMatch.forward.has(key) || newMatch.forward.get(key) === value);
           newMatch.forward.set(key, value);
@@ -270,9 +276,9 @@ export class RecipeUtil {
       }
     }
 
-    function _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles) {
+    function _assignHandlesToEmptyPosition(match: Match, emptyHandles: Handle[], nullHandles: Handle[]) {
       if (emptyHandles.length === 1) {
-        const matches = [];
+        const matches: Match[] = [];
         const {forward, reverse, score} = match;
         for (const nullHandle of nullHandles) {
           let tagsMatch = true;
@@ -293,8 +299,8 @@ export class RecipeUtil {
         return matches;
       }
       const thisHandle = emptyHandles.pop();
-      const matches = _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles);
-      let newMatches = [];
+      const matches: Match[] = _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles);
+      let newMatches: Match[] = [];
       for (const match of matches) {
         const nullHandles = [...shape.handles.values()].filter(handle => match.forward.get(handle) === null);
         if (nullHandles.length > 0) {
@@ -313,9 +319,9 @@ export class RecipeUtil {
     // from recipe component to shape component.
 
     // Start with a single, empty match
-    let matches = [{forward: new Map(), reverse: new Map(), score: 0}];
+    let matches: Match[] = [{forward: new Map(), reverse: new Map(), score: 0}];
     for (const shapeHC of shape.recipe.handleConnections) {
-      const newMatches = [];
+      const newMatches: Match[] = [];
       for (const match of matches) {
         // collect matching handle connections into a new matches list
         _buildNewHCMatches(recipe, shapeHC, match, newMatches);
@@ -330,7 +336,7 @@ export class RecipeUtil {
       if (shapeParticle.unnamedConnections.length > 0) {
         continue;
       }
-      const newMatches = [];
+      const newMatches: Match[] = [];
       for (const match of matches) {
         _buildNewParticleMatches(recipe, shapeParticle, match, newMatches);
       }
@@ -340,14 +346,14 @@ export class RecipeUtil {
     const emptyHandles = recipe.handles.filter(handle => handle.connections.length === 0);
 
     if (emptyHandles.length > 0) {
-      let newMatches = [];
+      let newMatches: Match[] = [];
       for (const match of matches) {
         const nullHandles = [...shape.handles.values()].filter(handle => match.forward.get(handle) === null);
         if (nullHandles.length > 0) {
           newMatches = newMatches.concat(
               _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles));
         } else {
-          newMatches.concat(match);
+          newMatches = newMatches.concat(match);
         }
       }
       matches = newMatches;
@@ -388,10 +394,10 @@ export class RecipeUtil {
     return handle;
   }
 
-  static directionCounts(handle): DirectionCounts {
+  static directionCounts(handle: Handle): DirectionCounts {
     const counts: DirectionCounts = {in: 0, out: 0, inout: 0, unknown: 0};
     for (const connection of handle.connections) {
-      let direction = connection.direction;
+      let direction: Direction | 'unknown' = connection.direction;
       if (counts[direction] === undefined) {
         direction = 'unknown';
       }
@@ -403,7 +409,7 @@ export class RecipeUtil {
   }
 
   // Returns true if `otherRecipe` matches the shape of recipe.
-  static matchesRecipe(recipe, otherRecipe) {
+  static matchesRecipe(recipe: Recipe, otherRecipe: Recipe) {
     const shape = RecipeUtil.recipeToShape(otherRecipe);
     const result = RecipeUtil.find(recipe, shape);
     return result.some(r => r.score === 0);

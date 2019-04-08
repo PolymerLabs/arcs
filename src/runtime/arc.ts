@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {FakePecFactory} from './fake-pec-factory.js';
-import {Id, IdGenerator} from './id.js';
+import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
@@ -103,7 +103,7 @@ export class Arc {
       console.error(
           `Arc created with string ID ${id}!!! This should be an object of type Id instead. This warning will turn into an ` +
           `exception soon (end of April 2019).`);
-      this.id = new Id(id);
+      this.id = ArcId.fromString(id);
     } else {
       this.id = id;
     }
@@ -442,7 +442,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   generateID(component: string = ''): Id {
-    return this.idGenerator.createChildId(this.id, component);
+    return this.idGenerator.newChildId(this.id, component);
   }
 
   get _stores(): (StorageProviderBase)[] {
@@ -636,7 +636,8 @@ ${this.activeRecipe.toString()}`;
   _tagStore(store: StorageProviderBase, tags: Set<string>) {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
-    (tags || []).forEach((tag: string) => storeTags.add(tag));
+    tags = tags || new Set();
+    tags.forEach(tag => storeTags.add(tag));
   }
 
   _onDataChange() {

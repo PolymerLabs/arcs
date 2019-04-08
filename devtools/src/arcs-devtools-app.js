@@ -3,6 +3,7 @@ import '../deps/@polymer/app-route/app-route.js';
 import '../deps/@polymer/iron-icons/iron-icons.js';
 import '../deps/@polymer/iron-icons/device-icons.js';
 import '../deps/@polymer/iron-icons/social-icons.js';
+import '../deps/@polymer/iron-icons/image-icons.js';
 import '../deps/@polymer/iron-icons/communication-icons.js';
 import '../deps/@polymer/iron-pages/iron-pages.js';
 import '../deps/@polymer/iron-selector/iron-selector.js';
@@ -11,6 +12,7 @@ import './arcs-overview.js';
 import './arcs-stores.js';
 import './arcs-planning.js';
 import './arcs-communication-channel.js';
+import './arcs-environment.js';
 import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
 import './arcs-tracing.js';
@@ -42,30 +44,42 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       }
       iron-selector {
         width: max-content;
-        height: 27px;
+        height: 26px;
       }
       iron-selector a {
         display: inline-block;
         height: 100%;
         color: #666;
         text-decoration: none;
-        line-height: 24px;
         padding: 0 8px;
-        box-sizing: border-box;
-        vertical-align: bottom;
-        border-bottom: 1px solid var(--mid-gray);
+        position: relative;
       }
       .header iron-selector a iron-icon {
         display: none;
       }
       iron-selector a.iron-selected {
         color: #444;
-        border-color: #03a9f4;
+      }
+      iron-selector a.iron-selected::after {
+        content: ' ';
+        display: block;
+        background-color: rgb(26, 115, 232);
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 2px;
+      }
+      @media (-webkit-min-device-pixel-ratio: 1.5) {
+        iron-selector a.iron-selected::after {
+          transform: scaleY(0.75);
+          transform-origin: 0 100%;
+        }
       }
       iron-selector a:not(.iron-selected):hover {
         background-color: #eaeaea;
       }
-      @media (max-width: 600px) {
+      @media (max-width: 650px) {
         .header iron-selector a {
           font-size: 0;
           padding: 0;
@@ -107,6 +121,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
           <div divider></div>
           <iron-selector selected="[[routeData.page]]" attr-for-selected="name" role="navigation">
             <a name="overview" href="#overview"><iron-icon icon="timeline" title="Overview"></iron-icon><span tab-header>Overview</span></a>
+            <a name="environment" href="#environment"><iron-icon icon="image:filter-vintage" title="Environment"></iron-icon><span tab-header>Environment</span></a>
             <a name="stores" href="#stores"><iron-icon icon="device:sd-storage" title="Storage"></iron-icon><span tab-header>Storage</span></a>
             <a name="pecLog" href="#pecLog"><iron-icon icon="swap-horiz" title="Execution Log"></iron-icon><span tab-header>Execution Log</span></a>
             <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications" title="Strategizer"></iron-icon><span tab-header>Strategizer</span></a>
@@ -118,6 +133,7 @@ class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
       </header>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
+        <arcs-environment name="environment"></arcs-environment>
         <arcs-stores name="stores"></arcs-stores>
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-pec-log name="pecLog"></arcs-pec-log>

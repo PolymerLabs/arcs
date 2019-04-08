@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {handleFor, Handle, Variable, Collection} from '../handle.js';
-import {Id} from '../id.js';
+import {Id, ArcId} from '../id.js';
 import {Schema} from '../schema.js';
 import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, VariableProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
@@ -124,7 +124,7 @@ class TestCollection {
     const effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      const item = {value: {id, storageKey: `volatile://${this._arcId}:^^volatile-Thing {Text value}`}, effective, keys};
+      const item = {value: {id, storageKey: `volatile://${this._arcId}^^volatile-Thing {Text value}`}, effective, keys};
       // Hard coding the storageKey here is a bit cheeky, but the TestEngine class 
       // enforces the schema and arcID is plumbed through.
       const event = {remove: [item], version: this._version, originatorId};
@@ -187,10 +187,10 @@ class TestEngine {
   _syncCallbacks = new Map();
   _events = [];
   _scheduler = new StorageProxyScheduler();
-  _arcId;
+  _arcId: ArcId;
   
-  constructor(arcId) {
-    this._arcId = arcId;
+  constructor(arcId: string) {
+    this._arcId = ArcId.newForTest(arcId);
   }
 
   newVariable(name) {
@@ -316,7 +316,7 @@ describe('storage-proxy', () => {
     // and TestVariable will need to be updated to match.
     const engine = new TestEngine('!arc-id');
     const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(new Id('arc-id'));
+    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
     let testEvent;
     let realEvent;
 
@@ -341,9 +341,9 @@ describe('storage-proxy', () => {
   it('verify that the test storage API matches the real storage (collection)', async () => {
     // If this fails, most likely the VolatileStorage classes have been changed
     // and TestCollection will need to be updated to match.
-    const engine = new TestEngine('!arc-id');
+    const engine = new TestEngine('arc-id');
     const entity = engine.newEntity('abc');
-    const realStorage = new VolatileStorage(new Id('arc-id'));
+    const realStorage = new VolatileStorage(ArcId.newForTest('arc-id'));
     let testEvent;
     let realEvent;
 
@@ -366,7 +366,7 @@ describe('storage-proxy', () => {
   });
 
   it('notifies for updates to initially empty handles', async () => {
-    const engine = new TestEngine('!arc-id');
+    const engine = new TestEngine('arc-id');
     const fooStore = engine.newVariable('foo');
     const barStore = engine.newCollection('bar');
     const particle = engine.newParticle();

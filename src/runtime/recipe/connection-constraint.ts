@@ -11,11 +11,13 @@ import {ParticleSpec} from '../particle-spec.js';
 import {Direction} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings} from './util.js';
+import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
+import { Particle } from './particle.js';
 
 export abstract class EndPoint implements Comparable {
-  abstract _compareTo(other): number;
-  abstract _clone(cloneMap?);
-  abstract toString(nameMap?);
+  abstract _compareTo(other: EndPoint): number;
+  abstract _clone(cloneMap?: CloneMap);
+  abstract toString(nameMap?: Map<RecipeComponent, string>);
 }
 
 
@@ -29,18 +31,18 @@ export class ParticleEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap = undefined) {
+  _clone(cloneMap: CloneMap = undefined) {
     return new ParticleEndPoint(this.particle, this.connection);
   }
 
-  _compareTo(other): number {
-    let cmp;
+  _compareTo(other: ParticleEndPoint): number {
+    let cmp: number;
     if ((cmp = compareStrings(this.particle.name, other.particle.name)) !== 0) return cmp;
     if ((cmp = compareStrings(this.connection, other.connection)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap = undefined) {
+  toString(nameMap: Map<RecipeComponent, string> = undefined) {
     if (!this.connection) {
       return `${this.particle.name}`;
     }
@@ -49,9 +51,9 @@ export class ParticleEndPoint extends EndPoint {
 }
 
 export class InstanceEndPoint extends EndPoint {
-  instance: EndPoint;
+  instance: Particle;
   connection: string;
-  constructor(instance: EndPoint, connection: string) {
+  constructor(instance: Particle, connection: string) {
     super();
     assert(instance);
     //this.recipe = instance.recipe;
@@ -59,18 +61,18 @@ export class InstanceEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap) {
-    return new InstanceEndPoint(cloneMap.get(this.instance), this.connection);
+  _clone(cloneMap: CloneMap) {
+    return new InstanceEndPoint(cloneMap.get(this.instance) as Particle, this.connection);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: InstanceEndPoint) {
+    let cmp: number;
     if ((cmp = compareComparables(this.instance, other.instance)) !== 0) return cmp;
     if ((cmp = compareStrings(this.connection, other.connection)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap) {
+  toString(nameMap: Map<RecipeComponent, string>) {
     if (!this.connection) {
       return `${nameMap.get(this.instance)}`;
     }
@@ -86,17 +88,17 @@ export class HandleEndPoint extends EndPoint {
     this.handle = handle;
   }
 
-  _clone(cloneMap = undefined) {
+  _clone(cloneMap: CloneMap  = undefined) {
     return new HandleEndPoint(this.handle);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: HandleEndPoint) {
+    let cmp: number;
     if ((cmp = compareStrings(this.handle.localName, other.handle.localName)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap = undefined) {
+  toString(nameMap: Map<RecipeComponent, string> = undefined) {
     return `${this.handle.localName}`;
   }
 }
@@ -108,17 +110,17 @@ export class TagEndPoint extends EndPoint {
     this.tags = tags;
   }
 
-  _clone(cloneMap = undefined) {
+  _clone(cloneMap: CloneMap = undefined) {
     return new TagEndPoint(this.tags);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: TagEndPoint) {
+    let cmp: number;
     if ((cmp = compareArrays(this.tags, other.tags, compareStrings)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap = undefined) {
+  toString(nameMap: Map<RecipeComponent, string> = undefined) {
     return this.tags.map(a => `#${a}`).join(' ');
   }
 }
@@ -141,7 +143,7 @@ export class ConnectionConstraint {
     Object.freeze(this);
   }
 
-  _copyInto(recipe, cloneMap) {
+  _copyInto(recipe: Recipe, cloneMap: CloneMap) {
     if (this.type === 'constraint') {
       if (this.from instanceof InstanceEndPoint || this.to instanceof InstanceEndPoint) {
         assert(!`Can't have connection constraints of type constraint with InstanceEndPoints`);
@@ -154,15 +156,15 @@ export class ConnectionConstraint {
     return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction);
   }
     
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: ConnectionConstraint) {
+    let cmp: number;
     if ((cmp = this.from._compareTo(other.from)) !== 0) return cmp;
     if ((cmp = this.to._compareTo(other.to)) !== 0) return cmp;
     if ((cmp = compareStrings(this.direction, other.direction)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap = undefined, options = undefined) {
+  toString(nameMap: Map<RecipeComponent, string> = undefined, options: ToStringOptions = undefined) {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';

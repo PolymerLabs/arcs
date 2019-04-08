@@ -13,12 +13,12 @@ import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Speculator} from '../speculator.js';
-import {Id} from '../../runtime/id.js';
+import {Id, ArcId} from '../../runtime/id.js';
 
 describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
-    const arc = new Arc({id: new Id('test'), loader, context: new Manifest({id: new Id('test')})});
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: new Manifest({id: ArcId.newForTest('test')})});
     const manifest = await Manifest.load('./src/runtime/test/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

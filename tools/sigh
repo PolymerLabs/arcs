@@ -1,2 +1,7 @@
 #!/bin/sh
-exec node $(dirname $0)/sigh.js "$@"
+
+if [ ! -e build/sigh.js -o tools/sigh.ts -nt build/sigh.js ]; then
+  echo 'Building sigh'
+  node_modules/.bin/tsc -p tools || exit 1
+fi
+exec node build/sigh.js "$@"
