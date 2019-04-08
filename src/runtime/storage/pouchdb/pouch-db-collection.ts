@@ -120,8 +120,6 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   /** @inheritDoc */
-  // Returns {version, model: [{id, value, keys: []}]}
-  // TODO(lindner): this is async, but the base class isn't....
   async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     return {

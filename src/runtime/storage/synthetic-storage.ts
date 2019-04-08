@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
+import {SerializedModelEntry} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Manifest} from '../manifest.js';
 import {ArcHandle, ArcInfo} from '../synthetic-types.js';
@@ -14,7 +15,7 @@ import {ArcType, HandleType, Type} from '../type.js';
 import {setDiffCustom} from '../util.js';
 
 import {KeyBase} from './key-base.js';
-import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase} from './storage-provider-base.js';
+import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
 import {StorageProviderFactory} from './storage-provider-factory.js';
 
 enum Scope {
@@ -111,7 +112,7 @@ export class SyntheticStorage extends StorageBase {
   async connect(id: string, type: Type, key: string) : Promise<SyntheticCollection> {
     assert(type === null, 'SyntheticStorage does not accept a type parameter');
     const synthKey = new SyntheticKey(key, this.storageFactory);
-    const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey);
+    const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey) as VariableStorageProvider;
     if (targetStore === null) {
       return null;
     }
@@ -139,7 +140,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   private model: ArcHandle[] = [];
   backingStore = undefined;
 
-  constructor(type, id, key, targetStore, storageFactory) {
+  constructor(type: Type, id: string, key:string, targetStore: VariableStorageProvider, storageFactory: StorageProviderFactory) {
     super(type, undefined, id, key);
     this.targetStore = targetStore;
     this.storageFactory = storageFactory;
@@ -184,8 +185,8 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     return this.model;
   }
 
-  async toLiteral() {
-    return this.toList();
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
+    throw new Error('unimplemented');
   }
 
   cloneFrom(): Promise<void> {
@@ -193,7 +194,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   }
 
 
-  ensureBackingStore() {
+  async ensureBackingStore() {
     throw new Error('ensureBackingStore should never be called on SyntheticCollection!');
   }
 

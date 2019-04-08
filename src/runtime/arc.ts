@@ -249,7 +249,10 @@ export class Arc {
         let serializedData: {storageKey: string}[] | null = [];
         if (!volatile) {
           // TODO: include keys in serialized [big]collections?
-          serializedData = (await handle.toLiteral()).model.map(({id, value, index}) => {
+          serializedData = (await handle.toLiteral()).model.map((model) => {
+            const {id, value} = model;
+            const index = model['index']; // TODO: Invalid Type
+
             if (value == null) {
               return null;
             }

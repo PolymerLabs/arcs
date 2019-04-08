@@ -1,6 +1,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {Type} from '../../type.js';
 import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
+import {SerializedModelEntry} from '../crdt-collection-model.js';
 
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
@@ -137,7 +138,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * Returns the state of this variable based as an object of the form
    * {version, model: [{id, value}]}
    */
-  async toLiteral(): Promise<{version: number; model: {}[]}> {
+  async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
     await this.initialized;
     const value = await this.getStored();
 
