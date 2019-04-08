@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -xe
-[ tools/whisper.ts -nt build/whisper.js ] && echo 'newer ts file detected, would rebuild'
-node_modules/.bin/tsc -p tools
-exec node build/whisper.js "$@"
+set -e
+if [ tools/sigh.ts -nt build/sigh.js ]; then
+  echo 'Building sigh'
+  node_modules/.bin/tsc -p tools
+fi
+exec node build/sigh.js "$@"
