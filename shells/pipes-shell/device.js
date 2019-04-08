@@ -39,18 +39,25 @@ export const DeviceApiFactory = async (storage, manifest, deviceClient) => {
 };
 
 const signalClientWhenReady = async client => {
-  // inform client when shell is ready
-  const ready = client && client.shellReady;
-  if (ready) {
-    await userContext.isReady;
-    ready.call(client);
+  // inform client when shell is ready, if possible
+  if (client) {
+    const ready = client.shellReady;
+    if (ready) {
+      await userContext.isReady;
+      ready.call(client);
+    }
   }
 };
 
 const marshalRecipeContext = async () => {
   const manifest = await Utils.parse(recipeManifest);
   recipes = manifest.findRecipesByVerb('autofill');
-  log('supported types:', recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.')));
+  const types = recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.'));
+  //log('supported types:', types);
+  log(`> DeviceClient.notifyAutofillTypes('${JSON.stringify(types)}')`);
+  if (client) {
+    client.notifyAutofillTypes(JSON.stringify(types));
+  }
 };
 
 const deviceApi = {
