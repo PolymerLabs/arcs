@@ -70,7 +70,7 @@ export abstract class Action<T extends Cloneable> {
     return this._arc;
   }
 
-  getResults(inputParams) {
+  getResults(inputParams: {generated: Descendant<T>[]}) {
     return inputParams.generated;
   }
 
