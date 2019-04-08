@@ -54,6 +54,15 @@ describe('IdGenerator', () => {
       assert.deepEqual(idGenerator.createChildId(parentId, 'z').idTree, ['x', 'y', 'z2']);
     });
   });
+
+  describe('#createArcId', () => {
+    it('creates a valid ArcId using its session ID', () => {
+      const idGenerator = IdGenerator.createWithSessionIdForTesting('sessionId');
+      const arcId = idGenerator.createArcId('foo');
+      assert(arcId instanceof ArcId);
+      assert.equal(arcId.toString(), '!sessionId:foo');
+    });
+  });
 });
 
 describe('Id', () => {

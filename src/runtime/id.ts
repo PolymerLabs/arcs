@@ -37,6 +37,7 @@ export class IdGenerator {
     return new IdGenerator(sessionId);
   }
   
+  /** Creates a new ArcId. */
   createArcId(name: string): ArcId {
     return ArcId._createArcIdInternal(this._currentSessionId, name);
   }
