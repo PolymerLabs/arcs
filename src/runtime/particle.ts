@@ -55,7 +55,7 @@ export class Particle {
   }
 
   /**
-   * This method is deprecated. Use setHandles instead.
+   * @deprecated Use setHandles instead.
    */
   setViews(views) {
   }

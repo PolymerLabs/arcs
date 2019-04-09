@@ -1,4 +1,5 @@
 {
+  // loosely based on https://github.com/google/gts/blob/master/tslint.json
   "rules": {
     "array-type": [true, "array"],
     "arrow-return-shorthand": true,
@@ -15,6 +16,7 @@
     ],
     "class-name": true,
     "curly": [true, "ignore-same-line"],
+    "deprecation": {"options": true, "severity": "warning"},
     "forin": true,
     "interface-name": [true, "never-prefix"],
     "jsdoc-format": true,
@@ -33,6 +35,7 @@
     "no-namespace": [true, "allow-declarations"],
     "no-reference": true,
     "no-string-throw": true,
+    "no-unsafe-finally": true,
     "no-unused-expression": true,
     "no-var-keyword": true,
     "object-literal-shorthand": true,

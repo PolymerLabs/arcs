@@ -94,18 +94,16 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
-  //
-  // deprecated
+  /** @deprecated */
   get _views() {
     console.warn(`Particle ${this.spec.name} uses deprecated _views getter.`);
     return this.handles;
   }
+  /** @deprecated */
   async setViews(views) {
     console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
     return this.setHandles(views);
   }
-  // end deprecated
-  //
   async setHandles(handles) {
     this.configureHandles(handles);
     this.handles = handles;
