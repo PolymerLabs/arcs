@@ -14,7 +14,7 @@ import {Id} from '../../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 
-import {CrdtCollectionModel} from '../crdt-collection-model.js';
+import {CrdtCollectionModel, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from '../storage-provider-base.js';
 
@@ -136,7 +136,7 @@ export class FirebaseStorage extends StorageBase {
   }
 
   // Unit tests should call this in an 'after' block.
-  shutdown() {
+  async shutdown() {
     for (const entry of Object.values(this.apps)) {
       if (entry.owned) {
         entry.app.delete();
@@ -589,12 +589,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     return super.modelForSynchronization();
   }
 
-  // Returns {version, model: [{id, value}]}
-  async toLiteral(): Promise<{}> {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     // fixme: think about if there are local mutations...
     const value = this.value;
-    const model = (value == null) ? [] : [{id: value.id, value}];
+    // TODO: what should keys be set to?
+    const model = (value == null) ? [] : [{id: value.id, value, keys: []}];
 
     return {version: this.version, model};
   }
@@ -1135,8 +1135,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  // Returns {version, model: [{id, value, keys: []}]}
-  async toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     await this.initialized;
     // TODO: think about what to do here, do we really need toLiteral for a firebase store?
     // if yes, how should it represent local modifications?
@@ -1471,7 +1470,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
     throw new Error('FirebaseBigCollection does not yet implement cloneFrom');
   }
 
-  toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('FirebaseBigCollection does not yet implement toLiteral');
   }
 
@@ -1603,7 +1602,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement off');
   }
 
-  toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 

@@ -23,9 +23,9 @@ import {Id, ArcId} from '../../../id.js';
 const testUrl = 'pouchdb://memory/user-test';
 
 // TODO(lindner): run tests for remote and local variants
-const testUrlReplicated = 'pouchdb://memory/user-test';
+['pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((testUrl) => {
 
-describe('pouchdb', () => {
+describe('pouchdb for ' + testUrl, () => {
   let lastStoreId = 0;
   function newStoreKey(name) {
     return `${testUrl}/${name}-${lastStoreId++}`;
@@ -42,17 +42,23 @@ describe('pouchdb', () => {
     // await PouchDbStorage.dumpDB();
   });
 
-  let storageInstances = [];
+  const storageInstances: Map<Id, StorageProviderFactory> = new Map();
 
-  function createStorage(id) {
-    const storage = new StorageProviderFactory(id);
-    storageInstances.push(storage);
+  function createStorage(id: Id) {
+    let storage = storageInstances.get(id);
+    if (!storage) {
+      storage = new StorageProviderFactory(id);
+      storageInstances.set(id, storage);
+    }
+
     return storage;
   }
 
-  after(() => {
-    storageInstances.map(s => s.shutdown());
-    storageInstances = [];
+  after(async () => {
+    for (const s of storageInstances.values()) {
+      await s.shutdown();
+    }
+    storageInstances.clear();
   });
 
   describe('variable', () => {
@@ -324,4 +330,5 @@ describe('pouchdb', () => {
     });
   });
   // TODO(lindner): add big collection tests here when implemented.
+});
 });

@@ -646,8 +646,8 @@ describe('Arc', () => {
 
     // Grab a snapshot of the current state from each store, then clear them.
     const varData = JSON.parse(JSON.stringify(await varStore.toLiteral()));
-    const colData = JSON.parse(JSON.stringify(colStore.toLiteral()));
-    const bigData = JSON.parse(JSON.stringify(bigStore.toLiteral()));
+    const colData = JSON.parse(JSON.stringify(await colStore.toLiteral()));
+    const bigData = JSON.parse(JSON.stringify(await bigStore.toLiteral()));
 
     await varStore.clear();
 
@@ -669,12 +669,12 @@ describe('Arc', () => {
     // The old ones should still be cleared.
     assert.isNull(await varStore.get());
     assert.isEmpty(await colStore.toList());
-    assert.isEmpty(await bigStore.toLiteral().model);
+    assert.isEmpty((await bigStore.toLiteral()).model);
 
     // The new ones should be populated from the serialized data.
     assert.deepEqual(await varStore2.toLiteral(), varData);
-    assert.deepEqual(colStore2.toLiteral(), colData);
-    assert.deepEqual(bigStore2.toLiteral(), bigData);
+    assert.deepEqual(await colStore2.toLiteral(), colData);
+    assert.deepEqual(await bigStore2.toLiteral(), bigData);
   });
 
   it('serializes immediate value handles correctly', async () => {
@@ -721,7 +721,7 @@ describe('Arc', () => {
   });
 
 
-  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
     it('persist serialization for ' + storageKeyPrefix, async () => {
       const id = ArcId.newForTest('test');
       const manifest = await Manifest.parse(`
@@ -836,7 +836,7 @@ describe('Arc', () => {
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
-  ['volatile://', 'pouchdb://memory/user/'].forEach((storageKeyPrefix) => {
+  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
     it('handles serialization/deserialization of empty arcs handles ' + storageKeyPrefix, async () => {
       const id = ArcId.newForTest('test');
       const loader = new Loader();

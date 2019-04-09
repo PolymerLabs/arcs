@@ -10,7 +10,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js';
 
-import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {CrdtCollectionModel, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
 
@@ -230,7 +230,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 
   // Returns {version, model: [{id, value, keys: []}]}
-  toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     return {version: this.version, model: this._model.toLiteral()};
   }
 
@@ -241,7 +241,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
 
   async _toList() {
     if (this.referenceMode) {
-      const items = this.toLiteral().model;
+      const items = (await this.toLiteral()).model;
       if (items.length === 0) {
         return [];
       }
@@ -260,7 +260,8 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
       }
       return output;
     }
-    return this.toLiteral().model;
+    const literal = await this.toLiteral();
+    return literal.model;
   }
 
   async toList() {
@@ -350,7 +351,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
 }
 
 class VolatileVariable extends VolatileStorageProvider implements VariableStorageProvider {
-  _stored: {id: string}|null;
+  _stored: {id: string, storageKey?: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
@@ -404,10 +405,10 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
     return super.modelForSynchronization();
   }
 
-  // Returns {version, model: [{id, value}]}
-  async toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     const value = this._stored;
-    const model = (value != null) ? [{id: value.id, value}] : [];
+    // TODO: what should keys be set to?
+    const model = (value != null) ? [{id: value.id, value, keys: []}] : [];
     return {version: this.version, model};
   }
 
@@ -590,7 +591,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
   }
 
   // Returns {version, model: [{id, index, value, keys: []}]}
-  toLiteral() {
+  async toLiteral() {
     const model = [];
     for (const [id, {index, value, keys}] of this.items.entries()) {
       model.push({id, index, value, keys: Object.keys(keys)});

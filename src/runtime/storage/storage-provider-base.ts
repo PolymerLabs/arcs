@@ -11,8 +11,9 @@ import {Id} from '../id.js';
 import {compareNumbers, compareStrings} from '../recipe/util.js';
 import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
-
+import {SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
+
 
 enum EventKind {
   change = 'Change'
@@ -87,7 +88,7 @@ export abstract class StorageBase {
   /**
    * Provides graceful shutdown for tests.
    */
-  shutdown() {}
+  async shutdown(): Promise<void> {}
 }
 
 // tslint:disable-next-line: no-any
@@ -125,7 +126,7 @@ export abstract class StorageProviderBase {
   source: string|null;
   description: string;
 
-  protected constructor(type: Type, name, id, key) {
+  protected constructor(type: Type, name: string, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     this._type = type;
@@ -249,18 +250,20 @@ export abstract class StorageProviderBase {
   /**
    * @returns an object notation of this storage provider.
    */
-  abstract toLiteral();
+  abstract async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}>;
 
   abstract cloneFrom(store: StorageProviderBase | StorageStub);
 
   // TODO(shans): remove this when it's possible to.
-  abstract ensureBackingStore();
+  abstract async ensureBackingStore();
 
   // tslint:disable-next-line: no-any
   abstract backingStore: any;
 
-  /** TODO */
-  modelForSynchronization() {
+  /**
+   * Called by Particle Execution Host to synchronize it's proxy.
+   */
+  async modelForSynchronization(): Promise<{version: number, model: {}}> {
     return this.toLiteral();
   }
 }

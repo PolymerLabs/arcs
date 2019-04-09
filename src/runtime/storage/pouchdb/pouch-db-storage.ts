@@ -103,14 +103,19 @@ export class PouchDbStorage extends StorageBase {
   }
 
   /** Unit tests should call this in an 'after' block. */
-  shutdown() {
+  async shutdown() {
     // Stop syncing
     if (PouchDbStorage.syncHandler) {
       PouchDbStorage.syncHandler.cancel();
     }
     // Close databases
     for (const db of PouchDbStorage.dbLocationToInstance.values()) {
-      db.close();
+      try {
+        await db.close();
+        await db.destroy();
+      } catch (err) {
+        // ignore already closed db
+      }
     }
     PouchDbStorage.dbLocationToInstance.clear();
   }

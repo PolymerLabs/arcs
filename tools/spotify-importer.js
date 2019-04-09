@@ -124,7 +124,7 @@ import {resetStorageForTesting} from '../build/runtime/storage/firebase/firebase
       console.error(usage);
     }
 
-    storage.shutdown();
+    await storage.shutdown();
   }
 
   console.log();

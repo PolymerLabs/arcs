@@ -1,5 +1,6 @@
 import {assert} from '../../../platform/assert-web.js';
 import {BigCollectionStorageProvider} from '../storage-provider-base.js';
+import {SerializedModelEntry} from '../crdt-collection-model.js';
 
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 
@@ -38,7 +39,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
     throw new Error('NotImplemented');
   }
 
-  toLiteral() {
+  async toLiteral(): Promise<{version: number, model: SerializedModelEntry[]}> {
     throw new Error('NotImplemented');
   }
 

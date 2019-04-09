@@ -92,7 +92,9 @@ export class StorageProviderFactory {
   }
 
   // For testing
-  shutdown() {
-    Object.values(this._storageInstances).map(item => item.storage.shutdown());
+  async shutdown(): Promise<void> {
+    for (const s of Object.values(this._storageInstances)) {
+      await s.storage.shutdown();
+    }
   }
 }

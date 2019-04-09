@@ -34,7 +34,7 @@ async function storeResults(consumer, suggestions) {
 }
 
 // Run test suite for each storageKeyBase
-['volatile', 'pouchdb://memory/user/'].forEach(storageKeyBase => {
+['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
       const helper = await PlanningTestHelper.createAndPlan({
