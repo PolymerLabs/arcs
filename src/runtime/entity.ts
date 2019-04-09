@@ -33,6 +33,7 @@ export interface EntityInterface {
   toLiteral(): EntityRawData;
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
+  entityClass: EntityClass;
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
@@ -143,12 +144,18 @@ export abstract class Entity implements EntityInterface {
     return clone;
   }
 
+  abstract entityClass: EntityClass;
+
   /** Dynamically constructs a new JS class for the entity type represented by the given schema. */
   static createEntityClass(schema: Schema, context: ParticleExecutionContext): EntityClass {
     // Create a new class which extends the Entity base class, and implement all of the required static methods/properties.
     const clazz = class extends Entity {
       constructor(data: EntityRawData, userIDComponent?: string) {
         super(data, schema, context, userIDComponent);
+      }
+
+      get entityClass(): EntityClass {
+        return clazz;
       }
 
       static get type(): Type {
