@@ -55,7 +55,9 @@ describe('pouchdb for ' + testUrl, () => {
   }
 
   after(async () => {
-    await Promise.all([...storageInstances.values()].map(s => s.shutdown()));
+    for (const s of storageInstances.values()) {
+      await s.shutdown();
+    }
     storageInstances.clear();
   });
 
