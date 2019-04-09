@@ -16,10 +16,11 @@ import {Recipe, RequireSection} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareArrays, compareComparables, compareStrings} from './util.js';
+import {Id} from '../id.js';
 
 export class Particle {
   private readonly _recipe: Recipe;
-  private _id: string | undefined = undefined;
+  private _id: Id | undefined = undefined;
   private _name: string;
   private _localName: string | undefined = undefined;
   spec: ParticleSpec | undefined = undefined;
@@ -109,7 +110,7 @@ export class Particle {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = compareStrings(this._id, other._id)) !== 0) return cmp;
+    if ((cmp = compareStrings(this._id ? this._id.toString() : '', other._id ? other._id.toString() : '')) !== 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
     if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
     // TODO: spec?
@@ -208,8 +209,8 @@ export class Particle {
   get recipe() { return this._recipe; }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get id() { return this._id; } // Not resolved until we have an ID.
-  set id(id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
+  get id(): Id { return this._id; } // Not resolved until we have an ID.
+  set id(id: Id) { assert(!this._id, 'Particle ID can only be set once.'); this._id = id; }
   get name() { return this._name; }
   set name(name) { this._name = name; }
   get connections() { return this._connections; } // {parameter -> HandleConnection}

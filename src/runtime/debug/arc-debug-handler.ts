@@ -69,7 +69,7 @@ export class ArcDebugHandler {
     particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
       if (cs.targetSlot) {
         slotConnections.push({
-          particleId: cs.particle.id,
+          particleId: cs.particle.id.toString(),
           consumed: truncate(cs.targetSlot),
           provided: Object.values(cs.providedSlots).map(slot  => truncate(slot)),
         });
