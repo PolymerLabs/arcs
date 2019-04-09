@@ -104,7 +104,7 @@ import '../runtime/storage/pouchdb-provider.js';
 
     const playlistType = new EntityType(manifest.schemas.Playlist);
 
-    const id = Id.fromString('test');
+    const id = Id.fromString('import');
     const storage = new StorageProviderFactory(id);
     const construct = () => storage.construct('import', playlistType.bigCollectionOf(), key);
     const connect = () => storage.connect('import', playlistType.bigCollectionOf(), key);
