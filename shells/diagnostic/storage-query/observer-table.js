@@ -3,7 +3,7 @@ export const ObserverTable = class {
     this.table = document.querySelector(`#${tableId} tbody`);
   }
   addRow(key, cols) {
-    const html = cols.map(msg => `<td>${msg}</td>`).join('');
+    const html = cols.map(msg => `<td>${msg.replace(/</g, '&lt;')}</td>`).join('');
     const node = elt(this.table, 'tr', {innerHTML: html});
     node.id = key;
     return node;

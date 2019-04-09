@@ -14,7 +14,9 @@ const displayHandle = handle => {
   if (handle.type.isCollection) {
     name = `[${name}]`;
   }
-  userTable.onAdd({key: handle.storageKey.split('/').pop(), description: name, deleted: false});
+  const key = handle.storageKey.split('/').pop();
+  userTable.onAdd({key: name, description: key, deleted: false});
+  //userTable.onAdd({key, description: name, deleted: false});
 };
 
 // UserObserver (user)
@@ -95,11 +97,30 @@ const AbstractListener = class {
   }
 };
 
-const BoxListener = class extends AbstractListener {
-  async add(data, {handle}) {
-    const key = handle.type.toString();
-    const typeName = handle.type.getEntitySchema().names[0];
-    entitiesTable.onAdd({key, description: JSON.stringify(data.rawData)});
+const HandlesListener = class extends AbstractListener {
+  async add(handle, owner) {
+    //console.log(handle);
+    displayHandle(handle);
+    const store = await SyntheticStores.getHandleStore(handle);
+    this.observe(store, {store, owner, handle});
+  }
+};
+
+const ArcMetaListener = class extends AbstractListener {
+  async add(data, {owner}) {
+    const {key, deleted} = data.rawData;
+    if (!deleted) {
+      metaTable.onAdd(data.rawData);
+      const storage = owner.rawData && owner.rawData.publicKey || owner;
+      console.log('ArcMetaListener: storage =', storage);
+      const store = await SyntheticStores.getStore(storage, key);
+      if (store) {
+        // get list of handles in user-launcher
+        this.observe(store, {store, owner, data});
+      } else {
+        console.log('failed to marshal store');
+      }
+    }
   }
 };
 
@@ -119,26 +140,12 @@ const ProfileListener = class extends AbstractListener {
   }
 };
 
-const HandlesListener = class extends AbstractListener {
-  async add(handle, owner) {
-    //console.log(handle);
-    displayHandle(handle);
-    const store = await SyntheticStores.getHandleStore(handle);
-    this.observe(store, {store, owner, handle});
-  }
-};
-
-const ArcMetaListener = class extends AbstractListener {
-  async add(data, {owner}) {
-    metaTable.onAdd(data.rawData);
-    const {key, deleted} = data.rawData;
-    if (!deleted) {
-      const store = await SyntheticStores.getStore(storage, key);
-      if (store) {
-        // get list of handles in user-launcher
-        this.observe(store, {store, owner, data});
-      }
-    }
+const BoxListener = class extends AbstractListener {
+  async add(data, {owner, handle}) {
+    const user = owner.owner.rawData.publicKey.split('/').pop();
+    //const typeName = handle.type.toString();
+    const typeName = handle.type.getEntitySchema().names[0];
+    entitiesTable.addRow(data.id, [user /*typeName*/, JSON.stringify(data.rawData)]);
   }
 };
 
@@ -146,7 +153,6 @@ const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-
 
 (async () => {
   //const shareOb = new ArcObserver(key, 'user-launcher', userTable);
-  //
   //
   const store = await SyntheticStores.getStore(storage, 'user-launcher');
   if (store) {
