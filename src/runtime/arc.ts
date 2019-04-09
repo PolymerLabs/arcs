@@ -428,9 +428,9 @@ ${this.activeRecipe.toString()}`;
   }
 
   _instantiateParticle(recipeParticle: Particle) {
-    recipeParticle.id = this.generateID('particle').toString();
+    recipeParticle.id = this.generateID('particle');
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
-    this.loadedParticleInfo.set(recipeParticle.id, info);
+    this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       const store = this.findStoreById(connection.handle.id);

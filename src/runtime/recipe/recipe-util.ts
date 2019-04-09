@@ -13,6 +13,7 @@ import {HandleConnection, Direction} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
+import {Id} from '../id.js';
 
 class Shape {
   recipe: Recipe;
@@ -367,7 +368,7 @@ export class RecipeUtil {
   }
 
   static constructImmediateValueHandle(
-      connection: HandleConnection, particleSpec: ParticleSpec, id: string): Handle {
+      connection: HandleConnection, particleSpec: ParticleSpec, id: Id): Handle {
     assert(connection.type instanceof InterfaceType);
     
     if (!(connection.type instanceof InterfaceType) ||
@@ -386,7 +387,7 @@ export class RecipeUtil {
     handleType.maybeEnsureResolved();
 
     const handle = connection.recipe.newHandle();
-    handle.id = id;
+    handle.id = id.toString();
     handle.mappedType = handleType;
     handle.fate = 'copy';
     handle.immediateValue = particleSpec;
