@@ -11,12 +11,13 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {handleFor, Handle, Variable, Collection} from '../handle.js';
-import {Id, ArcId} from '../id.js';
+import {ArcId} from '../id.js';
 import {Schema} from '../schema.js';
 import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, VariableProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {EntityType} from '../type.js';
+import {EntityInterface} from '../entity.js';
 
 const CAN_READ = true;
 const CAN_WRITE = true;
@@ -226,7 +227,7 @@ class TestEngine {
     return handleFor(proxy, store.name, particle.id, canRead, canWrite);
   }
 
-  newEntity(value) {
+  newEntity(value): EntityInterface {
     const entity = new (this.schema.entityClass())({value});
     entity.identify('E' + this._idCounters[2]++);
     return entity;

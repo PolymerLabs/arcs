@@ -9,18 +9,19 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {handleFor} from './handle.js';
+import {handleFor, Storable} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
 import {Entity} from './entity.js';
+import {SerializedEntity} from './storage-proxy.js';
 
 enum ReferenceMode {Unstored, Stored}
 
-export class Reference {
+export class Reference implements Storable {
   public entity = null;
   public type: ReferenceType;
 
-  private readonly id: string;
+  protected readonly id: string;
   private storageKey: string;
   private readonly context: ParticleExecutionContext;
   private storageProxy = null;
@@ -60,9 +61,16 @@ export class Reference {
   dataClone(): {storageKey: string, id: string} {
     return {storageKey: this.storageKey, id: this.id};
   }
+
+  serialize(): SerializedEntity {
+    return {
+      id: this.id,
+      rawData: this.dataClone(),
+    };
+  }
 }
 
-/** A subclass of Reference that clients can create. Supports storing in handles.  */
+/** A subclass of Reference that clients can create. */
 export abstract class ClientReference extends Reference {
   private mode = ReferenceMode.Unstored;
   public stored: Promise<undefined>;

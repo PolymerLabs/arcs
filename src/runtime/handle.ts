@@ -13,21 +13,20 @@ import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
-import {BigCollectionProxy, CollectionProxy, StorageProxy, VariableProxy} from './storage-proxy.js';
-import {Symbols} from './symbols.js';
+import {BigCollectionProxy, CollectionProxy, StorageProxy, VariableProxy, SerializedEntity} from './storage-proxy.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
-import {EntityClass, EntityInterface, EntityRawData} from './entity.js';
+import {EntityClass, Entity} from './entity.js';
+
+/** An interface representing anything storable in a Handle. Concretely, this is the {@link Entity} and {@link ClientReference} classes. */
+export interface Storable {
+  serialize(): SerializedEntity;
+}
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
   return data;
   //return JSON.parse(JSON.stringify(data));
 }
-
-type SerializedEntity = {
-  id: string,
-  rawData: EntityRawData,
-};
 
 function restore(entry: SerializedEntity, entityClass: EntityClass) {
   assert(entityClass, 'Handles need entity classes for deserialization');
@@ -102,18 +101,14 @@ export abstract class Handle {
     }
   }
 
-  _serialize(entity: EntityInterface) {
+  _serialize(entity: Storable) {
     assert(entity, 'can\'t serialize a null entity');
-    if (!entity.isIdentified()) {
-      entity.createIdentity(this._proxy.generateIDComponents());
+    if (entity instanceof Entity) {
+      if (!entity.isIdentified()) {
+        entity.createIdentity(this._proxy.generateIDComponents());
+      }
     }
-    // tslint:disable-next-line: no-any
-    const id = entity[Symbols.identifier as any];
-    const rawData = entity.dataClone();
-    return {
-      id,
-      rawData
-    };
+    return entity.serialize();
   }
 
   get type() {
@@ -205,7 +200,7 @@ export class Collection extends Handle {
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
-  async store(entity) {
+  async store(entity: Storable) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
@@ -231,7 +226,7 @@ export class Collection extends Handle {
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
-  async remove(entity) {
+  async remove(entity: Storable) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
@@ -315,12 +310,13 @@ export class Variable extends Handle {
    * @throws {Error} if this variable is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
-  async set(entity: EntityInterface) {
+  async set(entity: Storable) {
     try {
       if (!this.canWrite) {
         throw new Error('Handle not writeable');
       }
-      return this._proxy.set(this._serialize(entity), this._particleId);
+      const serialization = this._serialize(entity);
+      return this._proxy.set(serialization, this._particleId);
     } catch (e) {
       this.reportSystemExceptionInHost(e, 'Handle::set');
       throw e;
@@ -398,7 +394,7 @@ export class BigCollection extends Handle {
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
-  async store(entity) {
+  async store(entity: Storable) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
@@ -412,7 +408,7 @@ export class BigCollection extends Handle {
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'out' or 'inout')
    * in the particle's manifest.
    */
-  async remove(entity) {
+  async remove(entity: Entity) {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
