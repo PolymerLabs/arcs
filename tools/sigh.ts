@@ -70,6 +70,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   clean: [clean],
   unit: [unit],
   health: [health],
+  bundle: [build, bundle],
   default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
 };
 
@@ -77,7 +78,7 @@ const eslintCache = '.eslint_sigh_cache';
 const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'src/gen', coverageDir];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
@@ -714,6 +715,18 @@ function health(args: string[]): boolean {
   line();
 
   return true;
+}
+
+// E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes
+function bundle(args: string[]) {
+  return saneSpawn(`node`, [
+      '--experimental-modules',
+      '--loader',
+      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
+      `build/tools/bundle-cli.js`,
+      ...args
+    ],
+    {stdio: 'inherit'});
 }
 
 // Looks up the steps for `command` and runs each with `args`.

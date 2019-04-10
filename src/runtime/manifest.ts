@@ -1122,7 +1122,6 @@ ${e.message}
       tags = [];
     }
 
-
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
@@ -1133,9 +1132,9 @@ ${e.message}
     let json;
     let source;
     if (item.origin === 'file') {
-      source = loader.join(manifest.fileName, item.source);
+      item.source = loader.join(manifest.fileName, item.source);
       // TODO: json5?
-      json = await loader.loadResource(source);
+      json = await loader.loadResource(item.source);
     } else if (item.origin === 'resource') {
       source = item.source;
       json = manifest.resources[source];
@@ -1143,6 +1142,7 @@ ${e.message}
         throw new ManifestError(item.location, `Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
       }
     }
+
     let entities;
     try {
       entities = JSON.parse(json);
