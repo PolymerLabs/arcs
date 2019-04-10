@@ -42,8 +42,8 @@ recipe MakeReservations
   use as restaurants
   use #selected as restaurant
   create #reservation as event
-  create as calendarDescriptions
-  create as annotationDescriptions
+  create #volatile as calendarDescriptions
+  create #volatile as annotationDescriptions
   slot 'rootslotid-toproot' as toproot
   Calendar
     event = event
