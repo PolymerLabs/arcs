@@ -19,7 +19,7 @@
     height: 32px;
   }
   table {
-    width: 100%; /*660px;*/
+    width: 95%; /*660px;*/
     font-size: 80%;
     border: 1px solid #000000;
     text-align: left;
@@ -35,18 +35,18 @@
     background-color: #eeeeee;
   }
   td {
-    font-size: 80%;
+    font-size: 90%;
   }
   td, th {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* #user th {
+  #user th {
     width: 100px;
-  } */
+  }
   :root {
-    --cell-0-width: 340px;
+    --cell-0-width: 220px;
   }
   th:nth-of-type(1), td:nth-of-type(1) {
     width: var(--cell-0-width);
@@ -55,13 +55,12 @@
 
 <div>
   <button onclick="dispose()">Dispose</button>
-  <button onclick="observe()">Observe</button>
 </div>
 
 <spacer></spacer>
 
 <table id="user_h">
-  <tr><th>Handles</th></tr>
+  <tr><th>Arc Handles</th></tr>
   <tr><th>Id</th><th>Description</th></tr>
 </table>
 <div scroller>
@@ -70,7 +69,7 @@
   </table>
 </div>
 
-<!-- <spacer></spacer>
+<spacer></spacer>
 
 <table id="meta_h">
   <tr><th>ArcMetaData</th></tr>
@@ -81,7 +80,7 @@
     <tbody>
     </tbody>
   </table>
-</div> -->
+</div>
 
 <spacer></spacer>
 

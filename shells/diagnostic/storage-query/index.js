@@ -9,162 +9,199 @@ const metaTable = new ObserverTable('meta');
 const entitiesTable = new ObserverTable('entities');
 const friendsTable = new ObserverTable('friends');
 
-const displayHandle = handle => {
-  let name = handle.type.getEntitySchema().names[0];
+const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`;
+
+const typeOf = handle => {
+  let typeName = handle.type.getEntitySchema().names[0];
   if (handle.type.isCollection) {
-    name = `[${name}]`;
+    typeName = `[${typeName}]`;
   }
-  const key = handle.storageKey.split('/').pop();
-  userTable.onAdd({key: name, description: key, deleted: false});
-  //userTable.onAdd({key, description: name, deleted: false});
+  return typeName;
 };
 
-// UserObserver (user)
-// 0: key
-//   ArcObserver (key/user-launcher)
-//     0: Arcid store
-//        0: ArcObserver
-//          0: user store
-//          n: user store
-//        n: ArccObserver
-//        ...
-// 1: key
-//   ArcObserver (key/user-launcher)
-// ...
+let observers = 0;
 
-// thing observer
-//   0: sub-thing
-//     0: sub-sub-thing
-
-// for user Foo
-//   shared handle: add/remove/change
-
-class AbstractEventer {
-  constructor(listener, owner) {
+class StoreObserver {
+  constructor(store, listener, owner) {
+    this.store = store;
     this.listener = listener;
     this.owner = owner;
+    this.log = logFactory('StoreObserver', 'orange');
+    this._connect(store);
+    observers++;
   }
-  fire(name, data) {
-    if (this.listener && this.listener[name]) {
-      return this.listener[name](data, this.owner);
+  async _connect(store) {
+    const data = store.toList ? await store.toList() : [await store.get()];
+    data.forEach(value => value && this.add(value));
+    //
+    const onchange = change => this.onChange(change);
+    store.on('change', onchange, this);
+    this.off = () => store.off(onchange);
+  }
+  async dispose() {
+    if (--observers === 0) {
+      console.warn(`all observers disposed (probably a good thing)`);
     }
-  }
-  dispose() {
-  }
-}
-
-class StoreObserver extends AbstractEventer {
-  constructor(store, listener, owner) {
-    super(listener, owner);
-    const key = store.storageKey.split('/')[3];
-    this.log = logFactory(`StoreObserver[${key}::${store.id}]`, 'green');
-    this.store = store;
-    this.connect(store);
-  }
-  async connect(store) {
-    if (store.toList) {
-      await this.notifyInitialPopulation(store);
-      const onchange = change => this.onChange(change);
-      store.on('change', onchange, this);
-      this.dispose = () => store.off(onchange);
-    }
+    this.off();
+    //
+    const {store} = this;
+    const data = store.toList ? await store.toList() : [await store.get()];
+    data.forEach(value => value && this.remove(value));
+    //
+    this.listener.dispose();
   }
   onChange({add, remove}) {
     this.log('onChange', add, remove);
     //console.log({add, remove});
     if (add) {
-      add.forEach(({value}) => this.fire('add', value));
+      add.forEach(({value}) => this.add(value));
     }
     if (remove) {
-      remove.forEach(({value}) => this.fire('remove', value));
+      remove.forEach(({value}) => this.remove(value));
     }
   }
-  async notifyInitialPopulation(store) {
-    // process initial data
-    this.log('initial population');
-    // TODO(sjmiles): assumes Collection
-    const data = await store.toList();
-    data.forEach(value => this.fire('add', value));
+  add(value) {
+    this.listener.add(value, this);
+  }
+  remove(value) {
+    this.listener.remove(value, this);
   }
 }
 
 const AbstractListener = class {
   constructor(listener) {
+    this.observers = {};
     this.listener = listener;
   }
-  observe(store, owner) {
-    new StoreObserver(store, this.listener, owner);
+  get name() {
+    return `AbstractListener`;
+  }
+  observe(key, store) {
+    this.observers[key] = new StoreObserver(store, this.listener, this);
+  }
+  async unobserve(key) {
+    const observer = this.observers[key];
+    delete this.observers[key];
+    if (observer) {
+      await observer.dispose();
+    }
+  }
+  dispose() {
   }
 };
 
-const HandlesListener = class extends AbstractListener {
-  async add(handle, owner) {
-    //console.log(handle);
-    displayHandle(handle);
+const NoopListener = class extends AbstractListener {
+  add() {
+    //
+  }
+  remove() {
+    //
+  }
+};
+
+const HandleListener = class extends AbstractListener {
+  async add(handle) {
+    const key = handle.storageKey;
+    userTable.addRow(key, [typeOf(handle), key]);
+    //
     const store = await SyntheticStores.getHandleStore(handle);
-    this.observe(store, {store, owner, handle});
+    this.observe(key, store);
+  }
+  remove(handle) {
+    const key = handle.storageKey;
+    userTable.removeRow(key);
+    //
+    this.unobserve(key);
   }
 };
 
-const ArcMetaListener = class extends AbstractListener {
-  async add(data, {owner}) {
-    const {key, deleted} = data.rawData;
+const MetaListener = class extends AbstractListener {
+  async add(entity, owner) {
+    const {id, rawData: {description, key, deleted}} = entity;
     if (!deleted) {
-      metaTable.onAdd(data.rawData);
-      const storage = owner.rawData && owner.rawData.publicKey || owner;
-      console.log('ArcMetaListener: storage =', storage);
+      entitiesTable.addRow(id, [id, description]);
+      //metaTable.addRow(id, [id, description]);
+      //
+      const storage = owner.store.storageKey.split('/').slice(0, -3).join('/');
       const store = await SyntheticStores.getStore(storage, key);
       if (store) {
-        // get list of handles in user-launcher
-        this.observe(store, {store, owner, data});
-      } else {
-        console.log('failed to marshal store');
+        this.observe(key, store);
       }
+    }
+  }
+  remove(entity) {
+    const {id, rawData: {key, deleted}} = entity;
+    if (!deleted) {
+      //metaTable.removeRow(id);
+      entitiesTable.removeRow(id);
+      //
+      this.unobserve(key);
     }
   }
 };
 
 const ProfileListener = class extends AbstractListener {
-  async add(data, {owner, handle}) {
-    const key = handle.type.toString();
-    const typeName = handle.type.getEntitySchema().names[0];
-    //entitiesTable.onAdd({key, description: JSON.stringify(data.rawData)});
-    const user = owner.owner.split('/').pop();
-    entitiesTable.addRow(handle.id, [user, JSON.stringify(data.rawData)]);
-    if (typeName === 'Friend') {
-      const {publicKey} = data.rawData;
-      friendsTable.addRow(data.id, [publicKey]);
-      const store = await SyntheticStores.getStore(publicKey, 'user-launcher');
-      this.observe(store, data);
+  get name() {
+    return `ProfileListener`;
+  }
+  async add(entity) {
+    const {id, rawData} = entity;
+    entitiesTable.addRow(id, [id, JSON.stringify(rawData)]);
+    //
+    if (rawData.publicKey) {
+      friendsTable.addRow(id, [rawData.publicKey]);
+      const store = await SyntheticStores.getStore(rawData.publicKey, 'user-launcher');
+      this.observe(id, store);
+    }
+  }
+  remove(entity) {
+    const {id, rawData} = entity;
+    entitiesTable.removeRow(id);
+    //
+    if (rawData.publicKey) {
+      friendsTable.removeRow(id);
+      this.unobserve(id);
     }
   }
 };
 
-const BoxListener = class extends AbstractListener {
-  async add(data, {owner, handle}) {
-    const user = owner.owner.rawData.publicKey.split('/').pop();
-    //const typeName = handle.type.toString();
-    const typeName = handle.type.getEntitySchema().names[0];
-    entitiesTable.addRow(data.id, [user /*typeName*/, JSON.stringify(data.rawData)]);
+const thingListener = {
+  observers: {},
+  async add(entity) {
+    const {id: key, rawData} = entity;
+    entitiesTable.addRow(key, [key, JSON.stringify(rawData)]);
+  },
+  remove(entity) {
+    const key = entity.id;
+    entitiesTable.removeRow(key);
+  },
+  dispose() {
   }
 };
 
-const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`;
-
-(async () => {
-  //const shareOb = new ArcObserver(key, 'user-launcher', userTable);
-  //
+const observe = async () => {
   const store = await SyntheticStores.getStore(storage, 'user-launcher');
   if (store) {
-    const chain = [ArcMetaListener, ProfileListener, ArcMetaListener, BoxListener];
-    //const chain = [HandlesListener, ArcMetaListener, HandlesListener, ProfileListener, HandlesListener, ArcMetaListener, HandlesListener, BoxListener];
-    let listener = null;
-    while (chain.length) {
-      listener = new HandlesListener(new (chain.pop())(listener));
-    }
-    // get list of handles in user-launcher
-    new StoreObserver(store, listener, storage);
-    //new HandlesListener(new ArcMetaListener(new HandlesListener(new ProfileListener(new HandlesListener(new ArcMetaListener()))))));
+    window.ob = new StoreObserver(store,
+      new HandleListener(
+        new MetaListener(
+          new HandleListener(
+            new ProfileListener(
+              new HandleListener(
+                new MetaListener(
+                  new HandleListener(
+                    //new NoopListener()
+                    thingListener
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+    window.dispose = () => window.ob.dispose();
   }
-})();
-
+};
+window.observe = observe;
+observe();
