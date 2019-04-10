@@ -374,7 +374,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
   private resolveInitialized: () => void;
-  private readonly valueChangeCallback: ({}) => void;
+  private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
     super(type, storageEngine, id, reference, firebaseKey);
@@ -651,7 +651,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: () => void;
   private localKeyId = Date.now();
-  private readonly valueChangeCallback: ({}) => void;
+  private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey) {
     super(type, storageEngine, id, reference, firebaseKey);
