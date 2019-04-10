@@ -1,5 +1,5 @@
 import {ObserverTable} from './observer-table.js';
-import {nameOfType, getBoxTypeSpec, boxes} from './utils.js';
+import {nameOfType, simpleNameOfType, getBoxTypeSpec, boxes} from './utils.js';
 
 const handlesTable = new ObserverTable('handles');
 const metaTable = new ObserverTable('meta');
@@ -44,37 +44,36 @@ export const ShareDisplayMixin = Base => class extends Base {
   async add(entity, store) {
     super.add(entity, store);
     const user = store.storageKey.split('/').slice(5, 6);
-    //const realId = entity.id.split(':').slice(0, -1).join(':');
-    //console.log(entity.id, realId);
-    entitiesTable.addRow(entity.id, [user, nameOfType(store.type), JSON.stringify(entity.rawData)]);
+    entitiesTable.addRow(entity.id, [user, simpleNameOfType(store.type), JSON.stringify(entity.rawData)]);
     const typeName = store.type.getEntitySchema().names[0];
     const typeSpec = getBoxTypeSpec(store);
     const box = boxes[typeSpec];
-    if (!box.table) {
-      const tid = typeName.replace(/[[\]]/g, '_');
-      document.body.appendChild(Object.assign(document.createElement('div'), {innerHTML: `
-<table id="${tid}">
-  <thead>
-    <tr><th colspan="3">Box of ${typeName}</th></tr>
-    <tr><th style="width:100px">User</th><th style="width:200px">Type</th><th>Data</th></tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
-<spacer></spacer>
-      `}));
-      box.table = new ObserverTable(tid);
+    if (box) {
+      if (!box.table) {
+        const tid = typeName.replace(/[[\]]/g, '_');
+        document.body.appendChild(Object.assign(document.createElement('div'), {innerHTML: `
+  <table id="${tid}">
+    <thead>
+      <tr><th colspan="3">Box of ${typeName}</th></tr>
+      <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <spacer></spacer>
+        `}));
+        box.table = new ObserverTable(tid);
+      }
+      box.table.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
     }
-    box.table.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
   }
   remove(entity, store) {
     super.remove(entity, store);
-    const realId = entity.id.split(':').slice(0, -1).join(':');
-    entitiesTable.removeRow(realId);
+    entitiesTable.removeRow(entity.id);
     const typeSpec = getBoxTypeSpec(store);
     const box = boxes[typeSpec];
     if (box) {
-      box.table.removeRow(realId);
+      box.table.removeRow(entity.id);
     }
   }
 };
@@ -82,15 +81,13 @@ export const ShareDisplayMixin = Base => class extends Base {
 export const ProfileDisplayMixin = Base => class extends Base {
   async add(entity, store) {
     super.add(entity, store);
-    const typeName = store.type.getEntitySchema().names[0];
-    if (typeName === 'Friend' && store.type.isCollection) {
+    if (this.isFriendStore(store)) {
       friendsTable.addRow(entity.id, [entity.rawData.publicKey]);
     }
   }
   remove(entity, store) {
     super.remove(entity, store);
-    const typeName = store.type.getEntitySchema().names[0];
-    if (typeName === 'Friend' && store.type.isCollection) {
+    if (this.isFriendStore(store)) {
       friendsTable.removeRow(entity.id);
     }
   }

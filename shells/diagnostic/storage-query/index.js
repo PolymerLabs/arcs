@@ -14,33 +14,38 @@ const paths = {
 };
 Utils.init(paths.root, paths.map);
 
-// prepare context
-const context = Utils.parse('');
-
-const ArcHandleListenerImpl = ArcHandleDisplayMixin(ArcHandleListener);
-
-const ArcMetaListenerImpl =
-  listener => new ArcHandleListenerImpl(new (ArcMetaDisplayMixin(ArcMetaListener))(listener));
-const ProfileListenerImpl =
-(context, listener) => new ArcHandleListenerImpl(new (ProfileDisplayMixin(ShareDisplayMixin(ProfileListener)))(context, listener));
-const ShareListenerImpl =
-(context, listener)  => new ArcHandleListenerImpl(new (ShareDisplayMixin(ShareListener))(context, listener));
-
-const UserObserverImpl = store => new StoreObserver(store,
-  // each handle is some Arc Metadata (including key)
-  ArcMetaListenerImpl(
-    // handles from each referenced Arc contains arbitrary profile data
-    ProfileListenerImpl(context,
-      // consume profile data of type [Friend] to look up Friend Arcs
-      ArcMetaListenerImpl(
-        // handles from each referenced Arc contains arbitrary shared data
-        ShareListenerImpl(context)
-      )
-    )
-  )
-);
+let context;
+let UserObserverImpl;
 
 const observe = async () => {
+  // prepare context
+  if (!context) {
+    context = await Utils.parse('');
+    //
+    const ArcHandleListenerImpl = ArcHandleDisplayMixin(ArcHandleListener);
+    //
+    const ArcMetaListenerImpl =
+      listener => new ArcHandleListenerImpl(new (ArcMetaDisplayMixin(ArcMetaListener))(listener));
+    const ProfileListenerImpl =
+    (context, listener) => new ArcHandleListenerImpl(new (ProfileDisplayMixin(ShareDisplayMixin(ProfileListener)))(context, listener));
+    const ShareListenerImpl =
+    (context, listener)  => new ArcHandleListenerImpl(new (ShareDisplayMixin(ShareListener))(context, listener));
+    //
+    UserObserverImpl = store => new StoreObserver(store,
+      // each handle is some Arc Metadata (including key)
+      ArcMetaListenerImpl(
+        // handles from each referenced Arc contains arbitrary profile data
+        ProfileListenerImpl(context,
+          // consume profile data of type [Friend] to look up Friend Arcs
+          ArcMetaListenerImpl(
+            // handles from each referenced Arc contains arbitrary shared data
+            ShareListenerImpl(context)
+          )
+        )
+      )
+    );
+  }
+  //
   const store = await SyntheticStores.getStore(storage, 'user-launcher');
   if (store) {
     // `user-launcher` store tracks user's Arcs
