@@ -84,7 +84,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 <template friend-avatars>
   <div item>
     <model-img src="{{url}}">
-      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dbl-click="onSelectAvatar">
+      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dblclick="onSelectAvatar">
     </model-img>
     <br>
     <span>{{name}}</span>
