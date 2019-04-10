@@ -36,6 +36,7 @@ export interface EntityInterface extends Storable {
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
   entityClass: EntityClass;
+  mutable: boolean;
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
@@ -67,6 +68,7 @@ export abstract class Entity implements EntityInterface {
 
   private schema: Schema;
   protected rawData: EntityRawData;
+  private _mutable = true;
 
   // Currently we need a ParticleExecutionContext to be injected here in order to construct entity References (done in the sanitizeEntry
   // function below).
@@ -78,13 +80,33 @@ export abstract class Entity implements EntityInterface {
     this.schema = schema;
 
     assert(data, `can't construct entity with null data`);
-    this.rawData = createRawDataProxy(schema);
 
     // TODO: figure out how to do this only on wire-created entities.
+    const rawData = {};
     const sanitizedData = sanitizeData(data, schema, context);
     for (const [name, value] of Object.entries(sanitizedData)) {
-      this.rawData[name] = value;
+      rawData[name] = value;
     }
+
+    this.rawData = createRawDataProxy(rawData, schema, this);
+  }
+
+  /** Returns true if this Entity instance can have its fields mutated. */
+  get mutable(): boolean {
+    // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
+    return this._mutable;
+  }
+
+  /**
+   * Prevents further mutation of this Entity instance. Note that calling this method only affects this particular Entity instance; the entity
+   * it represents (in a data store somewhere) can still be mutated by others. Also note that this field offers no security at all against
+   * malicious developers; they can reach in and modify the "private" backing field directly.
+   */
+  set mutable(mutable: boolean) {
+    if (!this.mutable && mutable) {
+      throw new Error('You cannot make an immutable entity mutable again.');
+    }
+    this._mutable = mutable;
   }
 
   getUserID(): string {
@@ -295,7 +317,9 @@ function validateFieldAndTypes({op, name, value, schema, fieldType}: {op: string
 function sanitizeData(data: EntityRawData, schema: Schema, context: ParticleExecutionContext) {
   const sanitizedData = {};
   for (const [name, value] of Object.entries(data)) {
-    sanitizedData[name] = sanitizeEntry(schema.fields[name], value, name, context);
+    const sanitizedValue = sanitizeEntry(schema.fields[name], value, name, context);
+    validateFieldAndTypes({op: 'set', name, value: sanitizedValue, schema});
+    sanitizedData[name] = sanitizedValue;
   }
   return sanitizedData;
 }
@@ -336,9 +360,9 @@ function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
 }
 
 /** Constructs a Proxy object to use for entities' rawData objects. This proxy will perform type-checking when getting/setting fields. */
-function createRawDataProxy(schema: Schema) {
+function createRawDataProxy(rawData: {}, schema: Schema, entity: Entity) {
   const classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
-  return new Proxy({}, {
+  return new Proxy(rawData, {
     get: (target, name: string) => {
       if (classJunk.includes(name) || name.constructor === Symbol) {
         return undefined;
@@ -348,7 +372,12 @@ function createRawDataProxy(schema: Schema) {
       return value;
     },
     set: (target, name: string, value) => {
+      // TODO: Disallow mutation via regular field properties, and add a new mutate method instead.
       validateFieldAndTypes({op: 'set', name, value, schema});
+      if (!entity.mutable) {
+        throw new Error('Entity is immutable.');
+      }
+      // TODO: If the given value is a JS object/list, make an immutable copy of it first before storing it.
       target[name] = value;
       return true;
     }
