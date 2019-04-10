@@ -44,8 +44,9 @@ export const ShareDisplayMixin = Base => class extends Base {
   async add(entity, store) {
     super.add(entity, store);
     const user = store.storageKey.split('/').slice(5, 6);
-    const realId = entity.id.split(':').slice(0, -1).join(':');
-    entitiesTable.addRow(realId, [user, nameOfType(store.type), JSON.stringify(entity.rawData)]);
+    //const realId = entity.id.split(':').slice(0, -1).join(':');
+    //console.log(entity.id, realId);
+    entitiesTable.addRow(entity.id, [user, nameOfType(store.type), JSON.stringify(entity.rawData)]);
     const typeName = store.type.getEntitySchema().names[0];
     const typeSpec = getBoxTypeSpec(store);
     const box = boxes[typeSpec];
@@ -64,7 +65,7 @@ export const ShareDisplayMixin = Base => class extends Base {
       `}));
       box.table = new ObserverTable(tid);
     }
-    box.table.addRow(realId, [user, typeName, JSON.stringify(entity.rawData)]);
+    box.table.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
   }
   remove(entity, store) {
     super.remove(entity, store);

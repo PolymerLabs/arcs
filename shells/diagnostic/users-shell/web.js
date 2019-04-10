@@ -84,4 +84,4 @@ const spawnFeedsArc = async (composer, context, storage) => {
       await arc.instantiate(recipe);
     }
   }
-}
+};

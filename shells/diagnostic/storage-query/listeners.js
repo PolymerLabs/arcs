@@ -60,6 +60,10 @@ export const ArcMetaListener = class extends NoopListener {
 };
 
 export const ShareListener = class extends NoopListener {
+  constructor(context, listener) {
+    super(listener);
+    this.context = context;
+  }
   createLogger() {
     return logFactory(`ShareListener`, 'blue');
   }
