@@ -1,14 +1,3 @@
 schema Geolocation
   Number latitude
   Number longitude
-
-particle Geolocate in './source/geolocate.js'
-  consume root
-  out Geolocation location
-  description `your current location`
-    location `your current location`
-
-recipe Geolocate
-  create as location
-  Geolocate
-    location = location
