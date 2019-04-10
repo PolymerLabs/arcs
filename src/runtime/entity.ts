@@ -14,6 +14,8 @@ import {Type, ReferenceType, EntityType} from './type.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {Storable} from './handle.js';
+import {SerializedEntity} from './storage-proxy.js';
 
 type EntityIdComponents = {
   base: string,
@@ -25,7 +27,7 @@ export type EntityRawData = {};
 /**
  * Regular interface for Entities.
  */
-export interface EntityInterface {
+export interface EntityInterface extends Storable {
   isIdentified(): boolean;
   id: string;
   identify(identifier: string): void;
@@ -33,6 +35,7 @@ export interface EntityInterface {
   toLiteral(): EntityRawData;
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
+  entityClass: EntityClass;
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
@@ -70,7 +73,7 @@ export abstract class Entity implements EntityInterface {
   // TODO(shans): Remove this dependency on ParticleExecutionContext, so that you can construct entities without one.
   protected constructor(data: EntityRawData, schema: Schema, context: ParticleExecutionContext, userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
-    this[Symbols.identifier] = undefined;
+    setEntityId(this, undefined);
     this.userIDComponent = userIDComponent;
     this.schema = schema;
 
@@ -89,18 +92,18 @@ export abstract class Entity implements EntityInterface {
   }
 
   isIdentified(): boolean {
-    return this[Symbols.identifier] !== undefined;
+    return getEntityId(this) !== undefined;
   }
 
   // TODO: entity should not be exposing its IDs.
   get id() {
     assert(!!this.isIdentified());
-    return this[Symbols.identifier];
+    return getEntityId(this);
   }
 
   identify(identifier: string) {
     assert(!this.isIdentified());
-    this[Symbols.identifier] = identifier;
+    setEntityId(this, identifier);
     const components = identifier.split(':');
     if (components[components.length - 2] === 'uid') {
       this.userIDComponent = components[components.length - 1];
@@ -115,7 +118,7 @@ export abstract class Entity implements EntityInterface {
     } else {
       id = `${components.base}:${components.component()}`;
     }
-    this[Symbols.identifier] = id;
+    setEntityId(this, id);
   }
 
   toLiteral(): EntityRawData {
@@ -143,12 +146,24 @@ export abstract class Entity implements EntityInterface {
     return clone;
   }
 
+  serialize(): SerializedEntity {
+    const id = getEntityId(this);
+    const rawData = this.dataClone();
+    return {id, rawData};
+  }
+
+  abstract entityClass: EntityClass;
+
   /** Dynamically constructs a new JS class for the entity type represented by the given schema. */
   static createEntityClass(schema: Schema, context: ParticleExecutionContext): EntityClass {
     // Create a new class which extends the Entity base class, and implement all of the required static methods/properties.
     const clazz = class extends Entity {
       constructor(data: EntityRawData, userIDComponent?: string) {
         super(data, schema, context, userIDComponent);
+      }
+
+      get entityClass(): EntityClass {
+        return clazz;
       }
 
       static get type(): Type {
@@ -338,4 +353,24 @@ function createRawDataProxy(schema: Schema) {
       return true;
     }
   });
+}
+
+/**
+ * Returns the ID of the given entity. This is a function private to this file instead of a method on the Entity class, so that developers can't
+ * get access to it.
+ */
+function getEntityId(entity: Entity): string {
+  // Typescript doesn't let us use symbols as indexes, so cast to any first.
+  // tslint:disable-next-line: no-any
+  return entity[Symbols.identifier as any];
+}
+
+/**
+ * Sets the ID of the given entity. This is a function private to this file instead of a method on the Entity class, so that developers can't
+ * get access to it.
+ */
+function setEntityId(entity: Entity, id: string) {
+  // Typescript doesn't let us use symbols as indexes, so cast to any first.
+  // tslint:disable-next-line: no-any
+  entity[Symbols.identifier as any] = id;
 }

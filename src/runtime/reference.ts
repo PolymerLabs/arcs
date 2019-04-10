@@ -9,17 +9,19 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {handleFor} from './handle.js';
+import {handleFor, Storable} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType} from './type.js';
+import {Entity} from './entity.js';
+import {SerializedEntity} from './storage-proxy.js';
 
 enum ReferenceMode {Unstored, Stored}
 
-export class Reference {
+export class Reference implements Storable {
   public entity = null;
   public type: ReferenceType;
 
-  private readonly id: string;
+  protected readonly id: string;
   private storageKey: string;
   private readonly context: ParticleExecutionContext;
   private storageProxy = null;
@@ -60,38 +62,53 @@ export class Reference {
     return {storageKey: this.storageKey, id: this.id};
   }
 
-  static newClientReference(context: ParticleExecutionContext) : typeof Reference {
-    return class extends Reference {
-      private mode = ReferenceMode.Unstored;
-      public stored: Promise<undefined>;
-      constructor(entity) {
-        // TODO(shans): start carrying storageKey information around on Entity objects
-        super({id: entity.id, storageKey: null}, new ReferenceType(entity.constructor.type), context);
-
-        this.entity = entity;
-        this.stored = new Promise(async (resolve, reject) => {
-          await this.storeReference(entity);
-          resolve();
-        });
-      }
-
-      private async storeReference(entity) {
-        await this.ensureStorageProxy();
-        await this.handle.store(entity);
-        this.mode = ReferenceMode.Stored;
-      }
-
-      async dereference() {
-        if (this.mode === ReferenceMode.Unstored) {
-          return null;
-        }
-        return super.dereference();
-      }
-
-      isIdentified(): boolean {
-        return this.entity.isIdentified();
-      }
+  serialize(): SerializedEntity {
+    return {
+      id: this.id,
+      rawData: this.dataClone(),
     };
   }
 }
 
+/** A subclass of Reference that clients can create. */
+export abstract class ClientReference extends Reference {
+  private mode = ReferenceMode.Unstored;
+  public stored: Promise<undefined>;
+
+  /** Use the newClientReference factory method instead. */
+  protected constructor(entity: Entity, context: ParticleExecutionContext) {
+    // TODO(shans): start carrying storageKey information around on Entity objects
+    super({id: entity.id, storageKey: null}, new ReferenceType(entity.entityClass.type), context);
+
+    this.entity = entity;
+    this.stored = new Promise(async (resolve, reject) => {
+      await this.storeReference(entity);
+      resolve();
+    });
+  }
+
+  private async storeReference(entity) {
+    await this.ensureStorageProxy();
+    await this.handle.store(entity);
+    this.mode = ReferenceMode.Stored;
+  }
+
+  async dereference() {
+    if (this.mode === ReferenceMode.Unstored) {
+      return null;
+    }
+    return super.dereference();
+  }
+
+  isIdentified(): boolean {
+    return this.entity.isIdentified();
+  }
+
+  static newClientReference(context: ParticleExecutionContext): typeof ClientReference {
+    return class extends ClientReference {
+      constructor(entity: Entity) {
+        super(entity, context);
+      }
+    };
+  }
+}
