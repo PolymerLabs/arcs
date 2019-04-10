@@ -9,11 +9,11 @@ import { VersionMap, CRDTChange, CRDTModel } from "./crdt.js";
 
 type RawSingleton<T> = T;
 
-type RawCRDTSingleton<T> = { values: Set<{ value: T, clock: VersionMap }>, version: VersionMap };
+type SingletonData<T> = { values: Set<{ value: T, clock: VersionMap }>, version: VersionMap };
 
-type CRDTSingletonOperation<T> = { from: T | null, to: T | null, actor: string };
+type SingletonOperation<T> = { from: T | null, to: T | null, actor: string };
 
-type CRDTSingletonChange<T> = CRDTChange<CRDTSingletonOperation<T>, RawCRDTSingleton<T>>;
+type SingletonChange<T> = CRDTChange<SingletonOperation<T>, SingletonData<T>>;
 
-type CRDTSingletonModel<T> = CRDTModel<CRDTSingletonOperation<T>, RawCRDTSingleton<T>, RawSingleton<T>>;
+type SingletonModel<T> = CRDTModel<SingletonOperation<T>, SingletonData<T>, RawSingleton<T>>;
 

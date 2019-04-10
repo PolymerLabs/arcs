@@ -5,58 +5,56 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import { VersionMap, CRDTChange, CRDTModel } from "./crdt.js";
+import { CRDTChange, CRDTModel } from "./crdt.js";
 
 type RawCount = number
 
-type RawCRDTCount = { values: Map<string, number> };
+type CountData = { values: Map<string, number> };
 
-export enum CRDTCountOpTypes { CountIncrement, CountSet }
-export type CRDTCountOperation = { type: CRDTCountOpTypes.CountSet, value: number, actor: string } | 
-                          { type: CRDTCountOpTypes.CountIncrement, actor: string };
+export enum CountOpTypes { Increment, MultiIncrement }
+export type CountOperation = { type: CountOpTypes.MultiIncrement, value: number, actor: string } | 
+                             { type: CountOpTypes.Increment, actor: string };
 
-type CRDTCountChange = CRDTChange<CRDTCountOperation, RawCRDTCount>;
-type CRDTCountModel = CRDTModel<CRDTCountOperation, RawCRDTCount, RawCount>;
+type CountChange = CRDTChange<CountOperation, CountData>;
+type CountModel = CRDTModel<CountOperation, CountData, RawCount>;
 
-export class CRDTCount implements CRDTCountModel {
-  private model: RawCRDTCount = {values: new Map()};
+export class CRDTCount implements CountModel {
+  private model: CountData = {values: new Map()};
 
-  merge(other: CRDTCountModel): {modelChange: CRDTCountChange, otherChange: CRDTCountChange} {
-    const otherChanges: CRDTCountOperation[] = [];
-    const thisChanges: CRDTCountOperation[] = [];
+  merge(other: CountModel): {modelChange: CountChange, otherChange: CountChange} {
+    const otherChanges: CountOperation[] = [];
+    const thisChanges: CountOperation[] = [];
 
-    const otherRaw = other.getData();    
-    for (const key in otherRaw.values.keys()) {
+    const otherRaw = other.getData();
+
+    for (const key of otherRaw.values.keys()) {
       const thisValue = this.model.values.get(key) || 0;
       const otherValue = otherRaw.values.get(key) || 0;
       if (thisValue > otherValue) {
-        otherChanges.push({type: CRDTCountOpTypes.CountSet, value: thisValue, actor: key});
+        otherChanges.push({type: CountOpTypes.MultiIncrement, value: thisValue - otherValue, actor: key});
       } else if (otherValue > thisValue) {
-        thisChanges.push({type: CRDTCountOpTypes.CountSet, value: otherValue, actor: key});
+        thisChanges.push({type: CountOpTypes.MultiIncrement, value: otherValue - thisValue, actor: key});
         this.model.values.set(key, otherValue);
       }
     }
     
-    for (const key in this.model.values.keys()) {
+    for (const key of this.model.values.keys()) {
       if (otherRaw.values.has(key)) {
         continue;
       }
-      otherChanges.push({type: CRDTCountOpTypes.CountSet, value: this.model.values.get(key), actor: key});
+      otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values.get(key), actor: key});
     }
 
     return {modelChange: {changeIsOperations: true, operations: thisChanges}, otherChange: {changeIsOperations: true, operations: otherChanges}};
   }
 
-  applyOperation(op: CRDTCountOperation) {
+  applyOperation(op: CountOperation) {
     let value: number;
-    if (op.type == CRDTCountOpTypes.CountSet) {
+    if (op.type == CountOpTypes.MultiIncrement) {
       if (op.value < 0) {
         return false;
       }
-      if (this.model.values.has(op.actor) && this.model.values.get(op.actor) > op.value) {
-        return false;
-      }
-      value = op.value;
+      value = (this.model.values.get(op.actor) || 0) + op.value;
     } else {
       value = (this.model.values.get(op.actor) || 0) + 1;
     }

@@ -9,13 +9,13 @@ import { VersionMap, CRDTChange, CRDTModel } from "./crdt.js";
 
 type RawCollection<T> = Set<T>;
 
-type RawCRDTCollectionValue<T> = { value: T, clock: VersionMap };
-type RawCRDTCollection<T> = { values: Set<{ value: T, clock: VersionMap }>, version: VersionMap }
+type CollectionValue<T> = { value: T, clock: VersionMap };
+type CollectionData<T> = { values: Set<{ value: T, clock: VersionMap }>, version: VersionMap }
 
-enum CRDTCollectionOpTypes { CollectionAdd, CollectionRemove }
-type CRDTCollectionOperation<T> = { type: CRDTCollectionOpTypes.CollectionAdd, added: RawCRDTCollectionValue<T> } |
-                                  { type: CRDTCollectionOpTypes.CollectionRemove, removed: T };
+enum CollectionOpTypes { Add, Remove }
+type CollectionOperation<T> = { type: CollectionOpTypes.Add, added: CollectionValue<T> } |
+                              { type: CollectionOpTypes.Remove, removed: T };
 
-type CRDTCollectionChange<T> = CRDTChange<CRDTCollectionOperation<T>, RawCRDTCollection<T>>;
+type CollectionChange<T> = CRDTChange<CollectionOperation<T>, CollectionData<T>>;
 
-type CRDTCollectionModel<T> = CRDTModel<CRDTCollectionOperation<T>, RawCRDTCollection<T>, RawCollection<T>>;
+type CollectionModel<T> = CRDTModel<CollectionOperation<T>, CollectionData<T>, RawCollection<T>>;

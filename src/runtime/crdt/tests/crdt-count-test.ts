@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import { CRDTCount, CRDTCountOpTypes } from '../crdt-count.js';
+import { CRDTCount, CountOpTypes } from '../crdt-count.js';
 
 describe('CRDTCount', () => {
 
@@ -20,22 +20,97 @@ describe('CRDTCount', () => {
 
   it('can apply an increment op', () => {
     const count = new CRDTCount();
-    count.applyOperation({type: CRDTCountOpTypes.CountIncrement, actor: 'me'});
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'me'});
     assert.equal(count.getParticleView(), 1);
   });
 
   it('can apply two increment ops from different actors', () => {
     const count = new CRDTCount();
-    count.applyOperation({type: CRDTCountOpTypes.CountIncrement, actor: 'me'});
-    count.applyOperation({type: CRDTCountOpTypes.CountIncrement, actor: 'them'});
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'me'});
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'them'});
     assert.equal(count.getParticleView(), 2);
   });
 
-  it('resolves increment ops from the same', () => {
+  it('resolves increment ops from the same actor', () => {
     const count = new CRDTCount();
-    count.applyOperation({type: CRDTCountOpTypes.CountIncrement, actor: 'me'});
-    count.applyOperation({type: CRDTCountOpTypes.CountIncrement, actor: 'them'});
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'me'});
+    count.applyOperation({type: CountOpTypes.Increment, actor: 'me'});
     assert.equal(count.getParticleView(), 2);
   });
+
+  it('can apply a multi-increment op', () => {
+    const count = new CRDTCount();
+    count.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 7});
+    assert.equal(count.getParticleView(), 7);
+  });
+
+  it('merges two models with counts from different actors', () => {
+    const count1 = new CRDTCount();
+    const count2 = new CRDTCount();
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 7});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', value: 4});
+    const {modelChange, otherChange} = count1.merge(count2);
+    assert.equal(count1.getParticleView(), 11);
+    
+    assert.isTrue(modelChange.changeIsOperations);
+    assert.equal(modelChange.operations.length, 1);
+    assert.deepEqual(modelChange.operations[0], {actor: 'them', value: 4, type: CountOpTypes.MultiIncrement});
+
+    assert.isTrue(otherChange.changeIsOperations);
+    assert.equal(otherChange.operations.length, 1);
+    assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 7, type: CountOpTypes.MultiIncrement});
+
+    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+    assert.deepEqual(count1.getData(), count2.getData());
+  });
   
+  it('merges two models with counts from the same actor', () => {
+    const count1 = new CRDTCount();
+    const count2 = new CRDTCount();
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 7});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 4});
+    const {modelChange, otherChange} = count1.merge(count2);
+    assert.equal(count1.getParticleView(), 7);
+    
+    assert.isTrue(modelChange.changeIsOperations);
+    assert.equal(modelChange.operations.length, 0);
+
+    assert.isTrue(otherChange.changeIsOperations);
+    assert.equal(otherChange.operations.length, 1);
+    assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 3, type: CountOpTypes.MultiIncrement});
+
+    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+    assert.deepEqual(count1.getData(), count2.getData());
+  });
+
+  it('merges two models with counts from the multiple actors', () => {
+    const count1 = new CRDTCount();
+    const count2 = new CRDTCount();
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'a', value: 6});
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'c', value: 12});
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'd', value: 22});
+    count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'e', value: 4});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'b', value: 5});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'c', value: 9});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'd', value: 22});
+    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'e', value: 14});
+
+    const {modelChange, otherChange} = count1.merge(count2);
+    assert.equal(count1.getParticleView(), 59); // expect 5 / 6 / 12 / 22 / 14
+    
+    assert.isTrue(modelChange.changeIsOperations);
+    assert.equal(modelChange.operations.length, 2);
+    assert.deepEqual(modelChange.operations[0], {actor: 'b', value: 5, type: CountOpTypes.MultiIncrement});
+    assert.deepEqual(modelChange.operations[1], {actor: 'e', value: 10, type: CountOpTypes.MultiIncrement});
+
+    assert.isTrue(otherChange.changeIsOperations);
+    assert.equal(otherChange.operations.length, 2);
+    assert.deepEqual(otherChange.operations[0], {actor: 'c', value: 3, type: CountOpTypes.MultiIncrement});
+    assert.deepEqual(otherChange.operations[1], {actor: 'a', value: 6, type: CountOpTypes.MultiIncrement});
+
+    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+    assert.isTrue(count2.applyOperation(otherChange.operations[1]));
+    assert.deepEqual(count1.getData(), count2.getData());
+  });
+
 });
