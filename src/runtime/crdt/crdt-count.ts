@@ -10,7 +10,7 @@
 
 import { CRDTChange, CRDTModel } from "./crdt.js";
 
-type RawCount = number
+type RawCount = number;
 
 type CountData = { values: Map<string, number> };
 
@@ -53,7 +53,7 @@ export class CRDTCount implements CountModel {
 
   applyOperation(op: CountOperation) {
     let value: number;
-    if (op.type == CountOpTypes.MultiIncrement) {
+    if (op.type === CountOpTypes.MultiIncrement) {
       if (op.value < 0) {
         return false;
       }
