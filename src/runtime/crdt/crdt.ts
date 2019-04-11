@@ -19,7 +19,9 @@ export class CRDTError extends Error {
 //  - the external (particle-facing) data representation of the model
 // A CRDT model can:
 //  - merge with other models. This produces a 2-sided delta 
-//    (change from this model to merged model, change from other model to merged model)
+//    (change from this model to merged model, change from other model to merged model).
+//    Note that merge updates the model it is invoked on; the modelChange return value is 
+//    a record of a change that has already been applied.
 //  - apply an operation. This might fail (e.g. if the operation is out-of-order), in which case
 //    applyOperation() will return false.
 //  - report on internal data
@@ -36,16 +38,13 @@ export interface CRDTModel<Ops, Data, ConsumerType> {
 
 // A CRDT Change represents a delta between model states. Where possible,
 // this delta should be expressed as a sequence of operations; in which case
-// changeIsOperations will be true.
+// changeType will be ChangeType.Operations.
 // Sometimes it isn't possible to express a delta as operations. In this case,
-// changeIsOperations will be false, and a full post-merge model will be supplied.
+// changeType will be ChangeType.Model, and a full post-merge model will be supplied.
 // A CRDT Change is parameterized by the operations that can be represented, and the data representation
 // of the model.
-export interface CRDTChange<Ops, Data> {
-  changeIsOperations: boolean;
-  operations?: Ops[];
-  modelPostChange?: Data;
-}
+export enum ChangeType {Operations, Model}
+export type CRDTChange<Ops, Data> = {changeType: ChangeType.Operations, operations: Ops[]} | {changeType: ChangeType.Model, modelPostChange: Data};
 
 
 

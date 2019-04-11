@@ -10,6 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {CRDTCount, CountOpTypes} from '../crdt-count.js';
+import {CRDTError, ChangeType} from '../crdt.js';
 
 describe('CRDTCount', () => {
 
@@ -59,16 +60,22 @@ describe('CRDTCount', () => {
     const {modelChange, otherChange} = count1.merge(count2);
     assert.equal(count1.getParticleView(), 11);
     
-    assert.isTrue(modelChange.changeIsOperations);
-    assert.equal(modelChange.operations.length, 1);
-    assert.deepEqual(modelChange.operations[0], {actor: 'them', value: 4, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
+    if (modelChange.changeType === ChangeType.Operations) {
+      assert.equal(modelChange.operations.length, 1);
+      assert.deepEqual(modelChange.operations[0], {actor: 'them', value: 4, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
+    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
 
-    assert.isTrue(otherChange.changeIsOperations);
-    assert.equal(otherChange.operations.length, 1);
-    assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 7, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
+    if (otherChange.changeType === ChangeType.Operations) {
+      assert.equal(otherChange.operations.length, 1);
+      assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 7, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
 
-    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
-    assert.deepEqual(count1.getData(), count2.getData());
+      assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+      assert.deepEqual(count1.getData(), count2.getData());  
+    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
   });
   
   it('merges two models with counts from the same actor', () => {
@@ -79,15 +86,21 @@ describe('CRDTCount', () => {
     const {modelChange, otherChange} = count1.merge(count2);
     assert.equal(count1.getParticleView(), 7);
     
-    assert.isTrue(modelChange.changeIsOperations);
-    assert.equal(modelChange.operations.length, 0);
+    if (modelChange.changeType === ChangeType.Operations) {
+      assert.equal(modelChange.operations.length, 0);
+    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
 
-    assert.isTrue(otherChange.changeIsOperations);
-    assert.equal(otherChange.operations.length, 1);
-    assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 3, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
+    if (otherChange.changeType === ChangeType.Operations) {
+      assert.equal(otherChange.operations.length, 1);
+      assert.deepEqual(otherChange.operations[0], {actor: 'me', value: 3, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
 
-    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
-    assert.deepEqual(count1.getData(), count2.getData());
+      assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+      assert.deepEqual(count1.getData(), count2.getData());
+    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
   });
 
   it('throws when attempting to merge divergent models', () => {
@@ -95,7 +108,7 @@ describe('CRDTCount', () => {
     const count2 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 7, version: {from: 0, to: 1}});
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 4, version: {from: 0, to: 1}});
-    assert.throws(() => count1.merge(count2));
+    assert.throws(() => count1.merge(count2), CRDTError);
   });
 
   it('throws when values appear to have been decremented', () => {
@@ -103,7 +116,7 @@ describe('CRDTCount', () => {
     const count2 = new CRDTCount();
     count1.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 7, version: {from: 0, to: 1}});
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'me', value: 4, version: {from: 0, to: 2}});
-    assert.throws(() => count1.merge(count2));
+    assert.throws(() => count1.merge(count2), CRDTError);
   });
 
   it('merges two models with counts from the multiple actors', () => {
@@ -121,18 +134,23 @@ describe('CRDTCount', () => {
     const {modelChange, otherChange} = count1.merge(count2);
     assert.equal(count1.getParticleView(), 59); // expect 5 / 6 / 12 / 22 / 14
     
-    assert.isTrue(modelChange.changeIsOperations);
-    assert.equal(modelChange.operations.length, 2);
-    assert.deepEqual(modelChange.operations[0], {actor: 'b', value: 5, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
-    assert.deepEqual(modelChange.operations[1], {actor: 'e', value: 10, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
+    if (modelChange.changeType === ChangeType.Operations) {
+      assert.equal(modelChange.operations.length, 2);
+      assert.deepEqual(modelChange.operations[0], {actor: 'b', value: 5, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
+      assert.deepEqual(modelChange.operations[1], {actor: 'e', value: 10, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
 
-    assert.isTrue(otherChange.changeIsOperations);
-    assert.equal(otherChange.operations.length, 2);
-    assert.deepEqual(otherChange.operations[0], {actor: 'c', value: 3, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
-    assert.deepEqual(otherChange.operations[1], {actor: 'a', value: 6, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
-
-    assert.isTrue(count2.applyOperation(otherChange.operations[0]));
-    assert.isTrue(count2.applyOperation(otherChange.operations[1]));
-    assert.deepEqual(count1.getData(), count2.getData());
+    if (otherChange.changeType === ChangeType.Operations) {
+      assert.equal(otherChange.operations.length, 2);
+      assert.deepEqual(otherChange.operations[0], {actor: 'c', value: 3, type: CountOpTypes.MultiIncrement, version: {from: 1, to: 2}});
+      assert.deepEqual(otherChange.operations[1], {actor: 'a', value: 6, type: CountOpTypes.MultiIncrement, version: {from: 0, to: 1}});
+  
+      assert.isTrue(count2.applyOperation(otherChange.operations[0]));
+      assert.isTrue(count2.applyOperation(otherChange.operations[1]));
+      assert.deepEqual(count1.getData(), count2.getData());
+    } else {
+      assert.fail('modelChange.changeType should be ChangeType.Operations');
+    }
   });
 });
