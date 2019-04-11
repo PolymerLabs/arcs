@@ -1,6 +1,4 @@
-schema Geolocation
-  Number latitude
-  Number longitude
+import './Geolocation.schema'
 
 particle Geolocate in './source/Geolocate.js'
   consume root

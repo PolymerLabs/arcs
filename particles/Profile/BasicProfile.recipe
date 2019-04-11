@@ -12,12 +12,6 @@ particle UserNameForm in 'source/UserNameForm.js'
   consume userName
 
 import 'Avatar.schema'
-
-particle AvatarPicker in 'source/AvatarPicker.js'
-  inout Avatar avatar
-  consume root
-  description `select avatar`
-
 import 'User.schema'
 
 particle FriendsPicker in 'source/FriendsPicker.js'

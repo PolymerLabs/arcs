@@ -2,6 +2,7 @@ import { fs } from '../../platform/fs-web.js';
 import { Manifest } from '../../runtime/manifest.js';
 import glob from 'glob';
 import { Loader } from '../../runtime/loader.js';
+import {assert} from '../../platform/chai-web.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
@@ -10,10 +11,11 @@ describe('Particle definitions', () => {
 
   filenames
     .forEach(filename => {
-      const contents = fs.readFileSync(filename, 'utf8');
-
       it(`parses successfully: ${filename}`, async () => {
-        await Manifest.parse(contents, { fileName: filename, loader });
+        const manifest = await Manifest.load(filename, loader);
+        for (const particle of manifest.particles) {
+          assert.isTrue(fs.existsSync(particle.implFile), `${particle.implFile} not found`);
+        }
       });
     });
 });
