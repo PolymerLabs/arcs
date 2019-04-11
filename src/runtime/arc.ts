@@ -24,7 +24,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
-import {compareComparables} from './recipe/util.js';
+import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';

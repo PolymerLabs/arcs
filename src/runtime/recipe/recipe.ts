@@ -18,7 +18,7 @@ import {Particle} from './particle.js';
 import {Search} from './search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {compareComparables} from './util.js';
+import {compareComparables} from './comparable.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;

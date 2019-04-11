@@ -12,7 +12,7 @@ import {Type} from '../type.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
-import {compareArrays, compareComparables, compareStrings} from './util.js';
+import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 
 export type Direction = 'in' | 'out' | 'inout' | 'host';
 

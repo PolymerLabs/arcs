@@ -10,7 +10,7 @@ import {ParticleSpec} from '../particle-spec.js';
 
 import {Direction} from './handle-connection.js';
 import {Handle} from './handle.js';
-import {Comparable, compareArrays, compareComparables, compareStrings} from './util.js';
+import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
 import { Particle } from './particle.js';
 

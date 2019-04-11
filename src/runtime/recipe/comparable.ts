@@ -50,7 +50,7 @@ export function compareObjects<a>(o1: {[index: string]: a} | null, o2: {[index: 
 
 export interface Comparable<T> {
   _compareTo<T>(other: Comparable<T>): number;
-};
+}
 
 export function compareComparables<T>(o1: Comparable<T> | null, o2: Comparable<T> | null) {
   if (o1 == null || o2 == null) return compareNulls(o1, o2);
