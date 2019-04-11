@@ -10,6 +10,9 @@
 
 export type VersionMap = Map<string, number>;
 
+export class CRDTError extends Error {
+}
+
 // A CRDT model is parameterized by:
 //  - the operations that can be applied
 //  - the internal data representation of the model
@@ -21,8 +24,11 @@ export type VersionMap = Map<string, number>;
 //    applyOperation() will return false.
 //  - report on internal data
 //  - report on the particle's view of the data.
+//
+// It is possible that two models can't merge. For example, they may have had divergent operations apply.
+// This is a serious error and will result in merge throwing a CRDTError.
 export interface CRDTModel<Ops, Data, ConsumerType> {
-  merge(other: CRDTModel<Ops, Data, ConsumerType>): {modelChange: CRDTChange<Ops, Data>, otherChange: CRDTChange<Ops, Data>} | null; // null implies no change
+  merge(other: CRDTModel<Ops, Data, ConsumerType>): {modelChange: CRDTChange<Ops, Data>, otherChange: CRDTChange<Ops, Data>};
   applyOperation(op: Ops): boolean;
   getData(): Data;
   getParticleView(): ConsumerType;

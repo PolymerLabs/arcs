@@ -8,21 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { CRDTChange, CRDTModel } from "./crdt.js";
+import {VersionMap, CRDTChange, CRDTModel, CRDTError} from "./crdt.js";
 
 type RawCount = number;
 
-type CountData = { values: Map<string, number> };
+type CountData = {values: Map<string, number>, version: VersionMap};
 
-export enum CountOpTypes { Increment, MultiIncrement }
-export type CountOperation = { type: CountOpTypes.MultiIncrement, value: number, actor: string } | 
-                             { type: CountOpTypes.Increment, actor: string };
+type VersionInfo = {from: number, to: number};
+
+export enum CountOpTypes {Increment, MultiIncrement }
+export type CountOperation = {type: CountOpTypes.MultiIncrement, value: number, actor: string, version: VersionInfo} | 
+                             {type: CountOpTypes.Increment, actor: string, version: VersionInfo};
 
 type CountChange = CRDTChange<CountOperation, CountData>;
 type CountModel = CRDTModel<CountOperation, CountData, RawCount>;
 
 export class CRDTCount implements CountModel {
-  private model: CountData = {values: new Map()};
+  private model: CountData = {values: new Map(), version: new Map()};
 
   merge(other: CountModel): {modelChange: CountChange, otherChange: CountChange} {
     const otherChanges: CountOperation[] = [];
@@ -33,11 +35,22 @@ export class CRDTCount implements CountModel {
     for (const key of otherRaw.values.keys()) {
       const thisValue = this.model.values.get(key) || 0;
       const otherValue = otherRaw.values.get(key) || 0;
+      const thisVersion = this.model.version.get(key) || 0;
+      const otherVersion = otherRaw.version.get(key) || 0;
       if (thisValue > otherValue) {
-        otherChanges.push({type: CountOpTypes.MultiIncrement, value: thisValue - otherValue, actor: key});
+        if (otherVersion >= thisVersion) {
+          throw new CRDTError('Divergent versions encountered when merging CRDTCount models');
+        }
+        otherChanges.push({type: CountOpTypes.MultiIncrement, value: thisValue - otherValue, actor: key,
+                           version: {from: otherVersion, to: thisVersion}});
       } else if (otherValue > thisValue) {
-        thisChanges.push({type: CountOpTypes.MultiIncrement, value: otherValue - thisValue, actor: key});
+        if (thisVersion >= otherVersion) {
+          throw new CRDTError('Divergent versions encountered when merging CRDTCount models');
+        }
+        thisChanges.push({type: CountOpTypes.MultiIncrement, value: otherValue - thisValue, actor: key,
+                          version: {from: thisVersion, to: otherVersion}});
         this.model.values.set(key, otherValue);
+        this.model.version.set(key, otherVersion);
       }
     }
     
@@ -45,7 +58,11 @@ export class CRDTCount implements CountModel {
       if (otherRaw.values.has(key)) {
         continue;
       }
-      otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values.get(key), actor: key});
+      if (otherRaw.version.has(key)) {
+        throw new CRDTError(`CRDTCount model has version but no value for key ${key}`);
+      }
+      otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values.get(key), actor: key,
+                         version: {from: 0, to: this.model.version.get(key)}});
     }
 
     return {modelChange: {changeIsOperations: true, operations: thisChanges}, otherChange: {changeIsOperations: true, operations: otherChanges}};
@@ -53,6 +70,12 @@ export class CRDTCount implements CountModel {
 
   applyOperation(op: CountOperation) {
     let value: number;
+    if (op.version.from !== (this.model.version.get(op.actor) || 0)) {
+      return false;
+    }
+    if (op.version.to <= op.version.from) {
+      return false;
+    }
     if (op.type === CountOpTypes.MultiIncrement) {
       if (op.value < 0) {
         return false;
@@ -63,6 +86,7 @@ export class CRDTCount implements CountModel {
     }
 
     this.model.values.set(op.actor, value);
+    this.model.version.set(op.actor, op.version.to);
     return true;
   }
 
