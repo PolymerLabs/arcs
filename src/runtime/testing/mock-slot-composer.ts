@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Particle} from '../recipe/particle.js';
 import {SlotComposerOptions} from '../slot-composer.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {InterfaceType} from '../type.js';
 
 import {FakeSlotComposer} from './fake-slot-composer.js';
@@ -57,7 +57,7 @@ export class MockSlotComposer extends FakeSlotComposer {
     this.debugMessages = [];
 
     // Clear all cached templates
-    SlotDomConsumer.clearCache();
+    HeadlessSlotDomConsumer.clearCache();
   }
 
    // Overriding this method to investigate AppVeyor failures.

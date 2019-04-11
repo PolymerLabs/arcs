@@ -11,10 +11,11 @@
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
 import {DescriptionFormatter} from './description-formatter.js';
 import {HeadlessSlotDomConsumer} from './headless-slot-dom-consumer.js';
+import {SlotConsumer} from './slot-consumer.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
 
 export class ModalityHandler {
-  constructor(public readonly slotConsumerClass: typeof SlotDomConsumer,
+  constructor(public readonly slotConsumerClass: typeof SlotConsumer,
               public readonly descriptionFormatter?: typeof DescriptionFormatter){}
 
   static createHeadlessHandler(): ModalityHandler {

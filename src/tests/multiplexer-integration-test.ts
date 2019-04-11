@@ -12,7 +12,7 @@ import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Loader} from '../runtime/loader.js';
 import {HostedSlotContext} from '../runtime/slot-context.js';
-import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
+import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
@@ -78,9 +78,9 @@ describe('Multiplexer', () => {
     }
 
     // verify template cache
-    SlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
-    SlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
-    SlotDomConsumer.hasTemplate('PostMuxer::item::default');
-    SlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
+    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
+    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
+    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
+    HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
   });
 });

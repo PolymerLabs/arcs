@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {ProvidedSlotContext, HostedSlotContext} from '../slot-context.js';
 import {ArcId} from '../id.js';
@@ -58,7 +58,7 @@ describe('particle interface loading with slots', function() {
     for (const [subId, {model, templateName}] of renderings) {
       assert.equal(expectedValues[subId], model.value);
       assert.equal(expectedTemplateName, templateName);
-      assert.isTrue(!!SlotDomConsumer.hasTemplate(expectedTemplateName));
+      assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
     }
   }
 
