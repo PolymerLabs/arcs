@@ -21,6 +21,18 @@ import {SlotComposer} from './slot-composer.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 
+export type StartRenderOptions = {
+  particle: Particle;
+  slotName: string;
+  providedSlots: Map<string, string>;
+  contentTypes: string[];
+};
+
+export type StopRenderOptions = {
+  particle: Particle;
+  slotName: string;
+};
+
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;
   close : () => void;
@@ -281,11 +293,11 @@ export class ParticleExecutionHost {
     this._apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
 
-  startRender({particle, slotName, providedSlots, contentTypes}: {particle: Particle, slotName: string, providedSlots: {[index: string]: string}, contentTypes: string[]}) {
+  startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
     this._apiPort.StartRender(particle, slotName, providedSlots, contentTypes);
   }
 
-  stopRender({particle, slotName}: {particle: Particle, slotName: string}) {
+  stopRender({particle, slotName}: StopRenderOptions): void {
     this._apiPort.StopRender(particle, slotName);
   }
 

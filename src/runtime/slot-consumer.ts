@@ -12,8 +12,10 @@ import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
 import {Description} from './description.js';
+import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
+import {StartRenderOptions, StopRenderOptions} from './particle-execution-host.js';
 
 export interface Content {
   templateName?: string | Map<string, string>;
@@ -41,8 +43,8 @@ export class SlotConsumer {
   slotContext: SlotContext;
   readonly directlyProvidedSlotContexts: ProvidedSlotContext[] = [];
   readonly hostedSlotContexts: HostedSlotContext[] = [];
-  startRenderCallback: ({}) => void;
-  stopRenderCallback: ({}) => void;
+  startRenderCallback: (options: StartRenderOptions) => void;
+  stopRenderCallback: (options: StopRenderOptions) => void;
   eventHandler: ({}) => void;
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
@@ -149,10 +151,12 @@ export class SlotConsumer {
 
   startRender() {
     if (this.consumeConn && this.startRenderCallback) {
+      const providedSlots = new Map(this.allProvidedSlotContexts.map(context => ([context.name, context.id] as [string, string])));
+
       this.startRenderCallback({
         particle: this.consumeConn.particle,
         slotName: this.consumeConn.name,
-        providedSlots: new Map(this.allProvidedSlotContexts.map(context => ([context.name, context.id] as [string, string]))),
+        providedSlots,
         contentTypes: this.constructRenderRequest()
       });
     }
