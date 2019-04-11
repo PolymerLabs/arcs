@@ -11,6 +11,7 @@
 import idb, {ObjectStore} from 'idb';
 import rs from 'jsrsasign';
 
+import {crypto} from '../../platform/crypto-web.js';
 import {decode, encode} from './base64';
 import {DeviceKey, Key, PrivateKey, PublicKey, RecoveryKey, SessionKey, WrappedKey} from "./keys";
 import {KeyGenerator, KeyStorage} from "./manager";
