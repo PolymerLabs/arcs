@@ -15,7 +15,7 @@ import {HandleConnection} from './handle-connection.js';
 import {Recipe, RequireSection} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {compareArrays, compareComparables, compareStrings} from './util.js';
+import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Id} from '../id.js';
 
 export class Particle {

@@ -8,7 +8,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
-import {compareNumbers, compareStrings} from '../recipe/util.js';
+import {Comparable, compareNumbers, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
 import {SerializedModelEntry} from './crdt-collection-model.js';
@@ -111,7 +111,7 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase {
+export abstract class StorageProviderBase implements Comparable<StorageProviderBase> {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
   private readonly _type: Type;
@@ -203,7 +203,7 @@ export abstract class StorageProviderBase {
     }
   }
 
-  _compareTo(other: StorageProviderBase) : number {
+  _compareTo(other: StorageProviderBase): number {
     let cmp;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
@@ -216,7 +216,7 @@ export abstract class StorageProviderBase {
     return 0;
   }
 
-  toString(handleTags: string[]): string {
+  toString(handleTags?: string[]): string {
     const results: string[] = [];
     const handleStr: string[] = [];
     handleStr.push(`store`);

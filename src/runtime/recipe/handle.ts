@@ -14,7 +14,7 @@ import {Type} from '../type.js';
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings} from './util.js';
+import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 import { StorageProviderBase } from '../storage/storage-provider-base.js';
 
 type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';

@@ -10,7 +10,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';
 import {Slot} from './slot.js';
-import {compareComparables, compareStrings} from './util.js';
+import {compareComparables, compareStrings} from './comparable.js';
 
 export class SlotConnection {
   private readonly _recipe: Recipe;
