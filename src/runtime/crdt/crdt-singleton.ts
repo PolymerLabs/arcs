@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {VersionMap, CRDTChange, CRDTModel} from "./crdt.js";
+import {VersionMap, CRDTChange, CRDTModel, CRDTTypeRecord} from "./crdt.js";
 
 type RawSingleton<T> = T;
 
@@ -16,7 +16,13 @@ type SingletonData<T> = {values: Set<{ value: T, clock: VersionMap }>, version: 
 
 type SingletonOperation<T> = {from: T | null, to: T | null, actor: string};
 
-type SingletonChange<T> = CRDTChange<SingletonOperation<T>, SingletonData<T>>;
+interface CRDTSingletonTypeRecord<T> extends CRDTTypeRecord {
+  data: SingletonData<T>;
+  operation: SingletonOperation<T>;
+  consumerType: RawSingleton<T>;
+}
 
-type SingletonModel<T> = CRDTModel<SingletonOperation<T>, SingletonData<T>, RawSingleton<T>>;
+type SingletonChange<T> = CRDTChange<CRDTSingletonTypeRecord<T>>;
+
+type SingletonModel<T> = CRDTModel<CRDTSingletonTypeRecord<T>>;
 
