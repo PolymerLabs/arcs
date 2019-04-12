@@ -62,7 +62,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
-  dist: [webpack, pipeshell_web_dist, pipeshell_node_dist],
+  dist: [webpack, pipeshellWebDist, pipeshellNodeDist],
   build: [peg, build],
   watch: [watch],
   lint: [peg, build, lint, tslint],
@@ -431,7 +431,7 @@ function webpack(): boolean {
   return result.success;
 }
 
-function pipeshell_web_dist(): boolean {
+function pipeshellWebDist(): boolean {
   const result = saneSpawnWithOutput('cd shells/pipes-shell/web/deploy && ./deploy.sh', []);
   if (result.stdout) {
     console.log(result.stdout);
@@ -439,7 +439,7 @@ function pipeshell_web_dist(): boolean {
   return result.success;
 }
 
-function pipeshell_node_dist(): boolean {
+function pipeshellNodeDist(): boolean {
   const result = saneSpawnWithOutput('cd shells/pipes-shell/node/deploy && ./deploy.sh', []);
   console.log("Building dist");
   if (result.stdout) {

@@ -27,6 +27,7 @@
     "s-test-shells": "run-s --print-name --continue-on-error test-wdio-shells",
     "build:tsc": "tsc",
     "watch:tsc": "tsc -w",
+    "build:dist": "cross-env tools/sigh dist",
     "build:webpack": "webpack",
     "watch:webpack": "webpack --watch",
     "watch": "concurrently npm:watch:*"
