@@ -5,4 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-export const path = {};
+export const path = {
+
+  join(pth : string, name : string) {
+    throw new Error("Not implemented"); // We just want the interface
+  },
+};
