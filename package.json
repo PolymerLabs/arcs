@@ -20,7 +20,7 @@
     "test-wdio-shells": "wdio -b http://localhost:8786/ shells/test/wdio.conf.js",
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
-    "build:typedoc": "typedoc --mode file --target ES2017 --downLevelIteration -out dist/apidocs",
+    "build:typedoc": "typedoc --ignoreCompilerErrors --mode file --target ES2017 --downLevelIteration -out dist/apidocs",
     "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install && npm --prefix server run test",
     "server:start": "npm --prefix server start",
     "test-shells": "run-p --print-name --race start s-test-shells",
