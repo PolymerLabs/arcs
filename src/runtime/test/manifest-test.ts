@@ -15,6 +15,7 @@ import {path} from '../../platform/path-web.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 async function assertRecipeParses(input, result) {
   // Strip common leading whitespace.
@@ -410,21 +411,10 @@ ${particleStr1}
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('treats a failed import as non-fatal', async () => {
-    const manifests = {
-      a: `import 'b'`,
-      b: `lol what is this`,
-    };
-    const loader = {
-      loadResource(name) {
-        return manifests[name];
-      },
-      path(file) {
-        return '';
-      },
-      join(path, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      'a': `import 'b'`,
+      'b': `lol what is this`,
+    });
     await Manifest.load('a', loader);
   });
   it('throws an error when a particle has invalid description', async () => {
@@ -443,112 +433,60 @@ ${particleStr1}
   it('can load a manifest via a loader', async () => {
     const registry: {[index: string] : Promise<Manifest>} = {};
 
-    const loader = {
-      loadResource() {
-        return 'recipe';
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return `${path}/${file}`;
-      },
-    };
+    const loader = new StubLoader({'*': 'recipe'});
     const manifest = await Manifest.load('some-path', loader, {registry});
     assert(manifest.recipes[0]);
     assert.equal(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
     const registry: {[index: string] : Promise<Manifest>} = {};
-
-    const loader = {
-      loadResource(path) {
-        return {
-          a: `import 'b'`,
-          b: `recipe`,
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(_, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      a: `import 'b'`,
+      b: `recipe`,
+    });
     const manifest = await Manifest.load('a', loader, {registry});
     assert.equal(await registry.a, manifest);
     assert.equal(manifest.imports[0], await registry.b);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
     const registry: {[index: string] : Promise<Manifest>} = {};
-    const loader = {
-      loadResource(path) {
-        return {
-          a: `
-              import 'b'
-              recipe
-                ParticleB
-                `,
-          b: `
-              schema Thing
-              particle ParticleB in 'b.js'
-                in Thing thing`
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(_, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      a: `
+        import 'b'
+        recipe
+          ParticleB`,
+      b: `
+        schema Thing
+        particle ParticleB in 'b.js'
+          in Thing thing`
+    });
     const manifest = await Manifest.load('a', loader, {registry});
     assert.isTrue(manifest.recipes[0].particles[0].spec.equals((await registry.b).findParticleByName('ParticleB')));
   });
   it('can parse a schema extending a schema in another manifest', async () => {
     const registry = {};
-    const loader = {
-      loadResource(path) {
-        return {
-          a: `
-              import 'b'
-              schema Bar extends Foo`,
-          b: `
-              schema Foo
-                Text value`
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(_, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      a: `
+          import 'b'
+          schema Bar extends Foo`,
+      b: `
+          schema Foo
+            Text value`
+    });
     const manifest = await Manifest.load('a', loader, {registry});
     assert.equal(manifest.schemas.Bar.fields['value'], 'Text');
   });
   it('can find all imported recipes', async () => {
-    const loader = {
-      loadResource(path) {
-        return {
-          a: `
-              import 'b'
-              import 'c'
-              recipe`,
-          b: `
-              import 'c'
-              recipe`,
-          c: `recipe`,
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(_, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      a: `
+          import 'b'
+          import 'c'
+          recipe`,
+      b: `
+          import 'c'
+          recipe`,
+      c: `recipe`,
+    });
     const manifest = await Manifest.load('a', loader);
     assert.lengthOf(manifest.allRecipes, 3);
   });
@@ -1059,20 +997,10 @@ ${particleStr1}
         someProp: 'someValue2'
       },
     ]);
-    const loader = {
-      loadResource(path) {
-        return {
-          'the.manifest': manifestSource,
-          'entities.json': entitySource,
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      'the.manifest': manifestSource,
+      'entities.json': entitySource,
+    });
     const manifest = await Manifest.load('the.manifest', loader);
     const store = manifest.findStoreByName('Store0') as CollectionStorageProvider;
     assert(store);
@@ -1142,20 +1070,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         recipe
           map Store0 as myStore`;
     const entitySource = JSON.stringify([]);
-    const loader = {
-      loadResource(path) {
-        return {
-          'the.manifest': manifestSource,
-          'entities.json': entitySource,
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return file;
-      },
-    };
+    const loader = new StubLoader({
+      'the.manifest': manifestSource,
+      'entities.json': entitySource,
+    });
     const manifest = await Manifest.load('the.manifest', loader);
     const recipe = manifest.recipes[0];
     assert.deepEqual(recipe.toString(), 'recipe\n  map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
@@ -1381,18 +1299,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     assert.deepEqual(['good'], recipe1.search.resolvedTokens);
   });
   it('can parse a manifest containing stores', async () => {
-    const loader = {
-      loadResource() {
-        return '[]';
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return `${path}/${file}`;
-      },
-    };
-
+    const loader = new StubLoader({'*': '[]'});
     const manifest = await Manifest.parse(`
   schema Product
   store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
