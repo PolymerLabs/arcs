@@ -12,16 +12,25 @@
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
+import {Handle} from './handle.js';
+import {InnerArcHandle} from './particle-execution-context.js';
+import {Type} from './type.js';
+import {Content} from './slot-consumer.js';
 
 export class MultiplexerDomParticle extends TransformationDomParticle {
-  constructor() {
-    super();
-    this._itemSubIdByHostedSlotId = new Map();
-    this._connByHostedConn = new Map();
-  }
-  async _mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc) {
-    const otherMappedHandles = [];
-    const otherConnections = [];
+
+  private _itemSubIdByHostedSlotId: Map<string, string> = new Map();
+  private _connByHostedConn: Map<string, string> = new Map();
+  handleIds: {[key: string]: Promise<Handle>};
+
+  async _mapParticleConnections(
+      listHandleName: string,
+      particleHandleName: string,
+      hostedParticle: ParticleSpec,
+      handles: Map<string, Handle>,
+      arc) {
+    const otherMappedHandles: string[] = [];
+    const otherConnections: string[] = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
     for (const [connectionName, otherHandle] of handles) {
@@ -43,17 +52,20 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     }
     return [otherMappedHandles, otherConnections];
   }
-  async setHandles(handles) {
+
+  async setHandles(handles: Map<string, Handle>) {
     this.handleIds = {};
     const arc = await this.constructInnerArc();
     const listHandleName = 'list';
     const particleHandleName = 'hostedParticle';
     const particleHandle = handles.get(particleHandleName);
-    let hostedParticle = null;
-    let otherMappedHandles = [];
-    let otherConnections = [];
+    let hostedParticle: ParticleSpec | null = null;
+    let otherMappedHandles: string[] = [];
+    let otherConnections: string[] = [];
     if (particleHandle) {
-      hostedParticle = await particleHandle.get();
+      // Typecast to any; the get() method doesn't exist on raw Handles.
+      // tslint:disable-next-line: no-any
+      hostedParticle = await (particleHandle as any).get();
       if (hostedParticle) {
         [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc);
@@ -68,7 +80,14 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     });
     super.setHandles(handles);
   }
-  async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}) {
+
+  async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
+    arc: InnerArcHandle,
+    type: Type,
+    hostedParticle: ParticleSpec,
+    otherMappedHandles: string[],
+    otherConnections: string[],
+  }) {
     if (list.length > 0) {
       this.relevance = 0.1;
     }
@@ -76,7 +95,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
         const itemHandle = await this.handleIds[item.id];
-        itemHandle.set(item);
+        // tslint:disable-next-line: no-any
+        (itemHandle as any).set(item);
         continue;
       }
       const itemHandlePromise = arc.createHandle(type.getContainedType(), `item${index}`);
@@ -87,7 +107,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
         // hosted particle should be retrievable from the item itself. Else we
         // just skip this item.
         if (!item.renderParticleSpec) {
-            continue;
+          continue;
         }
         resolvedHostedParticle =
             ParticleSpec.fromLiteral(JSON.parse(item.renderParticleSpec));
@@ -107,15 +127,17 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this._itemSubIdByHostedSlotId.set(slotId, item.id);
       try {
         const recipe = this.constructInnerRecipe(resolvedHostedParticle, item, itemHandle, { name: hostedSlotName, id: slotId }, { connections: otherConnections, handles: otherMappedHandles });
-        await arc.loadRecipe(recipe, this);
-        itemHandle.set(item);
+        await arc.loadRecipe(recipe);
+        // tslint:disable-next-line: no-any
+        (itemHandle as any).set(item);
       }
       catch (e) {
         console.log(e);
       }
     }
   }
-  combineHostedModel(slotName, hostedSlotId, content) {
+
+  combineHostedModel(slotName: string, hostedSlotId: string, content: Content) {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
@@ -131,7 +153,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     }
     this._setState({renderModel: {items}});
   }
-  combineHostedTemplate(slotName, hostedSlotId, content) {
+
+  combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content) {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
@@ -140,7 +163,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     const templateName = {...this._state.templateName, [subId]: `${content.templateName}`};
     this._setState({templateName});
     if (content.template) {
-      let template = content.template;
+      let template = content.template as string;
       // Append subid$={{subid}} attribute to all provided slots, to make it usable for the transformation particle.
       template = template.replace(new RegExp('slotid="[a-z]+"', 'gi'), '$& subid$="{{subId}}"');
       // Replace hosted particle connection in template with the corresponding particle connection names.
@@ -148,22 +171,24 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this._connByHostedConn.forEach((conn, hostedConn) => {
           template = template.replace(new RegExp(`{{${hostedConn}.description}}`, 'g'), `{{${conn}.description}}`);
       });
-      this._setState({template: {...this._state.template, [content.templateName]: template}});
+      this._setState({template: {...this._state.template, [content.templateName as string]: template}});
       this.forceRenderTemplate();
     }
   }
+
   // Abstract methods below.
   // Called to produce a full interpolated recipe for loading into an inner
   // arc for each item. Subclasses should override this method as by default
   // it does nothing and so no recipe will be returned and content will not
   // be loaded successfully into the inner arc.
-  constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
-  }
+  constructInnerRecipe?(hostedParticle, item, itemHandle, slot, other): string;
+
   // Called with the list of items and by default returns the direct result of
   // `Array.entries()`. Subclasses can override this method to alter the item
   // order or otherwise permute the items as desired before their slots are
   // created and contents are rendered.
-  getListEntries(list) {
+  // tslint:disable-next-line: no-any
+  getListEntries(list: any[]) {
     return list.entries();
   }
 }

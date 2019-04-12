@@ -23,6 +23,13 @@ import {MessagePort} from './message-channel.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
+export type InnerArcHandle = {
+  createHandle(type: Type, name: string, hostParticle?: Particle): Promise<Handle>;
+  mapHandle(handle: Handle): Promise<string>;
+  createSlot(transformationParticle: Particle, transformationSlotName: string, handleId: string): Promise<string>;
+  loadRecipe(recipe: string): Promise<{error?: string}>;
+};
+
 export class ParticleExecutionContext {
   private apiPort : PECInnerPort;
   private particles = <Particle[]>[];
@@ -127,10 +134,10 @@ export class ParticleExecutionContext {
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  innerArcHandle(arcId: string, particleId: string) {
+  innerArcHandle(arcId: string, particleId: string): InnerArcHandle {
     const pec = this;
     return {
-      createHandle(type, name, hostParticle) {
+      createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
             const handle = handleFor(proxy, name, particleId);
@@ -181,7 +188,7 @@ export class ParticleExecutionContext {
   defaultCapabilitySet() {
     return {
       constructInnerArc: particle => {
-        return new Promise((resolve, reject) =>
+        return new Promise<InnerArcHandle>((resolve, reject) =>
           this.apiPort.ConstructInnerArc(arcId => resolve(this.innerArcHandle(arcId, particle.id)), particle));
       }
     };
