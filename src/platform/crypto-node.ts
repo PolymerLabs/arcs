@@ -7,5 +7,4 @@
 
 import WebCrypto from 'node-webcrypto-ossl';
 
-global.crypto = new WebCrypto();
-export const crypto = global.crypto;
+export const crypto = new WebCrypto();
