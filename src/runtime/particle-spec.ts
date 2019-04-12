@@ -144,7 +144,7 @@ export class ProvideSlotConnectionSpec {
   }
 }
 
-type SerializedParticleSpec = {
+export type SerializedParticleSpec = {
   name: string,
   id?: string,
   verbs: string[],

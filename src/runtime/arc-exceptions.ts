@@ -10,7 +10,7 @@ import {Particle} from './particle';
  * http://polymer.github.io/PATENTS.txt
  */
 
-type SerializedPropagatedException = {
+export type SerializedPropagatedException = {
   exceptionType: string,
   cause: {name: string, message: string, stack: string},  // Serialized Error.
   method: string,

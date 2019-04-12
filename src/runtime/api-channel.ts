@@ -14,15 +14,15 @@ import {Arc} from './arc.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {OuterPortAttachment} from './debug/outer-port-attachment.js';
 import {Handle} from './handle.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec, SerializedParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {Type} from './type.js';
-import {PropagatedException} from './arc-exceptions.js';
+import {Type, TypeLiteral} from './type.js';
+import {PropagatedException, SerializedPropagatedException} from './arc-exceptions.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -32,15 +32,25 @@ interface MappingInfo {
   redundant?: boolean;
   value?: MappingInfo;
   key?: MappingInfo;
-  converter?: Literalizer;
+  converter?: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException;
   identifier?: boolean;
   ignore?: boolean;
 }
 
 // TODO(shans): are there better types that I can use for this?
 interface Literalizer {
-  prototype: {toLiteral: () => {}};
-  fromLiteral: ({}) => {};
+  prototype: {toLiteral: () => TypeLiteral};
+  fromLiteral: (typeliteral: TypeLiteral) => Type;
+}
+
+interface LiteralizerParticleSpec {
+  prototype: {toLiteral: () => SerializedParticleSpec};
+  fromLiteral: (spec: SerializedParticleSpec) => ParticleSpec;
+}
+
+interface LiteralizerPropagatedException {
+  prototype: {toLiteral: () => SerializedPropagatedException};
+  fromLiteral: (exception: SerializedPropagatedException) => PropagatedException;
 }
 
 const targets = new Map<{}, Map<string, MappingInfo[]>>();
@@ -67,7 +77,7 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: Literalizer) {
+function ByLiteral(constructor: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
     const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
@@ -415,7 +425,7 @@ export abstract class PECOuterPort extends APIPort {
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
-  StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: {[index: string]: string}, @List(MappingType.Direct) contentTypes: string[]) {}
+  StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: Map<string, string>, @List(MappingType.Direct) contentTypes: string[]) {}
   StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
 
   abstract onRender(particle: recipeParticle.Particle, slotName: string, content: string);

@@ -11,6 +11,8 @@
     "noImplicitThis": true,
     "module": "es2015",
     "moduleResolution": "Node",
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
 
     "allowJs": false,
     "sourceMap": true,
