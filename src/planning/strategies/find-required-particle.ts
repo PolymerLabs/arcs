@@ -21,15 +21,15 @@ export class FindRequiredParticle extends Strategy {
         const particlesMatch: Particle[] = arc.activeRecipe.particles.filter(arcParticle => particle.matches(arcParticle));
         
         return particlesMatch.map(particleMatch => ((recipe: Recipe, particle: Particle) => {
-          if (!particle.matches(particleMatch)) return;
+          if (!particle.matches(particleMatch)) return undefined;
           for (const [name,slotConn] of Object.entries(particle.consumedSlotConnections)) {
             const oldSlot = slotConn.targetSlot;
             const newSlot = particleMatch.consumedSlotConnections[name].targetSlot;
-            if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return;
+            if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return undefined;
 
             for (const [pname, oldPSlot] of Object.entries(slotConn.providedSlots)) {
               const pslot = particleMatch.consumedSlotConnections[name].providedSlots[pname];
-              if (!SlotUtils.replaceOldSlot(recipe, oldPSlot, pslot)) return;
+              if (!SlotUtils.replaceOldSlot(recipe, oldPSlot, pslot)) return undefined;
             }
             
             // remove particle from require section 
@@ -39,6 +39,7 @@ export class FindRequiredParticle extends Strategy {
               }
             }
           }
+          return 0;
         }));
       }
     }(StrategizerWalker.Permuted), this);

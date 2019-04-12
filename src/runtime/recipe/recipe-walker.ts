@@ -14,55 +14,33 @@ import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
-import {Walker, Descendant} from './walker.js';
+import {Walker, Descendant, Continuation} from './walker.js';
 
 export class RecipeWalker extends Walker<Recipe> {
 
   // Optional lifecycle events
-
-  // tslint:disable-next-line: no-any
-  onHandle?(recipe: Recipe, handle: Handle): any;
-  // tslint:disable-next-line: no-any
-  onPotentialHandleConnection?(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec): any;
-  // tslint:disable-next-line: no-any
-  onHandleConnection?(recipe: Recipe, handleConnection: HandleConnection): any;
-  // tslint:disable-next-line: no-any
-  onParticle?(recipe: Recipe, particle: Particle): any;
-  // tslint:disable-next-line: no-any
-  onRecipe?(recipe: Recipe, result): any;
-  // tslint:disable-next-line: no-any
-  onPotentialSlotConnection?(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec): any;
-  // tslint:disable-next-line: no-any
-  onSlotConnection?(recipe: Recipe, slotConnection: SlotConnection): any;
-  // tslint:disable-next-line: no-any
-  onSlot?(recipe: Recipe, slot: Slot): any;
-  // tslint:disable-next-line: no-any
-  onObligation?(recipe: Recipe, obligation: ConnectionConstraint): any;
-  // tslint:disable-next-line: no-any
-  onRequiredParticle?(recipe: Recipe, particle: Particle): any;
+  onRecipe?(recipe: Recipe): Continuation<Recipe, []>;
+  onHandle?(recipe: Recipe, handle: Handle): Continuation<Recipe, [Handle]>;
+  onPotentialHandleConnection?(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec): Continuation<Recipe, [Particle, HandleConnectionSpec]>;
+  onHandleConnection?(recipe: Recipe, handleConnection: HandleConnection): Continuation<Recipe, [HandleConnection]>;
+  onParticle?(recipe: Recipe, particle: Particle): Continuation<Recipe, [Particle]>;
+  onPotentialSlotConnection?(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec): Continuation<Recipe, [Particle, ConsumeSlotConnectionSpec]>;
+  onSlotConnection?(recipe: Recipe, slotConnection: SlotConnection): Continuation<Recipe, [SlotConnection]>;
+  onSlot?(recipe: Recipe, slot: Slot): Continuation<Recipe, [Slot]>;
+  onObligation?(recipe: Recipe, obligation: ConnectionConstraint): Continuation<Recipe, [ConnectionConstraint]>;
+  onRequiredParticle?(recipe: Recipe, particle: Particle): Continuation<Recipe, [Particle]>;
 
   onResult(result: Descendant<Recipe>) {
     super.onResult(result);
     const recipe: Recipe = result.result;
-    const updateList = [];
 
-    // update phase - walk through recipe and call onRecipe,
-    // onHandle, etc.
-
-    // TODO overriding the argument with a local variable is very confusing.
     if (this.onRecipe) {
-      result = this.onRecipe(recipe, result);
-      if (!this.isEmptyResult(result)) {
-        updateList.push({continuation: result});
-      }
+      this.visit(this.onRecipe);
     }
+    
     if (this.onParticle) {
       for (const particle of recipe.particles) {
-        const context: [Particle] = [particle];
-        const result = this.onParticle(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+        this.visit(this.onParticle, particle);
       }
     }
 
@@ -73,87 +51,53 @@ export class RecipeWalker extends Walker<Recipe> {
             if (particle.connections[connectionSpec.name]) {
               continue;
             }
-            const context: [Particle, HandleConnectionSpec] = [particle, connectionSpec];
-            const result = this.onPotentialHandleConnection(recipe, ...context);
-            if (!this.isEmptyResult(result)) {
-              updateList.push({continuation: result, context});
-            }
+            this.visit(this.onPotentialHandleConnection, particle, connectionSpec);
           }
         }
       }
     }
 
-    for (const handleConnection of recipe.handleConnections) {
-      if (this.onHandleConnection) {
-        const context: [HandleConnection] = [handleConnection];
-        const result = this.onHandleConnection(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+    if (this.onHandleConnection) {
+      for (const handleConnection of recipe.handleConnections) {
+        this.visit(this.onHandleConnection, handleConnection);
       }
     }
     if (this.onHandle) {
       for (const handle of recipe.handles) {
-        const context: [Handle] = [handle];
-        const result = this.onHandle(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+        this.visit(this.onHandle, handle);
       }
     }
     if (this.onPotentialSlotConnection) {
       for (const particle of recipe.particles) {
         for (const [name, slotSpec] of particle.getSlotSpecs()) {
           if (particle.getSlotConnectionByName(name)) continue;
-          const context: [Particle, ConsumeSlotConnectionSpec] = [particle, slotSpec];
-          const result = this.onPotentialSlotConnection(recipe, ...context);
-          if (!this.isEmptyResult(result)) {
-            updateList.push({continuation: result, context});
-          }
+          this.visit(this.onPotentialSlotConnection, particle, slotSpec);
         }
       }
     }
 
     if (this.onSlotConnection) {
       for (const slotConnection of recipe.slotConnections) {
-        const context: [SlotConnection] = [slotConnection];
-        const result = this.onSlotConnection(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+        this.visit(this.onSlotConnection, slotConnection);
       }
     }
     if (this.onSlot) {
       for (const slot of recipe.slots) {
-        const context: [Slot] = [slot];
-        const result = this.onSlot(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+        this.visit(this.onSlot, slot);
       }
     }
     if (this.onObligation) {
       for (const obligation of recipe.obligations) {
-        const context: [ConnectionConstraint] = [obligation];
-        const result = this.onObligation(recipe, ...context);
-        if (!this.isEmptyResult(result)) {
-          updateList.push({continuation: result, context});
-        }
+        this.visit(this.onObligation, obligation);
       }
     }
     if (this.onRequiredParticle) {
       for (const require of recipe.requires) {
         for (const particle of require.particles) {
-          const context: [Particle] = [particle];
-          const result = this.onRequiredParticle(recipe, ...context);
-          if (!this.isEmptyResult(result)) {
-            updateList.push({continuation: result, context});
-          }
+          this.visit(this.onRequiredParticle, particle);
         }
       }
     }
-
-    this._runUpdateList(recipe, updateList);
   }
 
   createDescendant(recipe: Recipe, score: number): void {
@@ -161,6 +105,5 @@ export class RecipeWalker extends Walker<Recipe> {
     const hash = valid ? recipe.digest() : null;
     super.createWalkerDescendant(recipe, score, hash, valid);
   }
-  
 }
 

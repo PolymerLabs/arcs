@@ -13,7 +13,7 @@ export class CreateHandleGroup extends Strategy {
 
   async generate(inputParams) {
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
-      onRecipe(recipe: Recipe, result) {
+      onRecipe(recipe: Recipe) {
         // Resolve constraints before assuming connections are free.
         if (recipe.connectionConstraints.length > 0) return undefined;
 
@@ -62,6 +62,7 @@ export class CreateHandleGroup extends Strategy {
               const conn = cloneParticle.addConnectionName(connSpec.name);
               conn.connectToHandle(newHandle);
             }
+            return 0;
           };
         }
         return undefined;

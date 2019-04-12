@@ -85,6 +85,7 @@ export class ResolveWalker extends RecipeWalker {
     if (mappable.length === 1) {
       return (recipe, handle) => {
         handle.mapToStorage(mappable[0]);
+        return 0;
       };
     }
     return undefined;
@@ -156,13 +157,12 @@ export class ResolveRecipeAction extends Action<Recipe> {
     return ResolveWalker.walk(this.getResults(inputParams),
       new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
   }
-
 }
 
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {
   private resolver: ResolveRecipeAction;
-  constructor(arc) {
+  constructor(arc: Arc) {
     this.resolver = new ResolveRecipeAction(arc);
   }
 

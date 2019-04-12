@@ -8,26 +8,20 @@
 import {ConnectionConstraint} from './connection-constraint.js';
 import {Recipe} from './recipe';
 import {RecipeWalker} from './recipe-walker.js';
-import {Descendant} from './walker.js';
+import {Descendant, Continuation} from './walker.js';
 
 export class ConstraintWalker extends RecipeWalker {
   // Optional handler
-  onConstraint?(recipe: Recipe, constraint: ConnectionConstraint);
+  onConstraint?(recipe: Recipe, constraint: ConnectionConstraint): Continuation<Recipe, [ConnectionConstraint]>;
   
   onResult(result: Descendant<Recipe>) {
     super.onResult(result);
     const recipe: Recipe = result.result as Recipe;
-    const updateList = [];
 
-    recipe.connectionConstraints.forEach(constraint => {
-      if (this.onConstraint) {
-        const result = this.onConstraint(recipe, constraint);
-        if (result) {
-          updateList.push({continuation: result, context: constraint});
-        }
+    if (this.onConstraint) {
+      for (const constraint of recipe.connectionConstraints) {
+        this.visit(this.onConstraint, constraint);
       }
-    });
-
-    this._runUpdateList(recipe, updateList);
+    }
   }
 }
