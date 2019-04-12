@@ -516,7 +516,7 @@ function runTests(args: string[]): boolean {
   function buildTestRunner() {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     const chain = [];
-    const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../src/platform/mocha-node.js'));
+    const mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../build/platform/mocha-node.js'));
     for (const test of testsInDir(process.cwd())) {
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
