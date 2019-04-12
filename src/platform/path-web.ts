@@ -8,6 +8,6 @@
 export const path = {
 
   join(pth : string, name : string) {
-    return name; // dummy is it isn't used by web, but we want the interface
+    throw new Error("Not implemented"); // We just want the interface
   },
 };
