@@ -229,4 +229,5 @@ export class SlotConsumer {
   formatContent(content: Content, subId): Content { return null; }
   formatHostedContent(content: Content): {} { return null; }
   static clear(container) {}
+  static findRootContainers(topContainer) { return {}; }
 }

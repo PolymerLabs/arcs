@@ -16,7 +16,6 @@ import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConsumer} from './slot-consumer.js';
 import {HostedSlotContext, ProvidedSlotContext, SlotContext} from './slot-context.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
 
 export type SlotComposerOptions = {
   modalityName?: string;
@@ -124,7 +123,7 @@ export class SlotComposer {
   }
 
   async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
-    const newConsumers = <SlotDomConsumer[]>[];
+    const newConsumers = <SlotConsumer[]>[];
 
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {

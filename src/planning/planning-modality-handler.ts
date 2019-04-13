@@ -11,6 +11,7 @@ import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
 import {DescriptionFormatter} from '../runtime/description-formatter.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {ModalityHandler} from '../runtime/modality-handler.js';
+import {SlotConsumer} from '../runtime/slot-consumer.js';
 import {SlotDomConsumer} from '../runtime/slot-dom-consumer.js';
 
 import {HeadlessSuggestDomConsumer} from './headless-suggest-dom-consumer.js';
@@ -18,7 +19,7 @@ import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
 
 export class PlanningModalityHandler extends ModalityHandler{
-  constructor(slotConsumerClass: typeof SlotDomConsumer,
+  constructor(slotConsumerClass: typeof SlotConsumer,
               public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
               descriptionFormatter?: typeof DescriptionFormatter){
     super(slotConsumerClass, descriptionFormatter);
