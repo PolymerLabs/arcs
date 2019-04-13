@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType} from "./crdt.js";
+import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord} from "./crdt.js";
 
 type RawCount = number;
 
@@ -20,8 +20,14 @@ export enum CountOpTypes {Increment, MultiIncrement}
 export type CountOperation = {type: CountOpTypes.MultiIncrement, value: number, actor: string, version: VersionInfo} | 
                              {type: CountOpTypes.Increment, actor: string, version: VersionInfo};
 
-type CountChange = CRDTChange<CountOperation, CountData>;
-type CountModel = CRDTModel<CountOperation, CountData, RawCount>;
+export interface CRDTCountTypeRecord extends CRDTTypeRecord {
+  data: CountData;
+  operation: CountOperation;
+  consumerType: RawCount;
+}
+
+type CountModel = CRDTModel<CRDTCountTypeRecord>;
+type CountChange = CRDTChange<CRDTCountTypeRecord>;
 
 export class CRDTCount implements CountModel {
   private model: CountData = {values: new Map(), version: new Map()};
@@ -94,7 +100,7 @@ export class CRDTCount implements CountModel {
     return this.model;
   }
 
-  getParticleView(): RawCount {
+  getParticleView() {
     return [...this.model.values.values()].reduce((prev, current) => prev + current, 0);
   }
 }

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTCount, CountOpTypes} from '../crdt-count.js';
+import {CRDTCountTypeRecord, CountOpTypes, CRDTCount} from '../crdt-count.js';
 import {CRDTError, ChangeType} from '../crdt.js';
 
 describe('CRDTCount', () => {
