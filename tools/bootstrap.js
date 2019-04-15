@@ -9,19 +9,17 @@ const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
 
-function spawn(cmd, ...args) {
-  const res = child_process.spawnSync(path.normalize(cmd), args, {stdio: 'inherit'});
-  return res.status === 0 && !res.error;
-}
-
 const src = 'tools/sigh.ts';
 const dst = 'build/sigh.js';
 
 if (!fs.existsSync(dst) || fs.statSync(dst).mtimeMs < fs.statSync(src).mtimeMs) {
   console.log('Building sigh');
-  if (!spawn('node_modules/.bin/tsc', '-p', 'tools')) {
+  const cmd = path.normalize('node_modules/.bin/tsc');
+  const res = child_process.spawnSync(cmd, ['-p', 'tools'], {stdio: 'inherit'});
+  if (res.status !== 0 || res.error) {
     process.exit(1);
   }
 }
 
-process.exit(!spawn('node', 'build/sigh.js', ...process.argv.slice(2)));
+const child = child_process.fork('build/sigh.js', process.argv.slice(2));
+child.on('exit', status => process.exit(status));
