@@ -41,7 +41,7 @@ interface Cloneable {
 }
 
 export interface Descendant<T extends Cloneable> {
-  result: T; // TODO: Make Walker genericly typed.
+  result: T;
   score: number;
   derivation: {
     parent: Descendant<T>;
@@ -79,6 +79,20 @@ export abstract class Action<T extends Cloneable> {
   }
 }
 
+// Exported alias to be used by visitor methods of walker subclasses.
+export type Continuation<T extends Cloneable, Ctx extends object[]> = SingleContinuation<T, Ctx> | SingleContinuation<T, Ctx>[];
+
+// Utility aliases used in the walker.
+interface Update<T extends Cloneable, Ctx extends object[]> {
+  continuation: Continuation<T, Ctx>;
+  context: Ctx;
+}
+type SingleContinuation<T extends Cloneable, Ctx extends object[]> = (obj: T, ...ctx: Ctx) => number;
+interface SingleUpdate<T extends Cloneable, Ctx extends object[]> {
+  continuation: SingleContinuation<T, Ctx>;
+  context: Ctx;
+}
+
 export abstract class Walker<T extends Cloneable> {
   // tslint:disable-next-line: variable-name
   static Permuted: WalkerTactic = WalkerTactic.Permuted;
@@ -88,6 +102,8 @@ export abstract class Walker<T extends Cloneable> {
   currentAction: Action<T>;
   currentResult: Descendant<T>;
   tactic: WalkerTactic;
+
+  private updateList: Update<T, object[]>[];
 
   constructor(tactic: WalkerTactic) {
     this.descendants = [];
@@ -101,10 +117,13 @@ export abstract class Walker<T extends Cloneable> {
 
   onResult(result: Descendant<T>): void {
     this.currentResult = result;
+    this.updateList = [];
   }
 
   onResultDone(): void {
+    this.runUpdateList(this.currentResult.result, this.updateList);
     this.currentResult = undefined;
+    this.updateList = undefined;
   }
 
   onActionDone(): void {
@@ -121,21 +140,28 @@ export abstract class Walker<T extends Cloneable> {
     return walker.descendants;
   }
 
-  _runUpdateList(start: T, updateList) {
-    const updated = [];
+  visit<Ctx extends object[]>(visitor: (obj: T, ...ctx: Ctx) => Continuation<T, Ctx>, ...context: Ctx): void {
+    const continuation: Continuation<T, Ctx> = visitor.bind(this)(this.currentResult.result, ...context);
+    if (!this.isEmptyResult(continuation)) {
+      this.updateList.push({continuation, context});
+    }
+  }
+
+  private runUpdateList(start: T, updateList: Update<T, object[]>[]) {
+    const updated: {result: T, score: number}[] = [];
     if (updateList.length) {
       switch (this.tactic) {
         case WalkerTactic.Permuted: {
-          let permutations = [[]];
+          let permutations: SingleUpdate<T, object[]>[][] = [[]];
           updateList.forEach(({continuation, context}) => {
-            const newResults = [];
+            const newResults: SingleUpdate<T, object[]>[][] = [];
             if (typeof continuation === 'function') {
               continuation = [continuation];
             }
             continuation.forEach(f => {
               permutations.forEach(p => {
                 const newP = p.slice();
-                newP.push({f, context});
+                newP.push({continuation: f, context});
                 newResults.push(newP);
               });
             });
@@ -143,19 +169,15 @@ export abstract class Walker<T extends Cloneable> {
           });
 
           for (let permutation of permutations) {
-            const cloneMap = new Map();
+            const cloneMap = new Map<object, object>();
             const newResult = start.clone(cloneMap);
             let score = 0;
-            permutation = permutation.filter(p => p.f !== null);
+            permutation = permutation.filter(p => p.continuation !== null);
             if (permutation.length === 0) {
               continue;
             }
-            permutation.forEach(({f, context}) => {
-              if (context) {
-                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
-              } else {
-                score = f(newResult);
-              }
+            permutation.forEach(({continuation, context}) => {
+              score = continuation(newResult, ...context.map(c => cloneMap.get(c) || c));
             });
 
             updated.push({result: newResult, score});
@@ -172,13 +194,9 @@ export abstract class Walker<T extends Cloneable> {
               if (f == null) {
                 f = () => 0;
               }
-              const cloneMap = new Map();
+              const cloneMap = new Map<object, object>();
               const newResult = start.clone(cloneMap);
-              if (context) {
-                score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
-              } else {
-                score = f(newResult);
-              }
+              score = f(newResult, ...context.map(c => cloneMap.get(c) || c));
               updated.push({result: newResult, score});
             });
           });
@@ -191,7 +209,7 @@ export abstract class Walker<T extends Cloneable> {
     // commit phase - output results.
 
     for (const newResult of updated) {
-      const result = this.createDescendant(newResult.result, newResult.score);
+      this.createDescendant(newResult.result, newResult.score);
     }
   }
 
@@ -215,7 +233,7 @@ export abstract class Walker<T extends Cloneable> {
     });
   }
 
-  isEmptyResult(result) {
+  isEmptyResult(result: Continuation<T, object[]>) {
     if (!result) {
       return true;
     }

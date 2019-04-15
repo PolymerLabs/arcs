@@ -29,7 +29,7 @@ export class AddMissingHandles extends Strategy {
           return undefined;
         }
 
-        return recipe => {
+        return (recipe: Recipe) => {
           disconnectedConnections.forEach(({particle, connSpec}) => {
             const cloneParticle = recipe.updateToClone({particle}).particle;
             const handleConnection = cloneParticle.addConnectionName(connSpec.name);

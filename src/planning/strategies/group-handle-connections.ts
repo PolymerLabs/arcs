@@ -8,7 +8,6 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Type} from '../../runtime/type.js';
@@ -21,7 +20,7 @@ export class GroupHandleConnections extends Strategy {
     super(arc, args);
 
     this._walker = new class extends StrategizerWalker {
-      onRecipe(recipe: Recipe, result) {
+      onRecipe(recipe: Recipe) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.getUnnamedUntypedConnections()) {
           return undefined;
@@ -101,7 +100,7 @@ export class GroupHandleConnections extends Strategy {
         }
 
         if (groupsByType.size > 0) {
-          return recipe => {
+          return (recipe: Recipe) => {
             groupsByType.forEach((groups, type) => {
               groups.forEach(({group}) => {
                 const recipeHandle = recipe.newHandle();
@@ -115,7 +114,7 @@ export class GroupHandleConnections extends Strategy {
                 }
               });
             });
-            // TODO: score!
+            return 0;
           };
         }
         return undefined;
