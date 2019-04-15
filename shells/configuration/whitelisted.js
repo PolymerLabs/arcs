@@ -8,6 +8,7 @@ import '../../modalities/dom/components/elements/good-map.js';
 import '../../modalities/dom/components/elements/geo-location.js';
 import '../../modalities/dom/components/elements/model-input.js';
 import '../../modalities/dom/components/elements/model-img.js';
+import '../../modalities/dom/components/elements/dom-repeater.js';
 
 // requires app-level firebase configuration
 import '../lib/firebase-upload.js';
