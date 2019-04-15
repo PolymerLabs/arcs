@@ -35,12 +35,12 @@ export class RecipeWalker extends Walker<Recipe> {
     const recipe: Recipe = result.result;
 
     if (this.onRecipe) {
-      this.visit(this.onRecipe);
+      this.visit(this.onRecipe.bind(this));
     }
     
     if (this.onParticle) {
       for (const particle of recipe.particles) {
-        this.visit(this.onParticle, particle);
+        this.visit(this.onParticle.bind(this), particle);
       }
     }
 
@@ -51,7 +51,7 @@ export class RecipeWalker extends Walker<Recipe> {
             if (particle.connections[connectionSpec.name]) {
               continue;
             }
-            this.visit(this.onPotentialHandleConnection, particle, connectionSpec);
+            this.visit(this.onPotentialHandleConnection.bind(this), particle, connectionSpec);
           }
         }
       }
@@ -59,42 +59,42 @@ export class RecipeWalker extends Walker<Recipe> {
 
     if (this.onHandleConnection) {
       for (const handleConnection of recipe.handleConnections) {
-        this.visit(this.onHandleConnection, handleConnection);
+        this.visit(this.onHandleConnection.bind(this), handleConnection);
       }
     }
     if (this.onHandle) {
       for (const handle of recipe.handles) {
-        this.visit(this.onHandle, handle);
+        this.visit(this.onHandle.bind(this), handle);
       }
     }
     if (this.onPotentialSlotConnection) {
       for (const particle of recipe.particles) {
         for (const [name, slotSpec] of particle.getSlotSpecs()) {
           if (particle.getSlotConnectionByName(name)) continue;
-          this.visit(this.onPotentialSlotConnection, particle, slotSpec);
+          this.visit(this.onPotentialSlotConnection.bind(this), particle, slotSpec);
         }
       }
     }
 
     if (this.onSlotConnection) {
       for (const slotConnection of recipe.slotConnections) {
-        this.visit(this.onSlotConnection, slotConnection);
+        this.visit(this.onSlotConnection.bind(this), slotConnection);
       }
     }
     if (this.onSlot) {
       for (const slot of recipe.slots) {
-        this.visit(this.onSlot, slot);
+        this.visit(this.onSlot.bind(this), slot);
       }
     }
     if (this.onObligation) {
       for (const obligation of recipe.obligations) {
-        this.visit(this.onObligation, obligation);
+        this.visit(this.onObligation.bind(this), obligation);
       }
     }
     if (this.onRequiredParticle) {
       for (const require of recipe.requires) {
         for (const particle of require.particles) {
-          this.visit(this.onRequiredParticle, particle);
+          this.visit(this.onRequiredParticle.bind(this), particle);
         }
       }
     }
