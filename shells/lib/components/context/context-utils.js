@@ -5,10 +5,16 @@ export const listenToStore = (store, onchange) => {
   return () => store.off(onchange);
 };
 
+export const getStoreData = async store => {
+  return store.toList ? await store.toList() : await store.get();
+};
+
 export const forEachEntity = async (store, fn) => {
   const data = store.toList ? await store.toList() : [await store.get()];
   data.forEach(value => value && fn(value));
 };
+
+export const simpleNameOfType = type => type.getEntitySchema().names[0];
 
 export const nameOfType = type => {
   let typeName = type.getEntitySchema().names[0];
@@ -18,10 +24,17 @@ export const nameOfType = type => {
   return typeName;
 };
 
-export const simpleNameOfType = type => type.getEntitySchema().names[0];
-
-export const getBoxTypeSpec = store => {
-  return store.type.getEntitySchema().type.toString();
-};
+// export const getBoxTypeSpec = store => {
+//   return store.type.getEntitySchema().type.toString();
+// };
 
 export const boxes = {};
+
+export const crackStorageKey = storage => {
+  // TODO(sjmiles): cheating?
+  const parts = storage.split('/');
+  const base = parts.slice(0, -3).join('/');
+  const arcid = parts.slice(-3, -2).pop();
+  const id = parts.slice(-1).pop();
+  return {base, arcid, id};
+};

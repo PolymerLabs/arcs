@@ -1,5 +1,6 @@
 import {ObserverTable} from './observer-table.js';
-import {nameOfType, simpleNameOfType, getBoxTypeSpec, boxes} from './utils.js';
+import {ContextStores} from '../../lib/context/context-stores.js';
+import {nameOfType, simpleNameOfType, boxes} from '../../lib/context/context-utils.js';
 
 const handlesTable = new ObserverTable('handles');
 const metaTable = new ObserverTable('meta');
@@ -8,13 +9,13 @@ const friendsTable = new ObserverTable('friends');
 
 export const ArcHandleDisplayMixin = Base => class extends Base {
   async add(handle, store) {
-    super.add(handle, store);
+    await super.add(handle, store);
     const key = handle.storageKey;
     const user = key.split('/').slice(5, 6);
     handlesTable.addRow(key, [user, nameOfType(handle.type), key.split('/').pop()]);
   }
-  remove(handle, store) {
-    super.remove(handle, store);
+  async remove(handle, store) {
+    await super.remove(handle, store);
     const key = handle.storageKey;
     handlesTable.removeRow(key);
   }
@@ -25,15 +26,15 @@ export const ArcMetaDisplayMixin = Base => class extends Base {
     return metaTable;
   }
   async add(entity, store) {
-    super.add(entity, store);
+    await super.add(entity, store);
     const {id, rawData: {description, deleted}} = entity;
     if (!deleted) {
       const user = store.storageKey.split('/').slice(5, 6);
       this.table.addRow(id, [user, description]);
     }
   }
-  remove(entity, store) {
-    super.remove(entity, store);
+  async remove(entity, store) {
+    await super.remove(entity, store);
     if (!entity.rawData.deleted) {
       this.table.removeRow(entity.id);
     }
@@ -42,51 +43,79 @@ export const ArcMetaDisplayMixin = Base => class extends Base {
 
 export const ShareDisplayMixin = Base => class extends Base {
   async add(entity, store) {
-    super.add(entity, store);
+    await super.add(entity, store);
     const user = store.storageKey.split('/').slice(5, 6);
     entitiesTable.addRow(entity.id, [user, simpleNameOfType(store.type), JSON.stringify(entity.rawData)]);
     const typeName = store.type.getEntitySchema().names[0];
-    const typeSpec = getBoxTypeSpec(store);
-    const box = boxes[typeSpec];
-    if (box) {
-      if (!box.table) {
-        const tid = typeName.replace(/[[\]]/g, '_');
-        document.body.appendChild(Object.assign(document.createElement('div'), {innerHTML: `
-  <table id="${tid}">
-    <thead>
-      <tr><th colspan="3">Box of ${typeName}</th></tr>
-      <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
-  <spacer></spacer>
+    //
+    const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
+    const share = boxes[metrics.storeId];
+    if (share) {
+      if (!share.shareTable) {
+        const name = metrics.storeId; // typeName
+        const tid = ObserverTable.cleanId(name);
+        document.body.appendChild(Object.assign(document.createElement('div'), {
+          innerHTML: `
+<table id="${tid}">
+  <thead>
+    <tr><th colspan="3">${metrics.storeName}</th></tr>
+    <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+<spacer></spacer>
         `}));
-        box.table = new ObserverTable(tid);
+        share.shareTable = new ObserverTable(tid);
       }
-      box.table.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
+      share.shareTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
+    }
+    const box = boxes[metrics.boxStoreId];
+    if (box) {
+      if (!box.boxTable) {
+        const name = metrics.boxStoreId;
+        const tid = ObserverTable.cleanId(name);
+        document.body.appendChild(Object.assign(document.createElement('div'), {
+          innerHTML: `
+<table id="${tid}">
+  <thead>
+    <tr><th colspan="3">${metrics.boxStoreId}</th></tr>
+    <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+<spacer></spacer>
+        `}));
+        box.boxTable = new ObserverTable(tid);
+      }
+      box.boxTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
     }
   }
-  remove(entity, store) {
-    super.remove(entity, store);
+  async remove(entity, store) {
+    await super.remove(entity, store);
     entitiesTable.removeRow(entity.id);
-    const typeSpec = getBoxTypeSpec(store);
-    const box = boxes[typeSpec];
-    if (box) {
-      box.table.removeRow(entity.id);
+    const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
+    const share = boxes[metrics.storeId];
+    if (share && share.shareTable) {
+      share.shareTable.removeRow(entity.id);
+    }
+    const box = boxes[metrics.boxStoreId];
+    if (box && box.boxTable) {
+      box.boxTable.removeRow(entity.id);
     }
   }
 };
 
-export const ProfileDisplayMixin = Base => class extends Base {
+export const ProfileDisplayMixin = Base => class extends ShareDisplayMixin(Base) {
   async add(entity, store) {
-    super.add(entity, store);
+    await super.add(entity, store);
     if (this.isFriendStore(store)) {
       friendsTable.addRow(entity.id, [entity.rawData.publicKey]);
     }
   }
-  remove(entity, store) {
-    super.remove(entity, store);
+  async remove(entity, store) {
+    await super.remove(entity, store);
     if (this.isFriendStore(store)) {
       friendsTable.removeRow(entity.id);
     }

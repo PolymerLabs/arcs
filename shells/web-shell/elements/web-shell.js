@@ -13,7 +13,7 @@ import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {Xen} from '../../lib/components/xen.js';
 import {Const} from '../../configuration/constants.js';
 import {Utils} from '../../lib/utils.js';
-import '../../elements/launcher-arc.js';
+import '../../lib/elements/launcher-arc.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';

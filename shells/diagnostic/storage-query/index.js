@@ -1,10 +1,11 @@
 import '../../lib/firebase-support.js';
 import '../../lib/loglevel-web.js';
-import {SyntheticStores} from '../../lib/synthetic-stores.js';
-import {StoreObserver} from './store-observer.js';
-import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from './listeners.js';
-import {ProfileDisplayMixin, ShareDisplayMixin, ArcMetaDisplayMixin, ArcHandleDisplayMixin} from './table-mixins.js';
 import {Utils} from '../../lib/utils.js';
+import {SyntheticStores} from '../../lib/synthetic-stores.js';
+import {StoreObserver} from '../../lib/context/store-observer.js';
+import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from '../../lib/context/context-listeners.js';
+import {ProfileDisplayMixin, ShareDisplayMixin, ArcMetaDisplayMixin, ArcHandleDisplayMixin} from './table-mixins.js';
+import '../../../modalities/dom/components/arc-tools/store-explorer.js';
 
 const storage = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/sjmiles`;
 
@@ -27,9 +28,9 @@ const observe = async () => {
     const ArcMetaListenerImpl =
       listener => new ArcHandleListenerImpl(new (ArcMetaDisplayMixin(ArcMetaListener))(listener));
     const ProfileListenerImpl =
-    (context, listener) => new ArcHandleListenerImpl(new (ProfileDisplayMixin(ShareDisplayMixin(ProfileListener)))(context, listener));
+      (context, listener) => new ArcHandleListenerImpl(new (ProfileDisplayMixin(ProfileListener))(context, listener));
     const ShareListenerImpl =
-    (context, listener)  => new ArcHandleListenerImpl(new (ShareDisplayMixin(ShareListener))(context, listener));
+      (context, listener)  => new ArcHandleListenerImpl(new (ShareDisplayMixin(ShareListener))(context, listener));
     //
     UserObserverImpl = store => new StoreObserver(store,
       // each handle is some Arc Metadata (including key)
@@ -44,11 +45,12 @@ const observe = async () => {
         )
       )
     );
+    //
+    document.querySelector('store-explorer').context = context;
   }
-  //
+  // `user-launcher` store contains keys for user's Arcs
   const store = await SyntheticStores.getStore(storage, 'user-launcher');
   if (store) {
-    // `user-launcher` store tracks user's Arcs
     return UserObserverImpl(store);
   }
 };

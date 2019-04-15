@@ -73,6 +73,9 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     display: block;
   }
   input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
     border: none;
     background-color: inherit;
     font-size: 1.7em;
@@ -98,7 +101,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       <input value="{{newFriendName}}" placeholder="Enter New Friend Id" spellcheck="false" on-change="onNameInputChange">
     </model-input>
   </div>
-  <div grid>{{avatars}}</div>
+  <div grid>{{friendModels}}</div>
 </div>
 
   `;
@@ -107,31 +110,34 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     get template() {
       return template;
     }
-    render({friends}, state) {
+    render({friends, avatars, userNames}, state) {
       //const user = props.user || {};
       //const others = friends.filter(p => p.id !== user.id);
-      //const names = props.userNames || [];
-      //const avatars = props.avatars || [];
-      const avatars = {$template: 'friend-avatars'};
-      avatars.models = (friends || []).map((friend, i) => {
-        //log(friend);
-        //const avatar = this.boxQuery(avatars, p.id)[0];
-        //const name = this.boxQuery(names, p.id)[0] || p.id.split('/');
-        //const url = (avatar && avatar.url) ||
-        const url = resolver(`FriendsPicker/../assets/user.png`);
-        const name = friend.publicKey.split('/').pop();
+      const friendModels = {$template: 'friend-avatars'};
+      friendModels.models = (friends || []).map((friend, i) => {
+        const profile = this.getUserProfile(friend.publicKey, avatars, userNames);
         return {
           key: i,
-          value: friend.publicKey,
-          name,
-          url
+          value: profile.publicKey,
+          name: profile.name,
+          url: profile.avatar
         };
       });
       return {
-        avatars,
+        friendModels,
         newFriendName: '',
         showPopup: state.showPopup,
         popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`
+      };
+    }
+    getUserProfile(publicKey, avatars, names) {
+      const nar = [];
+      const avatar = this.boxQuery(avatars || nar, publicKey)[0];
+      const name = this.boxQuery(names || nar, publicKey)[0];
+      return {
+        publicKey,
+        avatar: (avatar && avatar.url) || resolver(`FriendsPicker/../assets/user.png`),
+        name: name && name.userName || publicKey.split('/').pop()
       };
     }
     onAddFriend(e) {

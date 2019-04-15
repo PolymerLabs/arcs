@@ -1,5 +1,5 @@
+import {Xen} from '../xen.js';
 import {logFactory} from '../../../build/platform/log-web.js';
-import {Xen} from '../components/xen.js';
 import {ArcComponentMixin} from '../components/arc-component.js';
 
 const log = logFactory('ArcElement', '#bb1396');

@@ -20,7 +20,7 @@ import '../../configuration/whitelisted.js';
 // proper dependencies
 import {Utils} from '../../lib/utils.js';
 import {DevtoolsSupport} from '../../lib/devtools-support.js';
-import {DomSlotComposer} from '../../lib/dom-slot-composer.js';
+import {DomSlotComposer} from '../../lib/components/dom-slot-composer.js';
 
 // usage:
 //

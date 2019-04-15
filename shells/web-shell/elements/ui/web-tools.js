@@ -57,10 +57,10 @@ const template = Xen.Template.html`
     <simple-tabs>
       <div tab="Store Explorer">
         <simple-tabs on-change="onTabChange">
-          <div tab="User Arc">
+          <div tab="User Arc" style="padding-top: 8px;">
             <store-explorer arc="{{arc}}" context="{{context}}"></store-explorer>
           </div>
-          <div tab="Launcher">
+          <div tab="Launcher" style="padding-top: 8px;">
             <store-explorer arc="{{launcherarc}}"></store-explorer>
           </div>
           <!-- <div tab="Pipes">

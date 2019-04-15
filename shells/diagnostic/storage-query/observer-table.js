@@ -1,26 +1,26 @@
 export const ObserverTable = class {
+  static cleanId(key) {
+    return String(key).replace(/[!:$./|]/g, '_');
+  }
   constructor(tableId) {
     this.table = document.querySelector(`#${tableId} tbody`);
-  }
-  cleanId(key) {
-    return String(key).replace(/[!:$./]/g, '_');
   }
   addRow(key, cols) {
     this.disposeRow(key);
     const html = cols.map(msg => `<td>${String(msg).replace(/</g, '&lt;')}</td>`).join('');
     const node = elt(this.table, 'tr', {innerHTML: html});
-    node.id = this.cleanId(key);
+    node.id = ObserverTable.cleanId(key);
     return node;
   }
   disposeRow(key) {
-    const id = this.cleanId(key);
+    const id = ObserverTable.cleanId(key);
     const node = this.table.querySelector(`#${id}`);
     if (node) {
       node.remove();
     }
   }
   removeRow(key) {
-    const id = this.cleanId(key);
+    const id = ObserverTable.cleanId(key);
     const node = this.table.querySelector(`#${id}`);
     if (node) {
       node.style.backgroundColor = '#FFC8C8';

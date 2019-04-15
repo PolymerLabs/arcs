@@ -59,7 +59,7 @@ export interface MutableEntityData {
  * A set of static methods used by Entity implementations.  These are
  * defined dynamically in Schema.  Required because Typescript does
  * not support abstract statics.
- * 
+ *
  * @see https://github.com/Microsoft/TypeScript/issues/14600
  * @see https://stackoverflow.com/a/13955591
  */
@@ -154,9 +154,8 @@ export abstract class Entity implements EntityInterface {
     assert(!this.isIdentified());
     setEntityId(this, identifier);
     const components = identifier.split(':');
-    if (components[components.length - 2] === 'uid') {
-      this.userIDComponent = components[components.length - 1];
-    }
+    const uid = components.lastIndexOf('uid');
+    this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
   }
 
   createIdentity(components: EntityIdComponents) {

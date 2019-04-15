@@ -10,16 +10,8 @@
 import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
 
 export class SyntheticStores {
-  static init() {
-    // if (!SyntheticStores.providerFactory) {
-    //   SyntheticStores.providerFactory = new StorageProviderFactory('shell');
-    // }
-  }
   static get providerFactory() {
-    if (!SyntheticStores._providerFactory) {
-      SyntheticStores._providerFactory = new StorageProviderFactory('shell');
-    }
-    return SyntheticStores._providerFactory;
+    return SyntheticStores._providerFactory || (SyntheticStores._providerFactory = new StorageProviderFactory('shell'));
   }
   static async getArcsStore(storage, arcid) {
     const handleStore = await SyntheticStores.getStore(storage, arcid);
@@ -50,5 +42,3 @@ export class SyntheticStores {
     return key.split('/').pop();
   }
 }
-
-SyntheticStores.init();

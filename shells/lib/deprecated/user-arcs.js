@@ -31,7 +31,6 @@ export class UserArcs {
     }
   }
   publish(changes, listeners) {
-    // convert {add:[], remove:[]} to [{add, remove}]
     if (changes.add) {
       changes.add.forEach(add => this._publish({add: add.value}, listeners));
     }

@@ -1,115 +1,45 @@
-// @license
-// Copyright (c) 2018 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
-import 'User.schema'
-
-resource SYSTEM_userResource
-  start
-  []
-store SYSTEM_user of User 'SYSTEM_user' @0 #system in SYSTEM_userResource
-
-resource PROFILE_friendsResource
-  start
-  []
-store PROFILE_friends of [User] 'PROFILE_friends' @0 #profile in PROFILE_friendsResource
-
-resource BOXED_friendsResource
-  start
-  []
-store BOXED_friends of [User] 'BOXED_friends' @0 #boxed in BOXED_friendsResource
-
-import 'UserName.schema'
-resource PROFILE_userNameResource
-  start
-  []
-store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
-
-resource BOXED_userNameResource
-  start
-  []
-store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
-
 import 'Avatar.schema'
+import 'UserName.schema'
+
 resource PROFILE_avatarResource
   start
   []
 store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
+
+resource PROFILE_userNameResource
+  start
+  []
+store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
 
 resource BOXED_avatarResource
   start
   []
 store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
 
-import '../TVMaze/schemas/TVMazeShow.schema'
-resource PROFILE_piped_tv_showResource
+resource BOXED_userNameResource
   start
   []
-store PROFILE_piped_tv_show of [TVMazeShow] 'PROFILE_piped-tv_show' @0 #profile in PROFILE_piped_tv_showResource
-
-resource PROFILE_all_piped_all_tv_showsResource
-  start
-  []
-store PROFILE_all_piped_all_tv_shows of [TVMazeShow] 'PROFILE_all_piped-all_tv_shows' @0 #profile in PROFILE_all_piped_all_tv_showsResource
-
-resource BOXED_all_piped_all_tv_showsResource
-  start
-  []
-store BOXED_all_piped_all_tv_shows of [TVMazeShow] 'BOXED_all_piped-all_tv_shows' @0 #boxed in BOXED_all_piped_all_tv_showsResource
-
-resource PROFILE_shows_tilesResource
-  start
-  []
-store PROFILE_shows_tiles of [TVMazeShow] 'PROFILE_shows-tiles' @0 #profile in PROFILE_shows_tilesResource
-
-resource BOXED_shows_tilesResource
-  start
-  []
-store BOXED_shows_tiles of [TVMazeShow] 'BOXED_shows-tiles' @0 #boxed in BOXED_shows_tilesResource
+store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
 
 // the below is required to make the arc aware of these stores
 
 particle Sharing in './source/Sharing.js'
-  in User systemUser
-  in [User] profileFriends
-  in [User] boxedFriends
+  in [Avatar] boxedAvatar
+  in [Avatar] profileAvatar
+  //
   in [UserName] profileUserName
   in [UserName] boxedUserName
-  in [Avatar] profileAvatar
-  in [Avatar] boxedAvatar
-  in [TVMazeShow] profilePipedShow
-  in [TVMazeShow] profilePipedShows
-  in [TVMazeShow] boxedPipedShows
-  in [TVMazeShow] profileShowsTiles
-  in [TVMazeShow] boxedShowsTiles
 
 recipe Sharing
-  use 'SYSTEM_user' as systemUser
-  use 'PROFILE_friends' as profileFriends
-  use 'BOXED_friends' as boxedFriends
-  use 'PROFILE_userName' as profileUserName
-  use 'BOXED_userName' as boxedUserName
   use 'PROFILE_avatar' as profileAvatar
   use 'BOXED_avatar' as boxedAvatar
-  use 'PROFILE_piped-tv_show' as profilePipedShow
-  use 'PROFILE_all_piped-all_tv_shows' as profilePipedShows
-  use 'BOXED_all_piped-all_tv_shows' as boxedPipedShows
-  use 'PROFILE_shows-tiles' as profileShowsTiles
-  use 'BOXED_shows-tiles' as boxedShowsTiles
+  //
+  use 'PROFILE_userName' as profileUserName
+  use 'BOXED_userName' as boxedUserName
+  //
   Sharing
-    systemUser = systemUser
-    profileFriends = profileFriends
-    boxedFriends = boxedFriends
-    profileUserName = profileUserName
-    boxedUserName = boxedUserName
     profileAvatar = profileAvatar
     boxedAvatar = boxedAvatar
-    profilePipedShow = profilePipedShow
-    profilePipedShows = profilePipedShows
-    boxedPipedShows = boxedPipedShows
-    profileShowsTiles = profileShowsTiles
-    boxedShowsTiles = boxedShowsTiles
+    //
+    profileUserName = profileUserName
+    boxedUserName = boxedUserName

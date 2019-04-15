@@ -4,7 +4,7 @@ const logLevel = params.get('logLevel') || (params.has('log') ? 2 : Xen.Debug.le
 window.debugLevel = Xen.Debug.level = logLevel;
 
 import {Utils} from '../lib/utils.js';
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../components/ram-slot-composer.js';
 import {App} from './app.js';
 
 // run

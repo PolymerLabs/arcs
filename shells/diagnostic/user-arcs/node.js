@@ -1,5 +1,5 @@
 import {Utils} from '../lib/utils.js';
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../components/ram-slot-composer.js';
 import {App} from './app.js';
 
 // run
