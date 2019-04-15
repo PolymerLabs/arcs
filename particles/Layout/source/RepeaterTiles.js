@@ -18,42 +18,56 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   }
   [tile] {
     position: absolute;
+    display: inline-block;
     background: #eee;
     color: black;
-    transition: all 0.3s;
     width: 120px;
     height: 120px;
     padding: 8px;
     box-sizing: border-box;
     border: 1px dotted gray;
     opacity: 1;
+    transition: all 0.3s;
+    animation: tile-enter 0.3s;
+  }
+  @keyframes tile-enter {
+    from {
+      transform: scale(0);
+      opacity: 0;
+    }
+  }
+  /* exit animation */
+  [tile].xen-exit {
+    transform: scale(0);
+    opacity: 0;
   }
   [container] {
     display: block;
     position: relative;
     height: 400px;
+    user-select: none;
   }
 </style>
 
 <h3>Click the tiles to animate...</h3>
 
-<div container on-click="onClick">
-  <div>{{tiles}}</div>
-</div>
+<dom-repeater xen:forward container models="{{models}}">
+  <template>
+    <div tile key="{{key}}" xen:style="{{style}}" on-click="onTileClick"><span>{{name}}</span></div>
+  </template>
+</dom-repeater>
 
-<template tile>
-  <span tile xen:style="{{style}}">{{name}}</span>
-</template>
   `;
 
   const Grid = class {
     constructor() {
       this.grid = [];
       this.tiles = [];
+      this.key = 0;
     }
     _newTile(name, t, l) {
-      const tile = {name, t, l};
-      tile.id = this.tiles.push(tile) - 1;
+      const tile = {name, t, l, key: this.key++, color: 'silver'};
+      this.tiles.push(tile);
       return tile;
     }
     insert({name, t, l}) {
@@ -70,32 +84,15 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         col.l--;
       }
       const tile = row.splice(l, 1).pop();
-      tile.removed = true;
+      const i = this.tiles.indexOf(tile);
+      this.tiles.splice(i, 1);
     }
-    sweep() {
-      for (let i=0, tile; (tile=this.tiles[i]); i++) {
-        tile.frozen = true;
-        if (tile.removed) {
-          this.tiles.splice(i, 1);
-          for (let s=i, sibling; (sibling=this.grid[s]); s++) {
-            sibling.id--;
-          }
-          i--;
-        }
-      }
-    }
-    unfreeze() {
-      this.tiles.forEach(tile => tile.frozen = false);
-    }
-    operate({insert, remove, sweep, unfreeze}) {
+    operate({insert, remove}) {
       if (insert) {
         this.insert(insert);
-      } else if (remove) {
+      }
+      if (remove) {
         this.remove(remove);
-      } else if (sweep) {
-        this.sweep();
-      } else if (unfreeze) {
-        this.unfreeze();
       }
     }
   };
@@ -109,32 +106,15 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         grid = new Grid();
         ['Alfa', 'Bravo'].forEach(name => grid.insert({name, t: 0, l: 0}));
         ['Charlie', 'Delta'].forEach(name => grid.insert({name, t: 1, l: 0}));
-        this.setState({grid});
       }
-      // _debounce fires function after 100ms has elapsed since last invocation,
-      // notion is that we `sweep` up dead tiles after 1s of idleness since last
-      // add/remove operation
-      const sweeper = () => this._debounce('sweep', () => this.setState({sweep: true}), 1000);
-      grid.operate({insert, remove, sweep, unfreeze});
-      if (insert || remove) {
-        sweeper();
-        this.setState({insert: null, remove: null});
-      } else if (sweep) {
-        this.setState({sweep: false});
-        // transitions are disabled during sweep to avoid bogus animations,
-        // unfreeze (re-enable transitions) one tick later
-        setTimeout(() => this.setState({unfreeze: true}), 0);
-      }
-      this.setState({unfreeze: false});
+      grid.operate({insert, remove});
+      this.setState({grid, insert: null, remove: null});
     }
     render(props, {grid}) {
-      const models = grid.tiles.map(({name, t, l, removed, frozen}, i) => ({
-        key: i,
-        name,
-        style: `${frozen ? `transition: none;` : ``} ${removed ? `transition-property: opacity; opacity: 0;` : ''} top: ${t*120}px; left: ${l*120}px; z-index: ${1000-i};`
+      const models = grid.tiles.map(({name, t, l, key, color}, i) => ({
+        key, name, style: `top: ${t*120}px; left: ${l*120}px; z-index: ${1000-i}; background-color: ${color};`
       }));
       return {
-        tiles: {$template: 'tile', models},
         models
       };
     }
@@ -149,16 +129,24 @@ defineParticle(({DomParticle, html, log, resolver}) => {
           this.setState({insert: {name: 'Foxtrot', t: 0, l: 0}});
           break;
         case 6: {
+          // add random tile
           const t = Math.floor(Math.random()*3);
           const row = grid.grid[t];
           const l = Math.floor(Math.random()*(row ? row.length : 0));
-          this.setState({insert: {name: `Golf (${t},${l})`, t, l}});
+          this.setState({insert: {name: `Golf (${grid.key+1})`, t, l}});
         } break;
         case 7: {
+          // remove random tile
           const tile = live[Math.floor(Math.random()*live.length)];
           this.setState({remove: tile});
         } break;
       }
+    }
+    onTileClick(e) {
+      log('TileClick', e.data);
+      const tile = this.state.grid.tiles.find(tile => tile.key === e.data.key);
+      tile.color = ['red', 'lightblue', 'lightgreen', 'goldenrod'][Math.floor(Math.random()*4)];
+      this.onClick(e);
     }
   };
 

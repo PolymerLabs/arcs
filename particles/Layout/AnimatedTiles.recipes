@@ -5,3 +5,9 @@ particle AnimatedTiles in 'source/AnimatedTiles.js'
 recipe AnimatedTiles
   AnimatedTiles
 
+particle RepeaterTiles in 'source/RepeaterTiles.js'
+  consume root
+  description `repeater tiles`
+
+recipe RepeaterTiles
+  RepeaterTiles
