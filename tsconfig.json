@@ -5,12 +5,18 @@
   ],
   "compilerOptions": {
     "outDir": "build",
-    "declaration": true,
+    // "declaration": true,
     "experimentalDecorators": true,
     "incremental": true,
+    "plugins": [
+      {
+        "name": "@bazel/tsetse",
+        "disabledRules": ["must-use-promises"],
+      },
+    ],
   },
   "exclude": [
     "build/**/*",
     "server/**/*"
-  ]
+  ],
 }
