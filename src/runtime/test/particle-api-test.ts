@@ -93,12 +93,17 @@ describe('particle-api', () => {
     await fooStore.set({id: 'id2', rawData: {value: 'v2'}});
     fooStore._fire = fireFn;
     await fooStore.set({id: 'id3', rawData: {value: 'v3'}});
-    await inspector.verify('update:{"data":{"value":"v1"}}',
+    await inspector.verify('update:{"data":{"value":"v1"},"oldData":null}',
                            'desync',
                            'sync:{"value":"v3"}');
 
+    // Check it includes the previous value (v3) in updates.
+    await fooStore.set({id: 'id4', rawData: {value: 'v4'}});
+    await inspector.verify('update:{"data":{"value":"v4"},"oldData":{"value":"v3"}}');
+
+    // Check clearing the store.
     await fooStore.clear();
-    await inspector.verify('update:{"data":null}');
+    await inspector.verify('update:{"data":null,"oldData":{"value":"v4"}}');
   });
 
   it('can sync/update and store/remove with collections', async () => {
