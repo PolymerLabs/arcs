@@ -137,7 +137,7 @@ describe('schema', () => {
     const product = new Product({});
     assert.throws(() => product.rawData.sku, 'not in schema');
     assert.throws(() => product.rawData.sku = 'sku', 'Use the mutate method instead');
-    assert.throws(() => product.mutate(p => p['sku'] = 'sku'), 'not in schema');
+    assert.throws(() => product.mutate(p => p.sku = 'sku'), 'not in schema');
   });
 
   it('performs type checking', async () => {
@@ -148,16 +148,16 @@ describe('schema', () => {
     assert.throws(() => { new Product({shipDays: '2'}); }, TypeError, 'Type mismatch setting field shipDays');
 
     const product = new Product({});
-    assert.throws(() => product.mutate(p => p['name'] = 6), TypeError, 'Type mismatch setting field name');
-    assert.throws(() => product.mutate(p => p['url'] = ['url']), TypeError, 'Type mismatch setting field url');
-    assert.throws(() => product.mutate(p => p['shipDays'] = {two: 2}), TypeError, 'Type mismatch setting field shipDays');
-    assert.throws(() => product.mutate(p => p['isReal'] = 1), TypeError, 'Type mismatch setting field isReal');
+    assert.throws(() => product.mutate(p => p.name = 6), TypeError, 'Type mismatch setting field name');
+    assert.throws(() => product.mutate(p => p.url = ['url']), TypeError, 'Type mismatch setting field url');
+    assert.throws(() => product.mutate(p => p.shipDays = {two: 2}), TypeError, 'Type mismatch setting field shipDays');
+    assert.throws(() => product.mutate(p => p.isReal = 1), TypeError, 'Type mismatch setting field isReal');
 
     // Should be able to clear fields.
     assert.doesNotThrow(() => new Product({name: null, shipDays: undefined}));
-    assert.doesNotThrow(() => product.mutate(p => p['image'] = null));
-    assert.doesNotThrow(() => product.mutate(p => p['url'] = undefined));
-    assert.doesNotThrow(() => product.mutate(p => p['isReal'] = true));
+    assert.doesNotThrow(() => product.mutate(p => p.image = null));
+    assert.doesNotThrow(() => product.mutate(p => p.url = undefined));
+    assert.doesNotThrow(() => product.mutate(p => p.isReal = true));
     assert.deepEqual(product.image, null);
     assert.deepEqual(product.url, undefined);
     assert.deepEqual(product.isReal, true);
@@ -175,8 +175,8 @@ describe('schema', () => {
 
     // Mutate product to ensure data has been copied.
     product.mutate(p => {
-      p['name'] = 'Potato Soup';
-      p['category'] = undefined;
+      p.name = 'Potato Soup';
+      p.category = undefined;
     });
     assert.deepEqual(data, {name: 'Tomato Soup', description: 'Soup that tastes like tomato',
                             image: 'http://www.example.com/soup.jpg', category: 'Fluidic Food',
@@ -193,19 +193,19 @@ describe('schema', () => {
     assert.equal(unions.u1, 'foo');
     assert.equal(unions.u2, true);
     unions.mutate(u => {
-      u['u1'] = 45;
-      u['u2'] = 'http://bar.org';
+      u.u1 = 45;
+      u.u2 = 'http://bar.org';
     });
     assert.equal(unions.u1, 45);
     assert.equal(unions.u2, 'http://bar.org');
     unions.mutate(u => {
-      u['u2'] = {a: 12};
+      u.u2 = {a: 12};
     });
     assert.equal(unions.u2.a, 12);
 
     unions.mutate(u => {
-      u['u1'] = null;
-      u['u2'] = undefined;
+      u.u1 = null;
+      u.u2 = undefined;
     });
     assert.isNull(unions.u1);
     assert.isUndefined(unions.u2);
@@ -213,8 +213,8 @@ describe('schema', () => {
 
     assert.throws(() => { new Unions({u1: false}); }, TypeError, 'Type mismatch setting field u1');
     assert.throws(() => { new Unions({u2: 25}); }, TypeError, 'Type mismatch setting field u2');
-    assert.throws(() => unions.mutate(u => u['u1'] = {a: 12}), TypeError, 'Type mismatch setting field u1');
-    assert.throws(() => unions.mutate(u => u['u2'] = 25), TypeError, 'Type mismatch setting field u2');
+    assert.throws(() => unions.mutate(u => u.u1 = {a: 12}), TypeError, 'Type mismatch setting field u1');
+    assert.throws(() => unions.mutate(u => u.u2 = 25), TypeError, 'Type mismatch setting field u2');
   });
 
   it('enforces rules when storing reference types', async () => {
@@ -278,15 +278,15 @@ describe('schema', () => {
     assert.deepEqual(tuples.t1, ['foo', 55]);
     assert.deepEqual(tuples.t2, [null, undefined, true]);
     tuples.mutate(t => {
-      t['t1'] = ['bar', 66];
-      t['t2'] = ['http://bar.org', {a: 77}, null];
+      t.t1 = ['bar', 66];
+      t.t2 = ['http://bar.org', {a: 77}, null];
     });
     assert.deepEqual(tuples.t1, ['bar', 66]);
     assert.deepEqual(tuples.t2, ['http://bar.org', {a: 77}, null]);
 
     tuples.mutate(t => {
-      t['t1'] = null;
-      t['t2'] = undefined;
+      t.t1 = null;
+      t.t2 = undefined;
     });
     assert.isNull(tuples.t1);
     assert.isUndefined(tuples.t2);
@@ -294,17 +294,17 @@ describe('schema', () => {
 
     assert.throws(() => { new Tuples({t1: 'foo'}); }, TypeError,
                   'Cannot set tuple t1 with non-array value');
-    assert.throws(() => tuples.mutate(t => t['t2'] = {a: 1}), TypeError,
+    assert.throws(() => tuples.mutate(t => t.t2 = {a: 1}), TypeError,
                   'Cannot set tuple t2 with non-array value');
 
     assert.throws(() => { new Tuples({t1: ['foo']}); }, TypeError,
                   'Length mismatch setting tuple t1');
-    assert.throws(() => tuples.mutate(t => t['t2'] = ['url', {}, true, 3]), TypeError,
+    assert.throws(() => tuples.mutate(t => t.t2 = ['url', {}, true, 3]), TypeError,
                   'Length mismatch setting tuple t2');
 
     assert.throws(() => { new Tuples({t1: ['foo', '55']}); }, TypeError,
                   /Type mismatch setting field t1 .* at index 1/);
-    assert.throws(() => tuples.mutate(t => t['t2'] = [12, {}, false]), TypeError,
+    assert.throws(() => tuples.mutate(t => t.t2 = [12, {}, false]), TypeError,
                   /Type mismatch setting field t2 .* at index 0/);
 
     // Tuple fields should not be accessible as standard Arrays.
@@ -319,11 +319,11 @@ describe('schema', () => {
     const SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
     const svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);
-    svt.mutate(s => s['t'] = [34]);
+    svt.mutate(s => s.t = [34]);
     assert.deepEqual(svt.t, [34]);
     assert.throws(() => { new SingleValueTuple({t: 56}); }, TypeError,
                   'Cannot set tuple t with non-array value');
-    assert.throws(() => { svt.mutate(s => s['t'] = 78); }, TypeError,
+    assert.throws(() => { svt.mutate(s => s.t = 78); }, TypeError,
                   'Cannot set tuple t with non-array value');
   });
 

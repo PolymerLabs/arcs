@@ -34,7 +34,7 @@ export interface EntityInterface extends Storable {
   toLiteral(): EntityRawData;
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
-  mutate(mutationFn: (data: {}) => void): void;
+  mutate(mutationFn: (data: MutableEntityData) => void): void;
   
   mutable: boolean;
   readonly id: string;
@@ -42,6 +42,15 @@ export interface EntityInterface extends Storable {
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
+  // tslint:disable-next-line: no-any
+  [index: string]: any;
+}
+
+/** 
+ * Represents mutable entity data. Instances will have mutable properties defined on them for all of the fields defined in the schema for the
+ * entity. This type permits indexing by all strings, because we do not know what those fields are at compile time (since they're dynamic).
+ */
+export interface MutableEntityData {
   // tslint:disable-next-line: no-any
   [index: string]: any;
 }
@@ -68,9 +77,9 @@ export type EntityClass = (new (data, userIDComponent?: string) => EntityInterfa
 export abstract class Entity implements EntityInterface {
   protected rawData: EntityRawData;
   
-  private _userIDComponent?: string;
-  private _schema: Schema;
-  private _context: ParticleExecutionContext;
+  private userIDComponent?: string;
+  private schema: Schema;
+  private context: ParticleExecutionContext;
   private _mutable = true;
 
   // Currently we need a ParticleExecutionContext to be injected here in order to construct entity References (done in the sanitizeEntry
@@ -79,9 +88,9 @@ export abstract class Entity implements EntityInterface {
   protected constructor(data: EntityRawData, schema: Schema, context: ParticleExecutionContext, userIDComponent?: string) {
     assert(!userIDComponent || userIDComponent.indexOf(':') === -1, 'user IDs must not contain the \':\' character');
     setEntityId(this, undefined);
-    this._userIDComponent = userIDComponent;
-    this._schema = schema;
-    this._context = context;
+    this.userIDComponent = userIDComponent;
+    this.schema = schema;
+    this.context = context;
 
     assert(data, `can't construct entity with null data`);
 
@@ -110,18 +119,18 @@ export abstract class Entity implements EntityInterface {
    * Mutates the entity. The supplied mutation function will be called with a mutable copy of the entity's data. The mutations performed by that
    * function will be reflected in the original entity instance (i.e. mutations applied in place).
    */
-  mutate(mutationFn: (data: {}) => void) {
+  mutate(mutationFn: (data: MutableEntityData) => void) {
     if (!this.mutable) {
       throw new Error('Entity is immutable.');
     }
     const newData = this.dataClone();
     mutationFn(newData);
-    this.rawData = createRawDataProxy(newData, this._schema, this._context);
+    this.rawData = createRawDataProxy(newData, this.schema, this.context);
     // TODO: Send mutations to data store.
   }
 
   getUserID(): string {
-    return this._userIDComponent;
+    return this.userIDComponent;
   }
 
   isIdentified(): boolean {
@@ -139,15 +148,15 @@ export abstract class Entity implements EntityInterface {
     setEntityId(this, identifier);
     const components = identifier.split(':');
     if (components[components.length - 2] === 'uid') {
-      this._userIDComponent = components[components.length - 1];
+      this.userIDComponent = components[components.length - 1];
     }
   }
 
   createIdentity(components: EntityIdComponents) {
     assert(!this.isIdentified());
     let id: string;
-    if (this._userIDComponent) {
-      id = `${components.base}:uid:${this._userIDComponent}`;
+    if (this.userIDComponent) {
+      id = `${components.base}:uid:${this.userIDComponent}`;
     } else {
       id = `${components.base}:${components.component()}`;
     }
@@ -164,7 +173,7 @@ export abstract class Entity implements EntityInterface {
 
   dataClone(): EntityRawData {
     const clone = {};
-    const fieldTypes = this._schema.fields;
+    const fieldTypes = this.schema.fields;
     for (const name of Object.keys(fieldTypes)) {
       if (this.rawData[name] !== undefined) {
         if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
