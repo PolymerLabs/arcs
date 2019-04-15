@@ -16,7 +16,7 @@ import {PropagatedException, SystemException} from './arc-exceptions.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
-import {CrdtCollectionModel, SerializedModelEntry} from './storage/crdt-collection-model.js';
+import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/crdt-collection-model.js';
 import {BigCollectionType, CollectionType, Type} from './type.js';
 import {EntityRawData} from './entity.js';
 
@@ -86,8 +86,7 @@ export abstract class StorageProxy {
 
   // TODO(shans): _getModelForSync returns a list from collections and
   // a singleton from variables. Fix this.
-  // tslint:disable-next-line: no-any
-  abstract _getModelForSync() : any;
+  abstract _getModelForSync(): {id: string} | ModelValue[];
   abstract _synchronizeModel(version: number, model: SerializedModelEntry[]): boolean;
   abstract _processUpdate(update: {version: number}, apply?: boolean): {};
 
@@ -106,7 +105,7 @@ export abstract class StorageProxy {
   /**
    *  Called by ParticleExecutionContext to associate (potentially multiple) particle/handle pairs with this proxy.
    */
-  register(particle, handle) {
+  register(particle: Particle, handle: Handle) {
     if (!handle.canRead) {
       return;
     }
@@ -184,7 +183,7 @@ export abstract class StorageProxy {
     this._processUpdates();
   }
 
-  _notify(kind, details, predicate=(ignored: HandleOptions) => true) {
+  _notify(kind: string, details, predicate=(ignored: HandleOptions) => true) {
     for (const {handle, particle} of this.observers) {
       if (predicate(handle.options)) {
         this.scheduler.enqueue(particle, handle, [kind, particle, details]);
@@ -234,7 +233,7 @@ export abstract class StorageProxy {
         this.port.SynchronizeProxy(this, x => this._onSynchronize(x));
         for (const {handle, particle} of this.observers) {
           if (handle.options.notifyDesync) {
-            this.scheduler.enqueue(particle, handle, ['desync', particle]);
+            this.scheduler.enqueue(particle, handle, ['desync', particle, {}]);
           }
         }
       }
@@ -272,7 +271,7 @@ export abstract class StorageProxy {
 export class CollectionProxy extends StorageProxy {
   private model = new CrdtCollectionModel();
 
-  _getModelForSync() {
+  _getModelForSync(): ModelValue[] {
     return this.model.toList();
   }
 
@@ -406,7 +405,7 @@ export class CollectionProxy extends StorageProxy {
 export class VariableProxy extends StorageProxy {
   model: {id: string} | null = null;
 
-  _getModelForSync() {
+  _getModelForSync(): {id: string} {
     return this.model;
   }
 
@@ -448,8 +447,9 @@ export class VariableProxy extends StorageProxy {
       }
       return null;
     }
+    const oldData = this.model;
     this.model = update.data;
-    return update;
+    return {...update, oldData};
   }
 
   // Read ops: if we're synchronized we can just return the local copy of the data.
@@ -483,11 +483,12 @@ export class VariableProxy extends StorageProxy {
     } else {
       barrier = null;
     }
+    const oldData = this.model;
     // TODO: is this already a clone?
     this.model = JSON.parse(JSON.stringify(entity));
     this.barrier = barrier;
     this.port.HandleSet(this, entity, particleId, barrier);
-    const update = {originatorId: particleId, data: entity};
+    const update = {originatorId: particleId, data: entity, oldData};
     this._notify('update', update, options => options.notifyUpdate);
   }
 
@@ -496,10 +497,11 @@ export class VariableProxy extends StorageProxy {
       return;
     }
     const barrier = this.generateID(/* 'barrier' */);
+    const oldData = this.model;
     this.model = null;
     this.barrier = barrier;
     this.port.HandleClear(this, particleId, barrier);
-    const update = {originatorId: particleId, data: null};
+    const update = {originatorId: particleId, data: null, oldData};
     this._notify('update', update, options => options.notifyUpdate);
   }
 }
@@ -513,8 +515,7 @@ export class BigCollectionProxy extends StorageProxy {
     }
   }
 
-  // tslint:disable-next-line: no-any
-  _getModelForSync() : any {
+  _getModelForSync(): never {
     throw new Error("_getModelForSync not implemented for BigCollectionProxy");
   }
 
@@ -564,7 +565,7 @@ export class StorageProxyScheduler {
   }
 
   // TODO: break apart args here, sync events should flush the queue.
-  enqueue(particle, handle, args) {
+  enqueue(particle: Particle, handle: Handle, args: [string, Particle, {}]) {
     if (!this._queues.has(particle)) {
       this._queues.set(particle, new Map());
     }

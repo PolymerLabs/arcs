@@ -81,11 +81,12 @@ export class Particle {
    * @param handle The Handle instance that was updated.
    * @param update An object containing one of the following fields:
    *  - data: The full Entity for a Variable-backed Handle.
+   *  - oldData: The previous value of a Variable before it was updated.
    *  - added: An Array of Entities added to a Collection-backed Handle.
    *  - removed: An Array of Entities removed from a Collection-backed Handle.
    */
   // tslint:disable-next-line: no-any
-  onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}) {
+  onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}) {
   }
 
   /**
