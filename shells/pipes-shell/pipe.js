@@ -7,7 +7,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Utils} from '../lib/utils.js';
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
 import {generateId} from '../../modalities/dom/components/generate-id.js';
 import {now} from '../../build/platform/date-web.js';
 import {logFactory} from '../../build/platform/log-web.js';

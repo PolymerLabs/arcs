@@ -7,9 +7,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {now} from '../../build/platform/date-web.js';
-import {RamSlotComposer} from '../lib/ram-slot-composer.js';
+import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
 import {Utils} from '../lib/utils.js';
-import {ArcHost} from '../lib/arc-host.js';
+import {ArcHost} from '../lib/components/arc-host.js';
 import {Stores} from '../lib/stores.js';
 import {Schemas} from './schemas.js';
 import {logFactory} from '../../build/platform/log-web.js';
