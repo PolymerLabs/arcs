@@ -98,8 +98,8 @@ describe('firebase', function() {
       const var1 = await storage.construct('test0', barType, key) as VariableStorageProvider;
       const var2 = await storage.connect('test0', barType, key) as VariableStorageProvider;
 
-      var1.set({id: ArcId.newForTest('id1'), value: 'value1'});
-      var2.set({id: ArcId.newForTest('id2'), value: 'value2'});
+      await var1.set({id: ArcId.newForTest('id1'), value: 'value1'});
+      await var2.set({id: ArcId.newForTest('id2'), value: 'value2'});
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });

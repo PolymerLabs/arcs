@@ -110,7 +110,7 @@ class TestPlanProducer extends PlanProducer {
     assert.lengthOf(producer.result.suggestions, 0);
 
     for (let i = 0; i < 10; ++i) {
-      producer.produceSuggestions({test: i});
+      await producer.produceSuggestions({test: i});
     }
 
     producer.plannerReturnResults(helper.suggestions);
@@ -127,8 +127,8 @@ class TestPlanProducer extends PlanProducer {
     const {helper, producer} = await createProducer('./src/runtime/test/artifacts/Products/Products.recipes');
     assert.lengthOf(producer.result.suggestions, 0);
 
-    producer.produceSuggestions();
-    producer.produceSuggestions({cancelOngoingPlanning: true});
+    await producer.produceSuggestions();
+    await producer.produceSuggestions({cancelOngoingPlanning: true});
 
     producer.plannerReturnResults(helper.suggestions);
     await producer.allPlanningDone();

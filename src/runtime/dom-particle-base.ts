@@ -173,7 +173,7 @@ export class DomParticleBase extends Particle {
   async clearHandle(handleName: string) {
     const handle = this.handles.get(handleName);
     if (handle instanceof Variable || handle instanceof Collection) {
-      handle.clear();
+      await handle.clear();
     } else {
       throw new Error('Variable/Collection required');
     }
@@ -190,7 +190,7 @@ export class DomParticleBase extends Particle {
       handleEntities.forEach(entity => idMap[entity.id] = entity);
       for (const entity of entities) {
         if (!idMap[entity.id]) {
-          handle.store(entity);
+          await handle.store(entity);
         }
       }
     } else {
@@ -205,7 +205,7 @@ export class DomParticleBase extends Particle {
     const handle = this.handles.get(handleName);
     if (handle) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
-        Promise.all(entities.map(entity => handle.store(entity)));
+        await Promise.all(entities.map(entity => handle.store(entity)));
       } else {
         throw new Error('Collection required');
       }
@@ -220,7 +220,7 @@ export class DomParticleBase extends Particle {
     if (handle && handle.entityClass) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
         const entityClass = handle.entityClass;
-        Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
+        await Promise.all(rawDataArray.map(raw => handle.store(new entityClass(raw))));
       } else {
         throw new Error('Collection required');
       }

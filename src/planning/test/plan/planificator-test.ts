@@ -116,7 +116,7 @@ describe('remote planificator', () => {
         await createConsumePlanificator(plannerStorageKeyBase, manifestFilename);
     const producePlanificator = await createProducePlanificator(plannerStorageKeyBase,
         manifestFilename, consumePlanificator.consumer.result.store, consumePlanificator.searchStore);
-    producePlanificator.requestPlanning({contextual: true});
+    await producePlanificator.requestPlanning({contextual: true});
     return {consumePlanificator, producePlanificator};
   }
 
@@ -217,7 +217,7 @@ particle ShowProduct in 'show-product.js'
     await restaurantsPlanificator.setSearch('*');
     // result is NOT contextual, so re-planning is not automatically triggered.
     assert.isFalse(restaurantsPlanificator.producer.isPlanning);
-    restaurantsPlanificator.requestPlanning();
+    await restaurantsPlanificator.requestPlanning();
     await verifyReplanning(restaurantsPlanificator, 5, [
       showProductsDescription,
       'Extract person\'s location.',

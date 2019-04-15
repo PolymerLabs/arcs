@@ -185,7 +185,7 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
     if (!this.pendingBackingStore) {
       const key = this.storageEngine.baseStorageKey(this.backingType());
       this.pendingBackingStore = this.storageEngine.baseStorageFor(this.backingType(), key);
-      this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
+      await this.pendingBackingStore.then(backingStore => this.backingStore = backingStore);
     }
     return this.pendingBackingStore;
   }
@@ -330,7 +330,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     });
     this.version++;
 
-    this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({remove: items, version: this.version, originatorId}));
   }
 
   async remove(id, keys:string[] = [], originatorId=null) {

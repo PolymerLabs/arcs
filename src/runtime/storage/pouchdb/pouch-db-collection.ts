@@ -106,7 +106,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
     const updatedCrdtModelLiteral = updatedCrdtModel.toLiteral();
     const dataToFire = updatedCrdtModelLiteral.length === 0 ? null : updatedCrdtModelLiteral[0].value;
-    this._fire('change', new ChangeEvent({data: dataToFire, version: this.version}));
+    await this._fire('change', new ChangeEvent({data: dataToFire, version: this.version}));
   }
 
   /** @inheritDoc */
@@ -184,7 +184,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     await this.initialized;
     assert(!this.referenceMode, 'storeMultiple not implemented for referenceMode stores');
 
-    this.getModelAndUpdate(crdtmodel => {
+    await this.getModelAndUpdate(crdtmodel => {
       values.map(value => crdtmodel.add(value.id, value, keys));
       return crdtmodel;
     });
@@ -257,7 +257,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     this.version++;
 
     // Notify Listeners
-    this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
+    await this._fire('change', new ChangeEvent({add: [item], version: this.version, originatorId}));
   }
 
   async removeMultiple(items, originatorId=null) {

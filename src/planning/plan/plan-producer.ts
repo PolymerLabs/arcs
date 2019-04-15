@@ -99,7 +99,7 @@ export class PlanProducer {
     const metadata = {trigger: Trigger.Search, search: this.search};
     if (this.search === '*') { // Search for ALL (including non-contextual) suggestions.
       if (this.result.contextual) {
-        this.produceSuggestions({contextual: false, metadata});
+        await this.produceSuggestions({contextual: false, metadata});
       }
     } else { // Search by search term.
       const options: {
@@ -122,7 +122,7 @@ export class PlanProducer {
         options.strategies = [InitSearch, ...Planner.ResolutionStrategies];
       }
 
-      this.produceSuggestions({...options, metadata});
+      await this.produceSuggestions({...options, metadata});
     }
   }
 

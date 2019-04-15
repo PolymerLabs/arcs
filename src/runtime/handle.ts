@@ -413,7 +413,7 @@ export class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    this._proxy.remove(serialization.id, this._particleId);
+    await this._proxy.remove(serialization.id, this._particleId);
   }
 
   /**

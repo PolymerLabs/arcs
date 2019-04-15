@@ -40,12 +40,12 @@ describe('synthetic storage ', () => {
     const storage = new StorageProviderFactory(ArcId.newForTest('test'));
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
-    check('simplistic://arc/handles/volatile', 'unknown storage protocol');
-    check('synthetic://arc/handles/not-a-protocol://test', 'unknown storage protocol');
-    check('synthetic://archandles/volatile', 'invalid synthetic key');
-    check('synthetic://arc//volatile', 'invalid synthetic key');
-    check('synthetic://curve/handles/volatile://test', 'invalid scope');
-    check('synthetic://arc/cranks/volatile://test', 'invalid category');
+    await check('simplistic://arc/handles/volatile', 'unknown storage protocol');
+    await check('synthetic://arc/handles/not-a-protocol://test', 'unknown storage protocol');
+    await check('synthetic://archandles/volatile', 'invalid synthetic key');
+    await check('synthetic://arc//volatile', 'invalid synthetic key');
+    await check('synthetic://curve/handles/volatile://test', 'invalid scope');
+    await check('synthetic://arc/cranks/volatile://test', 'invalid category');
   });
 
   it('non-existent target key', async () => {

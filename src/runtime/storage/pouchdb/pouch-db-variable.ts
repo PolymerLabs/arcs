@@ -110,7 +110,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       if (newvalue) {
         await this.getStoredAndUpdate(stored => newvalue);
       }
-      this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
+      await this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
     }
   }
 
@@ -298,7 +298,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
           console.log('PouchDbVariable.onRemoteSynced: possible race condition for id=' + value.id);
           return;
         }
-        this._fire('change', new ChangeEvent({data, version: this.version}));
+        await this._fire('change', new ChangeEvent({data, version: this.version}));
       });
     } else {
       if (value != null) {

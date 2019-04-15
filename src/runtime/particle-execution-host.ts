@@ -240,7 +240,7 @@ export class ParticleExecutionHost {
                     pec.arc._registerStore(store, []);
                   }
                 });
-                arc.instantiate(recipe0);
+                await arc.instantiate(recipe0);
               } else {
                 error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
               }
