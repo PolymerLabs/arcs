@@ -292,7 +292,9 @@ describe('references', () => {
                     if (foo.shortForm === model.value[model.value.length - 1]) {
                       let ref = new Reference(model);
                       await ref.stored;
-                      foo.result = ref;
+                      foo.mutate(f => {
+                        f.result = ref;
+                      });
                       this.output.store(foo);
                     }
                   }

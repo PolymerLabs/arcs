@@ -29,17 +29,28 @@ export type EntityRawData = {};
  */
 export interface EntityInterface extends Storable {
   isIdentified(): boolean;
-  id: string;
   identify(identifier: string): void;
   createIdentity(components: EntityIdComponents): void;
   toLiteral(): EntityRawData;
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
-  entityClass: EntityClass;
+  mutate(mutationFn: (data: MutableEntityData) => void): void;
+  
   mutable: boolean;
+  readonly id: string;
+  readonly entityClass: EntityClass;
 
   // Used to access dynamic properties, but also may allow access to
   // rawData and other internal state for tests..
+  // tslint:disable-next-line: no-any
+  [index: string]: any;
+}
+
+/** 
+ * Represents mutable entity data. Instances will have mutable properties defined on them for all of the fields defined in the schema for the
+ * entity. This type permits indexing by all strings, because we do not know what those fields are at compile time (since they're dynamic).
+ */
+export interface MutableEntityData {
   // tslint:disable-next-line: no-any
   [index: string]: any;
 }
@@ -64,10 +75,11 @@ export interface EntityStaticInterface {
 export type EntityClass = (new (data, userIDComponent?: string) => EntityInterface) & EntityStaticInterface;
 
 export abstract class Entity implements EntityInterface {
-  private userIDComponent?: string;
-
-  private schema: Schema;
   protected rawData: EntityRawData;
+  
+  private userIDComponent?: string;
+  private schema: Schema;
+  private context: ParticleExecutionContext;
   private _mutable = true;
 
   // Currently we need a ParticleExecutionContext to be injected here in order to construct entity References (done in the sanitizeEntry
@@ -78,17 +90,11 @@ export abstract class Entity implements EntityInterface {
     setEntityId(this, undefined);
     this.userIDComponent = userIDComponent;
     this.schema = schema;
+    this.context = context;
 
     assert(data, `can't construct entity with null data`);
 
-    // TODO: figure out how to do this only on wire-created entities.
-    const rawData = {};
-    const sanitizedData = sanitizeData(data, schema, context);
-    for (const [name, value] of Object.entries(sanitizedData)) {
-      rawData[name] = value;
-    }
-
-    this.rawData = createRawDataProxy(rawData, schema, this);
+    this.rawData = createRawDataProxy(data, schema, context);
   }
 
   /** Returns true if this Entity instance can have its fields mutated. */
@@ -107,6 +113,20 @@ export abstract class Entity implements EntityInterface {
       throw new Error('You cannot make an immutable entity mutable again.');
     }
     this._mutable = mutable;
+  }
+
+  /**
+   * Mutates the entity. The supplied mutation function will be called with a mutable copy of the entity's data. The mutations performed by that
+   * function will be reflected in the original entity instance (i.e. mutations applied in place).
+   */
+  mutate(mutationFn: (data: MutableEntityData) => void) {
+    if (!this.mutable) {
+      throw new Error('Entity is immutable.');
+    }
+    const newData = this.dataClone();
+    mutationFn(newData);
+    this.rawData = createRawDataProxy(newData, this.schema, this.context);
+    // TODO: Send mutations to data store.
   }
 
   getUserID(): string {
@@ -157,9 +177,13 @@ export abstract class Entity implements EntityInterface {
     for (const name of Object.keys(fieldTypes)) {
       if (this.rawData[name] !== undefined) {
         if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
-          clone[name] = this.rawData[name].dataClone();
+          if (this.rawData[name]) {
+            clone[name] = this.rawData[name].dataClone();
+          }
         } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
-          clone[name] = [...this.rawData[name]].map(a => a.dataClone());
+          if (this.rawData[name]) {
+            clone[name] = [...this.rawData[name]].map(a => a.dataClone());
+          }
         } else {
           clone[name] = this.rawData[name];
         }
@@ -360,9 +384,13 @@ function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
 }
 
 /** Constructs a Proxy object to use for entities' rawData objects. This proxy will perform type-checking when getting/setting fields. */
-function createRawDataProxy(rawData: {}, schema: Schema, entity: Entity) {
+function createRawDataProxy(data: {}, schema: Schema, context: ParticleExecutionContext) {
   const classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
-  return new Proxy(rawData, {
+
+  // TODO: figure out how to do this only on wire-created entities.
+  const sanitizedData = sanitizeData(data, schema, context);
+
+  return new Proxy(sanitizedData, {
     get: (target, name: string) => {
       if (classJunk.includes(name) || name.constructor === Symbol) {
         return undefined;
@@ -372,14 +400,7 @@ function createRawDataProxy(rawData: {}, schema: Schema, entity: Entity) {
       return value;
     },
     set: (target, name: string, value) => {
-      // TODO: Disallow mutation via regular field properties, and add a new mutate method instead.
-      validateFieldAndTypes({op: 'set', name, value, schema});
-      if (!entity.mutable) {
-        throw new Error('Entity is immutable.');
-      }
-      // TODO: If the given value is a JS object/list, make an immutable copy of it first before storing it.
-      target[name] = value;
-      return true;
+      throw new Error(`Tried to modify entity field '${name}'. Use the mutate method instead.`);
     }
   });
 }
