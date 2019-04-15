@@ -1,8 +1,8 @@
 import {XenStateMixin} from './xen-state.js';
-import XenElementMixin from './xen-element.js';
+import {XenElementMixin} from './xen-element.js';
 import {Template} from './xen-template.js';
 
-class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
+export const XenBaseMixin = Base => class extends Base {
   get template() {
     // TODO(sjmiles): null check module?
     const module = this.constructor.module;
@@ -48,6 +48,6 @@ class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
   }
   _didRender() {
   }
-}
+};
 
-export default XenBase;
+export const XenBase = XenBaseMixin(XenElementMixin(XenStateMixin(HTMLElement)));

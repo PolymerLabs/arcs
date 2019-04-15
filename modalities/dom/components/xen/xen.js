@@ -1,7 +1,7 @@
 import {Template} from './xen-template.js';
 import {XenStateMixin, debounce, nob} from './xen-state.js';
-import Element from './xen-element.js';
-import Base from './xen-base.js';
+import {XenElementMixin} from './xen-element.js';
+import {XenBaseMixin, XenBase} from './xen-base.js';
 import {Debug, logFactory, walker} from './xen-debug.js';
 
 // helper for editors that can syntax highlight html template strings
@@ -13,11 +13,15 @@ Template.html = (...args) => Template.createTemplate(html(...args));
 
 const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : {};
 
+// TODO(sjmiles): properties of Xen include some classes as mixins, some as resolved, we should
+// be more explicit
+
 const Xen = {
   State: XenStateMixin,
   Template,
-  Element,
-  Base,
+  Element: XenElementMixin,
+  BaseMixin: XenBaseMixin,
+  Base: XenBase,
   Debug,
   setBoolAttribute: Template.setBoolAttribute,
   html,
