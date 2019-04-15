@@ -10,17 +10,10 @@
 
 defineParticle(({DomParticle, html, log, resolver}) => {
 
-  const host = 'tabbed';
-
   const template = html`
-<style>
-  [${host}] {
-    /* */
-  }
-</style>
-<div ${host}>
-  <simple-tabs slotid="content"></simple-tabs>
-</div>
+
+<simple-tabs slotid="content"></simple-tabs>
+
   `;
 
   return class extends DomParticle {

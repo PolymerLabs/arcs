@@ -1,0 +1,7 @@
+particle AnimatedTiles in 'source/AnimatedTiles.js'
+  consume root
+  description `animated tiles`
+
+recipe AnimatedTiles
+  AnimatedTiles
+
