@@ -277,7 +277,6 @@ const _setSubTemplate = function(node, value, controller) {
 };
 
 const _renderSubtemplates = function(container, controller, template, models) {
-  //console.log('XList::_renderList:', props);
   let child = container.firstElementChild;
   let next;
   if (template && models) {

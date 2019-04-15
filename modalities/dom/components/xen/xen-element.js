@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export default Base => class extends Base {
+export const XenElementMixin = Base => class extends Base {
   constructor() {
     super();
     this._mounted = false;
