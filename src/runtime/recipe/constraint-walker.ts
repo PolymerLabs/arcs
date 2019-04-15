@@ -20,7 +20,7 @@ export class ConstraintWalker extends RecipeWalker {
 
     if (this.onConstraint) {
       for (const constraint of recipe.connectionConstraints) {
-        this.visit(this.onConstraint, constraint);
+        this.visit(this.onConstraint.bind(this), constraint);
       }
     }
   }

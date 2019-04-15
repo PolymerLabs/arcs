@@ -141,9 +141,12 @@ export abstract class Walker<T extends Cloneable> {
   }
 
   visit<Ctx extends object[]>(visitor: (obj: T, ...ctx: Ctx) => Continuation<T, Ctx>, ...context: Ctx): void {
-    const continuation: Continuation<T, Ctx> = visitor.bind(this)(this.currentResult.result, ...context);
+    const continuation: Continuation<T, Ctx> = visitor(this.currentResult.result, ...context);
     if (!this.isEmptyResult(continuation)) {
-      this.updateList.push({continuation, context});
+      this.updateList.push({
+        continuation: continuation as Continuation<T, object[]>,
+        context
+      });
     }
   }
 
@@ -233,7 +236,7 @@ export abstract class Walker<T extends Cloneable> {
     });
   }
 
-  isEmptyResult(result: Continuation<T, object[]>) {
+  isEmptyResult<Ctx extends object[]>(result: Continuation<T, Ctx>) {
     if (!result) {
       return true;
     }
