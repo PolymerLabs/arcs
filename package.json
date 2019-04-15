@@ -29,9 +29,15 @@
     "watch:tsc": "tsc -w",
     "build:webpack": "webpack",
     "watch:webpack": "webpack --watch",
-    "watch": "concurrently npm:watch:*"
+    "watch": "concurrently npm:watch:*",
+    "bazel-build": "bazel build //...",
+    "bazel-test": "ibazel test //..."
   },
   "devDependencies": {
+    "@bazel/bazel": "^0.24.0",
+    "@bazel/buildifier": "^0.22.0",
+    "@bazel/ibazel": "^0.10.0",
+    "@bazel/typescript": "^0.27.12",
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.24",
