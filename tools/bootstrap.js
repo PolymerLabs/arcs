@@ -10,7 +10,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 function spawn(cmd, ...args) {
-  const res = child_process.spawnSync(path.normalize(cmd), args, {shell: true,  stdio: 'inherit'});
+  const res = child_process.spawnSync(path.normalize(cmd), args, {stdio: 'inherit'});
   return res.status === 0 && !res.error;
 }
 
