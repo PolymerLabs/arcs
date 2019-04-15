@@ -1,6 +1,6 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {Entity} from '../entity.js';
+import {Entity, MutableEntityData} from '../entity.js';
 
 describe('Entity', () => {
   describe('mutability', async () => {
@@ -28,7 +28,7 @@ describe('Entity', () => {
       const entity = newFooEntity('abc');
 
       // TODO: Fix typing on Entity so that we can modify fields!
-      entity.mutate((e: FooEntity) => {
+      entity.mutate(e => {
         e.bar = 'xyz';
       });
       assert.equal(entity.bar, 'xyz');
@@ -48,7 +48,7 @@ describe('Entity', () => {
 
       entity.mutable = false;
       assert.throws(() => {
-        entity.mutate((e: FooEntity) => {
+        entity.mutate(e => {
           e.bar = 'xyz';
         });
       }, 'Entity is immutable');
