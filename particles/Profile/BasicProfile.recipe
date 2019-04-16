@@ -6,11 +6,6 @@ particle UserNameForm in 'source/UserNameForm.js'
   inout UserName userName
   consume userName
 
-particle AvatarPicker in 'source/AvatarPicker.js'
-  inout Avatar avatar
-  consume root
-  description `select avatar`
-
 particle FriendsPicker in 'source/FriendsPicker.js'
   inout [Friend] friends
   in [Avatar] avatars
