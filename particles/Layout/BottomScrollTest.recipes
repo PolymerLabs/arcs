@@ -1,0 +1,6 @@
+particle BottomScrollTest in 'source/BottomScrollTest.js'
+  consume root
+  description `bottom scroller`
+
+recipe BottomScrollTest
+  BottomScrollTest
