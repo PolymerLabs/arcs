@@ -226,7 +226,7 @@ return class extends DomParticle {
   mutateEntity(handleName, entity, mutator) {
     const handle = this.handles.get(handleName);
     handle.remove(entity);
-    mutator(entity);
+    entity.mutate(mutator);
     handle.store(entity);
     log(`mutated entity [${entity.id}]`);
   }

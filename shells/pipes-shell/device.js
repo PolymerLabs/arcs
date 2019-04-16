@@ -9,7 +9,7 @@
 import {SyntheticStores} from '../lib/synthetic-stores.js';
 import {Context} from './context.js';
 import {Pipe} from './pipe.js';
-import {Utils} from '../lib/utils.js';
+import {Utils} from '../lib/runtime/utils.js';
 import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('Device');

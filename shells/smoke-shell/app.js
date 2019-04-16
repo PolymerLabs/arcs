@@ -1,5 +1,5 @@
 
-import {Utils} from '../lib/utils.js';
+import {Utils} from '../lib/runtime/utils.js';
 
 export const App = async (composer) => {
   const arc = await Utils.spawn({id: 'smoke-arc', composer});

@@ -16,6 +16,6 @@ if (params.has('log')) {
 }
 window.logLevel = logLevel;
 
-import {Xen} from './xen.js';
+import {Xen} from '../components/xen.js';
 Xen.Debug.level = logLevel;
 

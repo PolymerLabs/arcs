@@ -1,10 +1,19 @@
-import {Manifest} from '../../build/runtime/manifest.js';
-import {Arc} from '../../build/runtime/arc.js';
-import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
-import {PlatformLoader} from '../../build/platform/loader-web.js';
-import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+/*
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+import {Manifest} from '../../../build/runtime/manifest.js';
+import {Arc} from '../../../build/runtime/arc.js';
+import {IdGenerator} from '../../../build/runtime/id.js';
+import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
+import {PlatformLoader} from '../../../build/platform/loader-web.js';
+import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
 import {debugListeners} from './debug-listeners.js';
-import {IdGenerator} from '../../build/runtime/id.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);

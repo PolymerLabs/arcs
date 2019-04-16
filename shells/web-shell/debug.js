@@ -5,5 +5,5 @@ if (params.has('log')) {
   window.logLevel = logLevel;
   console.log(`setting logLevel = ${window.logLevel}`);
 }
-import {Xen} from '../lib/xen.js';
+import {Xen} from '../lib/components/xen.js';
 Xen.Debug.level = window.logLevel;

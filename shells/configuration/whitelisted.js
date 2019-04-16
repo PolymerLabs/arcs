@@ -11,4 +11,4 @@ import '../../modalities/dom/components/elements/model-img.js';
 import '../../modalities/dom/components/elements/dom-repeater.js';
 
 // requires app-level firebase configuration
-import '../lib/firebase-upload.js';
+import '../lib/database/firebase-upload.js';
