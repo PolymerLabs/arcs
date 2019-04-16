@@ -60,9 +60,12 @@ export class SlotConsumer {
     this.containerKind = containerKind;
   }
 
-  get description() { return this._description; }
   async resetDescription() {
     this._description = await Description.create(this.arc);
+  }
+
+  setDescription(description: Description) {
+    this._description = description;
   }
 
   getRendering(subId?): Rendering { return this._renderingBySubId.get(subId); }
@@ -169,7 +172,7 @@ export class SlotConsumer {
   }
 
   setContent(content: Content, handler) {
-    if (content && Object.keys(content).length > 0 && this.description) {
+    if (content && Object.keys(content).length > 0 && this._description) {
       content.descriptions = this.populateHandleDescriptions();
     }
     this.eventHandler = handler;
@@ -178,13 +181,13 @@ export class SlotConsumer {
     }
   }
 
-  populateHandleDescriptions(): Map<string, Description> {
+  private populateHandleDescriptions(): Map<string, Description> {
     if (!this.consumeConn) return null; // TODO: remove null ability
     const descriptions: Map<string, Description> = new Map();
     Object.values(this.consumeConn.particle.connections).map(handleConn => {
       if (handleConn.handle) {
         descriptions[`${handleConn.name}.description`] =
-            this.description.getHandleDescription(handleConn.handle).toString();
+            this._description.getHandleDescription(handleConn.handle).toString();
       }
     });
     return descriptions;
