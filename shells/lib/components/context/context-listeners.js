@@ -113,15 +113,17 @@ export const ShareListener = class extends AbstractListener {
     this.log('removing entity', entity);
     const {base: userid} = crackStorageKey(store.storageKey);
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
-    const share = boxes[metrics.storeId];
-    if (share && share.shareStorePromise) {
-      const shareStore = await share.shareStorePromise;
-      ContextStores.removeEntityWithUid(shareStore, entity, userid);
-    }
-    const box = boxes[metrics.boxStoreId];
-    if (box && box.boxStorePromise) {
-      const boxStore = await box.boxStorePromise;
-      ContextStores.removeEntityWithUid(boxStore, entity, userid);
+    if (metrics) {
+      const share = boxes[metrics.storeId];
+      if (share && share.shareStorePromise) {
+        const shareStore = await share.shareStorePromise;
+        ContextStores.removeEntityWithUid(shareStore, entity, userid);
+      }
+      const box = boxes[metrics.boxStoreId];
+      if (box && box.boxStorePromise) {
+        const boxStore = await box.boxStorePromise;
+        ContextStores.removeEntityWithUid(boxStore, entity, userid);
+      }
     }
   }
 };

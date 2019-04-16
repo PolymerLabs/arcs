@@ -54,7 +54,9 @@ const storeTemplate = html`
 `;
 
 const nameSort = (a, b) => a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
-const simpleNameOfType = type => type.getEntitySchema().names[0];
+
+//const simpleNameOfType = type => type.getEntitySchema().names[0];
+
 const nameOfType = type => {
   let typeName = type.getEntitySchema().names[0];
   if (type.isCollection) {
@@ -121,6 +123,9 @@ class StoreExplorer extends Xen.Base {
         if (hideNamed && store.name && tags.length === 0) {
           continue;
         }
+        if (store.type.tag === 'Interface') {
+          continue;
+        }
         let malformed = false;
         let values = `(don't know how to dereference)`;
         if (store.toList) {
@@ -158,10 +163,8 @@ class StoreExplorer extends Xen.Base {
         const moniker = store.id.split(':').pop();
         const name = store.name || data.tags || moniker;
         //const name = `${store.name || moniker}:${data.tags}`;
-        if (/*!store.type ||*/ store.type.tag !== 'Interface') {
-          const label = `${data.name || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
-          result.push({tags: data.details.tags, data: {[label]: data}, name});
-        }
+        const label = `${data.name || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
+        result.push({tags: data.details.tags, data: {[label]: data}, name});
       }
     }
     return result;
