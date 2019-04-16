@@ -1,0 +1,5 @@
+schema Thing
+  Text name
+
+particle A in 'a.js'
+  in Thing thing
