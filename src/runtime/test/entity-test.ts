@@ -24,13 +24,19 @@ describe('Entity', () => {
       assert.equal(entity.bar, 'abc');
     });
 
-    it('allows mutations via the mutate method', () => {
+    it('allows mutations via the mutate method with a callback function', () => {
       const entity = newFooEntity('abc');
 
-      // TODO: Fix typing on Entity so that we can modify fields!
       entity.mutate(e => {
         e.bar = 'xyz';
       });
+      assert.equal(entity.bar, 'xyz');
+    });
+
+    it('allows mutations via the mutate method with new data', () => {
+      const entity = newFooEntity('abc');
+
+      entity.mutate({bar: 'xyz'});
       assert.equal(entity.bar, 'xyz');
     });
 
@@ -51,6 +57,10 @@ describe('Entity', () => {
         entity.mutate(e => {
           e.bar = 'xyz';
         });
+      }, 'Entity is immutable');
+
+      assert.throws(() => {
+        entity.mutate({bar: 'xyz'});
       }, 'Entity is immutable');
 
       assert.equal(entity.bar, 'abc');
