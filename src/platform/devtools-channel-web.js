@@ -14,7 +14,7 @@ import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channe
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 
 // configures a firebase instance
-import {database} from '../../shells/lib/firebase.js';
+import {database} from '../../shells/lib/database/firebase.js';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {

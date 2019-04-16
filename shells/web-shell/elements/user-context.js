@@ -9,8 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {Const} from '../../configuration/constants.js';
-import {Xen} from '../../lib/xen.js';
-import {SyntheticStores} from '../../lib/synthetic-stores.js';
+import {Xen} from '../../lib/components/xen.js';
+import {SyntheticStores} from '../../lib/runtime/synthetic-stores.js';
 import {SingleUserContext} from '../../lib/single-user-context.js';
 
 const log = Xen.logFactory('UserContext', '#4f0433');

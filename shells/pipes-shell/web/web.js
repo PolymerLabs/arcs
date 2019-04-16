@@ -9,18 +9,18 @@
  */
 
  // configure
-import '../../lib/loglevel-web.js';
+import '../../lib/platform/loglevel-web.js';
 import {paths} from './paths.js';
 import {manifest} from './config.js';
 
 // optional
-import '../../lib/pouchdb-support.js';
-import '../../lib/firebase-support.js';
+import '../../lib/database/pouchdb-support.js';
+import '../../lib/database/firebase-support.js';
 //import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
-import {Utils} from '../../lib/utils.js';
+import {Utils} from '../../lib/runtime/utils.js';
 import {ShellApiFactory} from '../device.js';
-import {DevtoolsSupport} from '../../lib/devtools-support.js';
+import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
 
 // usage:
 //

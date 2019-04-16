@@ -21,7 +21,7 @@ Is a platform-agnostic (Web/Nodejs) library of Arcs middle-ware.
 ### Accessing environment objects
 
 ```
-import {Utils} from 'lib/utils.js'
+import {Utils} from 'lib/runtime/utils.js'
 Utils.init(path_to_arcs_root);
 console.log(Utils.env.loader, Utils.env.pecFactory);
 ```

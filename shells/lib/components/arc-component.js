@@ -1,4 +1,4 @@
-import {Xen} from '../xen.js';
+import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
 import {DomSlotComposer} from './dom-slot-composer.js';
 import {logFactory} from '../../../build/platform/log-web.js';

@@ -1,5 +1,5 @@
-import {defaultCoreDebugListeners} from '../../build/runtime/debug/arc-debug-handler.js';
-import {defaultPlanningDebugListeners} from '../../build/planning/arcs-planning.js';
+import {defaultCoreDebugListeners} from '../../../build/runtime/debug/arc-debug-handler.js';
+import {defaultPlanningDebugListeners} from '../../../build/planning/arcs-planning.js';
 
 // Debug-channel listeners are injected, so that the runtime need not know about them.
 export const debugListeners = [

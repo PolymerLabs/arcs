@@ -10,9 +10,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {Xen} from '../../lib/xen.js';
+import {Xen} from '../../lib/components/xen.js';
 import {Const} from '../../configuration/constants.js';
-import {Utils} from '../../lib/utils.js';
+import {Utils} from '../../lib/runtime/utils.js';
 import './web-config.js';
 import './web-arc.js';
 import './user-context.js';

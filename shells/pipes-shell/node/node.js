@@ -9,16 +9,16 @@
 */
 
  // configure
-import '../../lib/loglevel-node.js';
+import '../../lib/platform/loglevel-node.js';
 import {paths} from './paths.js';
 import {manifest} from './config.js';
 
 // optional
-//import '../../lib/pouchdb-support.js';
-//import '../../lib/firebase-support.js';
+//import '../../lib/database/pouchdb-support.js';
+//import '../../lib/database/firebase-support.js';
 //import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
-import {Utils} from '../../lib/utils.js';
+import {Utils} from '../../lib/runtime/utils.js';
 import {DeviceApiFactory} from '../device.js';
 
 // usage:

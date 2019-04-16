@@ -1,4 +1,4 @@
-import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
+import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
 
 //const stores = {};
 

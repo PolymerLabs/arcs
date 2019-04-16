@@ -17,7 +17,7 @@
 import './config.js';
 
 // platform agnostic code
-import {Utils} from '../lib/utils.js';
+import {Utils} from '../lib/runtime/utils.js';
 import {ArcHost} from '../lib/components/arc-host.js';
 import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
 import {UserArcs} from '../lib/user-arcs.js';

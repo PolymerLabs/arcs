@@ -7,7 +7,7 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import {Xen} from '../../../lib/xen.js';
+import {Xen} from '../../../lib/components/xen.js';
 import IconStyle from '../../../../modalities/dom/components/icons.css.js';
 import '../../../../modalities/dom/components/elements/simple-tabs.js';
 import '../../../../modalities/dom/components/arc-tools/store-explorer.js';

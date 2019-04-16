@@ -1,4 +1,4 @@
-import {Utils} from '../lib/utils.js';
+import {Utils} from '../lib/runtime/utils.js';
 
 export const App = async (composer, manifestPath) => {
   const context = await Utils.parse(`
