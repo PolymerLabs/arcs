@@ -19,7 +19,7 @@ import {manifest} from './config.js';
 //import '../../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js';
 
 import {Utils} from '../../lib/runtime/utils.js';
-import {DeviceApiFactory} from '../device.js';
+import {ShellApiFactory} from '../device.js';
 
 // usage:
 //
@@ -32,9 +32,9 @@ import {DeviceApiFactory} from '../device.js';
 
 //const storage = `pouchdb://local/arcs/`;
 const storage = `volatile://`;
-const version = `version: apr-2`;
+const version = `apr-16`;
 
-console.log(`${version} -- ${storage}`);
+console.log(`version: ${version}, storage: ${storage}`);
 
 process.on('uncaughtException', (err) => {
   console.error('uncaughtException:', err);
@@ -45,7 +45,7 @@ process.on('uncaughtException', (err) => {
   // configure arcs environment
   Utils.init(paths.root, paths.map);
   // configure ShellApi (DeviceClient is bound in by outer process, otherwise undefined)
-  global.ShellApi = await DeviceApiFactory(storage, manifest, global.DeviceClient);
+  global.ShellApi = await ShellApiFactory(storage, manifest, global.DeviceClient);
 })();
 
 if ('test' in global.params) {

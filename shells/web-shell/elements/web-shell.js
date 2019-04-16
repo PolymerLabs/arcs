@@ -1,22 +1,21 @@
-/*
-@license
-Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {Xen} from '../../lib/components/xen.js';
 import {Const} from '../../configuration/constants.js';
-import {Utils} from '../../lib/utils.js';
+import {Xen} from '../../lib/components/xen.js';
+import {Utils} from '../../lib/runtime/utils.js';
 import '../../lib/elements/launcher-arc.js';
 import './web-config.js';
 import './web-arc.js';
-import './user-context.js';
+import './web-context.js';
 import './web-launcher.js';
 import './web-planner.js';
 import './ui/web-shell-ui.js';
@@ -60,7 +59,7 @@ const template = Xen.Template.html`
   <!-- context bootstrap -->
   <web-arc id="context" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
-  <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></user-context>
+  <web-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></web-context>
   <!-- web planner -->
   <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
@@ -185,7 +184,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.state = {arckey, search: ''};
     }
   }
-  // TODO(sjmiles): use SyntheticStore instead, see user-context.js
+  // TODO(sjmiles): use SyntheticStore instead, see web-context.js
   waitForStore(pollInterval) {
     const {launcherArc, store} = this.state;
     if (launcherArc && !store) {

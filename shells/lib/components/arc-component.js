@@ -1,6 +1,15 @@
-import {Xen} from '../xen.js';
-import {ArcHost} from '../components/arc-host.js';
-import {DomSlotComposer} from '../components/dom-slot-composer.js';
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+import {Xen} from './xen.js';
+import {ArcHost} from './arc-host.js';
+import {DomSlotComposer} from './dom-slot-composer.js';
 import {logFactory} from '../../../build/platform/log-web.js';
 
 const log = logFactory('ArcComponent', '#cb23a6');

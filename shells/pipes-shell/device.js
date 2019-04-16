@@ -6,11 +6,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {SyntheticStores} from '../lib/synthetic-stores.js';
+import {logFactory} from '../../build/platform/log-web.js';
+import {Utils} from '../lib/runtime/utils.js';
 import {Context} from './context.js';
 import {Pipe} from './pipe.js';
-import {Utils} from '../lib/runtime/utils.js';
-import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('Device');
 const warn = logFactory('Device', null, 'warn');
@@ -19,9 +18,6 @@ const defaultManifest = `
 import 'https://thorn-egret.glitch.me/custom.recipes'
 import 'https://$particles/PipeApps/canonical.recipes'
 `;
-
-// TODO(sjmiles): why not automatic?
-SyntheticStores.init();
 
 let recipes;
 let client;

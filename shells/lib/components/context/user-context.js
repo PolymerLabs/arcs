@@ -1,7 +1,15 @@
-import {SyntheticStores} from '../../synthetic-stores.js';
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+import {SyntheticStores} from '../../runtime/synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
 import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from './context-listeners.js';
-import '../../../../modalities/dom/components/arc-tools/store-explorer.js';
 
 const ArcMetaContext = listener => new ArcHandleListener(new ArcMetaListener(listener));
 const ProfileContext = (context, listener) => new ArcHandleListener(new ProfileListener(context, listener));

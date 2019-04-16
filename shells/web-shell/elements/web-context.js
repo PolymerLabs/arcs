@@ -1,20 +1,19 @@
-/*
-@license
-Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
-import {Xen} from '../../lib/xen.js';
+import {Xen} from '../../lib/components/xen.js';
 import {UserContext} from '../../lib/components/context/user-context.js';
 
 const log = Xen.logFactory('UserContext', '#4f0433');
 const warn = Xen.logFactory('UserContext', '#4f0433', 'warn');
 
-class UserContextElement extends Xen.Debug(Xen.Async, log) {
+class WebContext extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['storage', 'context'];
   }
@@ -35,4 +34,4 @@ class UserContextElement extends Xen.Debug(Xen.Async, log) {
     //
   }
 }
-customElements.define('user-context', UserContextElement);
+customElements.define('web-context', WebContext);
