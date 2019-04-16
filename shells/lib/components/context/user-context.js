@@ -40,8 +40,11 @@ export class UserContext {
       this.observer = ContextObserver(context, store);
       // wait for ready connection
       await this.observer.ready;
-      // resolve context ready
-      this._resolveReady();
+    } else {
+      console.warn('UserContext: no launcher arc, will look again in 5s');
+      setTimeout(() => this.connect(context, storageKey), 5000);
     }
+    // resolve context ready
+    this._resolveReady();
   }
 }
