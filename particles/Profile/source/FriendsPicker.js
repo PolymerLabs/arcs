@@ -87,7 +87,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 <template friend-avatars>
   <div item>
     <model-img src="{{url}}">
-      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dblclick="onSelectAvatar">
+      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dblclick="onRemoveFriend">
     </model-img>
     <br>
     <span>{{name}}</span>
@@ -131,13 +131,12 @@ defineParticle(({DomParticle, html, resolver, log}) => {
       };
     }
     getUserProfile(publicKey, avatars, names) {
-      const nar = [];
-      const avatar = this.boxQuery(avatars || nar, publicKey)[0];
-      const name = this.boxQuery(names || nar, publicKey)[0];
+      const avatar = this.boxQuery(avatars, publicKey)[0];
+      const name = this.boxQuery(names, publicKey)[0];
       return {
         publicKey,
         avatar: (avatar && avatar.url) || resolver(`FriendsPicker/../assets/user.png`),
-        name: name && name.userName || publicKey.split('/').pop()
+        name: (name && name.userName) || publicKey.split('/').pop()
       };
     }
     onAddFriend(e) {
@@ -155,12 +154,11 @@ defineParticle(({DomParticle, html, resolver, log}) => {
         }
       }
     }
-    onSelectAvatar(e, state) {
+    onRemoveFriend(e, state) {
       const selectedId = e.data.value;
       const friend = this._props.friends.find(f => f.publicKey === selectedId);
       const friendsHandle = this.handles.get('friends');
       if (friend) {
-        //log('ready to remove a friend (but not doing it)', friend);
         friendsHandle.remove(friend);
       }
     }
