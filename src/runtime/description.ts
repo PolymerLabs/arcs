@@ -20,21 +20,47 @@ import {StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 
 export class Description {
-  private constructor(private readonly particleDescriptions = <ParticleDescription[]>[],
-                      private readonly storeDescById: {[id: string]: string} = {},
-                      private readonly arcRecipeName: string,
-                      // TODO(mmandlis): replace Particle[] with serializable json objects.
-                      private readonly arcRecipes: {patterns: string[], particles: Particle[]}[]) {}
+  private readonly storeDescById: {[id: string]: string} = {};
+  private readonly arcRecipeName: string;
+  // TODO(mmandlis): replace Particle[] with serializable json objects.
+  private readonly arcRecipes: {patterns: string[], particles: Particle[]}[];
 
-  static async create(arc: Arc, relevance?: Relevance): Promise<Description> {
-    const particleDescriptions = await Description.initDescriptionHandles(arc, relevance);
-    return new Description(particleDescriptions, Description._getStoreDescById(arc), arc.activeRecipe.name, arc.recipeDeltas);
+  private constructor(
+      arc: Arc,
+      private readonly particleDescriptions: ParticleDescription[] = []) {
+
+    // Populate store descriptions by ID.
+    for (const {id} of arc.activeRecipe.handles) {
+      const store = arc.findStoreById(id);
+      if (store && store instanceof StorageProviderBase) {
+        this.storeDescById[id] = arc.getStoreDescription(store);
+      }
+    }
+
+    // Retain specific details of the supplied Arc
+    this.arcRecipeName = arc.activeRecipe.name;
+    this.arcRecipes = arc.recipeDeltas;
   }
- 
-  getArcDescription(formatterClass = DescriptionFormatter) {
+
+  /**
+   * Create a new Description object for the given Arc with an
+   * optional Relevance object.
+   */
+  static async create(arc: Arc, relevance?: Relevance): Promise<Description> {
+    // Execute async related code here
+    const particleDescriptions = await Description.initDescriptionHandles(arc, relevance);
+
+    // ... and pass to the private constructor.
+    return new Description(arc, particleDescriptions);
+  }
+
+  getArcDescription(formatterClass = DescriptionFormatter): string|undefined {
+    const patterns: string[] = [].concat(...this.arcRecipes.map(recipe => recipe.patterns));
+    const particles: Particle[] = [].concat(...this.arcRecipes.map(recipe => recipe.particles));
+
     const desc = new (formatterClass)(this.particleDescriptions, this.storeDescById).getDescription({
-      patterns: <string[]>[].concat(...this.arcRecipes.map(recipe => recipe.patterns)),
-      particles: <Particle[]>[].concat(...this.arcRecipes.map(recipe => recipe.particles))
+      patterns,
+      particles
     });
 
     if (desc) {
@@ -52,74 +78,66 @@ export class Description {
     return formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription);
   }
 
-  getHandleDescription(recipeHandle: Handle) {
+  getHandleDescription(recipeHandle: Handle): string {
     assert(recipeHandle.connections.length > 0, 'handle has no connections?');
     const formatter = new DescriptionFormatter(this.particleDescriptions, this.storeDescById);
     formatter.excludeValues = true;
     return formatter.getHandleDescription(recipeHandle);
   }
 
-  static _getStoreDescById(arc: Arc): {} {
-    const storeDescById = {};
-    for (const {id} of arc.activeRecipe.handles) {
-      const store = arc.findStoreById(id);
-      if (store && store instanceof StorageProviderBase) {
-        storeDescById[id] = arc.getStoreDescription(store);
-      }
-    }
-    return storeDescById;
+  private static async initDescriptionHandles(arc: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
+    const allParticles: Particle[] = [].concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
+
+    return await Promise.all(
+      allParticles.map(particle => Description._createParticleDescription(particle, arc, relevance)));
   }
 
-  static async initDescriptionHandles(arc: Arc, relevance?: Relevance): Promise<ParticleDescription[]> {
-    const particleDescriptions: ParticleDescription[] = [];
-    const allParticles = <Particle[]>[].concat(...arc.allDescendingArcs.map(arc => arc.activeRecipe.particles));
-    await Promise.all(allParticles.map(async particle => {
-      particleDescriptions.push(await this._createParticleDescription(particle, arc, relevance));
-    }));
-    return particleDescriptions;
-  }
-
-  static async _createParticleDescription(particle: Particle, arc: Arc, relevance?: Relevance) {
+  private static async _createParticleDescription(particle: Particle, arc: Arc, relevance?: Relevance): Promise<ParticleDescription> {
     let pDesc : ParticleDescription = {
       _particle: particle,
       _connections: {}
     };
+
     if (relevance) {
       pDesc._rank = relevance.calcParticleRelevance(particle);
     }
 
-    const descByName = await this._getPatternByNameFromDescriptionHandle(particle, arc) || {};
+    const descByName = await Description._getPatternByNameFromDescriptionHandle(particle, arc);
     pDesc = {...pDesc, ...descByName};
     pDesc.pattern = pDesc.pattern || particle.spec.pattern;
+
     for (const handleConn of Object.values(particle.connections)) {
       const specConn = particle.spec.handleConnectionMap.get(handleConn.name);
       const pattern = descByName[handleConn.name] || specConn.pattern;
       const store = arc.findStoreById(handleConn.handle.id);
+
       pDesc._connections[handleConn.name] = {
         pattern,
         _handleConn: handleConn,
-        value: await this._prepareStoreValue(store)
+        value: await Description._prepareStoreValue(store)
       };
     }
     return pDesc;
   }
 
-  static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc) {
+  private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<{[key: string]: string}> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      const descHandle = arc.findStoreById(descriptionConn.handle.id);
+      const descHandle = arc.findStoreById(descriptionConn.handle.id) as CollectionStorageProvider;
+
       if (descHandle) {
         // TODO(shans): fix this mess when there's a unified Collection class or interface.
-        const descList = await (<unknown>descHandle as {toList: () => Promise<{rawData: {key: string, value: string}}[]>}).toList();
         const descByName: {[key: string]: string} = {};
-        descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
+        for (const d of await descHandle.toList()) {
+          descByName[d.rawData.key] = d.rawData.value;
+        }
         return descByName;
       }
     }
-    return undefined;
+    return {};
   }
 
-  static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue> {
+  private static async _prepareStoreValue(store: StorageProviderBase | StorageStub): Promise<DescriptionValue>|undefined {
     if (!store) {
       return undefined;
     }
@@ -153,5 +171,6 @@ export class Description {
     return undefined;
   }
 
-  static defaultDescription = 'i\'m feeling lucky';
+  /** A fallback description if none other can be found */
+  static defaultDescription = `i'm feeling lucky`;
 }
