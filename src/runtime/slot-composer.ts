@@ -161,7 +161,7 @@ export class SlotComposer {
 
     // ... and apply to each consumer
     for (const consumer of this.consumers) {
-      consumer.setDescription(consumerByArc.get(consumer.arc));
+      consumer.description = consumerByArc.get(consumer.arc);
     }
   }
 

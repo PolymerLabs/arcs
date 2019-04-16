@@ -397,7 +397,7 @@ export class DescriptionFormatter {
     }
   }
 
-  _formatDescription(handleConnection): string {
+  _formatDescription(handleConnection) {
     return this._formatDescriptionPattern(handleConnection) ||
            this._formatStoreDescription(handleConnection) ||
            this._formatHandleType(handleConnection);
