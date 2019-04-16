@@ -27,6 +27,10 @@ export class SyntheticStores {
     return await SyntheticStores.connectToKind('handles', storage, arcid);
   }
   static async connectToKind(kind, storage, arcid) {
+    // delimiter problems
+    if (storage[storage.length-1] === '/') {
+      storage = storage.slice(0, -1);
+    }
     return SyntheticStores.storeConnect(null, `synthetic://arc/${kind}/${storage}/${arcid}`);
   }
   static async getHandleStore(handle) {
