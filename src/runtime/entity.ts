@@ -125,7 +125,8 @@ export abstract class Entity implements EntityInterface {
       throw new Error('Entity is immutable.');
     }
     let newData: {};
-    if (mutation instanceof Function) {
+    // Using typeof instead of instanceof here, because apparently sometimes lambdas aren't an instance of Function... :-/
+    if (typeof mutation === 'function') {
       newData = this.dataClone();
       mutation(newData);
     } else {
