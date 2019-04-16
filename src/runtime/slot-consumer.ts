@@ -52,17 +52,12 @@ export class SlotConsumer {
   private _renderingBySubId: Map<string|undefined, Rendering> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
-  private _description: Description;
+  public description: Description;
 
   constructor(arc: Arc, consumeConn?: SlotConnection, containerKind?: string) {
     this.arc = arc;
     this.consumeConn = consumeConn;
     this.containerKind = containerKind;
-  }
-
-  get description() { return this._description; }
-  async resetDescription() {
-    this._description = await Description.create(this.arc);
   }
 
   getRendering(subId?): Rendering { return this._renderingBySubId.get(subId); }
@@ -170,7 +165,7 @@ export class SlotConsumer {
 
   setContent(content: Content, handler) {
     if (content && Object.keys(content).length > 0 && this.description) {
-      content.descriptions = this.populateHandleDescriptions();
+      content.descriptions = this._populateHandleDescriptions();
     }
     this.eventHandler = handler;
     for (const [subId, rendering] of this.renderings) {
@@ -178,7 +173,7 @@ export class SlotConsumer {
     }
   }
 
-  populateHandleDescriptions(): Map<string, Description> {
+  private _populateHandleDescriptions(): Map<string, Description> {
     if (!this.consumeConn) return null; // TODO: remove null ability
     const descriptions: Map<string, Description> = new Map();
     Object.values(this.consumeConn.particle.connections).map(handleConn => {

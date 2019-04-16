@@ -11,6 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
+import {Description} from './description.js';
 import {ModalityHandler} from './modality-handler.js';
 import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
@@ -110,7 +111,7 @@ export class SlotComposer {
     const transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
     assert(transformationSlotConsumer,
         `Transformation particle ${transformationParticle.name} with consumed ${transformationSlotName} not found`);
-    
+
     const hostedSlotId = innerArc.generateID().toString();
     this._contexts.push(new HostedSlotContext(hostedSlotId, transformationSlotConsumer, storeId));
     return hostedSlotId;
@@ -148,7 +149,20 @@ export class SlotComposer {
       context.addSlotConsumer(consumer);
     });
 
-    await Promise.all(this.consumers.map(async consumer => await consumer.resetDescription()));
+    // Calculate the Descriptions only once per-Arc
+    const allArcs = this.consumers.map(consumer => consumer.arc);
+    const uniqueArcs = [...new Set(allArcs).values()];
+
+    // get arc -> description
+    const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
+
+    // create a mapping from the zipped uniqueArcs and descriptions
+    const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
+
+    // ... and apply to each consumer
+    for (const consumer of this.consumers) {
+      consumer.description = consumerByArc.get(consumer.arc);
+    }
   }
 
   renderSlot(particle: Particle, slotName: string, content) {
@@ -180,7 +194,7 @@ export class SlotComposer {
                     hostedConsumer.consumeConn.particle,
                     hostedConsumer.consumeConn.name,
                     eventlet);
-              }    
+              }
             });
           }
         }

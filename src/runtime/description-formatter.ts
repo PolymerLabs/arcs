@@ -22,6 +22,7 @@ export type ParticleDescription = {
   _connections: {[index: string]: HandleDescription},
   _rank?: number
 };
+
 export type HandleDescription = {pattern: string, _handleConn: HandleConnection, value: DescriptionValue};
 export type DescriptionValue = {entityValue?: string|{}, valueDescription?: string, collectionValues?: string[], bigCollectionValues?: string[], interfaceValue?: string | {}};
 
@@ -402,7 +403,7 @@ export class DescriptionFormatter {
            this._formatHandleType(handleConnection);
   }
 
-  _formatDescriptionPattern(handleConnection) {
+  _formatDescriptionPattern(handleConnection): string|undefined {
     let chosenConnection = handleConnection;
 
     // For "out" connection, use its own description
@@ -436,7 +437,7 @@ export class DescriptionFormatter {
     }
     return undefined;
   }
-  _formatHandleType(handleConnection) {
+  _formatHandleType(handleConnection): string {
     const type = handleConnection.handle && handleConnection.handle.type.isResolved() ? handleConnection.handle.type : handleConnection.type;
     return type.toPrettyString().toLowerCase();
   }
