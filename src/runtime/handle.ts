@@ -119,12 +119,16 @@ export abstract class Handle {
     return this.storage.type;
   }
 
-  get _id() {
+  get _id(): string {
     return this.storage.id;
   }
 
   toManifestString() {
     return `'${this._id}'`;
+  }
+
+  protected generateKey(): string {
+    return this.idGenerator.newChildId(Id.fromString(this._id), 'key').toString();
   }
 }
 
@@ -209,7 +213,7 @@ export class Collection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    const keys = [this.storage.generateID() + 'key'];
+    const keys = [this.generateKey()];
     return this.storage.store(serialization, keys, this._particleId);
   }
 
@@ -409,7 +413,7 @@ export class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    const keys = [this.storage.generateID() + 'key'];
+    const keys = [this.generateKey()];
     return this.storage.store(serialization, keys, this._particleId);
   }
 

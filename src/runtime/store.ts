@@ -15,7 +15,6 @@ export interface Store {
   readonly pec?: ParticleExecutionContext;
 
   reportExceptionInHost(exception: PropagatedException): void;
-  generateID(): string;
 }
 
 export interface VariableStore extends Store {

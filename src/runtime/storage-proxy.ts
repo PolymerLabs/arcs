@@ -20,6 +20,7 @@ import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/c
 import {BigCollectionType, CollectionType, Type} from './type.js';
 import {EntityRawData} from './entity.js';
 import {Store, VariableStore, CollectionStore, BigCollectionStore} from './store.js';
+import {Id} from './id.js';
 
 enum SyncState {none, pending, full}
 
@@ -61,10 +62,8 @@ export abstract class StorageProxy implements Store {
   protected readonly port: PECInnerPort;
   protected readonly scheduler: StorageProxyScheduler;
   name: string;
-  private readonly baseForNewID: string;
   pec: ParticleExecutionContext;
 
-  private localIDComponent = 0;
   protected version: number | undefined = undefined;
   protected listenerAttached = false;
   private keepSynced = false;
@@ -78,10 +77,7 @@ export abstract class StorageProxy implements Store {
     this.port = port;
     this.scheduler = scheduler;
     this.name = name;
-    this.baseForNewID = pec.generateID();
-
     this.updates = [];
-
     this.pec = pec;
   }
 
@@ -244,8 +240,8 @@ export abstract class StorageProxy implements Store {
     }
   }
 
-  generateID() {
-    return `${this.baseForNewID}:${this.localIDComponent++}`;
+  protected generateBarrier(): string {
+    return this.pec.idGenerator.newChildId(Id.fromString(this.id), 'barrier').toString();
   }
 }
 
@@ -478,9 +474,7 @@ export class VariableProxy extends StorageProxy implements VariableStore {
     // to the set comes back before a listener is registered then this proxy will
     // end up locked waiting for a barrier that will never arrive.
     if (this.listenerAttached) {
-      // TODO(shans): this.generateID() used to take a parameter. Is this the
-      // cause of some of the key collisions we're seeing?
-      barrier = this.generateID(/* 'barrier' */);
+      barrier = this.generateBarrier();
     } else {
       barrier = null;
     }
@@ -498,7 +492,7 @@ export class VariableProxy extends StorageProxy implements VariableStore {
     if (this.model == null) {
       return Promise.resolve();
     }
-    const barrier = this.generateID(/* 'barrier' */);
+    const barrier = this.generateBarrier();
     const oldData = this.model;
     this.model = null;
     this.barrier = barrier;

@@ -142,10 +142,6 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
     return this._storageKey;
   }
 
-  generateID(): string {
-    return `${this.id}:${this.nextLocalID++}`;
-  }
-
   get type(): Type {
     return this._type;
   }
