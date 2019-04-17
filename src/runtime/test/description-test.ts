@@ -20,7 +20,7 @@ import {Relevance} from '../relevance.js';
 import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
-import {Id, ArcId} from '../id.js';
+import {Id, ArcId, IdGenerator} from '../id.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -789,7 +789,7 @@ recipe
       recipe,
       fooStore,
       DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionStore) as Collection,
+      descriptionHandle: handleFor(descriptionStore, IdGenerator.newSession()) as Collection,
     };
   }
 

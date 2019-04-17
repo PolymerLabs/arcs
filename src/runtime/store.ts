@@ -1,6 +1,5 @@
 import {PropagatedException} from "./arc-exceptions";
 import {Type} from "./type";
-import {EntityIdComponents} from "./entity";
 import {ParticleExecutionContext} from "./particle-execution-context";
 
 /**
@@ -17,7 +16,6 @@ export interface Store {
 
   reportExceptionInHost(exception: PropagatedException): void;
   generateID(): string;
-  generateIDComponents(): EntityIdComponents;
 }
 
 export interface VariableStore extends Store {

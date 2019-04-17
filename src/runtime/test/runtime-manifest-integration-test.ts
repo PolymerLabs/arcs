@@ -9,13 +9,9 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {handleFor, Variable} from '../handle.js';
-import {Loader} from '../loader.js';
-import {Manifest} from '../manifest.js';
-import {StorageProxy} from '../storage-proxy.js';
 import {manifestTestSetup} from '../testing/manifest-integration-test-setup.js';
-
+import {IdGenerator} from '../id.js';
 
 describe('runtime manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
@@ -25,7 +21,7 @@ describe('runtime manifest integration', () => {
     const type = recipe.handles[0].type;
     const [store] = arc.findStoresByType(type);
 
-    const handle = handleFor(store) as Variable;
+    const handle = handleFor(store, IdGenerator.newSession()) as Variable;
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();

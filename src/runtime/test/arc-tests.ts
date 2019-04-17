@@ -14,7 +14,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {handleFor, Variable} from '../handle.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-import {Id, ArcId} from '../id.js';
+import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
@@ -89,7 +89,7 @@ async function setupSlandlesWithOptional(cProvided, dProvided) {
 }
 
 function getVariableHandle(store: StorageProviderBase): Variable {
-  return handleFor(store) as Variable;
+  return handleFor(store, IdGenerator.newSession()) as Variable;
 }
 
 describe('Arc', () => {

@@ -11,7 +11,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {handleFor, Handle, Variable, Collection} from '../handle.js';
-import {ArcId} from '../id.js';
+import {ArcId, IdGenerator} from '../id.js';
 import {Schema} from '../schema.js';
 import {StorageProxy, StorageProxyScheduler, CollectionProxy, BigCollectionProxy, VariableProxy} from '../storage-proxy.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
@@ -193,6 +193,7 @@ class TestEngine {
   _events = [];
   _scheduler = new StorageProxyScheduler();
   _arcId: ArcId;
+  _idGenerator = IdGenerator.newSession();
   
   constructor(arcId: string) {
     this._arcId = ArcId.newForTest(arcId);
@@ -228,7 +229,7 @@ class TestEngine {
   }
 
   newHandle(store, proxy, particle, canRead, canWrite): Handle {
-    return handleFor(proxy, store.name, particle.id, canRead, canWrite);
+    return handleFor(proxy, this._idGenerator, store.name, particle.id, canRead, canWrite);
   }
 
   newEntity(value): EntityInterface {

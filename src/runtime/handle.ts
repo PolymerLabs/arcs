@@ -17,6 +17,7 @@ import {SerializedEntity} from './storage-proxy.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
 import {EntityClass, Entity} from './entity.js';
 import {Store, VariableStore, CollectionStore, BigCollectionStore} from './store.js';
+import {IdGenerator, Id} from './id.js';
 
 /** An interface representing anything storable in a Handle. Concretely, this is the {@link Entity} and {@link ClientReference} classes. */
 export interface Storable {
@@ -49,6 +50,7 @@ export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notify
  */
 export abstract class Handle {
   storage: Store;
+  private idGenerator: IdGenerator;
   name: string;
   canRead: boolean;
   canWrite: boolean;
@@ -59,9 +61,10 @@ export abstract class Handle {
   abstract _notify(kind: string, particle: Particle, details: {});
 
   // TODO type particleId, marked as string, but called with number
-  constructor(storage: Store, name: string, particleId, canRead: boolean, canWrite: boolean) {
+  constructor(storage: Store, idGenerator: IdGenerator, name: string, particleId, canRead: boolean, canWrite: boolean) {
     assert(!(storage instanceof Handle));
     this.storage = storage;
+    this.idGenerator = idGenerator;
     this.name = name || this.storage.name;
     this.canRead = canRead;
     this.canWrite = canWrite;
@@ -106,7 +109,7 @@ export abstract class Handle {
     assert(entity, 'can\'t serialize a null entity');
     if (entity instanceof Entity) {
       if (!entity.isIdentified()) {
-        entity.createIdentity(this.storage.generateIDComponents());
+        entity.createIdentity(Id.fromString(this._id), this.idGenerator);
       }
     }
     return entity.serialize();
@@ -447,14 +450,14 @@ export class BigCollection extends Handle {
   }
 }
 
-export function handleFor(storage: Store, name: string = null, particleId = '', canRead = true, canWrite = true) {
+export function handleFor(storage: Store, idGenerator: IdGenerator, name: string = null, particleId = '', canRead = true, canWrite = true) {
   let handle: Handle;
   if (storage.type instanceof CollectionType) {
-    handle = new Collection(storage, name, particleId, canRead, canWrite);
+    handle = new Collection(storage, idGenerator, name, particleId, canRead, canWrite);
   } else if (storage.type instanceof BigCollectionType) {
-    handle = new BigCollection(storage, name, particleId, canRead, canWrite);
+    handle = new BigCollection(storage, idGenerator, name, particleId, canRead, canWrite);
   } else {
-    handle = new Variable(storage, name, particleId, canRead, canWrite);
+    handle = new Variable(storage, idGenerator, name, particleId, canRead, canWrite);
   }
 
   const type = storage.type.getContainedType() || storage.type;
