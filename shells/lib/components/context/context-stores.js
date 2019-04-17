@@ -7,13 +7,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {simpleNameOfType, crackStorageKey} from './context-utils.js';
+import {crackStorageKey} from './context-utils.js';
+import {Reference} from '../../../../build/runtime/reference.js';
 
 const pendingStores = {};
 
 const ContextStoresImpl = class {
   getHandleMetrics(handle, isProfile) {
-    const tag = (handle.tags && handle.tags.length) ? handle.tags.join('-') : null; //simpleNameOfType(handle.type);
+    const tag = (handle.tags && handle.tags.length) ? handle.tags.join('-') : null;
     if (tag) {
       const {base: userid, arcid, id} = crackStorageKey(handle.storageKey);
       const type = handle.type.isCollection ? handle.type : handle.type.collectionOf();
@@ -47,21 +48,28 @@ const ContextStoresImpl = class {
   getDecoratedId(entity, uid) {
     return `${entity.id}:uid:${uid}`;
   }
-  storeEntityWithUid(store, entity, uid) {
+  async storeEntityWithUid(store, entity, uid) {
     const id = this.getDecoratedId(entity, uid);
-    //ids.push({id: decoratedId, entity.rawData});
-    //console.log('pushing data to store');
     const decoratedEntity = {id, rawData: entity.rawData};
-    //if (store.type.isCollection) {
-      // FIXME: store.generateID may not be safe (session scoped)?
-      store.store(decoratedEntity, [store.generateID()]);
-    //} else {
-    //  store.set(decoratedEntity);
-    //}
+    // context stores are always Collection
+    store.store(decoratedEntity, [store.generateID()]);
+    // TODO(sjmiles): for later ... instead of cloning entities
+    // and monkeying with the id's, we could potentially
+    // use references
+    //this.createReference();
   }
   removeEntityWithUid(store, entity, uid) {
     const id = this.getDecoratedId(entity, uid);
     store.remove(id);
+  }
+  async createReference(entity, uid) {
+    const ref = new Reference(entity);
+    await ref.stored;
+    const refEntity = {
+      entity: ref,
+      fromKey: uid
+    };
+    console.log(refEntity);
   }
 };
 
