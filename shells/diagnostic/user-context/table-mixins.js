@@ -1,6 +1,6 @@
+import {ContextStores} from '../../lib/components/context/context-stores.js';
+import {nameOfType, simpleNameOfType, boxes} from '../../lib/components/context/context-utils.js';
 import {ObserverTable} from './observer-table.js';
-import {ContextStores} from '../../lib/context/context-stores.js';
-import {nameOfType, simpleNameOfType, boxes} from '../../lib/context/context-utils.js';
 
 const handlesTable = new ObserverTable('handles');
 const metaTable = new ObserverTable('meta');
@@ -49,60 +49,64 @@ export const ShareDisplayMixin = Base => class extends Base {
     const typeName = store.type.getEntitySchema().names[0];
     //
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
-    const share = boxes[metrics.storeId];
-    if (share) {
-      if (!share.shareTable) {
-        const name = metrics.storeId; // typeName
-        const tid = ObserverTable.cleanId(name);
-        document.body.appendChild(Object.assign(document.createElement('div'), {
-          innerHTML: `
-<table id="${tid}">
-  <thead>
-    <tr><th colspan="3">${metrics.storeName}</th></tr>
-    <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
-<spacer></spacer>
-        `}));
-        share.shareTable = new ObserverTable(tid);
+    if (metrics) {
+      const share = boxes[metrics.storeId];
+      if (share) {
+        if (!share.shareTable) {
+          const name = metrics.storeId; // typeName
+          const tid = ObserverTable.cleanId(name);
+          document.body.appendChild(Object.assign(document.createElement('div'), {
+            innerHTML: `
+  <table id="${tid}">
+    <thead>
+      <tr><th colspan="3">${metrics.storeName}</th></tr>
+      <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <spacer></spacer>
+          `}));
+          share.shareTable = new ObserverTable(tid);
+        }
+        share.shareTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
       }
-      share.shareTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
-    }
-    const box = boxes[metrics.boxStoreId];
-    if (box) {
-      if (!box.boxTable) {
-        const name = metrics.boxStoreId;
-        const tid = ObserverTable.cleanId(name);
-        document.body.appendChild(Object.assign(document.createElement('div'), {
-          innerHTML: `
-<table id="${tid}">
-  <thead>
-    <tr><th colspan="3">${metrics.boxStoreId}</th></tr>
-    <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
-<spacer></spacer>
-        `}));
-        box.boxTable = new ObserverTable(tid);
+      const box = boxes[metrics.boxStoreId];
+      if (box) {
+        if (!box.boxTable) {
+          const name = metrics.boxStoreId;
+          const tid = ObserverTable.cleanId(name);
+          document.body.appendChild(Object.assign(document.createElement('div'), {
+            innerHTML: `
+  <table id="${tid}">
+    <thead>
+      <tr><th colspan="3">${metrics.boxStoreId}</th></tr>
+      <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Data</th></tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <spacer></spacer>
+          `}));
+          box.boxTable = new ObserverTable(tid);
+        }
+        box.boxTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
       }
-      box.boxTable.addRow(entity.id, [user, typeName, JSON.stringify(entity.rawData)]);
     }
   }
   async remove(entity, store) {
     await super.remove(entity, store);
     entitiesTable.removeRow(entity.id);
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
-    const share = boxes[metrics.storeId];
-    if (share && share.shareTable) {
-      share.shareTable.removeRow(entity.id);
-    }
-    const box = boxes[metrics.boxStoreId];
-    if (box && box.boxTable) {
-      box.boxTable.removeRow(entity.id);
+    if (metrics) {
+      const share = boxes[metrics.storeId];
+      if (share && share.shareTable) {
+        share.shareTable.removeRow(entity.id);
+      }
+      const box = boxes[metrics.boxStoreId];
+      if (box && box.boxTable) {
+        box.boxTable.removeRow(entity.id);
+      }
     }
   }
 };
