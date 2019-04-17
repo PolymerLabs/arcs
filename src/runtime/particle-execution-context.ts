@@ -34,12 +34,13 @@ export class ParticleExecutionContext {
   private apiPort : PECInnerPort;
   private particles = <Particle[]>[];
   private readonly pecId: Id;
-  private readonly idGenerator: IdGenerator;
   private loader: Loader;
   private pendingLoads = <Promise<void>[]>[]; 
   private scheduler: StorageProxyScheduler = new StorageProxyScheduler();
   private keyedProxies: { [index: string]: StorageProxy | Promise<StorageProxy>} = {};
-
+  
+  readonly idGenerator: IdGenerator;
+  
   constructor(port, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
 
@@ -140,7 +141,7 @@ export class ParticleExecutionContext {
       createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = handleFor(proxy, name, particleId);
+            const handle = handleFor(proxy, pec.idGenerator, name, particleId);
             resolve(handle);
             if (hostParticle) {
               proxy.register(hostParticle, handle);
@@ -209,7 +210,7 @@ export class ParticleExecutionContext {
     const registerList = [];
     proxies.forEach((proxy, name) => {
       const connSpec = spec.handleConnectionMap.get(name);
-      const handle = handleFor(proxy, name, id, connSpec.isInput, connSpec.isOutput);
+      const handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);
       handleMap.set(name, handle);
 
       // Defer registration of handles with proxies until after particles have a chance to

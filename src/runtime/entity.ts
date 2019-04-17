@@ -16,11 +16,7 @@ import {Reference} from './reference.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Storable} from './handle.js';
 import {SerializedEntity} from './storage-proxy.js';
-
-export type EntityIdComponents = {
-  base: string,
-  component: () => number,
-};
+import {Id, IdGenerator} from './id.js';
 
 export type EntityRawData = {};
 
@@ -30,7 +26,7 @@ export type EntityRawData = {};
 export interface EntityInterface extends Storable {
   isIdentified(): boolean;
   identify(identifier: string): void;
-  createIdentity(components: EntityIdComponents): void;
+  createIdentity(parentId: Id, idGenerator: IdGenerator): void;
   toLiteral(): EntityRawData;
   toJSON(): EntityRawData;
   dataClone(): EntityRawData;
@@ -159,13 +155,14 @@ export abstract class Entity implements EntityInterface {
     }
   }
 
-  createIdentity(components: EntityIdComponents) {
+  createIdentity(parentId: Id, idGenerator: IdGenerator) {
     assert(!this.isIdentified());
     let id: string;
     if (this.userIDComponent) {
-      id = `${components.base}:uid:${this.userIDComponent}`;
+      // TODO: Stop creating IDs by manually concatenating strings.
+      id = `${parentId.toString()}:uid:${this.userIDComponent}`;
     } else {
-      id = `${components.base}:${components.component()}`;
+      id = idGenerator.newChildId(parentId).toString();
     }
     setEntityId(this, id);
   }

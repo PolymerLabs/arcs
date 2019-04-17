@@ -146,10 +146,6 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
     return `${this.id}:${this.nextLocalID++}`;
   }
 
-  generateIDComponents() {
-    return {base: this.id, component: () => this.nextLocalID++};
-  }
-
   get type(): Type {
     return this._type;
   }

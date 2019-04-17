@@ -19,7 +19,7 @@ import {CollectionStorageProvider, VariableStorageProvider} from '../storage/sto
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
-import {Id, ArcId} from '../id.js';
+import {Id, ArcId, IdGenerator} from '../id.js';
 
 describe('Handle', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -83,7 +83,7 @@ describe('Handle', () => {
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf())) as Collection;
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()), IdGenerator.newSession()) as Collection;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
@@ -97,7 +97,7 @@ describe('Handle', () => {
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf())) as Collection;
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()), IdGenerator.newSession()) as Collection;
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
@@ -111,7 +111,7 @@ describe('Handle', () => {
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
 
-    const fooHandle = handleFor(await arc.createStore(Foo.type)) as Variable;
+    const fooHandle = handleFor(await arc.createStore(Foo.type), IdGenerator.newSession()) as Variable;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));

@@ -247,10 +247,6 @@ export abstract class StorageProxy implements Store {
   generateID() {
     return `${this.baseForNewID}:${this.localIDComponent++}`;
   }
-
-  generateIDComponents() {
-    return {base: this.baseForNewID, component: () => this.localIDComponent++};
-  }
 }
 
 /**
