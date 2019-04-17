@@ -6,7 +6,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {SyntheticStores} from '../lib/synthetic-stores.js';
+import {SyntheticStores} from '../lib/runtime/synthetic-stores.js';
 import {Context} from './context.js';
 import {Pipe} from './pipe.js';
 import {Utils} from '../lib/runtime/utils.js';
