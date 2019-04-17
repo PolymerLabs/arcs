@@ -218,14 +218,10 @@ class TestEngine {
   }
 
   newProxy(store): CollectionProxy | BigCollectionProxy | VariableProxy {
-    let id = 0;
-
     // tslint:disable-next-line: no-any
-    const pec:any = {
-      generateID() { return `${id++}`; }
-    };
+    const fakePec: any = {idGenerator: this._idGenerator};
     // tslint:disable-next-line: no-any
-    return StorageProxy.newProxy('X' + this._idCounters[1]++, store.type, this as any, pec, this._scheduler, store.name);
+    return StorageProxy.newProxy('X' + this._idCounters[1]++, store.type, this as any, fakePec, this._scheduler, store.name);
   }
 
   newHandle(store, proxy, particle, canRead, canWrite): Handle {
