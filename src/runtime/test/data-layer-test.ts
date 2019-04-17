@@ -28,9 +28,7 @@ describe('entity', async () => {
 
     const collectionType = new EntityType(schema).collectionOf();
     
-    // Get around incompatible types for handleFor()
-    let storage;
-    storage = await arc.createStore(collectionType);
+    const storage = await arc.createStore(collectionType);
     const handle = handleFor(storage) as Collection;
     await handle.store(entity);
 

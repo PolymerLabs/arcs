@@ -13,6 +13,8 @@ import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
 import {SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
+import {Store, VariableStore, CollectionStore} from '../store.js';
+import {PropagatedException} from '../arc-exceptions.js';
 
 
 enum EventKind {
@@ -25,9 +27,7 @@ type Callback = (v: {[index: string]: any}) => void;
 /**
  * Methods that must be implemented by a Variable Storage Provider
  */
-export interface VariableStorageProvider extends StorageProviderBase {
-  // tslint:disable-next-line: no-any
-  get(): Promise<any>;
+export interface VariableStorageProvider extends StorageProviderBase, VariableStore {
   set(value: {}, originatorId?: string, barrier?: string): Promise<void>;
   clear(originatorId?: string, barrier?: string): Promise<void>;
 }
@@ -35,7 +35,7 @@ export interface VariableStorageProvider extends StorageProviderBase {
 /**
  * Methods that must be implemented by a Collection Storage Provider
  */
-export interface CollectionStorageProvider extends StorageProviderBase {
+export interface CollectionStorageProvider extends StorageProviderBase, CollectionStore {
   // tslint:disable-next-line: no-any
   toList(): Promise<any[]>;
 
@@ -44,11 +44,6 @@ export interface CollectionStorageProvider extends StorageProviderBase {
   storeMultiple(values: {}, keys: string[], originatorId?: string): Promise<void>;
   // tslint:disable-next-line: no-any
   removeMultiple(items: any[], originatorId?: string) : Promise<void>;
-
-  // tslint:disable-next-line: no-any
-  get(id: string): Promise<any>;
-  remove(id: string, keys: string[], originatorId?: string);
-  store(value, keys: string[], originatorId?: string);
 }
 
 export interface BigCollectionStorageProvider extends StorageProviderBase {
@@ -111,7 +106,7 @@ export class ChangeEvent {
 /**
  * Docs TBD
  */
-export abstract class StorageProviderBase implements Comparable<StorageProviderBase> {
+export abstract class StorageProviderBase implements Comparable<StorageProviderBase>, Store {
   private listeners: Map<EventKind, Map<Callback, {target: {}}>>;
   private nextLocalID: number;
   private readonly _type: Type;
@@ -120,7 +115,7 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   referenceMode = false;
 
   version: number|null;
-  id: string;
+  readonly id: string;
   originalId: string|null;
   name: string;
   source: string|null;
@@ -157,6 +152,11 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
 
   get type(): Type {
     return this._type;
+  }
+
+  reportExceptionInHost(exception: PropagatedException) {
+    // This class lives in the host, so it's safe to just rethrow the exception here.
+    throw exception;
   }
 
   // TODO: add 'once' which returns a promise.
