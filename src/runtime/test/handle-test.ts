@@ -83,9 +83,7 @@ describe('Handle', () => {
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
-    // TODO handleFor incompatibility
-    // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any) as Collection;
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf())) as Collection;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
@@ -99,9 +97,7 @@ describe('Handle', () => {
 
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
-    // TODO handleFor incompatibility
-    // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()) as any) as Collection;
+    const fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf())) as Collection;
 
     await fooHandle.store(new Foo({value: '1'}, 'id1'));
     await fooHandle.store(new Foo({value: '2'}, 'id1'));
@@ -115,9 +111,7 @@ describe('Handle', () => {
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
 
-    // TODO handleFor incompatibility
-    // tslint:disable-next-line: no-any
-    const fooHandle = handleFor(await arc.createStore(Foo.type) as any) as Variable;
+    const fooHandle = handleFor(await arc.createStore(Foo.type)) as Variable;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));

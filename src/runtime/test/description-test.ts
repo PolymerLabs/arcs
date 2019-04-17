@@ -782,19 +782,14 @@ recipe
     assert.isTrue(recipe.isResolved());
     const arc = createTestArc(recipe, manifest);
     const fooStore = await arc.createStore(fooType, undefined, 'test:1') as VariableStorageProvider;
-    const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
-
-    // Use an any variable to turn descriptionStore into a storageProxy
-    // tslint:disable-next-line: no-any
-    let descriptionStoreProxy: any;
-    descriptionStoreProxy = descriptionStore;
+    const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
 
     return {
       arc,
       recipe,
       fooStore,
       DescriptionType: (descriptionStore.type.getContainedType() as EntityType).entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionStoreProxy) as Collection,
+      descriptionHandle: handleFor(descriptionStore) as Collection,
     };
   }
 

@@ -13,9 +13,10 @@ import {SystemException, UserException} from './arc-exceptions.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {Reference} from './reference.js';
-import {BigCollectionProxy, CollectionProxy, StorageProxy, VariableProxy, SerializedEntity} from './storage-proxy.js';
+import {SerializedEntity} from './storage-proxy.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType} from './type.js';
 import {EntityClass, Entity} from './entity.js';
+import {Store, VariableStore, CollectionStore, BigCollectionStore} from './store.js';
 
 /** An interface representing anything storable in a Handle. Concretely, this is the {@link Entity} and {@link ClientReference} classes. */
 export interface Storable {
@@ -47,7 +48,7 @@ export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notify
  * Base class for Collections and Variables.
  */
 export abstract class Handle {
-  _proxy: StorageProxy;
+  storage: Store;
   name: string;
   canRead: boolean;
   canWrite: boolean;
@@ -58,10 +59,10 @@ export abstract class Handle {
   abstract _notify(kind: string, particle: Particle, details: {});
 
   // TODO type particleId, marked as string, but called with number
-  constructor(proxy: StorageProxy, name: string, particleId, canRead: boolean, canWrite: boolean) {
-    assert(!(proxy instanceof Handle));
-    this._proxy = proxy;
-    this.name = name || this._proxy.name;
+  constructor(storage: Store, name: string, particleId, canRead: boolean, canWrite: boolean) {
+    assert(!(storage instanceof Handle));
+    this.storage = storage;
+    this.name = name || this.storage.name;
     this.canRead = canRead;
     this.canWrite = canWrite;
     this._particleId = particleId;
@@ -74,11 +75,11 @@ export abstract class Handle {
   }
 
   protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
-    this._proxy.reportExceptionInHost(new UserException(exception, method, this._particleId, particle.spec.name));
+    this.storage.reportExceptionInHost(new UserException(exception, method, this._particleId, particle.spec.name));
   }
 
   protected reportSystemExceptionInHost(exception: Error, method: string) {
-    this._proxy.reportExceptionInHost(new SystemException(exception, method, this._particleId));
+    this.storage.reportExceptionInHost(new SystemException(exception, method, this._particleId));
   }
 
   // `options` may contain any of:
@@ -105,18 +106,18 @@ export abstract class Handle {
     assert(entity, 'can\'t serialize a null entity');
     if (entity instanceof Entity) {
       if (!entity.isIdentified()) {
-        entity.createIdentity(this._proxy.generateIDComponents());
+        entity.createIdentity(this.storage.generateIDComponents());
       }
     }
     return entity.serialize();
   }
 
   get type() {
-    return this._proxy.type;
+    return this.storage.type;
   }
 
   get _id() {
-    return this._proxy.id;
+    return this.storage.id;
   }
 
   toManifestString() {
@@ -133,7 +134,7 @@ export abstract class Handle {
  */
 export class Collection extends Handle {
   // Called by StorageProxy.
-  _proxy: CollectionProxy;
+  storage: CollectionStore;
   _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
@@ -172,11 +173,11 @@ export class Collection extends Handle {
    * @throws {Error} if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
    * in the particle's manifest.
    */
-  async get(id) {
+  async get(id: string) {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    return this._restore([await this._proxy.get(id, this._particleId)])[0];
+    return this._restore([await this.storage.get(id)])[0];
   }
 
   /**
@@ -188,7 +189,7 @@ export class Collection extends Handle {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    return this._restore(await this._proxy.toList());
+    return this._restore(await this.storage.toList());
   }
 
   _restore(list) {
@@ -205,8 +206,8 @@ export class Collection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    const keys = [this._proxy.generateID() + 'key'];
-    return this._proxy.store(serialization, keys, this._particleId);
+    const keys = [this.storage.generateID() + 'key'];
+    return this.storage.store(serialization, keys, this._particleId);
   }
 
   /**
@@ -218,7 +219,11 @@ export class Collection extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    return this._proxy.clear(this._particleId);
+    if (this.storage.clear) {
+      return this.storage.clear(this._particleId);
+    } else {
+      throw new Error('clear not implemented by storage');
+    }
   }
 
   /**
@@ -233,7 +238,7 @@ export class Collection extends Handle {
     const serialization = this._serialize(entity);
     // Remove the keys that exist at storage/proxy.
     const keys = [];
-    this._proxy.remove(serialization.id, keys, this._particleId);
+    this.storage.remove(serialization.id, keys, this._particleId);
   }
 }
 
@@ -243,7 +248,7 @@ export class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 export class Variable extends Handle {
-  _proxy: VariableProxy;
+  storage: VariableStore;
   // Called by StorageProxy.
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -287,7 +292,7 @@ export class Variable extends Handle {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    const model = await this._proxy.get();
+    const model = await this.storage.get();
     return this._restore(model);
   }
 
@@ -302,7 +307,7 @@ export class Variable extends Handle {
       return ParticleSpec.fromLiteral(model);
     }
     if (this.type instanceof ReferenceType) {
-      return new Reference(model, this.type, this._proxy.pec);
+      return new Reference(model, this.type, this.storage.pec);
     }
     throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }
@@ -318,7 +323,7 @@ export class Variable extends Handle {
         throw new Error('Handle not writeable');
       }
       const serialization = this._serialize(entity);
-      return this._proxy.set(serialization, this._particleId);
+      return this.storage.set(serialization, this._particleId);
     } catch (e) {
       this.reportSystemExceptionInHost(e, 'Handle::set');
       throw e;
@@ -334,7 +339,7 @@ export class Variable extends Handle {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    return this._proxy.clear(this._particleId);
+    return this.storage.clear(this._particleId);
   }
 }
 
@@ -357,7 +362,7 @@ class Cursor {
    * when the cursor has completed reading the collection.
    */
   async next() {
-    const data = await this._parent._proxy.cursorNext(this._cursorId);
+    const data = await this._parent.storage.cursorNext(this._cursorId);
     if (!data.done) {
       data.value = data.value.map(a => restore(a as SerializedEntity, this._parent.entityClass));
     }
@@ -369,7 +374,7 @@ class Cursor {
    * yet completed streaming (i.e. next() hasn't returned {done: true}).
    */
   close() {
-    this._parent._proxy.cursorClose(this._cursorId);
+    this._parent.storage.cursorClose(this._cursorId);
   }
 }
 
@@ -380,7 +385,7 @@ class Cursor {
  * trigger onHandleSync() or onHandleUpdate().
  */
 export class BigCollection extends Handle {
-  _proxy: BigCollectionProxy;
+  storage: BigCollectionStore;
   configure(options) {
     throw new Error('BigCollections do not support sync/update configuration');
   }
@@ -401,8 +406,8 @@ export class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    const keys = [this._proxy.generateID() + 'key'];
-    return this._proxy.store(serialization, keys, this._particleId);
+    const keys = [this.storage.generateID() + 'key'];
+    return this.storage.store(serialization, keys, this._particleId);
   }
 
   /**
@@ -415,7 +420,7 @@ export class BigCollection extends Handle {
       throw new Error('Handle not writeable');
     }
     const serialization = this._serialize(entity);
-    this._proxy.remove(serialization.id, this._particleId);
+    this.storage.remove(serialization.id, [], this._particleId);
   }
 
   /**
@@ -437,24 +442,24 @@ export class BigCollection extends Handle {
     if (isNaN(pageSize) || pageSize < 1) {
       throw new Error('Streamed reads require a positive pageSize');
     }
-    const cursorId = await this._proxy.stream(pageSize, forward);
+    const cursorId = await this.storage.stream(pageSize, forward);
     return new Cursor(this, cursorId);
   }
 }
 
-export function handleFor(proxy: StorageProxy, name: string = null, particleId = '', canRead = true, canWrite = true) {
+export function handleFor(storage: Store, name: string = null, particleId = '', canRead = true, canWrite = true) {
   let handle: Handle;
-  if (proxy.type instanceof CollectionType) {
-    handle = new Collection(proxy, name, particleId, canRead, canWrite);
-  } else if (proxy.type instanceof BigCollectionType) {
-    handle = new BigCollection(proxy, name, particleId, canRead, canWrite);
+  if (storage.type instanceof CollectionType) {
+    handle = new Collection(storage, name, particleId, canRead, canWrite);
+  } else if (storage.type instanceof BigCollectionType) {
+    handle = new BigCollection(storage, name, particleId, canRead, canWrite);
   } else {
-    handle = new Variable(proxy, name, particleId, canRead, canWrite);
+    handle = new Variable(storage, name, particleId, canRead, canWrite);
   }
 
-  const type = proxy.type.getContainedType() || proxy.type;
+  const type = storage.type.getContainedType() || storage.type;
   if (type instanceof EntityType) {
-    handle.entityClass = type.entitySchema.entityClass(proxy.pec);
+    handle.entityClass = type.entitySchema.entityClass(storage.pec);
   }
   return handle;
 }

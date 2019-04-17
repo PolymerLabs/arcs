@@ -23,14 +23,9 @@ describe('runtime manifest integration', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const type = recipe.handles[0].type;
-    let store;
-    [store] = arc.findStoresByType(type);
-    assert(store);
+    const [store] = arc.findStoresByType(type);
 
-    // TODO(lindner): mismatched type..
-    const proxy = store as StorageProxy;
-    
-    const handle = handleFor(proxy) as Variable;
+    const handle = handleFor(store) as Variable;
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();

@@ -19,6 +19,7 @@ import {Particle} from './particle.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/crdt-collection-model.js';
 import {BigCollectionType, CollectionType, Type} from './type.js';
 import {EntityRawData} from './entity.js';
+import {Store, VariableStore, CollectionStore, BigCollectionStore} from './store.js';
 
 enum SyncState {none, pending, full}
 
@@ -43,7 +44,7 @@ export type SerializedEntity = {id: string, rawData: EntityRawData};
  * - once the resync response is received, stale queued updates are discarded and any remaining ones
  *   are applied.
  */
-export abstract class StorageProxy {
+export abstract class StorageProxy implements Store {
   static newProxy(id: string, type: Type, port: PECInnerPort, pec: ParticleExecutionContext, scheduler, name: string) {
     if (type instanceof CollectionType) {
       return new CollectionProxy(id, type, port, pec, scheduler, name);
@@ -268,7 +269,7 @@ export abstract class StorageProxy {
  * of keys that exist at the storage object at the time it receives the
  * request.
  */
-export class CollectionProxy extends StorageProxy {
+export class CollectionProxy extends StorageProxy implements CollectionStore {
   private model = new CrdtCollectionModel();
 
   _getModelForSync(): ModelValue[] {
@@ -331,7 +332,7 @@ export class CollectionProxy extends StorageProxy {
     }
   }
 
-  get(id, particleId) {
+  get(id: string) {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model.getValue(id));
     } else {
@@ -340,22 +341,24 @@ export class CollectionProxy extends StorageProxy {
     }
   }
 
-  store(value, keys, particleId) {
+  // tslint:disable-next-line: no-any
+  store(value: any, keys: string[], particleId: string): Promise<void> {
     const id = value.id;
     const data = {value, keys};
     this.port.HandleStore(this, () => {}, data, particleId);
 
     if (this.synchronized !== SyncState.full) {
-      return;
+      return Promise.resolve();
     }
     if (!this.model.add(id, value, keys)) {
-      return;
+      return Promise.resolve();
     }
     const update = {originatorId: particleId, add: [value]};
     this._notify('update', update, options => options.notifyUpdate);
+    return Promise.resolve();
   }
 
-  clear(particleId) {
+  clear(particleId): Promise<void> {
     if (this.synchronized !== SyncState.full) {
       this.port.HandleRemoveMultiple(this, () => {}, [], particleId);
     }
@@ -368,18 +371,19 @@ export class CollectionProxy extends StorageProxy {
     if (items.length > 0) {
       this._notify('update', {originatorId: particleId, remove: items}, options => options.notifyUpdate);
     }
+    return Promise.resolve();
   }
 
-  remove(id, keys, particleId) {
+  remove(id, keys, particleId): Promise<void> {
     if (this.synchronized !== SyncState.full) {
       const data = {id, keys: []};
       this.port.HandleRemove(this, () => {}, data, particleId);
-      return;
+      return Promise.resolve();
     }
 
     const value = this.model.getValue(id);
     if (!value) {
-      return;
+      return Promise.resolve();
     }
     if (keys.length === 0) {
       keys = this.model.getKeys(id);
@@ -388,10 +392,11 @@ export class CollectionProxy extends StorageProxy {
     this.port.HandleRemove(this, () => {}, data, particleId);
 
     if (!this.model.remove(id, keys)) {
-      return;
+      return Promise.resolve();
     }
     const update = {originatorId: particleId, remove: [value]};
     this._notify('update', update, options => options.notifyUpdate);
+    return Promise.resolve();
   }
 }
 
@@ -402,7 +407,7 @@ export class CollectionProxy extends StorageProxy {
  * Between those two points in time updates are not applied or
  * notified about as these reflect concurrent writes that did not 'win'.
  */
-export class VariableProxy extends StorageProxy {
+export class VariableProxy extends StorageProxy implements VariableStore {
   model: {id: string} | null = null;
 
   _getModelForSync(): {id: string} {
@@ -465,10 +470,10 @@ export class VariableProxy extends StorageProxy {
     }
   }
 
-  set(entity, particleId: string) {
+  set(entity: {}, particleId: string): Promise<void> {
     assert(entity !== undefined);
     if (JSON.stringify(this.model) === JSON.stringify(entity)) {
-      return;
+      return Promise.resolve();
     }
     let barrier;
 
@@ -490,11 +495,12 @@ export class VariableProxy extends StorageProxy {
     this.port.HandleSet(this, entity, particleId, barrier);
     const update = {originatorId: particleId, data: entity, oldData};
     this._notify('update', update, options => options.notifyUpdate);
+    return Promise.resolve();
   }
 
-  clear(particleId) {
+  clear(particleId: string): Promise<void> {
     if (this.model == null) {
-      return;
+      return Promise.resolve();
     }
     const barrier = this.generateID(/* 'barrier' */);
     const oldData = this.model;
@@ -503,12 +509,13 @@ export class VariableProxy extends StorageProxy {
     this.port.HandleClear(this, particleId, barrier);
     const update = {originatorId: particleId, data: null, oldData};
     this._notify('update', update, options => options.notifyUpdate);
+    return Promise.resolve();
   }
 }
 
 // BigCollections are never synchronized. No local state is held and all operations are passed
 // directly through to the backing store.
-export class BigCollectionProxy extends StorageProxy {
+export class BigCollectionProxy extends StorageProxy implements BigCollectionStore {
   register(particle, handle) {
     if (handle.canRead) {
       this.scheduler.enqueue(particle, handle, ['sync', particle, {}]);
@@ -528,28 +535,30 @@ export class BigCollectionProxy extends StorageProxy {
   }
   // TODO: surface get()
 
-  async store(value, keys, particleId) {
+  async store(value, keys, particleId): Promise<void> {
     return new Promise<void>(resolve =>
       this.port.HandleStore(this, resolve, {value, keys}, particleId));
   }
 
-  async remove(id, particleId) {
+  async remove(id, keys, particleId): Promise<void> {
     return new Promise<void>(resolve =>
       this.port.HandleRemove(this, resolve, {id, keys: []}, particleId));
   }
 
-  async stream(pageSize, forward) {
+  async stream(pageSize, forward): Promise<number> {
     return new Promise(resolve =>
       this.port.HandleStream(this, resolve, pageSize, forward));
   }
 
-  async cursorNext(cursorId) {
+  // tslint:disable-next-line: no-any
+  async cursorNext(cursorId): Promise<any> {
     return new Promise<CursorNextValue>(resolve =>
       this.port.StreamCursorNext(this, resolve, cursorId));
   }
 
-  cursorClose(cursorId) {
+  cursorClose(cursorId): Promise<void> {
     this.port.StreamCursorClose(this, cursorId);
+    return Promise.resolve();
   }
 }
 
@@ -623,7 +632,7 @@ export class StorageProxyScheduler {
             handle._notify(...args);
           } catch (e) {
             console.error('Error dispatching to particle', e);
-            handle._proxy.reportExceptionInHost(new SystemException(e, handle._particleId, 'StorageProxyScheduler::_dispatch'));
+            handle.storage.reportExceptionInHost(new SystemException(e, handle._particleId, 'StorageProxyScheduler::_dispatch'));
           }
         }
       }

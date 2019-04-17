@@ -215,11 +215,11 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     throw new Error('unimplemented');
   }
 
-  remove(id: string, keys: string[], originatorId: string) {
+  remove(id: string, keys: string[], originatorId: string): never {
     throw new Error('unimplemented');
   }
 
-  store(value, keys: string[], originatorId?: string) {
+  store(value, keys: string[], originatorId?: string): never {
     throw new Error('unimplemented');
   }
 }

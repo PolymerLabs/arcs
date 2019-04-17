@@ -17,7 +17,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Storable} from './handle.js';
 import {SerializedEntity} from './storage-proxy.js';
 
-type EntityIdComponents = {
+export type EntityIdComponents = {
   base: string,
   component: () => number,
 };
