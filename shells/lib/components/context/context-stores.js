@@ -29,7 +29,7 @@ const ContextStoresImpl = class {
     }
   }
   async getShareStore(context, type, name, id, tags) {
-    // TODO(sjmiles): cache and return promises in case of re-entrancy
+    // cache and return promises in case of re-entrancy
     let promise = pendingStores[id];
     if (!promise) {
       promise = new Promise(async (resolve) => {
@@ -53,23 +53,10 @@ const ContextStoresImpl = class {
     const decoratedEntity = {id, rawData: entity.rawData};
     // context stores are always Collection
     store.store(decoratedEntity, [store.generateID()]);
-    // TODO(sjmiles): for later ... instead of cloning entities
-    // and monkeying with the id's, we could potentially
-    // use references
-    //this.createReference();
   }
   removeEntityWithUid(store, entity, uid) {
     const id = this.getDecoratedId(entity, uid);
     store.remove(id);
-  }
-  async createReference(entity, uid) {
-    const ref = new Reference(entity);
-    await ref.stored;
-    const refEntity = {
-      entity: ref,
-      fromKey: uid
-    };
-    console.log(refEntity);
   }
 };
 
