@@ -1,0 +1,110 @@
+<!doctype html>
+
+<script type="module" src="index.js"></script>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body, button, input {
+    font-family: 'Google Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  row {
+    display: flex;
+  }
+  column {
+    flex: 1;
+    padding-right: 8px;
+  }
+  storage-explorer {
+    font-size: 70%;
+  }
+  spacer {
+    display: block;
+    height: 16px;
+    margin-bottom: 16px;
+  }
+  table {
+    width: 100%; /*660px;*/
+    font-size: 70%;
+    border: 1px solid #000000;
+    text-align: left;
+    border-collapse: collapse;
+    /* table-layout: fixed; */
+  }
+  td, th {
+    border: 1px solid #000000;
+    padding: 6px 8px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  th {
+    background-color: #eeeeee;
+  }
+  td {
+    font-size: 90%;
+  }
+  td:last-of-type {
+    max-width: 200px;
+  }
+</style>
+
+  <button onclick="dispose()">Dispose</button>
+  <button onclick="observe()">Observe</button>
+</div>
+
+<spacer style="border-bottom: 1px solid silver;"></spacer>
+
+<row>
+  <column Xstyle="flex: 2;">
+
+    <table id="meta">
+      <thead>
+        <tr><th colspan="2">Arcs</th></tr>
+        <tr><th style="width:100px">User</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+
+    <spacer></spacer>
+
+    <table id="handles">
+      <thead>
+        <tr><th colspan="3">Handles</th></tr>
+        <tr><th style="width:100px">User</th><th style="width:100px">Type</th><th>Description</th></tr>
+      </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <spacer></spacer>
+
+    <table id="entities">
+      <thead>
+        <tr><th colspan="3">Entities</th></tr>
+        <tr><th style="width:100px">User</th><th style="width:160px">Type</th><th>Data</th></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+
+    <spacer></spacer>
+
+    <table id="friends">
+      <thead>
+      <tr><th>Friends</th></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+
+    <spacer></spacer>
+  </column>
+  <column>
+    <store-explorer></store-explorer>
+  </column>
+</row>

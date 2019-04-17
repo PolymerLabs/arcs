@@ -19,8 +19,12 @@ const html = Xen.Template.html;
 
 const template = html`
   <style>
-    button {
-      margin: 8px 16px;
+    [toolbar] {
+      margin-bottom: 8px;
+      padding-left: 12px;
+    }
+    [toolbar] > * {
+      margin-right: 16px;
     }
     [banner] {
       padding: 8px 0 8px 16px;
@@ -32,7 +36,7 @@ const template = html`
     }
   </style>
 
-  <div>
+  <div toolbar>
     <button on-click="_onUpdate">Update</button>
   </div>
 
@@ -48,6 +52,18 @@ const storeTemplate = html`
     <data-explorer object="{{data}}"></data-explorer>
   </div>
 `;
+
+const nameSort = (a, b) => a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
+
+//const simpleNameOfType = type => type.getEntitySchema().names[0];
+
+const nameOfType = type => {
+  let typeName = type.getEntitySchema().names[0];
+  if (type.isCollection) {
+    typeName = `[${typeName}]`;
+  }
+  return typeName;
+};
 
 class StoreExplorer extends Xen.Base {
   static get observedAttributes() { return ['arc', 'context']; }
@@ -92,12 +108,12 @@ class StoreExplorer extends Xen.Base {
       }
       return tags;
     };
-    const contextStores = await this._digestStores(find(context));
-    this._setState({contextStores});
+    const stores = await this._digestStores(find(context));
+    this._setState({contextStores: stores.sort(nameSort)});
   }
   async _queryArcStores(arc) {
-    const arcStores = await this._digestStores(arc.storeTags, true);
-    this._setState({arcStores});
+    const stores = await this._digestStores(arc.storeTags, true);
+    this._setState({arcStores: stores.sort(nameSort)});
   }
   async _digestStores(stores, hideNamed) {
     const result = [];
@@ -105,6 +121,9 @@ class StoreExplorer extends Xen.Base {
       for (const [store, tags] of stores) {
         //if (store.name === null) {
         if (hideNamed && store.name && tags.length === 0) {
+          continue;
+        }
+        if (store.type.tag === 'Interface') {
           continue;
         }
         let malformed = false;
@@ -128,12 +147,15 @@ class StoreExplorer extends Xen.Base {
         }
         const data = {
           name: store.name,
-          tags: tags ? [...tags].join(', ') : '',
-          id: store.id,
+          type: nameOfType(store.type), //.toString(),
           storage: store.storageKey,
-          type: store.type,
           //values: JSON.stringify(store.toList ? await store.toList() : `await store.get()`, null, '  ')
-          values
+          values,
+          details: {
+            tags: tags ? [...tags].join(', ') : '',
+            id: store.id,
+            type: store.type
+          }
         };
         if (store.description) {
           data.description = store.description;
@@ -141,10 +163,8 @@ class StoreExplorer extends Xen.Base {
         const moniker = store.id.split(':').pop();
         const name = store.name || data.tags || moniker;
         //const name = `${store.name || moniker}:${data.tags}`;
-        if (!store.type || store.type.tag !== 'Interface') {
-          const label = `${data.name || store.type.toPrettyString()} [${data.tags}]`; // (type)`;
-          result.push({tags: data.tags, data: {[label]: data}, name});
-        }
+        const label = `${data.name || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
+        result.push({tags: data.details.tags, data: {[label]: data}, name});
       }
     }
     return result;

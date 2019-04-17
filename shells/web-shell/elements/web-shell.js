@@ -1,21 +1,21 @@
-/*
-@license
-Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {linkJack} from '../../../modalities/dom/components/link-jack.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {Xen} from '../../lib/components/xen.js';
 import {Const} from '../../configuration/constants.js';
+import {Xen} from '../../lib/components/xen.js';
 import {Utils} from '../../lib/runtime/utils.js';
+import '../../lib/elements/launcher-arc.js';
 import './web-config.js';
 import './web-arc.js';
-import './user-context.js';
+import './web-context.js';
 import './web-launcher.js';
 import './web-planner.js';
 import './ui/web-shell-ui.js';
@@ -59,16 +59,18 @@ const template = Xen.Template.html`
   <!-- context bootstrap -->
   <web-arc id="context" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
   <!-- context feed -->
-  <user-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></user-context>
+  <web-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></web-context>
   <!-- web planner -->
   <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
-    <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc>
+    <launcher-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></launcher-arc>
+    <!-- <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc> -->
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- background arcs -->
     <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
+    <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
     <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
     <!-- user arc -->
     <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
@@ -121,18 +123,18 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (!state.launcherConfig && state.env && state.userid) {
       this.spawnLauncher(state.userid);
     }
+    // poll for arcs-store
+    if (!state.store && state.launcherArc) {
+      this.waitForStore(10);
+    }
     // spin up nullArc
-    if (!state.nullConfig && state.context && state.userid) {
+    if (!state.nullConfig && state.context && state.userid && state.store) {
       this.spawnNullArc(state.userid);
     }
     // spin up pipesArc
     // if (!state.pipesConfig && state.context && state.userid) {
     //   this.spawnPipesArc(state.userid);
     // }
-    // poll for arcs-store
-    if (!state.store && state.launcherArc) {
-      this.waitForStore(10);
-    }
     // consume a suggestion
     if (state.suggestion && state.context) {
       if (!this.state.arckey) {
@@ -182,7 +184,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.state = {arckey, search: ''};
     }
   }
-  // TODO(sjmiles): use SyntheticStore instead, see user-context.js
+  // TODO(sjmiles): use SyntheticStore instead, see web-context.js
   waitForStore(pollInterval) {
     const {launcherArc, store} = this.state;
     if (launcherArc && !store) {
@@ -221,7 +223,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnNullArc(userid) {
     this.state = {
-      nullConfig: this.configureBgArc(userid, 'null')
+      nullConfig: this.configureBgArc(userid, 'planning')
     };
   }
   // spawnPipesArc(userid) {
@@ -231,20 +233,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   //     pipesConfig
   //   };
   // }
-  configureBgArc(userid, name)  {
-    const key = `${userid}-${name.toLowerCase()}`;
-    this.recordArcMeta({
-      key: key,
-      href: `?arc=${key}`,
-      description: `${name} arc`,
-      color: 'silver',
-      touched: 0
-    });
-    return {
-      id: key,
-      suggestionContainer: this.getSuggestionSlot()
-    };
-  }
   spawnSerialization(key) {
     this.state = {
       search: '',
@@ -286,13 +274,28 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       manifest: null
     };
   }
+  configureBgArc(userid, name)  {
+    const key = `${userid}-${name.toLowerCase()}`;
+    // this.recordArcMeta({
+    //   key: key,
+    //   href: `?arc=${key}`,
+    //   description: `${name} arc`,
+    //   color: 'silver',
+    //   touched: 0
+    // });
+    return {
+      id: key,
+      suggestionContainer: this.getSuggestionSlot()
+    };
+  }
   getSuggestionSlot() {
     return this._dom.$('[slotid="suggestions"]');
   }
   async recordArcMeta(meta) {
-    const {store} = this._state;
-    if (store) {
-      await store.store({id: meta.key, rawData: meta}, [generateId()]);
+    if (this.state.store) {
+      await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
+    } else {
+      log('failed to record arc metadata: no store');
     }
   }
   openLauncher() {

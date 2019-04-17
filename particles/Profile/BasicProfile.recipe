@@ -1,22 +1,13 @@
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
+import 'Friend.schema'
 import 'UserName.schema'
+import 'Avatar.schema'
 
 particle UserNameForm in 'source/UserNameForm.js'
   inout UserName userName
   consume userName
 
-import 'Avatar.schema'
-import 'User.schema'
-
 particle FriendsPicker in 'source/FriendsPicker.js'
-  in User user
-  inout [User] friends
+  inout [Friend] friends
   in [Avatar] avatars
   in [UserName] userNames
   consume friends
@@ -29,19 +20,17 @@ particle BasicProfile in 'source/BasicProfile.js'
     provide friends
 
 recipe BasicProfile
-  map 'SYSTEM_user' as user
-  map 'BOXED_avatar' as avatars
-  map 'BOXED_userName' as userNames
   create #avatar as avatar
   create #userName as userName
   create #friends as friends
+  map 'BOXED_avatar' as avatars
+  map 'BOXED_userName' as userNames
   BasicProfile
     avatar = avatar
   UserNameForm
     userName = userName
   FriendsPicker
-    user = user
     friends = friends
     avatars = avatars
     userNames = userNames
-  description `Edit user profile (name, avatar, and friends)`
+  description `edit user profile (name, avatar, and friends)`

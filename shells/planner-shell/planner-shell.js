@@ -17,14 +17,14 @@
 import './config.js';
 
 // platform agnostic code
+import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.js';
 import {Utils} from '../lib/runtime/utils.js';
 import {ArcHost} from '../lib/components/arc-host.js';
 import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
-import {UserArcs} from '../lib/user-arcs.js';
-import {UserContext} from '../lib/user-context.js';
-import {UserPlanner} from '../lib/user-planner.js';
 import {Const} from '../configuration/constants.js';
-import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.js';
+import {UserArcs} from './user-arcs.js';
+import {UserContext} from './user-context.js';
+import {UserPlanner} from './user-planner.js';
 
 const contextManifest = `
   import 'https://$particles/canonical.manifest'

@@ -8,7 +8,7 @@ import '../List/List.recipes'
 import '../Layout/Layout.recipes'
 
 recipe TVMazeSearchBar
-  create as query
+  create #volatile as query
   TVMazeSearchBar
     query = query
 

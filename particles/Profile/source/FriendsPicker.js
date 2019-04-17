@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({DomParticle, html, resolver, log}) => {
 
   const template = html`
 
@@ -69,7 +69,13 @@ defineParticle(({DomParticle, html, resolver}) => {
     right: 16px;
     margin-top: 16px;
   }
+  model-input {
+    display: block;
+  }
   input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
     border: none;
     background-color: inherit;
     font-size: 1.7em;
@@ -81,7 +87,7 @@ defineParticle(({DomParticle, html, resolver}) => {
 <template friend-avatars>
   <div item>
     <model-img src="{{url}}">
-      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-click="onSelectAvatar">
+      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dblclick="onRemoveFriend">
     </model-img>
     <br>
     <span>{{name}}</span>
@@ -95,7 +101,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       <input value="{{newFriendName}}" placeholder="Enter New Friend Id" spellcheck="false" on-change="onNameInputChange">
     </model-input>
   </div>
-  <div grid>{{avatars}}</div>
+  <div grid>{{friendModels}}</div>
 </div>
 
   `;
@@ -104,32 +110,33 @@ defineParticle(({DomParticle, html, resolver}) => {
     get template() {
       return template;
     }
-    render(props, state) {
-      const user = props.user || {};
-      const friends = props.friends || [];
-      const others = friends.filter(p => p.id !== user.id);
-      const names = props.userNames || [];
-      const avatars = props.avatars || [];
-      const avatarModels = others.map((p, i) => {
-        const avatar = this.boxQuery(avatars, p.id)[0];
-        const name = this.boxQuery(names, p.id)[0];
-        const url = (avatar && avatar.url) || `https://$shells/assets/avatars/user%20(0).png`;
+    render({friends, avatars, userNames}, state) {
+      //const user = props.user || {};
+      //const others = friends.filter(p => p.id !== user.id);
+      const friendModels = {$template: 'friend-avatars'};
+      friendModels.models = (friends || []).map((friend, i) => {
+        const profile = this.getUserProfile(friend.publicKey, avatars, userNames);
         return {
           key: i,
-          value: p.id,
-          name: name ? name.userName : p.id,
-          url: resolver && resolver(url),
-          selected: true
+          value: profile.publicKey,
+          name: profile.name,
+          url: profile.avatar
         };
       });
       return {
-        showPopup: state.showPopup,
-        popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`,
+        friendModels,
         newFriendName: '',
-        avatars: {
-          $template: 'friend-avatars',
-          models: avatarModels
-        }
+        showPopup: state.showPopup,
+        popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`
+      };
+    }
+    getUserProfile(publicKey, avatars, names) {
+      const avatar = this.boxQuery(avatars, publicKey)[0];
+      const name = this.boxQuery(names, publicKey)[0];
+      return {
+        publicKey,
+        avatar: (avatar && avatar.url) || resolver(`FriendsPicker/../assets/user.png`),
+        name: (name && name.userName) || publicKey.split('/').pop()
       };
     }
     onAddFriend(e) {
@@ -141,15 +148,15 @@ defineParticle(({DomParticle, html, resolver}) => {
     onNameInputChange({data: {value}}) {
       this.setState({showPopup: false});
       if (value) {
-        const friend = this.props.friends.find(f => f.id === value);
+        const friend = this.props.friends.find(f => f.publicKey === value);
         if (!friend) {
-          this.appendRawDataToHandle('friends', [{id: value}]);
+          this.appendRawDataToHandle('friends', [{publicKey: value}]);
         }
       }
     }
-    onSelectAvatar(e, state) {
+    onRemoveFriend(e, state) {
       const selectedId = e.data.value;
-      const friend = this._props.friends.find(f => f.id === selectedId);
+      const friend = this._props.friends.find(f => f.publicKey === selectedId);
       const friendsHandle = this.handles.get('friends');
       if (friend) {
         friendsHandle.remove(friend);

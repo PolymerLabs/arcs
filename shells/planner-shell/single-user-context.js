@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {SyntheticStores} from './runtime/synthetic-stores.js';
+import {SyntheticStores} from '../lib/runtime/synthetic-stores.js';
 import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('SingleUserContext', '#f2ce14');

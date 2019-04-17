@@ -93,9 +93,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     <div logo>${logo}</div>
     <div signin>Sign in to Arcs</div>
     <div blurb>Sign in with your Arcs Account to get your arcs, shares, and other settings on all your devices</div>
-    <cx-input username error="Enter a user name">
-      <input slot="input" id="nameInput" required on-input="onInput">
-      <label slot="label" for="nameInput">&nbsp;User name</label>
+    <cx-input username error="Enter a storage key:">
+      <input slot="input" id="keyInput" required on-input="onInput">
+      <label slot="label" for="keyInput">&nbsp;Storage Key</label>
     </cx-input>
     <div bar>
       <cx-button><button disabled$="{{nextDisabled}}">Next</button></cx-button>
@@ -125,9 +125,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     render(props, state) {
       return state;
     }
-    onInput({data: {key, value}}) {
+    onInput({data: {value}}) {
       this.setState({nextDisabled: value == ''});
-      this.updateVariable('username', {username: value});
+      this.updateVariable('key', {key: value});
     }
   };
 

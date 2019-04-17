@@ -1,0 +1,125 @@
+<!doctype html>
+
+<link rel="stylesheet" href="../../../modalities/dom/components/icons.css">
+
+<style>
+  body {
+    font-family: sans-serif;
+  }
+  /*icon {
+    margin: 0 4px;
+  }*/
+  [row] {
+    display: flex;
+    align-items: center;
+  }
+  [children] {
+    margin-left: 24px;
+  }
+  [delete] {
+    margin-left: 8px;
+    visibility: hidden;
+  }
+  [entry] {
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  [entry]:hover {
+    background-color: #edeecd;
+  }
+  [entry]:hover [delete] {
+    visibility: visible;
+  }
+  [deleted] {
+    background-color: #fbd5d5;
+    border-radius: 12px;
+  }
+  [deleted] [entry]:hover {
+    background-color: inherit;
+  }
+  [deleted] [entry]:hover [delete] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+</style>
+
+<img id="busygif" src="./loading.gif">
+
+<script type="module">
+  import {Xen} from '../../lib/components/xen.js'
+  import '../../lib/build/firebase.js';
+  import {database} from '../../lib/database/firebase.js'
+  //
+  const nodePath = '0_7_0'; ///scott';
+  //
+  const itemTemplate = Xen.Template.html`
+    <div>
+      <div row key="{{key}}" on-click="onClick">
+        <icon>{{icon}}</icon>
+        <div entry row>
+          <span>{{title}}</span>
+          <icon delete on-click="onDelete">delete_forever</icon>
+        </div>
+      </div>
+      <div children></div>
+    </div>
+  `;
+  //
+  const snarfAll = async () => {
+    const ref = database.ref(nodePath);
+    // for console work
+    window.db = ref;
+    console.log('querying database...');
+    ref.once('value', snap => {
+      busygif.style.display = 'none';
+      console.log('evaluating snapshot...');
+      const corpus = snap.val();
+      renderChildren('', corpus, document.body);
+    });
+    //
+    const renderChildren = (root, group, container) => {
+      Object.keys(group || Object).forEach(key => {
+        const path = `${root ? `${root}/` : ''}${key}`;
+        let title = key;
+        let icon = '';
+        let open = false;
+        const item = group[key];
+        const isGroup = typeof item === 'object';
+        if (isGroup) {
+          const count = Object.keys(item).length;
+          title = `${title} (${count} item${count !== 1 ? 's' : ''})`;
+          icon = 'arrow_right';
+        }
+        const dom = Xen.Template.stamp(itemTemplate).appendTo(container).set({key, title, isGroup, icon}).events({
+          onClick: event => {
+            event.stopPropagation();
+            if (isGroup) {
+              const icon = open ? 'arrow_right' : 'arrow_drop_down';
+              dom.set({icon});
+              const container = dom.firstElement.querySelector('[children]');
+              if (open) {
+                container.innerText = '';
+              } else {
+                renderChildren(path, item, container);
+              }
+              open = !open;
+            }
+          },
+          onDelete: event => {
+            event.stopPropagation();
+            if (confirm(`Really delete node at location [${path}]?`)) {
+              console.groupCollapsed(`deleting: ${path}`);
+              console.log('command to restore node:')
+              console.log(`db.child('${path}').set(${JSON.stringify(item)})`);
+              console.groupEnd();
+              const ref = database.ref(nodePath).child(path);
+              ref.remove();
+              dom.firstElement.setAttribute('deleted', '');
+            }
+          }
+        });
+      });
+    }
+  }
+  snarfAll();
+</script>
