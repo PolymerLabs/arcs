@@ -22,8 +22,8 @@ import {SlotProxy} from './slot-proxy.js';
 export class Particle {
     public static spec: ParticleSpec;
     public spec: ParticleSpec;
-    public extraData: boolean;
-    public relevances: (Relevance | number)[] = [];
+    public readonly extraData: boolean;
+    public readonly relevances: (Relevance | number)[] = [];
     public handles: Map<string, Handle>;
 
     private _idle: Promise<void> = Promise.resolve();
@@ -31,7 +31,7 @@ export class Particle {
     private _busy = 0;
 
     protected slotProxiesByName: Map<string, SlotProxy> = new Map();
-    private capabilities: {constructInnerArc?: Function};
+    private readonly capabilities: {constructInnerArc?: Function};
 
   constructor(capabilities?: {constructInnerArc?: Function}) {
     // Typescript only sees this.constructor as a Function type.

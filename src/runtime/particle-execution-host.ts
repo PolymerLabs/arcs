@@ -36,9 +36,9 @@ export type StopRenderOptions = {
 export class ParticleExecutionHost {
   private _apiPort : PECOuterPort;
   close : () => void;
-  private arc: Arc;
+  private readonly arc: Arc;
   private nextIdentifier = 0;
-  slotComposer: SlotComposer;
+  public readonly slotComposer: SlotComposer;
   private idleVersion = 0;
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;

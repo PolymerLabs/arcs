@@ -49,7 +49,7 @@ export class SlotConsumer {
   readonly containerKind?: string;
   // Contains `container` and other modality specific rendering information
   // (eg for `dom`: model, template for dom renderer) by sub id. Key is `undefined` for singleton slot.
-  private _renderingBySubId: Map<string|undefined, Rendering> = new Map();
+  private readonly _renderingBySubId: Map<string|undefined, Rendering> = new Map();
   private innerContainerBySlotId: {} = {};
   public readonly arc: Arc;
   public description: Description;
@@ -60,13 +60,19 @@ export class SlotConsumer {
     this.containerKind = containerKind;
   }
 
-  getRendering(subId?): Rendering { return this._renderingBySubId.get(subId); }
-  get renderings(): [string, Rendering][] { return [...this._renderingBySubId.entries()]; }
+  getRendering(subId?: string): Rendering {
+    return this._renderingBySubId.get(subId);
+  }
+
+  get renderings(): [string, Rendering][] {
+    return [...this._renderingBySubId.entries()];
+  }
+
   addRenderingBySubId(subId: string|undefined, rendering: Rendering) {
     this._renderingBySubId.set(subId, rendering);
   }
 
-  addHostedSlotContexts(context: HostedSlotContext) {
+  addHostedSlotContexts(context: HostedSlotContext): void {
     context.containerAvailable = Boolean(this.slotContext.containerAvailable);
     this.hostedSlotContexts.push(context);
   }
@@ -90,7 +96,7 @@ export class SlotConsumer {
     }
   }
 
-  onContainerUpdate(newContainer, originalContainer) {
+  onContainerUpdate(newContainer, originalContainer): void {
     assert(this.slotContext instanceof ProvidedSlotContext, 'Container can only be updated in non-hosted context');
     const context = this.slotContext as ProvidedSlotContext;
 
@@ -133,18 +139,18 @@ export class SlotConsumer {
     }
   }
 
-  createProvidedContexts() {
+  createProvidedContexts(): SlotContext | ConcatArray<SlotContext> {
     return this.consumeConn.getSlotSpec().provideSlotConnections.map(
       spec => new ProvidedSlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
   }
 
-  updateProvidedContexts() {
+  updateProvidedContexts(): void {
     this.allProvidedSlotContexts.forEach(providedContext => {
       providedContext.container = providedContext.sourceSlotConsumer.getInnerContainer(providedContext.id);
     });
   }
 
-  startRender() {
+  startRender(): void {
     if (this.consumeConn && this.startRenderCallback) {
       const providedSlots = new Map(this.allProvidedSlotContexts.map(context => ([context.name, context.id] as [string, string])));
 
@@ -157,13 +163,13 @@ export class SlotConsumer {
     }
   }
 
-  stopRender() {
+  stopRender(): void {
     if (this.consumeConn && this.stopRenderCallback) {
       this.stopRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name});
     }
   }
 
-  setContent(content: Content, handler) {
+  setContent(content: Content, handler): void {
     if (content && Object.keys(content).length > 0 && this.description) {
       content.descriptions = this._populateHandleDescriptions();
     }
@@ -200,7 +206,7 @@ export class SlotConsumer {
       this.innerContainerBySlotId[slotId] = container;
     }
   }
-  _clearInnerSlotContainers(subIds) {
+  _clearInnerSlotContainers(subIds): void {
     subIds.forEach(subId => {
       if (subId) {
         Object.values(this.innerContainerBySlotId).forEach(inner => delete inner[subId]);
@@ -210,19 +216,19 @@ export class SlotConsumer {
     });
   }
 
-  isSameContainer(container, contextContainer) {
+  isSameContainer(container, contextContainer): boolean {
     return (!container && !contextContainer) || (container === contextContainer);
   }
 
   // abstract
   constructRenderRequest(): string[] { return []; }
-  dispose() {}
+  dispose(): void {}
   createNewContainer(contextContainer, subId): {} { return null; }
   deleteContainer(container) {}
   clearContainer(rendering) {}
   setContainerContent(rendering, content: Content, subId) {}
   formatContent(content: Content, subId): Content { return null; }
   formatHostedContent(content: Content): {} { return null; }
-  static clear(container) {}
+  static clear(container): void {}
   static findRootContainers(topContainer) { return {}; }
 }
