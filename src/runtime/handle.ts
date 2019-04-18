@@ -49,19 +49,19 @@ export interface HandleOptions {keepSynced: boolean; notifySync: boolean; notify
  * Base class for Collections and Variables.
  */
 export abstract class Handle {
-  storage: Store;
-  private idGenerator: IdGenerator;
-  name: string;
-  canRead: boolean;
-  canWrite: boolean;
-  _particleId: string|null;
-  options: HandleOptions;
+  readonly storage: Store;
+  private readonly idGenerator: IdGenerator;
+  readonly name: string;
+  readonly canRead: boolean;
+  readonly canWrite: boolean;
+  readonly _particleId: string|null;
+  readonly options: HandleOptions;
   entityClass: EntityClass|null;
 
   abstract _notify(kind: string, particle: Particle, details: {});
 
   // TODO type particleId, marked as string, but called with number
-  constructor(storage: Store, idGenerator: IdGenerator, name: string, particleId, canRead: boolean, canWrite: boolean) {
+  constructor(storage: Store, idGenerator: IdGenerator, name: string, particleId: string|null, canRead: boolean, canWrite: boolean) {
     assert(!(storage instanceof Handle));
     this.storage = storage;
     this.idGenerator = idGenerator;
@@ -81,7 +81,7 @@ export abstract class Handle {
     this.storage.reportExceptionInHost(new UserException(exception, method, this._particleId, particle.spec.name));
   }
 
-  protected reportSystemExceptionInHost(exception: Error, method: string) {
+  protected reportSystemExceptionInHost(exception: Error, method: string): void {
     this.storage.reportExceptionInHost(new SystemException(exception, method, this._particleId));
   }
 
@@ -90,7 +90,7 @@ export abstract class Handle {
   // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
   // - notifyUpdate (bool): call onHandleUpdate for every change event received
   // - notifyDesync (bool): if keepSynced is true, call onHandleDesync when desync is detected
-  configure(options) {
+  configure(options): void {
     assert(this.canRead, 'configure can only be called on readable Handles');
     try {
       const keys = Object.keys(this.options);
@@ -123,7 +123,7 @@ export abstract class Handle {
     return this.storage.id;
   }
 
-  toManifestString() {
+  toManifestString(): string {
     return `'${this._id}'`;
   }
 
@@ -141,7 +141,8 @@ export abstract class Handle {
  */
 export class Collection extends Handle {
   // Called by StorageProxy.
-  storage: CollectionStore;
+  readonly storage: CollectionStore;
+
   _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
@@ -255,7 +256,7 @@ export class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 export class Variable extends Handle {
-  storage: VariableStore;
+  readonly storage: VariableStore;
   // Called by StorageProxy.
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
@@ -356,10 +357,10 @@ export class Variable extends Handle {
  * implicit iteration in Javascript.
  */
 class Cursor {
-  _parent: BigCollection;
-  _cursorId: number;
+  private readonly _parent: BigCollection;
+  private readonly _cursorId: number;
 
-  constructor(parent, cursorId) {
+  constructor(parent: BigCollection, cursorId: number) {
     this._parent = parent;
     this._cursorId = cursorId;
   }
@@ -392,7 +393,8 @@ class Cursor {
  * trigger onHandleSync() or onHandleUpdate().
  */
 export class BigCollection extends Handle {
-  storage: BigCollectionStore;
+  readonly storage: BigCollectionStore;
+
   configure(options) {
     throw new Error('BigCollections do not support sync/update configuration');
   }
@@ -454,7 +456,7 @@ export class BigCollection extends Handle {
   }
 }
 
-export function handleFor(storage: Store, idGenerator: IdGenerator, name: string = null, particleId = '', canRead = true, canWrite = true) {
+export function handleFor(storage: Store, idGenerator: IdGenerator, name: string = null, particleId = '', canRead = true, canWrite = true): Handle {
   let handle: Handle;
   if (storage.type instanceof CollectionType) {
     handle = new Collection(storage, idGenerator, name, particleId, canRead, canWrite);

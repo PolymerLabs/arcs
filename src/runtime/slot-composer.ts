@@ -32,7 +32,7 @@ export class SlotComposer {
   private readonly _containerKind: string;
   readonly modality: Modality;
   readonly modalityHandler: ModalityHandler;
-  private _consumers: SlotConsumer[] = [];
+  private readonly _consumers: SlotConsumer[] = [];
   protected _contexts: SlotContext[] = [];
 
   /**
@@ -206,7 +206,7 @@ export class SlotComposer {
     return this._contexts;
   }
 
-  dispose() {
+  dispose(): void {
     this.consumers.forEach(consumer => consumer.dispose());
     this._contexts.forEach(context => {
       context.clearSlotConsumers();
@@ -215,6 +215,6 @@ export class SlotComposer {
       }
     });
     this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);
-    this._consumers = [];
+    this._consumers.length = 0;
   }
 }

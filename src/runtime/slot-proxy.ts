@@ -10,9 +10,10 @@ export class SlotProxy {
   readonly particle: Particle;
   readonly providedSlots: Map<string, string>;
   private readonly apiPort: PECInnerPort;
-  private handlers = new Map<string, ((event: {}) => void)[]>();
-  requestedContentTypes = new Set<string>();
+  private readonly handlers = new Map<string, ((event: {}) => void)[]>();
+  readonly requestedContentTypes = new Set<string>();
   private _isRendered = false;
+
   constructor(apiPort: PECInnerPort, particle: Particle, slotName: string, providedSlots: Map<string, string>) {
     this.apiPort = apiPort;
     this.slotName = slotName;
@@ -20,6 +21,7 @@ export class SlotProxy {
     this.providedSlots = providedSlots;
   }
   get isRendered() { return this._isRendered; }
+
   /**
    * renders content to the slot.
    */

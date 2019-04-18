@@ -70,27 +70,27 @@ export class Arc {
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   // Public for debug access
   public readonly _loader: Loader;
-  private dataChangeCallbacks = new Map<object, () => void>();
+  private readonly dataChangeCallbacks = new Map<object, () => void>();
   // All the stores, mapped by store ID
-  private storesById = new Map<string, StorageProviderBase>();
+  private readonly storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
   private storageKeys: {[index: string]: string} = {};
-  readonly storageKey: string;
+  public readonly storageKey: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access
-  public storeTags = new Map<StorageProviderBase, Set<string>>();
+  public readonly storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private storeDescriptions = new Map<StorageProviderBase, string>();
-  private instantiatePlanCallbacks: PlanCallback[] = [];
+  private readonly storeDescriptions = new Map<StorageProviderBase, string>();
+  private readonly instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
-  private debugHandler: ArcDebugHandler;
-  private innerArcsByParticle: Map<Particle, Arc[]> = new Map();
+  private readonly debugHandler: ArcDebugHandler;
+  private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly listenerClasses: ArcDebugListenerDerived[];
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
-  pec: ParticleExecutionHost;
+  readonly pec: ParticleExecutionHost;
 
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
     // TODO: context should not be optional.
@@ -150,7 +150,7 @@ export class Arc {
     for (const innerArc of this.innerArcs) {
       innerArc.dispose();
     }
-    this.instantiatePlanCallbacks = [];
+    this.instantiatePlanCallbacks.length = 0;
     // TODO: disconnect all associated store event handlers
     this.pec.stop();
     this.pec.close();
@@ -181,7 +181,7 @@ export class Arc {
     }
   }
 
-  get idle() {
+  get idle(): Promise<void> {
     if (!this.waitForIdlePromise) {
       // Store one active completion promise for use by any subsequent callers.
       // We explicitly want to avoid, for example, multiple simultaneous
@@ -222,7 +222,7 @@ export class Arc {
     return innerArc;
   }
 
-  async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
+  private async _serializeHandle(handle: StorageProviderBase, context: SerializeContext, id: string): Promise<void> {
     const type = handle.type.getContainedType() || handle.type;
     if (type instanceof InterfaceType) {
       context.interfaces += type.interfaceInfo.toString() + '\n';
@@ -303,7 +303,7 @@ export class Arc {
     }
   }
 
-  async _serializeHandles() {
+  private async _serializeHandles(): Promise<string> {
     const context: SerializeContext = {handles: '', resources: '', interfaces: '', dataResources: new Map()};
 
     let id = 0;
@@ -335,7 +335,7 @@ export class Arc {
     return context.resources + context.interfaces + context.handles;
   }
 
-  _serializeParticles() {
+  private _serializeParticles(): string {
     const particleSpecs = <ParticleSpec[]>[];
     // Particles used directly.
     particleSpecs.push(...this._activeRecipe.particles.map(entry => entry.spec));
@@ -356,7 +356,7 @@ export class Arc {
     return results.join('\n');
   }
 
-  _serializeStorageKey(): string {
+  private _serializeStorageKey(): string {
     if (this.storageKey) {
       return `storageKey: '${this.storageKey}'\n`;
     }
@@ -636,24 +636,24 @@ ${this.activeRecipe.toString()}`;
     store.on('change', () => this._onDataChange(), this);
   }
 
-  _tagStore(store: StorageProviderBase, tags: Set<string>) {
+  _tagStore(store: StorageProviderBase, tags: Set<string>): void {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
     tags = tags || new Set();
     tags.forEach(tag => storeTags.add(tag));
   }
 
-  _onDataChange() {
+  _onDataChange(): void {
     for (const callback of this.dataChangeCallbacks.values()) {
       callback();
     }
   }
 
-  onDataChange(callback: () => void, registration: object) {
+  onDataChange(callback: () => void, registration: object): void {
     this.dataChangeCallbacks.set(registration, callback);
   }
 
-  clearDataChange(registration: object) {
+  clearDataChange(registration: object): void {
     this.dataChangeCallbacks.delete(registration);
   }
 

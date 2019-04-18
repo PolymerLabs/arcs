@@ -12,6 +12,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
+import {Direction} from './handle-connection.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -27,7 +28,7 @@ export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
 export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean};
 
 export class Recipe {
-  private _requires: RequireSection[] = [];
+  private readonly _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
   private _slots: Slot[] = [];
@@ -41,7 +42,7 @@ export class Recipe {
   // with a type. Strategies should register the record types they
   // can handle. ConnectionConstraints should be a different record
   // type to particles/handles.
-  private _connectionConstraints = <ConnectionConstraint[]>[];
+  private readonly _connectionConstraints = <ConnectionConstraint[]>[];
 
   // Obligations are like connection constraints in that they describe
   // required connections between particles/verbs. However, where
@@ -49,51 +50,52 @@ export class Recipe {
   // connections, obligations can't be. Instead, they describe requirements
   // that must be discharged before a recipe can be considered to be
   // resolved.
-  private _obligations: ConnectionConstraint[] = [];
+  private readonly _obligations: ConnectionConstraint[] = [];
   private _verbs: string[] = [];
 
   // TODO: Change to array, if needed for search strings of merged recipes.
   private _search: Search | null = null;
   private _patterns: string[] = [];
-  constructor(name = undefined) {
+
+  constructor(name?: string) {
     this._name = name;
   }
 
-  newConnectionConstraint(from, to, direction) {
+  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'constraint');
     this._connectionConstraints.push(result);
     return result;
   }
 
-  newObligation(from, to, direction) {
+  newObligation(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
     const result = new ConnectionConstraint(from, to, direction, 'obligation');
     this._obligations.push(result);
     return result;
   }
 
-  removeObligation(obligation) {
+  removeObligation(obligation: ConnectionConstraint): void {
     const idx = this._obligations.indexOf(obligation);
     assert(idx > -1);
     this._obligations.splice(idx, 1);
   }
 
-  removeConstraint(constraint) {
+  removeConstraint(constraint: ConnectionConstraint): void {
     const idx = this._connectionConstraints.indexOf(constraint);
     assert(idx >= 0);
     this._connectionConstraints.splice(idx, 1);
   }
 
-  clearConnectionConstraints() {
-    this._connectionConstraints = [];
+  clearConnectionConstraints(): void {
+    this._connectionConstraints.length = 0; // truncate
   }
 
-  newRequireSection() {
+  newRequireSection(): RequireSection {
     const require = new RequireSection(this);
     this._requires.push(require);
     return require;
   }
 
-  newParticle(name) {
+  newParticle(name: string): Particle {
     const particle = new Particle(this, name);
     this._particles.push(particle);
     return particle;
@@ -109,32 +111,32 @@ export class Recipe {
     }
   }
 
-  newHandle() {
+  newHandle(): Handle {
     const handle = new Handle(this);
     this._handles.push(handle);
     return handle;
   }
 
-  removeHandle(handle) {
+  removeHandle(handle: Handle): void {
     assert(handle.connections.length === 0);
     const idx = this._handles.indexOf(handle);
     assert(idx > -1);
     this._handles.splice(idx, 1);
   }
 
-  newSlot(name) {
+  newSlot(name: string): Slot {
     const slot = new Slot(this, name);
     this._slots.push(slot);
     return slot;
   }
 
-  addSlot(slot: Slot) {
+  addSlot(slot: Slot): void {
     if (this.slots.indexOf(slot) === -1) {
       this.slots.push(slot);
     }
   }
 
-  removeSlot(slot) {
+  removeSlot(slot: Slot): void {
     assert(slot.consumeConnections.length === 0);
     let idx = this._slots.indexOf(slot);
     assert(idx > -1);
@@ -148,7 +150,7 @@ export class Recipe {
     }
   }
 
-  isResolved() {
+  isResolved(): boolean {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     if (this._obligations.length > 0) {
       return false;
@@ -176,7 +178,7 @@ export class Recipe {
       .reduce((modality, total) => modality.intersection(total), Modality.all);
   }
 
-  allRequiredSlotsPresent() {
+  allRequiredSlotsPresent(): boolean {
     // All required slots and at least one consume slot for each particle must be present in order for the 
     // recipe to be considered resolved. 
     for (const particle of this.particles) {
@@ -224,7 +226,7 @@ export class Recipe {
     return duplicateHandle;
   }
 
-  _isValid(options: IsValidOptions = undefined) {
+  _isValid(options: IsValidOptions = undefined): boolean {
     return !this._findDuplicate(this._handles, options)
         && !this._findDuplicate(this._slots, options)
         && this._handles.every(handle => handle._isValid(options))
@@ -254,7 +256,8 @@ export class Recipe {
   set search(search: Search | null) {
     this._search = search;
   }
-  setSearchPhrase(phrase?: string) {
+
+  setSearchPhrase(phrase?: string): void {
     assert(!this._search, 'Cannot override search phrase');
     if (phrase) {
       this._search = new Search(phrase);
@@ -278,7 +281,7 @@ export class Recipe {
     return handleConnections;
   }
 
-  isEmpty() {
+  isEmpty(): boolean {
     return this.particles.length === 0 &&
            this.handles.length === 0 &&
            this.slots.length === 0 &&
@@ -330,7 +333,7 @@ export class Recipe {
     return digest(this.toString());
   }
 
-  normalize(options?: IsValidOptions) {
+  normalize(options?: IsValidOptions): boolean {
     if (Object.isFrozen(this)) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');
@@ -456,7 +459,7 @@ export class Recipe {
     return true;
   }
 
-  clone(cloneMap=undefined) {
+  clone(cloneMap=undefined): Recipe {
     // for now, just copy everything
 
     const recipe = new Recipe(this.name);
@@ -489,7 +492,7 @@ export class Recipe {
     };
   }
 
-  _copyInto(recipe, cloneMap) {
+  _copyInto(recipe: Recipe, cloneMap): void {
     const variableMap = new Map();
     function cloneTheThing(object) {
       const clonedObject = object._copyInto(recipe, cloneMap, variableMap);
@@ -630,7 +633,7 @@ export class Recipe {
     return result.join('\n');
   }
 
-  getFreeHandles() {
+  getFreeHandles(): Handle[] {
     return this.handles.filter(handle => handle.connections.length === 0);
   }
 
@@ -657,7 +660,7 @@ export class Recipe {
     return this.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional);
   }
 
-  getParticlesByImplFile(files: Set<string>) {
+  getParticlesByImplFile(files: Set<string>): Particle[] {
     return this.particles.filter(particle => particle.spec && files.has(particle.spec.implFile));
   }
 
@@ -678,7 +681,7 @@ export class Recipe {
 }
 
 export class RequireSection extends Recipe {
-  public parent: Recipe;
+  public readonly parent: Recipe;
   constructor(parent = undefined, name = undefined) {
     super(name);
     this.parent = parent;

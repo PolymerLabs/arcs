@@ -31,16 +31,16 @@ export type InnerArcHandle = {
 };
 
 export class ParticleExecutionContext {
-  private apiPort : PECInnerPort;
-  private particles = <Particle[]>[];
+  private readonly apiPort : PECInnerPort;
+  private readonly particles = <Particle[]>[];
   private readonly pecId: Id;
-  private loader: Loader;
-  private pendingLoads = <Promise<void>[]>[]; 
-  private scheduler: StorageProxyScheduler = new StorageProxyScheduler();
-  private keyedProxies: { [index: string]: StorageProxy | Promise<StorageProxy>} = {};
-  
+  private readonly loader: Loader;
+  private readonly pendingLoads = <Promise<void>[]>[];
+  private readonly scheduler: StorageProxyScheduler = new StorageProxyScheduler();
+  private readonly keyedProxies: { [index: string]: StorageProxy | Promise<StorageProxy>} = {};
+
   readonly idGenerator: IdGenerator;
-  
+
   constructor(port, pecId: Id, idGenerator: IdGenerator, loader: Loader) {
     const pec = this;
 
@@ -72,20 +72,20 @@ export class ParticleExecutionContext {
       onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: string) {
         transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
       }
-  
-      onStop() {
+
+      onStop(): void {
         if (global['close']) {
           global['close']();
         }
       }
-  
+
       onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>) {
         return pec._instantiateParticle(id, spec, proxies);
       }
 
       onSimpleCallback(callback: ({}) => void, data: {}) {
         callback(data);
-      } 
+      }
 
       onConstructArcCallback(callback: (arc: string) => void, arc: string) {
         callback(arc);
@@ -98,7 +98,7 @@ export class ParticleExecutionContext {
           setTimeout(() => { this.Idle(version, pec.relevance); }, 0);
         });
       }
-  
+
       onUIEvent(particle: Particle, slotName: string, event: {}) {
         particle.fireEvent(slotName, event);
       }
@@ -107,7 +107,7 @@ export class ParticleExecutionContext {
         particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
         particle.renderSlot(slotName, contentTypes);
       }
-  
+
       onStopRender(particle: Particle, slotName: string) {
         assert(particle.hasSlotProxy(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
         particle.removeSlotProxy(slotName);
@@ -161,13 +161,13 @@ export class ParticleExecutionContext {
           pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, handleId)
           );
       },
-      loadRecipe(recipe) {
+      loadRecipe(recipe: string) {
         // TODO: do we want to return a promise on completion?
         return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, response => {
           if (response.error) {
             reject(response.error);
           } else {
-            resolve(response);            
+            resolve(response);
           }
         }));
       }
@@ -175,7 +175,7 @@ export class ParticleExecutionContext {
   }
 
   getStorageProxy(storageKey, type) {
-    if (!this.keyedProxies[storageKey]) {      
+    if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
         this.apiPort.GetBackingStore((proxy, storageKey) => {
           this.keyedProxies[storageKey] = proxy;
@@ -234,7 +234,7 @@ export class ParticleExecutionContext {
         return;
       }
       rMap.set(p, p.relevances);
-      p.relevances = [];
+      p.relevances.length = 0; // truncate
     });
     return rMap;
   }
