@@ -106,12 +106,12 @@ describe('Bundle Tool', () => {
 
     // Sanity check.
     assert.include(
-      await zip.file('Products/Recommend.recipes').async('string'),
+      await zip.file('Products/Recommend.recipes').async('text'),
       `particle Recommend in 'source/Recommend.js'`
     );
 
     assert.equal(
-        await zip.file('bundle-manifest.mf').async('string'),
+        await zip.file('bundle-manifest.mf').async('text'),
         'entry-point: Products/Products.recipes\n');
   });
 });
