@@ -1,3 +1,4 @@
+#!/usr/bin/env -S node --experimental-modules --no-deprecation --loader=./tools/custom-loader.mjs -r source-map-support/register.js
 /**
  * @license
  * Copyright (c) 2018 Google Inc. All rights reserved.
@@ -9,10 +10,13 @@
  */
 
 import fs from 'fs';
-import {Manifest} from '../build/runtime/manifest.js';
-import {EntityType} from '../build/runtime/type.js';
-import {StorageProviderFactory} from '../build/runtime/storage/storage-provider-factory.js';
-import {resetStorageForTesting} from '../build/runtime/storage/firebase/firebase-storage.js';
+import {Id} from '../runtime/id.js';
+import {Manifest} from '../runtime/manifest.js';
+import {EntityType} from '../runtime/type.js';
+import {StorageProviderFactory} from '../runtime/storage/storage-provider-factory.js';
+import {resetStorageForTesting} from '../runtime/storage/firebase/firebase-storage.js';
+import '../runtime/storage/firebase/firebase-provider.js';
+import '../runtime/storage/pouchdb-provider.js';
 
 // Imports Spotify playlists from JSON files, formatted as per the API
 // described on https://developer.spotify.com/console/get-playlist
@@ -98,21 +102,23 @@ import {resetStorageForTesting} from '../build/runtime/storage/firebase/firebase
       return;
     }
 
-    const PlaylistType = new EntityType(manifest.schemas.Playlist);
-    const storage = new StorageProviderFactory('import');
-    const construct = () => storage.construct('import', PlaylistType.bigCollectionOf(), key);
-    const connect = () => storage.connect('import', PlaylistType.bigCollectionOf(), key);
+    const playlistType = new EntityType(manifest.schemas.Playlist);
+
+    const id = Id.fromString('import');
+    const storage = new StorageProviderFactory(id);
+    const construct = () => storage.construct('import', playlistType.bigCollectionOf(), key);
+    const connect = () => storage.connect('import', playlistType.bigCollectionOf(), key);
 
     // First two entries in argv are the node binary and this file.
     const args = process.argv.slice(2);
 
     if (args[0] == '--list') {
-      if (args.length == 1) {
+      if (args.length === 1) {
         await showPlaylists(await connect());
       } else {
         console.error(usage);
       }
-    } else if (args[0] == '--clear') {
+    } else if (args[0] === '--clear') {
       await resetStorageForTesting(key);
       const collection = await construct();
       if (args.length > 1) {
