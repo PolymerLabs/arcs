@@ -7,9 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
-import {SerializedModelEntry} from './crdt-collection-model.js';
+import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {Id} from '../id.js';
 import {Manifest} from '../manifest.js';
+import {Handle} from '../recipe/handle.js';
 import {ArcHandle, ArcInfo} from '../synthetic-types.js';
 import {ArcType, HandleType, Type} from '../type.js';
 import {setDiffCustom} from '../util.js';
@@ -155,7 +156,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   }
 
   private async process(data, fireEvent) {
-    let handles;
+    let handles: Handle[];
     try {
       if (data) {
         const manifest = await Manifest.parse(ArcInfo.extractSerialization(data), {});
@@ -168,8 +169,8 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     const oldModel = this.model;
     this.model = [];
     for (const handle of handles || []) {
-      if (this.storageFactory.isPersistent(handle._storageKey)) {
-        this.model.push(new ArcHandle(handle.storageKey, handle.mappedType, handle.tags));
+      if (this.storageFactory.isPersistent(handle.storageKey)) {
+        this.model.push(new ArcHandle(handle.id, handle.storageKey, handle.mappedType, handle.tags));
       }
     }
     if (fireEvent) {
@@ -180,7 +181,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     }
   }
 
-  async toList() {
+  async toList(): Promise<ModelValue[]> {
     await this.initialized;
     return this.model;
   }

@@ -10,7 +10,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js';
 
-import {CrdtCollectionModel, SerializedModelEntry} from './crdt-collection-model.js';
+import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
 
@@ -239,7 +239,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     this._model = new CrdtCollectionModel(model);
   }
 
-  async _toList() {
+  async _toList(): Promise<SerializedModelEntry[]> {
     if (this.referenceMode) {
       const items = (await this.toLiteral()).model;
       if (items.length === 0) {
@@ -264,7 +264,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
     return literal.model;
   }
 
-  async toList() {
+  async toList(): Promise<ModelValue[]> {
     return (await this._toList()).map(item => item.value);
   }
 

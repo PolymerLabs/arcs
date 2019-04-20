@@ -14,7 +14,7 @@ import {Id} from '../../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 
-import {CrdtCollectionModel, SerializedModelEntry} from '../crdt-collection-model.js';
+import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from '../storage-provider-base.js';
 
@@ -1057,7 +1057,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     }
   }
 
-  async _toList() {
+  async _toList(): Promise<SerializedModelEntry[]> {
     await this.initialized;
     if (this.referenceMode) {
       const items = (await this.toLiteral()).model;
@@ -1088,7 +1088,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     return {version: this.version, model};
   }
 
-  async toList() {
+  async toList(): Promise<ModelValue[]> {
     return (await this._toList()).map(item => item.value);
   }
 

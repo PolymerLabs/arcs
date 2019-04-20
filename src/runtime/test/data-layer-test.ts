@@ -37,6 +37,8 @@ describe('entity', async () => {
     const clone = list[0];
     assert.isDefined(clone);
     assert.deepEqual(clone.rawData, {value: 'hello world'});
-    assert.notEqual(entity, clone);
+
+    // Bogus test? ModelValue !== EntityInterface
+    // assert.notEqual(entity, clone);
   });
 });
