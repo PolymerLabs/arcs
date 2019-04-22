@@ -56,10 +56,16 @@ export class PlatformLoader extends Loader {
     return url;
   }
   async provisionObjectUrl(fileName) {
-    const code = await this.loadResource(fileName);
+    const raw = await this.loadResource(fileName);
+    const code = `${raw}\n//# sourceURL=${fileName}`;
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
   }
   // Below here invoked from inside Worker
+  async loadParticleClass(spec) {
+    const clazz = await this.requireParticle(spec.implFile, spec.implBlobUrl);
+    clazz.spec = spec;
+    return clazz;
+  }
   async requireParticle(unresolvedPath, blobUrl) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
@@ -70,7 +76,7 @@ export class PlatformLoader extends Loader {
     const particle = this.loadWrappedParticle(url);
     // execute particle wrapper, if we have one
     if (particle) {
-      return this.unwrapParticle(particle, this.provisionLogger(fileName));
+      return this.unwrapParticle(particle, this.provisionLogger(unresolvedPath));
     }
   }
   loadWrappedParticle(url) {
