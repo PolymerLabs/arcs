@@ -55,25 +55,8 @@ export class PlatformLoader extends Loader {
     //log(`resolve(${path}) = ${url}`);
     return url;
   }
-  async provisionParticleSpecBlobUrl(spec) {
-    // if needed, construct spec.implBlobUrl for spec.implFile
-    if (!spec.implBlobUrl) {
-      spec.setImplBlobUrl(await this.provisionObjectUrl(spec.implFile));
-    }
-  }
   async provisionObjectUrl(fileName) {
-    const raw = await this.loadResource(fileName);
-    /*
-    // TODO(sjmiles): can manipulate/examine code before executing, right here
-    // ... consider automarshalling `defineParticle` boilerplate
-    const code = !fileName.includes('Launcher') ? raw :
-`'use strict';
-defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
-${raw}
-return AParticle;
-});`;
-    */
-    const code = raw;
+    const code = await this.loadResource(fileName);
     return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
   }
   // Below here invoked from inside Worker
