@@ -151,6 +151,7 @@ export type SerializedParticleSpec = {
   args: SerializedHandleConnectionSpec[],
   description: {pattern?: string},
   implFile: string,
+  implBlobUrl: string | null,
   modality: string[],
   slotConnections: SerializedConsumeSlotConnectionSpec[]
 };
@@ -165,6 +166,7 @@ export class ParticleSpec {
   outputs: HandleConnectionSpec[];
   pattern: string;
   implFile: string;
+  implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
 
@@ -189,6 +191,7 @@ export class ParticleSpec {
     });
 
     this.implFile = model.implFile;
+    this.implBlobUrl = model.implBlobUrl;
     this.modality = Modality.create(model.modality || []);
     this.slotConnections = new Map();
     if (model.slotConnections) {
@@ -235,20 +238,24 @@ export class ParticleSpec {
     return this.slotConnections.size === 0 || this.modality.intersection(modality).isResolved();
   }
 
+  setImplBlobUrl(url: string) {
+    this.model.implBlobUrl = this.implBlobUrl = url;
+  }
+
   toLiteral() : SerializedParticleSpec {
-    const {args, name, verbs, description, implFile, modality, slotConnections} = this.model;
+    const {args, name, verbs, description, implFile, implBlobUrl, modality, slotConnections} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, implFile, modality, slotConnections};
+    return {args: argsLiteral, name, verbs, description, implFile, implBlobUrl, modality, slotConnections};
   }
 
   static fromLiteral(literal: SerializedParticleSpec) {
-    let {args, name, verbs, description, implFile, modality, slotConnections} = literal;
+    let {args, name, verbs, description, implFile, implBlobUrl, modality, slotConnections} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, modality, slotConnections});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, implBlobUrl, modality, slotConnections});
   }
 
   // Note: this method shouldn't be called directly.

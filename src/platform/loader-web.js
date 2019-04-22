@@ -31,16 +31,16 @@ export class PlatformLoader extends Loader {
   flushCaches() {
     simpleCache = {};
   }
+  loadResource(name) {
+    // subclass impl differentiates paths and URLs,
+    // for browser env we can feed both kinds into _loadURL
+    return this._loadURL(name);
+  }
   _loadURL(url) {
     const resolved = this._resolve(url);
     const cacheKey = this.normalizeDots(url);
     const resource = simpleCache[cacheKey];
     return resource || (simpleCache[cacheKey] = super._loadURL(resolved));
-  }
-  loadResource(name) {
-    // subclass impl differentiates paths and URLs,
-    // for browser env we can feed both kinds into _loadURL
-    return this._loadURL(name);
   }
   _resolve(path) {
     let url = this._urlMap[path];
@@ -55,13 +55,34 @@ export class PlatformLoader extends Loader {
     //log(`resolve(${path}) = ${url}`);
     return url;
   }
+  async provisionParticleSpecBlobUrl(spec) {
+    // if needed, construct spec.implBlobUrl for spec.implFile
+    if (!spec.implBlobUrl) {
+      spec.setImplBlobUrl(await this.provisionObjectUrl(spec.implFile));
+    }
+  }
+  async provisionObjectUrl(fileName) {
+    const raw = await this.loadResource(fileName);
+    /*
+    // TODO(sjmiles): can manipulate/examine code before executing, right here
+    // ... consider automarshalling `defineParticle` boilerplate
+    const code = !fileName.includes('Launcher') ? raw :
+`'use strict';
+defineParticle(({Particle, DomParticle, MultiplexerDomParticle, TransformationDomParticle, resolver, log, html}) => {
+${raw}
+return AParticle;
+});`;
+    */
+    const code = raw;
+    return URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+  }
   // Below here invoked from inside Worker
-  async requireParticle(fileName) {
+  async requireParticle(unresolvedPath, blobUrl) {
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke "importScripts(resolver('foo/othermodule.js'))"
-    this.mapParticleUrl(fileName);
-    // determine URL to load fileName
-    const url = this._resolve(fileName);
+    this.mapParticleUrl(unresolvedPath);
+    // resolved target
+    const url = blobUrl || this._resolve(unresolvedPath);
     // load wrapped particle
     const particle = this.loadWrappedParticle(url);
     // execute particle wrapper, if we have one
@@ -82,7 +103,7 @@ export class PlatformLoader extends Loader {
       result = particleWrapper;
     };
     try {
-    // import (execute) particle code
+      // import (execute) particle code
       importScripts(url);
     } catch (x) {
       error(x);

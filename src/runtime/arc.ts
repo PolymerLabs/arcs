@@ -430,10 +430,13 @@ ${this.activeRecipe.toString()}`;
     return [...this.loadedParticleInfo.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle: Particle) {
+  async _instantiateParticle(recipeParticle: Particle) {
     recipeParticle.id = this.generateID('particle');
     const info = {spec: recipeParticle.spec, stores: new Map<string, StorageProviderBase>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
+
+    // provide particle caching via a BloblUrl representing spec.implFile
+    await this._provisionSpecUrl(recipeParticle.spec);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       const store = this.findStoreById(connection.handle.id);
@@ -442,6 +445,13 @@ ${this.activeRecipe.toString()}`;
       info.stores.set(name, store as StorageProviderBase);
     }
     this.pec.instantiate(recipeParticle, info.stores);
+  }
+
+  async _provisionSpecUrl(spec: ParticleSpec) {
+    // if supported, construct spec.implBlobUrl for spec.implFile
+    if (this.loader && this.loader['provisionParticleSpecBlobUrl']) {
+      await this.loader['provisionParticleSpecBlobUrl'](spec);
+    }
   }
 
   generateID(component: string = ''): Id {
@@ -576,7 +586,7 @@ ${this.activeRecipe.toString()}`;
       this._registerStore(store, recipeHandle.tags);
     }
 
-    particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
+    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
