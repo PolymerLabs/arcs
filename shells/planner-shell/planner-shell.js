@@ -84,9 +84,9 @@ export class PlannerShellInterface {
 }
 
 // These are sample users for testing.
-PlannerShellInterface.DEFAULT_USER_ID = Const.defaultUserId;
-PlannerShellInterface.DEFAULT_STORAGE = Const.defaultStorageKey;
-PlannerShellInterface.DEFAULT_MANIFEST = Const.defaultManifest;
+PlannerShellInterface.DEFAULT_USER_ID = Const.DEFAULT.userId;
+PlannerShellInterface.DEFAULT_STORAGE = Const.DEFAULT.storageKey;
+PlannerShellInterface.DEFAULT_MANIFEST = Const.DEFAULT.manifest;
 
 const visualizeContext = context => {
   console.log('== context ===========================');
