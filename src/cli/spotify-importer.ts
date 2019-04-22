@@ -112,7 +112,7 @@ import '../runtime/storage/pouchdb-provider.js';
     // First two entries in argv are the node binary and this file.
     const args = process.argv.slice(2);
 
-    if (args[0] == '--list') {
+    if (args[0] === '--list') {
       if (args.length === 1) {
         await showPlaylists(await connect());
       } else {
