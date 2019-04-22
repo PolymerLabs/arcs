@@ -18,6 +18,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
+import {Content} from './slot-consumer.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 
@@ -34,7 +35,7 @@ export type StopRenderOptions = {
 };
 
 export class ParticleExecutionHost {
-  private _apiPort : PECOuterPort;
+  private readonly _apiPort : PECOuterPort;
   close : () => void;
   private readonly arc: Arc;
   private nextIdentifier = 0;
@@ -72,7 +73,7 @@ export class ParticleExecutionHost {
         this.SimpleCallback(callback, data);
       }
 
-      async onHandleGet(handle: StorageProviderBase, callback: number) {
+      async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
         const data = await (handle as any).get();
@@ -91,6 +92,7 @@ export class ParticleExecutionHost {
         // tslint:disable-next-line: no-any
         (handle as any).set(data, particleId, barrier);
       }
+
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
@@ -267,7 +269,7 @@ export class ParticleExecutionHost {
     this._apiPort.Stop();
   }
 
-  get idle() {
+  get idle(): Promise<Map<Particle, number[]>> | undefined {
     if (this.idlePromise == undefined) {
       this.idlePromise = new Promise((resolve, reject) => {
         this.idleResolve = resolve;
@@ -278,15 +280,15 @@ export class ParticleExecutionHost {
     return this.idlePromise;
   }
 
-  get messageCount() {
+  get messageCount(): number {
     return this._apiPort.messageCount;
   }
 
-  sendEvent(particle, slotName, event) {
+  sendEvent(particle, slotName, event): void {
     this._apiPort.UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, StorageProviderBase>) {
+  instantiate(particle: Particle, stores: Map<string, StorageProviderBase>): void {
     stores.forEach((store, name) => {
       this._apiPort.DefineHandle(store, store.type.resolvedType(), name);
     });
@@ -301,7 +303,7 @@ export class ParticleExecutionHost {
     this._apiPort.StopRender(particle, slotName);
   }
 
-  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content) {
+  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
     this._apiPort.InnerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content);
   }
 }

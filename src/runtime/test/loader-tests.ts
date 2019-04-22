@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
+import {Particle} from '../particle.js';
 
 describe('loader', () => {
   it('can extract a path', () => {
@@ -27,9 +28,9 @@ describe('loader', () => {
   it('can load a particle from a particle spec', async () => {
     const files = [];
     const testLoader = new class extends Loader {
-      async requireParticle(fileName) {
+      async requireParticle(fileName): Promise<typeof Particle> {
         files.push(fileName);
-        return {};
+        return class extends Particle {};
       }
     }();
     const options = {
