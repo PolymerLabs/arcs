@@ -181,7 +181,6 @@ export abstract class StorageProxy implements Store {
   }
 
   _notify(kind: string, details, predicate=(ignored: HandleOptions) => true) {
-    console.log('_notify: ' + kind, details);
     for (const {handle, particle} of this.observers) {
       if (predicate(handle.options)) {
         this.scheduler.enqueue(particle, handle, [kind, particle, details]);
