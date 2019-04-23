@@ -72,6 +72,8 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     }
     state.config.plannerDebug = !state.config.plannerNoDebug;
     ProcessConfig.persistParams(configOptions, state.config);
+    // TODO(sjmiles): only works if config is a Highlander
+    WebConfig.config = state.config;
   }
 }
 customElements.define('web-config', WebConfig);
