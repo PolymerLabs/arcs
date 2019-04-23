@@ -8,88 +8,70 @@
  */
 
 import {Xen} from '../../lib/components/xen.js';
+import {ProcessConfig} from '../../lib/components/process-config.js';
 import {Const} from '../../configuration/constants.js';
 
 const log = Xen.logFactory('WebConfig', '#60ac66');
+
+const configOptions = {
+  //configPropertyName: {
+  //  aliases: [...] // aliases for configPropertyName
+  //  default: ... // default value
+  //  map: { ... } // map human parameter names to actual config values
+  //  localStorageKey: "..." // key for persisting to/from localStorage
+  //  persistToUrl: <Boolean> // whether parameter should be written into URL
+  //},
+  storage: {
+    aliases: ['storageKey'],
+    default: Const.DEFAULT.storageKey,
+    map: {
+      'firebase': Const.DEFAULT.firebaseStorageKey,
+      'pouchdb': Const.DEFAULT.pouchdbStorageKey,
+      'pouch': Const.DEFAULT.pouchdbStorageKey,
+      'volatile': Const.DEFAULT.volatileStorageKey,
+      'default': Const.DEFAULT.storageKey
+    },
+    localStorageKey: Const.LOCALSTORAGE.storage
+  },
+  userid: {
+    aliases: ['user'],
+    localStorageKey: Const.LOCALSTORAGE.user
+  },
+  arckey: {
+    aliases: ['arc'],
+    persistToUrl: true
+  },
+  search: {
+  },
+  plannerStorage: {
+    localStorageKey: Const.LOCALSTORAGE.plannerStorage,
+  },
+  plannerNoDebug: {
+    boolean: true
+  },
+  plannerOnlyConsumer: {
+    boolean: true
+  }
+};
 
 export class WebConfig extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['userid', 'arckey'];
   }
-  _update({userid, arckey}, state, oldProps) {
+  update({userid, arckey}, state) {
     if (!state.config) {
-      const config = this.basicConfig();
-      this.updateUserConfig(config);
-      this.updateStorageConfig(config);
-      this._fire('config', config);
-      state.config = config;
+      const params = (new URL(document.location)).searchParams;
+      state.config = ProcessConfig.processConfig(configOptions, params);
+      this._fire('config', state.config);
     }
-    // TODO(sjmiles): persisting user makes it hard to share by copying URL
-    // ... but not having it makes it hard to test multi-user scenarios
-    //this.setUrlParam('user', null);
     if (userid) {
-      localStorage.setItem(Const.LOCALSTORAGE.user, userid);
+      state.config.userid = userid;
     }
-    if (arckey != null) {
-      this.setUrlParam('arc', arckey);
+    if (arckey) {
+      state.config.arckey = arckey;
     }
-    // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
-    this.setUrlParam('search', null);
-    // if (search && search !== oldProps.search) {
-    //   ArcUtils.setUrlParam('search', search);
-    // }
-  }
-  basicConfig() {
-    const params = (new URL(document.location)).searchParams;
-    return {
-      //modality: 'dom',
-      //root: params.get('root') || window.arcsPath,
-      //manifestPath: params.get('manifest'),
-      //solo: params.get('solo'),
-      //defaultManifest: window.defaultManifest,
-      storage: params.get('storage') || localStorage.getItem(Const.LOCALSTORAGE.storage),
-      userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
-      arckey: params.get('arc'),
-      search: params.get('search') || '',
-      plannerStorage: params.get('plannerStorage') || localStorage.getItem(Const.LOCALSTORAGE.plannerStorage),
-      plannerDebug: !params.has('plannerNoDebug'),
-      plannerOnlyConsumer: params.has('plannerOnlyConsumer'),
-      //urls: window.shellUrls || {},
-      //useStorage: !params.has('legacy') && !params.has('legacy-store'),
-      //useSerialization: !params.has('legacy')
-    };
-  }
-  updateStorageConfig(config) {
-    if (config.storage === 'firebase') {
-      config.storage = Const.defaultFirebaseStorageKey;
-    }
-    if (config.storage === 'pouchdb') {
-      config.storage = Const.defaultPouchdbStorageKey;
-    }
-    if (!config.storage || config.storage === 'default') {
-      config.storage = Const.defaultStorageKey;
-    }
-    localStorage.setItem(Const.LOCALSTORAGE.storage, config.storage);
-    if (!config.plannerStorage || config.plannerStorage === 'default') {
-      config.plannerStorage = Const.defaultPlannerStorageKey;
-    }
-    localStorage.setItem(Const.LOCALSTORAGE.plannerStorage, config.plannerStorage);
-    return config;
-  }
-  updateUserConfig(config) {
-    if (!config.userid) {
-      config.userid = Const.defaultUserId;
-    }
-  }
-  setUrlParam(name, value) {
-    // TODO(sjmiles): memoize url
-    const url = new URL(document.location.href);
-    if (!value) {
-      url.searchParams.delete(name);
-    } else {
-      url.searchParams.set(name, value);
-    }
-    window.history.replaceState({}, '', decodeURIComponent(url.href));
+    state.config.plannerDebug = !state.config.plannerNoDebug;
+    ProcessConfig.persistParams(configOptions, state.config);
   }
 }
 customElements.define('web-config', WebConfig);

@@ -8,7 +8,6 @@
  */
 
 import {crackStorageKey} from './context-utils.js';
-import {Reference} from '../../../../build/runtime/reference.js';
 
 const pendingStores = {};
 
@@ -52,7 +51,7 @@ const ContextStoresImpl = class {
     const id = this.getDecoratedId(entity, uid);
     const decoratedEntity = {id, rawData: entity.rawData};
     // context stores are always Collection
-    store.store(decoratedEntity, [store.generateID()]);
+    store.store(decoratedEntity, [String(Math.random())]);
   }
   removeEntityWithUid(store, entity, uid) {
     const id = this.getDecoratedId(entity, uid);
