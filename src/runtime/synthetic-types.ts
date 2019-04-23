@@ -8,6 +8,7 @@
 
 import {Id} from './id.js';
 import {Type} from './type.js';
+import {ModelValue} from './storage/crdt-collection-model.js';
 
 // Equivalent to an Entity with Schema { serialization Text }
 export class ArcInfo {
@@ -22,17 +23,19 @@ export class ArcInfo {
   }
 
   // Retrieves the serialized string from a stored instance of ArcInfo.
-  static extractSerialization(data) {
+  static extractSerialization(data): string {
     return data.serialization.replace(/\bimport .*\n/g, '');
   }
 }
 
-export class ArcHandle {
+export class ArcHandle implements ModelValue {
+  public readonly id: string;
   public readonly storageKey: string;
   public readonly type: Type;
   public readonly tags: string[];
 
-  constructor(storageKey, type, tags) {
+  constructor(id: string, storageKey: string, type: Type, tags: string[]) {
+    this.id = id;
     this.storageKey = storageKey;
     this.type = type;
     this.tags = tags;

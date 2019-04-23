@@ -15,6 +15,7 @@ import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
+import {ModelValue} from './storage/crdt-collection-model.js';
 
 export type ParticleDescription = {
   _particle: Particle,
@@ -24,7 +25,7 @@ export type ParticleDescription = {
 };
 
 export type HandleDescription = {pattern: string, _handleConn: HandleConnection, value: DescriptionValue};
-export type DescriptionValue = {entityValue?: string|{}, valueDescription?: string, collectionValues?: string[], bigCollectionValues?: string[], interfaceValue?: string | {}};
+export type DescriptionValue = {entityValue?: string|{}, valueDescription?: string, collectionValues?: ModelValue[], bigCollectionValues?: string[], interfaceValue?: string | {}};
 
 export type CombinedDescriptionsOptions = {skipFormatting?: boolean};
 

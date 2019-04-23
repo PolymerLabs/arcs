@@ -11,7 +11,7 @@ import {Id} from '../id.js';
 import {Comparable, compareNumbers, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
-import {SerializedModelEntry} from './crdt-collection-model.js';
+import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {Store, VariableStore, CollectionStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
@@ -37,7 +37,7 @@ export interface VariableStorageProvider extends StorageProviderBase, VariableSt
  */
 export interface CollectionStorageProvider extends StorageProviderBase, CollectionStore {
   // tslint:disable-next-line: no-any
-  toList(): Promise<any[]>;
+  toList(): Promise<ModelValue[]>;
 
   // tslint:disable-next-line: no-any
   getMultiple(ids: string[]): Promise<any[]>;

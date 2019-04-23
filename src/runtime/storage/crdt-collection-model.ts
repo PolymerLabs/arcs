@@ -19,7 +19,8 @@ import {assert} from '../../platform/assert-web.js';
 
 export interface ModelValue {
   id: string;
-  rawData?: {};
+  // tslint:disable-next-line: no-any
+  rawData?: {[index: string]: any};
   storageKey?: string;
 }
 

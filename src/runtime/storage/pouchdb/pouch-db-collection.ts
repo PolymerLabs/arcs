@@ -158,7 +158,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     return (await this.getModel()).toLiteral();
   }
 
-  async toList() {
+  async toList(): Promise<ModelValue[]> {
     await this.initialized;
     return (await this._toList()).map(item => item.value);
   }

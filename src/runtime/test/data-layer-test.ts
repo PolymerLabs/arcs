@@ -37,6 +37,9 @@ describe('entity', async () => {
     const clone = list[0];
     assert.isDefined(clone);
     assert.deepEqual(clone.rawData, {value: 'hello world'});
-    assert.notEqual(entity, clone);
+
+    // TODO(https://github.com/PolymerLabs/arcs/pull/2916#discussion_r277793505)
+    // Test that clone/entity are not deeply equal.  Revisit once we
+    // provide the full storage stack to the shell
   });
 });
