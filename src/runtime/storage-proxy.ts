@@ -319,7 +319,7 @@ export class CollectionProxy extends StorageProxy implements CollectionStore {
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request
-      return new Promise<{}[]>(resolve =>
+      return new Promise<ModelValue[]>(resolve =>
         this.port.HandleToList(this, resolve));
     }
   }
@@ -524,7 +524,9 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
     throw new Error("_synchronizeModel not implemented for BigCollectionProxy");
   }
   // TODO: surface get()
-
+  async get(id: string) {
+    throw new Error("unimplemented");
+  }
   async store(value, keys, particleId): Promise<void> {
     return new Promise<void>(resolve =>
       this.port.HandleStore(this, resolve, {value, keys}, particleId));

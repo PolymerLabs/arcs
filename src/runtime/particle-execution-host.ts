@@ -18,7 +18,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 
 export type StartRenderOptions = {
@@ -72,29 +72,21 @@ export class ParticleExecutionHost {
         this.SimpleCallback(callback, data);
       }
 
-      async onHandleGet(handle: StorageProviderBase, callback: number) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        const data = await (handle as any).get();
+      async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
+        const data = await (handle as VariableStorageProvider).get();
         this.SimpleCallback(callback, data);
       }
 
       async onHandleToList(handle: StorageProviderBase, callback: number) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        const data = await (handle as any).toList();
+        const data = await (handle as CollectionStorageProvider).toList();
         this.SimpleCallback(callback, data);
       }
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        (handle as any).set(data, particleId, barrier);
+        (handle as VariableStorageProvider).set(data, particleId, barrier);
       }
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        (handle as any).clear(particleId, barrier);
+        (handle as VariableStorageProvider).clear(particleId, barrier);
       }
 
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
@@ -111,29 +103,21 @@ export class ParticleExecutionHost {
         this.SimpleCallback(callback, {});
       }
 
-      async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        await (handle as any).removeMultiple(data, particleId);
+      async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: [], particleId: string) {
+        await (handle as CollectionStorageProvider).removeMultiple(data, particleId);
         this.SimpleCallback(callback, {});
       }
 
       async onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        this.SimpleCallback(callback, await (handle as any).stream(pageSize, forward));
+        this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).stream(pageSize, forward));
       }
 
-      async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        this.SimpleCallback(callback, await (handle as any).cursorNext(cursorId));
+      async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number) {
+        this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).cursorNext(cursorId));
       }
 
-      onStreamCursorClose(handle: StorageProviderBase, cursorId: string) {
-        // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-        // tslint:disable-next-line: no-any
-        (handle as any).cursorClose(cursorId);
+      onStreamCursorClose(handle: StorageProviderBase, cursorId: number) {
+        (handle as BigCollectionStorageProvider).cursorClose(cursorId);
       }
 
       onIdle(version: number, relevance: Map<Particle, number[]>) {
