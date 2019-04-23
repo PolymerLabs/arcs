@@ -267,7 +267,7 @@ export class MatchRecipeByVerb extends Strategy {
     return false;
   }
 
-  static slotsMatchConstraint(particle: Particle, slotSpecs: Map<string, ConsumeSlotConnectionSpec>, name, constraints): boolean {
+  static slotsMatchConstraint(particle: Particle, slotSpecs: ReadonlyMap<string, ConsumeSlotConnectionSpec>, name, constraints): boolean {
     if (slotSpecs.get(name) == null) {
       return false;
     }

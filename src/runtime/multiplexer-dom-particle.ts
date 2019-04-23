@@ -27,7 +27,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       listHandleName: string,
       particleHandleName: string,
       hostedParticle: ParticleSpec,
-      handles: Map<string, Handle>,
+      handles: ReadonlyMap<string, Handle>,
       arc) {
     const otherMappedHandles: string[] = [];
     const otherConnections: string[] = [];
@@ -53,7 +53,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     return [otherMappedHandles, otherConnections];
   }
 
-  async setHandles(handles: Map<string, Handle>) {
+  async setHandles(handles: ReadonlyMap<string, Handle>) {
     this.handleIds = {};
     const arc = await this.constructInnerArc();
     const listHandleName = 'list';
