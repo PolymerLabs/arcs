@@ -202,12 +202,8 @@ export class ParticleExecutionContext {
     this.pendingLoads.push(p);
     const clazz = await this.loader.loadParticleClass(spec);
     const capabilities = this.defaultCapabilitySet();
-    const particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
+    const particle = new clazz(capabilities);
 
-    // TODO(lindner): what's going on here???
-    particle['id'] = id;
-    // tslint:disable-next-line: no-any
-    (particle as any)['capabilities'] = capabilities;  // should be set in the constructor
     this.particles.push(particle);
 
     const handleMap = new Map();

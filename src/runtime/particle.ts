@@ -33,7 +33,7 @@ export class Particle {
     protected slotProxiesByName: Map<string, SlotProxy> = new Map();
     private readonly capabilities: {constructInnerArc?: Function};
 
-  constructor(capabilities?: {constructInnerArc?: Function}) {
+  constructor(capabilities: {constructInnerArc?: Function}) {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];

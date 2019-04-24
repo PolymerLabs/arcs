@@ -54,8 +54,8 @@ class MyLoader extends StubLoader {
     const clazz = class extends Particle {
       relevances: number[];
 
-      constructor() {
-        super();
+      constructor(capabilities) {
+        super(capabilities);
         this.relevances = [1];
       }
       async setHandles(handles) {
