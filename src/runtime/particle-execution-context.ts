@@ -79,7 +79,7 @@ export class ParticleExecutionContext {
         }
       }
 
-      onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>) {
+      onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
         return pec._instantiateParticle(id, spec, proxies);
       }
 
@@ -103,7 +103,7 @@ export class ParticleExecutionContext {
         particle.fireEvent(slotName, event);
       }
 
-      onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]) {
+      onStartRender(particle: Particle, slotName: string, providedSlots: ReadonlyMap<string, string>, contentTypes: string[]) {
         particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
         particle.renderSlot(slotName, contentTypes);
       }
@@ -195,7 +195,7 @@ export class ParticleExecutionContext {
     };
   }
 
-  async _instantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>) {
+  async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
     let resolve : () => void = null;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
