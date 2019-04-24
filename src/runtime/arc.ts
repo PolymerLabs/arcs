@@ -509,11 +509,31 @@ ${this.activeRecipe.toString()}`;
     return arc;
   }
 
-  async instantiate(recipe: Recipe) {
+  /** in-flight instantiate, or Promise.resolve() if not executing */
+  private nextInstantiate: Promise<void> = Promise.resolve();
+
+  /**
+   * Adds a new recipe to instantiate in the Arc.
+   *
+   * Executes the following steps:
+   * - TBD1
+   * - TBD2
+   *
+   * Waits for completion of an existing Instantiate before returning.
+   */
+  async instantiate(recipe: Recipe): Promise<void> {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
+    await this.nextInstantiate;
+    this.nextInstantiate = this._doInstantiate(recipe);
+    await this.nextInstantiate;
+    this.nextInstantiate = Promise.resolve();
+  }
+
+  // Critical section for instantiate,
+  private async _doInstantiate(recipe: Recipe): Promise<void> {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
@@ -593,7 +613,7 @@ ${this.activeRecipe.toString()}`;
       // TODO: pass slot-connections instead
       await this.pec.slotComposer.initializeRecipe(this, particles);
     }
-
+    
     if (!this.isSpeculative) { // Note: callbacks not triggered for speculative arcs.
       this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
