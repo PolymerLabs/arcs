@@ -439,8 +439,8 @@ export abstract class PECOuterPort extends APIPort {
   abstract onHandleRemove(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
   abstract onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: {}, particleId: string);
   abstract onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean);
-  abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: string);
-  abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: string);
+  abstract onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number);
+  abstract onStreamCursorClose(handle: StorageProviderBase, cursorId: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
