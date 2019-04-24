@@ -18,6 +18,10 @@ const re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
  * Particle that does transformation stuff with DOM.
  */
 export class TransformationDomParticle extends DomParticle {
+  constructor(capabilities: {constructInnerArc?: Function}) {
+    super(capabilities);
+  }
+
   getTemplate(slotName) {
     // TODO: add support for multiple slots.
     return this._state.template;

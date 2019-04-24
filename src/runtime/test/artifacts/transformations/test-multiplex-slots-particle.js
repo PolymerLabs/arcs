@@ -8,8 +8,8 @@
 
 defineParticle(({TransformationDomParticle}) => {
   return class MultiplexSlotsParticle extends TransformationDomParticle {
-    constructor() {
-      super();
+    constructor(capabilities) {
+      super(capabilities);
       this._handleIds = new Set();
     }
 
