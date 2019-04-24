@@ -84,7 +84,7 @@ export class UserContext {
   //   return arcsStore;
   // }
   // async fetchArcsStore(storage, userid) {
-  //   const store = await SyntheticStores.getArcsStore(storage, `${userid}${Const.launcherSuffix}`);
+  //   const store = await SyntheticStores.getArcsStore(storage, `${userid}${Const.DEFAULT.launcherSuffix}`);
   //   if (store) {
   //     log(`marshalled arcsStore for [${userid}]`); //[${storage}]`, store);
   //     return store;

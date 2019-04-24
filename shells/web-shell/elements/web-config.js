@@ -62,6 +62,8 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     if (!state.config) {
       const params = (new URL(document.location)).searchParams;
       state.config = ProcessConfig.processConfig(configOptions, params);
+      state.config.plannerDebug = !state.config.plannerNoDebug;
+      state.config.storage = this.expandStorageMacro(state.config.storage);
       this._fire('config', state.config);
     }
     if (userid) {
@@ -70,10 +72,18 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     if (arckey) {
       state.config.arckey = arckey;
     }
-    state.config.plannerDebug = !state.config.plannerNoDebug;
     ProcessConfig.persistParams(configOptions, state.config);
     // TODO(sjmiles): only works if config is a Highlander
     WebConfig.config = state.config;
+  }
+  // TODO(sjmiles): make this a ProcessConfig ability(?)
+  // support some macros in storage keys
+  expandStorageMacro(storage) {
+    return storage
+      .replace('$firebase', configOptions.storage.map.firebase)
+      .replace('$pouchdb', configOptions.storage.map.pouchdb)
+      .replace('$pouch', configOptions.storage.map.pouch)
+      ;
   }
 }
 customElements.define('web-config', WebConfig);

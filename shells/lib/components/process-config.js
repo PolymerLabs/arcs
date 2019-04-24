@@ -32,7 +32,10 @@ export const ProcessConfig = class {
     } else {
       // use local storage value if available
       if (option.localStorageKey) {
-        value = localStorage.getItem(option.localStorageKey);
+        const storageValue = localStorage.getItem(option.localStorageKey);
+        if (storageValue !== null) {
+          value = storageValue;
+        }
       }
       // otherwise use default value
       if (!value && ('default' in option)) {
@@ -51,12 +54,14 @@ export const ProcessConfig = class {
   static persistParams(options, config) {
     Object.keys(options).forEach(key => this.persistParam(key, options[key], config[key]));
   }
-  static persistParam(name, {localStorageKey, persistToUrl}, value) {
-    if (localStorageKey) {
+  static persistParam(name, {localStorageKey, persistToUrl, aliases}, value) {
+    if (localStorageKey && value !== undefined) {
       localStorage.setItem(localStorageKey, value);
     }
     if (persistToUrl) {
       this.setUrlParam(name, value);
+      // remove any aliases in favor of the canonical form
+      aliases.forEach(alias => this.setUrlParam(alias));
     }
   }
   static setUrlParam(name, value) {
