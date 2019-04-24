@@ -46,7 +46,11 @@ const AbstractListener = class {
 };
 
 export const ArcHandleListener = class extends AbstractListener {
+  createLogger() {
+    return logFactory(`ArcHandleListener`, `#4040FF`);
+  }
   async add(handle) {
+    //this.log('add', handle);
     const store = await SyntheticStores.getHandleStore(handle);
     // TODO(sjmiles): sketchy
     store.handle = handle;
@@ -82,6 +86,7 @@ export const ShareListener = class extends AbstractListener {
     return logFactory(`ShareListener`, 'blue');
   }
   async add(entity, store) {
+    //this.log('add', entity);
     // TODO(sjmiles): roll this into 'metrics'?
     let backingStorageKey = store.storageKey;
     if (store.backingStore) {
@@ -116,7 +121,7 @@ export const ShareListener = class extends AbstractListener {
     }
   }
   async remove(entity, store) {
-    this.log('removing entity', entity);
+    //this.log('removing entity', entity);
     const {base: userid} = crackStorageKey(store.storageKey);
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
     if (metrics) {
@@ -145,6 +150,7 @@ export const ProfileListener = class extends ShareListener {
     return (simpleNameOfType(store.type) === 'Friend' && store.type.isCollection);
   }
   async add(entity, store) {
+    //this.log('add', entity);
     await super.add(entity, store);
     if (this.isFriendStore(store)) {
       const launcher = await getLauncherStore(entity.rawData.publicKey);
