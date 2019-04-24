@@ -26,13 +26,13 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
   async remove(id: string, keys: string[], originatorId?: string) {
     throw new Error('NotImplemented');
   }
-  async stream(pageSize: number, forward = true) {
+  async stream(pageSize: number, forward = true): Promise<number> {
     throw new Error('NotImplemented');
   }
   async cursorNext(cursorId: number) {
     throw new Error('NotImplemented');
   }
-  cursorClose(cursorId: number) {
+  cursorClose(cursorId: number): Promise<void> {
     throw new Error('NotImplemented');
   }
   cursorVersion(cursorId: number) {
