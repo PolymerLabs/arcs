@@ -34,7 +34,7 @@ const pecIndustry = loader => {
 const provisionWorkersUrls = loader => {
   workerUrl = loader._resolve(WORKER_PATH);
   loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
-}
+};
 
 const _expandUrls = urlMap => {
   const remap = {};

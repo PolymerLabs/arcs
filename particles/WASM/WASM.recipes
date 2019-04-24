@@ -1,0 +1,13 @@
+schema Thunk
+  Text thunk
+
+particle WasmTest in 'source/WasmTest.js'
+  consume root
+  in Thunk thunk
+
+recipe WasmTest
+  create as thunk
+  slot 'rootslotid-root' as root
+  WasmTest
+    thunk = thunk
+    consume root as root

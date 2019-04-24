@@ -31,7 +31,7 @@ export class Relevance {
     return relevance;
   }
 
-  apply(relevance: Map<Particle, number[]>) {
+  apply(relevance: ReadonlyMap<Particle, number[]>) {
     for (const key of relevance.keys()) {
       if (this.relevanceMap.has(key)) {
         this.relevanceMap.set(

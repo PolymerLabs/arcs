@@ -17,7 +17,7 @@ import { Particle } from './particle.js';
 export abstract class EndPoint implements Comparable<EndPoint> {
   abstract _compareTo(other: EndPoint): number;
   abstract _clone(cloneMap?: CloneMap);
-  abstract toString(nameMap?: Map<RecipeComponent, string>);
+  abstract toString(nameMap?: ReadonlyMap<RecipeComponent, string>);
 }
 
 
@@ -42,7 +42,7 @@ export class ParticleEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: Map<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
     if (!this.connection) {
       return `${this.particle.name}`;
     }
@@ -72,7 +72,7 @@ export class InstanceEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: Map<RecipeComponent, string>) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string>) {
     if (!this.connection) {
       return `${nameMap.get(this.instance)}`;
     }
@@ -98,7 +98,7 @@ export class HandleEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: Map<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
     return `${this.handle.localName}`;
   }
 }
@@ -120,7 +120,7 @@ export class TagEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: Map<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
     return this.tags.map(a => `#${a}`).join(' ');
   }
 }
@@ -164,7 +164,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     return 0;
   }
 
-  toString(nameMap: Map<RecipeComponent, string> = undefined, options: ToStringOptions = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined, options: ToStringOptions = undefined) {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';

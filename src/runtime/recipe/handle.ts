@@ -252,7 +252,7 @@ export class Handle {
     return resolved;
   }
 
-  toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string>, options: ToStringOptions) {
     if (this._immediateValue) {
       // Immediate Value handles are only rendered inline with particle connections.
       // E.g. hostedParticle = ShowProduct
