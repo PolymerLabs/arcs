@@ -8,8 +8,8 @@ particle UserNameForm in 'source/UserNameForm.js'
 
 particle FriendsPicker in 'source/FriendsPicker.js'
   inout [Friend] friends
-  in [Avatar] avatars
-  in [UserName] userNames
+  in [AvatarShare] avatars
+  in [UserNameShare] userNames
   consume friends
   description `select friends`
 

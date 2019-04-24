@@ -1,3 +1,6 @@
 schema UserName
   Text userName
 
+import 'Share.schema'
+schema UserNameShare extends Share
+  Reference<UserName> ref

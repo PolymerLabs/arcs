@@ -33,13 +33,18 @@ const template = html`
     font-size: 0.8em;
   }
   right {
-    display: block;
+    display: flex;
+    align-items: center;
   }
   [expand] {
-    padding-top: 2px;
+    padding-bottom: 3px;
   }
   data-explorer:not([hidden]) {
     padding-left: 32px;
+  }
+  [type="object"] {
+    font-weight: bold;
+    font-size: 0.9em;
   }
   [type="number"] {
     color: blue;
@@ -99,7 +104,7 @@ class DataItem extends Xen.Base {
     return {
       type,
       name,
-      value: isnull || isobject ? '(null)' : isbool ? value : String(value),
+      value: isnull || isobject ? 'null' : isbool ? value : String(value),
       isobject: isobject && state.expanded,
       notstring: !isstring,
       notbool: !isbool,

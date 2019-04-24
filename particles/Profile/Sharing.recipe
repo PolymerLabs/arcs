@@ -4,31 +4,31 @@ import 'UserName.schema'
 resource PROFILE_avatarResource
   start
   []
-store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
+store PROFILE_avatar of [AvatarShare] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
 
 resource PROFILE_userNameResource
   start
   []
-store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
+store PROFILE_userName of [UserNameShare] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
 
 resource BOXED_avatarResource
   start
   []
-store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
+store BOXED_avatar of [AvatarShare] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
 
 resource BOXED_userNameResource
   start
   []
-store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
+store BOXED_userName of [UserNameShare] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
 
 // the below is required to make the arc aware of these stores
 
 particle Sharing in './source/Sharing.js'
-  in [Avatar] boxedAvatar
-  in [Avatar] profileAvatar
+  in [AvatarShare] boxedAvatar
+  in [AvatarShare] profileAvatar
   //
-  in [UserName] profileUserName
-  in [UserName] boxedUserName
+  in [UserNameShare] profileUserName
+  in [UserNameShare] boxedUserName
 
 recipe Sharing
   use 'PROFILE_avatar' as profileAvatar

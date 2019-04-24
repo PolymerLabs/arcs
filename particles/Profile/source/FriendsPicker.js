@@ -110,29 +110,38 @@ defineParticle(({DomParticle, html, resolver, log}) => {
     get template() {
       return template;
     }
-    render({friends, avatars, userNames}, state) {
-      //const user = props.user || {};
-      //const others = friends.filter(p => p.id !== user.id);
-      const friendModels = {$template: 'friend-avatars'};
-      friendModels.models = (friends || []).map((friend, i) => {
-        const profile = this.getUserProfile(friend.publicKey, avatars, userNames);
-        return {
-          key: i,
-          value: profile.publicKey,
-          name: profile.name,
-          url: profile.avatar
-        };
-      });
+    willReceiveProps(props) {
+      this.calcFriendModels(props);
+    }
+    render(props, {showPopup, friendModels}) {
       return {
         friendModels,
         newFriendName: '',
-        showPopup: state.showPopup,
-        popupStyle: `display: ${state.showPopup ? 'block' : 'none'};`
+        showPopup: showPopup,
+        popupStyle: `display: ${showPopup ? 'block' : 'none'};`
       };
     }
-    getUserProfile(publicKey, avatars, names) {
-      const avatar = this.boxQuery(avatars, publicKey)[0];
-      const name = this.boxQuery(names, publicKey)[0];
+    async calcFriendModels({friends, avatars, userNames}) {
+      if (friends) {
+        const promises = friends.map(async (friend, i) => {
+          const profile = await this.getUserProfile(friend.publicKey, avatars, userNames);
+          return {
+            key: i,
+            value: profile.publicKey,
+            name: profile.name,
+            url: profile.avatar
+          };
+        });
+        const friendModels = {
+          $template: 'friend-avatars',
+          models: await Promise.all(promises)
+        };
+        this.setState({friendModels});
+      }
+    }
+    async getUserProfile(publicKey, avatars, names) {
+      const avatar = (await this.boxQuery(avatars, publicKey))[0];
+      const name = (await this.boxQuery(names, publicKey))[0];
       return {
         publicKey,
         avatar: (avatar && avatar.url) || resolver(`FriendsPicker/../assets/user.png`),
