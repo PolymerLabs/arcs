@@ -20,8 +20,8 @@ const debounce = (key, action, delay) => {
 };
 
 const XenStateMixin = Base => class extends Base {
-  constructor(arg) {
-    super(arg);
+  constructor() {
+    super();
     this._pendingProps = nob();
     this._props = this._getInitialProps() || nob();
     this._lastProps = nob();

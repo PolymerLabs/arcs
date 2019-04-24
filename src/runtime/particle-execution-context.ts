@@ -202,7 +202,8 @@ export class ParticleExecutionContext {
     this.pendingLoads.push(p);
     const clazz = await this.loader.loadParticleClass(spec);
     const capabilities = this.defaultCapabilitySet();
-    const particle = new clazz(capabilities);
+    const particle = new clazz();
+    particle.setCapabilities(capabilities);
 
     this.particles.push(particle);
 

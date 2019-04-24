@@ -27,8 +27,8 @@ export interface DomParticle extends StatefulDomParticle {
  * to handle updates.
  */
 export class DomParticle extends XenStateMixin(DomParticleBase) {
-  constructor(capabilities: {constructInnerArc?: Function}) {
-    super(capabilities);
+  constructor() {
+    super();
     // alias properties to remove `_`
     this.state = this._state;
     this.props = this._props;
