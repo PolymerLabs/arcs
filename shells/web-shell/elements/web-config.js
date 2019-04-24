@@ -62,6 +62,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     if (!state.config) {
       const params = (new URL(document.location)).searchParams;
       state.config = ProcessConfig.processConfig(configOptions, params);
+      state.config.plannerDebug = !state.config.plannerNoDebug;
       this._fire('config', state.config);
     }
     if (userid) {
@@ -70,7 +71,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     if (arckey) {
       state.config.arckey = arckey;
     }
-    state.config.plannerDebug = !state.config.plannerNoDebug;
     ProcessConfig.persistParams(configOptions, state.config);
     // TODO(sjmiles): only works if config is a Highlander
     WebConfig.config = state.config;
