@@ -27,11 +27,13 @@ export class StoreObserver {
     // dispose should await a ready condition
     this._connect(store);
   }
-  async _connect(store, resolveReady) {
+  async _connect(store) {
+    //this.log('connect', store);
+    const observe = change => this.onChange(change);
     // observe addition of all entities
-    await simulateInitialChanges(store, change => this.onChange(change));
+    await simulateInitialChanges(store, observe);
     // observe future changes (and record ability to stop observation)
-    this.off = listenToStore(store, change => this.onChange(change));
+    this.off = listenToStore(store, observe);
     // notify that connection is ready
     this._resolveReady();
   }
@@ -48,25 +50,20 @@ export class StoreObserver {
     await forEachEntity(this.store, value => this.remove(value));
   }
   async onChange(change) {
-    //this.log('onChange', change);
+    //this.log('onChange', change, this.listener);
     const {add, remove, data} = change;
     if (data) {
-      // TODO(sjmiles): strip off version indicator (kosher?)
-      //data.id = data.id.split(':').slice(0, -1).join(':');
-      //this.log('removed version tag from data.id', data.id);
       this.add(data);
     }
     if (add) {
       for (let i=0, record; (record=add[i]); i++) {
         await this.add(record.value);
       }
-      //add.forEach(({value}) => this.add(value));
     }
     if (remove) {
       for (let i=0, record; (record=remove[i]); i++) {
         await this.remove(record.value);
       }
-      //remove.forEach(({value}) => this.remove(value));
     }
   }
   async add(value) {
