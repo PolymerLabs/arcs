@@ -216,7 +216,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   spawnLauncher(userid) {
     this.state = {
       launcherConfig: {
-        id: `${userid}${Const.launcherSuffix}`,
+        id: `${userid}${Const.DEFAULT.launcherSuffix}`,
         manifest: manifests.launcher
       }
     };
