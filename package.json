@@ -11,7 +11,7 @@
   "main": "dist/index.es.js",
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "test-with-start": "run-p --print-name --race start test",
+    "test-with-start": "run-p --print-name --race start test lint",
     "test": "run-s --print-name --continue-on-error test-no-web test-wdio-shells",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
     "test-sigh": "cross-env tools/sigh",
@@ -21,6 +21,7 @@
     "build:rollup": "rollup -c --sourcemap",
     "watch:rollup": "rollup -c --sourcemap --watch",
     "build:typedoc": "typedoc --ignoreCompilerErrors --mode file --target ES2017 --downLevelIteration -out dist/apidocs",
+    "lint": "./tools/sigh lint",
     "server": "npm install && ./tools/sigh && npm run build:rollup && npm --prefix server install && npm --prefix server run test",
     "server:start": "npm --prefix server start",
     "test-shells": "run-p --print-name --race start s-test-shells",
