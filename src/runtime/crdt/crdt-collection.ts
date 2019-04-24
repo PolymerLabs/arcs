@@ -78,16 +78,13 @@ export class CRDTCollection<T> implements CollectionModel<T> {
   }
 
   private add(value: T, key: string, version: VersionMap): boolean {
-    // Only accept an add if it is immediately consecutive to the clock for that
-    // actor.
+    // Only accept an add if it is immediately consecutive to the clock for that actor.
     const expectedClockValue = (this.model.version.get(key) || 0) + 1;
     if (!(expectedClockValue === version.get(key) || 0)) {
       return false;
     }
     this.model.version.set(key, version.get(key));
-    this.model.values.set(
-        value,
-        mergeVersions(version, this.model.values.get(value) || new Map()));
+    this.model.values.set(value,mergeVersions(version, this.model.values.get(value) || new Map()));
     return true;
   }
 
@@ -113,8 +110,7 @@ export class CRDTCollection<T> implements CollectionModel<T> {
     return true;
   }
 
-  private mergeItems(data1: CollectionData<T>, data2: CollectionData<T>):
-      Map<T, VersionMap> {
+  private mergeItems(data1: CollectionData<T>, data2: CollectionData<T>): Map<T, VersionMap> {
     const merged = new Map();
     for (const [value, version2] of data2.values) {
       const version1 = data1.values.get(value);
@@ -141,9 +137,9 @@ function mergeVersions(version1: VersionMap, version2: VersionMap): VersionMap {
   return merged;
 }
 
-function dominates(thiz: VersionMap, that: VersionMap): boolean {
-  for (const [k, v] of that) {
-    if ((thiz.get(k) || 0) < v) {
+function dominates(map1: VersionMap, map2: VersionMap): boolean {
+  for (const [k, v] of map2) {
+    if ((map1.get(k) || 0) < v) {
       return false;
     }
   }
