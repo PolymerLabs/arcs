@@ -9,6 +9,7 @@
 
 import {Xen} from '../../../lib/components/xen.js';
 import IconStyle from '../../../../modalities/dom/components/icons.css.js';
+import {WebConfig} from '../web-config.js';
 
 // templates
 const template = Xen.Template.html`
@@ -81,6 +82,16 @@ const template = Xen.Template.html`
       overflow-y: var(--content-overflow);
       overflow-x: hidden;
     }
+    settings-panel {
+      display: none;
+      padding: 24px;
+    }
+    settings-panel[open] {
+      display: block;
+    }
+    settings-panel > pre {
+      white-space: pre-wrap;
+    }
   </style>
   <div toolbars on-click="onToolbarsClick">
     <div main toolbar open$="{{mainToolbarOpen}}">
@@ -103,7 +114,9 @@ const template = Xen.Template.html`
     <div suggestions content open$="{{suggestionsContentOpen}}">
       <slot on-plan-choose="onChooseSuggestion"></slot>
     </div>
-    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare"></settings-panel>
+    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare">
+      <pre unsafe-html="{{settings}}"></pre>
+    </settings-panel>
   </div>
 `;
 
@@ -141,11 +154,25 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
       settingsContentOpen: settingsOpen,
       userContentOpen: userOpen,
       hideMic: !micVsClear,
-      hideClear: micVsClear
+      hideClear: micVsClear,
+      settings: this.renderSettings()
     }];
+  }
+  renderSettings() {
+    //return JSON.stringify(WebConfig.config, null, '  ');
+    return Xen.html`
+<h3>Storage</h3>
+<div>${WebConfig.config.storage}</div>
+    `;
   }
   commitSearch(search) {
     this.fire('search', search || '');
+  }
+  onMainClick(e) {
+    this.state = {toolState: 'main'};
+  }
+  onSettingsClick(e) {
+    this.state = {toolState: 'settings'};
   }
   onToolbarsClick(e) {
     e.stopPropagation();
