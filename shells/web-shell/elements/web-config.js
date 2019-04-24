@@ -14,13 +14,15 @@ import {Const} from '../../configuration/constants.js';
 const log = Xen.logFactory('WebConfig', '#60ac66');
 
 const configOptions = {
-  //configPropertyName: {
-  //  aliases: [...] // aliases for configPropertyName
-  //  default: ... // default value
-  //  map: { ... } // map human parameter names to actual config values
-  //  localStorageKey: "..." // key for persisting to/from localStorage
-  //  persistToUrl: <Boolean> // whether parameter should be written into URL
-  //},
+  /*
+    configPropertyName: {
+      aliases: [...] // aliases for configPropertyName
+      default: ... // default value
+      map: { ... } // map human parameter names to actual config values
+      localStorageKey: "..." // key for persisting to/from localStorage
+      persistToUrl: <Boolean> // whether parameter should be written into URL
+    }
+  */
   storage: {
     aliases: ['storageKey'],
     default: Const.DEFAULT.storageKey,
@@ -33,11 +35,6 @@ const configOptions = {
     },
     localStorageKey: Const.LOCALSTORAGE.storage
   },
-  userid: {
-    aliases: ['user'],
-    default: Const.DEFAULT.userId,
-    localStorageKey: Const.LOCALSTORAGE.user
-  },
   arc: {
     aliases: ['arckey'],
     persistToUrl: true
@@ -45,8 +42,9 @@ const configOptions = {
   search: {
   },
   plannerStorage: {
-    localStorageKey: Const.LOCALSTORAGE.plannerStorage,
-    default: Const.DEFAULT.plannerStorageKey
+    aliases: ['planner'],
+    default: Const.DEFAULT.plannerStorageKey,
+    localStorageKey: Const.LOCALSTORAGE.plannerStorage
   },
   plannerNoDebug: {
     boolean: true
@@ -58,21 +56,19 @@ const configOptions = {
 
 export class WebConfig extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['userid', 'arckey'];
+    return ['arckey'];
   }
-  update({userid, arckey}, state) {
+  update({arckey}, state) {
     if (!state.config) {
       const params = (new URL(document.location)).searchParams;
       state.config = ProcessConfig.processConfig(configOptions, params);
       state.config.plannerDebug = !state.config.plannerNoDebug;
       state.config.storage = this.expandStorageMacro(state.config.storage);
+      state.config.userid = Const.DEFAULT.userId;
       this._fire('config', state.config);
     }
     if (arckey !== undefined) {
       state.config.arc = arckey;
-    }
-    if (userid !== undefined) {
-      state.config.userid = userid;
     }
     ProcessConfig.persistParams(configOptions, state.config);
     // TODO(sjmiles): only works if config is a Highlander
