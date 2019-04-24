@@ -1438,7 +1438,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
   }
 
   /** Calls close() on and discards the cursor identified by cursorId. */
-  async cursorClose(cursorId: number): Promise<void> {
+  cursorClose(cursorId: number): void {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);

@@ -32,7 +32,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
   async cursorNext(cursorId: number) {
     throw new Error('NotImplemented');
   }
-  async cursorClose(cursorId: number): Promise<void> {
+  cursorClose(cursorId: number): Promise<void> {
     throw new Error('NotImplemented');
   }
   cursorVersion(cursorId: number) {

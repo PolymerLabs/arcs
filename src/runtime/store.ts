@@ -57,5 +57,5 @@ export interface BigCollectionStore extends Store {
   // tslint:disable-next-line: no-any
   cursorNext(cursorId: number): Promise<any>;
 
-  cursorClose(cursorId: number): Promise<void>;
+  cursorClose(cursorId: number): void;
 }
