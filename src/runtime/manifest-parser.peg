@@ -404,9 +404,8 @@ TypeVariableList
     return [head, ...tail.map(a => a[2])];
   }
 
-// TODO: remove 'affordance' when all particle manifests updated.
 ParticleModality
-  = ('affordance' / 'modality') whiteSpace modality:Modality eolWhiteSpace
+  = 'modality' whiteSpace modality:Modality eolWhiteSpace
   {
     return {
       kind: 'particle-modality',
