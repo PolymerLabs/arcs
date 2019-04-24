@@ -570,7 +570,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
     return data;
   }
 
-  cursorClose(cursorId: number) {
+  async cursorClose(cursorId: number): Promise<void> {
     const cursor = this.cursors.get(cursorId);
     if (cursor) {
       this.cursors.delete(cursorId);
