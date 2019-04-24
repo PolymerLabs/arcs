@@ -271,7 +271,15 @@ export class DomParticleBase extends Particle {
   /**
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`
    */
-  boxQuery(box, userid: string) {
-    return box && box.filter(item => userid === item.getUserID().split('|')[0]);
+  async boxQuery(box, userid) {
+    let results = [];
+    if (box) {
+      const matches = box.filter(item => userid === item.fromKey);
+      results = await Promise.all(matches.map(async match => {
+        await match.ref.dereference();
+        return match.ref.entity;
+      }));
+    }
+    return results;
   }
 }

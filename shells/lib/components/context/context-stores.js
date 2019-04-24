@@ -8,7 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {crackStorageKey} from './context-utils.js';
+import {crackStorageKey, simpleNameOfType} from './context-utils.js';
+import {Reference} from '../../../../build/runtime/reference.js';
+import {Type} from '../../../../build/runtime/type.js';
+import {logFactory} from '../../../../build/platform/log-web.js';
+import {generateId} from '../../../../modalities/dom/components/generate-id.js';
+
+const log = logFactory('ContextStores', 'lime');
 
 const pendingStores = {};
 
@@ -32,12 +38,12 @@ const ContextStoresImpl = class {
     // cache and return promises in case of re-entrancy
     let promise = pendingStores[id];
     if (!promise) {
-      promise = new Promise(async (resolve) => {
+      promise = new Promise(async resolve => {
         const store = await context.findStoreById(id);
         if (store) {
           resolve(store);
         } else {
-          const store = await context.createStore(type, name, id, tags);
+          const store = await this.createReferenceStore(context, type, name, id, tags);
           resolve(store);
         }
       });
@@ -48,15 +54,49 @@ const ContextStoresImpl = class {
   getDecoratedId(entity, uid) {
     return `${entity.id}:uid:${uid}`;
   }
-  async storeEntityWithUid(store, entity, uid) {
-    const id = this.getDecoratedId(entity, uid);
-    const decoratedEntity = {id, rawData: entity.rawData};
-    // context stores are always Collection
-    store.store(decoratedEntity, [String(Math.random())]);
+  async storeEntityWithUid(store, entity, backingStorageKey, uid) {
+    this.storeEntityReference(store, entity, backingStorageKey, uid);
   }
   removeEntityWithUid(store, entity, uid) {
-    const id = this.getDecoratedId(entity, uid);
-    store.remove(id);
+    // TODO(sjmiles): implement
+    //const id = this.getDecoratedId(entity, uid);
+    //store.remove(id);
+  }
+  async createReferenceStore(context, type, name, id, tags) {
+    const shareType = this.generateReferenceType(type).collectionOf();
+    const store = await context.createStore(shareType, name, `${id}Ref`, tags);
+    return store;
+  }
+  async storeEntityReference(store, entity, backingStorageKey, uid) {
+    // TODO(sjmiles): storageKey will be baked into entity in future
+    entity.storageKey = backingStorageKey;
+    const ref = new Reference(entity);
+    await ref.stored;
+    const refEntity = {
+      id: generateId(),
+      rawData: {
+        ref: ref,
+        fromKey: uid
+      }
+    };
+    store.store(refEntity, [String(Math.random())]);
+  }
+  generateReferenceType(type) {
+    // TODO(sjmiles): note there need to be matching* types in Particles
+    // (*matching is fuzzy based on the current capabilities of the type system)
+    const refType = simpleNameOfType(type);
+    const literalShareType = {
+      tag: `Entity`,
+      data: {
+        names: [`${refType}Share`],
+        fields: {
+          entity: `Reference<${refType}>`,
+          fromKey: `Text`,
+          fromArc: `Text`
+        }
+      }
+    };
+    return Type.fromLiteral(literalShareType);
   }
 };
 

@@ -83,6 +83,12 @@ export const ShareListener = class extends AbstractListener {
     return logFactory(`ShareListener`, 'blue');
   }
   async add(entity, store) {
+    // TODO(sjmiles): roll this into 'metrics'?
+    let backingStorageKey = store.storageKey;
+    if (store.backingStore) {
+      // TODO(sjmiles): property is not called 'storageKey' for pouchdb
+      backingStorageKey = store.backingStore.storageKey;
+    }
     const handle = store.handle;
     const metrics = ContextStores.getHandleMetrics(handle, this.isProfile);
     if (metrics) {
@@ -99,7 +105,7 @@ export const ShareListener = class extends AbstractListener {
         share.shareStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
       }
       const shareStore = await share.shareStorePromise;
-      ContextStores.storeEntityWithUid(shareStore, entity, userid);
+      ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, userid);
       //
       let box = boxes[metrics.boxStoreId];
       if (!box) {
@@ -107,7 +113,7 @@ export const ShareListener = class extends AbstractListener {
         box.boxStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.boxStoreId, metrics.boxStoreId, ['shared']);
       }
       const boxStore = await box.boxStorePromise;
-      ContextStores.storeEntityWithUid(boxStore, entity, userid);
+      ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, userid);
     }
   }
   async remove(entity, store) {
