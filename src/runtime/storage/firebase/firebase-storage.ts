@@ -153,19 +153,20 @@ export class FirebaseStorage extends StorageBase {
 
   async baseStorageFor(type, key: string) {
     const typeStr = type.toString();
+    const cacheStr = `${new FirebaseKey(key).databaseUrl}!typeStr`;
     let storage;
-    if (storage = this.baseStores.get(typeStr)) {
+    if (storage = this.baseStores.get(cacheStr)) {
       return storage;
     }
-    if (storage = this.baseStorePromises.get(typeStr)) {
+    if (storage = this.baseStorePromises.get(cacheStr)) {
       return storage;
     }
     const storagePromise = this._join(typeStr, type.collectionOf(), key, 'unknown', Mode.backing) as Promise<FirebaseBackingStore>;
-    this.baseStorePromises.set(typeStr, storagePromise);
+    this.baseStorePromises.set(cacheStr, storagePromise);
     storage = await storagePromise;
     assert(storage, 'baseStorageFor should not fail');
-    this.baseStores.set(typeStr, storage);
-    this.baseStorePromises.delete(typeStr);
+    this.baseStores.set(cacheStr, storage);
+    this.baseStorePromises.delete(cacheStr);
     return storage;
   }
 
