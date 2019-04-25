@@ -152,6 +152,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.equal('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
+      
       assert.isNull(var1.backingStore);
     });
   });
@@ -170,6 +171,7 @@ describe('pouchdb for ' + testUrl, () => {
       const collection = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as PouchDbCollection;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
+
       let result = await collection.get('id0');
       assert.equal(result.value, value1);
       result = await collection.toList();

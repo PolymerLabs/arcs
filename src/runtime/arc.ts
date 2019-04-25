@@ -134,11 +134,11 @@ export class Arc {
     return this.activeRecipe.modality;
   }
 
-  registerInstantiatePlanCallback(callback: PlanCallback) {
+  registerInstantiatePlanCallback(callback: PlanCallback): void {
     this.instantiatePlanCallbacks.push(callback);
   }
 
-  unregisterInstantiatePlanCallback(callback: PlanCallback) {
+  unregisterInstantiatePlanCallback(callback: PlanCallback): boolean {
     const index = this.instantiatePlanCallbacks.indexOf(callback);
     if (index >= 0) {
       this.instantiatePlanCallbacks.splice(index, 1);

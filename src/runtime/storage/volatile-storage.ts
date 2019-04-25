@@ -438,6 +438,7 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
 
   async set(value : {id: string}, originatorId: string = null, barrier: string = null): Promise<void> {
     assert(value !== undefined);
+    
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have

@@ -1,5 +1,15 @@
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 import {PouchDB} from '../../../platform/pouchdb-web.js';
-import {Type} from '../../type.js';
+import {ReferenceType, Type} from '../../type.js';
 import {StorageProviderBase} from '../storage-provider-base.js';
 
 import {PouchDbCollection} from './pouch-db-collection.js';
@@ -16,12 +26,10 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
 
   // Manages backing store
   backingStore: PouchDbCollection | null = null;
-  private pendingBackingStore: Promise<PouchDbCollection> | null = null;
+  private pendingBackingStore?: Promise<PouchDbCollection>;
 
   /** The PouchDbKey for this Collection */
   protected readonly pouchDbKey: PouchDbKey;
-  /** The Pouch revision of the data we have stored locally */
-  protected _rev: string | undefined;
 
   protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
     super(type, name, id, key);
@@ -66,7 +74,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    * Increments the local version to be one more than the maximum of
    * the local and remove versions.
    */
-  public bumpVersion(otherVersion: number): void {
+  public bumpVersion(otherVersion: number = 0): void {
     this.version = Math.max(this.version, otherVersion) + 1;
   }
 }

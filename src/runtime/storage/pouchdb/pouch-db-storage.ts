@@ -1,10 +1,12 @@
-// @
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../platform/pouchdb-web.js';
@@ -63,6 +65,8 @@ export class PouchDbStorage extends StorageBase {
       return provider;
     }
     provider.enableReferenceMode();
+    await provider.ensureBackingStore();
+
     return provider;
   }
 
@@ -96,6 +100,7 @@ export class PouchDbStorage extends StorageBase {
       return this.construct(id, type, key);
     } catch (err) {
       if (err.name && err.name === 'not_found') {
+        console.warn('connecting despite missing doc, returning null');
         return null;
       }
       throw err;
