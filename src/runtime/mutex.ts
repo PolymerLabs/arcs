@@ -34,7 +34,7 @@ export class Mutex {
    * @return true if the mutex is already acquired.
    */
   get locked(): boolean {
-    return this.depth != 0;
+    return this.depth !== 0;
   }
 
   /**
@@ -58,7 +58,7 @@ export class Mutex {
     });
     
     this.next = new Promise<void>(resolve => {
-      release = resolve
+      release = resolve;
     });
     return current;
   }

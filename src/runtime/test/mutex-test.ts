@@ -54,7 +54,7 @@ describe('Mutex', () => {
     const runTask = async (name: string, startDelay: number, critDelay: number) => {
       results.push(name + ' begin');
       await delay(startDelay);
-      results.push(name + ' requesting mutex')
+      results.push(name + ' requesting mutex');
 
       const release = await mutex.acquire();
       try {
