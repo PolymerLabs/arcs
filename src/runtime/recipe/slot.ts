@@ -46,12 +46,12 @@ export class Slot {
   get spec() {
     // TODO: should this return something that indicates this isn't available yet instead of
     // the constructed {isSet: false, tags: []}?
-    return (this.sourceConnection && this.sourceConnection.getSlotSpec()) ? this.sourceConnection.getSlotSpec().getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
+    return (this.sourceConnection && this.sourceConnection.getSlotSpec()) ? this.sourceConnection.particle.getSlotSpecByName(this.name) : {isSet: false, tags: []};
   }
   get handles(): Handle[] {
     const handles = [];
     if (this.sourceConnection && this.sourceConnection.getSlotSpec()) {
-      for (const handleName of this.sourceConnection.getSlotSpec().getProvidedSlotSpec(this.name).handles) {
+      for (const handleName of this.sourceConnection.particle.getSlotSpecByName(this.name).handles) {
         const handleConn = this.sourceConnection.particle.connections[handleName];
         if (handleConn || handleConn.handle) {
           handles.push(handleConn.handle);

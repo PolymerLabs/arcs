@@ -15,7 +15,7 @@ import {Direction} from './recipe/handle-connection.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {InterfaceType, Type, TypeLiteral} from './type.js';
+import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -80,13 +80,14 @@ export class HandleConnectionSpec {
   }
 }
 
-type SerializedConsumeSlotConnectionSpec = {
+type SerializedSlotConnectionSpec = {
   name: string,
-  isRequired: boolean,
-  isSet: boolean,
-  tags: string[],
-  formFactor: string,
-  provideSlotConnections: SerializedProvideSlotConnectionSpec[]
+  isRequired?: boolean,
+  isSet?: boolean,
+  tags?: string[],
+  formFactor?: string,
+  handles?: string[]
+  provideSlotConnections?: SerializedSlotConnectionSpec[]
 };
 
 export class ConsumeSlotConnectionSpec {
@@ -95,14 +96,16 @@ export class ConsumeSlotConnectionSpec {
   isSet: boolean;
   tags: string[];
   formFactor: string;
+  handles?: string[];
   provideSlotConnections: ProvideSlotConnectionSpec[];
 
-  constructor(slotModel: SerializedConsumeSlotConnectionSpec) {
+  constructor(slotModel: SerializedSlotConnectionSpec) {
     this.name = slotModel.name;
-    this.isRequired = slotModel.isRequired;
-    this.isSet = slotModel.isSet;
+    this.isRequired = slotModel.isRequired || false;
+    this.isSet = slotModel.isSet || false;
     this.tags = slotModel.tags || [];
     this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
+    this.handles = slotModel.handles || [];
     this.provideSlotConnections = [];
     if (!slotModel.provideSlotConnections) {
       return;
@@ -112,37 +115,14 @@ export class ConsumeSlotConnectionSpec {
     });
   }
 
-  getProvidedSlotSpec(name): ProvideSlotConnectionSpec {
-    return this.provideSlotConnections.find(ps => ps.name === name);
-  }
+  // Getters to 'fake' being a Handle.
+  get isOptional() { return !this.isRequired; }
+  get direction() { return '`consume'; }
+  get type() { return SlotType.make(this.formFactor, null); } //TODO(jopra): FIX THIS NULL!
+  get dependentConnections() { return this.provideSlotConnections; }
 }
 
-type SerializedProvideSlotConnectionSpec = {
-  name: string,
-  isRequired?: boolean,
-  isSet?: boolean,
-  tags?: string[],
-  formFactor?: string,
-  handles?: string[]
-};
-
-export class ProvideSlotConnectionSpec {
-  name: string;
-  isRequired: boolean;
-  isSet: boolean;
-  tags: string[];
-  formFactor: string;
-  handles: string[];
-
-  constructor(slotModel: SerializedProvideSlotConnectionSpec) {
-    this.name = slotModel.name;
-    this.isRequired = slotModel.isRequired || false;
-    this.isSet = slotModel.isSet || false;
-    this.tags = slotModel.tags || [];
-    this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
-    this.handles = slotModel.handles || [];
-  }
-}
+export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
 
 export type SerializedParticleSpec = {
   name: string,
@@ -153,17 +133,14 @@ export type SerializedParticleSpec = {
   implFile: string,
   implBlobUrl: string | null,
   modality: string[],
-  slotConnections: SerializedConsumeSlotConnectionSpec[]
+  slotConnections: SerializedSlotConnectionSpec[]
 };
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
   name: string;
   verbs: string[];
-  handleConnections: HandleConnectionSpec[];
   handleConnectionMap: Map<string, HandleConnectionSpec>;
-  inputs: HandleConnectionSpec[];
-  outputs: HandleConnectionSpec[];
   pattern: string;
   implFile: string;
   implBlobUrl: string | null;
@@ -175,19 +152,15 @@ export class ParticleSpec {
     this.name = model.name;
     this.verbs = model.verbs;
     const typeVarMap = new Map();
-    this.handleConnections = [];
-    model.args.forEach(arg => this.createConnection(arg, typeVarMap));
     this.handleConnectionMap = new Map();
-    this.handleConnections.forEach(a => this.handleConnectionMap.set(a.name, a));
-    this.inputs = this.handleConnections.filter(a => a.isInput);
-    this.outputs = this.handleConnections.filter(a => a.isOutput);
+    model.args.forEach(arg => this.createConnection(arg, typeVarMap));
 
     // initialize descriptions patterns.
     model.description = model.description || {};
     this.validateDescription(model.description);
     this.pattern = model.description['pattern'];
-    this.handleConnections.forEach(connectionSpec => {
-      connectionSpec.pattern = model.description[connectionSpec.name];
+    this.handleConnectionMap.forEach((connectionSpec, name) => {
+      connectionSpec.pattern = model.description[name];
     });
 
     this.implFile = model.implFile;
@@ -207,19 +180,35 @@ export class ParticleSpec {
 
   createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     const connection = new HandleConnectionSpec(arg, typeVarMap);
-    this.handleConnections.push(connection);
+    this.handleConnectionMap.set(connection.name, connection);
     connection.instantiateDependentConnections(this, typeVarMap);
     return connection;
   }
 
+  get handleConnections() {
+    return this.connections;
+  }
+
+  get connections() {
+    return [...this.handleConnectionMap.values()];
+  }
+
+  get inputs() {
+    return this.connections.filter(a => a.isInput);
+  }
+
+  get outputs() {
+    return this.connections.filter(a => a.isOutput);
+  }
+
   isInput(param: string) {
-    for (const input of this.inputs) if (input.name === param) return true;
-    return false;
+    const connection = this.handleConnectionMap.get(param);
+    return connection && connection.isInput;
   }
 
   isOutput(param: string) {
-    for (const outputs of this.outputs) if (outputs.name === param) return true;
-    return false;
+    const connection = this.handleConnectionMap.get(param);
+    return connection && connection.isOutput;
   }
 
   getConnectionByName(name: string): HandleConnectionSpec {
@@ -356,7 +345,7 @@ export class ParticleSpec {
     // Description
     if (this.pattern) {
       results.push(`  description \`${this.pattern}\``);
-      this.handleConnections.forEach(cs => {
+      this.handleConnectionMap.forEach(cs => {
         if (cs.pattern) {
           results.push(`    ${cs.name} \`${cs.pattern}\``);
         }
