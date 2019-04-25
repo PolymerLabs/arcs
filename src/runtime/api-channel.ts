@@ -137,14 +137,15 @@ class ThingMapper {
   _nextIdentifier: number;
   _idMap: Map<string, {}>;
   _reverseIdMap: Map<{}, string>;
-  constructor(prefix) {
+
+  constructor(prefix: string) {
     this._prefix = prefix;
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
   }
 
-  _newIdentifier() {
+  _newIdentifier(): string {
     return this._prefix + (this._nextIdentifier++);
   }
 
@@ -209,7 +210,7 @@ export class APIPort {
   protected _debugAttachment: OuterPortAttachment;
   protected _attachStack: boolean;
   messageCount: number;
-  constructor(messagePort, prefix) {
+  constructor(messagePort: MessagePort, prefix: string) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._port.onmessage = async e => this._processMessage(e);
@@ -224,7 +225,7 @@ export class APIPort {
   _testingHook() {
   }
 
-  close() {
+  close(): void {
     this._port.close();
   }
 
@@ -379,7 +380,6 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             await Promise.all(promises.map(a => a.promise));
             promises.forEach(a => args[a.position] = args[a.position]());
           }
-
           const result = this['on' + f](...args);
 
           // If this message is an initializer, need to establish a mapping
@@ -410,7 +410,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 }
 
 export abstract class PECOuterPort extends APIPort {
-  constructor(messagePort, arc) {
+  constructor(messagePort: MessagePort, arc: Arc) {
     super(messagePort, 'o');
     DevtoolsConnection.onceConnected.then(devtoolsChannel => {
       this.DevToolsConnected();
@@ -474,7 +474,7 @@ export interface CursorNextValue {
 
 @AutoConstruct(PECOuterPort)
 export abstract class PECInnerPort extends APIPort {
-  constructor(messagePort) {
+  constructor(messagePort: MessagePort) {
     super(messagePort, 'i');
   }
 

@@ -21,9 +21,6 @@ import {Particle} from './particle.js';
 export class DomParticleBase extends Particle {
   private currentSlotName: string | undefined;
 
-  constructor() {
-    super();
-  }
   /**
    * Override to return a String defining primary markup.
    */

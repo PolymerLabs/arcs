@@ -102,7 +102,7 @@ export abstract class StorageProxy implements Store {
   /**
    *  Called by ParticleExecutionContext to associate (potentially multiple) particle/handle pairs with this proxy.
    */
-  register(particle: Particle, handle: Handle) {
+  register(particle: Particle, handle: Handle): void {
     if (!handle.canRead) {
       return;
     }
@@ -132,7 +132,7 @@ export abstract class StorageProxy implements Store {
     }
   }
 
-  _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}) {
+  _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}): void {
     if (this.version !== undefined && version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale model version ${version}; ` +
                    `current is ${this.version}`);
@@ -156,7 +156,7 @@ export abstract class StorageProxy implements Store {
     this._processUpdates();
   }
 
-  _onUpdate(update: {version: number}) {
+  _onUpdate(update: {version: number}): void {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (this.observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
       const handleUpdate = this._processUpdate(update, false);
@@ -188,8 +188,7 @@ export abstract class StorageProxy implements Store {
     }
   }
 
-  _processUpdates() {
-
+  _processUpdates(): void {
     const updateIsNext = update => {
       if (update.version === this.version + 1) {
         return true;
@@ -579,11 +578,11 @@ export class StorageProxyScheduler {
     this._schedule();
   }
 
-  get busy() {
+  get busy(): boolean {
     return this._queues.size > 0;
   }
 
-  _updateIdle() {
+  _updateIdle(): void {
     if (this._idleResolver && !this.busy) {
       this._idleResolver();
       this._idle = null;
@@ -591,7 +590,7 @@ export class StorageProxyScheduler {
     }
   }
 
-  get idle() {
+  get idle(): Promise<void> {
     if (!this.busy) {
       return Promise.resolve();
     }
@@ -601,7 +600,7 @@ export class StorageProxyScheduler {
     return this._idle;
   }
 
-  _schedule() {
+  _schedule(): void {
     if (this._scheduled) {
       return;
     }
@@ -612,7 +611,7 @@ export class StorageProxyScheduler {
     }, 0);
   }
 
-  _dispatch() {
+  _dispatch(): void {
     // TODO: should we process just one particle per task?
     while (this._queues.size > 0) {
       const particle = [...this._queues.keys()][0];

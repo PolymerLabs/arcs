@@ -16,6 +16,7 @@ import {JsonldToManifest} from './converters/jsonldToManifest.js';
 import {DomParticle} from './dom-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
+import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import {ClientReference} from './reference.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
@@ -47,7 +48,7 @@ export class Loader {
   }
 
   // convert `././foo/bar/../baz` to `./foo/baz`
-  normalizeDots(path: string) {
+  normalizeDots(path: string): string {
     // only unix slashes
     path = path.replace(/\\/g, '/');
     // remove './'
@@ -58,7 +59,7 @@ export class Loader {
     return path;
   }
 
-  loadResource(file: string) {
+  loadResource(file: string): Promise<string> {
     if (/^https?:\/\//.test(file)) {
       return this._loadURL(file);
     }
@@ -77,7 +78,7 @@ export class Loader {
     });
   }
 
-  _loadURL(url: string) {
+  _loadURL(url: string): Promise<string> {
     if (/\/\/schema.org\//.test(url)) {
       if (url.endsWith('/Thing')) {
         return fetch('https://schema.org/Product.jsonld').then(res => res.text()).then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
@@ -87,13 +88,28 @@ export class Loader {
     return fetch(url).then(res => res.text());
   }
 
-  async loadParticleClass(spec) {
+  /**
+   * Returns a particle class implementation by loading and executing
+   * the code defined by a particle.  In the following example `x.js`
+   * will be loaded and executed:
+   *
+   * ```
+   * Particle foo in 'x.js'
+   * ```
+   */
+  async loadParticleClass(spec: ParticleSpec): Promise<typeof Particle> {
     const clazz = await this.requireParticle(spec.implFile);
     clazz.spec = spec;
     return clazz;
   }
 
-  async requireParticle(fileName: string) {
+  /**
+   * Loads a particle class from the given filename by loading the
+   * script contained in `fileName` and executing it as a script.
+   *
+   * Protected for use in tests.
+   */
+  protected async requireParticle(fileName: string): Promise<typeof Particle> {
     if (fileName === null) fileName = '';
     const src = await this.loadResource(fileName);
     // Note. This is not real isolation.
@@ -113,11 +129,14 @@ export class Loader {
     return this.unwrapParticle(result[0]);
   }
 
-  setParticleExecutionContext(pec: ParticleExecutionContext) {
+  setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
   }
 
-  unwrapParticle(particleWrapper) {
+  /**
+   * executes the defineParticle() code and returns the results which should be a class definition.
+   */
+  unwrapParticle(particleWrapper): typeof Particle {
     assert(this.pec);
     return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: ClientReference.newClientReference(this.pec), html});
   }

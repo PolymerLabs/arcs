@@ -195,19 +195,21 @@ export class ParticleExecutionContext {
     };
   }
 
-  async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
+  // tslint:disable-next-line: no-any
+  async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>): Promise<[any, () => Promise<void>]> {
     let resolve : () => void = null;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
     const clazz = await this.loader.loadParticleClass(spec);
     const capabilities = this.defaultCapabilitySet();
-    const particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
-    particle.id = id;
-    particle.capabilities = capabilities;
+    const particle = new clazz();
+    particle.setCapabilities(capabilities);
+
     this.particles.push(particle);
 
     const handleMap = new Map();
-    const registerList = [];
+    const registerList: {proxy: StorageProxy, particle: Particle, handle: Handle}[] = [];
+
     proxies.forEach((proxy, name) => {
       const connSpec = spec.handleConnectionMap.get(name);
       const handle = handleFor(proxy, this.idGenerator, name, id, connSpec.isInput, connSpec.isOutput);

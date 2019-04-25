@@ -31,17 +31,29 @@ export class Particle {
     private _busy = 0;
 
     protected slotProxiesByName: Map<string, SlotProxy> = new Map();
-    private readonly capabilities: {constructInnerArc?: Function};
+    private capabilities: {constructInnerArc?: Function};
 
-  constructor(capabilities?: {constructInnerArc?: Function}) {
+  constructor() {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
     if (this.spec.inputs.length === 0) {
       this.extraData = true;
     }
+  }
+
+  /**
+   * This sets the capabilities for this particle.  This can only
+   * be called once.
+   */
+  setCapabilities(capabilities: {constructInnerArc?: Function}): void {
+    if (this.capabilities) {
+      // Capabilities already set, throw an error.
+      throw new Error('capabilities should only be set once');
+    }
     this.capabilities = capabilities || {};
   }
+
 
   /**
    * This method is invoked with a handle for each store this particle

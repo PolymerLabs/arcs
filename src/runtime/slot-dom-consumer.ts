@@ -48,7 +48,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return [...templateByName.keys()].find(key => key.startsWith(templatePrefix));
   }
 
-  isSameContainer(container, contextContainer) {
+  isSameContainer(container, contextContainer): boolean {
     return container.parentNode === contextContainer;
   }
 
@@ -111,18 +111,18 @@ export class SlotDomConsumer extends SlotConsumer {
     return newContent;
   }
 
-  _modelForSingletonSlot(model, subId) {
+  private _modelForSingletonSlot(model, subId) {
     assert(!subId, 'subId should be absent for a Singleton Slot');
     return model;
   }
 
-  _modelForSetSlotConsumedAsSetSlot(model, subId) {
+  private _modelForSetSlotConsumedAsSetSlot(model, subId) {
     assert(model.items && model.items.every(item => item.subId),
         'model for a Set Slot consumed as a Set Slot needs to have items array, with every element having subId');
     return model.items.find(item => item.subId === subId);
   }
 
-  _modelForSetSlotConsumedAsSingletonSlot(model, subId) {
+  private _modelForSetSlotConsumedAsSingletonSlot(model, subId) {
     assert(model.subId, 'model for a Set Slot consumed as a Singleton Slot needs to have subId');
     return subId === model.subId ? model : null;
   }
@@ -351,7 +351,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return null;
   }
 
-  formatHostedContent(content: Content): {} {
+  formatHostedContent(content: Content): Content {
     if (content.templateName) {
       if (typeof content.templateName === 'string') {
         content.templateName = `${this.consumeConn.getQualifiedName()}::${content.templateName}`;
