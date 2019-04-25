@@ -30,6 +30,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Mutex} from './mutex.js';
 
 type ArcOptions = {
   id: Id;
@@ -85,6 +86,7 @@ export class Arc {
   private readonly debugHandler: ArcDebugHandler;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly listenerClasses: ArcDebugListenerDerived[];
+  private readonly instantiateMutex = new Mutex();
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
@@ -509,11 +511,36 @@ ${this.activeRecipe.toString()}`;
     return arc;
   }
 
-  async instantiate(recipe: Recipe) {
+  /**
+   * Instantiates the given recipe in the Arc.
+   *
+   * Executes the following steps:
+   *
+   * - Merges the recipe into the Active Recipe
+   * - Populates missing slots.
+   * - Processes the Handles and creates stores for them.
+   * - Instantiates the new Particles
+   * - Passes these particles for initialization in the PEC
+   * - For non-speculative Arcs processes instantiatePlanCallbacks
+   *
+   * Waits for completion of an existing Instantiate before returning.
+   */
+  async instantiate(recipe: Recipe): Promise<void> {
+
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
+    const release = await this.instantiateMutex.acquire();
+    try {
+      await this._doInstantiate(recipe);
+    } finally {
+      release();
+    }
+  }
+
+  // Critical section for instantiate,
+  private async _doInstantiate(recipe: Recipe): Promise<void> {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
@@ -593,7 +620,7 @@ ${this.activeRecipe.toString()}`;
       // TODO: pass slot-connections instead
       await this.pec.slotComposer.initializeRecipe(this, particles);
     }
-
+    
     if (!this.isSpeculative) { // Note: callbacks not triggered for speculative arcs.
       this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
