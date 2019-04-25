@@ -30,6 +30,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Mutex} from './mutex.js';
 
 type ArcOptions = {
   id: Id;
@@ -85,6 +86,7 @@ export class Arc {
   private readonly debugHandler: ArcDebugHandler;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly listenerClasses: ArcDebugListenerDerived[];
+  private readonly instantiateMutex = new Mutex();
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
@@ -509,27 +511,32 @@ ${this.activeRecipe.toString()}`;
     return arc;
   }
 
-  /** in-flight instantiate, or Promise.resolve() if not executing */
-  private nextInstantiate: Promise<void> = Promise.resolve();
-
   /**
-   * Adds a new recipe to instantiate in the Arc.
+   * Instantiates the given recipe in the Arc.
    *
    * Executes the following steps:
-   * - TBD1
-   * - TBD2
+   *
+   * - Merges the recipe into the Active Recipe
+   * - Populates missing slots.
+   * - Processes the Handles and creates stores for them.
+   * - Instantiates the new Particles
+   * - Passes these particles for initialization in the PEC
+   * - For non-speculative Arcs processes instantiatePlanCallbacks
    *
    * Waits for completion of an existing Instantiate before returning.
    */
   async instantiate(recipe: Recipe): Promise<void> {
+
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
-    await this.nextInstantiate;
-    this.nextInstantiate = this._doInstantiate(recipe);
-    await this.nextInstantiate;
-    this.nextInstantiate = Promise.resolve();
+    const release = await this.instantiateMutex.acquire();
+    try {
+      await this._doInstantiate(recipe);
+    } finally {
+      release();
+    }
   }
 
   // Critical section for instantiate,
