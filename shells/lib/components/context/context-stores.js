@@ -57,9 +57,7 @@ const ContextStoresImpl = class {
     this.storeEntityReference(store, entity, backingStorageKey, uid);
   }
   removeEntityWithUid(store, entity, uid) {
-    // TODO(sjmiles): implement
-    //const id = this.getDecoratedId(entity, uid);
-    //store.remove(id);
+    store.remove(`shared-${entity.id}`);
   }
   async createReferenceStore(context, type, name, id, tags) {
     const shareType = this.generateReferenceType(type).collectionOf();
@@ -72,7 +70,7 @@ const ContextStoresImpl = class {
     const ref = new Reference(entity);
     await ref.stored;
     const refEntity = {
-      id: generateId(),
+      id: `shared-${entity.id}`,
       rawData: {
         ref: ref,
         fromKey: uid
