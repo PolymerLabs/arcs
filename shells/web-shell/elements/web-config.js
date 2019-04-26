@@ -24,7 +24,7 @@ const configOptions = {
     }
   */
   storage: {
-    aliases: ['storageKey'],
+    aliases: ['storageKey', 'user'],
     default: Const.DEFAULT.storageKey,
     map: {
       'firebase': Const.DEFAULT.firebaseStorageKey,
@@ -34,6 +34,10 @@ const configOptions = {
       'default': Const.DEFAULT.storageKey
     },
     localStorageKey: Const.LOCALSTORAGE.storage
+  },
+  userHistoryJson: {
+    default: '[]',
+    localStorageKey: Const.LOCALSTORAGE.userHistory
   },
   arc: {
     aliases: ['arckey'],
@@ -58,22 +62,33 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
     return ['arckey'];
   }
-  update({arckey}, state) {
-    if (!state.config) {
+  update({arckey}, {config}) {
+    if (!config) {
       const params = (new URL(document.location)).searchParams;
-      const config = ProcessConfig.processConfig(configOptions, params);
+      config = ProcessConfig.processConfig(configOptions, params);
       config.plannerDebug = !config.plannerNoDebug;
       config.userid = Const.DEFAULT.userId;
       config.storage = this.expandStorageMacro(config.storage);
-      state.config = config;
-      this._fire('config', config);
+      this.state = {config};
     }
     if (arckey !== undefined) {
-      state.config.arc = arckey;
+      config.arc = arckey;
     }
-    ProcessConfig.persistParams(configOptions, state.config);
-    // TODO(sjmiles): only works if config is a Highlander
-    WebConfig.config = state.config;
+    this.updateUserHistory(config);
+    log(config.userHistory);
+    ProcessConfig.persistParams(configOptions, config);
+    // TODO(sjmiles): only works if config is Highlander
+    WebConfig.config = config;
+    this._fire('config', config);
+  }
+  updateUserHistory(config) {
+    const {userHistoryJson, storage} = config;
+    const userHistory = JSON.parse(userHistoryJson);
+    if (userHistory.indexOf(storage) < 0) {
+      userHistory.push(storage);
+    }
+    config.userHistory = userHistory;
+    config.userHistoryJson = JSON.stringify(userHistory);
   }
   // TODO(sjmiles): make this a ProcessConfig ability(?)
   // support some macros in storage keys

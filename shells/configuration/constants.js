@@ -18,7 +18,8 @@ export const Const = {
   LOCALSTORAGE: {
     user: `${version}-user`,
     storage: `${version}-storage`,
-    plannerStorage: `${version}-plannerStorage`
+    plannerStorage: `${version}-plannerStorage`,
+    userHistory: `${version}-userHistory`
   },
   SHARE: {
     private: 1,

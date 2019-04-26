@@ -114,7 +114,7 @@ const template = Xen.Template.html`
     <div suggestions content open$="{{suggestionsContentOpen}}">
       <slot on-plan-choose="onChooseSuggestion"></slot>
     </div>
-    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare">
+    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare" on-click="onSettingsPanelClick">
       <pre unsafe-html="{{settings}}"></pre>
     </settings-panel>
   </div>
@@ -161,6 +161,7 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   renderSettings() {
     //return JSON.stringify(WebConfig.config, null, '  ');
     return Xen.html`
+<select><option>${WebConfig.config.userHistory.join('</option><option>')}</option></select>
 <h3>Storage</h3>
 <div>${WebConfig.config.storage}</div>
     `;
@@ -181,6 +182,9 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   onContentsClick(e) {
     e.stopPropagation();
     this.fire('open', false);
+  }
+  onSettingsPanelClick(e) {
+    e.stopPropagation();
   }
   onSearchChange(e) {
     const search = e.target.value;
