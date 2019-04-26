@@ -16,6 +16,7 @@ import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.
 import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
 import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
+import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
 import {Planner} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
@@ -157,9 +158,10 @@ export class PlanProducer {
       log(`[${this.arc.id.idTreeAsString()}] Produced ${suggestions.length} suggestions [elapsed=${timestr}s].`);
       this.isPlanning = false;
 
+      const serializedGenerations = this.debug ? PlanningResult.formatSerializableGenerations(generations) : [];
       if (this.result.merge({
           suggestions,
-          generations: this.debug ? PlanningResult.formatSerializableGenerations(generations) : [],
+          generations: serializedGenerations,
           contextual: this.replanOptions['contextual']}, this.arc)) {
         // Store suggestions to store.
         await this.result.flush();
@@ -167,6 +169,10 @@ export class PlanProducer {
       } else {
         // Add skipped result to devtools.
         PlanningExplorerAdapter.updatePlanningAttempt(suggestions, options['metadata'], this.devtoolsChannel);
+        if (this.debug) {
+          StrategyExplorerAdapter.processGenerations(
+              serializedGenerations, this.devtoolsChannel, {label: 'Plan Producer', keep: true});
+        }
       }
     } else {  // Suggestions are null, if planning was cancelled.
       // Add cancelled attempt to devtools.
