@@ -62,11 +62,12 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
   update({arckey}, state) {
     if (!state.config) {
       const params = (new URL(document.location)).searchParams;
-      state.config = ProcessConfig.processConfig(configOptions, params);
-      state.config.plannerDebug = !state.config.plannerNoDebug;
-      state.config.storage = this.expandStorageMacro(state.config.storage);
-      state.config.userid = Const.DEFAULT.userId;
-      this._fire('config', state.config);
+      const config = ProcessConfig.processConfig(configOptions, params);
+      config.plannerDebug = !config.plannerNoDebug;
+      config.userid = Const.DEFAULT.userId;
+      config.storage = this.expandStorageMacro(config.storage);
+      state.config = config;
+      this._fire('config', config);
     }
     if (arckey !== undefined) {
       state.config.arc = arckey;
