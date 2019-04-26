@@ -140,7 +140,7 @@ export class ParticleExecutionHost {
         //
         // Without an auditor on the runtime side that inspects what is being fetched from
         // this store, particles with a reference can access any data of that reference's type.
-        this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), store.id, storageKey);
+        this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), String(Math.random())/*store.id*/, storageKey);
       }
 
       onConstructInnerArc(callback: number, particle: Particle) {
