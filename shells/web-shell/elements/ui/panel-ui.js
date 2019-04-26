@@ -161,8 +161,13 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   }
   renderSettings() {
     //return JSON.stringify(WebConfig.config, null, '  ');
+    const users = WebConfig.config.userHistory.map(url => {
+      const parts = url.split('/');
+      const short = `${parts.slice(0, 3).join('/')}...${parts.slice(-1).join('/')}`;
+      return short;
+    });
     return Xen.html`
-<select><option>${WebConfig.config.userHistory.join('</option><option>')}</option></select>
+<select><option>${users.join('</option><option>')}</option></select>
 <h3>Storage</h3>
 <div>${WebConfig.config.storage}</div>
     `;
