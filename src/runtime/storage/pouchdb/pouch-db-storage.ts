@@ -109,8 +109,7 @@ export class PouchDbStorage extends StorageBase {
       return this.construct(id, type, key);
     } catch (err) {
       if (err.name && err.name === 'not_found') {
-        console.warn('connecting despite missing doc, returning null for ' + key);
-
+        // connecting despite missing doc, returning null
         return null;
       }
       throw err;
