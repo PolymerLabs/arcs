@@ -19,12 +19,17 @@ export interface UpsertMutatorFn<T extends UpsertDoc> {
 }
 
 /**
+ * Total number of tries before giving up on this upsert.
+ */
+const DEFAULT_MAX_RETRIES = 100;
+
+/**
  * Provides a way to read-modify-write data for a given PouchDB key
  * based on the following rules:
  *
  * - A new entry based on defaultValue is stored if it doesn't exist.
  * - If the existing entry is available it is fetched.
- * - A copy of the existing document is pass passed to `mutatorFn`
+ * - A copy of the existing document is passed to `mutatorFn`
  * - If the model is new or mutated by `mutatorFn`, write a new revision.
  *
  * @return the current value of data for `docId`
@@ -40,9 +45,10 @@ export async function upsert<T extends UpsertDoc>(
     defaultValue?: PouchDB.Core.NewDocument<T>): Promise<T> {
 
   // Keep retrying the operation until it succeeds.
-  // TODO(lindner): add backoff and error out if this goes on for too long
 
-  while (1) {
+  let upsertAttempts = 0;
+
+  while (upsertAttempts++ < DEFAULT_MAX_RETRIES) {
     let doc: T;
     let existingDoc = false;
 
@@ -79,8 +85,7 @@ export async function upsert<T extends UpsertDoc>(
         throw err;
       }
     }
-  } // end while (1)
+  } // end retry
 
-  // can never get here..
-  throw new Error('unable to store');
+  throw new Error('Unable to store key=' + docId);
 }
