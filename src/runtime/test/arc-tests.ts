@@ -102,10 +102,6 @@ describe('Arc ' + storageKeyPrefix, () => {
     recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
     await arc.instantiate(recipe);
-    const f = async () => { await arc.idle; };
-    // The arc.idle wait causes onHandleSync to run before the variable set below,
-    // resulting in test failure.
-     await Promise.all([f(), f()]);
     await getVariableHandle(fooStore).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
