@@ -11,7 +11,7 @@
 import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../platform/pouchdb-web.js';
 
 export interface UpsertDoc {
-  version: number; // TODO version
+  version: number;
 }
 
 export interface UpsertMutatorFn<T extends UpsertDoc> {
@@ -63,7 +63,10 @@ export async function upsert<T extends UpsertDoc>(
       doc = {_rev: undefined, _id: docId, ...defaultValue};
     }
 
-    // TODO deepClone? Readonly?  For now just use a shallow clone to avoid weirdness..
+    // The following call shallow clones the existing document and passes it to the
+    // mutatorFn.  This is required because we immediately deep compare the
+    // old vs new and the mutatorFn can modify the inbound data.
+    // TODO consider deepClone
     const newDoc = await mutatorFn({...doc}) as PouchDB.Core.PutDocument<T>;
 
     // Just return if the doc exists and mutator didn't make any changes
