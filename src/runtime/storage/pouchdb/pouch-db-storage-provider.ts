@@ -31,10 +31,11 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /** The PouchDbKey for this Collection */
   protected readonly pouchDbKey: PouchDbKey;
 
-  protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
+  protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, name, id, key);
     this.storageEngine = storageEngine;
     this.pouchDbKey = new PouchDbKey(key);
+    this.referenceMode = refMode;
   }
 
   // A consequence of awaiting this function is that this.backingStore

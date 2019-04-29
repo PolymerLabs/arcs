@@ -44,8 +44,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @param id see base class.
    * @param key the storage key for this collection.
    */
-  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
-    super(type, storageEngine, name, id, key);
+  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
+    super(type, storageEngine, name, id, key, refMode);
 
     let resolveInitialized: () => void;
     this.initialized = new Promise(resolve => resolveInitialized = resolve);
@@ -66,19 +66,11 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     return this.type.getContainedType();
   }
 
-  // TODO(lindner): write tests
-  clone(): PouchDbCollection {
-    const handle = new PouchDbCollection(this.type, this.storageEngine, this.name, this.id, null);
-    handle.cloneFrom(this); // async?
-    return handle;
-  }
-
   // TODO(lindner): don't allow this to run on items with data...
   async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
 
     const literal = await handle.toLiteral();
-
     if (this.referenceMode && literal.model.length > 0) {
       const [backingStore, handleBackingStore] =
         await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
@@ -172,7 +164,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    */
   async getMultiple(ids: string[]): Promise<ModelValue[]>  {
     await this.initialized;
-    assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores');
+    assert(!this.referenceMode, 'getMultiple not implemented for referenceMode stores for '+ this.storageKey);
     const model = await this.getModel();
     return ids.map(id => model.getValue(id));
   }

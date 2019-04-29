@@ -16,8 +16,8 @@ import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 
 // TODO(lindner): update to operate like the firebase version
 export class PouchDbBigCollection extends PouchDbStorageProvider implements BigCollectionStorageProvider {
-  constructor(type, storageEngine, name, id, key) {
-    super(type, storageEngine, name, id, key);
+  constructor(type, storageEngine, name, id, key, refMode?: boolean) {
+    super(type, storageEngine, name, id, key, refMode);
   }
 
   backingType() {

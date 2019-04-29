@@ -53,26 +53,35 @@ export class PouchDbStorage extends StorageBase {
     }
   }
 
+  private isTypeReferenceMode(type: Type) {
+    if (type instanceof ReferenceType) {
+      return false;
+    }
+    if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
+      return false;
+    }
+    return true;
+  }
+
+
   /**
    * Instantiates a new key for id/type stored at keyFragment.
    */
   async construct(id: string, type: Type, keyFragment: string): Promise<PouchDbStorageProvider> {
-    const provider = await this._construct(id, type, keyFragment);
-    if (type instanceof ReferenceType) {
-      return provider;
+
+    const refMode = this.isTypeReferenceMode(type);
+    const provider = await this._construct(id, type, keyFragment, refMode);
+
+    if (provider.referenceMode) {
+      await provider.ensureBackingStore();
     }
-    if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
-      return provider;
-    }
-    provider.enableReferenceMode();
-    await provider.ensureBackingStore();
 
     return provider;
   }
 
-  async _construct(id: string, type: Type, keyFragment: string) {
+  async _construct(id: string, type: Type, keyFragment: string, refMode: boolean) {
     const key = new PouchDbKey(keyFragment);
-    const provider = this.newProvider(type, undefined, id, key.toString());
+    const provider = this.newProvider(type, undefined, id, key.toString(), refMode);
 
     // Used to track changes for the key.
     this.providerByLocationCache.set(key.location, provider);
@@ -100,7 +109,8 @@ export class PouchDbStorage extends StorageBase {
       return this.construct(id, type, key);
     } catch (err) {
       if (err.name && err.name === 'not_found') {
-        console.warn('connecting despite missing doc, returning null');
+        console.warn('connecting despite missing doc, returning null for ' + key);
+
         return null;
       }
       throw err;
@@ -141,7 +151,8 @@ export class PouchDbStorage extends StorageBase {
       return this.baseStorePromises.get(type);
     }
 
-    const storagePromise = this._construct(type.toString(), type.collectionOf(), key) as Promise<PouchDbCollection>;
+    // Base Storage is not using Reference Mode
+    const storagePromise = this._construct(type.toString(), type.collectionOf(), key, false) as Promise<PouchDbCollection>;
 
     this.baseStorePromises.set(type, storagePromise);
     const storage = await storagePromise;
@@ -154,16 +165,16 @@ export class PouchDbStorage extends StorageBase {
   parseStringAsKey(s: string): PouchDbKey {
     return new PouchDbKey(s);
   }
-
+  
   /** Creates a new Variable or Collection given basic parameters */
-  newProvider(type: Type, name: string, id: string, key: string): PouchDbStorageProvider {
+  newProvider(type: Type, name: string, id: string, key: string, refMode: boolean): PouchDbStorageProvider {
     if (type instanceof CollectionType) {
-      return new PouchDbCollection(type, this, name, id, key);
+      return new PouchDbCollection(type, this, name, id, key, refMode);
     }
     if (type instanceof BigCollectionType) {
-      return new PouchDbBigCollection(type, this, name, id, key);
+      return new PouchDbBigCollection(type, this, name, id, key, refMode);
     }
-    return new PouchDbVariable(type, this, name, id, key);
+    return new PouchDbVariable(type, this, name, id, key, refMode);
   }
 
   /** Removes everything that a test could have created. */

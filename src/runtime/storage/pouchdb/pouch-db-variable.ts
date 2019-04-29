@@ -52,8 +52,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param id see base class.
    * @param key the storage key for this collection.
    */
-  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
-    super(type, storageEngine, name, id, key);
+  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
+    super(type, storageEngine, name, id, key, refMode);
 
     let resolveInitialized: () => void;
     this.initialized = new Promise(resolve => resolveInitialized = resolve);
@@ -72,18 +72,19 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   async clone(): Promise<PouchDbVariable> {
-    const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null);
+    const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null, this.referenceMode);
     await variable.cloneFrom(this);
     return variable;
   }
 
   async cloneFrom(handle): Promise<void> {
     await this.initialized;
-    
+
     const literal = await handle.toLiteral();
 
+    this.referenceMode = handle.referenceMode;
+
     if (handle.referenceMode && literal.model.length > 0) {
-      this.referenceMode = handle.referenceMode;
       // cloneFrom the backing store data by reading the model and writing it out.
       const [backingStore, handleBackingStore] = await Promise.all(
         [this.ensureBackingStore(), handle.ensureBackingStore()]);
@@ -93,6 +94,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       await backingStore.storeMultiple(underlying, [this.storageKey]);
     }
 
+    await this.initialized;
     await this.fromLiteral(literal);
 
     if (literal && literal.model && literal.model.length === 1) {
@@ -105,7 +107,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
           return doc;
         });
       }
-          
+
       this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
     }
   }
@@ -211,7 +213,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     assert(value !== undefined);
     await this.initialized;
 
-    let stored;
+    let stored: VariableStorage;
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have
@@ -261,7 +263,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     }
     this.bumpVersion();
 
-    const data = this.referenceMode ? value : stored;
+    const data = this.referenceMode ? value : stored.value;
     await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
   }
 
