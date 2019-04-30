@@ -46,11 +46,10 @@ type CollectionModel<T> = CRDTModel<CRDTCollectionTypeRecord<T>>;
 export class CRDTCollection<T> implements CollectionModel<T> {
   private model: CollectionData<T> = {values: new Map(), version: new Map()};
 
-  merge(other: CollectionModel<T>):
+  merge(other: CollectionData<T>):
       {modelChange: CollectionChange<T>, otherChange: CollectionChange<T>} {
-    const newValues = this.mergeItems(this.model, other.getData());
-    const newVersion =
-        mergeVersions(this.model.version, other.getData().version);
+    const newValues = this.mergeItems(this.model, other);
+    const newVersion = mergeVersions(this.model.version, other.version);
     this.model.values = newValues;
     this.model.version = newVersion;
     // For now this is always returning a model change.
@@ -92,7 +91,7 @@ export class CRDTCollection<T> implements CollectionModel<T> {
     if (!this.model.values.has(value)) {
       return false;
     }
-    if (!version.get(key)) {
+    if (!version.has(key)) {
       return false;
     }
     // Removes do not increment the clock.

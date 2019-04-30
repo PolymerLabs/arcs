@@ -177,7 +177,7 @@ describe('CRDTCollection', () => {
       clock: new Map([['you', 2]]),
       actor: 'you'
     });
-    const {modelChange, otherChange} = set1.merge(set2);
+    const {modelChange, otherChange} = set1.merge(set2.getData());
     const expectedValues = new Map([
       ['one', new Map([['me', 1], ['you', 2]])],
       ['two', new Map([['me', 2]])],
@@ -200,7 +200,7 @@ describe('CRDTCollection', () => {
       actor: 'me'
     });
     const {modelChange: modelChange2, otherChange: otherChange2} =
-        set1.merge(set2);
+        set1.merge(set2.getData());
     const expectedValues2 = new Map([
       ['two', new Map([['me', 2]])],
       ['three', new Map([['you', 1]])],
