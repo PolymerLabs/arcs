@@ -1,0 +1,2 @@
+schema MlModelUrl
+  Text url

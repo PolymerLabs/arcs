@@ -1,0 +1,9 @@
+import '../schemas/Image.schema'
+import '../schemas/MlModel.schema'
+
+particle ImageStyler in './source/ImageStyler.js'
+  in ImageUrl image
+  in MlModelUrl model
+  consume root
+
+
