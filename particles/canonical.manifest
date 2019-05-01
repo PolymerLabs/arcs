@@ -10,3 +10,5 @@ import 'Demo/Demo.recipes'
 
 // Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
 //import 'Tutorial/Tutorial.recipes'
+
+import 'TicTacToe/TicTacToe.recipes'
