@@ -17,7 +17,6 @@ defineParticle(({DomParticle, html, log}) => {
     <h5 style="margin: 8px 0;">Please choose the folder where the model is located.</h5>
     <button on-click="onSubmit">Submit</button>
     <br/>
-    <p>Path: {{model}}</p>
   </div>
   `;
 
@@ -29,13 +28,13 @@ defineParticle(({DomParticle, html, log}) => {
       return state;
     }
     onChange({data: {value}}) {
-      this.setState({inputModelUrl: value});
+      this.setState({
+        inputModelUrl: value,
+      });
     }
     onSubmit() {
-      const model = this.state.inputModelUrl;
-      this.updateVariable('model', {model});
-      this.setState({model});
+      const url = this.state.inputModelUrl;
+      this.updateVariable('model', {url});
     }
   };
-
 });

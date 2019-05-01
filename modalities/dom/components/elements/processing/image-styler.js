@@ -23,7 +23,7 @@ const template = Xen.html`
  */
 class ImageStyleTransfer extends Xen.Async {
   static get observedAttributes() {
-    return ['imgUrl', 'modelUrl'];
+    return ['img-url', 'model-url'];
   }
   get template() {
     return template;
