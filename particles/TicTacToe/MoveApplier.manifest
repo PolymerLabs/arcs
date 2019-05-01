@@ -24,7 +24,7 @@ particle MoveApplier in 'source/MoveApplier.js'
 recipe
   create as h0
   create as h1
-  create  as h2
+  create as h2
   create as h3
   create as h4
   MoveApplier
