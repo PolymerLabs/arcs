@@ -133,6 +133,7 @@ export abstract class StorageProxy implements Store {
   }
 
   _onSynchronize({version, model}: {version: number, model: SerializedModelEntry[]}): void {
+    console.log('sync!', version, model, this.id);
     if (this.version !== undefined && version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale model version ${version}; ` +
                    `current is ${this.version}`);
@@ -157,6 +158,7 @@ export abstract class StorageProxy implements Store {
   }
 
   _onUpdate(update: {version: number}): void {
+    console.log('update!', update, this.id);
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (this.observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
       const handleUpdate = this._processUpdate(update, false);
@@ -170,6 +172,8 @@ export abstract class StorageProxy implements Store {
     if (update.version <= this.version) {
       console.warn(`StorageProxy '${this.id}' received stale update version ${update.version}; ` +
                    `current is ${this.version}`);
+      console.warn('this', this);
+      console.warn('update', update);
       return;
     }
 
