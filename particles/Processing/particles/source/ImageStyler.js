@@ -12,7 +12,8 @@
 defineParticle(({DomParticle, html, log}) => {
 
   const tmpl = html`
-  <image-styler img-url="{{url}}" model-url="{{model}}" on-results="{{onResults}}"></image-styler>
+  <h2>Neural Style Transfer</h2>
+  <image-styler imgurl="{{url}}" modelurl="{{model}}" on-results="{{onResults}}"></image-styler>
   <div style="padding: 16px">
     <img src="{{newImg}}">
   </div>
@@ -25,10 +26,10 @@ defineParticle(({DomParticle, html, log}) => {
 
     render({image, model}, state) {
       return {
-        status: state.status || (image ? 'classifying' : 'idle'),
+        status: state.status || (image ? 'transfering' : 'idle'),
         url: image ? image.url : '',
         model: model ? model.url : '',
-        newImg: state.newImg || '',
+        newImg: state.newImg ? state.newImg : '',
       };
     }
 

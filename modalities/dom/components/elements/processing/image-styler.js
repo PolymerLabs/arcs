@@ -10,7 +10,7 @@
 import {Xen} from '../../xen/xen-async.js';
 import 'https://unpkg.com/ml5@0.2.3/dist/ml5.min.js';
 
-const log = Xen.logFactory('ImageStyleTransfer', 'green');
+const log = console.log; // Xen.logFactory('ImageStyleTransfer', 'green');
 
 
 const template = Xen.html`
@@ -23,26 +23,29 @@ const template = Xen.html`
  */
 class ImageStyleTransfer extends Xen.Async {
   static get observedAttributes() {
-    return ['img-url', 'model-url'];
+    return ['imgurl', 'modelurl'];
   }
   get template() {
     return template;
   }
-  update({imgUrl, modelUrl}, state) {
+  update({imgurl, modelurl}, state) {
+
+    console.log('args: ', imgurl, modelurl);
+
     if (!state.status) {
       state.status = 'idle';
     }
-    if (state.imgUrl !== imgUrl) {
-      state.imgUrl = imgUrl;
-      this.updateUrl(imgUrl);
+    if (state.imgurl !== imgurl) {
+      state.imgurl = imgurl;
+      this.updateUrl(imgurl);
     }
-    if (state.modelUrl !== modelUrl) {
-      state.modelUrl = modelUrl;
+    if (state.modelurl !== modelurl) {
+      state.modelurl = modelurl;
     }
-    if (state.img) {
+    if (state.img && !!state.modelurl) {
       const img = state.img;
       state.img = null;
-      this.applyTransfer(img, modelUrl);
+      this.applyTransfer(img, modelurl);
     }
   }
   async updateUrl(url) {
@@ -60,6 +63,7 @@ class ImageStyleTransfer extends Xen.Async {
     return state;
   }
   async applyTransfer(baseImage, styleModel) {
+    console.log('starting style transfer');
     log('Loading style transfer model...');
     const styler = await window.ml5.styleTransfer(styleModel);
     log('Applying style transfer...');

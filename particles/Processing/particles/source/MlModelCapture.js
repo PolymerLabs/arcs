@@ -14,7 +14,7 @@ defineParticle(({DomParticle, html, log}) => {
   <div style="padding: 16px;">
     <h3>Input the path/to/style-transfer/model/</h3> 
     <input style="width: 80%; padding: 8px;" on-change="onChange">
-    <h5 style="margin: 8px 0;">Please choose the folder where the model is located.</h5>
+    <h5 style="margin: 8px 0;">Please choose the folder where the model is located, <it>not</it> the model itself.</h5>
     <button on-click="onSubmit">Submit</button>
     <br/>
   </div>
