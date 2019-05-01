@@ -1,4 +1,4 @@
-import './MoveApplier.manifest'
+import 'particles/MoveApplier.particle'
 recipe
   create as h0
   create as h1
