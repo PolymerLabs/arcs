@@ -111,7 +111,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       if (config) {
         state.storage = config.storage;
         state.userid = config.userid;
-        state.arckey = config.arckey;
+        state.arckey = config.arc;
       }
     }
     // setup environment once we have a root and a user
