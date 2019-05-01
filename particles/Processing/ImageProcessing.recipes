@@ -1,0 +1,9 @@
+import 'particles/ImageCapture.particle'
+import 'particles/ImageProcessing.particle'
+
+recipe ImageProcessing
+  create #volatile as image
+  ImageCapture
+    image -> image
+  ImageProcessing
+    image <- image

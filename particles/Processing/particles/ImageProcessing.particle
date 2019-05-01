@@ -1,0 +1,5 @@
+import '../schemas/Image.schema'
+
+particle ImageProcessing in './source/ImageProcessing.js'
+  in Image image
+  consume root
