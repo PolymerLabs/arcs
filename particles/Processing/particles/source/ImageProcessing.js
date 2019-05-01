@@ -14,17 +14,32 @@
 defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
-    <image-processor url="{{url}}"></image-processor>
-  `;
+    <image-processor url="{{url}}" on-results="{{onResults}}"></image-processor>
+    <div style="padding: 16px;">
+      <div>Status: <b>{{status}}</b></div>
+      <div>Label: <b>{{label}}</b></div>
+      <div>Confidence: <span>{{probability}}</span></div>
+    </div>
+    `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    render({image}, state) {
-      if (image) {
-        return {url: image.url};
-      }
+    render({image}, {status, label, probability}) {
+      return {
+        status: status || (image ? 'classifying' : 'idle'),
+        url: image ? image.url : '',
+        label,
+        probability
+      };
+    }
+    onResults({data: {value}}) {
+      this.setState({
+        status: 'done',
+        label: value.label,
+        probability: value.probability
+      });
     }
   };
 
