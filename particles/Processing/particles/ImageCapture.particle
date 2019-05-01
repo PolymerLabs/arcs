@@ -3,3 +3,4 @@ import '../schemas/Image.schema'
 particle ImageCapture in './source/ImageCapture.js'
   out ImageUrl image
   consume root
+    provide imageView

@@ -15,7 +15,7 @@ defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
     <image-processor url="{{url}}" on-results="{{onResults}}"></image-processor>
-    <div style="padding: 16px;">
+    <div hidden={{shouldHide}} style="padding: 16px;">
       <div>Status: <b>{{status}}</b></div>
       <div>Label: <b>{{label}}</b></div>
       <div>Confidence: <span>{{probability}}</span></div>
@@ -26,12 +26,16 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
+    shouldRender({image}) {
+      return !!image;
+    }
     render({image}, {status, label, probability}) {
       return {
         status: status || (image ? 'classifying' : 'idle'),
         url: image ? image.url : '',
         label,
-        probability
+        probability,
+        shouldHide: false
       };
     }
     onResults({data: {value}}) {

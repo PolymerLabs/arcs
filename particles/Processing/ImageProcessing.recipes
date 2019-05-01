@@ -1,14 +1,23 @@
 import 'particles/ImageCapture.particle'
 import 'particles/MlModelCapture.particle'
+import 'particles/ImageProcessSelector.particle'
 import 'particles/ImageProcessing.particle'
 import 'particles/ImageStyler.particle'
 
 recipe ImageProcessing
-  create #volatile as image
+  create #volatile as target
   ImageCapture
-    image -> image
+    image -> target
+    consume root
+      provide imageView as viewSlot
+  create #volatile as classifyTarget
+  ImageProcessSelector
+    imageToProcess <- target
+    imageToClassify -> classifyTarget
+    imageToStyle -> Target
+    consume selectView as viewSlot
   ImageProcessing
-    image <- image
+    image <- classifyTarget
 
 
 recipe ImageStyler

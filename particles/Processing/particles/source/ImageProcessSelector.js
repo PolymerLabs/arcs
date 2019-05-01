@@ -15,13 +15,9 @@ defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
     <div style="padding: 16px;">
-      <h3>Input an image url</h3>
-      <input style="width: 80%; padding: 8px;" on-change="onChange">
-      <h5 style="margin: 8px 0;">Try: https://behelits.com/projects/ml5-examples/javascript/ImageClassification/images/kitten.jpg</h5>
-      <button on-click="onSubmit">Submit</button>
+     <button on-click="onClassify">Classify</button>
+     <button on-click="onOther">Other</button>
       <br><br>
-      <img src="{{url}}">
-      <div slotid="imageView"></div>
     </div>
   `;
 
@@ -29,17 +25,18 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
+    shouldRender({imageToProcess}) {
+      return !!imageToProcess;
+    }
     render(props, state) {
       return state;
     }
-    onChange({data: {value}}) {
-      this.setState({inputUrl: value});
+    onClassify() {
+      this.updateVariable('imageToClassify', {url: this.props.imageToProcess.url});
     }
-    onSubmit() {
-      console.log(this.props);
-      const url = this.state.inputUrl;
-      this.updateVariable('image', {url});
-      this.setState({url});
+    onOther() {
+      console.log("onOther called");
+      this.updateVariable('imageToOther', {url: this.props.imageToProcess.url});
     }
   };
 

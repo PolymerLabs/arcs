@@ -1,0 +1,7 @@
+import '../schemas/Image.schema'
+
+particle ImageProcessSelector in './source/ImageProcessSelector.js'
+  in ImageUrl imageToProcess
+  out ImageUrl imageToClassify
+  out ImageUrl imageToOther
+  consume selectView
