@@ -537,7 +537,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     let storageKey;
     if (this.referenceMode && value) {
       storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
-      // this.value = {id: value.id, storageKey};
       this.pendingWrites.push({value, storageKey});
     } else {
       this.value = value;
