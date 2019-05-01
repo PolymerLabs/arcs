@@ -1,5 +1,7 @@
 import 'particles/ImageCapture.particle'
+import 'particles/MlModelCapture.particle'
 import 'particles/ImageProcessing.particle'
+import 'particles/ImageStyler.particle'
 
 recipe ImageProcessing
   create #volatile as image
@@ -7,3 +9,15 @@ recipe ImageProcessing
     image -> image
   ImageProcessing
     image <- image
+
+
+recipe ImageStyler
+  create #volatile as image
+  create #volatile as model
+  ImageCapture
+    image -> image
+  MlModelCapture
+    model -> model
+  ImageStyler
+    image <- image
+    model <- model
