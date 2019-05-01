@@ -37,8 +37,8 @@ const configOptions = {
     aliases: ['user'],
     localStorageKey: Const.LOCALSTORAGE.user
   },
-  arckey: {
-    aliases: ['arc'],
+  arc: {
+    aliases: ['arckey'],
     persistToUrl: true
   },
   search: {
@@ -66,11 +66,11 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       state.config.storage = this.expandStorageMacro(state.config.storage);
       this._fire('config', state.config);
     }
-    if (userid) {
-      state.config.userid = userid;
+    if (arckey !== undefined) {
+      state.config.arc = arckey;
     }
-    if (arckey) {
-      state.config.arckey = arckey;
+    if (userid !== undefined) {
+      state.config.userid = userid;
     }
     ProcessConfig.persistParams(configOptions, state.config);
     // TODO(sjmiles): only works if config is a Highlander
