@@ -13,11 +13,6 @@ import 'https://unpkg.com/ml5@0.2.3/dist/ml5.min.js';
 //const log = Xen.logFactory('ImageClassifier', 'blue');
 
 const template = Xen.html`
-  <div style="padding: 16px;">
-    <div>Status: <b>{{status}}</b></div>
-    <div>Label: <b>{{label}}</b></div>
-    <div>Confidence: <span>{{probability}}</span></div>
-  </div>
 `;
 
 class ImageProcessor extends Xen.Async {
@@ -56,18 +51,17 @@ class ImageProcessor extends Xen.Async {
     return state;
   }
   async classify(image) {
-   this.state = {status: 'classifying...'};
     console.log('classifying...');
     // Initialize the Image Classifier method with MobileNet
     const classifier = await window.ml5.imageClassifier('MobileNet');
     const results = await classifier.classify(image);
     const result = results.shift();
     console.log('classifying done.');
-    this.state = {
+    this.value = {
       label: result.label,
-      probability: result.confidence.toFixed(4),
-      status: 'done'
+      probability: result.confidence.toFixed(4)
     };
+    this.fire('results');
   }
 }
 
