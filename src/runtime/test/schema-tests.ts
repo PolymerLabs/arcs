@@ -393,4 +393,13 @@ describe('schema', () => {
     assert.isEmpty(emptySchema.names);
     assert.equal('* {}', emptySchema.toInlineSchemaString());
   });
+
+  it('handles Bytes fields', async () => {
+    const manifest = await Manifest.parse(`
+      schema Buffer
+        Bytes data`);
+    const Buffer = manifest.findSchemaByName('Buffer').entityClass();
+    const b1 = new Buffer({data: Uint8Array.from([12, 34, 56])});
+    assert.deepEqual(b1.data, Uint8Array.from([12, 34, 56]));
+  });
 });

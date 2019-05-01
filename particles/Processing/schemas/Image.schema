@@ -1,2 +1,6 @@
-schema Image
+schema ImageUrl
   Text url
+
+schema ImageBlob
+  Bytes blob
+
