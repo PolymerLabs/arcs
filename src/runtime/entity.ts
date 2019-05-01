@@ -260,6 +260,8 @@ function convertToJsType(fieldType: string, schemaName: string) {
       return 'number';
     case 'Boolean':
       return 'boolean';
+    case 'Bytes':
+      return 'Uint8Array';
     case 'Object':
       return 'object';
     default:
@@ -279,7 +281,8 @@ function validateFieldAndTypes({op, name, value, schema, fieldType}: {op: string
 
   if (typeof(fieldType) !== 'object') {
     // Primitive fields.
-    if (typeof(value) !== convertToJsType(fieldType, schema.name)) {
+    const valueType = value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
+    if (valueType !== convertToJsType(fieldType, schema.name)) {
       throw new TypeError(
           `Type mismatch ${op}ting field ${name} (type ${fieldType}); ` +
           `value '${value}' is type ${typeof(value)}`);
