@@ -7,6 +7,7 @@ import 'Music/Music.recipes'
 import 'TVMaze/TVMaze.recipes'
 import 'Words/Words.recipes'
 import 'Demo/Demo.recipes'
+import 'Processing/ImageProcessing.recipes'
 
 // Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
 //import 'Tutorial/Tutorial.recipes'
