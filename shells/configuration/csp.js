@@ -31,6 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   const httpEquiv = 'Content-Security-Policy';
   const content = `
     script-src
+        'unsafe-eval'
         'self'
         blob:
         wss://*.firebase.io wss://*.firebaseio.com
@@ -43,6 +44,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.tvmaze.com
         https://media.w3.org
         https://*.glitch.me
+        https://unpkg.com
         ;
     font-src
         'self'
@@ -54,6 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://behelits.com
         ;
     img-src
+        *
         'self'
         blob:
         data:
