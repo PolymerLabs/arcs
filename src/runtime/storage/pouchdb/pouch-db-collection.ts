@@ -11,11 +11,13 @@
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {Type, TypeLiteral} from '../../type.js';
+import {Mutex} from '../../mutex.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';
 import {ChangeEvent, CollectionStorageProvider} from '../storage-provider-base.js';
 import {UpsertDoc, UpsertMutatorFn, upsert} from './pouch-db-upsert.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
+
 
 /**
  * A representation of a Collection in Pouch storage.
@@ -31,9 +33,7 @@ interface CollectionStorage extends UpsertDoc {
  * The PouchDB-based implementation of a Collection.
  */
 export class PouchDbCollection extends PouchDbStorageProvider implements CollectionStorageProvider {
-  // All public methods must call `await initialized` to avoid race
-  // conditions on initialization.
-  private readonly initialized: Promise<void>;
+  private upsertMutex = new Mutex();
 
   /**
    * Create a new PouchDbCollection.
@@ -47,12 +47,9 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, storageEngine, name, id, key, refMode);
 
-    let resolveInitialized: () => void;
-    this.initialized = new Promise(resolve => resolveInitialized = resolve);
-
     // Ensure that the underlying database and backing store is created.
     this.getModel().then(() => {
-      resolveInitialized();
+      this.resolveInitialized();
     }).catch((err) => {
       // should throw something?
       console.warn('error init', err);
@@ -68,6 +65,8 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
   // TODO(lindner): don't allow this to run on items with data...
   async cloneFrom(handle): Promise<void> {
+    await this.initialized;
+
     this.referenceMode = handle.referenceMode;
 
     const literal = await handle.toLiteral();
@@ -81,11 +80,6 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     }
 
     const updatedCrdtModel = new CrdtCollectionModel(literal.model);
-
-    // Normally this would be at the top of this function, but that
-    // leads to race conditions.  Instead read the data from the other
-    // handle first and then await.
-    await this.initialized;
 
     const doc = await this.upsert(async doc => {
       doc.referenceMode = this.referenceMode;
@@ -105,10 +99,11 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   async modelForSynchronization() {
     await this.initialized;
     // TODO(lindner): should this change for reference mode??
-    return {
+    const retval = {
       version: this.version,
       model: await this._toList()
     };
+    return retval;
   }
 
   /** @inheritDoc */
@@ -121,6 +116,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   private async _toList(): Promise<SerializedModelEntry[]> {
+    await this.initialized;
     if (this.referenceMode) {
       const items = (await this.getModel()).toLiteral();
       if (items.length === 0) {
@@ -144,6 +140,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
         const backingStoreValue = backingStoreValues.shift();
         retval.push({id: item.value.id, value: backingStoreValue, keys: item.keys});
       }
+
       return retval;
     }
     // !this.referenceMode
@@ -224,6 +221,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    */
   async store(value, keys: string[], originatorId:string = undefined): Promise<void> {
     assert(keys != null && keys.length > 0, 'keys required');
+
     const id = value.id;
 
     // item contains data that is passed to _fire
@@ -236,15 +234,15 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       // Update the referred data
       await this.initialized;
 
+      const backingStore = await this.ensureBackingStore();
+      backingStore.store(value, keys);
+
       const doc = await this.upsert(async doc => {
         const crdtmodel = new CrdtCollectionModel(doc.model);
         item.effective = crdtmodel.add(value.id, {id: value.id, storageKey}, keys);
         doc.model = crdtmodel.toLiteral();
         return doc;
       });
-
-      const backingStore = await this.ensureBackingStore();
-      backingStore.store(value, keys);
     } else {
       await this.initialized;
 
@@ -347,15 +345,19 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
     const defaultDoc: CollectionStorage = {
       referenceMode: this.referenceMode,
       type: this.type.toLiteral(),
-      model: null,
+      model: new CrdtCollectionModel().toLiteral(),
       version: 0,
     };
-    // Update local state..
-    const doc = await upsert(this.db, this.pouchDbKey.location, mutatorFn, defaultDoc);
-    this.version = doc.version;
-    this.referenceMode = doc.referenceMode;
-
-    return doc;
+    const release = await this.upsertMutex.acquire();
+    try {
+      // Update local state..
+      const doc = await upsert(this.db, this.pouchDbKey.location, mutatorFn, defaultDoc);
+      this.version = doc.version;
+      this.referenceMode = doc.referenceMode;
+      return doc;
+    } finally {
+      release();
+    }
   }
 
   /**

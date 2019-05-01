@@ -39,9 +39,6 @@ interface VariableStorage extends UpsertDoc {
  */
 export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
   private localKeyId = 0;
-  // All public methods must call `await initialized` to avoid race
-  // conditions on initialization.
-  private readonly initialized: Promise<void>;
 
   /**
    * Create a new PouchDbVariable.
@@ -54,15 +51,16 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, storageEngine, name, id, key, refMode);
-
-    let resolveInitialized: () => void;
-    this.initialized = new Promise(resolve => resolveInitialized = resolve);
     this.version = 0;
 
-    this.upsert(async doc => doc).then(() => {
-      resolveInitialized();
+    // See if the value has been set
+    this.upsert(async doc => doc).then((doc) => {
+      this.resolveInitialized();
+      // value has been written
     }).catch((err) => {
-      console.warn('error init', err);
+      console.warn('Error init ' + this.storageKey, err);
+      // TODO(lindner) error out the initialized Promise
+      throw err;
     });
   }
 
@@ -78,8 +76,6 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   async cloneFrom(handle): Promise<void> {
-    await this.initialized;
-
     const literal = await handle.toLiteral();
 
     this.referenceMode = handle.referenceMode;
@@ -94,7 +90,6 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       await backingStore.storeMultiple(underlying, [this.storageKey]);
     }
 
-    await this.initialized;
     await this.fromLiteral(literal);
 
     if (literal && literal.model && literal.model.length === 1) {
@@ -138,6 +133,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * {version, model: [{id, value}]}
    */
   async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
+    await this.initialized;
+
     const doc = await this.upsert(async doc => doc);
     const value = doc.value;
 
@@ -161,6 +158,8 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * Updates the internal state of this variable with the supplied data.
    */
   async fromLiteral({version, model}): Promise<void> {
+    await this.initialized;
+
     const value = model.length === 0 ? null : model[0].value;
 
     if (this.referenceMode && value && value.rawData) {
@@ -188,7 +187,9 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     try {
       const doc = await this.upsert(async doc => doc);
       let value = doc.value;
-
+      if (value == null) {
+        console.warn('value is null and refmode=' + this.referenceMode);
+      }
       if (this.referenceMode && value) {
         const backingStore = await this.ensureBackingStore();
         value = await backingStore.get(value.id);
@@ -211,7 +212,6 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   async set(value, originatorId: string = null, barrier: string|null = null): Promise<void> {
     assert(value !== undefined);
-    await this.initialized;
 
     let stored: VariableStorage;
     if (this.referenceMode && value) {

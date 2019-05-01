@@ -828,8 +828,8 @@ describe('Arc ' + storageKeyPrefix, () => {
       current = next;
     }
 
-    // TODO storageKeyPrefix
     const {arc, slotComposer} = await TestHelper.create({
+      storageKey: storageKeyPrefix + Id.fromString('demo').toString(),
       manifestString: `
         particle A in 'A.js'
           consume root

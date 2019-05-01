@@ -503,7 +503,8 @@ ${e.message}
     }
     return manifest;
   }
-  static _augmentAstWithTypes(manifest, items) {
+
+  private static _augmentAstWithTypes(manifest, items) {
     const visitor = new class extends ManifestVisitor {
       constructor() {
         super();
@@ -604,7 +605,8 @@ ${e.message}
     }();
     visitor.traverse(items);
   }
-  static _processSchema(manifest, schemaItem) {
+
+  private static _processSchema(manifest, schemaItem) {
     let description;
     const fields = {};
     let names = [...schemaItem.names];
@@ -659,10 +661,12 @@ ${e.message}
     }
     manifest._schemas[name] = schema;
   }
-  static _processResource(manifest, schemaItem) {
+
+  private static _processResource(manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
-  static _processParticle(manifest, particleItem, loader) {
+
+  private static _processParticle(manifest, particleItem, loader) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -693,8 +697,9 @@ ${e.message}
 
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
+
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
-  static _processInterface(manifest, interfaceItem) {
+  private static _processInterface(manifest, interfaceItem) {
     const handles = [];
     for (const arg of interfaceItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
@@ -719,12 +724,14 @@ ${e.message}
     const ifaceInfo = new InterfaceInfo(interfaceItem.name, handles, slots);
     manifest._interfaces.push(ifaceInfo);
   }
-  static _processRecipe(manifest, recipeItem, loader) {
+
+  private static _processRecipe(manifest, recipeItem, loader) {
     // TODO: annotate other things too
     const recipe = manifest._newRecipe(recipeItem.name);
     this._buildRecipe(manifest, recipe, recipeItem);
   }
-  static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem) {
+
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem) {
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
@@ -1112,7 +1119,8 @@ ${e.message}
     }
     return null;
   }
-  static async _processStore(manifest, item, loader) {
+
+  private static async _processStore(manifest, item, loader) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1220,16 +1228,18 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    store.fromLiteral({version, model});
+    await store.fromLiteral({version, model});
   }
-  static async _createStore(manifest, type, name, id, tags, item, originalId) {
+
+  private static async _createStore(manifest, type, name, id, tags, item, originalId) {
     const store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
     store.originalId = originalId;
     return store;
   }
-  _newRecipe(name) {
+
+  private _newRecipe(name) {
     const recipe = new Recipe(name);
     this._recipes.push(recipe);
     return recipe;

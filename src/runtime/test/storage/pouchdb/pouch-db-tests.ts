@@ -152,7 +152,6 @@ describe('pouchdb for ' + testUrl, () => {
       assert.equal('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
-      
       assert.isNull(var1.backingStore);
     });
   });

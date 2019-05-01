@@ -14,7 +14,6 @@ defineParticle(({Particle}) => {
       this.barHandle = handles.get('bar');
     }
     onHandleSync(handle, model) {
-      console.log('>onHandleSync');
       if (handle.name === 'foo') {
         this.barHandle.set(new this.barHandle.entityClass({value: model ? model.value + 1 : '0'}));
       }

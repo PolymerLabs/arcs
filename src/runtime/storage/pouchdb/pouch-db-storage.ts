@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/assert-web.js';
 import {PouchDB, PouchDbDebug, PouchDbMemory} from '../../../platform/pouchdb-web.js';
 import {Id} from '../../id.js';
-import {BigCollectionType, CollectionType, ReferenceType, Type} from '../../type.js';
+import {ArcType, BigCollectionType, CollectionType, EntityType, ReferenceType, Type} from '../../type.js';
 import {StorageBase} from '../storage-provider-base.js';
 
 import {PouchDbBigCollection} from './pouch-db-big-collection.js';
@@ -19,7 +19,6 @@ import {PouchDbCollection} from './pouch-db-collection.js';
 import {PouchDbKey} from './pouch-db-key.js';
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbVariable} from './pouch-db-variable.js';
-
 PouchDB.plugin(PouchDbDebug);
 PouchDB.debug.disable();
 
@@ -53,10 +52,33 @@ export class PouchDbStorage extends StorageBase {
     }
   }
 
+  /**
+   * Determines if the given type is Reference Mode and sets it
+   * accordingly.  Attempts to sidestep the hacky ways reference mode
+   * changes outside of the storage subsystem.  The following items
+   * will force reference mode to false:
+   *
+   * - ArcType, used for serialization
+   * - EntityType used for Search/Suggestions
+   * - ReferenceTypes
+   * - TypeContainers that contain Reference Types.
+   */
   private isTypeReferenceMode(type: Type) {
+    if (type instanceof EntityType) {
+      // Suggestions and Search are non-referenceMode
+      const schema = type.getEntitySchema();
+      if (schema.name === 'Suggestions' || schema.name === 'Search') {
+        return false;
+      }
+    }
+    if (type instanceof ArcType) {
+      return false; // see arc.ts persistSerialization
+    }
+
     if (type instanceof ReferenceType) {
       return false;
     }
+
     if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
       return false;
     }
@@ -164,7 +186,7 @@ export class PouchDbStorage extends StorageBase {
   parseStringAsKey(s: string): PouchDbKey {
     return new PouchDbKey(s);
   }
-  
+
   /** Creates a new Variable or Collection given basic parameters */
   newProvider(type: Type, name: string, id: string, key: string, refMode: boolean): PouchDbStorageProvider {
     if (type instanceof CollectionType) {

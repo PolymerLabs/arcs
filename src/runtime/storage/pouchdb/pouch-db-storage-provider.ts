@@ -31,11 +31,17 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /** The PouchDbKey for this Collection */
   protected readonly pouchDbKey: PouchDbKey;
 
+  // All public methods must call `await initialized` to avoid race
+  // conditions on initialization.
+  protected readonly initialized: Promise<void>;
+  protected resolveInitialized: () => void;
+
   protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, name, id, key);
     this.storageEngine = storageEngine;
     this.pouchDbKey = new PouchDbKey(key);
     this.referenceMode = refMode;
+    this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
   }
 
   // A consequence of awaiting this function is that this.backingStore
