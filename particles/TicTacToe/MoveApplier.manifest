@@ -1,35 +1,10 @@
-// schema Move
-//   Number x      //  column: 0,1,2
-//   Number y      //  row:    0,1,2
-//   Number player //  player:   1,2
-
-// schema State
-//   Text state
-
 schema MoveResult // Updated board or error message.
   (Number, Number, Number, Number, Number, Number, Number, Number, Number) result
-  // (Number p00, Number p01, Number p02, Number p10, Number p11, Number p12, Number p20, Number p21, Number p22) result
   Text error
 
 particle MoveApplier in 'source/MoveApplier.js'
   in Board {Number p00, Number p01, Number p02, Number p10, Number p11, Number p12, Number p20, Number p21, Number p22} board
   in Move {Number x, Number y, Number player} nextMove // column: 0,1,2; row: 0,1,2;  player:   1,2
   in State {Number state} state // 0: turn of player 1, 1: turn of player 2; 2: player 1 won, 3: player 2 won; 4: draw
-  // out MoveResult result
-  // out (Board () or Text) result
   out Board {Number p00, Number p01, Number p02, Number p10, Number p11, Number p12, Number p20, Number p21, Number p22} boardResult
   out Message {Text msg} messageResult
-
-
-recipe
-  create as h0
-  create as h1
-  create as h2
-  create as h3
-  create as h4
-  MoveApplier
-    board = h0
-    nextMove = h1
-    state = h2
-    boardResult = h3
-    messageResult = h4
