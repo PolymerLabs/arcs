@@ -1,5 +1,5 @@
 import '../schemas/Image.schema'
 
 particle ImageCapture in './source/ImageCapture.js'
-  out Image image
+  out ImageUrl image
   consume root
