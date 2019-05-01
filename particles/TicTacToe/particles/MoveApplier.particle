@@ -1,7 +1,3 @@
-schema MoveResult // Updated board or error message.
-  (Number, Number, Number, Number, Number, Number, Number, Number, Number) result
-  Text error
-
 particle MoveApplier in './js/MoveApplier.js'
   in Board {Number p00, Number p01, Number p02, Number p10, Number p11, Number p12, Number p20, Number p21, Number p22} board
   in Move {Number x, Number y, Number player} nextMove // column: 0,1,2; row: 0,1,2;  player:   1,2
