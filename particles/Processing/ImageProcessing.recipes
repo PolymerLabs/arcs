@@ -14,7 +14,7 @@ recipe ImageProcessing
   ImageProcessSelector
     imageToProcess <- target
     imageToClassify -> classifyTarget
-    imageToStyle -> Target
+    imageToOther -> otherTarget
     consume selectView as viewSlot
   ImageProcessing
     image <- classifyTarget
