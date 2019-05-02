@@ -40,7 +40,9 @@ class ImageStyleTransfer extends Xen.Async {
       this.updateModel(modelurl);
     }
     if (state.img && state.modelurl) {
-      this.applyTransfer(state.img, state.styler);
+      // buy some time for the display to update before we munch the main thread
+      // TODO(sjmiles): probably we should do this in a worker
+      setTimeout(() => this.applyTransfer(state.img, state.styler), 100);
     }
   }
   async updateUrl(url) {

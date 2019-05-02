@@ -25,10 +25,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     get template() {
       return tmpl;
     }
-    //shouldRender({image}) {
-    //  return Boolean(image);
-    //}
-    render({image}, state) {
+    render({}, state) {
       if (!state.inputModelUrl) {
         state.inputModelUrl = 'https://$particles/Processing/assets/models/udnie';
       }

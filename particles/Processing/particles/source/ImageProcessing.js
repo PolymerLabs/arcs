@@ -31,7 +31,7 @@ defineParticle(({DomParticle, html, log}) => {
     }
     render({image}, {status, label, probability}) {
       return {
-        status: status || (image ? 'classifying' : 'idle'),
+        status: status || (image ? 'classifying...' : 'idle'),
         url: image ? image.url : '',
         label,
         probability,

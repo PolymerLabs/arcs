@@ -2,5 +2,4 @@ import '../schemas/Image.schema'
 
 particle ImageProcessing in './source/ImageProcessing.js'
   in ImageUrl image
-  consume root
-
+  consume imageView

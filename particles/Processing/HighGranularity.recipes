@@ -1,0 +1,49 @@
+import 'particles/ImageCapture.particle'
+import 'particles/MlModelCapture.particle'
+import 'particles/ImageProcessSelector.particle'
+import 'particles/ImageProcessing.particle'
+import 'particles/ImageStyler.particle'
+
+// high-granularity: using suggestions as UI
+
+recipe ImageCapture
+  create #volatile as image
+  ImageCapture
+  description `load an image from a url`
+
+store UdnieModel of MlModelUrl 'udnie-model' in 'assets/udnie.json'
+
+recipe UdnieStyler
+  use as image
+  use 'udnie-model' as model
+  ImageStyler
+    image = image
+    model = model
+  description `image style transfer using Udnie model`
+
+store WaveModel of MlModelUrl 'wave-model' in 'assets/wave.json'
+
+recipe WaveStyler
+  use as image
+  use 'wave-model' as model
+  ImageStyler
+    image = image
+    model = model
+  description `image style transfer using Wave model`
+
+recipe AnyStyler
+  use as image
+  create #volatile as model
+  MlModelCapture
+    model = model
+  ImageStyler
+    image = image
+    model = model
+  description `image style transfer using a custom model`
+
+recipe ImageClassifier
+  use as image
+  ImageProcessing
+    image = image
+  description `classify an image`
+
