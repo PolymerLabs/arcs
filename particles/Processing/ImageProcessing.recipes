@@ -14,10 +14,16 @@ recipe ImageProcessing
   ImageProcessSelector
     imageToProcess <- target
     imageToClassify -> classifyTarget
-    imageToOther -> otherTarget
+    imageToStyle -> styleTarget
     consume selectView as viewSlot
   ImageProcessing
     image <- classifyTarget
+  MlModelCapture
+    image <- styleTarget
+    model -> model
+  ImageStyler
+    image <- styleTarget
+    model <- model
 
 
 recipe ImageStyler
@@ -26,6 +32,7 @@ recipe ImageStyler
   ImageCapture
     image -> image
   MlModelCapture
+    image <- image
     model -> model
   ImageStyler
     image <- image

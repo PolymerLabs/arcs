@@ -12,7 +12,6 @@
 defineParticle(({DomParticle, html, log}) => {
 
   const tmpl = html`
-  <h2>Neural Style Transfer</h2>
   <image-styler imgurl="{{url}}" modelurl="{{model}}" on-results="{{onResults}}"></image-styler>
   <div style="padding: 16px">
     <img src="{{newImg}}">

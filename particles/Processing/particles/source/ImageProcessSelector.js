@@ -16,7 +16,7 @@ defineParticle(({DomParticle, html, log}) => {
   const template = html`
     <div style="padding: 16px;">
      <button on-click="onClassify">Classify</button>
-     <button on-click="onOther">Other</button>
+     <button on-click="onStyle">Style</button>
       <br><br>
     </div>
   `;
@@ -34,9 +34,8 @@ defineParticle(({DomParticle, html, log}) => {
     onClassify() {
       this.updateVariable('imageToClassify', {url: this.props.imageToProcess.url});
     }
-    onOther() {
-      console.log("onOther called");
-      this.updateVariable('imageToOther', {url: this.props.imageToProcess.url});
+    onStyle() {
+      this.updateVariable('imageToStyle', {url: this.props.imageToProcess.url});
     }
   };
 

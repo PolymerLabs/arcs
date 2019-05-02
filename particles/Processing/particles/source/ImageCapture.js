@@ -15,6 +15,7 @@ defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
     <div style="padding: 16px;">
+      <h2>Arcs Image Processing Demo</h2>
       <h3>Input an image url</h3>
       <input style="width: 80%; padding: 8px;" on-change="onChange">
       <h5 style="margin: 8px 0;">Try: https://behelits.com/projects/ml5-examples/javascript/ImageClassification/images/kitten.jpg</h5>

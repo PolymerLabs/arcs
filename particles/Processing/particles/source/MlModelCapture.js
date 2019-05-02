@@ -11,7 +11,8 @@
 
 defineParticle(({DomParticle, html, log}) => {
   const tmpl = html`
-  <div style="padding: 16px;">
+  <div hidden={{shouldHide}} style="padding: 16px;">
+  	<h3>Neural Style Transfer</h3>
     <h3>Input the path/to/style-transfer/model/</h3> 
     <input style="width: 80%; padding: 8px;" on-change="onChange">
     <h5 style="margin: 8px 0;">Please choose the folder where the model is located, <it>not</it> the model itself.</h5>
@@ -24,8 +25,14 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return tmpl;
     }
-    render(props, state) {
-      return state;
+    shouldrender({image}) {
+      return !!image;
+    }
+    render({image}, state) {
+      return {
+      	inputModelUrl: state.inputModelUrl,
+        shouldHide: !image    	 
+      };
     }
     onChange({data: {value}}) {
       this.setState({
