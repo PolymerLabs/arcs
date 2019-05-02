@@ -2,6 +2,5 @@ import '../schemas/Image.schema'
 import '../schemas/MlModel.schema'
 
 particle MlModelCapture in './source/MlModelCapture.js'
-  in ImageUrl image
   out MlModelUrl model
   consume root

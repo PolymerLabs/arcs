@@ -11,18 +11,19 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, resolver, log}) => {
 
   const template = html`
     <div style="padding: 16px;">
       <h2>Arcs Image Processing Demo</h2>
       <h3>Input an image url</h3>
-      <input style="width: 80%; padding: 8px;" on-change="onChange">
-      <h5 style="margin: 8px 0;">Try: https://behelits.com/projects/ml5-examples/javascript/ImageClassification/images/kitten.jpg</h5>
+      <input style="width: 80%; padding: 8px;" on-change="onChange" value="{{inputUrl}}">
+      <br><br>
       <button on-click="onSubmit">Submit</button>
       <br><br>
       <img src="{{url}}">
       <div slotid="imageView"></div>
+      <!-- <image-helper src="{{url}}"></image-helper> -->
     </div>
   `;
 
@@ -31,14 +32,16 @@ defineParticle(({DomParticle, html, log}) => {
       return template;
     }
     render(props, state) {
+      if (!state.inputUrl) {
+        state.inputUrl = 'https://$particles/Processing/assets/kitten.jpg';
+      }
       return state;
     }
     onChange({data: {value}}) {
       this.setState({inputUrl: value});
     }
     onSubmit() {
-      console.log(this.props);
-      const url = this.state.inputUrl;
+      const url = resolver(this.state.inputUrl);
       this.updateVariable('image', {url});
       this.setState({url});
     }

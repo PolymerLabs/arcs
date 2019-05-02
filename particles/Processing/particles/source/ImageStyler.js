@@ -12,7 +12,7 @@
 defineParticle(({DomParticle, html, log}) => {
 
   const tmpl = html`
-  <image-styler imgurl="{{url}}" modelurl="{{model}}" on-results="{{onResults}}"></image-styler>
+  <image-styler imgurl="{{url}}" modelurl="{{model}}" on-results="onResults"></image-styler>
   <div style="padding: 16px">
     <img src="{{newImg}}">
   </div>

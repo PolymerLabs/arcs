@@ -9,15 +9,15 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, log, resolver}) => {
   const tmpl = html`
-  <div hidden={{shouldHide}} style="padding: 16px;">
-  	<h3>Neural Style Transfer</h3>
-    <h3>Input the path/to/style-transfer/model/</h3> 
-    <input style="width: 80%; padding: 8px;" on-change="onChange">
+  <div style="padding: 16px;">
+    <h3>Neural Style Transfer</h3>
+    <h4>Input the path/to/style-transfer/model/</h4>
+    <input style="width: 80%; padding: 8px;" value="{{inputModelUrl}}" on-change="onChange">
     <h5 style="margin: 8px 0;">Please choose the folder where the model is located, <it>not</it> the model itself.</h5>
     <button on-click="onSubmit">Submit</button>
-    <br/>
+    <br>
   </div>
   `;
 
@@ -25,22 +25,22 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return tmpl;
     }
-    shouldrender({image}) {
-      return !!image;
-    }
+    //shouldRender({image}) {
+    //  return Boolean(image);
+    //}
     render({image}, state) {
+      if (!state.inputModelUrl) {
+        state.inputModelUrl = 'https://$particles/Processing/assets/models/udnie';
+      }
       return {
-      	inputModelUrl: state.inputModelUrl,
-        shouldHide: !image    	 
+        inputModelUrl: state.inputModelUrl
       };
     }
     onChange({data: {value}}) {
-      this.setState({
-        inputModelUrl: value,
-      });
+      this.setState({inputModelUrl: value});
     }
     onSubmit() {
-      const url = this.state.inputModelUrl;
+      const url = resolver(this.state.inputModelUrl);
       this.updateVariable('model', {url});
     }
   };

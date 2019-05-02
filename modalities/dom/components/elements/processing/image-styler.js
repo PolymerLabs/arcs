@@ -12,10 +12,8 @@ import 'https://unpkg.com/ml5@0.2.3/dist/ml5.min.js';
 
 const log = Xen.logFactory('ImageStyleTransfer', 'green');
 
-
 const template = Xen.html`
 `;
-
 
 /**
  * Apply a style-transfer model to an input image.
@@ -33,18 +31,16 @@ class ImageStyleTransfer extends Xen.Async {
     if (!state.status) {
       state.status = 'idle';
     }
-    if (state.imgurl !== imgurl) {
+    if (imgurl && state.imgurl !== imgurl) {
       state.imgurl = imgurl;
       this.updateUrl(imgurl);
     }
-    if (state.modelurl !== modelurl) {
+    if (modelurl && state.modelurl !== modelurl) {
       state.modelurl = modelurl;
       this.updateModel(modelurl);
     }
     if (state.img && state.modelurl) {
-      const img = state.img;
-      const styler = state.styler;
-      this.applyTransfer(img, styler);
+      this.applyTransfer(state.img, state.styler);
     }
   }
   async updateUrl(url) {
@@ -82,7 +78,7 @@ class ImageStyleTransfer extends Xen.Async {
         return;
       }
       this.value = {
-        src: result.src,
+        src: result.src
       };
       this.fire('results');
     });

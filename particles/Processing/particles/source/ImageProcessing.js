@@ -14,7 +14,7 @@
 defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
-    <image-processor url="{{url}}" on-results="{{onResults}}"></image-processor>
+    <image-processor url="{{url}}" on-results="onResults"></image-processor>
     <div hidden={{shouldHide}} style="padding: 16px;">
       <div>Status: <b>{{status}}</b></div>
       <div>Label: <b>{{label}}</b></div>

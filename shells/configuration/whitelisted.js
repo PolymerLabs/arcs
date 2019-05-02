@@ -11,6 +11,7 @@ import '../../modalities/dom/components/elements/model-img.js';
 import '../../modalities/dom/components/elements/dom-repeater.js';
 import '../../modalities/dom/components/elements/processing/image-processor.js';
 import '../../modalities/dom/components/elements/processing/image-styler.js';
+import '../../modalities/dom/components/elements/processing/image-helper.js';
 
 // requires app-level firebase configuration
 import '../lib/database/firebase-upload.js';
