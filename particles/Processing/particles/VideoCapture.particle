@@ -1,0 +1,6 @@
+import '../schemas/Image.schema'
+
+particle VideoCapture in './source/VideoCapture.js'
+  out ImageUrl image
+  consume root
+    provide imageView
