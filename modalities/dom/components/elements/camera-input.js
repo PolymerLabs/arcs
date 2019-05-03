@@ -11,7 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../xen/xen.js';
 
 let template = Xen.html`
-<video id="player"  autoplay ></video>
+<video id="player" width="640" height="480" autoplay ></video>
 <canvas id="canvas" style="display: none;" width="640" height="480"></canvas>
 <br/>
 <span>
@@ -25,6 +25,7 @@ template = Xen.Template.createTemplate(template);
 
 const constraints = {
   video: true,
+  audio: false,
 };
 
 class CameraInput extends Xen.Base {
@@ -41,25 +42,23 @@ class CameraInput extends Xen.Base {
   }
 
   record() {
-
     navigator.mediaDevices.getUserMedia(constraints)
       .then((stream) => {
         if (!this.isRecording) {
           this.player.srcObject = stream;
           this.player.play();
+          this.isRecording = true;
         } else {
           this._stop();
         }
-        this.isRecording = !this.isRecording;
       });
   }
 
   _stop() {
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then((stream) => {
-        this.player.pause();
-        stream.getVideoTracks().forEach((track) => track.stop());
-      });
+    this.player.srcObject.getVideoTracks().forEach((track) => track.stop());
+    this.player.srcObject = null;
+    this.player.pause();
+    this.isRecording = false;
   }
 
   _update(props, state) {
@@ -78,7 +77,6 @@ class CameraInput extends Xen.Base {
   }
 
   capture() {
-    this._stop();
     // Draw whatever is in the video element on to the canvas.
     this.ctx.drawImage(this.player, 0, 0);
     const imageData = this.ctx.getImageData(0, 0, 640, 480);
@@ -86,6 +84,7 @@ class CameraInput extends Xen.Base {
       pixels: imageData.data, width: imageData.width, height: imageData.height,
       url: this.canvas.toDataURL('image/png')
     };
+    this._stop();
     this._fire('capture', this.value);
   }
 
