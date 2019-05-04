@@ -27,20 +27,23 @@ defineParticle(({DomParticle, html}) => {
 
   return class extends DomParticle {
     get template() {
-      return tmpl; }
+      return tmpl;
+    }
+
     render(props, state) {
       // if (!state.inputUrl) {
       //   state.inputUrl = 'https://$particles/Processing/assets/kitten.jpg';
       // }
       return state;
     }
+
     onCapture(data) {
-      const {pixels, width, height, url} = data.data.value;
-      this.setState({url: url, blob: {
-          blob: new Uint8Array(pixels.buffer),
-          width: width,
-          height: height
-        }});
+      const {width, height, url} = data.data.value;
+      this.setState({
+        url: url,
+        width: width,
+        height: height
+      });
       this.updateVariable('image', {url});
     }
   };
