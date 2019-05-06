@@ -2,9 +2,9 @@ import {FilePane} from './file-pane.js';
 import {OutputPane} from './output-pane.js';
 import {DevShellLoader} from './loader.js';
 
+import {Runtime} from '../../../build/runtime/runtime.js';
 import {Arc} from '../../../build/runtime/arc.js';
 import {IdGenerator} from '../../../build/runtime/id.js';
-import {Manifest} from '../../../build/runtime/manifest.js';
 import {Modality} from '../../../build/runtime/modality.js';
 import {ModalityHandler} from '../../../build/runtime/modality-handler.js';
 import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
@@ -28,7 +28,7 @@ async function wrappedExecute() {
   let manifest;
   try {
     const options = {loader, fileName: './manifest', throwImportErrors: true};
-    manifest = await Manifest.parse(files.getManifest(), options);
+    manifest = await Runtime.parseManifest(files.getManifest(), options);
   } catch (e) {
     output.showError('Error in Manifest.parse', e);
     return;
@@ -74,6 +74,10 @@ async function wrappedExecute() {
     } catch (e) {
       arcPanel.showError('Error in arc.instantiate', e);
       continue;
+    }
+    const description = await Runtime.getArcDescription(arc);
+    if (description) {
+      arcPanel.setDescription(description);
     }
     arcPanel.setSerialization(await arc.serialize());
   }
