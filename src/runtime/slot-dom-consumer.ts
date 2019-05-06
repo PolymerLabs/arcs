@@ -21,7 +21,8 @@ export interface DomRendering extends Rendering {
   liveDom?: Template;
 }
 
-const templateByName = new Map();
+// tslint:disable-next-line: no-any
+const templateByName = new Map<string, any>();
 
 // this style sheet is installed in every particle shadow-root
 let commonStyleTemplate;
