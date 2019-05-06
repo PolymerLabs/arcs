@@ -49,7 +49,7 @@ class ArcsSelector extends MessengerMixin(PolymerElement) {
       [list] {
         min-width: 200px;
         line-height: 24px;
-        max-height: 90vh;
+        max-height: calc(90vh - 80px);
         overflow: scroll;
       }
       [list]:not([show-inner]) [inner]:not([speculative]) {
