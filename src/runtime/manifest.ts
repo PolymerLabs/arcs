@@ -171,7 +171,7 @@ export class Manifest {
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
-  private warnings = <ManifestError[]>[];
+  private errors = <ManifestError[]>[];
   constructor({id}) {
     // TODO: Cleanup usage of strings as Ids.
     assert(id instanceof Id || typeof id === 'string');
@@ -381,22 +381,22 @@ export class Manifest {
   static async parse(content: string, options?): Promise<Manifest> {
     options = options || {};
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {session_id, fileName, loader, registry, context} = options;
+    let {session_id, fileName, loader, registry, context, throwImportErrors} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
-    function dumpWarnings(manifest: Manifest) {
-      for (const warning of manifest.warnings) {
+    function dumpErrors(manifest: Manifest) {
+      for (const error of manifest.errors) {
         // TODO: make a decision as to whether we should be logging these here, or if it should
         //       be a responsibility of the caller.
         // TODO: figure out how to have node print the correct message and stack trace
-        if (warning.key) {
-          if (globalWarningKeys.has(warning.key)) {
+        if (error.key) {
+          if (globalWarningKeys.has(error.key)) {
             continue;
           }
-          globalWarningKeys.add(warning.key);
+          globalWarningKeys.add(error.key);
         }
-        console.warn(processError(warning).message);
+        console.warn(processError(error).message);
       }
     }
 
@@ -466,8 +466,8 @@ ${e.message}
           try {
             manifest._imports.push(await Manifest.load(target, loader, {registry}));
           } catch (e) {
-            manifest.warnings.push(e);
-            manifest.warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
+            manifest.errors.push(e);
+            manifest.errors.push(new ManifestError(item.location, `Error importing '${target}'`));
           }
         }
       }));
@@ -494,10 +494,13 @@ ${e.message}
       await processItems('store', item => this._processStore(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
-      dumpWarnings(manifest);
+      dumpErrors(manifest);
       throw processError(e, false);
     }
-    dumpWarnings(manifest);
+    dumpErrors(manifest);
+    if (options.throwImportErrors && manifest.errors.length > 0) {
+      throw manifest.errors[0];
+    }
     return manifest;
   }
   static _augmentAstWithTypes(manifest, items) {
@@ -767,7 +770,7 @@ ${e.message}
       }
       handle.tags = ref.tags;
       if (item.name) {
-        assert(!items.byName.has(item.name));
+        assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
         handle.localName = item.name;
         items.byName.set(item.name, {item, handle});
       }
