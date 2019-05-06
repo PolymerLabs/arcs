@@ -11,7 +11,7 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
-  log('defineParticle');
+
   return class extends DomParticle {
     update() {
       const entities = [
@@ -23,4 +23,5 @@ defineParticle(({DomParticle, html, log}) => {
       this.updateSingleton('artist', artist);
     }
   };
+
 });

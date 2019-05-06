@@ -1,6 +1,6 @@
 import './PipeEntity.schema'
 
-particle Trigger in './source/Noop.js'
+particle Trigger in './source/Trigger.js'
   in PipeEntity pipe
   consume root
-    provide app
+    provide content

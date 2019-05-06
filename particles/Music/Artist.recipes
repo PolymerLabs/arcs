@@ -32,7 +32,7 @@ particle ArtistShow in 'source/ArtistShow.js'
   description `Learn more about ${artist}`
 
 recipe ArtistInfo
-  use #artist as artist
+  use as artist
   ArtistShow
     artist = artist
   description `${ArtistShow}`

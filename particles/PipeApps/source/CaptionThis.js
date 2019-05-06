@@ -10,16 +10,18 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html, log}) => {
 
   return class extends DomParticle {
     get template() {
       return `<span>{{json}}</span>`;
     }
-    render({artist}) {
-      if (artist) {
-        const json = JSON.stringify(artist.rawData);
-        this.updateSingleton('suggestion', {json});
+    render({query}) {
+      if (query) {
+        log('update');
+        const text = query.name.split(' ');
+        const json = JSON.stringify(text);
+        this.updateVariable('output', {json});
         return {json};
       }
     }

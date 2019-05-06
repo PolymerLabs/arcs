@@ -13,7 +13,8 @@
 defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     get template() {
-      return html`<div slotid="assistance"></div>`;
+      //return html`<div slotid="assistance"></div>`;
+      return html`<span></span>`;
     }
     update({recentEntities}, state) {
       if (recentEntities) {
