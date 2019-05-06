@@ -5,7 +5,7 @@ const mainTemplate = `
     }
     #error {
       display: none;
-      margin-top: 20px;
+      margin-top: 30px;
     }
   </style>
   <div id="arcs"></div>
@@ -13,23 +13,28 @@ const mainTemplate = `
 
 const arcTemplate = `
   <style>
+    .spacer {
+      margin-top: 20px;
+    }
     #arc-label {
       font-family: Arial;
       font-size: 13px;
       font-style: italic;
-      margin-top: 20px;
+    }
+    #kill {
+      cursor: pointer;
+      float: right;
+      margin-right: 8px;
     }
     #arc-root {
       margin: 4px 0 6px 0;
       border: 1px solid;
     }
     #toggle {
+      cursor: pointer;
       color: #777;
       font-size: 15px;
       vertical-align: top;
-    }
-    #toggle:hover {
-      cursor: pointer;
     }
     #serialization {
       display: none;
@@ -40,7 +45,10 @@ const arcTemplate = `
       border: 1px dashed;
     }
   </style>
-  <div id="arc-label"></div>
+  <div class="spacer">
+    <span id="arc-label"></span>
+    <span id="kill">✘</span>
+  </div>
   <div id="arc-root"></div>
   <span id="toggle"></span>
   <pre id="serialization"></pre>`;
@@ -79,7 +87,7 @@ export class OutputPane extends HTMLElement {
     this.arcs.style.display = 'block';
     this.error.style.display = 'none';
     while (this.arcs.firstChild) {
-      this.arcs.firstChild.dispose();
+      this.arcs.firstChild.disposeArc();
       this.arcs.removeChild(this.arcs.firstChild);
     }
     this.error.clear();
@@ -88,8 +96,12 @@ export class OutputPane extends HTMLElement {
   addArcPanel(arcId) {
     const arcPanel = document.createElement('arc-panel');
     this.arcs.appendChild(arcPanel);
-    arcPanel.setId(arcId);
+    arcPanel.init(this, arcId);
     return arcPanel;
+  }
+
+  removeArcPanel(arcPanel) {
+    this.arcs.removeChild(arcPanel);
   }
 
   showError(header, message = '') {
@@ -112,9 +124,11 @@ class ArcPanel extends HTMLElement {
 
     this.linkedArc = null;
     this.toggle.addEventListener('click', this.toggleSerialization.bind(this));
+    shadowRoot.getElementById('kill').addEventListener('click', this.kill.bind(this));
   }
 
-  setId(arcId) {
+  init(host, arcId) {
+    this.host = host;
     this.arcLabel.textContent = arcId.idTree[0];
   }
 
@@ -134,10 +148,10 @@ class ArcPanel extends HTMLElement {
   toggleSerialization() {
     if (this.serialization.style.display === 'none') {
       this.serialization.style.display = 'inline-block';
-      this.toggle.innerHTML = '&#x2BC6;';  // ⯆
+      this.toggle.innerHTML = '⯆';
     } else {
       this.serialization.style.display = 'none';
-      this.toggle.innerHTML = '&#x2BC8;';  // ⯈
+      this.toggle.innerHTML = '⯈';
     }
   }
 
@@ -147,7 +161,12 @@ class ArcPanel extends HTMLElement {
     error.show(header, message);
   }
 
-  dispose() {
+  kill() {
+    this.disposeArc();
+    this.host.removeArcPanel(this);
+  }
+
+  disposeArc() {
     if (this.linkedArc) {
       this.linkedArc.dispose();
     }
