@@ -13,7 +13,7 @@ const mainTemplate = `
 
 const arcTemplate = `
   <style>
-    #arc-id {
+    #arc-label {
       font-family: Arial;
       font-size: 13px;
       font-style: italic;
@@ -40,7 +40,7 @@ const arcTemplate = `
       border: 1px dashed;
     }
   </style>
-  <div id="arc-id"></div>
+  <div id="arc-label"></div>
   <div id="arc-root"></div>
   <span id="toggle"></span>
   <pre id="serialization"></pre>`;
@@ -104,7 +104,8 @@ class ArcPanel extends HTMLElement {
     const shadowRoot = this.attachShadow({mode: 'open'});
     shadowRoot.innerHTML = arcTemplate;
 
-    this.arcId = shadowRoot.getElementById('arc-id');
+    this.arcLabel = shadowRoot.getElementById('arc-label');
+    this.description = shadowRoot.getElementById('description');
     this.arcRoot = shadowRoot.getElementById('arc-root');
     this.toggle = shadowRoot.getElementById('toggle');
     this.serialization = shadowRoot.getElementById('serialization');
@@ -114,11 +115,15 @@ class ArcPanel extends HTMLElement {
   }
 
   setId(arcId) {
-    this.arcId.textContent = arcId.idTree[0];
+    this.arcLabel.textContent = arcId.idTree[0];
   }
 
   attachArc(arc) {
     this.linkedArc = arc;
+  }
+
+  setDescription(text) {
+    this.arcLabel.textContent += ` - "${text.trim()}"`;
   }
 
   setSerialization(text) {
