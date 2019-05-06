@@ -17,15 +17,15 @@ import {compareArrays, compareComparables, compareStrings} from './comparable.js
 export type Direction = 'in' | 'out' | 'inout' | 'host';
 
 export class HandleConnection {
-  _recipe: Recipe;
-  _name: string;
-  _tags: string[] = [];
+  private readonly _recipe: Recipe;
+  private readonly _name: string;
+  private _tags: string[] = [];
   private resolvedType: Type | undefined = undefined;
-  _direction: Direction | undefined = undefined;
-  _particle: Particle;
+  private _direction: Direction | undefined = undefined;
+  private _particle: Particle;
   _handle: Handle | undefined = undefined;
 
-  constructor(name, particle) {
+  constructor(name: string, particle: Particle) {
     assert(particle);
     assert(particle.recipe);
     this._recipe = particle.recipe;
@@ -33,7 +33,7 @@ export class HandleConnection {
     this._particle = particle;
   }
 
-  _clone(particle, cloneMap) {
+  _clone(particle: Particle, cloneMap) {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
@@ -54,19 +54,19 @@ export class HandleConnection {
   }
 
   // Note: don't call this method directly, only called from particle cloning.
-  cloneTypeWithResolutions(variableMap) {
+  cloneTypeWithResolutions(variableMap): void {
     if (this.resolvedType) {
       this.resolvedType = this.resolvedType._cloneWithResolutions(variableMap);
     }
   }
 
-  _normalize() {
+  _normalize(): void {
     this._tags.sort();
     // TODO: type?
     Object.freeze(this);
   }
 
-  _compareTo(other): number {
+  _compareTo(other: HandleConnection): number {
     let cmp;
     if ((cmp = compareComparables(this._particle, other._particle)) !== 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
@@ -78,10 +78,11 @@ export class HandleConnection {
     return 0;
   }
 
-  get recipe() { return this._recipe; }
-  get name() { return this._name; } // Parameter name?
-  getQualifiedName() { return `${this.particle.name}::${this.name}`; }
-  get tags() { return this._tags; }
+  get recipe(): Recipe { return this._recipe; }
+  get name(): string { return this._name; } // Parameter name?
+  getQualifiedName(): string { return `${this.particle.name}::${this.name}`; }
+  get tags(): string[] { return this._tags; }
+
   get type() {
     if (this.resolvedType) {
       return this.resolvedType;
@@ -89,20 +90,22 @@ export class HandleConnection {
     const spec = this.spec;
     return spec ? spec.type : null;
   }
-  get direction() { // in/out/inout/host/consume/provide
+
+  get direction(): Direction|undefined { // in/out/inout/host/consume/provide
     if (this._direction) {
       return this._direction;
     }
     const spec = this.spec;
     return spec ? spec.direction : null;
   }
-  get isInput() {
+
+  get isInput(): boolean {
     return this.direction === 'in' || this.direction === 'inout';
   }
-  get isOutput() {
+  get isOutput(): boolean {
     return this.direction === 'out' || this.direction === 'inout';
   }
-  get handle() { return this._handle; } // Handle?
+  get handle(): Handle|undefined { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
 
   set tags(tags: string[]) { this._tags = tags; }
@@ -209,27 +212,27 @@ export class HandleConnection {
     return true;
   }
 
-  _resetHandleType() {
+  private _resetHandleType(): void {
     if (this._handle) {
       this._handle._type = undefined;
     }
   }
 
-  connectToHandle(handle) {
+  connectToHandle(handle: Handle): void {
     assert(handle.recipe === this.recipe);
     this._handle = handle;
     this._resetHandleType();
     this._handle.connections.push(this);
   }
 
-  disconnectHandle() {
+  disconnectHandle(): void {
     const idx = this._handle.connections.indexOf(this);
     assert(idx >= 0);
     this._handle.connections.splice(idx, 1);
     this._handle = undefined;
   }
 
-  toString(nameMap, options) {
+  toString(nameMap, options): string {
     const result = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.

@@ -59,7 +59,7 @@ export interface Descendant<T extends Cloneable> {
  */
 export abstract class Action<T extends Cloneable> {
   private readonly _arc?: Arc;
-  private _args?;
+  private readonly _args?;
 
   constructor(arc?: Arc, args?) {
     this._arc = arc;
@@ -236,7 +236,7 @@ export abstract class Walker<T extends Cloneable> {
     });
   }
 
-  isEmptyResult<Ctx extends object[]>(result: Continuation<T, Ctx>) {
+  isEmptyResult<Ctx extends object[]>(result: Continuation<T, Ctx>): boolean {
     if (!result) {
       return true;
     }

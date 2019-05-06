@@ -240,7 +240,7 @@ export class Recipe {
   get requires(): RequireSection[] { return this._requires; }
   get name(): string | undefined { return this._name; }
   set name(name: string | undefined) { this._name = name; }
-  get localName() { return this._localName; }
+  get localName(): string { return this._localName; }
   set localName(name) { this._localName = name; }
   get particles(): Particle[] { return this._particles; }
   set particles(particles: Particle[]) { this._particles = particles; }
@@ -248,8 +248,8 @@ export class Recipe {
   set handles(handles: Handle[]) { this._handles = handles; }
   get slots(): Slot[] { return this._slots; }
   set slots(slots: Slot[]) { this._slots = slots; }
-  get connectionConstraints() { return this._connectionConstraints; }
-  get obligations() { return this._obligations; }
+  get connectionConstraints(): ConnectionConstraint[] { return this._connectionConstraints; }
+  get obligations(): ConnectionConstraint[] { return this._obligations; }
   get verbs(): string[] { return this._verbs; }
   set verbs(verbs: string[]) { this._verbs = verbs; }
   get search(): Search | null { return this._search; }
@@ -288,7 +288,7 @@ export class Recipe {
            this._connectionConstraints.length === 0;
   }
 
-  findHandle(id) {
+  findHandle(id: string): Handle {
     for (const handle of this.handles) {
       if (handle.id === id) {
         return handle;
@@ -297,7 +297,7 @@ export class Recipe {
     return null;
   }
 
-  findSlot(id) {
+  findSlot(id: string): Slot {
     for (const slot of this.slots) {
       if (slot.id === id) {
         return slot;
@@ -395,12 +395,13 @@ export class Recipe {
       slot._finishNormalize();
     }
 
-    const seenHandles = new Set();
-    const seenParticles = new Set();
-    const seenSlots = new Set();
-    const particles = [];
-    const handles = [];
-    const slots = [];
+    const seenHandles = new Set<Handle>();
+    const seenParticles = new Set<Particle>();
+    const seenSlots = new Set<Slot>();
+    const particles: Particle[] = [];
+    const handles: Handle[] = [];
+    const slots: Slot[] = [];
+
     // Reorder connections so that interfaces come last.
     // TODO: update handle-connection comparison method instead?
     let ordered = connections.filter(c => !c.type || !(c.type instanceof InterfaceType));
@@ -527,7 +528,7 @@ export class Recipe {
   }
 
   _makeLocalNameMap() {
-    const names = new Set();
+    const names = new Set<string>();
     for (const particle of this.particles) {
       names.add(particle.localName);
     }
@@ -663,7 +664,7 @@ export class Recipe {
     return this.particles.filter(particle => particle.spec && files.has(particle.spec.implFile));
   }
 
-  findSlotByID(id) {
+  findSlotByID(id: string): Slot {
     let slot = this.slots.find(s => s.id === id);
     if (slot == undefined) {
       if (this instanceof RequireSection) {
@@ -681,7 +682,7 @@ export class Recipe {
 
 export class RequireSection extends Recipe {
   public readonly parent: Recipe;
-  constructor(parent = undefined, name = undefined) {
+  constructor(parent: Recipe = undefined, name: string = undefined) {
     super(name);
     this.parent = parent;
   }
