@@ -18,3 +18,9 @@ const _logFactory = (preamble, color, log='log') => {
 const factory = global.logLevel < 1 ? () => () => {} : _logFactory;
 
 export const logFactory = (...args) => factory(...args);
+
+export const logsFactory = (preamble, color) => ({
+  log: logFactory(preamble, color, 'log'),
+  warn: logFactory(preamble, color, 'warn'),
+  error: logFactory(preamble, color, 'error')
+});
