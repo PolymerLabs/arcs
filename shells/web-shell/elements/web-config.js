@@ -45,6 +45,7 @@ const configOptions = {
   },
   plannerStorage: {
     localStorageKey: Const.LOCALSTORAGE.plannerStorage,
+    default: Const.DEFAULT.plannerStorageKey
   },
   plannerNoDebug: {
     boolean: true

@@ -625,7 +625,7 @@ ${this.activeRecipe.toString()}`;
       this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
 
-    this.debugHandler.recipeInstantiated({particles});
+    this.debugHandler.recipeInstantiated({particles, activeRecipe: this.activeRecipe.toString()});
   }
 
   async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined) {

@@ -37,9 +37,9 @@ defineParticle(({DomParticle, html, log}) => {
       if (board == undefined) {
         return {};
       }
-      return {p00: "" + board.p00, p01: "" + board.p01, p02: "" + board.p02,
-              p10: "" + board.p10, p11: "" + board.p11, p12: "" + board.p12,
-              p20: "" + board.p20, p21: "" + board.p21, p22: "" + board.p22};
+      return {p00: '' + board.p00, p01: '' + board.p01, p02: '' + board.p02,
+              p10: '' + board.p10, p11: '' + board.p11, p12: '' + board.p12,
+              p20: '' + board.p20, p21: '' + board.p21, p22: '' + board.p22};
     }
-  }
+  };
 });
