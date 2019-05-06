@@ -32,7 +32,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
       [content] {
         border-bottom: 1px solid var(--mid-gray);
       }
-      object-explorer[find]:not([found-inside]) {
+      object-explorer[find]:not([found]) {
         display: none;
       }
     </style>
@@ -41,7 +41,11 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         <filter-input filter="{{searchParams}}"></filter-input>
       </div>
     </header>
-    <div title>Recipes</div>
+    <div title>Active Recipe</div>
+    <div content>
+      <object-explorer object=[[activeRecipe]]></object-explorer>
+    </div>
+    <div title>Context Recipes</div>
     <div content>
       <template is="dom-repeat" items="{{recipes}}">
         <object-explorer object="{{item}}">
@@ -52,7 +56,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         <div class="empty-label">No recipes</div>
       </template>
     </div>
-    <div title>Particles</div>
+    <div title>Context Particles</div>
     <div content>
       <template is="dom-repeat" items="{{particles}}">
         <object-explorer object="{{item}}">
@@ -67,8 +71,7 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
 
   constructor() {
     super();
-    this.recipes = [];
-    this.particles = [];
+    this.clear();
   }
 
   static get properties() {
@@ -78,6 +81,12 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         observer: '_onSearchChanged'
       }
     };
+  }
+
+  clear() {
+    this.recipes = [];
+    this.particles = [];
+    this.activeRecipe = '';
   }
 
   _onSearchChanged(params) {
@@ -94,10 +103,12 @@ class ArcsEnvironment extends MessengerMixin(PolymerElement) {
         this.particles = msg.messageBody.particles.slice();
         this.particles.sort(nameCompare);
         break;
+      case 'recipe-instantiated':
+        this.activeRecipe = msg.messageBody.activeRecipe;
+        break;
       case 'arc-selected':
       case 'page-refresh':
-        this.recipes = [];
-        this.particles = [];
+        this.clear();
         break;
     }
   }

@@ -50,7 +50,7 @@ class ArcsStores extends MessengerMixin(PolymerElement) {
       [id] {
         color: var(--devtools-red);
       }
-      object-explorer[find]:not([found-inside]) {
+      object-explorer[find]:not([found]) {
         display: none;
       }
     </style>
