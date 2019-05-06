@@ -66,6 +66,7 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
     if (!config) {
       const params = (new URL(document.location)).searchParams;
       config = ProcessConfig.processConfig(configOptions, params);
+      config.version = Const.version;
       config.plannerDebug = !config.plannerNoDebug;
       config.userid = Const.DEFAULT.userId;
       config.storage = this.expandStorageMacro(config.storage);
