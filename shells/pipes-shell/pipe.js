@@ -7,157 +7,102 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {now} from '../../build/platform/date-web.js';
-import {logFactory} from '../../build/platform/log-web.js';
+
+// dependencies
+import {logsFactory} from '../../build/platform/log-web.js';
 import {Utils} from '../lib/runtime/utils.js';
-import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
-import {generateId} from '../../modalities/dom/components/generate-id.js';
+import {requireContext} from './context.js';
+import {marshalPipesArc, addPipeEntity} from './api/pipes-api.js';
+import {marshalArc, installPlanner, deliverSuggestions, ingestEntity, ingestRecipe, ingestSuggestion, observeOutput} from './api/spawn-api.js';
+import {dispatcher} from './dispatcher.js';
+import {Bus} from './bus.js';
 
-const log = logFactory('Pipe');
+const {log, warn} = logsFactory('pipe');
 
-let t0;
-
-export const Pipe = {
-  async observeEntity(store, json) {
-    //log('observeEntity', Boolean(store), json);
-    const data = fromJson(json);
-    if (store && data) {
-      if (!data.timestamp) {
-        data.timestamp = Date.now();
-        data.source = 'com.unknown';
+export const initPipe = async (client, paths, storage, composerFactory) => {
+  // configure arcs environment
+  Utils.init(paths.root, paths.map);
+  // marshal context
+  const context = await requireContext();
+  // marshal pipes-arc (and stores)
+  await marshalPipesArc(storage, context);
+  // construct ShellApi
+  const api = {
+    addPipeEntity(entity) {
+      return addPipeEntity(entity);
+    },
+    async marshalProcessArc(msg, tid, bus) {
+      const composer = composerFactory(msg.modality);
+      //return marshalProcessArc(msg.entity, composer, context, storage);
+      const arc = await marshalArc(tid, composer, context, storage, bus);
+      let callback;
+      if (msg.entity) {
+        ingestEntity(arc, msg.entity);
+        callback = consumeOneSuggestionCallbackFactory(tid, bus, arc);
+      } else if (msg.recipe) {
+        ingestRecipe(arc, msg.recipe);
+        observeOutput(tid, bus, arc);
+        callback = suggestions => deliverSuggestions(tid, bus, suggestions);
       }
-      const entity = {
-        id: generateId(),
-        rawData: data
-      };
-      await store.store(entity, [now()]);
-      //dumpStores([store]);
+      installPlanner(tid, bus, arc, callback);
+      return arc;
+    },
+    async marshalSpawnArc(msg, tid, bus) {
+      const composer = composerFactory(msg.modality);
+      const arc = await marshalArc(tid, composer, context, storage, bus);
+      installPlanner(tid, bus, arc, suggestions => deliverSuggestions(tid, bus, suggestions));
+      // forward output to the bus
+      observeOutput(tid, bus, arc);
+      return arc;
     }
-  },
-  async receiveEntity(context, recipes, callback, json) {
-    //log('receiveEntity', json);
-    t0 = now();
-    const type = extractType(json);
-    const recipe = recipeForType(type, recipes);
-    if (recipe) {
-      return instantiateAutofillArc(context, type, recipe, callback);
-    } else {
-      log(`found no autofill recipe for type [${type}]`);
-    }
-  }
-};
-
-const fromJson = json => {
-  try {
-    return JSON.parse(json);
-  } catch (x) {
-    return null;
-  }
-};
-
-const extractType = json => {
-  const entity = fromJson(json);
-  return (entity ? entity.type : 'com.music.spotify').replace(/\./g, '_');
-};
-
-const recipeForType = (type, recipes) => {
-  return recipes.find(recipe => recipe.name.toLowerCase() === type);
-};
-
-const instantiateAutofillArc = async (context, type, recipe, callback) => {
-  const arc = await Utils.spawn({id: 'piping-arc', composer: new RamSlotComposer(), context});
-  log(`arc [${arc.id}]`);
-  await instantiatePipeRecipe(arc, type);
-  // TODO(sjmiles): `clone()` because recipe cannot `normalize()` twice
-  await instantiateAutofillRecipe(arc, recipe.clone(), callback);
-  return arc;
-};
-
-const instantiateAutofillRecipe = async (arc, recipe, callback) => {
-  await instantiateRecipe(arc, recipe);
-  // wait for data to appear
-  // TODO(sjmiles): find a better way to locate the important store
-  const store = arc._stores[2];
-  watchOneChange(store, callback, arc);
-  //await dumpStores(arc._stores);
-};
-
-const instantiatePipeRecipe = async (arc, type) => {
-  const manifestContent = buildEntityManifest({type});
-  const manifest = await Utils.parse(manifestContent);
-  const recipe = recipeByName(manifest, 'Pipe');
-  await instantiateRecipe(arc, recipe);
-};
-
-const logArc = async arc => {
-  log(`\narc serialization`);
-  log(`==================================`);
-  log(await arc.serialize());
-  log(`==================================`);
-};
-
-const instantiateRecipe = async (arc, recipe) => {
-  const plan = await Utils.resolve(arc, recipe);
-  await arc.instantiate(plan);
-};
-
-const recipeByName = (manifest, name) => {
-  return manifest.allRecipes.find(recipe => recipe.name === name);
-};
-
-const watchOneChange = (store, callback, arc) => {
-  const cb = info => {
-    onChange(arc, info, callback);
-    store.off('change', cb);
-    arc.dispose();
   };
-  store.on('change', cb, arc);
-};
-
-const onChange = (arc, change, callback) => {
-  //log(change);
-  if (change.data) {
-    const data = change.data.rawData;
-    const text = data.json || data.text || data.address;
-    callback(arc, text);
-    //log(text);
-    const dt = now() - t0;
-    //log(`dt = ${dt.toFixed(1)}ms`);
-    if (typeof document != 'undefined') {
-      document.body.appendChild(Object.assign(document.createElement('div'), {
-        style: `padding: 16px;`,
-        innerText: `[${arc.id}] ${text}\n\n${dt.toFixed(1)}ms`
-      }));
-    }
-  }
-};
-
-const buildEntityManifest = entity => `
-import 'https://$particles/PipeApps/Trigger.recipes'
-
-resource PipeEntityResource
-  start
-  [{"type": "${entity.type}", "name": "${entity.name}"}]
-
-store LivePipeEntity of PipeEntity 'LivePipeEntity' @0 #pipe_entity #pipe_${entity.type} in PipeEntityResource
-
-recipe Pipe
-  use 'LivePipeEntity' #pipe_entity #pipe_${entity.type} as pipe
-  Trigger
-    pipe = pipe
-`;
-
-const dumpStores = async stores => {
-  log(`stores dump, length = ${stores.length}`);
-  await Promise.all(stores.map(async (store, i) => {
-    if (store) {
-      let value;
-      if (store.type.isCollection) {
-        value = await store.toList();
-      } else {
-        value = await store.get();
+  // populate dispatcher
+  Object.assign(dispatcher, {
+    capture: async (msg, tid, bus) => {
+      return addPipeEntity(msg.entity);
+    },
+    ingest: async (msg, tid, bus) => {
+      if (msg.tid) {
+        const arc = await bus.getAsyncValue(msg.tid);
+        log('found arc for ingestion', arc);
+        if (arc) {
+          if (msg.entity) {
+            return ingestEntity(arc, msg.entity);
+          } else if (msg.recipe) {
+            return ingestRecipe(arc, msg.recipe);
+          } else if (msg.suggestion) {
+            return ingestSuggestion(arc, msg.suggestion);
+          }
+        } else {
+          warn('found no arc for ingest tid=', msg.tid);
+        }
       }
-      log(`store #${i}:`, store.id, value);
+      else {
+        return api.marshalProcessArc(msg, tid, bus);
+      }
+    },
+    spawn: async (msg, tid, bus) => {
+      return api.marshalSpawnArc(msg, tid, bus);
     }
-  }));
+  });
+  // create bus
+  return new Bus(dispatcher, client);
+};
+
+// TODO(sjmiles): a lot of jumping-about for two stage suggestion handling, simplify
+const consumeOneSuggestionCallbackFactory = (tid, bus, arc) => {
+  let didOne;
+  return suggestions => {
+    if (!didOne) {
+      didOne = true;
+      const suggestion = suggestions[0];
+      if (suggestion) {
+        bus.receive({message: 'ingest', tid, suggestion: suggestion.descriptionText});
+        // forward output to the bus
+        observeOutput(tid, bus, arc);
+      }
+    } else {
+      deliverSuggestions(tid, bus, suggestions);
+    }
+  };
 };

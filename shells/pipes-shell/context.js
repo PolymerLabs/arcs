@@ -7,83 +7,65 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {now} from '../../build/platform/date-web.js';
-import {logFactory} from '../../build/platform/log-web.js';
+
 import {Utils} from '../lib/runtime/utils.js';
 import {Stores} from '../lib/runtime/stores.js';
-import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
-import {ArcHost} from '../lib/components/arc-host.js';
 import {Schemas} from './schemas.js';
 
-const log = logFactory('Context');
+const manifest = `
+import 'https://$particles/canonical.manifest'
+import 'https://$particles/PipeApps/PipeApps.recipes'
+`;
 
-export const Context = class {
-  constructor(storage) {
-    this.isReady = new Promise((resolve, reject) => this.readyResolver = resolve);
-    this.initContext(storage);
+export const requireContext = async () => {
+  if (!requireContext.promise) {
+    requireContext.promise = marshalContext(manifest);
   }
-  async initContext(storage) {
-    this.context = await Utils.parse('');
-    await this.initAddressStore(this.context);
-    await this.initPipesArc(storage);
-    this.readyResolver();
-  }
-  async initAddressStore(context) {
-    const store = await Stores.create(context, {
-      name: 'pipe-entities',
-      id: 'pipe-entities',
-      schema: Schemas.PipeEntity,
-      isCollection: true,
-      tags: null,
-      storageKey: null
-    });
-    this.contextEntityStore = store;
-    //console.log(store);
-  }
-  async initPipesArc(storage) {
-    log('initPipesArc');
-    const host = new ArcHost(null, storage, new RamSlotComposer());
-    const id = 'pipes-arc';
-    const manifest = `import 'https://$particles/PipeApps/BackgroundPipes.recipes'`;
-    this.pipesArc = await host.spawn({id, manifest});
-    // TODO(sjmiles): findById would be better,
-    // but I can't get the id to materialize via manifest
-    this.entityStore = this.pipesArc._stores[0];
-    if (this.entityStore) {
-      await this.entityStoreChange(await this.getInitialChange(this.entityStore));
-      this.entityStore.on('change', info => this.entityStoreChange(info), this);
-    } else {
-      log('initPipesArc: failed to find entityStore');
-    }
-    //dumpStores([this.entityStore]);
-  }
-  async getInitialChange(store) {
-    const change = {add: []};
-    const values = await store.toList();
+  return await requireContext.promise;
+};
+
+const marshalContext = async manifest => {
+  const context = await Utils.parse(manifest);
+  return context;
+};
+
+// TODO(sjmiles): a proper context would construct stores based on the observed types, not
+// create them a-priori ... I'm cheating here cuz I want to close the circuit
+// Come back and fix ASAP
+
+export const initPipeStore = async context => {
+  return await Stores.create(context, {
+    name: 'pipe-entities',
+    id: 'pipe-entities',
+    schema: Schemas.PipeEntity,
+    isCollection: true,
+    tags: null,
+    storageKey: null
+  });
+};
+
+export const mirrorStore = async (sourceStore, contextStore) => {
+  const change = change => {
+    cloneStoreChange(contextStore, change);
+  };
+  cloneStore(sourceStore, contextStore);
+  sourceStore.on('change', change, {});
+};
+
+const cloneStore = async (sourceStore, contextStore) => {
+  const change = {add: []};
+  const values = await sourceStore.toList();
+  if (values.length) {
     values.forEach(value => change.add.push({value}));
-    return change;
-  }
-  async entityStoreChange(change) {
-    //console.log(change);
-    await this.cloneStoreChange(change, this.contextEntityStore);
-    //dumpStores([this.contextEntityStore]);
-  }
-  async cloneStoreChange(change, store) {
-    if (store && change.add) {
-      await Promise.all(change.add.map(async add => {
-        await store.store(add.value, [now()]);
-      }));
-    }
+    cloneStoreChange(contextStore, change);
   }
 };
 
-const dumpStores = async stores => {
-  //console.log(`stores dump, length = ${stores.length}`);
-  await Promise.all(stores.map(async (store, i) => {
-    if (store) {
-      const accessor = store.type.isCollection ? 'toList' : 'get';
-      const value = await store[accessor]();
-      log(`store #${i}:`, store.id, value);
-    }
-  }));
+const cloneStoreChange = async (store, change) => {
+  console.log('mirroring store change', change);
+  if (store && change.add) {
+    await Promise.all(change.add.map(async add => store.store(add.value, [Math.random()])));
+  }
 };
+
+
