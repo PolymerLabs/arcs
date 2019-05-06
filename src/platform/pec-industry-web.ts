@@ -18,6 +18,7 @@ const pecIndustry = loader => {
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
   loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
+  // return pecFactory
   return id => {
     if (!workerBlobUrl) {
       console.warn('workerBlob not available, falling back to network URL');
