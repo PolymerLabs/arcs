@@ -47,7 +47,7 @@ const arcTemplate = `
   </style>
   <div class="spacer">
     <span id="arc-label"></span>
-    <span id="kill">&#x2718;</span>  <!-- ✘ -->
+    <span id="kill">✘</span>
   </div>
   <div id="arc-root"></div>
   <span id="toggle"></span>
@@ -148,10 +148,10 @@ class ArcPanel extends HTMLElement {
   toggleSerialization() {
     if (this.serialization.style.display === 'none') {
       this.serialization.style.display = 'inline-block';
-      this.toggle.innerHTML = '&#x2BC6;';  // ⯆
+      this.toggle.innerHTML = '⯆';
     } else {
       this.serialization.style.display = 'none';
-      this.toggle.innerHTML = '&#x2BC8;';  // ⯈
+      this.toggle.innerHTML = '⯈';
     }
   }
 
