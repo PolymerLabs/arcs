@@ -60,7 +60,7 @@ export class ArcDebugHandler {
     });
   }
 
-  recipeInstantiated({particles}: {particles: Particle[]}) {
+  recipeInstantiated({particles, activeRecipe}: {particles: Particle[], activeRecipe: string}) {
     if (!this.arcDevtoolsChannel) return;
 
     type TruncatedSlot = {id: string, name: string};
@@ -77,7 +77,7 @@ export class ArcDebugHandler {
     }));
     this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
-      messageBody: {slotConnections}
+      messageBody: {slotConnections, activeRecipe}
     });
   }
 

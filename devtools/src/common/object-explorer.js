@@ -81,7 +81,7 @@ export class ObjectExplorer extends PolymerElement {
       :host([inner]:not([folded])) {
         padding-left: 10px;
       }
-      :host([inner][found-inside]:not([expanded]):not([folded])) {
+      :host([inner][found]:not([expanded]):not([folded])) {
         padding-left: 0;
         border-left: 10px solid yellow;
       }
@@ -243,7 +243,6 @@ export class ObjectExplorer extends PolymerElement {
       for (const inner of data.props) {
         foundInside = this._findInternal(inner, params) || foundInside;
       }
-      data.foundInside = foundInside;
       data.found = foundInKey || foundInside; 
     } else {
       const [displayValue, foundInValue] = this._highlight(String(data.value), params);
@@ -346,10 +345,10 @@ export class ObjectExplorer extends PolymerElement {
         value: null,
         observer: '_onFindChanged'
       },
-      foundInside: {
+      found: {
         type: Boolean,
         reflectToAttribute: true,
-        computed: '_id(data.foundInside)'
+        computed: '_id(data.found)'
       },
     };
   }
@@ -390,7 +389,7 @@ export class ObjectExplorer extends PolymerElement {
     ObjectExplorer.find(this.data, params);
     this.notifyPath('data.displayKey');
     this.notifyPath('data.displayValue');
-    this.notifyPath('data.foundInside');
+    this.notifyPath('data.found');
   }
 }
 
