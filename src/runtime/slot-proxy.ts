@@ -31,7 +31,7 @@ export class SlotProxy {
     this.providedSlots = providedSlots;
   }
 
-  get isRendered(): boolean {
+  get isRendered() {
     return this._isRendered;
   }
 

@@ -130,7 +130,7 @@ export abstract class Type {
     return test(this);
   }
 
-  get hasVariable(): boolean {
+  get hasVariable() {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable);
   }
 
@@ -337,7 +337,7 @@ export class TypeVariable extends Type {
     return this.variable.resolution || this;
   }
 
-  _canEnsureResolved(): boolean {
+  _canEnsureResolved() {
     return this.variable.canEnsureResolved();
   }
 
@@ -388,7 +388,7 @@ export class TypeVariable extends Type {
                                     : {tag: this.tag, data: this.variable.toLiteral()};
   }
 
-  toString(options = undefined): string {
+  toString(options = undefined) {
     return `~${this.variable.name}`;
   }
 

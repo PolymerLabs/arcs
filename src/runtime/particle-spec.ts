@@ -65,16 +65,16 @@ export class HandleConnectionSpec {
     }
   }
 
-  get isInput(): boolean {
+  get isInput() {
     // TODO: we probably don't really want host to be here.
     return this.direction === 'in' || this.direction === 'inout' || this.direction === 'host';
   }
 
-  get isOutput(): boolean {
+  get isOutput() {
     return this.direction === 'out' || this.direction === 'inout';
   }
 
-  isCompatibleType(type: Type): boolean {
+  isCompatibleType(type: Type) {
     return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction});
   }
 }
@@ -218,7 +218,7 @@ export class ParticleSpec {
     return this.slotConnections.get(slotName);
   }
 
-  get primaryVerb(): string {
+  get primaryVerb(): string|undefined {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 

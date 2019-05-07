@@ -21,18 +21,18 @@ import {SlotProxy} from './slot-proxy.js';
  * instead use DOMParticle.
  */
 export class Particle {
-    public static spec: ParticleSpec;
-    public spec: ParticleSpec;
-    public readonly extraData: boolean;
-    public readonly relevances: (Relevance | number)[] = [];
-    public handles: ReadonlyMap<string, Handle>;
+  public static spec: ParticleSpec;
+  public spec: ParticleSpec;
+  public readonly extraData: boolean;
+  public readonly relevances: (Relevance | number)[] = [];
+  public handles: ReadonlyMap<string, Handle>;
 
-    private _idle: Promise<void> = Promise.resolve();
-    private _idleResolver: (() => void);
-    private _busy = 0;
+  private _idle: Promise<void> = Promise.resolve();
+  private _idleResolver: (() => void);
+  private _busy = 0;
 
-    protected slotProxiesByName: Map<string, SlotProxy> = new Map();
-  private capabilities: {constructInnerArc?: (Particle) => Promise<InnerArcHandle>};
+  protected slotProxiesByName: Map<string, SlotProxy> = new Map();
+  private capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>};
 
   constructor() {
     // Typescript only sees this.constructor as a Function type.

@@ -422,9 +422,9 @@ ${this.activeRecipe.toString()}`;
     return this._context;
   }
 
-  get activeRecipe(): Recipe { return this._activeRecipe; }
-  get allRecipes(): Recipe[] { return [this.activeRecipe].concat(this.context.allRecipes); }
-  get recipes(): Recipe[] { return [this.activeRecipe]; }
+  get activeRecipe() { return this._activeRecipe; }
+  get allRecipes() { return [this.activeRecipe].concat(this.context.allRecipes); }
+  get recipes() { return [this.activeRecipe]; }
   get recipeDeltas() { return this._recipeDeltas; }
 
   loadedParticleSpecs() {
@@ -804,7 +804,7 @@ ${this.activeRecipe.toString()}`;
     return results.join('\n');
   }
 
-  get apiChannelMappingId(): string {
+  get apiChannelMappingId() {
     return this.id.toString();
   }
 
