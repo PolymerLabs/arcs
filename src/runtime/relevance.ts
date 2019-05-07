@@ -20,7 +20,7 @@ export class Relevance {
 
   private constructor() {}
 
-  static create(arc: Arc, recipe: Recipe) {
+  static create(arc: Arc, recipe: Recipe): Relevance {
     const relevance = new Relevance();
     const versionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
     recipe.handles.forEach(handle => {
@@ -31,7 +31,7 @@ export class Relevance {
     return relevance;
   }
 
-  apply(relevance: ReadonlyMap<Particle, number[]>) {
+  apply(relevance: ReadonlyMap<Particle, number[]>): void {
     for (const key of relevance.keys()) {
       if (this.relevanceMap.has(key)) {
         this.relevanceMap.set(
@@ -42,7 +42,7 @@ export class Relevance {
     }
   }
 
-  calcRelevanceScore() {
+  calcRelevanceScore(): number {
     let relevance = 1;
     let hasNegative = false;
     for (const rList of this.relevanceMap.values()) {
@@ -56,7 +56,7 @@ export class Relevance {
   }
 
   // Returns false, if at least one of the particles relevance lists ends with a negative score.
-  isRelevant(plan: Recipe) {
+  isRelevant(plan: Recipe): boolean {
     const hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
     let rendersUi = false;
 
@@ -73,7 +73,7 @@ export class Relevance {
     return hasUi === rendersUi;
   }
 
-  static scaleRelevance(relevance: number) {
+  static scaleRelevance(relevance: number): number {
     if (relevance == undefined) {
       relevance = 5;
     }
@@ -82,7 +82,7 @@ export class Relevance {
     return relevance / 5;
   }
 
-  static particleRelevance(relevanceList: number[]) {
+  static particleRelevance(relevanceList: number[]): number {
     let relevance = 1;
     let hasNegative = false;
     relevanceList.forEach(r => {
@@ -95,7 +95,7 @@ export class Relevance {
     return relevance * (hasNegative ? -1 : 1);
   }
 
-  calcParticleRelevance(particle: Particle) {
+  calcParticleRelevance(particle: Particle): number {
     if (this.relevanceMap.has(particle)) {
       return Relevance.particleRelevance(this.relevanceMap.get(particle));
     }

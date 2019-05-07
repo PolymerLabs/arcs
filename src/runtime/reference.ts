@@ -18,7 +18,7 @@ import {SerializedEntity} from './storage-proxy.js';
 enum ReferenceMode {Unstored, Stored}
 
 export class Reference implements Storable {
-  public entity = null;
+  public entity: Entity|null = null;
   public type: ReferenceType;
 
   protected readonly id: string;
@@ -26,6 +26,7 @@ export class Reference implements Storable {
   private readonly context: ParticleExecutionContext;
   private storageProxy = null;
   protected handle = null;
+
   constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) {
     this.id = data.id;
     this.storageKey = data.storageKey;
@@ -45,7 +46,7 @@ export class Reference implements Storable {
     }
   }
 
-  async dereference(): Promise<void> {
+  async dereference(): Promise<Entity|null> {
     assert(this.context, "Must have context to dereference");
 
     if (this.entity) {
@@ -93,7 +94,7 @@ export abstract class ClientReference extends Reference {
     this.mode = ReferenceMode.Stored;
   }
 
-  async dereference() {
+  async dereference(): Promise<Entity|null> {
     if (this.mode === ReferenceMode.Unstored) {
       return null;
     }

@@ -35,7 +35,7 @@ export class TypeVariableInfo {
    * of two variables together. Use this when two separate type variables need to resolve
    * to the same value.
    */
-  maybeMergeConstraints(variable: TypeVariableInfo) {
+  maybeMergeConstraints(variable: TypeVariableInfo): boolean {
     if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
@@ -103,7 +103,7 @@ export class TypeVariableInfo {
     return false;
   }
 
-  isSatisfiedBy(type: Type) {
+  isSatisfiedBy(type: Type): boolean {
     const constraint = this._canWriteSuperset;
     if (!constraint) {
       return true;
@@ -232,7 +232,7 @@ export class TypeVariableInfo {
         data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);
   }
 
-  isResolved() {
+  isResolved(): boolean {
     return (this._resolution && this._resolution.isResolved());
   }
 }

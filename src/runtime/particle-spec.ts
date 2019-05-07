@@ -57,13 +57,12 @@ export class HandleConnectionSpec {
     this.dependentConnections = [];
   }
 
-  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>) {
+  instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
     for (const dependentArg of this.rawData.dependentConnections) {
       const dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
       this.dependentConnections.push(dependentConnection);
     }
-
   }
 
   get isInput() {
@@ -116,10 +115,10 @@ export class ConsumeSlotConnectionSpec {
   }
 
   // Getters to 'fake' being a Handle.
-  get isOptional() { return !this.isRequired; }
-  get direction() { return '`consume'; }
-  get type() { return SlotType.make(this.formFactor, null); } //TODO(jopra): FIX THIS NULL!
-  get dependentConnections() { return this.provideSlotConnections; }
+  get isOptional(): boolean { return !this.isRequired; }
+  get direction(): string { return '`consume'; }
+  get type(): SlotType { return SlotType.make(this.formFactor, null); } //TODO(jopra): FIX THIS NULL!
+  get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
 
 export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
@@ -178,7 +177,7 @@ export class ParticleSpec {
     });
   }
 
-  createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
+  createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>): HandleConnectionSpec {
     const connection = new HandleConnectionSpec(arg, typeVarMap);
     this.handleConnectionMap.set(connection.name, connection);
     connection.instantiateDependentConnections(this, typeVarMap);
@@ -201,12 +200,12 @@ export class ParticleSpec {
     return this.connections.filter(a => a.isOutput);
   }
 
-  isInput(param: string) {
+  isInput(param: string): boolean {
     const connection = this.handleConnectionMap.get(param);
     return connection && connection.isInput;
   }
 
-  isOutput(param: string) {
+  isOutput(param: string): boolean {
     const connection = this.handleConnectionMap.get(param);
     return connection && connection.isOutput;
   }
@@ -219,7 +218,7 @@ export class ParticleSpec {
     return this.slotConnections.get(slotName);
   }
 
-  get primaryVerb() {
+  get primaryVerb(): string|undefined {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
@@ -227,11 +226,11 @@ export class ParticleSpec {
     return this.slotConnections.size === 0 || this.modality.intersection(modality).isResolved();
   }
 
-  setImplBlobUrl(url: string) {
+  setImplBlobUrl(url: string): void {
     this.model.implBlobUrl = this.implBlobUrl = url;
   }
 
-  toLiteral() : SerializedParticleSpec {
+  toLiteral(): SerializedParticleSpec {
     const {args, name, verbs, description, implFile, implBlobUrl, modality, slotConnections} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
       ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
@@ -239,7 +238,7 @@ export class ParticleSpec {
     return {args: argsLiteral, name, verbs, description, implFile, implBlobUrl, modality, slotConnections};
   }
 
-  static fromLiteral(literal: SerializedParticleSpec) {
+  static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
     let {args, name, verbs, description, implFile, implBlobUrl, modality, slotConnections} = literal;
     const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
@@ -261,17 +260,17 @@ export class ParticleSpec {
     return spec;
   }
 
-  equals(other) {
+  equals(other): boolean {
     return JSON.stringify(this.toLiteral()) === JSON.stringify(other.toLiteral());
   }
 
-  validateDescription(description) {
+  validateDescription(description): void {
     Object.keys(description || []).forEach(d => {
       assert(['kind', 'location', 'pattern'].includes(d) || this.handleConnectionMap.has(d), `Unexpected description for ${d}`);
     });
   }
 
-  toInterface() {
+  toInterface(): InterfaceType {
     // TODO: wat do?
     assert(!this.slotConnections.size, 'please implement slots toInterface');
     const handles = this.model.args.map(({type, name, direction}) => ({type: asType(type), name, direction}));
@@ -279,7 +278,7 @@ export class ParticleSpec {
     return InterfaceType.make(this.name, handles, slots);
   }
 
-  toString() {
+  toString(): string {
     const results = [];
     let verbs = '';
     if (this.verbs.length > 0) {
@@ -354,7 +353,7 @@ export class ParticleSpec {
     return results.join('\n');
   }
 
-  toManifestString() {
+  toManifestString(): string {
     return this.toString();
   }
 }

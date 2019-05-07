@@ -152,7 +152,7 @@ export class ParticleExecutionContext {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcMapHandle(id => {
             resolve(id);
-          }, arcId, handle));
+          }, arcId, handle));  // recipe handle vs not?
       },
       createSlot(transformationParticle, transformationSlotName, handleId) {
         // handleId: the ID of a handle (returned by `createHandle` above) this slot is rendering; null - if not applicable.

@@ -32,7 +32,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 
-type ArcOptions = {
+type ArcOptions = Readonly<{
   id: Id;
   context: Manifest;
   pecFactory?: PecFactory;
@@ -44,9 +44,9 @@ type ArcOptions = {
   innerArc?: boolean;
   stub?: boolean
   listenerClasses?: ArcDebugListenerDerived[];
-};
+}>;
 
-type DeserializeArcOptions = {
+type DeserializeArcOptions = Readonly<{
   serialization: string;
   pecFactory?: PecFactory;
   slotComposer?: SlotComposer;
@@ -54,7 +54,7 @@ type DeserializeArcOptions = {
   fileName: string;
   context: Manifest;
   listenerClasses?: ArcDebugListenerDerived[];
-};
+}>;
 
 export type PlanCallback = (recipe: Recipe) => void;
 
@@ -147,7 +147,7 @@ export class Arc {
     return false;
   }
 
-  dispose() {
+  dispose(): void {
     for (const innerArc of this.innerArcs) {
       innerArc.dispose();
     }
@@ -167,7 +167,7 @@ export class Arc {
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it
   // sees no other messages were sent.
-  async _waitForIdle() {
+  async _waitForIdle(): Promise<void> {
     while (true) {
       const messageCount = this.pec.messageCount;
       const innerArcs = this.innerArcs;
@@ -382,7 +382,7 @@ ${this.activeRecipe.toString()}`;
   // Writes `serialization` to the ArcInfo child key under the Arc's storageKey.
   // This does not directly use serialize() as callers may want to modify the
   // contents of the serialized arc before persisting.
-  async persistSerialization(serialization: string) {
+  async persistSerialization(serialization: string): Promise<void> {
     const storage = this.storageProviderFactory;
     const key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
     const arcInfoType = new ArcType();
@@ -448,7 +448,7 @@ ${this.activeRecipe.toString()}`;
     this.pec.instantiate(recipeParticle, info.stores);
   }
 
-  async _provisionSpecUrl(spec: ParticleSpec) {
+  private async _provisionSpecUrl(spec: ParticleSpec): Promise<void> {
     if (!spec.implBlobUrl) {
       // if supported, construct spec.implBlobUrl for spec.implFile
       if (this.loader && this.loader['provisionObjectUrl']) {
@@ -466,7 +466,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   // Makes a copy of the arc used for speculative execution.
-  async cloneForSpeculativeExecution() {
+  async cloneForSpeculativeExecution(): Promise<Arc> {
     const arc = new Arc({id: this.generateID(),
                          pecFactory: this.pecFactory,
                          context: this.context,
@@ -628,7 +628,7 @@ ${this.activeRecipe.toString()}`;
     this.debugHandler.recipeInstantiated({particles, activeRecipe: this.activeRecipe.toString()});
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined) {
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined): Promise<StorageProviderBase> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type instanceof RelationType) {
@@ -660,7 +660,7 @@ ${this.activeRecipe.toString()}`;
     return store;
   }
 
-  _registerStore(store: StorageProviderBase, tags?: string[]) {
+  _registerStore(store: StorageProviderBase, tags?: string[]): void {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -808,7 +808,7 @@ ${this.activeRecipe.toString()}`;
     return this.id.toString();
   }
 
-  get idGeneratorForTesting() {
+  get idGeneratorForTesting(): IdGenerator {
     return this.idGenerator;
   }
 }

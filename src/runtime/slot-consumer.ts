@@ -195,7 +195,7 @@ export class SlotConsumer {
     return this.innerContainerBySlotId[slotId];
   }
 
-  _initInnerSlotContainer(slotId, subId, container) {
+  _initInnerSlotContainer(slotId, subId, container): void {
     if (subId) {
       if (!this.innerContainerBySlotId[slotId]) {
         this.innerContainerBySlotId[slotId] = {};
@@ -206,7 +206,8 @@ export class SlotConsumer {
       this.innerContainerBySlotId[slotId] = container;
     }
   }
-  _clearInnerSlotContainers(subIds): void {
+
+  protected _clearInnerSlotContainers(subIds): void {
     subIds.forEach(subId => {
       if (subId) {
         Object.values(this.innerContainerBySlotId).forEach(inner => delete inner[subId]);
@@ -224,9 +225,9 @@ export class SlotConsumer {
   constructRenderRequest(): string[] { return []; }
   dispose(): void {}
   createNewContainer(contextContainer, subId): {} { return null; }
-  deleteContainer(container) {}
-  clearContainer(rendering) {}
-  setContainerContent(rendering, content: Content, subId) {}
+  deleteContainer(container): void {}
+  clearContainer(rendering): void {}
+  setContainerContent(rendering, content: Content, subId): void {}
   formatContent(content: Content, subId): Content { return null; }
   formatHostedContent(content: Content): {} { return null; }
   static clear(container): void {}

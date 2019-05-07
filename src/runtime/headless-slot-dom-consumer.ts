@@ -10,6 +10,8 @@
 
 import {assert} from '../platform/assert-web.js';
 
+import {Arc} from './arc.js';
+import {SlotConnection} from './recipe/slot-connection.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
 
 export class HeadlessSlotDomConsumer extends SlotDomConsumer {
@@ -17,7 +19,7 @@ export class HeadlessSlotDomConsumer extends SlotDomConsumer {
   contentAvailable;
   _contentAvailableResolve;
 
-  constructor(arc, consumeConn) {
+  constructor(arc: Arc, consumeConn: SlotConnection) {
     super(arc, consumeConn);
     this._content = {};
     this.contentAvailable = new Promise(resolve => this._contentAvailableResolve = resolve);

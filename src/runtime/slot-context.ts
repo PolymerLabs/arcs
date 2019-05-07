@@ -28,12 +28,12 @@ export abstract class SlotContext {
     this.sourceSlotConsumer = sourceSlotConsumer;
   }
 
-  addSlotConsumer(slotConsumer: SlotConsumer) {
+  addSlotConsumer(slotConsumer: SlotConsumer): void {
     this.slotConsumers.push(slotConsumer);
     slotConsumer.slotContext = this;
   }
 
-  clearSlotConsumers() {
+  clearSlotConsumers(): void {
     this.slotConsumers.forEach(slotConsumer => slotConsumer.slotContext = null);
     this.slotConsumers.length = 0;
   }
@@ -69,7 +69,7 @@ export class HostedSlotContext extends SlotContext {
     transformationSlotConsumer.addHostedSlotContexts(this);
   }
 
-  onRenderSlot(consumer: SlotConsumer, content: Content, handler) {
+  onRenderSlot(consumer: SlotConsumer, content: Content, handler): void {
     this.sourceSlotConsumer.arc.pec.innerArcRender(
         this.sourceSlotConsumer.consumeConn.particle,
         this.sourceSlotConsumer.consumeConn.name,
@@ -77,7 +77,7 @@ export class HostedSlotContext extends SlotContext {
         consumer.formatHostedContent(content));
   }
 
-  addSlotConsumer(consumer: SlotConsumer) {
+  addSlotConsumer(consumer: SlotConsumer): void {
     super.addSlotConsumer(consumer);
     if (this.containerAvailable) consumer.startRender();
   }
@@ -136,10 +136,15 @@ export class ProvidedSlotContext extends SlotContext {
     consumer.setContent(content, handler);
   }
 
-  get container() { return this._container; }
-  get containerAvailable() { return !!this._container; }
+  get container(): HTMLElement {
+    return this._container;
+  }
 
-  static createContextForContainer(id, name, container, tags) {
+  get containerAvailable(): boolean {
+    return Boolean(this._container);
+  }
+
+  static createContextForContainer(id, name, container, tags): ProvidedSlotContext {
     return new ProvidedSlotContext(id, name, tags, container, null);
   }
 
@@ -159,7 +164,7 @@ export class ProvidedSlotContext extends SlotContext {
     return (!container && !this.container) || (this.container === container);
   }
 
-  set container(container) {
+  set container(container: HTMLElement) {
     if (this.isSameContainer(container)) {
       return;
     }
@@ -169,7 +174,7 @@ export class ProvidedSlotContext extends SlotContext {
     this.slotConsumers.forEach(slotConsumer => slotConsumer.onContainerUpdate(this.container, originalContainer));
   }
 
-  addSlotConsumer(slotConsumer) {
+  addSlotConsumer(slotConsumer): void {
     super.addSlotConsumer(slotConsumer);
 
     if (this.container) {

@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase} from './dom-particle-base.js';
-import {Collection, Variable} from './handle.js';
+import {Collection, Handle, Variable} from './handle.js';
 
 interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here
@@ -22,7 +21,7 @@ interface StatefulDomParticle extends DomParticleBase {
 export interface DomParticle extends StatefulDomParticle {
 }
 
-/** @class DomParticle
+/**
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
@@ -33,45 +32,52 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this.state = this._state;
     this.props = this._props;
   }
-  /** @method willReceiveProps(props, state, oldProps, oldState)
+
+  /**
    * Override if necessary, to do things when props change.
    */
   willReceiveProps(...args) {
   }
-  /** @method update(props, state, oldProps, oldState)
+
+  /**
    * Override if necessary, to modify superclass config.
    */
   update(...args) {
   }
-  /** @method shouldRender(props, state, oldProps, oldState)
+
+  /**
    * Override to return false if the Particle won't use
    * it's slot.
    */
-  shouldRender(...args) {
+  shouldRender(...args): boolean {
     return true;
   }
-  /** @method render(props, state, oldProps, oldState)
+
+  /**
    * Override to return a dictionary to map into the template.
    */
   render(...args) {
     return {};
   }
-  /** @method setState(state)
+
+  /**
    * Copy values from `state` into the particle's internal state,
    * triggering an update cycle unless currently updating.
    */
   setState(state) {
     return this._setState(state);
   }
-  /** @method configureHandles(handles)
+
+  /**
    * This is called once during particle setup. Override to control sync and update
    * configuration on specific handles (via their configure() method).
    * `handles` is a map from names to handle instances.
    */
-  configureHandles(handles) {
+  configureHandles(handles: ReadonlyMap<string, Handle>) {
     // Example: handles.get('foo').configure({keepSynced: false});
   }
-  /** @method get config()
+
+  /**
    * Override if necessary, to modify superclass config.
    */
   get config() {
@@ -83,10 +89,12 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
     };
   }
+
   // affordances for aliasing methods to remove `_`
   _willReceiveProps(...args) {
     this.willReceiveProps(...args);
   }
+
   _update(...args) {
     this.update(...args);
     if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
@@ -94,17 +102,20 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
+
   /** @deprecated */
   get _views() {
     console.warn(`Particle ${this.spec.name} uses deprecated _views getter.`);
     return this.handles;
   }
+
   /** @deprecated */
   async setViews(views) {
     console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
     return this.setHandles(views);
   }
-  async setHandles(handles) {
+
+  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
     this._handlesToSync = new Set();
@@ -120,13 +131,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       this._invalidate();
     }
   }
-  async onHandleSync(handle, model) {
+
+  async onHandleSync(handle: Handle, model): Promise<void> {
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size === 0) {
       await this._handlesToProps();
     }
   }
-  async onHandleUpdate(handle, update) {
+
+  async onHandleUpdate(handle: Handle, update): Promise<void> {
     // TODO(sjmiles): debounce handles updates
     const work = () => {
       //console.warn(handle, update);
@@ -134,6 +147,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     };
     this._debounce('handleUpdateDebounce', work, 300);
   }
+
   async _handlesToProps() {
     // convert handle data (array) into props (dictionary)
     const props = Object.create(null);
@@ -144,13 +158,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // initialize properties
     this._setProps(props);
   }
+
   async _addNamedHandleData(dictionary, handleName) {
     const handle = this.handles.get(handleName);
     if (handle) {
       dictionary[handleName] = await this._getHandleData(handle);
     }
   }
-  async _getHandleData(handle) {
+
+  async _getHandleData(handle: Handle) {
     if (handle instanceof Collection) {
       return await (handle as Collection).toList();
     }
@@ -160,12 +176,14 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // other types (e.g. BigCollections) map to the handle itself
     return handle;
   }
+
   fireEvent(slotName: string, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
   }
+
   _debounce(key: string, func: Function, delay: number) {
     const subkey = `_debounce_${key}`;
     if (!this._state[subkey]) {
@@ -179,4 +197,3 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     super._debounce(key, idleThenFunc, delay);
   }
 }
-//# sourceMappingURL=dom-particle.js.map

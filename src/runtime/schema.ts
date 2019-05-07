@@ -18,14 +18,14 @@ export class Schema {
   readonly names: string[];
   // tslint:disable-next-line: no-any
   readonly fields: {[index: string]: any};
-  description: {[index: string]: string};
+  description: {[index: string]: string} = {};
   isAlias: boolean;
 
   // tslint:disable-next-line: no-any
   constructor(names: string[], fields: {[index: string]: any}, description?) {
     this.names = names;
     this.fields = fields;
-    this.description = {};
+
     if (description) {
       description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }

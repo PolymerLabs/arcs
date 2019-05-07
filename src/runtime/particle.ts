@@ -11,6 +11,7 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
+import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
@@ -20,18 +21,18 @@ import {SlotProxy} from './slot-proxy.js';
  * instead use DOMParticle.
  */
 export class Particle {
-    public static spec: ParticleSpec;
-    public spec: ParticleSpec;
-    public readonly extraData: boolean;
-    public readonly relevances: (Relevance | number)[] = [];
-    public handles: Map<string, Handle>;
+  public static spec: ParticleSpec;
+  public spec: ParticleSpec;
+  public readonly extraData: boolean;
+  public readonly relevances: (Relevance | number)[] = [];
+  public handles: ReadonlyMap<string, Handle>;
 
-    private _idle: Promise<void> = Promise.resolve();
-    private _idleResolver: (() => void);
-    private _busy = 0;
+  private _idle: Promise<void> = Promise.resolve();
+  private _idleResolver: (() => void);
+  private _busy = 0;
 
-    protected slotProxiesByName: Map<string, SlotProxy> = new Map();
-    private capabilities: {constructInnerArc?: Function};
+  protected slotProxiesByName: Map<string, SlotProxy> = new Map();
+  private capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>};
 
   constructor() {
     // Typescript only sees this.constructor as a Function type.
@@ -46,7 +47,7 @@ export class Particle {
    * This sets the capabilities for this particle.  This can only
    * be called once.
    */
-  setCapabilities(capabilities: {constructInnerArc?: Function}): void {
+  setCapabilities(capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>}): void {
     if (this.capabilities) {
       // Capabilities already set, throw an error.
       throw new Error('capabilities should only be set once');
@@ -63,7 +64,7 @@ export class Particle {
    *
    * @param handles a map from handle names to store handles.
    */
-  setHandles(handles: Map<string, Handle>) {
+  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
   }
 
   /**
@@ -98,7 +99,7 @@ export class Particle {
    *  - removed: An Array of Entities removed from a Collection-backed Handle.
    */
   // tslint:disable-next-line: no-any
-  onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}) {
+  async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}): Promise<void> {
   }
 
   /**
@@ -110,10 +111,10 @@ export class Particle {
    *
    * @param handle The Handle instance that was desynchronized.
    */
-  onHandleDesync(handle: Handle) {
+  async onHandleDesync(handle: Handle): Promise<void> {
   }
 
-  constructInnerArc() {
+  async constructInnerArc(): Promise<InnerArcHandle> {
     if (!this.capabilities.constructInnerArc) {
       throw new Error('This particle is not allowed to construct inner arcs');
     }
@@ -154,31 +155,31 @@ export class Particle {
     return this.spec.outputs;
   }
 
-  hasSlotProxy(name: string) {
+  hasSlotProxy(name: string): boolean {
     return this.slotProxiesByName.has(name);
   }
 
-  addSlotProxy(slotlet: SlotProxy) {
+  addSlotProxy(slotlet: SlotProxy): void {
     this.slotProxiesByName.set(slotlet.slotName, slotlet);
   }
 
-  removeSlotProxy(name: string) {
+  removeSlotProxy(name: string): void {
     this.slotProxiesByName.delete(name);
   }
 
   /**
    * Returns the slot with provided name.
    */
-  getSlot(name) {
+  getSlot(name: string): SlotProxy {
     return this.slotProxiesByName.get(name);
   }
 
   static buildManifest(strings: string[], ...bits): string {
-    const output:string[] = [];
+    const output: string[] = [];
     for (let i = 0; i < bits.length; i++) {
         const str = strings[i];
         const indent = / *$/.exec(str)[0];
-        let bitStr;
+        let bitStr: string;
         if (typeof bits[i] === 'string') {
           bitStr = bits[i];
         } else {
@@ -211,7 +212,7 @@ export class Particle {
   }
 
   // abstract
-  renderSlot(slotName: string, contentTypes: string[]) {}
-  renderHostedSlot(slotName: string, hostedSlotId: string, content: string) {}
-  fireEvent(slotName: string, event: {}) {}
+  renderSlot(slotName: string, contentTypes: string[]): void {}
+  renderHostedSlot(slotName: string, hostedSlotId: string, content: string): void {}
+  fireEvent(slotName: string, event: {}): void {}
 }
