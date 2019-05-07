@@ -50,7 +50,7 @@ async function init(options?) {
   return {producer, queue};
 }
 
-describe('replan queue', async () => {
+describe('replan queue', () => {
   it('triggers planning', async () => {
     const {producer, queue} = await init();
     queue.addChange();
