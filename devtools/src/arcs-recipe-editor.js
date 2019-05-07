@@ -424,7 +424,7 @@ class ArcsRecipeEditor extends MessengerMixin(PolymerElement) {
   }
 
   and(one, two) {
-    return !!one && !!two;
+    return Boolean(one) && Boolean(two);
   }
 }
 

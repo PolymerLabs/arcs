@@ -130,7 +130,7 @@ export class DomParticleBase extends Particle {
       model['models'] = model['models'].map(m => this.enhanceModelWithSlotIDs(m, slotIDs));
     }
     for (const [key, value] of Object.entries(model)) {
-      if (!!value && typeof value === 'object') {
+      if (Boolean(value) && typeof value === 'object') {
       model[key] = this.enhanceModelWithSlotIDs(value, slotIDs, false);
       }
     }

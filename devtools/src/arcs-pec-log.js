@@ -162,7 +162,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     for (const explorer of this.shadowRoot.querySelectorAll('[entry] > object-explorer')) {
       explorer.find = params;
     }
-    this.downloadEnabled = !!this.filteredEntries.length;
+    this.downloadEnabled = Boolean(this.filteredEntries.length);
   }
 
   reset() {
@@ -196,7 +196,7 @@ class ArcsPecLog extends MessengerMixin(PolymerElement) {
     if (newFilteredEntries.length) {
       this.push('filteredEntries', ...newFilteredEntries);
     }
-    this.downloadEnabled = !!this.filteredEntries.length;
+    this.downloadEnabled = Boolean(this.filteredEntries.length);
   }
 
   newEntry(msg) {

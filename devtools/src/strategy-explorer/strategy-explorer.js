@@ -104,7 +104,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
   }
 
   _onSearchChanged(params) {
-    this.findBacklit = !!params;
+    this.findBacklit = Boolean(params);
     for (const seRecipe of this.idMap.values()) {
       seRecipe.setFindParams(params);
     }

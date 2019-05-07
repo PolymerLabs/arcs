@@ -205,7 +205,7 @@ function init() {
     const baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview, sequence: info.sequence};
     return {
       async wait(v, info) {
-        const flowExisted = !!flow;
+        const flowExisted = Boolean(flow);
         if (!flowExisted) {
           flow = module_.exports.flow(baseInfo);
         }

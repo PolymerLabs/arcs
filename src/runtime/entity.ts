@@ -142,7 +142,7 @@ export abstract class Entity implements EntityInterface {
 
   // TODO: entity should not be exposing its IDs.
   get id() {
-    assert(!!this.isIdentified());
+    assert(Boolean(this.isIdentified()));
     return getEntityId(this);
   }
 

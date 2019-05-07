@@ -174,10 +174,10 @@ export class ArcPlannerInvoker extends ArcDebugListener {
     const errorTypes = [{
       // TODO: Switch to declaring errors in a structured way in the error object, instead of message parsing.
       pattern: /could not find particle ([A-Z][A-Za-z0-9_]*)\n/,
-      predicate: extracted => manifest => !!(manifest.particles.find(p => p.name === extracted))
+      predicate: extracted => manifest => Boolean(manifest.particles.find(p => p.name === extracted))
     }, {
       pattern: /Could not resolve type reference to type name '([A-Z][A-Za-z0-9_]*)'\n/,
-      predicate: extracted => manifest => !!(manifest.schemas[extracted])      
+      predicate: extracted => manifest => Boolean(manifest.schemas[extracted])      
     }];
 
     for (const {pattern, predicate} of errorTypes) {

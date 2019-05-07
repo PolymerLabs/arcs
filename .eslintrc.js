@@ -8,6 +8,8 @@ module.exports = {
     "sourceType": "module",
   },
   "rules": {
+    // Things we do that go beyond the default rules
+    "no-implicit-coercion": "error",
     // Things we do, but probably shouldn't.
     "no-console": "off",
     "no-throw-literal": "off",

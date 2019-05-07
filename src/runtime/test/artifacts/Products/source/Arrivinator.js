@@ -23,7 +23,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     shouldRender(props) {
-      return !!props && !!props.product;
+      return Boolean(props) && Boolean(props.product);
     }
     render(props) {
       const {product} = props;

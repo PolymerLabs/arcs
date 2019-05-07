@@ -109,7 +109,7 @@ describe('demo flow', () => {
     const verifyContents = (num, content) => {
       assert(content.model, `Content doesn't have model`);
       assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
-      return content.model.items.length === num && content.model.items.every(i => !!i.resolvedImage);
+      return content.model.items.length === num && content.model.items.every(i => Boolean(i.resolvedImage));
     };
     const verifyElementMove = async (key, num, muxerHostedParticles) => {
         helper.slotComposer

@@ -112,7 +112,7 @@ describe('interface', () => {
       `);
     const type = new EntityType(manifest.schemas.Test);
     const iface = new InterfaceInfo('Test',[
-      {direction: 'in', type}],[
+      {direction: 'in', type}], [
         {name: 'one'},
         {direction: 'provide', isSet: true}]);
 
@@ -207,7 +207,7 @@ describe('interface', () => {
     }
 
     const hostedParticleType = multiplexer.spec.getConnectionByName('hostedParticle').type as InterfaceType;
-    assert.isTrue(!!hostedParticleType.interfaceInfo.restrictType(burritoDisplayer));
+    assert.isTrue(Boolean(hostedParticleType.interfaceInfo.restrictType(burritoDisplayer)));
 
     // After restricting the interface, handle types are constrainted to a Burrito.
     assert.lengthOf(recipe.handles, 2);
@@ -280,7 +280,7 @@ describe('interface', () => {
     assert.isTrue(check('GibsonCandidate'));
     assert.isFalse(check('LesPaulCandidate'));
 
-    assert.isTrue(!!hostedInterface.restrictType(manifest.findParticleByName('GuitarCandidate')));
+    assert.isTrue(Boolean(hostedInterface.restrictType(manifest.findParticleByName('GuitarCandidate'))));
 
     // After restricting the type with inout Guitar,
     // inout Instrument and inout Gibson are no longer viable matches.

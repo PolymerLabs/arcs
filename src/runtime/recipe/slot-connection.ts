@@ -151,10 +151,10 @@ export class SlotConnection {
   }
 
   isConnectedToInternalSlot(): boolean {
-    return this.targetSlot && (!!this.targetSlot.sourceConnection);
+    return this.targetSlot && (Boolean(this.targetSlot.sourceConnection));
   }
   isConnectedToRemoteSlot() {
-    return this.targetSlot && (!!this.targetSlot.id);
+    return this.targetSlot && (Boolean(this.targetSlot.id));
   }
 
   isConnected(): boolean {

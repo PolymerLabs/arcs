@@ -16,7 +16,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   private nextID = 0;
 
   _isSelectedDescription(desc): boolean {
-    return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
+    return super._isSelectedDescription(desc) || (Boolean(desc.template) && Boolean(desc.model));
   }
 
   _combineSelectedDescriptions(selectedDescriptions: ParticleDescription[], options: CombinedDescriptionsOptions) {
@@ -48,10 +48,10 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
             model[newTokenKey] = tokenValue;
           }
           return true;
-        }).every(t => !!t);
+        }).every(t => Boolean(t));
       });
 
-      if (success.every(s => !!s)) {
+      if (success.every(s => Boolean(s))) {
         suggestionByParticleDesc.set(particleDesc, {template, model});
       }
     }
@@ -170,7 +170,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       return token;
     });
 
-    const nonEmptyTokens = tokens.filter(token => token && !!token.template && !!token.model);
+    const nonEmptyTokens = tokens.filter(token => token && Boolean(token.template) && Boolean(token.model));
     return {
       template: nonEmptyTokens.map(token => token.template).join(''),
       model: nonEmptyTokens.map(token => token.model).reduce((prev, curr) => ({...prev, ...curr}), {})
@@ -178,7 +178,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   _combineDescriptionAndValue(token, description, storeValue) {
-    if (!!description.template && !!description.model) {
+    if (Boolean(description.template) && Boolean(description.model)) {
       return {
         template: `${description.template} (${storeValue.template})`,
         model: {...description.model, ...storeValue.model}

@@ -23,7 +23,7 @@ describe('IdGenerator', () => {
   
       const idGenerator = IdGenerator.newSession();
   
-      const sessionId = 123 * 2 ** 50 + '';
+      const sessionId = String(123 * 2 ** 50);
       assert.equal(idGenerator.currentSessionIdForTesting, sessionId);
     });
   });

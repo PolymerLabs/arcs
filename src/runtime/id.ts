@@ -25,7 +25,7 @@ export class IdGenerator {
 
   /** Generates a new random session ID to use when creating new IDs. */
   static newSession() {
-    const sessionId = Math.floor(Random.next() * Math.pow(2, 50)) + '';
+    const sessionId = String(Math.floor(Random.next() * Math.pow(2, 50)));
     return new IdGenerator(sessionId);
   }
 

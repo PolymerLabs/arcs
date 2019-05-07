@@ -57,7 +57,7 @@ export class SuggestionComposer {
   }
 
   private _addInlineSuggestion(suggestion: Suggestion): void {
-    const remoteSlots = suggestion.plan.slots.filter(s => !!s.id);
+    const remoteSlots = suggestion.plan.slots.filter(s => Boolean(s.id));
     if (remoteSlots.length !== 1) {
       return;
     }

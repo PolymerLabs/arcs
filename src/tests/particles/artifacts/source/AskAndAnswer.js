@@ -41,7 +41,7 @@ defineParticle(({DomParticle, html}) => {
       return super.getTemplateName(slotName);
     }
     shouldRender(props) {
-      return !!props.thing;
+      return Boolean(props.thing);
     }
     render({thing}) {
       if (thing) {

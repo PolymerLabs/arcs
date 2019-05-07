@@ -87,7 +87,7 @@ export class Planificator {
     }
   }
 
-  get consumerOnly() { return !Boolean(this.producer); }
+  get consumerOnly() { return !this.producer; }
 
   async loadSuggestions() {
     return this.result.load();

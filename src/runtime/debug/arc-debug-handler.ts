@@ -43,7 +43,7 @@ export class ArcDebugHandler {
 
       this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
-      if (!!listenerClasses) { // undefined -> false
+      if (Boolean(listenerClasses)) { // undefined -> false
       	  listenerClasses.forEach(l => ArcDevtoolsChannel.instantiateListener(l, 
       	  	  arc, this.arcDevtoolsChannel));
       }

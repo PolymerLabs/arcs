@@ -93,8 +93,8 @@ export class PlanConsumer {
       const usesHandlesFromActiveRecipe = suggestion.plan.handles.find(handle => {
         // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
         // either by tagging or by exploring connection directions etc.
-        return !!handle.id &&
-               !!this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
+        return Boolean(handle.id) &&
+               Boolean(this.arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id));
       });
       const usesRemoteNonRootSlots = suggestion.plan.slots.find(slot => {
         return !slot.name.includes('root') && !slot.tags.includes('root') &&

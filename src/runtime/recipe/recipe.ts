@@ -405,7 +405,7 @@ export class Recipe {
     // Reorder connections so that interfaces come last.
     // TODO: update handle-connection comparison method instead?
     let ordered = connections.filter(c => !c.type || !(c.type instanceof InterfaceType));
-    ordered = ordered.concat(connections.filter(c => !!c.type && !!(c.type instanceof InterfaceType)));
+    ordered = ordered.concat(connections.filter(c => Boolean(c.type) && Boolean(c.type instanceof InterfaceType)));
     for (const connection of ordered) {
       if (!seenParticles.has(connection.particle)) {
         particles.push(connection.particle);

@@ -108,9 +108,9 @@ export class Arc {
     } else {
       this.id = id;
     }
-    this.isSpeculative = !!speculative; // undefined => false
-    this.isInnerArc = !!innerArc; // undefined => false
-    this.isStub = !!stub;
+    this.isSpeculative = Boolean(speculative); // undefined => false
+    this.isInnerArc = Boolean(innerArc); // undefined => false
+    this.isStub = Boolean(stub);
     this._loader = loader;
 
     this.storageKey = storageKey;
@@ -748,8 +748,8 @@ ${this.activeRecipe.toString()}`;
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!Handle.effectiveType(
-      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
+    return stores.filter(s => Boolean(Handle.effectiveType(
+      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}])));
   }
 
   findStoreById(id: string): StorageProviderBase | StorageStub {

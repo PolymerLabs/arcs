@@ -344,8 +344,8 @@ export class Manifest {
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
-    return stores.filter(s => !!Handle.effectiveType(
-      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}]));
+    return stores.filter(s => Boolean(Handle.effectiveType(
+      type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'host' : 'inout'}])));
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));

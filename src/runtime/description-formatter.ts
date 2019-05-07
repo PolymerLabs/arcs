@@ -67,7 +67,7 @@ export class DescriptionFormatter {
   }
 
   _isSelectedDescription(desc: ParticleDescription): boolean {
-    return !!desc.pattern;
+    return Boolean(desc.pattern);
   }
 
   getHandleDescription(recipeHandle: Handle) {
@@ -432,7 +432,7 @@ export class DescriptionFormatter {
       const storeDescription = this.storeDescById[handleConn.handle.id];
       const handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).
-      if (!!storeDescription && storeDescription !== handleType) {
+      if (Boolean(storeDescription) && storeDescription !== handleType) {
         return storeDescription;
       }
     }
@@ -448,7 +448,7 @@ export class DescriptionFormatter {
       // Choose connections with patterns (manifest-based or dynamic).
       const connectionSpec = connection.spec;
       const particleDescription = this.particleDescriptions.find(desc => desc._particle === connection.particle);
-      return !!connectionSpec.pattern || !!particleDescription._connections[connection.name].pattern;
+      return Boolean(connectionSpec.pattern) || Boolean(particleDescription._connections[connection.name].pattern);
     });
 
     possibleConnections.sort((c1, c2) => {

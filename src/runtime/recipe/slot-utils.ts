@@ -101,10 +101,10 @@ export class SlotUtils {
     if (slot.handles.length === 0) {
       return true; // slot is not limited to specific handles
     }
-    return !!Object.values(particle.connections).find(handleConn => {
+    return Boolean(Object.values(particle.connections).find(handleConn => {
       return slot.handles.includes(handleConn.handle) ||
               (handleConn.handle && handleConn.handle.id && slot.handles.map(sh => sh.id).includes(handleConn.handle.id));
-    });
+    }));
   }
 
   static tagsOrNameMatch(consumeSlotSpec: ConsumeSlotConnectionSpec, provideSlotSpec: ProvideSlotConnectionSpec, consumeSlotConn: SlotConnection = undefined, provideSlot: Slot = undefined) {

@@ -58,7 +58,7 @@ describe('particle interface loading with slots', function() {
     for (const [subId, {model, templateName}] of renderings) {
       assert.equal(expectedValues[subId], model.value);
       assert.equal(expectedTemplateName, templateName);
-      assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
+      assert.isTrue(Boolean(HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName)));
     }
   }
 

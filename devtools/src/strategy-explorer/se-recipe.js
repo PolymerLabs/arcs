@@ -180,13 +180,13 @@ Polymer({
         if (this.recipe.result.toLowerCase().includes(params.phrase)) {
           return true;
         }
-        return !!(this.recipe.description && this.recipe.description.toLowerCase().includes(params.phrase));
+        return Boolean(this.recipe.description && this.recipe.description.toLowerCase().includes(params.phrase));
       } else {
         const re = new RegExp(params.regex, 'i');
         if (re.test(this.recipe.result)) {
           return true;
         }
-        return !!(this.recipe.description && re.test(this.recipe.description));
+        return Boolean(this.recipe.description && re.test(this.recipe.description));
       }
     })();
   },
