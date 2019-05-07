@@ -141,7 +141,7 @@ export class ProvidedSlotContext extends SlotContext {
   }
 
   get containerAvailable(): boolean {
-    return !!this._container;
+    return Boolean(this._container);
   }
 
   static createContextForContainer(id, name, container, tags): ProvidedSlotContext {
