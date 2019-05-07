@@ -109,12 +109,6 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     return this.handles;
   }
 
-  /** @deprecated */
-  async setViews(views) {
-    console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
-    return this.setHandles(views);
-  }
-
   async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
