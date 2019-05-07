@@ -11,9 +11,6 @@
 import {assert} from '../../platform/chai-web.js';
 import {Mutex} from '../mutex.js';
 
-
-
-
 describe('Mutex', () => {
   const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -24,26 +21,21 @@ describe('Mutex', () => {
     
     // Simulate two simultaneous sections
     const lock1 = mutex.acquire();
-    console.log('l1');
     assert.isFalse(mutex.locked, 'unlocked after acquiring lock1');
     
     const lock2 = mutex.acquire();
-    console.log('l2');
     assert.isFalse(mutex.locked, 'unlocked after acquiring lock2');
 
     const release1 = await lock1;
-    console.log('al1');
     assert.isTrue(mutex.locked, 'locked after acquiring release1');
 
     release1();
     assert.isFalse(mutex.locked, 'unlocked releasing lock1');
 
     const release2 = await lock2;
-    console.log('al2');
     assert.isTrue(mutex.locked, 'locked after acquiring release2');
 
     release2();
-    console.log('r2');
     assert.isFalse(mutex.locked, 'unlocked after releasing all locks');
   });
 

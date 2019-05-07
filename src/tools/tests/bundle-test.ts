@@ -19,7 +19,7 @@ import {assert} from '../../platform/chai-web.js';
 // to be isolated from repo location in the user's file system.
 function relativize(listing: BundleEntry[]): BundleEntry[] {
   return listing.map(entry => ({
-    filePath: path.relative(process.cwd(), entry.filePath),
+    filePath: path.relative(process.cwd(), entry.filePath).split(path.sep).join('/'),
     bundlePath: entry.bundlePath,
     entryPoint: entry.entryPoint
   }));
