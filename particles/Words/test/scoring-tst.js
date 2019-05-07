@@ -24,7 +24,7 @@ describe('Scoring', function() {
 
   describe('#wordScore()', function() {
     function tilesForWord(word) {
-      let tiles = [];
+      const tiles = [];
       for (let i = 0; i < word.length; i++) {
         tiles.push(new Tile(i, word.charAt(i)));
       }
@@ -83,7 +83,7 @@ describe('Scoring', function() {
 
   describe('#applyMoveStats()', function() {
     const validateStats = (actual, expected) => {
-      let actualCopy = Object.assign({}, actual);
+      const actualCopy = Object.assign({}, actual);
       // TODO(wkorman): We hack in Post data currently. Revisit this and add
       // specific relevant tests.
       delete actualCopy.author;

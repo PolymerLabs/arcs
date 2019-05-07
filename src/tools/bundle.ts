@@ -53,7 +53,10 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
 
 export async function bundleListing(...entryPoints: string[]): Promise<BundleEntry[]> {
   // Use absolute paths to properly handle navigating up above current working directory.
-  entryPoints = entryPoints.map(ep => path.isAbsolute(ep) ? ep : path.join(process.cwd(), ep));
+  entryPoints = entryPoints.map(ep => path.isAbsolute(ep)
+      ? ep
+      // All the paths handled by Arcs use Web/POSIX separators.
+      : path.resolve(process.cwd(), ep).split(path.sep).join('/'));
   
   const loader = new Loader();
   const entryManifests = await Promise.all(entryPoints.map(ep => Manifest.load(ep, loader)));
@@ -78,7 +81,7 @@ function dirPrefixForSortedPaths(paths: string[]): number {
   let prefixLength = 0;
   for (let i = 0; i < Math.min(first.length, last.length); i++) {
     if (first[i] !== last[i]) break;
-    if (first[i] === path.sep) prefixLength = i + 1;
+    if (first[i] === '/') prefixLength = i + 1;
   }
   return prefixLength;
 }

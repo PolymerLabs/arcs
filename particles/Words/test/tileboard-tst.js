@@ -252,7 +252,7 @@ describe('TileBoard', function() {
 
   describe('#pickCharWithFrequencies()', function() {
     it('should return a single caps alpha character', function() {
-      let result = TileBoard.pickCharWithFrequencies();
+      const result = TileBoard.pickCharWithFrequencies();
       assert.lengthOf(result, 1);
       assert.match(result, /[A-Z]/);
     });
@@ -278,16 +278,16 @@ describe('TileBoard', function() {
 
   describe('#shuffle()', function() {
     it('should not shuffle board with no shuffles remaining', function() {
-      let board = createDefaultBoard(0);
-      let letters = board.toString();
+      const board = createDefaultBoard(0);
+      const letters = board.toString();
       assert.equal(board.shuffleAvailableCount, 0);
       assert.isFalse(board.shuffle());
       assert.equal(letters, board.toString());
     });
 
     it('should shuffle board with a shuffle remaining', function() {
-      let board = createDefaultBoard(1);
-      let letters = board.toString();
+      const board = createDefaultBoard(1);
+      const letters = board.toString();
       assert.equal(board.shuffleAvailableCount, 1);
       assert.isTrue(board.shuffle());
       assert.notEqual(letters, board.toString());
