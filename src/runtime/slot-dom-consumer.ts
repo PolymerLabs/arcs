@@ -21,8 +21,7 @@ export interface DomRendering extends Rendering {
   liveDom?: Template;
 }
 
-// tslint:disable-next-line: no-any
-const templateByName = new Map<string, any>();
+const templateByName = new Map<string, HTMLElement>();
 
 // this style sheet is installed in every particle shadow-root
 let commonStyleTemplate;
@@ -45,7 +44,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return request;
   }
 
-  static hasTemplate(templatePrefix) {
+  static hasTemplate(templatePrefix: string): string {
     return [...templateByName.keys()].find(key => key.startsWith(templatePrefix));
   }
 
@@ -160,11 +159,11 @@ export class SlotDomConsumer extends SlotConsumer {
     this.renderings.forEach(([subId, {container}]) => this.deleteContainer(container));
   }
 
-  static clear(container) {
+  static clear(container): void {
     container.textContent = '';
   }
 
-  static clearCache() {
+  static clearCache(): void {
     templateByName.clear();
   }
 
