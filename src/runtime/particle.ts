@@ -34,7 +34,7 @@ export class Particle {
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>};
 
-  protected constructor() {
+  constructor() {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];

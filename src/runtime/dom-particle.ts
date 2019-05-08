@@ -169,7 +169,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
 
-  private static async _getHandleData(handle: Handle) {
+  private async _getHandleData(handle: Handle) {
     if (handle instanceof Collection) {
       return await (handle as Collection).toList();
     }
