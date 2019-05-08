@@ -116,7 +116,7 @@ export class ConsumeSlotConnectionSpec {
 
   // Getters to 'fake' being a Handle.
   get isOptional(): boolean { return !this.isRequired; }
-  get direction(): string { return '`consume'; }
+  static get direction(): string { return '`consume'; }
   get type(): SlotType { return SlotType.make(this.formFactor, null); } //TODO(jopra): FIX THIS NULL!
   get dependentConnections(): ProvideSlotConnectionSpec[] { return this.provideSlotConnections; }
 }
