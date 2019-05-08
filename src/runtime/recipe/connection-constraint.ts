@@ -17,7 +17,7 @@ import { Particle } from './particle.js';
 export abstract class EndPoint implements Comparable<EndPoint> {
   abstract _compareTo(other: EndPoint): number;
   abstract _clone(cloneMap?: CloneMap);
-  abstract toString(nameMap?: ReadonlyMap<RecipeComponent, string>);
+  abstract toString(nameMap?: ReadonlyMap<RecipeComponent, string>): string;
 }
 
 
@@ -31,7 +31,7 @@ export class ParticleEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap: CloneMap = undefined) {
+  _clone(cloneMap: CloneMap = undefined): ParticleEndPoint {
     return new ParticleEndPoint(this.particle, this.connection);
   }
 
@@ -42,7 +42,7 @@ export class ParticleEndPoint extends EndPoint {
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined): string {
     if (!this.connection) {
       return `${this.particle.name}`;
     }
@@ -61,18 +61,18 @@ export class InstanceEndPoint extends EndPoint {
     this.connection = connection;
   }
 
-  _clone(cloneMap: CloneMap) {
+  _clone(cloneMap: CloneMap): InstanceEndPoint {
     return new InstanceEndPoint(cloneMap.get(this.instance) as Particle, this.connection);
   }
 
-  _compareTo(other: InstanceEndPoint) {
+  _compareTo(other: InstanceEndPoint): number {
     let cmp: number;
     if ((cmp = compareComparables(this.instance, other.instance)) !== 0) return cmp;
     if ((cmp = compareStrings(this.connection, other.connection)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string>) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string>): string {
     if (!this.connection) {
       return `${nameMap.get(this.instance)}`;
     }
@@ -88,17 +88,17 @@ export class HandleEndPoint extends EndPoint {
     this.handle = handle;
   }
 
-  _clone(cloneMap: CloneMap  = undefined) {
+  _clone(cloneMap: CloneMap  = undefined): HandleEndPoint {
     return new HandleEndPoint(this.handle);
   }
 
-  _compareTo(other: HandleEndPoint) {
+  _compareTo(other: HandleEndPoint): number {
     let cmp: number;
     if ((cmp = compareStrings(this.handle.localName, other.handle.localName)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined): string {
     return `${this.handle.localName}`;
   }
 }
@@ -110,17 +110,17 @@ export class TagEndPoint extends EndPoint {
     this.tags = tags;
   }
 
-  _clone(cloneMap: CloneMap = undefined) {
+  _clone(cloneMap: CloneMap = undefined): TagEndPoint {
     return new TagEndPoint(this.tags);
   }
 
-  _compareTo(other: TagEndPoint) {
+  _compareTo(other: TagEndPoint): number {
     let cmp: number;
     if ((cmp = compareArrays(this.tags, other.tags, compareStrings)) !== 0) return cmp;
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined): string {
     return this.tags.map(a => `#${a}`).join(' ');
   }
 }
@@ -156,7 +156,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction);
   }
     
-  _compareTo(other: ConnectionConstraint) {
+  _compareTo(other: ConnectionConstraint): number {
     let cmp: number;
     if ((cmp = this.from._compareTo(other.from)) !== 0) return cmp;
     if ((cmp = this.to._compareTo(other.to)) !== 0) return cmp;
@@ -164,7 +164,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     return 0;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined, options: ToStringOptions = undefined) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string> = undefined, options: ToStringOptions = undefined): string {
     let unresolved = '';
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';

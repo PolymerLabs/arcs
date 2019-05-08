@@ -15,39 +15,41 @@ import {compareArrays, compareComparables, compareStrings} from './comparable.js
 
 export class Slot {
   private readonly _recipe: Recipe;
-  private _id: string | undefined = undefined;
-  private _localName: string | undefined = undefined;
-  _name: string;
+  private _id?: string = undefined;
+  private _localName?: string = undefined;
+  private _name: string;
   private _tags = <string[]>[];
-  _sourceConnection: SlotConnection | undefined = undefined;
-  private _formFactor: string | undefined = undefined;
-  private _consumeConnections = <SlotConnection[]>[];
-  constructor(recipe, name) {
+  private _sourceConnection: SlotConnection | undefined = undefined;
+  private _formFactor?: string = undefined;
+  private _consumeConnections: SlotConnection[] = [];
+
+  constructor(recipe: Recipe, name: string) {
     assert(recipe);
 
     this._recipe = recipe;
     this._name = name;
   }
 
-  get recipe() { return this._recipe; }
-  get id() { return this._id; }
-  set id(id) { this._id = id; }
-  get localName() { return this._localName; }
+  get recipe(): Recipe { return this._recipe; }
+  get id(): string|undefined { return this._id; }
+  set id(id: string) { this._id = id; }
+  get localName(): string|undefined { return this._localName; }
   set localName(localName) { this._localName = localName; }
-  get name() { return this._name; }
+  get name(): string { return this._name; }
   set name(name) { this._name = name; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
-  get formFactor() { return this._formFactor; }
+  get formFactor(): string|undefined { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
-  get sourceConnection() { return this._sourceConnection; }
+  get sourceConnection(): SlotConnection|undefined { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
-  get consumeConnections() { return this._consumeConnections; }
+  get consumeConnections(): SlotConnection[] { return this._consumeConnections; }
   get spec() {
     // TODO: should this return something that indicates this isn't available yet instead of
     // the constructed {isSet: false, tags: []}?
     return (this.sourceConnection && this.sourceConnection.getSlotSpec()) ? this.sourceConnection.particle.getSlotSpecByName(this.name) : {isSet: false, tags: []};
   }
+
   get handles(): Handle[] {
     const handles = [];
     if (this.sourceConnection && this.sourceConnection.getSlotSpec()) {
@@ -61,7 +63,7 @@ export class Slot {
     return handles;
   }
 
-  _copyInto(recipe, cloneMap) {
+  _copyInto(recipe: Recipe, cloneMap) {
     let slot = undefined;
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
@@ -89,12 +91,12 @@ export class Slot {
     return slot;
   }
 
-  _startNormalize() {
+  _startNormalize(): void {
     this.localName = null;
     this._tags.sort();
   }
 
-  _finishNormalize() {
+  _finishNormalize(): void {
     // TODO(mmandlis): This was assert(Object.isFroze(this._source)) - but there is no _source.
     // Changing to _sourceConnection makes the assert fail.
     // assert(Object.isFrozen(this._sourceConnection));
@@ -103,8 +105,8 @@ export class Slot {
     Object.freeze(this);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: Slot): number {
+    let cmp: number;
     if ((cmp = compareStrings(this.id, other.id)) !== 0) return cmp;
     if ((cmp = compareStrings(this.localName, other.localName)) !== 0) return cmp;
     if ((cmp = compareStrings(this.formFactor, other.formFactor)) !== 0) return cmp;
@@ -125,7 +127,7 @@ export class Slot {
     }
   }
 
-  remove() {
+  remove(): void {
     this._recipe.removeSlot(this);
   }
 
@@ -146,12 +148,12 @@ export class Slot {
     return Boolean(this._sourceConnection || this.id);
   }
 
-  _isValid(options) {
+  _isValid(options): boolean {
     // TODO: implement
     return true;
   }
 
-  toString(nameMap, options) {
+  toString(nameMap, options): string {
     const result = [];
     result.push('slot');
     if (this.id) {

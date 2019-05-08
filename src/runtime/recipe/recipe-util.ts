@@ -410,7 +410,7 @@ export class RecipeUtil {
   }
 
   // Returns true if `otherRecipe` matches the shape of recipe.
-  static matchesRecipe(recipe: Recipe, otherRecipe: Recipe) {
+  static matchesRecipe(recipe: Recipe, otherRecipe: Recipe): boolean {
     const shape = RecipeUtil.recipeToShape(otherRecipe);
     const result = RecipeUtil.find(recipe, shape);
     return result.some(r => r.score === 0);

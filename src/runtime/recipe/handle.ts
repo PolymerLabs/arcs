@@ -106,8 +106,8 @@ export class Handle {
     Object.freeze(this);
   }
 
-  _compareTo(other: Handle) {
-    let cmp;
+  _compareTo(other: Handle): number {
+    let cmp: number;
     if ((cmp = compareStrings(this._id, other._id)) !== 0) return cmp;
     if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
@@ -201,7 +201,7 @@ export class Handle {
     return false;
   }
 
-  isResolved(options = undefined) {
+  isResolved(options = undefined): boolean {
     assert(Object.isFrozen(this));
     let resolved = true;
     if (this.type) {
@@ -252,7 +252,7 @@ export class Handle {
     return resolved;
   }
 
-  toString(nameMap: ReadonlyMap<RecipeComponent, string>, options: ToStringOptions) {
+  toString(nameMap: ReadonlyMap<RecipeComponent, string>, options: ToStringOptions): string {
     if (this._immediateValue) {
       // Immediate Value handles are only rendered inline with particle connections.
       // E.g. hostedParticle = ShowProduct
@@ -260,7 +260,7 @@ export class Handle {
     }
     options = options || {};
     // TODO: type? maybe output in a comment
-    const result = [];
+    const result: string[] = [];
     result.push(this.fate);
     if (this.id) {
       result.push(`'${this.id}'`);
@@ -292,7 +292,7 @@ export class Handle {
     return result.join(' ');
   }
 
-  findConnectionByDirection(dir:string) {
+  findConnectionByDirection(dir: string): HandleConnection {
     return this._connections.find(conn => conn.direction === dir);
   }
 }
