@@ -20,7 +20,7 @@ import {SlotProxy} from './slot-proxy.js';
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
-export abstract class Particle {
+export class Particle {
   public static spec: ParticleSpec;
   public spec: ParticleSpec;
   public readonly extraData: boolean;
