@@ -9,24 +9,49 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, log, html, resolver}) => {
+
+  const template = html`
+<div>
+  <img style="max-width: 240px;" src="{{imageUrl}}"><br>
+  <div>
+    <div>Label: </span><span>{{label}}</div>
+    <div>Confidence: </span><span>{{probability}}</div>
+  </div>
+</div>
+  `;
+
+  const url = `http://localhost/projects/ml5-examples/javascript/ImageClassification/images/waltbird.jpg`;
 
   return class extends DomParticle {
     get template() {
-      return '<slot></slot>';
+      return template;
     }
-    service(...args) {
-      this.capabilities.serviceRequest(this, ...args);
+    async service(request) {
+      if (!this.capabilities.serviceRequest) {
+        console.warn(`${this.spec.name} has no service support.`);
+      }
+      return new Promise(resolve => {
+        this.capabilities.serviceRequest(this, request, response => resolve(response));
+      });
     }
     update({}, state) {
-      if (!state.requestedService) {
-        state.requestedService = true;
-        this.service({name: 'test'}, ({channel}) => this.setState({channel}));
+      if (!state.classified) {
+        state.classified = true;
+        this.classify(url);
       }
-      if (state.channel) {
-        log('service channel', state.channel);
-        this.service({channel: state.channel, name: 'classify'}, ({response}) => log(response));
-      }
+    }
+    async classify(imageUrl) {
+      const response = await this.service({service: 'ml5', invoke: 'classifyImage', imageUrl});
+      this.setState({response});
+    }
+    render({}, {response}) {
+      response = response || {label: '<working>', probability: '<working>'};
+      return {
+        label: response.label,
+        probability: response.probability,
+        imageUrl: url
+      };
     }
   };
 
