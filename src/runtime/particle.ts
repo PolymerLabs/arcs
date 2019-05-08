@@ -205,7 +205,6 @@ export class Particle {
     throw new Error('A particle needs a description handle to set a decription pattern');
   }
 
-  // TODO(alxr) What are thoughts about marking these methods as `abstract`?
   // abstract
   renderSlot(slotName: string, contentTypes: string[]): void {}
   renderHostedSlot(slotName: string, hostedSlotId: string, content: string): void {}
