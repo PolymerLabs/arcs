@@ -824,13 +824,13 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     // Check that the parser found the handleConnections
     assert.lengthOf(recipe.handleConnections, 2);
-    assert.equal('slotA1', recipe.handleConnections[0]._name);
-    assert.equal('slotA2', recipe.handleConnections[1]._name);
+    assert.equal('slotA1', recipe.handleConnections[0].name);
+    assert.equal('slotA2', recipe.handleConnections[1].name);
 
     // Check that the handle connection
     // wasn't resolved to a handle (even though it was parsed).
-    assert.isUndefined(recipe.handleConnections[0]._handle);
-    assert.isUndefined(recipe.handleConnections[1]._handle);
+    assert.isUndefined(recipe.handleConnections[0].handle);
+    assert.isUndefined(recipe.handleConnections[1].handle);
 
     // The recipe shouldn't resolve (as there is nothing providing slotA1 or
     // consuming slotA2).
@@ -883,14 +883,14 @@ ${particleStr1}
 
     assert.lengthOf(recipe.handleConnections, 3);
     const slotConnA = recipe.handleConnections.find(s => s.name === 'slotA');
-    assert.isUndefined(slotConnA._handle);
+    assert.isUndefined(slotConnA.handle);
 
     assert.lengthOf(recipe.handles, 1);
     const slotB = recipe.handles[0];
     assert.lengthOf(slotB.connections, 2);
 
-    assert.equal(slotB.connections[0]._name, 'slotB');
-    assert.equal(slotB.connections[1]._name, 'slotB');
+    assert.equal(slotB.connections[0].name, 'slotB');
+    assert.equal(slotB.connections[1].name, 'slotB');
 
     const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);

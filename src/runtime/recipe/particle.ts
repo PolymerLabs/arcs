@@ -20,10 +20,10 @@ import {Id} from '../id.js';
 
 export class Particle {
   private readonly _recipe: Recipe;
-  private _id: Id | undefined = undefined;
+  private _id?: Id = undefined;
   private _name: string;
-  private _localName: string | undefined = undefined;
-  spec: ParticleSpec | undefined = undefined;
+  private _localName?: string = undefined;
+  spec?: ParticleSpec = undefined;
   private _verbs: string[] = [];
   private _connections: {[index: string]: HandleConnection} = {};
   
@@ -87,7 +87,7 @@ export class Particle {
     }
   }
 
-  _startNormalize() {
+  _startNormalize(): void {
     this._localName = null;
     this._verbs.sort();
     const normalizedConnections = {};
@@ -103,13 +103,13 @@ export class Particle {
     this._consumedSlotConnections = normalizedSlotConnections;
   }
 
-  _finishNormalize() {
+  _finishNormalize(): void {
     this._unnamedConnections.sort(compareComparables);
     Object.freeze(this);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: Particle): number {
+    let cmp: number;
     if ((cmp = compareStrings(this._id ? this._id.toString() : '', other._id ? other._id.toString() : '')) !== 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
     if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
@@ -299,16 +299,16 @@ export class Particle {
     return slotConn;
   }
 
-  removeSlotConnection(slotConnection) {
-    this._consumedSlotConnections[slotConnection._name] = null;
+  removeSlotConnection(slotConnection: SlotConnection) {
+    this._consumedSlotConnections[slotConnection.name] = null;
     slotConnection.disconnectFromSlot();
   }
 
-  remove() {
+  remove(): void {
     this.recipe.removeParticle(this);
   }
 
-  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec) {
+  getSlotConnectionBySpec(spec: ConsumeSlotConnectionSpec): SlotConnection {
     return Object.values(this._consumedSlotConnections).find(slotConn => slotConn.getSlotSpec() === spec);
   }
 
@@ -326,7 +326,7 @@ export class Particle {
     return undefined;
   }
 
-  getSlotConnectionByName(name: string) : SlotConnection {
+  getSlotConnectionByName(name: string): SlotConnection {
     return this._consumedSlotConnections[name];
   }
 
@@ -339,7 +339,7 @@ export class Particle {
     return new Map();
   }
 
-  toString(nameMap, options) {
+  toString(nameMap, options): string {
     let result = [];
     // TODO: we need at least name or verb(s)
     if (this.name) {

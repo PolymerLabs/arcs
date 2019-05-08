@@ -15,8 +15,8 @@ import {Slot} from './slot.js';
 
 export class SlotUtils {
   // Helper methods.
-  static getClonedSlot(recipe, selectedSlot) {
-    let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
+  static getClonedSlot(recipe: Recipe, selectedSlot): Slot {
+    let clonedSlot: Slot = recipe.updateToClone({selectedSlot}).selectedSlot;
     if (!clonedSlot) {
       if (selectedSlot.id) {
         clonedSlot = recipe.findSlotByID(selectedSlot.id);
@@ -34,7 +34,7 @@ export class SlotUtils {
   }
 
   // Connect the given slot connection to the selectedSlot, create the slot, if needed.
-  static connectSlotConnection(slotConnection, selectedSlot) {
+  static connectSlotConnection(slotConnection: SlotConnection, selectedSlot: Slot): void {
     const recipe = slotConnection.recipe;
     if (!slotConnection.targetSlot) {
       const clonedSlot = SlotUtils.getClonedSlot(recipe, selectedSlot);
@@ -62,7 +62,7 @@ export class SlotUtils {
   }
 
   // Returns the given slot candidates, sorted by "quality".
-  static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots) {
+  private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots) {
     const possibleSlots = slots.filter(s => this.slotMatches(particle, slotSpec, s));
     possibleSlots.sort((slot1, slot2) => {
         // TODO: implement.
@@ -72,7 +72,7 @@ export class SlotUtils {
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot) {
+  static slotMatches(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slot): boolean {
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }
