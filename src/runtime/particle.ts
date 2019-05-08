@@ -20,7 +20,7 @@ import {SlotProxy} from './slot-proxy.js';
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
-export class Particle {
+export abstract class Particle {
   public static spec: ParticleSpec;
   public spec: ParticleSpec;
   public readonly extraData: boolean;
@@ -34,7 +34,7 @@ export class Particle {
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: {constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>};
 
-  constructor() {
+  protected constructor() {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
@@ -205,6 +205,7 @@ export class Particle {
     throw new Error('A particle needs a description handle to set a decription pattern');
   }
 
+  // TODO(alxr) What are thoughts about marking these methods as `abstract`?
   // abstract
   renderSlot(slotName: string, contentTypes: string[]): void {}
   renderHostedSlot(slotName: string, hostedSlotId: string, content: string): void {}
