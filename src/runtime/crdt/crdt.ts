@@ -14,7 +14,9 @@ export class CRDTError extends Error {
 }
 
 export interface CRDTOperation {}
-export interface CRDTData {}
+export interface CRDTData {
+  version: VersionMap;
+}
 export interface CRDTConsumerType {}
 
 // A CRDT model is parameterized by:
