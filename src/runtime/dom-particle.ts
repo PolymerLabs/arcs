@@ -25,8 +25,8 @@ export interface DomParticle extends StatefulDomParticle {
 }
 
 export interface DomParticleConfig {
-  handleNames?: string[];
-  slotNames?: string[];
+  handleNames: string[];
+  slotNames: string[];
 }
 
 /**
