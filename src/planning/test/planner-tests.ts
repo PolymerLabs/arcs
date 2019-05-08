@@ -547,7 +547,7 @@ store MyThings2 of [Thing2] #mythings2 in 'things.json'`);
   });
 });
 
-describe('Description', async () => {
+describe('Description', () => {
   it('description generated from speculative execution arc', async () => {
     const manifest = `
     schema Thing
