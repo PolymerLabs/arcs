@@ -9,35 +9,25 @@
 
 export const Services = class {
   static registry: Object;
-  static id: number;
-  static channels: Object;
   static register(name, service: Object) {
     Services.registry[name] = service;
   }
-  static request(name) {
+  static async request(request) {
+    const {service: name, invoke} = request;
     const service = Services.registry[name];
-    const bus = {
-      channel: Services.id++,
-      service
-    };
-    Services.channels[bus.channel] = bus;
-    return bus;
-  }
-  static invoke(request) {
-    const {channel} = request;
-    const bus = Services.channels[channel];
-    if (bus) {
-      const {name} = request;
-      if (bus.service[name]) {
-        bus.service[name](request);
+    if (service) {
+      if (service[invoke]) {
+        return await service[invoke](request);
       }
     }
+    return null;
   }
 };
 
-Services.id = 1;
 Services.registry = {};
-Services.channels = {};
 
 Services.register('test', {
+  async classify(request) {
+    return {data: `it's a pig, that don't fly straight`};
+  }
 });

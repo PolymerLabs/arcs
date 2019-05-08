@@ -248,20 +248,10 @@ export class ParticleExecutionHost {
         reportSystemException(exception);
       }
 
-      // TODO(sjmiles):
+      // TODO(sjmiles): experimental `services` impl
       async onServiceRequest(particle: Particle, request: Object, callback: number): Promise<void> {
-        console.warn(`[outerPEC]::onServiceRequest `, particle.spec.name, request);
-        const channel = request["channel"];
-        if (!channel) {
-          const bus = Services.request(request["name"]);
-          this.SimpleCallback(callback, {channel: bus.channel});
-        } else {
-          const result = await ((Services["invoke"])(request));
-          this.SimpleCallback(callback, result);
-        }
-        // }
-        // console.warn(`got ServiceRequest [outerPEC]`, particle.spec.name, request, bus);
-        // this.SimpleCallback(callback, invoker);
+        const response = await Services.request(request);
+        this.SimpleCallback(callback, response);
       }
 
     }(port, arc);

@@ -462,7 +462,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
-  // TODO(sjmiles):
+  // TODO(sjmiles): experimental `services` impl
   abstract onServiceRequest(particle: recipeParticle.Particle, request: Object, callback: number);
   ServiceRequestCallback(@Direct response: Object, @RemoteMapped callback: number) {}
 
@@ -519,7 +519,7 @@ export abstract class PECInnerPort extends APIPort {
   ArcMapHandle(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
 
-  // TODO(sjmiles):
+  // TODO(sjmiles): experimental `services` impl
   ServiceRequest(@Mapped particle: Particle, @Direct content: Object, @LocalMapped callback: Function) {}
 
   ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
