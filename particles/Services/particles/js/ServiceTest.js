@@ -9,41 +9,24 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
-
-  const template = html`
-<div>
-  <img style="max-width: 240px;" src="{{imageUrl}}"><br>
-  <div>
-    <div>Label: </span><span>{{label}}</div>
-    <div>Confidence: </span><span>{{probability}}</div>
-  </div>
-</div>
-  `;
-
-  const url = resolver(`ServiceTest/../../assets/waltbird.jpg`);
+defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
     get template() {
-      return template;
+      return '<slot></slot>';
+    }
+    service(...args) {
+      this.capabilities.serviceRequest(this, ...args);
     }
     update({}, state) {
-      if (!state.classified) {
-        state.classified = true;
-        this.classify(url);
+      if (!state.requestedService) {
+        state.requestedService = true;
+        this.service({name: 'test'}, ({channel}) => this.setState({channel}));
       }
-    }
-    async classify(imageUrl) {
-      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
-      this.setState({response});
-    }
-    render({}, {response}) {
-      response = response || {label: '<working>', probability: '<working>'};
-      return {
-        label: response.label,
-        probability: response.probability,
-        imageUrl: url
-      };
+      if (state.channel) {
+        log('service channel', state.channel);
+        this.service({channel: state.channel, name: 'classify'}, ({response}) => log(response));
+      }
     }
   };
 
