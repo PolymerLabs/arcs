@@ -88,6 +88,7 @@
     "pouchdb": "^7.0.0",
     "pouchdb-adapter-memory": "^7.0.0",
     "pouchdb-debug": "^7.0.0",
+    "protobufjs": "^6.8.8",
     "source-map-support": "^0.5.9",
     "sourcemapped-stacktrace": "^1.1.9",
     "typescript": "^3.4.2",

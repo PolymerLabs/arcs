@@ -191,4 +191,63 @@ export class Schema {
     }
     return results.join('\n');
   }
+
+  // Returns a JSON representation that protobufjs can use to de/serialize entity data as protobufs.
+  toProtoJSON() {
+    assert(this.names.length > 0, 'At least one schema name is required for proto-json conversion');
+
+    let id = 0;
+    let hasUrl = false;
+    const fields = {};
+    for (const [name, type] of Object.entries(this.fields).sort()) {
+      id++;
+      let field;
+      if (type.kind === 'schema-collection') {
+        field = {rule: 'repeated', type: this.jsonBaseType(type.schema), id};
+      } else {
+        field = {type: this.jsonBaseType(type), id};
+      }
+      hasUrl = hasUrl || (field.type === 'Url');
+      fields[name] = field;
+    }
+    const json = {
+      nested: {
+        [this.name]: {fields}
+      }
+    };
+    if (hasUrl) {
+      json.nested.Url = {fields: {href: {type: 'string', id: 1}}};
+    }
+    return json;
+  }
+
+  private jsonBaseType(type) {
+    const kind = type.kind || type;
+    switch (kind) {
+      case 'Text':
+        return 'string';
+
+      case 'URL':
+        return 'Url';
+
+      case 'Number':
+        return 'double';
+
+      case 'Boolean':
+        return 'bool';
+
+      case 'Bytes':
+      case 'Object':
+      case 'schema-union':
+      case 'schema-tuple':
+      case 'schema-reference':
+        throw new Error(`'${kind}' not yet supported for schema to proto-json conversion`);
+
+      case 'schema-collection':
+        throw new Error(`Nested collections not yet supported for schema to proto-json conversion`);
+
+      default:
+        throw new Error(`Unknown type '${kind}' in schema ${this.name}`);
+    }
+  }
 }
