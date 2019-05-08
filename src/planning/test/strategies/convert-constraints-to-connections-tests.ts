@@ -17,7 +17,7 @@ import {ConvertConstraintsToConnections} from '../../strategies/convert-constrai
 import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
 import {ArcId} from '../../../runtime/id.js';
 
-describe('ConvertConstraintsToConnections', async () => {
+describe('ConvertConstraintsToConnections', () => {
   const newArc = (manifest: Manifest) => {
     return new Arc({
       id: ArcId.newForTest('test-plan-arc'),

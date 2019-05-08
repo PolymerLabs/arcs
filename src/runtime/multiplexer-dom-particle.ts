@@ -7,11 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
+import {Arc} from './arc.js';
 import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
@@ -28,11 +28,12 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       particleHandleName: string,
       hostedParticle: ParticleSpec,
       handles: ReadonlyMap<string, Handle>,
-      arc) {
+      arc: InnerArcHandle) {
     const otherMappedHandles: string[] = [];
     const otherConnections: string[] = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
+
     for (const [connectionName, otherHandle] of handles) {
       if (skipConnectionNames.includes(connectionName)) {
         continue;
@@ -40,7 +41,11 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // TODO(wkorman): For items with embedded recipes we may need a map
       // (perhaps id to index) to make sure we don't map a handle into the inner
       // arc multiple times unnecessarily.
-      otherMappedHandles.push(`use '${await arc.mapHandle(otherHandle.storage)}' as v${index}`);
+
+      // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
+      let otherHandleStore;
+      otherHandleStore = otherHandle.storage;
+      otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
       const hostedOtherConnection = hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
         otherConnections.push(`${hostedOtherConnection.name} = v${index++}`);
@@ -53,7 +58,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     return [otherMappedHandles, otherConnections];
   }
 
-  async setHandles(handles: ReadonlyMap<string, Handle>) {
+  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.handleIds = {};
     const arc = await this.constructInnerArc();
     const listHandleName = 'list';
@@ -71,6 +76,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
             await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc);
       }
     }
+
     this.setState({
       arc,
       type: handles.get(listHandleName).type,
@@ -137,7 +143,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     }
   }
 
-  combineHostedModel(slotName: string, hostedSlotId: string, content: Content) {
+  combineHostedModel(slotName: string, hostedSlotId: string, content: Content): void {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
@@ -154,7 +160,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     this._setState({renderModel: {items}});
   }
 
-  combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content) {
+  combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content): void {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
     if (!subId) {
       return;
@@ -192,4 +198,3 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     return list.entries();
   }
 }
-//# sourceMappingURL=multiplexer-dom-particle.js.map

@@ -10,9 +10,8 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {BigCollection} from './handle.js';
-import {Collection} from './handle.js';
-import {Variable} from './handle.js';
+import {Entity} from './entity.js';
+import {BigCollection, Collection, Variable} from './handle.js';
 import {Particle} from './particle.js';
 
 /**
@@ -47,18 +46,18 @@ export class DomParticleBase extends Particle {
   /**
    * Override to return false if the Particle won't use it's slot.
    */
-  shouldRender(stateArgs?) {
+  shouldRender(stateArgs?): boolean {
     return true;
   }
 
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(stateArgs?) {
+  render(stateArgs?): {} {
     return {};
   }
 
-  renderSlot(slotName: string, contentTypes: string[]) {
+  renderSlot(slotName: string, contentTypes: string[]): void {
     const stateArgs = this._getStateArgs();
     const slot = this.getSlot(slotName);
 
@@ -110,6 +109,7 @@ export class DomParticleBase extends Particle {
     }
     this.currentSlotName = undefined;
   }
+
   private slotNamesToModelReferences(slot, template) {
     slot.providedSlots.forEach((slotId, slotName) => {
       // TODO: This is a simple string replacement right now,
@@ -119,6 +119,7 @@ export class DomParticleBase extends Particle {
     });
     return template;
   }
+
   // We put slot IDs at the top-level of the model as well as in models for sub-templates.
   // This is temporary and should go away when we move from sub-IDs to [(Entity, Slot)] constructs.
   private enhanceModelWithSlotIDs(model = {}, slotIDs, topLevel = true) {
@@ -140,7 +141,7 @@ export class DomParticleBase extends Particle {
     return [];
   }
 
-  forceRenderTemplate(slotName: string = '') {
+  forceRenderTemplate(slotName: string = ''): void {
     this.slotProxiesByName.forEach((slot, name) => {
       if (!slotName || (name === slotName)) {
         slot.requestedContentTypes.add('template');
@@ -148,26 +149,30 @@ export class DomParticleBase extends Particle {
     });
   }
 
-  fireEvent(slotName: string, {handler, data}) {
+  fireEvent(slotName: string, {handler, data}): void {
     if (this[handler]) {
       this[handler]({data});
     }
   }
 
-  setParticleDescription(pattern) {
+  setParticleDescription(pattern: string | {template, model: {}}): boolean | undefined {
     if (typeof pattern === 'string') {
       return super.setParticleDescription(pattern);
     }
-    assert(!!pattern.template && !!pattern.model, 'Description pattern must either be string or have template and model');
-    super.setDescriptionPattern('_template_', pattern.template);
-    super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
-    return undefined;
+
+    if (pattern.template && pattern.model) {
+      super.setDescriptionPattern('_template_', pattern.template);
+      super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
+      return undefined;
+    } else {
+      throw new Error('Description pattern must either be string or have template and model');
+    }
   }
 
   /**
    * Remove all entities from named handle.
    */
-  async clearHandle(handleName: string) {
+  async clearHandle(handleName: string): Promise<void> {
     const handle = this.handles.get(handleName);
     if (handle instanceof Variable || handle instanceof Collection) {
       handle.clear();
@@ -179,7 +184,7 @@ export class DomParticleBase extends Particle {
   /**
    * Merge entities from Array into named handle.
    */
-  async mergeEntitiesToHandle(handleName: string, entities): Promise<void> {
+  async mergeEntitiesToHandle(handleName: string, entities: Entity[]): Promise<void> {
     const idMap = {};
     const handle = this.handles.get(handleName);
     if (handle instanceof Collection) {
@@ -198,7 +203,7 @@ export class DomParticleBase extends Particle {
   /**
    * Append entities from Array to named handle.
    */
-  async appendEntitiesToHandle(handleName: string, entities): Promise<void> {
+  async appendEntitiesToHandle(handleName: string, entities: Entity[]): Promise<void> {
     const handle = this.handles.get(handleName);
     if (handle) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
@@ -212,7 +217,7 @@ export class DomParticleBase extends Particle {
   /**
    * Create an entity from each rawData, and append to named handle.
    */
-  async appendRawDataToHandle(handleName, rawDataArray): Promise<void> {
+  async appendRawDataToHandle(handleName: string, rawDataArray): Promise<void> {
     const handle = this.handles.get(handleName);
     if (handle && handle.entityClass) {
       if (handle instanceof Collection || handle instanceof BigCollection) {
@@ -247,7 +252,7 @@ export class DomParticleBase extends Particle {
    * Modify or insert `entity` into named handle.
    * Modification is done by removing the old entity and reinserting the new one.
    */
-  async updateSet(handleName: string, entity): Promise<void> {
+  async updateSet(handleName: string, entity: Entity): Promise<void> {
     // Set the entity into the right place in the set. If we find it
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
@@ -265,7 +270,7 @@ export class DomParticleBase extends Particle {
   /**
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`
    */
-  boxQuery(box, userid) {
+  boxQuery(box, userid: string) {
     return box && box.filter(item => userid === item.getUserID().split('|')[0]);
   }
 }

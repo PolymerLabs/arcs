@@ -18,7 +18,7 @@ import {InitPopulation} from '../../strategies/init-population.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Id, ArcId} from '../../../runtime/id.js';
 
-describe('InitPopulation', async () => {
+describe('InitPopulation', () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
     const manifest = await Manifest.parse(`
       schema Product

@@ -16,12 +16,13 @@ import {TypeVariableInfo} from './type-variable-info.js';
 
 // tslint:disable-next-line: no-any
 export type TypeLiteral = {tag: string, data?: any};
+export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
 
 export abstract class Type {
-  tag: 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-       'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
+  tag: Tag;
 
-  protected constructor(tag) {
+  protected constructor(tag: Tag) {
     this.tag = tag;
   }
 
@@ -52,7 +53,7 @@ export abstract class Type {
     }
   }
 
-  abstract toLiteral() : TypeLiteral;
+  abstract toLiteral(): TypeLiteral;
 
   static unwrapPair(type1: Type, type2: Type): [Type, Type] {
     if (type1.tag === type2.tag) {
@@ -69,7 +70,7 @@ export abstract class Type {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
-  static _canMergeCanReadSubset(type1, type2) {
+  static _canMergeCanReadSubset(type1, type2): boolean {
     if (type1.canReadSubset && type2.canReadSubset) {
       if (type1.canReadSubset.tag !== type2.canReadSubset.tag) {
         return false;
@@ -82,7 +83,7 @@ export abstract class Type {
     return true;
   }
 
-  static _canMergeCanWriteSuperset(type1, type2) {
+  static _canMergeCanWriteSuperset(type1, type2): boolean {
     if (type1.canWriteSuperset && type2.canWriteSuperset) {
       if (type1.canWriteSuperset.tag !== type2.canWriteSuperset.tag) {
         return false;
@@ -108,13 +109,15 @@ export abstract class Type {
     return this instanceof BigCollectionType;
   }
 
-  // TODO: update call sites to use the type checker instead (since they will
-  // have additional information about direction etc.)
-  equals(type) {
+  /**
+   * @deprecated use the type checker instead (since they will have
+   * additional information about direction etc.)
+   */
+  equals(type): boolean {
     return TypeChecker.compareTypes({type: this}, {type});
   }
 
-  isResolved() {
+  isResolved(): boolean {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
   }
@@ -131,7 +134,7 @@ export abstract class Type {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable);
   }
 
-  get hasUnresolvedVariable() {
+  get hasUnresolvedVariable(): boolean {
     return this._applyExistenceTypeTest(type => type instanceof TypeVariable && !type.variable.isResolved());
   }
 
@@ -139,7 +142,7 @@ export abstract class Type {
     return null;
   }
 
-  isTypeContainer() {
+  isTypeContainer(): boolean {
     return false;
   }
 
@@ -151,31 +154,31 @@ export abstract class Type {
     return new BigCollectionType(this);
   }
 
-  resolvedType() : Type {
+  resolvedType(): Type {
     return this;
   }
 
-  canEnsureResolved() {
+  canEnsureResolved(): boolean {
     return this.isResolved() || this._canEnsureResolved();
   }
 
-  protected _canEnsureResolved() {
+  protected _canEnsureResolved(): boolean {
     return true;
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return true;
   }
 
-  get canWriteSuperset() : Type {
+  get canWriteSuperset(): Type {
     throw new Error(`canWriteSuperset not implemented for ${this}`);
   }
 
-  get canReadSubset() : Type {
+  get canReadSubset(): Type {
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
-  isMoreSpecificThan(type: Type) {
+  isMoreSpecificThan(type: Type): boolean {
     return this.tag === type.tag && this._isMoreSpecificThan(type);
   }
 
@@ -208,23 +211,23 @@ export abstract class Type {
   }
 
   // TODO: is this the same as _applyExistenceTypeTest
-  hasProperty(property) {
+  hasProperty(property): boolean {
     return property(this) || this._hasProperty(property);
   }
 
-  protected _hasProperty(property) {
+  protected _hasProperty(property): boolean {
     return false;
   }
 
-  toString(options = undefined) : string {
+  toString(options = undefined): string {
     return this.tag;
   }
 
-  getEntitySchema() {
+  getEntitySchema(): Schema|null {
     return null;
   }
 
-  toPrettyString() {
+  toPrettyString(): string|null {
     return null;
   }
 }
@@ -243,31 +246,31 @@ export class EntityType extends Type {
   }
 
   // These type identifier methods are being left in place for non-runtime code.
-  get isEntity() {
+  get isEntity(): boolean {
     return true;
   }
 
-  get canWriteSuperset() {
+  get canWriteSuperset(): EntityType {
     return this;
   }
 
-  get canReadSubset() {
+  get canReadSubset(): EntityType {
     return this;
   }
 
-  _isMoreSpecificThan(type) {
+  _isMoreSpecificThan(type): boolean {
     return this.entitySchema.isMoreSpecificThan(type.entitySchema);
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.entitySchema.toLiteral()};
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     return this.entitySchema.toInlineSchemaString(options);
   }
 
-  getEntitySchema() {
+  getEntitySchema(): Schema {
     return this.entitySchema;
   }
 
@@ -305,11 +308,11 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
+  static make(name: string, canWriteSuperset?: Type, canReadSubset?: Type): TypeVariable {
     return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
   }
 
-  get isVariable() {
+  get isVariable(): boolean {
     return true;
   }
 
@@ -338,7 +341,7 @@ export class TypeVariable extends Type {
     return this.variable.canEnsureResolved();
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return this.variable.maybeEnsureResolved();
   }
 
@@ -380,7 +383,7 @@ export class TypeVariable extends Type {
     }
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return this.variable.resolution ? this.variable.resolution.toLiteral()
                                     : {tag: this.tag, data: this.variable.toLiteral()};
   }
@@ -389,11 +392,11 @@ export class TypeVariable extends Type {
     return `~${this.variable.name}`;
   }
 
-  getEntitySchema() {
+  getEntitySchema(): Schema {
     return this.variable.isResolved() ? this.resolvedType().getEntitySchema() : null;
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
   }
 }
@@ -435,7 +438,7 @@ export class CollectionType<T extends Type> extends Type {
     return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.collectionOf() : this;
   }
 
-  _canEnsureResolved() {
+  _canEnsureResolved(): boolean {
     return this.collectionType.canEnsureResolved();
   }
 
@@ -452,7 +455,7 @@ export class CollectionType<T extends Type> extends Type {
     return new CollectionType(this.collectionType._cloneWithResolutions(variableMap));
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.collectionType.toLiteral()};
   }
 
@@ -514,7 +517,7 @@ export class BigCollectionType<T extends Type> extends Type {
     return (collectionType !== resolvedCollectionType) ? resolvedCollectionType.bigCollectionOf() : this;
   }
 
-  _canEnsureResolved() {
+  _canEnsureResolved(): boolean {
     return this.bigCollectionType.canEnsureResolved();
   }
 
@@ -531,7 +534,7 @@ export class BigCollectionType<T extends Type> extends Type {
     return new BigCollectionType(this.bigCollectionType._cloneWithResolutions(variableMap));
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.bigCollectionType.toLiteral()};
   }
 
@@ -558,7 +561,7 @@ export class BigCollectionType<T extends Type> extends Type {
 
 
 export class RelationType extends Type {
-  readonly relationEntities: Type[];
+  private readonly relationEntities: Type[];
 
   constructor(relation: Type[]) {
     super('Relation');
@@ -569,11 +572,11 @@ export class RelationType extends Type {
     return true;
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.relationEntities.map(t => t.toLiteral())};
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     return JSON.stringify(this.relationEntities);
   }
 }
@@ -611,11 +614,11 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.resolvedType());
   }
 
-  _canEnsureResolved() {
+  _canEnsureResolved(): boolean {
     return this.interfaceInfo.canEnsureResolved();
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return this.interfaceInfo.maybeEnsureResolved();
   }
 
@@ -640,22 +643,22 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo._cloneWithResolutions(variableMap));
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.interfaceInfo.toLiteral()};
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     return this.interfaceInfo.name;
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     return this.interfaceInfo.toPrettyString();
   }
 }
 
 
 export class SlotType extends Type {
-  readonly slot: SlotInfo;
+  private readonly slot: SlotInfo;
 
   constructor(slot: SlotInfo) {
     super('Slot');
@@ -670,7 +673,7 @@ export class SlotType extends Type {
     return true;
   }
 
-  get canWriteSuperset() {
+  get canWriteSuperset(): SlotType {
     return this;
   }
 
@@ -683,11 +686,11 @@ export class SlotType extends Type {
     return true;
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.slot.toLiteral()};
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     const fields = [];
     for (const key of Object.keys(this.slot)) {
       if (this.slot[key] !== undefined) {
@@ -701,7 +704,7 @@ export class SlotType extends Type {
     return `Slot${fieldsString}`;
   }
 
-  toPrettyString() {
+  toPrettyString(): string {
     const fields = [];
     for (const key of Object.keys(this.slot)) {
       if (this.slot[key] !== undefined) {
@@ -725,15 +728,15 @@ export class ReferenceType extends Type {
     this.referredType = reference;
   }
 
-  get isReference() {
+  get isReference(): boolean {
     return true;
   }
 
-  getContainedType() {
+  getContainedType(): Type {
     return this.referredType;
   }
 
-  isTypeContainer() {
+  isTypeContainer(): boolean {
     return true;
   }
 
@@ -743,11 +746,11 @@ export class ReferenceType extends Type {
     return (referredType !== resolvedReferredType) ? new ReferenceType(resolvedReferredType) : this;
   }
 
-  _canEnsureResolved() {
+  _canEnsureResolved(): boolean {
     return this.referredType.canEnsureResolved();
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(): boolean {
     return this.referredType.maybeEnsureResolved();
   }
 
@@ -764,11 +767,11 @@ export class ReferenceType extends Type {
     return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.referredType.toLiteral()};
   }
 
-  toString(options = undefined) {
+  toString(options = undefined): string {
     return 'Reference<' + this.referredType.toString() + '>';
   }
 }
@@ -779,15 +782,15 @@ export class ArcType extends Type {
     super('Arc');
   }
 
-  get isArc() {
+  get isArc(): boolean {
     return true;
   }
 
-  newInstance(arcId: Id, serialization: string) {
+  newInstance(arcId: Id, serialization: string): ArcInfo {
     return new ArcInfo(arcId, serialization);
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag};
   }
 }
@@ -798,11 +801,11 @@ export class HandleType extends Type {
     super('Handle');
   }
 
-  get isHandle() {
+  get isHandle(): boolean {
     return true;
   }
 
-  toLiteral() {
+  toLiteral(): TypeLiteral {
     return {tag: this.tag};
   }
 }

@@ -15,11 +15,11 @@ export class SlotInfo {
     this.handle = handle;
   }
 
-  toLiteral() {
+  toLiteral(): SlotInfo {
     return this;
   }
 
-  static fromLiteral(data) {
-    return new SlotInfo(data.formFactor, data.handle);
+  static fromLiteral({formFactor, handle}: {formFactor: string, handle: string}) {
+    return new SlotInfo(formFactor, handle);
   }
 }

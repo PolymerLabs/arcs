@@ -7,44 +7,49 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {DomParticle} from './dom-particle.js';
 
 // Regex to separate style and template.
 const re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
 
-/** @class TransformationDomParticle
+/**
  * Particle that does transformation stuff with DOM.
  */
 export class TransformationDomParticle extends DomParticle {
 
-  getTemplate(slotName) {
+  getTemplate(slotName: string) {
     // TODO: add support for multiple slots.
     return this._state.template;
   }
-  getTemplateName(slotName) {
+
+  getTemplateName(slotName: string) {
     // TODO: add support for multiple slots.
     return this._state.templateName;
   }
+
   render(props, state) {
     return state.renderModel;
   }
-  shouldRender(props, state) {
+
+  shouldRender(props, state): boolean {
     return Boolean((state.template || state.templateName) && state.renderModel);
   }
-  renderHostedSlot(slotName, hostedSlotId, content) {
+
+  renderHostedSlot(slotName, hostedSlotId, content): void {
     this.combineHostedTemplate(slotName, hostedSlotId, content);
     this.combineHostedModel(slotName, hostedSlotId, content);
   }
+
   // abstract
-  combineHostedTemplate(slotName, hostedSlotId, content) { 
+  combineHostedTemplate(slotName: string, hostedSlotId, content): void {
   }
-  combineHostedModel(slotName, hostedSlotId, content) {
+
+  combineHostedModel(slotName, hostedSlotId, content): void {
   }
+
   // Helper methods that may be reused in transformation particles to combine hosted content.
   static propsToItems(propsValues) {
     return propsValues ? propsValues.map(({rawData, id}) => ({...rawData, subId: id })) : [];
   }
 }
-//# sourceMappingURL=transformation-dom-particle.js.map
