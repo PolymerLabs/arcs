@@ -13,7 +13,6 @@ import {DomParticleBase, Model} from './dom-particle-base.js';
 import {Collection, Handle, Variable} from './handle.js';
 import {Runnable} from './functional.js';
 
-// TODO(alxr) Where is `ReadonlyMap` coming from? My IDE says that typescript's version should take 1 generic, not 2.
 
 export interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here
