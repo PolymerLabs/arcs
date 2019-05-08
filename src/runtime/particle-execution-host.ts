@@ -21,6 +21,7 @@ import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
+import {Services} from './services.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -246,6 +247,23 @@ export class ParticleExecutionHost {
         }
         reportSystemException(exception);
       }
+
+      // TODO(sjmiles):
+      async onServiceRequest(particle: Particle, request: Object, callback: number): Promise<void> {
+        console.warn(`[outerPEC]::onServiceRequest `, particle.spec.name, request);
+        const channel = request["channel"];
+        if (!channel) {
+          const bus = Services.request(request["name"]);
+          this.SimpleCallback(callback, {channel: bus.channel});
+        } else {
+          const result = await ((Services["invoke"])(request));
+          this.SimpleCallback(callback, result);
+        }
+        // }
+        // console.warn(`got ServiceRequest [outerPEC]`, particle.spec.name, request, bus);
+        // this.SimpleCallback(callback, invoker);
+      }
+
     }(port, arc);
   }
 

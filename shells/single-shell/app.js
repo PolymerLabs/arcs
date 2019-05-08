@@ -22,7 +22,9 @@ import 'https://$particles/Profile/Sharing.recipe'
   const plan = await Utils.resolve(arc, recipe);
   await arc.instantiate(plan);
 
-  console.log(`store [${arc._stores[0].id}]`);
+  if (arc._stores[0]) {
+    console.log(`store [${arc._stores[0].id}]`);
+  }
   console.log('serialization:', await arc.serialize());
 
   return arc;

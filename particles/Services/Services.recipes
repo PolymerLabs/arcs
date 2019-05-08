@@ -1,0 +1,4 @@
+import 'particles/ServiceTest.particle'
+
+recipe ServiceTest
+  ServiceTest
