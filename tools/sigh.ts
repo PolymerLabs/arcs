@@ -27,6 +27,8 @@ function try_require(dep) {
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
+let keepProcessAlive = false;
+
 const sources = {
   peg: [{
     grammar: 'src/runtime/manifest-parser.peg',
@@ -626,6 +628,7 @@ function watch(args: string[]): boolean {
     ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache})`),
     persistent: true
   });
+  keepProcessAlive = true; // Tell the runner to not exit.
   let timeout = null;
   const changes = new Set();
   watcher.on('change', path => {
@@ -640,12 +643,6 @@ function watch(args: string[]): boolean {
       timeout = null;
     }, 500);
   });
-
-  // TODO: Is there a better way to keep the process alive?
-  const forever = () => {
-    setTimeout(forever, 60 * 60 * 1000);
-  };
-  forever();
   return true;
 }
 
@@ -759,4 +756,7 @@ function runSteps(command: string, args: string[]): boolean {
 }
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
-process.exit(result ? 0 : 1);
+
+if(!keepProcessAlive) { // the watch command is running.
+  process.exit(result ? 0 : 1);
+}
