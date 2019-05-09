@@ -464,7 +464,6 @@ export abstract class PECOuterPort extends APIPort {
 
   // TODO(sjmiles): experimental `services` impl
   abstract onServiceRequest(particle: recipeParticle.Particle, request: Object, callback: number);
-  ServiceRequestCallback(@Direct response: Object, @RemoteMapped callback: number) {}
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
