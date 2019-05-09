@@ -159,7 +159,7 @@ export class ParticleExecutionContext {
         // TODO: support multiple handle IDs.
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, handleId)
-          );
+        );
       },
       loadRecipe(recipe: string) {
         // TODO: do we want to return a promise on completion?
@@ -191,6 +191,10 @@ export class ParticleExecutionContext {
       constructInnerArc: particle => {
         return new Promise<InnerArcHandle>((resolve, reject) =>
           this.apiPort.ConstructInnerArc(arcId => resolve(this.innerArcHandle(arcId, particle.id)), particle));
+      },
+      // TODO(sjmiles): experimental `services` impl
+      serviceRequest: (particle, args, callback) => {
+        this.apiPort.ServiceRequest(particle, args, callback);
       }
     };
   }

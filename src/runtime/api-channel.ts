@@ -95,7 +95,7 @@ function List(value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
     const info: MappingInfo = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
-  };  
+  };
 }
 
 function LocalMapped(target: {}, propertyKey: string, parameterIndex: number) {
@@ -252,7 +252,7 @@ export class APIPort {
 function getArgs(func) {
   // First match everything inside the function argument parens.
   const args = func.toString().match(/.*?\(([^)]*)\)/)[1];
- 
+
   // Split the arguments string into an array comma delimited.
   return args.split(',').map((arg) => {
     // Ensure no inline comments are parsed and trim the whitespace.
@@ -262,7 +262,7 @@ function getArgs(func) {
 }
 
 // value is covariant with info, and errors will be found
-// at start of runtime. 
+// at start of runtime.
 // tslint:disable-next-line: no-any
 function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
   switch (info.type) {
@@ -289,7 +289,7 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
 }
 
 // value is covariant with info, and errors will be found
-// at start of runtime. 
+// at start of runtime.
 // tslint:disable-next-line: no-any
 function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
   switch (info.type) {
@@ -331,7 +331,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         // If this descriptor records that this argument is the identifier, record it
         // as the requestedId for mapping below.
         const requestedId = descriptor.findIndex(d => d.identifier);
-        
+
         function impl(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
@@ -342,7 +342,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             // Process this argument.
             messageBody[argNames[i]] = convert(descriptor[i], args[i], this._mapper);
           }
-          
+
           // Process the initializer if present.
           if (initializer !== -1) {
             if (descriptor[initializer].redundant) {
@@ -403,7 +403,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         });
       }
     };
-    
+
     doConstruct(constructor, target);
     doConstruct(target, constructor);
   };
@@ -462,6 +462,9 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
+  // TODO(sjmiles): experimental `services` impl
+  abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
+
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
   @NoArgs DevToolsConnected() {}
@@ -514,6 +517,9 @@ export abstract class PECInnerPort extends APIPort {
   abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
+
+  // TODO(sjmiles): experimental `services` impl
+  ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
 
   ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);
