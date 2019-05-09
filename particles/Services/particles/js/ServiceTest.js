@@ -34,7 +34,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       }
     }
     async classify(imageUrl) {
-      const response = await this.service({service: 'ml5', invoke: 'classifyImage', imageUrl});
+      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
       this.setState({response});
     }
     render({}, {response}) {
