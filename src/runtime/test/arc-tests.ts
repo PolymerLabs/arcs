@@ -27,7 +27,7 @@ import {assertThrowsAsync} from '../testing/test-util.js';
 import * as util from '../testing/test-util.js';
 import {ArcType} from '../type.js';
 
-async function setup() {
+async function setup(storageKeyPrefix: string) {
   const loader = new Loader();
   const manifest = await Manifest.parse(`
     import 'src/runtime/test/artifacts/test-particles.manifest'
@@ -38,7 +38,10 @@ async function setup() {
         foo <- handle0
         bar -> handle1
   `, {loader, fileName: process.cwd() + '/input.manifest'});
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: ArcId.newForTest('test'), context: manifest});
+
+  const id = ArcId.newForTest('test');
+  const storageKey = storageKeyPrefix + id.toString();
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id, storageKey, context: manifest});
   return {
     arc,
     recipe: manifest.recipes[0],
@@ -48,63 +51,34 @@ async function setup() {
   };
 }
 
-async function setupSlandlesWithOptional(cProvided, dProvided) {
-  const loader = new Loader();
-  const manifest = await Manifest.parse(`
-    particle TestParticle in 'src/runtime/test/artifacts/test-dual-slandle-particle.js'
-      description \`particle a two required slandles and two optional slandles\`
-      \`consume Slot a
-        \`provide Slot b
-      \`consume? Slot c
-        \`provide? Slot d
-
-    recipe TestRecipe
-      use as slotA
-      use as slotB
-      use as maybeSlotC
-      use as maybeSlotD
-      TestParticle
-        a <- slotA
-        b -> slotB
-        ${cProvided ? 'c <- maybeSlotC' : ''}
-        ${dProvided ? 'd -> maybeSlotD' : ''}
-  `, {loader, fileName: process.cwd() + '/input.manifest'});
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, id: ArcId.newForTest('test'), context: manifest});
-
-  const slotType = manifest.findSchemaByName('Slot').entityClass().type;
-  const aStore = await arc.createStore(slotType, 'aStore', 'test:1');
-  const bStore = await arc.createStore(slotType, 'bStore', 'test:2');
-  const cStore = await arc.createStore(slotType, 'cStore', 'test:3');
-  const dStore = await arc.createStore(slotType, 'dStore', 'test:4');
-
-  const recipe = manifest.recipes[0];
-  recipe.handles[0].mapToStorage(aStore);
-  recipe.handles[1].mapToStorage(bStore);
-  recipe.handles[2].mapToStorage(cStore); // These might not be needed?
-  recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-  recipe.normalize();
-  await arc.instantiate(recipe);
-
-  return {arc, recipe, aStore, bStore, cStore, dStore};
-}
-
 function getVariableHandle(store: StorageProviderBase): Variable {
   return handleFor(store, IdGenerator.newSession()) as Variable;
 }
 
-describe('Arc', () => {
-  it('idle can safely be called multiple times', async () => {
+// TODO(lindner): add fireBase
+//  const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test/arc-1';
+
+['volatile://', 'pouchdb://memory/user-test/'].forEach((storageKeyPrefix) => {
+describe('Arc ' + storageKeyPrefix, () => {
+  it('idle can safely be called multiple times ', async () => {
     const manifest = await Manifest.parse(`
         schema Bar
           Text value
-      `);
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader: new Loader(), id: ArcId.newForTest('test'), context: manifest});
+    `);
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader: new Loader(), id, storageKey, context: manifest});
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
 
-  it('applies existing stores to a particle', async () => {
-    const {arc, recipe, Foo, Bar} = await setup();
+  it('applies existing stores to a particle', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
+    const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     await getVariableHandle(fooStore).set(new Foo({value: 'a Foo'}));
@@ -115,20 +89,29 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
-  it('applies new stores to a particle', async () => {
-    const {arc, recipe, Foo, Bar} = await setup();
+  it('applies new stores to a particle ', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
+    const {arc, recipe, Foo, Bar} = await setup(storageKeyPrefix);
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
     await arc.instantiate(recipe);
-
     await getVariableHandle(fooStore).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
-  it('optional provided handles do not resolve without parent', async () => {
+  it('optional provided handles do not resolve without parent', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -150,7 +133,10 @@ describe('Arc', () => {
           a <- thingA
           b -> thingB
     `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -172,7 +158,12 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
 
-  it('required provided handles do not resolve without parent', async () => {
+  it('required provided handles do not resolve without parent', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -194,7 +185,10 @@ describe('Arc', () => {
           a <- thingA
           b -> thingB
     `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -212,6 +206,7 @@ describe('Arc', () => {
 
     await getVariableHandle(aStore).set(new thingClass({value: 'from_a'}));
     await getVariableHandle(cStore).set(new thingClass({value: 'from_c'}));
+
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
@@ -240,7 +235,9 @@ describe('Arc', () => {
             b -> thingB
             d -> maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
-      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+      const id = ArcId.newForTest('test');
+      const storageKey = storageKeyPrefix + id.toString();
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = manifest.findSchemaByName('Thing').entityClass();
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -283,7 +280,10 @@ describe('Arc', () => {
             b -> thingB
             d -> maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
-      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+
+      const id = ArcId.newForTest('test');
+      const storageKey = storageKeyPrefix + id.toString();
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = manifest.findSchemaByName('Thing').entityClass();
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -300,7 +300,7 @@ describe('Arc', () => {
       await arc.instantiate(recipe);
     },
     /.*unresolved handle-connection: parent connection missing handle/)
-  );
+    );
 
   it('optional provided handles are not required to resolve with dependencies', async () => {
     const loader = new Loader();
@@ -325,7 +325,9 @@ describe('Arc', () => {
           b -> thingB
           c <- maybeThingC
     `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -342,7 +344,10 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
 
     await getVariableHandle(aStore).set(new thingClass({value: 'from_a'}));
+    await arc.instantiate(recipe);
     await getVariableHandle(cStore).set(new thingClass({value: 'from_c'}));
+    await arc.instantiate(recipe);
+
     await util.assertSingletonWillChangeTo(arc, bStore, 'value', 'from_a1');
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', '(null)');
   });
@@ -371,7 +376,9 @@ describe('Arc', () => {
             b -> thingB
             c <- maybeThingC
       `, {loader, fileName: process.cwd() + '/input.manifest'});
-      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+      const id = ArcId.newForTest('test');
+      const storageKey = storageKeyPrefix + id.toString();
+      const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = manifest.findSchemaByName('Thing').entityClass();
       const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -388,9 +395,14 @@ describe('Arc', () => {
       await arc.instantiate(recipe);
     },
         /.*unresolved particle: unresolved connections/)
-  );
+    );
 
-  it('optional provided handles can resolve with parent', async () => {
+  it('optional provided handles can resolve with parent 1', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -414,7 +426,9 @@ describe('Arc', () => {
           c <- maybeThingC
           d -> maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -436,7 +450,11 @@ describe('Arc', () => {
     await util.assertSingletonWillChangeTo(arc, dStore, 'value', 'from_c1');
   });
 
-  it('required provided handles can resolve with parent', async () => {
+  it('required provided handles can resolve with parent 2', async function() {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
     const loader = new Loader();
     const manifest = await Manifest.parse(`
       schema Thing
@@ -460,7 +478,9 @@ describe('Arc', () => {
           c <- maybeThingC
           d -> maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+    const id = ArcId.newForTest('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = manifest.findSchemaByName('Thing').entityClass();
     const aStore = await arc.createStore(thingClass.type, 'aStore', 'test:1');
@@ -485,7 +505,10 @@ describe('Arc', () => {
   it('deserializing a serialized empty arc produces an empty arc', async () => {
     const slotComposer = new FakeSlotComposer();
     const loader = new Loader();
-    const arc = new Arc({slotComposer, loader, id: Id.fromString('test'), context: undefined});
+    const id = Id.fromString('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({slotComposer, loader, id, storageKey, context: undefined});
+
     const serialization = await arc.serialize();
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
     assert.equal(newArc._stores.length, 0);
@@ -493,8 +516,13 @@ describe('Arc', () => {
     assert.equal(newArc.id.idTreeAsString(), 'test');
   });
 
-  it('deserializing a simple serialized arc produces that arc', async () => {
-    const {arc, recipe, Foo, Bar, loader} = await setup();
+  it('deserializing a simple serialized arc produces that arc', async function () {
+    if (!storageKeyPrefix.startsWith('volatile')) {
+      // TODO(lindner): fix pouch/firebase timing
+      this.skip();
+    }
+
+    const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1') as VariableStorageProvider;
     const fooStoreCallbacks = new CallbackTracker(fooStore, 1);
 
@@ -548,7 +576,9 @@ describe('Arc', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: Id.fromString('test'), context: manifest, slotComposer, loader: new Loader()});
+    const id = Id.fromString('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
 
     const barType = manifest.findTypeByName('Bar') ;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
@@ -572,7 +602,12 @@ describe('Arc', () => {
     assert.equal(slotsCreated, 1);
   });
 
-  it('serialization roundtrip preserves data for volatile stores', async () => {
+  it('serialization roundtrip preserves data for volatile stores', async function() {
+    if (storageKeyPrefix.startsWith('pouchdb')) {
+      // pouchdb does not support BigCollection
+      this.skip();
+    }
+
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -599,7 +634,9 @@ describe('Arc', () => {
     });
     const manifest = await Manifest.load('manifest', loader);
     const dataClass = manifest.findSchemaByName('Data').entityClass();
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
+    const id = Id.fromString('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({id, storageKey, loader, context: manifest});
 
     const varStore = await arc.createStore(dataClass.type, undefined, 'test:0') as VariableStorageProvider;
     const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
@@ -680,7 +717,9 @@ describe('Arc', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
+    const id = Id.fromString('test');
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({id, storageKey, loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -704,43 +743,42 @@ describe('Arc', () => {
   });
 
 
-  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
-    it('persist serialization for ' + storageKeyPrefix, async () => {
-      const id = ArcId.newForTest('test');
-      const manifest = await Manifest.parse(`
+  it('persist serialization for', async () => {
+    const id = ArcId.newForTest('test');
+    const manifest = await Manifest.parse(`
       schema Data
         Text value
       recipe
         description \`abc\``);
-      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`, loader: new Loader(), context: manifest});
-      const recipe = manifest.recipes[0];
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      const serialization = await arc.serialize();
-      await arc.persistSerialization(serialization);
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    const serialization = await arc.serialize();
+    await arc.persistSerialization(serialization);
 
-      const key = storageKeyPrefix.includes('volatile')
-            ? storageKeyPrefix + `${id}^^arc-info`
-            : storageKeyPrefix + `${id}/arc-info`;
+    const key = storageKeyPrefix.includes('volatile')
+      ? storageKeyPrefix + `${id}^^arc-info`
+      : storageKeyPrefix + `${id}/arc-info`;
 
-      const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as VariableStorageProvider;
-      const callbackTracker = new CallbackTracker(store, 0);
+    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as VariableStorageProvider;
+    const callbackTracker = new CallbackTracker(store, 0);
 
-      assert.isNotNull(store, 'got a valid store');
-      const data = await store.get();
-      assert.isNotNull(data, 'got valid data');
-      callbackTracker.verify();
+    assert.isNotNull(store, 'got a valid store');
+    const data = await store.get();
+    assert.isNotNull(data, 'got valid data');
+    callbackTracker.verify();
 
-      // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
-      data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
+    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
+    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
 
-      const expected = `meta name: '${id}' storageKey: '${storageKeyPrefix}${id}' @active recipe description \`abc\``;
-      assert.deepEqual({id: id.toString(), serialization: expected}, data);
+    const expected = `meta name: '${id}' storageKey: '${storageKeyPrefix}${id}' @active recipe description \`abc\``;
+    assert.deepEqual({id: id.toString(), serialization: expected}, data);
 
-      // TODO Simulate a cold-load to catch reference mode issues.
-      // in the interim you can disable the provider cache in pouch-db-storage.ts
-    });
-  }); // end forEach storageKeyPrefix
+    // TODO Simulate a cold-load to catch reference mode issues.
+    // in the interim you can disable the provider cache in pouch-db-storage.ts
+  });
 
   // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.
   // Whatever template is rendered into the hosted slot gets 'A' prepended and is rendered by A.
@@ -791,6 +829,7 @@ describe('Arc', () => {
     }
 
     const {arc, slotComposer} = await TestHelper.create({
+      storageKey: storageKeyPrefix + Id.fromString('demo').toString(),
       manifestString: `
         particle A in 'A.js'
           consume root
@@ -819,12 +858,11 @@ describe('Arc', () => {
     assert.equal(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
-  ['volatile://', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((storageKeyPrefix) => {
-    it('handles serialization/deserialization of empty arcs handles ' + storageKeyPrefix, async () => {
-      const id = ArcId.newForTest('test');
-      const loader = new Loader();
+  it('handles serialization/deserialization of empty arcs handles', async () => {
+    const id = ArcId.newForTest('test');
+    const loader = new Loader();
 
-      const manifest = await Manifest.parse(`
+    const manifest = await Manifest.parse(`
         schema FavoriteFood
           Text food
 
@@ -839,7 +877,8 @@ describe('Arc', () => {
             foods = foods
         `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-      const arc = new Arc({id, storageKey: `${storageKeyPrefix}${id}`, loader: new Loader(), context: manifest});
+    const storageKey = storageKeyPrefix + id.toString();
+    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
       assert.isNotNull(arc);
 
       const favoriteFoodClass = manifest.findSchemaByName('FavoriteFood').entityClass();
@@ -870,5 +909,5 @@ describe('Arc', () => {
       assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
       assert.equal(newArc.id.idTreeAsString(), 'test');
     });
-  });  // end forEach(storageKeyPrefix)
 });
+}); // forEach storageKeyPrefix

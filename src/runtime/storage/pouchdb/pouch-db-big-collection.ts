@@ -1,3 +1,13 @@
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 import {assert} from '../../../platform/assert-web.js';
 import {BigCollectionStorageProvider} from '../storage-provider-base.js';
 import {SerializedModelEntry} from '../crdt-collection-model.js';
@@ -6,8 +16,8 @@ import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 
 // TODO(lindner): update to operate like the firebase version
 export class PouchDbBigCollection extends PouchDbStorageProvider implements BigCollectionStorageProvider {
-  constructor(type, storageEngine, name, id, key) {
-    super(type, storageEngine, name, id, key);
+  constructor(type, storageEngine, name, id, key, refMode?: boolean) {
+    super(type, storageEngine, name, id, key, refMode);
   }
 
   backingType() {
