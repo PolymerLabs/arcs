@@ -70,7 +70,7 @@ export class Strategizer {
   async generate() {
     // Generate
     const generation = this.generation + 1;
-    const generatedResults = await Promise.all(this._strategies.map(strategy => {
+    const generatedResults = await Promise.all(this._strategies.map(async strategy => {
       const recipeFilter = (recipe: Descendant<Recipe>) => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
@@ -174,7 +174,7 @@ export class Strategizer {
       return 0;
     });
 
-    const evaluations = await Promise.all(this._evaluators.map(strategy => {
+    const evaluations = await Promise.all(this._evaluators.map(async strategy => {
       return strategy.evaluate(this, generated);
     }));
     const fitness = Strategizer._mergeEvaluations(evaluations, generated);

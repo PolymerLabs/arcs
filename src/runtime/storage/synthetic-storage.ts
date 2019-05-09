@@ -190,7 +190,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     throw new Error('unimplemented');
   }
 
-  cloneFrom(): Promise<void> {
+  async cloneFrom(): Promise<void> {
     throw new Error('cloneFrom should never be called on SyntheticCollection!');
   }
 
@@ -208,7 +208,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     throw new Error('unimplemented');
   }
 
-  removeMultiple(items, originatorId: string) : Promise<void> {
+  async removeMultiple(items, originatorId: string) : Promise<void> {
     throw new Error('unimplemented');
   }
 
