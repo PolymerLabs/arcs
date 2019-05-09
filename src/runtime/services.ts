@@ -13,7 +13,10 @@ export class Services {
     Services.registry[name] = service;
   }
   static async request(request) {
-    const {service: name, invoke} = request;
+    let {service: name, invoke, call} = request;
+    if (call) {
+      [name, invoke] = call.split('.');
+    }
     const service = Services.registry[name];
     if (service) {
       if (service[invoke]) {
