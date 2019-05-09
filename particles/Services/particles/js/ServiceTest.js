@@ -27,14 +27,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     get template() {
       return template;
     }
-    async service(request) {
-      if (!this.capabilities.serviceRequest) {
-        console.warn(`${this.spec.name} has no service support.`);
-      }
-      return new Promise(resolve => {
-        this.capabilities.serviceRequest(this, request, response => resolve(response));
-      });
-    }
     update({}, state) {
       if (!state.classified) {
         state.classified = true;
