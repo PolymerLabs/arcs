@@ -6,4 +6,4 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export const dynamicImport = foo => import(foo);
+export const dynamicImport = path => import(path);
