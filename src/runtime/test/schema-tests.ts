@@ -18,7 +18,6 @@ import {Reference} from '../reference.js';
 import {Schema} from '../schema.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
-import protobufjs from 'protobufjs';
 
 describe('schema', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -402,68 +401,5 @@ describe('schema', () => {
     const Buffer = manifest.findSchemaByName('Buffer').entityClass();
     const b1 = new Buffer({data: Uint8Array.from([12, 34, 56])});
     assert.deepEqual(b1.data, Uint8Array.from([12, 34, 56]));
-  });
-
-  it('schema to proto-json conversion supports basic types', async () => {
-    const manifest = await Manifest.parse(`
-      schema Foo
-        Text      txt
-        URL       lnk
-        Number    num
-        Boolean   flg
-        [Text]    c_txt
-        [URL]     c_lnk
-        [Number]  c_num
-        [Boolean] c_flg`);
-
-    const json = manifest.findSchemaByName('Foo').toProtoJSON();
-    const protoRoot = protobufjs.Root.fromJSON(json);
-    const urlMsg = protoRoot.lookupType('Url');
-    const fooMsg = protoRoot.lookupType('Foo');
-
-    // tslint:disable-next-line: no-any
-    const foo: any = fooMsg.create({txt: 'abc', c_num: [73]});
-    foo.lnk = urlMsg.create({href: 'http://def'});  // TODO: make this nicer
-    foo.num = 37;
-    foo.flg = true;
-    foo.c_txt.push('gh', 'ij');
-    foo.c_lnk.push(urlMsg.create({href: 'http://klm'}));
-    foo.c_num.push(51, 73, 26);  // TODO: dedupe collections
-    foo.c_flg.push(false, true);
-
-    // Verify that we can round-trip the entity over the proto wire format.
-    const buffer = fooMsg.encode(foo).finish();
-    const copy = fooMsg.decode(buffer);
-    assert.deepEqual(foo, copy);
-  });
-
-  it('schema to proto-json conversion fails for not-yet-supported types', async () => {
-    const manifest = await Manifest.parse(`
-      schema BytesFail
-        Bytes foo
-      schema ObjectFail
-        Object foo
-      schema UnionFail
-        (Text or URL or Number) foo
-      schema TupleFail
-        (Text, URL, Number) foo
-      schema BytesCollectionFail
-        [Bytes] foo
-      schema ObjectCollectionFail
-        [Object] foo
-      schema UnionCollectionFail
-        [(Text or Bytes)] foo
-      schema TupleCollectionFail
-        [(Number, Object)] foo
-      schema NestedCollectionFail
-        [[Text]] foo
-      schema NamedRefFail
-        Reference<BytesFail> foo
-      schema InlineRefFail
-        Reference<Bar {Text val}> foo`);
-
-    for (const schema of Object.values(manifest.schemas)) {
-      assert.throws(() => schema.toProtoJSON(), 'not yet supported for schema to proto-json conversion');
-    }
   });
 });
