@@ -162,7 +162,7 @@ export class Particle {
   }
 
   /**
-   * Invoke remote services.
+   * Request (outerPEC) service invocations.
    */
   // TODO(sjmiles): experimental services impl
   async service(request) {
