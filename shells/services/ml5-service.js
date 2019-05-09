@@ -1,8 +1,17 @@
+/**
+ * Copyright (c) 2019 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+import {dynamicImport} from './dynamic-import.js';
 import {Services} from '../../build/runtime/services.js';
 
 const requireMl5 = async () => {
   if (!window.ml5) {
-    await import('https://unpkg.com/ml5@0.2.3/dist/ml5.min.js');
+    await dynamicImport('https://unpkg.com/ml5@0.2.3/dist/ml5.min.js');
   }
 };
 
@@ -26,7 +35,7 @@ const loadImage = async url => {
     image.src = url;
     image.onload = async () => resolve(image);
   });
-}
+};
 
 Services.register('ml5', {
   classifyImage
