@@ -280,7 +280,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
 
     generateAndStoreRecoveryKey(): PromiseLike<RecoveryKey> {
         // TODO: Implement
-        return Promise.reject("Not implemented");
+      throw new Error("Not implemented");
     }
 
     generateDeviceKey(): PromiseLike<DeviceKey> {
@@ -368,7 +368,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             return Promise.resolve(new WebCryptoWrappedKey(result.key as Uint8Array,
                 wrappedBy));
         }
-        return Promise.reject("Unrecognized key type found in keystore.");
+        throw new Error("Unrecognized key type found in keystore.");
     }
 
     async write(keyFingerPrint: string, key: DeviceKey|WrappedKey): Promise<string> {
@@ -388,7 +388,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             });
             return keyFingerPrint;
         }
-        return Promise.reject("Can't write key that isn't StorableKey or WrappedKey.");
+        throw new Error("Can't write key that isn't StorableKey or WrappedKey.");
     }
 
     static getInstance() {

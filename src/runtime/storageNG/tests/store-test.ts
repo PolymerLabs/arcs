@@ -124,7 +124,7 @@ describe('Store', async () => {
           resolve(true);
           return true;
         }
-        reject();
+        throw new Error();
         return false;
       });
 
@@ -148,7 +148,7 @@ describe('Store', async () => {
 
       // another store
       const id2 = activeStore.on(proxyMessage => {
-        reject();
+        throw new Error();
         return false;
       });
 
@@ -175,7 +175,7 @@ describe('Store', async () => {
           resolve(true);
           return true;
         }
-        reject();
+        throw new Error();
         return false;
       });
   
