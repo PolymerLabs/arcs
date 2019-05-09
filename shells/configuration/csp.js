@@ -47,6 +47,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://media.w3.org
         https://*.glitch.me
         https://unpkg.com
+        https://cdn.jsdelivr.net
         ;
     font-src
         'self'

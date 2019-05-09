@@ -532,7 +532,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
          return;
       }
     }
-  
+
     const version = this.version + 1;
     let storageKey;
     if (this.referenceMode && value) {
@@ -1564,8 +1564,10 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 
-  async getMultiple(ids: string[]) {
+  async getMultiple(inputIds: string[]) {
     const values = [];
+    // TODO(sjmiles): do not destroy input array (mostly for debugging)
+    const ids = inputIds.slice();
     while (ids.length > 0) {
       const chunk = ids.splice(0, this.maxConcurrentRequests);
       const snapshots = await Promise.all(chunk.map(id => this.childRef(id).once('value')));

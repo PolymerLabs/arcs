@@ -15,3 +15,4 @@ import '../lib/database/firebase-upload.js';
 
 // services for particle use
 import '../services/ml5-service.js';
+import '../services/tfjs-service.js';
