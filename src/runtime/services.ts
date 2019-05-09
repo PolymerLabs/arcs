@@ -7,9 +7,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export const Services = class {
-  static registry: Object;
-  static register(name, service: Object) {
+export class Services {
+  static registry: {};
+  static register(name, service: {}) {
     Services.registry[name] = service;
   }
   static async request(request) {
@@ -22,7 +22,7 @@ export const Services = class {
     }
     return null;
   }
-};
+}
 
 Services.registry = {};
 

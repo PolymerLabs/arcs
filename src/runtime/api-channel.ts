@@ -463,7 +463,7 @@ export abstract class PECOuterPort extends APIPort {
   abstract onReportExceptionInHost(exception: PropagatedException);
 
   // TODO(sjmiles): experimental `services` impl
-  abstract onServiceRequest(particle: recipeParticle.Particle, request: Object, callback: number);
+  abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
@@ -519,7 +519,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
 
   // TODO(sjmiles): experimental `services` impl
-  ServiceRequest(@Mapped particle: Particle, @Direct content: Object, @LocalMapped callback: Function) {}
+  ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
 
   ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);

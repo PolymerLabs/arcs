@@ -249,7 +249,7 @@ export class ParticleExecutionHost {
       }
 
       // TODO(sjmiles): experimental `services` impl
-      async onServiceRequest(particle: Particle, request: Object, callback: number): Promise<void> {
+      async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
         const response = await Services.request(request);
         this.SimpleCallback(callback, response);
       }
