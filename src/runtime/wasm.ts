@@ -14,7 +14,7 @@ import {EntityInterface} from './entity.js';
 import protobufjs from 'protobufjs';
 
 function jsonBaseType(type) {
-  const kind = type.kind || type;
+  const kind = (type.kind === 'schema-primitive') ? type.type : type.kind;
   switch (kind) {
     case 'Text':
       return 'string';
@@ -84,7 +84,7 @@ export class EntityProtoConverter {
 
   encode(entity: EntityInterface): Uint8Array {
     const proto = this.message.create();
-    const scalar = (field, value) => (field === 'URL') ? {href: value} : value;
+    const scalar = (field, value) => (field.type === 'URL') ? {href: value} : value;
     for (const [name, value] of Object.entries(entity.toLiteral())) {
       const field = this.schema.fields[name];
       if (field.kind === 'schema-collection') {
@@ -99,7 +99,7 @@ export class EntityProtoConverter {
 
   decode(buffer: Uint8Array): EntityInterface {
     const proto = this.message.decode(buffer);
-    const scalar = (field, value) => (field === 'URL') ? value.href : value;
+    const scalar = (field, value) => (field.type === 'URL') ? value.href : value;
     const data = {};
     for (const [name, value] of Object.entries(proto.toJSON()) as [string, []][]) {
       const field = this.schema.fields[name];

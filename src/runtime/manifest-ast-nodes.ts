@@ -370,11 +370,13 @@ export interface SchemaField extends BaseNode {
   name: string;
 }
 
-export type SchemaPrimitiveType =
-    'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
-
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
+
+export interface SchemaPrimitiveType extends BaseNode {
+  kind: 'schema-primitive';
+  type: 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+}
 
 export interface SchemaCollectionType extends BaseNode {
   kind: 'schema-collection';
