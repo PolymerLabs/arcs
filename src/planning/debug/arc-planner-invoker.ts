@@ -94,7 +94,7 @@ export class ArcPlannerInvoker extends ArcDebugListener {
 
     const strategizer = new Strategizer([new InitialRecipe(recipe), ...strategies.map(S => this.instantiate(S))], [], Rulesets.Empty);
 
-    const terminal = [];
+    const terminal: Descendant<Recipe>[] = [];
     do {
       await strategizer.generate();
       terminal.push(...strategizer.terminal);

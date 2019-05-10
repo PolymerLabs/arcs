@@ -36,15 +36,15 @@ import {Arc} from '../arc.js';
 
 export enum WalkerTactic {Permuted='permuted', Independent='independent'}
 
-interface Cloneable {
-  clone(map: Map<object, object>): this;
+export interface Cloneable<T> {
+  clone(map?: Map<object, object>): T;
 }
 
-export interface Descendant<T extends Cloneable> {
+export interface Descendant<T extends Cloneable<T>> {
   result: T;
   score: number;
   derivation: {
-    parent: Descendant<T>;
+    parent?: Descendant<T>;
     strategy: Action<T>
   }[];
   hash: Promise<string> | string;
@@ -57,7 +57,7 @@ export interface Descendant<T extends Cloneable> {
  * An Action generates the list of Descendants by walking the object with a 
  * Walker.
  */
-export abstract class Action<T extends Cloneable> {
+export abstract class Action<T extends Cloneable<T>> {
   private readonly _arc?: Arc;
   private readonly _args?;
 
@@ -80,20 +80,20 @@ export abstract class Action<T extends Cloneable> {
 }
 
 // Exported alias to be used by visitor methods of walker subclasses.
-export type Continuation<T extends Cloneable, Ctx extends object[]> = SingleContinuation<T, Ctx> | SingleContinuation<T, Ctx>[];
+export type Continuation<T extends Cloneable<T>, Ctx extends object[]> = SingleContinuation<T, Ctx> | SingleContinuation<T, Ctx>[];
 
 // Utility aliases used in the walker.
-interface Update<T extends Cloneable, Ctx extends object[]> {
+interface Update<T extends Cloneable<T>, Ctx extends object[]> {
   continuation: Continuation<T, Ctx>;
   context: Ctx;
 }
-type SingleContinuation<T extends Cloneable, Ctx extends object[]> = (obj: T, ...ctx: Ctx) => number;
-interface SingleUpdate<T extends Cloneable, Ctx extends object[]> {
+type SingleContinuation<T extends Cloneable<T>, Ctx extends object[]> = (obj: T, ...ctx: Ctx) => number;
+interface SingleUpdate<T extends Cloneable<T>, Ctx extends object[]> {
   continuation: SingleContinuation<T, Ctx>;
   context: Ctx;
 }
 
-export abstract class Walker<T extends Cloneable> {
+export abstract class Walker<T extends Cloneable<T>> {
   // tslint:disable-next-line: variable-name
   static Permuted: WalkerTactic = WalkerTactic.Permuted;
   // tslint:disable-next-line: variable-name
@@ -130,7 +130,7 @@ export abstract class Walker<T extends Cloneable> {
     this.currentAction = undefined;
   }
 
-  static walk<T extends Cloneable>(results: Descendant<T>[], walker: Walker<T>, action: Action<T>): Descendant<T>[] {
+  static walk<T extends Cloneable<T>>(results: Descendant<T>[], walker: Walker<T>, action: Action<T>): Descendant<T>[] {
     walker.onAction(action);
     results.forEach(result => {
       walker.onResult(result);
