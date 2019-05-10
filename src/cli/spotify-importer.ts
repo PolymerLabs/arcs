@@ -21,7 +21,7 @@ import '../runtime/storage/pouchdb-provider.js';
 // Imports Spotify playlists from JSON files, formatted as per the API
 // described on https://developer.spotify.com/console/get-playlist
 
-(async () => {
+void (async () => {
   const usage = 'Usage: importSpotify [--clear] <json-files>\n' +
               '       importSpotify --list';
   const schemaFile = 'particles/Music/Playlist.schema';
