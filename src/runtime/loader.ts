@@ -54,8 +54,10 @@ export class Loader {
     // remove './'
     path = path.replace(/\/\.\//g, '/');
     // remove 'foo/..'
-    const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
+    let norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
     for (let n = norm(path); n !== path; path = n, n = norm(path));
+    // remove '//'
+    path = path.replace(/([^:])(\/\/)/g, '$1/');
     return path;
   }
 
