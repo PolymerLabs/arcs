@@ -32,26 +32,26 @@ interface MappingInfo {
   redundant?: boolean;
   value?: MappingInfo;
   key?: MappingInfo;
-  converter?: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException;
+  converter?: TypeLiteralizer | ParticleSpecLiteralizer | PropagatedExceptionLiteralizer;
   identifier?: boolean;
   ignore?: boolean;
 }
 
-// TODO(shans): are there better types that I can use for this?
-interface Literalizer {
-  prototype: {toLiteral: () => TypeLiteral};
-  fromLiteral: (typeliteral: TypeLiteral) => Type;
+// TODO(alxr): these should go into a central ADT file
+type Producer<T> = () => T;
+type Mapper<I, O> = (input: I) => O;
+
+interface Literalizer<T, Lit> {
+  prototype: {
+    toLiteral: Producer<Lit>;
+  };
+  fromLiteral: Mapper<Lit, T>;
 }
 
-interface LiteralizerParticleSpec {
-  prototype: {toLiteral: () => SerializedParticleSpec};
-  fromLiteral: (spec: SerializedParticleSpec) => ParticleSpec;
-}
+type TypeLiteralizer = Literalizer<Type, TypeLiteral>;
+type ParticleSpecLiteralizer = Literalizer<ParticleSpec, SerializedParticleSpec>;
+type PropagatedExceptionLiteralizer = Literalizer<PropagatedException, SerializedPropagatedException>;
 
-interface LiteralizerPropagatedException {
-  prototype: {toLiteral: () => SerializedPropagatedException};
-  fromLiteral: (exception: SerializedPropagatedException) => PropagatedException;
-}
 
 const targets = new Map<{}, Map<string, MappingInfo[]>>();
 
@@ -77,7 +77,7 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException) {
+function ByLiteral(constructor: TypeLiteralizer | ParticleSpecLiteralizer | PropagatedExceptionLiteralizer) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
     const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
