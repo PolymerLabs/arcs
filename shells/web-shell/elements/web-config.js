@@ -25,7 +25,7 @@ const configOptions = {
     }
   */
   storage: {
-    aliases: ['storageKey', 'user'],
+    aliases: ['storageKey', 'persona'],
     default: Const.DEFAULT.storageKey,
     map: {
       'firebase': Const.DEFAULT.firebaseStorageKey,
