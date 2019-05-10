@@ -35,6 +35,7 @@ const configOptions = {
   },
   userid: {
     aliases: ['user'],
+    default: Const.DEFAULT.userId,
     localStorageKey: Const.LOCALSTORAGE.user
   },
   arc: {

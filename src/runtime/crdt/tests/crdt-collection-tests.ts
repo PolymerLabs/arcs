@@ -142,10 +142,17 @@ describe('CRDTCollection', () => {
       clock: new Map([['you', 1]]),
       actor: 'you'
     });
-    // This fails because the op clock is not up to date wrt to the actor "you".
-    assert.isFalse(set.applyOperation({
+    // This succeeds because the op clock is up to date wrt to the value "one" (whose version is me:1).
+    assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: 'one',
+      clock: new Map([['me', 1]]),
+      actor: 'them'
+    }));
+    // This fails because the op clock is not up to date wrt to the actor "you" (whose version is you:1).
+    assert.isFalse(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: 'two',
       clock: new Map([['me', 1]]),
       actor: 'them'
     }));
@@ -177,7 +184,7 @@ describe('CRDTCollection', () => {
       clock: new Map([['you', 2]]),
       actor: 'you'
     });
-    const {modelChange, otherChange} = set1.merge(set2);
+    const {modelChange, otherChange} = set1.merge(set2.getData());
     const expectedValues = new Map([
       ['one', new Map([['me', 1], ['you', 2]])],
       ['two', new Map([['me', 2]])],
@@ -200,7 +207,7 @@ describe('CRDTCollection', () => {
       actor: 'me'
     });
     const {modelChange: modelChange2, otherChange: otherChange2} =
-        set1.merge(set2);
+        set1.merge(set2.getData());
     const expectedValues2 = new Map([
       ['two', new Map([['me', 2]])],
       ['three', new Map([['you', 1]])],

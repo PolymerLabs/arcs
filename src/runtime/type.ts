@@ -241,7 +241,7 @@ export class EntityType extends Type {
     this.entitySchema = schema;
   }
 
-  static make(names: string[], fields: {}, description?) {
+  static make(names: string[], fields: {}, description?): EntityType {
     return new EntityType(new Schema(names, fields, description));
   }
 

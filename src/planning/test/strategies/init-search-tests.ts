@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {InitSearch} from '../../strategies/init-search.js';
 
-describe('InitSearch', async () => {
+describe('InitSearch', () => {
   it('initializes the search recipe', async () => {
     const initSearch = new InitSearch(null, {search: 'search'});
     const inputParams = {generated: [], generation: 0};

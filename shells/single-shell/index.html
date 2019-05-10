@@ -30,20 +30,20 @@ http://polymer.github.io/PATENTS.txt
 <div slotid="root"></div>
 <div slotid="modal"></div>
 
+<script>window.logLevel = 2;</script>
 <script type="module">
-  import {Env} from '../lib/env/web/env.js';
-  import {SlotComposer} from '../lib/arcs.js';
+  import '../services/ml5-service.js';
+  import {Utils} from '../lib/runtime/utils.js';
+  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
   import {App} from './app.js';
   import '../configuration/whitelisted.js';
 
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const env = new Env('../../');
+  const utils = Utils.init('../../');
 
-  const composer = new SlotComposer({
-    modalityName: Modality.Name.Dom,
-    modalityHandler: PlanningModalityHandler.domHandler,
+  const composer = new DomSlotComposer({
     rootContainer: document.body
   });
 

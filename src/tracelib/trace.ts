@@ -105,7 +105,7 @@ function pushEvent(event) {
     }
     // Only keep events in memory if we're not streaming them.
     if (streamingCallbacks.length === 0) events.push(event);
-    Promise.resolve().then(() => {
+    void Promise.resolve().then(() => {
       for (const {callback, predicate} of streamingCallbacks) {
           if (!predicate || predicate(event)) callback(event);
       }

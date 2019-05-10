@@ -315,7 +315,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
             }, true, ["encrypt", "wrapKey"]).then(ikey => new WebCryptoPublicKey(ikey));
     }
 
-    importWrappedKey(wrappedKey: string, wrappedBy: PublicKey):Promise<WrappedKey> {
+    async importWrappedKey(wrappedKey: string, wrappedBy: PublicKey):Promise<WrappedKey> {
       const decodedKey = decode(wrappedKey);
       return Promise.resolve(new WebCryptoWrappedKey(decodedKey, wrappedBy));
     }
@@ -351,7 +351,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
     }
 
     async find(keyId: string): Promise<Key|null> {
-        const result:KeyRecord = await this.runOnStore(store => {
+        const result:KeyRecord = await this.runOnStore(async store => {
             return store.get(keyId);
         });
 
@@ -374,7 +374,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
     async write(keyFingerPrint: string, key: DeviceKey|WrappedKey): Promise<string> {
         if (key instanceof WebCryptoStorableKey) {
             const skey = key as WebCryptoStorableKey<CryptoKey>;
-            await this.runOnStore(store => {
+            await this.runOnStore(async store => {
                 return store.put({keyFingerPrint, key: skey.storableKey()});
             });
             return keyFingerPrint;
@@ -382,7 +382,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             const wrappedKey = key as WebCryptoWrappedKey;
             const wrappingKeyFingerprint = await wrappedKey.wrappedBy.fingerprint();
 
-            await this.runOnStore(store => {
+            await this.runOnStore(async store => {
                 return store.put({keyFingerPrint, key:wrappedKey.wrappedKeyData,
                     wrappingKeyFingerprint});
             });

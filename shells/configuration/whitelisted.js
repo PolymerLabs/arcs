@@ -12,3 +12,6 @@ import '../../modalities/dom/components/elements/dom-repeater.js';
 
 // requires app-level firebase configuration
 import '../lib/database/firebase-upload.js';
+
+// services for particle use
+import '../services/ml5-service.js';

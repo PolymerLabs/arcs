@@ -1512,7 +1512,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     }
   }
 
-  private storeSingle(value, keys: string[]) {
+  private async storeSingle(value, keys: string[]) {
     return this.childRef(value.id).transaction(data => {
       if (data === null) {
         data = {value, keys: {}};
@@ -1543,7 +1543,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     }
   }
 
-  private removeSingle(id: string, keys: string[]) {
+  private async removeSingle(id: string, keys: string[]) {
     return this.childRef(id).transaction(data => {
       if (data === null) {
         return null;
@@ -1612,7 +1612,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 
-  cloneFrom(store: StorageProviderBase): Promise<void> {
+  async cloneFrom(store: StorageProviderBase): Promise<void> {
     throw new Error('FirebaseBackingStore does not implement cloneFrom');
   }
 }

@@ -68,12 +68,6 @@ export class Particle {
   }
 
   /**
-   * @deprecated Use setHandles instead.
-   */
-  setViews(views) {
-  }
-
-  /**
    * Called for handles that are configured with both keepSynced and notifySync, when they are
    * updated with the full model of their data. This will occur once after setHandles() and any time
    * thereafter if the handle is resynchronized.
@@ -165,6 +159,20 @@ export class Particle {
 
   removeSlotProxy(name: string): void {
     this.slotProxiesByName.delete(name);
+  }
+
+  /**
+   * Request (outerPEC) service invocations.
+   */
+  // TODO(sjmiles): experimental services impl
+  async service(request) {
+    if (!this.capabilities["serviceRequest"]) {
+      console.warn(`${this.spec.name} has no service support.`);
+      return null;
+    }
+    return new Promise(resolve => {
+      this.capabilities["serviceRequest"](this, request, response => resolve(response));
+    });
   }
 
   /**

@@ -40,4 +40,4 @@ Examples
   process.exit();
 }
 
-bundle(argv._, Array.isArray(argv.o) ? argv.o[0] : argv.o, argv.verbose);
+void bundle(argv._, Array.isArray(argv.o) ? argv.o[0] : argv.o, argv.verbose);
