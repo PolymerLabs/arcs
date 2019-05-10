@@ -13,7 +13,7 @@ import {BigCollection, Collection, Variable} from './handle.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 
-export type Model = object;
+export type RenderModel = object;
 
 /**
  * Particle that interoperates with DOM.
@@ -54,7 +54,7 @@ export class DomParticleBase extends Particle {
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(stateArgs?): Model {
+  render(stateArgs?): RenderModel {
     return {};
   }
 
@@ -123,7 +123,7 @@ export class DomParticleBase extends Particle {
 
   // We put slot IDs at the top-level of the model as well as in models for sub-templates.
   // This is temporary and should go away when we move from sub-IDs to [(Entity, Slot)] constructs.
-  private enhanceModelWithSlotIDs(model: Model, slotIDs: object, topLevel: boolean = true): Model {
+  private enhanceModelWithSlotIDs(model: RenderModel, slotIDs: object, topLevel: boolean = true): RenderModel {
     if (topLevel) {
       model = {...slotIDs, ...model};
     }

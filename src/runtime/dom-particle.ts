@@ -9,7 +9,7 @@
  */
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
-import {DomParticleBase, Model} from './dom-particle-base.js';
+import {DomParticleBase, RenderModel} from './dom-particle-base.js';
 import {Collection, Handle, Variable} from './handle.js';
 import {Runnable} from './functional.js';
 
@@ -63,7 +63,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(...args): Model {
+  render(...args): RenderModel {
     return {};
   }
 
@@ -133,7 +133,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
 
-  async onHandleSync(handle: Handle, model: Model): Promise<void> {
+  async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size === 0) {
       await this._handlesToProps();
