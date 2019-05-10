@@ -1564,10 +1564,8 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     return (snapshot.val() !== null) ? snapshot.val().value : null;
   }
 
-  async getMultiple(inputIds: string[]) {
+  async getMultiple(ids: string[]) {
     const values = [];
-    // TODO(sjmiles): do not destroy input array (mostly for debugging)
-    const ids = inputIds.slice();
     while (ids.length > 0) {
       const chunk = ids.splice(0, this.maxConcurrentRequests);
       const snapshots = await Promise.all(chunk.map(id => this.childRef(id).once('value')));
