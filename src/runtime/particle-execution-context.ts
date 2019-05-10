@@ -79,7 +79,7 @@ export class ParticleExecutionContext {
         }
       }
 
-      onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
+      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
         return pec._instantiateParticle(id, spec, proxies);
       }
 
@@ -138,7 +138,7 @@ export class ParticleExecutionContext {
   innerArcHandle(arcId: string, particleId: string): InnerArcHandle {
     const pec = this;
     return {
-      createHandle(type: Type, name: string, hostParticle?: Particle) {
+      async createHandle(type: Type, name: string, hostParticle?: Particle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
             const handle = handleFor(proxy, pec.idGenerator, name, particleId);
@@ -148,20 +148,20 @@ export class ParticleExecutionContext {
             }
           }, arcId, type, name));
       },
-      mapHandle(handle: Handle) {
+      async mapHandle(handle: Handle) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcMapHandle(id => {
             resolve(id);
           }, arcId, handle));  // recipe handle vs not?
       },
-      createSlot(transformationParticle, transformationSlotName, handleId) {
+      async createSlot(transformationParticle, transformationSlotName, handleId) {
         // handleId: the ID of a handle (returned by `createHandle` above) this slot is rendering; null - if not applicable.
         // TODO: support multiple handle IDs.
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateSlot(hostedSlotId => resolve(hostedSlotId), arcId, transformationParticle, transformationSlotName, handleId)
         );
       },
-      loadRecipe(recipe: string) {
+      async loadRecipe(recipe: string) {
         // TODO: do we want to return a promise on completion?
         return new Promise((resolve, reject) => pec.apiPort.ArcLoadRecipe(arcId, recipe, response => {
           if (response.error) {
@@ -188,7 +188,7 @@ export class ParticleExecutionContext {
 
   defaultCapabilitySet() {
     return {
-      constructInnerArc: particle => {
+      constructInnerArc: async particle => {
         return new Promise<InnerArcHandle>((resolve, reject) =>
           this.apiPort.ConstructInnerArc(arcId => resolve(this.innerArcHandle(arcId, particle.id)), particle));
       },
@@ -259,7 +259,7 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    const busyParticlePromises = this.particles.filter(particle => particle.busy).map(particle => particle.idle);
+    const busyParticlePromises = this.particles.filter(async particle => particle.busy).map(async particle => particle.idle);
     return Promise.all([this.scheduler.idle, ...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

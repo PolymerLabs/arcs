@@ -173,7 +173,7 @@ export class Arc {
       const innerArcs = this.innerArcs;
 
       // tslint:disable-next-line: no-any
-      await Promise.all([this.pec.idle as Promise<any>, ...innerArcs.map(arc => arc.idle)]);
+      await Promise.all([this.pec.idle as Promise<any>, ...innerArcs.map(async arc => arc.idle)]);
 
       // We're idle if no new inner arcs appeared and this.pec had exactly 2 messages,
       // one requesting the idle status, and one answering it.

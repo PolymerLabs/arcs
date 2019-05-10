@@ -46,6 +46,7 @@
     //"ordered-imports": [true, {"grouped-imports": true}],
     "prefer-const": [true, {"destructuring": "all"}],
     "prefer-object-spread": true,
+    "promise-function-async": true,
     "radix": true,
     "semicolon": [true, "always", "ignore-bound-class-methods"],
     "switch-default": true,

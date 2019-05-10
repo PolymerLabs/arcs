@@ -42,7 +42,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
   async cursorNext(cursorId: number) {
     throw new Error('NotImplemented');
   }
-  cursorClose(cursorId: number): Promise<void> {
+  async cursorClose(cursorId: number): Promise<void> {
     throw new Error('NotImplemented');
   }
   cursorVersion(cursorId: number) {
@@ -53,7 +53,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
     throw new Error('NotImplemented');
   }
 
-  cloneFrom(): Promise<void> {
+  async cloneFrom(): Promise<void> {
     throw new Error('NotImplemented');
   }
 
