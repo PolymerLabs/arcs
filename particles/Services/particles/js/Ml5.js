@@ -21,7 +21,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 </div>
   `;
 
-  const url = resolver(`ServiceTest/../../assets/waltbird.jpg`);
+  const url = resolver(`Ml5/../../assets/waltbird.jpg`);
 
   return class extends DomParticle {
     get template() {

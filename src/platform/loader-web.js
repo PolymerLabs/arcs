@@ -14,8 +14,6 @@ const log = logFactory('loader-web', 'green');
 const warn = logFactory('loader-web', 'green', 'warn');
 const error = logFactory('loader-web', 'green', 'error');
 
-const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
-
 export class PlatformLoader extends PlatformLoaderBase {
   flushCaches() {
     // punt object urls?
