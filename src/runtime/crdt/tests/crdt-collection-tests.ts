@@ -142,10 +142,17 @@ describe('CRDTCollection', () => {
       clock: new Map([['you', 1]]),
       actor: 'you'
     });
-    // This fails because the op clock is not up to date wrt to the actor "you".
-    assert.isFalse(set.applyOperation({
+    // This succeeds because the op clock is up to date wrt to the value "one" (whose version is me:1).
+    assert.isTrue(set.applyOperation({
       type: CollectionOpTypes.Remove,
       removed: 'one',
+      clock: new Map([['me', 1]]),
+      actor: 'them'
+    }));
+    // This fails because the op clock is not up to date wrt to the actor "you" (whose version is you:1).
+    assert.isFalse(set.applyOperation({
+      type: CollectionOpTypes.Remove,
+      removed: 'two',
       clock: new Map([['me', 1]]),
       actor: 'them'
     }));
