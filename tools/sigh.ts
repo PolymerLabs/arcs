@@ -647,12 +647,41 @@ function watch(args: string[]): boolean {
 
 function health(args: string[]): boolean {
   const options = minimist(args, {
-    boolean: ['migration', 'types', 'tests', 'nullChecks'],
+    boolean: ['migration', 'types', 'tests', 'nullChecks', 'floatingPromises'],
   });
 
   if ((options.migration && 1 || 0) + (options.types && 1 || 0) + (options.tests && 1 || 0) > 1) {
     console.error('Please select only one detailed report at a time');
     return false;
+  }
+
+  // Utility function for counting / displaying errors caused by adding new TsLint rules.
+  // tslint:disable-next-line: no-any
+  function runTsLintWithModifiedConfig(modifier: (config: any) => void, lineMatch: string | RegExp): string[] {
+    const pathToTsLintConfig = './config/tslint.base.json';
+
+    // Read and parse existing TsLint config.
+    const tsLintConfig = fs.readFileSync(pathToTsLintConfig, 'utf-8');
+    const tsLintConfigNoComments = tsLintConfig.replace(/\ *\/\/.*\n/g, '');
+    const parsedConfig = JSON.parse(tsLintConfigNoComments);
+
+    modifier(parsedConfig);
+
+    // Write the modified TsLint config.
+    fs.writeFileSync(pathToTsLintConfig, JSON.stringify(parsedConfig, null, '  '), 'utf-8');
+
+    const tslintOutput = saneSpawnWithOutput('node_modules/.bin/tslint', ['--project', '.'], {dontWarnOnFailure: true}).stdout;
+    
+    // Recover original TsLint config.
+    fs.writeFileSync(pathToTsLintConfig, tsLintConfig, 'utf-8');
+
+    return tslintOutput.split('\n').filter(line => line.match(lineMatch));
+  }
+
+  function runNoFloatingPromisesCheck() {
+    return runTsLintWithModifiedConfig(
+        config => config.rules['no-floating-promises'] = true,
+        'Promises must be handled appropriately');
   }
 
   const migrationFiles = () => [...findProjectFiles(
@@ -680,11 +709,16 @@ function health(args: string[]): boolean {
     return saneSpawn('node_modules/.bin/c8', ['report'], {stdio: 'inherit'});
   }
 
+  if (options.floatingPromises) {
+    console.log(runNoFloatingPromisesCheck().join('\n'));
+    return true;
+  }
+
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
-  const line = () => console.log('+---------------------+--------+--------+---------------------+');
-  const show = (a, b, c, d) => console.log(`| ${String(a).padEnd(20, ' ')}| ${String(b).padEnd(7, ' ')}| ${String(c).padEnd(7, ' ')}| ${String(d).padEnd(20, ' ')}|`);
+  const line = () => console.log('+---------------------+--------+--------+---------------------------+');
+  const show = (a, b, c, d) => console.log(`| ${String(a).padEnd(20, ' ')}| ${String(b).padEnd(7, ' ')}| ${String(c).padEnd(7, ' ')}| ${String(d).padEnd(26, ' ')}|`);
 
   line();
   show('Category', 'Result', 'Points', 'Detailed report');
@@ -710,10 +744,14 @@ function health(args: string[]): boolean {
   const nullChecksPoints = (nullChecksErrors / 10);
   show('Null Errors', nullChecksErrors, nullChecksPoints.toFixed(1), 'health --nullChecks');
 
+  const floatingPromisesCount = runNoFloatingPromisesCheck().length;
+  const floatingPromisesPoints = floatingPromisesCount / 10;
+  show('Floating Promises', floatingPromisesCount, floatingPromisesPoints, 'health --floatingPromises');
+
   line();
 
   // For go/arcs-paydown, team tech-debt paydown exercise.
-  const points = testCovPoints + typeCovPoints + nullChecksPoints + jsLocPoints;
+  const points = jsLocPoints + testCovPoints + typeCovPoints + nullChecksPoints + floatingPromisesPoints;
   show('Points available', '', points.toFixed(1), 'go/arcs-paydown');
 
   line();
