@@ -22,4 +22,4 @@ self.Tf = class {
   dispose(reference) {
     this.scope.service({call: 'tfjs.dispose', reference});
   }
-}
+};
