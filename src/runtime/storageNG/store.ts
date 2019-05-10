@@ -82,7 +82,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // The driver will invoke this method when it has an updated remote model
   async onReceive(model: T['data']): Promise<void> {
     const {modelChange, otherChange} = this.localModel.merge(model);
-    this.processModelChange(modelChange, otherChange, true);
+    await this.processModelChange(modelChange, otherChange, true);
   }
   
   private async processModelChange(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, messageFromDriver) {
