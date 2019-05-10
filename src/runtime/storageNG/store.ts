@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt";
-import {Type} from "../type";
-import {Exists, Driver, DriverFactory} from "./drivers/driver-factory";
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt.js";
+import {Type} from "../type.js";
+import {Exists, Driver, DriverFactory} from "./drivers/driver-factory.js";
 
 export enum StorageMode {Direct, Backing, ReferenceMode}
 
@@ -46,6 +46,9 @@ export class Store<T extends CRDTTypeRecord> {
     this.modelConstructor = modelConstructor;
   }
   activate(): ActiveStore<T> {
+    if (this.constructors.get(this.mode) == null) {
+      throw new Error(`StorageMode ${this.mode} not yet implemented`);
+    }
     const activeStore = new (this.constructors.get(this.mode))<T>(this.storageKey, this.exists, this.type, this.mode, this.modelConstructor);
     this.exists = Exists.ShouldExist;
     return activeStore;

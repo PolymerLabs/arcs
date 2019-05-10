@@ -1,5 +1,3 @@
-import {CRDTModel} from "../../crdt/crdt";
-
 /**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
@@ -61,5 +59,9 @@ export class DriverFactory {
       }
     }
     return false;
+  }
+
+  static clearProvidersForTesting() {
+    this.providers = [];
   }
 }

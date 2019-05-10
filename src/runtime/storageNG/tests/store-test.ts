@@ -26,6 +26,7 @@ class MockDriver<Data> extends Driver<Data> {
 }
 
 class MockStorageDriverProvider implements StorageDriverProvider {
+
   willSupport(storageKey: string) {
     return true;
   }
@@ -35,6 +36,10 @@ class MockStorageDriverProvider implements StorageDriverProvider {
 }
 
 describe('Store', async () => {
+
+  afterEach(() => {
+    DriverFactory.clearProvidersForTesting();
+  });
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
@@ -60,7 +65,7 @@ describe('Store', async () => {
     let capturedModel: CountData = null;
     driver.send = async model => {capturedModel = model; return true;};
 
-    const count = new CRDTCount()
+    const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
     const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
