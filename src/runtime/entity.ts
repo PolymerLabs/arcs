@@ -250,8 +250,8 @@ export abstract class Entity implements EntityInterface {
   }
 }
 
-function convertToJsType(fieldType: string, schemaName: string) {
-  switch (fieldType) {
+function convertToJsType(primitiveType, schemaName: string) {
+  switch (primitiveType.type) {
     case 'Text':
       return 'string';
     case 'URL':
@@ -265,7 +265,7 @@ function convertToJsType(fieldType: string, schemaName: string) {
     case 'Object':
       return 'object';
     default:
-      throw new Error(`Unknown field type ${fieldType} in schema ${schemaName}`);
+      throw new Error(`Unknown field type ${primitiveType.type} in schema ${schemaName}`);
   }
 }
 
@@ -279,18 +279,16 @@ function validateFieldAndTypes({op, name, value, schema, fieldType}: {op: string
     return;
   }
 
-  if (typeof(fieldType) !== 'object') {
-    // Primitive fields.
-    const valueType = value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
-    if (valueType !== convertToJsType(fieldType, schema.name)) {
-      throw new TypeError(
-          `Type mismatch ${op}ting field ${name} (type ${fieldType}); ` +
-          `value '${value}' is type ${typeof(value)}`);
-    }
-    return;
-  }
-
   switch (fieldType.kind) {
+    case 'schema-primitive':
+      const valueType = value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
+      if (valueType !== convertToJsType(fieldType, schema.name)) {
+        throw new TypeError(
+            `Type mismatch ${op}ting field ${name} (type ${fieldType.type}); ` +
+            `value '${value}' is type ${typeof(value)}`);
+      }
+      break;
+
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
       for (const innerType of fieldType.types) {

@@ -21,11 +21,19 @@ export class Schema {
   description: {[index: string]: string} = {};
   isAlias: boolean;
 
+  // For convenience, primitive field types can be specified as {name: 'Type'}
+  // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
   constructor(names: string[], fields: {[index: string]: any}, description?) {
     this.names = names;
-    this.fields = fields;
-
+    this.fields = {};
+    for (const [name, field] of Object.entries(fields)) {
+      if (typeof(field) === 'string') {
+        this.fields[name] = {kind: 'schema-primitive', type: field};
+      } else {
+        this.fields[name] = field;
+      }
+    }
     if (description) {
       description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
@@ -82,15 +90,13 @@ export class Schema {
   }
 
   static _typeString(type): string {
-    if (typeof(type) !== 'object') {
-      assert(typeof type === 'string');
-      return type;
-    }
     switch (type.kind) {
+      case 'schema-primitive':
+        return type.type;
       case 'schema-union':
-        return `(${type.types.join(' or ')})`;
+        return `(${type.types.map(t => t.type).join(' or ')})`;
       case 'schema-tuple':
-        return `(${type.types.join(', ')})`;
+        return `(${type.types.map(t => t.type).join(', ')})`;
       case 'schema-reference':
         return `Reference<${Schema._typeString(type.schema)}>`;
       case 'type-name':
