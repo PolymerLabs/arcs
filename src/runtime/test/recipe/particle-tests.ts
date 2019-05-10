@@ -68,17 +68,17 @@ describe('Recipe Particle', () => {
       assert.isTrue(recipe.normalize());
       assert.equal(recipe.isResolved(), expectedResolved);
     };
-    verifyRecipe(`
+    await verifyRecipe(`
       recipe
         P
     `, true);
-    verifyRecipe(`
+    await verifyRecipe(`
       recipe
         create as handle0
         P
           thing0 = handle0
     `, false);
-    verifyRecipe(`
+    await verifyRecipe(`
       recipe
         create as handle0
         create as handle1

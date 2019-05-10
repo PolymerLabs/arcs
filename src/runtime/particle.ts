@@ -162,6 +162,20 @@ export class Particle {
   }
 
   /**
+   * Request (outerPEC) service invocations.
+   */
+  // TODO(sjmiles): experimental services impl
+  async service(request) {
+    if (!this.capabilities["serviceRequest"]) {
+      console.warn(`${this.spec.name} has no service support.`);
+      return null;
+    }
+    return new Promise(resolve => {
+      this.capabilities["serviceRequest"](this, request, response => resolve(response));
+    });
+  }
+
+  /**
    * Returns the slot with provided name.
    */
   getSlot(name: string): SlotProxy {

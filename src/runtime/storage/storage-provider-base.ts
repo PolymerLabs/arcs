@@ -116,8 +116,8 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
   readonly id: string;
   originalId: string|null;
   name: string;
-  source: string|null;
-  description: string;
+  readonly source: string|null;
+  readonly description: string;
 
   protected constructor(type: Type, name: string, id: string, key: string) {
     assert(id, 'id must be provided when constructing StorageProviders');
@@ -176,7 +176,6 @@ export abstract class StorageProviderBase implements Comparable<StorageProviderB
    */
   protected async _fire(kindStr: 'change', details: ChangeEvent) {
     const kind: EventKind = EventKind[kindStr];
-
     const listenerMap = this.listeners.get(kind);
     if (!listenerMap || listenerMap.size === 0) {
       return;

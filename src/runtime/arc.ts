@@ -134,11 +134,11 @@ export class Arc {
     return this.activeRecipe.modality;
   }
 
-  registerInstantiatePlanCallback(callback: PlanCallback) {
+  registerInstantiatePlanCallback(callback: PlanCallback): void {
     this.instantiatePlanCallbacks.push(callback);
   }
 
-  unregisterInstantiatePlanCallback(callback: PlanCallback) {
+  unregisterInstantiatePlanCallback(callback: PlanCallback): boolean {
     const index = this.instantiatePlanCallbacks.indexOf(callback);
     if (index >= 0) {
       this.instantiatePlanCallbacks.splice(index, 1);
@@ -173,7 +173,7 @@ export class Arc {
       const innerArcs = this.innerArcs;
 
       // tslint:disable-next-line: no-any
-      await Promise.all([this.pec.idle as Promise<any>, ...innerArcs.map(arc => arc.idle)]);
+      await Promise.all([this.pec.idle as Promise<any>, ...innerArcs.map(async arc => arc.idle)]);
 
       // We're idle if no new inner arcs appeared and this.pec had exactly 2 messages,
       // one requesting the idle status, and one answering it.

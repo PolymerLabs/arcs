@@ -12,7 +12,7 @@ import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord
 
 type RawCount = number;
 
-type CountData = {values: Map<string, number>, version: VersionMap};
+export type CountData = {values: Map<string, number>, version: VersionMap};
 
 type VersionInfo = {from: number, to: number};
 
@@ -32,17 +32,15 @@ type CountChange = CRDTChange<CRDTCountTypeRecord>;
 export class CRDTCount implements CountModel {
   private model: CountData = {values: new Map(), version: new Map()};
 
-  merge(other: CountModel): {modelChange: CountChange, otherChange: CountChange} {
+  merge(other: CountData): {modelChange: CountChange, otherChange: CountChange} {
     const otherChanges: CountOperation[] = [];
     const thisChanges: CountOperation[] = [];
 
-    const otherRaw = other.getData();
-
-    for (const key of otherRaw.values.keys()) {
+    for (const key of other.values.keys()) {
       const thisValue = this.model.values.get(key) || 0;
-      const otherValue = otherRaw.values.get(key) || 0;
+      const otherValue = other.values.get(key) || 0;
       const thisVersion = this.model.version.get(key) || 0;
-      const otherVersion = otherRaw.version.get(key) || 0;
+      const otherVersion = other.version.get(key) || 0;
       if (thisValue > otherValue) {
         if (otherVersion >= thisVersion) {
           throw new CRDTError('Divergent versions encountered when merging CRDTCount models');
@@ -61,10 +59,10 @@ export class CRDTCount implements CountModel {
     }
     
     for (const key of this.model.values.keys()) {
-      if (otherRaw.values.has(key)) {
+      if (other.values.has(key)) {
         continue;
       }
-      if (otherRaw.version.has(key)) {
+      if (other.version.has(key)) {
         throw new CRDTError(`CRDTCount model has version but no value for key ${key}`);
       }
       otherChanges.push({type: CountOpTypes.MultiIncrement, value: this.model.values.get(key), actor: key,

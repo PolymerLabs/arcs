@@ -26,12 +26,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // TODO: get rid of unsafe-inline for style?
   // TODO: construct whitelist dynamically from particle manifests
   //       OR use service worker to enforce
+  //
   // TODO(sjmiles): explain failure of `script-src 'strict-dynamic'`
+  // TODO(sjmiles): less-than-ideal unsafe-eval is turned on for ml5 service
   //
   const httpEquiv = 'Content-Security-Policy';
   const content = `
     script-src
         'self'
+        'unsafe-eval'
         blob:
         wss://*.firebase.io wss://*.firebaseio.com
         https://*.firebaseio.com
@@ -43,6 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.tvmaze.com
         https://media.w3.org
         https://*.glitch.me
+        https://unpkg.com
         ;
     font-src
         'self'

@@ -1,106 +1,93 @@
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {assert} from '../../../platform/assert-web.js';
 import {Type} from '../../type.js';
 import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
-import {SerializedModelEntry} from '../crdt-collection-model.js';
+import {SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';
 
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
 
-/**
- * Loosely defines the value object stored.
- */
-interface ValueStorage {
-  /** The id of this Variable */
-  id: string;
-  /** A reference to another storage key, used for reference mode */
-  storageKey?: string;
-  /** The actual value of the data */
-  rawData?: {};
-}
+import {upsert, UpsertDoc, UpsertMutatorFn} from './pouch-db-upsert.js';
+
 
 /**
- *  Callback definition for mutating values
+ * A representation of a Variable in Pouch storage.
  */
-interface ValueStorageMutator {
-  (value: ValueStorage): ValueStorage;
-}
+interface VariableStorage extends UpsertDoc {
+  value: ModelValue;
 
-/**
- * A type definition for PouchDB to allow for direct access
- * to stored top-level fields in a doc.
- */
-interface VariableStorage {
-  value: ValueStorage;
-  version: number;
   /** ReferenceMode state for this data */
   referenceMode: boolean;
-}
 
-interface StoredVariable extends PouchDB.Core.IdMeta, PouchDB.Core.GetMeta {
-  value: ValueStorage;
-  referenceMode: boolean;
+  /** Monotonically increasing version number */
   version: number;
 }
+
 
 /**
  * The PouchDB-based implementation of a Variable.
  */
 export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
-  private _stored: ValueStorage | null = null;
   private localKeyId = 0;
-  // All public methods must call `await initialized` to avoid race
-  // conditions on initialization.
-  private readonly initialized: Promise<void>;
 
-  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string) {
-    super(type, storageEngine, name, id, key);
-    let resolveInitialized: () => void;
-    this.initialized = new Promise(resolve => resolveInitialized = resolve);
+  /**
+   * Create a new PouchDbVariable.
+   *
+   * @param type the underlying type for this variable.
+   * @param storageEngine a reference back to the PouchDbStorage, used for baseStorageKey calls.
+   * @param name appears unused.
+   * @param id see base class.
+   * @param key the storage key for this collection.
+   */
+  constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
+    super(type, storageEngine, name, id, key, refMode);
+    this.version = 0;
 
-    this.backingStore = null;
-
-    // Insure that there's a value stored.
-    this.db.get(this.pouchDbKey.location).then(() => {
-      resolveInitialized();
+    // See if the value has been set
+    this.upsert(async doc => doc).then((doc) => {
+      this.resolveInitialized();
+      // value has been written
     }).catch((err) => {
-      if (err.name === 'not_found') {
-        this.db.put({
-          _id: this.pouchDbKey.location,
-          value: null,
-          version: 0,
-          referenceMode: this.referenceMode
-        }).then(() => {
-          resolveInitialized();
-        }).catch((e) => {
-          console.log('error init', e);
-        });
-      }
+      console.warn('Error init ' + this.storageKey, err);
+      // TODO(lindner) error out the initialized Promise
+      throw err;
     });
   }
 
+  /** @inheritDoc */
   backingType(): Type {
     return this.type;
   }
 
   async clone(): Promise<PouchDbVariable> {
-    const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null);
+    const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null, this.referenceMode);
     await variable.cloneFrom(this);
     return variable;
   }
 
   async cloneFrom(handle): Promise<void> {
-    await this.initialized;
-    
-    this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
 
-    if (this.referenceMode && literal.model.length > 0) {
-      // cloneFrom the backing store data by reading the model and writing it out.
-      await Promise.all([this.ensureBackingStore(), handle.ensureBackingStore()]);
+    this.referenceMode = handle.referenceMode;
 
-      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: this.backingStore.storageKey}}));
-      const underlying = await handle.backingStore.getMultiple(literal.model.map(({id}) => id));
-      await this.backingStore.storeMultiple(underlying, [this.storageKey]);
+    if (handle.referenceMode && literal.model.length > 0) {
+      // cloneFrom the backing store data by reading the model and writing it out.
+      const [backingStore, handleBackingStore] = await Promise.all(
+        [this.ensureBackingStore(), handle.ensureBackingStore()]);
+
+      literal.model = literal.model.map(({id, value}) => ({id, value: {id: value.id, storageKey: backingStore.storageKey}}));
+      const underlying = await handleBackingStore.getMultiple(literal.model.map(({id}) => id));
+      await backingStore.storeMultiple(underlying, [this.storageKey]);
     }
 
     await this.fromLiteral(literal);
@@ -108,8 +95,14 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     if (literal && literal.model && literal.model.length === 1) {
       const newvalue = literal.model[0].value;
       if (newvalue) {
-        await this.getStoredAndUpdate(stored => newvalue);
+        await this.upsert(async doc => {
+          doc.value = newvalue;
+          doc.referenceMode = this.referenceMode;
+          doc.version = Math.max(this.version, doc.version) + 1;
+          return doc;
+        });
       }
+
       this._fire('change', new ChangeEvent({data: newvalue, version: this.version}));
     }
   }
@@ -120,11 +113,12 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   async modelForSynchronization() {
     await this.initialized;
-    const value = await this.getStored();
+    const doc = await this.upsert(async doc => doc);
+    const value = doc.value;
 
     if (this.referenceMode && value !== null) {
-      await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
+      const backingStore = await this.ensureBackingStore();
+      const result = await backingStore.get(value.id);
       return {
         version: this.version,
         model: [{id: value.id, value: result}]
@@ -140,13 +134,16 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    */
   async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
     await this.initialized;
-    const value = await this.getStored();
 
-    let model = [];
+    const doc = await this.upsert(async doc => doc);
+    const value = doc.value;
+
+    let model: SerializedModelEntry[] = [];
     if (value != null) {
       model = [
         {
           id: value.id,
+          keys: [],
           value
         }
       ];
@@ -158,33 +155,44 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Updates the internal state of this variable with data and stores
-   * the data in the underlying Pouch Database.
+   * Updates the internal state of this variable with the supplied data.
    */
   async fromLiteral({version, model}): Promise<void> {
     await this.initialized;
+
     const value = model.length === 0 ? null : model[0].value;
+
     if (this.referenceMode && value && value.rawData) {
       assert(false, `shouldn't have rawData ${JSON.stringify(value.rawData)} here`);
     }
     assert(value !== undefined);
-    await this.getStoredAndUpdate(stored => {
-      return value;
+
+    const newDoc = await this.upsert(async (doc) => {
+      // modify document
+      doc.value = value;
+      doc.referenceMode = this.referenceMode;
+      doc.version = Math.max(version, doc.version) + 1;
+      return doc;
     });
-    this.version = version;
+
+    this.version = newDoc.version;
   }
 
   /**
    * @return a promise containing the variable value or null if it does not exist.
    */
-  async get(): Promise<ValueStorage> {
+  async get(): Promise<ModelValue> {
     await this.initialized;
-    try {
-      let value = await this.getStored();
 
+    try {
+      const doc = await this.upsert(async doc => doc);
+      let value = doc.value;
+      if (value == null) {
+        console.warn('value is null and refmode=' + this.referenceMode);
+      }
       if (this.referenceMode && value) {
-        await this.ensureBackingStore();
-        value = await this.backingStore.get(value.id);
+        const backingStore = await this.ensureBackingStore();
+        value = await backingStore.get(value.id);
       }
       // logging goes here
 
@@ -202,9 +210,10 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param originatorId TBD
    * @param barrier TBD
    */
-  async set(value: {}, originatorId: string = null, barrier: string = null): Promise<void> {
+  async set(value, originatorId: string = null, barrier: string|null = null): Promise<void> {
     assert(value !== undefined);
-    await this.initialized;
+
+    let stored: VariableStorage;
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have
@@ -214,28 +223,23 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       const referredType = this.type;
 
       const storageKey = this.storageEngine.baseStorageKey(referredType, this.storageKey);
-
-      await this.ensureBackingStore();
+      const backingStore = await this.ensureBackingStore();
 
       // TODO(shans): mutating the storageKey here to provide unique keys is
       // a hack that can be removed once entity mutation is distinct from collection
       // updates. Once entity mutation exists, it shouldn't ever be possible to write
       // different values with the same id.
-      await this.backingStore.store(value, [this.storageKey + this.localKeyId++]);
+      await backingStore.store(value, [this.storageKey + this.localKeyId++]);
 
       // Store the indirect pointer to the storageKey
       // Do this *after* the write to backing store, otherwise null responses could occur
-      await this.getStoredAndUpdate(stored => {
-        return {id: value['id'], storageKey};
+      stored = await this.upsert(async doc => {
+        doc.referenceMode = this.referenceMode;
+        doc.version = this.version;
+        doc.value = {id: value['id'], storageKey};
+        return doc;
       });
     } else {
-      // If there's a barrier set, then the originating storage-proxy is expecting
-      // a result so we cannot suppress the event here.
-      // TODO(lindner): determine if this is really needed
-      if (JSON.stringify(this._stored) === JSON.stringify(value) && barrier == null) {
-        return;
-      }
-
       // Update Pouch/_stored, If value is null delete key, otherwise store it.
       if (value == null) {
         try {
@@ -249,14 +253,17 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
           }
         }
       } else {
-        await this.getStoredAndUpdate(stored => {
-         return value as ValueStorage;
+        stored = await this.upsert(async doc => {
+          doc.referenceMode = this.referenceMode;
+          doc.version = this.version;
+          doc.value = value;
+          return doc;
         });
       }
     }
-    this.version++;
+    this.bumpVersion();
 
-    const data = this.referenceMode ? value : this._stored;
+    const data = this.referenceMode ? value : stored.value;
     await this._fire('change', new ChangeEvent({data, version: this.version, originatorId, barrier}));
   }
 
@@ -266,7 +273,6 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * @param barrier TBD
    */
   async clear(originatorId: string = null, barrier: string = null): Promise<void> {
-    await this.initialized;
     await this.set(null, originatorId, barrier);
   }
 
@@ -274,23 +280,15 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
    * Triggered when the storage key has been modified or deleted.
    */
   onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<VariableStorage>): void {
-    // Same revs?  No changes, just return.
-    if (doc._rev === this._rev) {
-      return;
-    }
-
-    // This is null for deleted docs.
+    // TODO(lindner): reimplement as simple fires when we have replication working again
     // TODO(lindner): consider using doc._deleted to special case.
     const value = doc.value;
 
     // Store locally
-    this._stored = value;
-    this._rev = doc._rev;
-    this.referenceMode = doc.referenceMode;
     this.bumpVersion(doc.version);
 
     // Skip if value == null, which is what happens when docs are deleted..
-    if (this.referenceMode && value) {
+    if (value) {
       this.ensureBackingStore().then(async store => {
         const data = await store.get(value.id);
         if (!data) {
@@ -308,115 +306,20 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Pouch stored version of _stored.  Requests the value from the
-   * database.
-   *
-   *  - If the fetched revision does not match update the local variable.
-   *  - If the value does not exist store a null value.
-   * @throw on misc pouch errors.
+   * Get/Modify/Set the data stored for this variable.
    */
-  private async getStored(): Promise<ValueStorage> {
-    try {
-      const result: StoredVariable = await this.db.get(this.pouchDbKey.location);
+  private async upsert(mutatorFn: UpsertMutatorFn<VariableStorage>): Promise<VariableStorage> {
+    const defaultDoc: VariableStorage = {
+      value: null,
+      version: 0,
+      referenceMode: this.referenceMode
+    };
+    const doc = await upsert(this.db, this.pouchDbKey.location, mutatorFn, defaultDoc);
 
-      // compare revisions
-      if (this._rev !== result._rev) {
-        // remote revision is different, update local copy.
-        this._stored = result.value;
-        this._rev = result._rev;
-        this.referenceMode = result.referenceMode;
-        this.bumpVersion(result.version);
-      }
-    } catch (err) {
-      if (err.name === 'not_found') {
-        // If the item was removed from storage empty out our local storage and bump the version.
-        this._stored = null;
-        this._rev = undefined;
-        this.version++;
-      } else {
-        console.warn('PouchDbVariable.getStored err=', err);
-        throw err;
-      }
-    }
-    return this._stored;
-  }
+    // post process results from doc here.
+    this.referenceMode = doc.referenceMode;
+    this.version = doc.version;
 
-  /**
-   * Provides a way to apply changes to the stored value in a way that
-   * will result in the stored value being written to the underlying
-   * PouchDB.
-   *
-   * - A new entry is stored if it doesn't exists.
-   * - If the existing entry is available it is fetched
-   * - If revisions differ a new item is written.
-   * - The storage is potentially mutated and written.
-   *
-   * @param variableStorageMutator allows for changing the variable.
-   * @return the current value of _stored.
-   */
-  private async getStoredAndUpdate(variableStorageMutator: ValueStorageMutator): Promise<ValueStorage> {
-    // Keep retrying the operation until it succeeds.
-    while (1) {
-      // TODO(lindner): add backoff and give up after a set period of time.
-      let doc: PouchDB.Core.ExistingDocument<VariableStorage>;
-
-      let notFound = false;
-      try {
-        doc = await this.db.get(this.pouchDbKey.location);
-        // Check remote doc.
-        // TODO(lindner): refactor with getStored above.
-        if (this._rev !== doc._rev) {
-          // remote revision is different, update local copy.
-          this._stored = doc.value;
-          this._rev = doc._rev;
-          this.bumpVersion(doc.version);
-        }
-      } catch (err) {
-        if (err.name !== 'not_found') {
-          throw err;
-        }
-        notFound = true;
-      }
-
-      // Run the mutator on a copy of the existing model
-      const newValue = variableStorageMutator({...this._stored});
-
-      // Check if the mutator made any changes..
-      // TODO(lindner): add a deep equals method for VariableStorage
-      if (!notFound && JSON.stringify(this._stored) === JSON.stringify(newValue)) {
-        // mutator didn't make any changes.
-        return this._stored;
-      }
-
-      // Apply changes made by the mutator
-      doc = {
-        _id: this.pouchDbKey.location,
-        _rev: this._rev,
-        value: newValue,
-        version: this.version,
-        referenceMode: this.referenceMode
-      };
-
-      // Update on pouchdb
-      try {
-        const putResult = await this.db.put(doc);
-        // success! update local with new stored value
-        this._rev = putResult.rev;
-        this._stored = newValue;
-
-        return this._stored;
-      } catch (err) {
-        if (err.name === 'conflict') {
-          // keep trying;
-        } else {
-          // failed to write new doc, give up.
-          console.warn('PouchDbVariable.getStoredAndUpdate (err, doc)=', err, doc);
-          throw err;
-        }
-      }
-    } // end while (1)
-
-    // can never get here..
-    return null;
+    return doc;
   }
 }

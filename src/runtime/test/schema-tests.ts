@@ -19,6 +19,14 @@ import {Schema} from '../schema.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 
+// Modifies the schema in-place.
+function deleteLocations(schema: Schema): Schema {
+  for (const [name, type] of Object.entries(schema.fields)) {
+    delete type.location;
+  }
+  return schema;
+}
+
 describe('schema', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
@@ -52,12 +60,24 @@ describe('schema', () => {
   it('schemas load recursively', async () => {
     const manifest = await Manifest.load('Product.schema', loader);
     const schema = manifest.findSchemaByName('Product');
-    assert.deepEqual(schema.fields, {description: 'Text', image: 'URL', category: 'Text',
-                                     price: 'Text', seller: 'Text', shipDays: 'Number',
-                                     url: 'URL', identifier: 'Text', isReal: 'Boolean',
-                                     brand: 'Object', name: 'Text'});
     assert.equal(schema.name, 'Product');
     assert.include(schema.names, 'Thing');
+
+    const kind = 'schema-primitive';
+    const expected = {
+      description: {kind, type: 'Text'},
+      image:       {kind, type: 'URL'},
+      category:    {kind, type: 'Text'},
+      price:       {kind, type: 'Text'},
+      seller:      {kind, type: 'Text'},
+      shipDays:    {kind, type: 'Number'},
+      url:         {kind, type: 'URL'},
+      identifier:  {kind, type: 'Text'},
+      isReal:      {kind, type: 'Boolean'},
+      brand:       {kind, type: 'Object'},
+      name:        {kind, type: 'Text'}
+    };
+    assert.deepEqual(deleteLocations(schema).fields, expected);
   });
 
   it('constructs an appropriate entity subclass', async () => {
@@ -333,7 +353,9 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Person.fields, ...Animal.fields};
-    assert.deepEqual(Schema.union(Person, Animal), new Schema(['Person', 'Animal', 'Thing'], fields));
+    const expected = deleteLocations(new Schema(['Person', 'Animal', 'Thing'], fields));
+    const actual = deleteLocations(Schema.union(Person, Animal));
+    assert.deepEqual(actual, expected);
   });
 
   it('handles field type conflict in schema unions', async () => {
@@ -361,7 +383,9 @@ describe('schema', () => {
     const Animal = manifest.findSchemaByName('Animal');
 
     const fields = {...Thing.fields, isReal: 'Boolean'};
-    assert.deepEqual(Schema.intersect(Animal, Product), new Schema(['Thing'], fields));
+    const expected = deleteLocations(new Schema(['Thing'], fields));
+    const actual = deleteLocations(Schema.intersect(Animal, Product));
+    assert.deepEqual(actual, expected);
   });
 
   it('handles schema intersection if no shared supertype and a conflicting field', async () => {
@@ -375,7 +399,9 @@ describe('schema', () => {
     assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
     assert.isUndefined(intersection.fields.price);
 
-    assert.deepEqual(Schema.intersect(Person, Product), new Schema([], {name: 'Text'}));
+    const expected = deleteLocations(new Schema([], {name: 'Text'}));
+    const actual = deleteLocations(Schema.intersect(Person, Product));
+    assert.deepEqual(actual, expected);
   });
 
   it('handles empty schema intersection as empty object', async () => {

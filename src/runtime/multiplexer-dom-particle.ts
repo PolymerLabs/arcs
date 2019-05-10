@@ -11,7 +11,6 @@
 import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
-import {Arc} from './arc.js';
 import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
@@ -84,7 +83,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       otherMappedHandles,
       otherConnections
     });
-    super.setHandles(handles);
+    await super.setHandles(handles);
   }
 
   async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {

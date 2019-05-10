@@ -1008,7 +1008,14 @@ SchemaReferenceType = 'Reference<' whiteSpace* schema:(SchemaInline / TypeName) 
   }
 
 SchemaPrimitiveType
-  = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes' / 'Object'
+  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes' / 'Object')
+  {
+    return {
+      kind: 'schema-primitive',
+      location: location(),
+      type
+    } as AstNode.SchemaPrimitiveType;
+  }
 
 SchemaUnionType
   = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)+ whiteSpace? ')'

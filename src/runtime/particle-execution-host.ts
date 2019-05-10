@@ -21,6 +21,7 @@ import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
+import {Services} from './services.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -246,6 +247,13 @@ export class ParticleExecutionHost {
         }
         reportSystemException(exception);
       }
+
+      // TODO(sjmiles): experimental `services` impl
+      async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
+        const response = await Services.request(request);
+        this.SimpleCallback(callback, response);
+      }
+
     }(port, arc);
   }
 
