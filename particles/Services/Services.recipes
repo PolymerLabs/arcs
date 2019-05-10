@@ -2,3 +2,8 @@ import 'particles/ServiceTest.particle'
 
 recipe ServiceTest
   ServiceTest
+
+import 'particles/Tfjs.particle'
+
+recipe Tfjs
+  Tfjs
