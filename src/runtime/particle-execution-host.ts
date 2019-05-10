@@ -140,7 +140,9 @@ export class ParticleExecutionHost {
         //
         // Without an auditor on the runtime side that inspects what is being fetched from
         // this store, particles with a reference can access any data of that reference's type.
-        this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), String(Math.random())/*store.id*/, storageKey);
+        //
+        // TOODO(sjmiles): randomizing the id as a workaround for https://github.com/PolymerLabs/arcs/issues/2936
+        this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), `${store.id}:${`String(Math.random())`.slice(2, 9)}`, storageKey);
       }
 
       onConstructInnerArc(callback: number, particle: Particle) {
