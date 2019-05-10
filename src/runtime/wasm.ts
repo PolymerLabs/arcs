@@ -88,6 +88,7 @@ export class EntityProtoConverter {
     for (const [name, value] of Object.entries(entity.toLiteral())) {
       const field = this.schema.fields[name];
       if (field.kind === 'schema-collection') {
+        // tslint:disable-next-line: no-any
         proto[name] = [...(value as Set<any>)].map(v => scalar(field.schema, v));
       } else {
         proto[name] = scalar(field, value);
@@ -100,7 +101,7 @@ export class EntityProtoConverter {
     const proto = this.message.decode(buffer);
     const scalar = (field, value) => (field === 'URL') ? value.href : value;
     const data = {};
-    for (const [name, value] of Object.entries(proto.toJSON())) {
+    for (const [name, value] of Object.entries(proto.toJSON()) as [string, []][]) {
       const field = this.schema.fields[name];
       if (field.kind === 'schema-collection') {
         data[name] = value.map(v => scalar(field.schema, v));
