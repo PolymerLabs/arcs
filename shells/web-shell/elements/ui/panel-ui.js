@@ -179,8 +179,8 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
 <pre>${WebConfig.config.storage}</pre>
 <h3>Planner Storage</h3>
 <pre>${WebConfig.config.plannerStorage}</pre>
-<h3>Recent Users</h3>
-<select><option>${users.join('</option><option>')}</option></select>
+<!-- <h3>Recent Users</h3>
+<select><option>${users.join('</option><option>')}</option></select> -->
     `;
   }
   commitSearch(search) {
