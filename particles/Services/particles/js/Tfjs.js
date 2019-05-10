@@ -11,7 +11,23 @@
 
 defineParticle(({DomParticle, log, html, resolver}) => {
 
+  // TODO(sjmiles): es6 `import` not supported yet in workers, `import_` is an MVP attempt
+  // to model `import` using `importScripts`
+
+  // `namespace` is a global that should be valued after importing the script
+  // `path` is absolute, or relative to this module
+  const import_ = (namespace, path) => {
+    if (typeof self[namespace] === 'undefined') {
+      importScripts(resolver(`$here/${path}`));
+    }
+    return self[namespace];
+  };
+
+  // import our Tf proxy-to-service
+  const Tf = import_('Tf', '../../lib/tf.js');
+
   const template = html`
+
 <div style="padding: 8px;">
   <h2>TensorFlowJS Linear Regression</h2>
   <h4>training (<span>{{fits}}</span> calls to .fit)</h4>
@@ -21,6 +37,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   <h4>outputs</h4>
   <pre>{{outputs}}</pre>
 </div>
+
   `;
 
   return class extends DomParticle {
@@ -42,7 +59,10 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       }
     }
     async run({training, query, fits}) {
-      const response = await this.service({call: 'tfjs.linearRegression', training, query, fits});
+      const tf = new Tf(this);
+      const model = await tf.sequential();
+      const response = await tf.linearRegression(model, training, fits, query);
+      tf.dispose(model);
       this.setState({response});
     }
     render({}, {training, query, fits, response}) {
