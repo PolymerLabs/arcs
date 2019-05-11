@@ -25,7 +25,8 @@ const Particle = Capabilities => {
             getState() { return this.state; }
 
             /** @override */
-	    html(str) { return Capabilities.html([str]); }
+            html(str) { return Capabilities.html([str]); }
+
             /** @override */
             log(str) { return Capabilities.log(str); }
         }
@@ -37,6 +38,3 @@ const Particle = Capabilities => {
 };
 
 defineParticle(Particle);
-
-
-

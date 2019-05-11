@@ -4,7 +4,6 @@
     <list default="true" id="5f82c9f8-bf9c-4b64-bcf7-6a7319fbc489" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../../../../package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../canonical.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../../../canonical.manifest" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,6 +16,7 @@
     <session id="1696022971">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
+          <entry key="project.closed" value="1" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.opened" value="1" />
         </counts>
@@ -26,12 +26,14 @@
           <entry key="bzl" value="1" />
           <entry key="java" value="5" />
           <entry key="js" value="2" />
+          <entry key="md" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="JAVA" value="5" />
           <entry key="JavaScript" value="2" />
+          <entry key="Markdown" value="1" />
           <entry key="PLAIN_TEXT" value="1" />
         </counts>
       </usages-collector>
@@ -96,11 +98,21 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/arcs/J2clParticle.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="120">
               <caret line="31" column="52" selection-start-line="31" selection-start-column="52" selection-end-line="31" selection-end-column="52" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/../README.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor />
+              <second_editor />
             </state>
           </provider>
         </entry>
@@ -282,16 +294,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1557514540769</updated>
-      <workItem from="1557514542221" duration="800000" />
+      <workItem from="1557514542221" duration="1114000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="800000" />
+    <option name="totallyTimeSpent" value="1114000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="117" y="84" width="1680" height="942" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="Image Layers" />
       <window_info id="Designer" />
@@ -409,6 +420,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="120">
           <caret line="31" column="52" selection-start-line="31" selection-start-column="52" selection-end-line="31" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor />
+          <second_editor />
         </state>
       </provider>
     </entry>

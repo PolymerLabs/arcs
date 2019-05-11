@@ -1,5 +1,9 @@
-/** @fileoverview provides externs definitions for 
- * defineParticle() and related types */
+/** 
+ * @fileoverview provides externs definitions for 
+ * defineParticle() and related types 
+ */
+
+/* eslint-disable no-var */
 
 /** 
  * @interface
