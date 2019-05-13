@@ -13,8 +13,10 @@ import {Particle} from '../recipe/particle.js';
 import {SlotComposerOptions} from '../slot-composer.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {InterfaceType} from '../type.js';
+import {Arc} from '../arc.js';
 
 import {FakeSlotComposer} from './fake-slot-composer.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const logging = false;
 const log = !logging ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');

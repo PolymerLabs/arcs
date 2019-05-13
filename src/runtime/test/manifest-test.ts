@@ -416,7 +416,7 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('treats a failed import as non-fatal', async () => {
+  it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
     const loader = new StubLoader({
       'a': `import 'b'`,
       'b': `lol what is this`,

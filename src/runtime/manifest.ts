@@ -731,7 +731,7 @@ ${e.message}
     this._buildRecipe(manifest, recipe, recipeItem);
   }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem) {
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem: AstNode.Recipe) {
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
@@ -743,26 +743,26 @@ ${e.message}
       handles: recipeItem.items.filter(item => item.kind === 'handle'),
       byHandle: new Map(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItem.items.filter(item => item.kind === 'requireHandle'),
+      requireHandles: recipeItem.items.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       byRequireHandle: new Map(),
-      particles: recipeItem.items.filter(item => item.kind === 'particle'),
+      particles: recipeItem.items.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
       byParticle: new Map(),
-      slots: recipeItem.items.filter(item => item.kind === 'slot'),
+      slots: recipeItem.items.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind === 'connection'),
-      search: recipeItem.items.find(item => item.kind === 'search'),
-      description: recipeItem.items.find(item => item.kind === 'description')
+      connections: recipeItem.items.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
+      search: recipeItem.items.find(item => item.kind === 'search') as AstNode.RecipeSearch,
+      description: recipeItem.items.find(item => item.kind === 'description') as AstNode.Description
     };
 
 
     // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item).
     // A recipe should not use both methods.
     assert(!(items.handles.length > 0 && items.requireHandles.length > 0), `Inconsistent handle definitions`);
-    const itemHandles = items.handles.length > 0 ? items.handles : items.requireHandles;
+    const itemHandles = (items.handles.length > 0 ? items.handles : items.requireHandles) as (AstNode.RecipeHandle | AstNode.RequireHandleSection)[];
     for (const item of itemHandles) {
       const handle = recipe.newHandle();
-      const ref = item.ref || {tags: []};
+      const ref = item.ref;
       if (ref.id) {
         handle.id = ref.id;
         const targetStore = manifest.findStoreById(handle.id);
@@ -834,7 +834,6 @@ ${e.message}
     for (const item of items.slots) {
       // TODO(mmandlis): newSlot requires a name. What should the name be here?
       const slot = recipe.newSlot(undefined);
-      item.ref = item.ref || {};
       if (item.ref.id) {
         slot.id = item.ref.id;
       }
@@ -852,8 +851,6 @@ ${e.message}
     // TODO: disambiguate.
     for (const item of items.particles) {
       const particle = recipe.newParticle(item.ref.name);
-      // TODO: particle doesn't have a tags member. Should we be setting this here?
-      particle['tags'] = item.ref.tags;
       particle.verbs = item.ref.verbs;
 
       if (!(recipe instanceof RequireSection)) {
@@ -1104,7 +1101,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        this._buildRecipe(manifest, requireSection, item);
+        this._buildRecipe(manifest, requireSection, (item as any) as AstNode.Recipe);
       }
     }
   }

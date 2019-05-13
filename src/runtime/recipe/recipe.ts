@@ -12,7 +12,7 @@ import {HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType, Type} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from './handle-connection.js';
+import {Direction} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';

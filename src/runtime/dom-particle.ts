@@ -26,11 +26,9 @@ export interface DomParticle extends StatefulDomParticle {
  * to handle updates.
  */
 export class DomParticle extends XenStateMixin(DomParticleBase) {
+  _handlesToSync: Set<string>;
   constructor() {
     super();
-    // alias properties to remove `_`
-    this.state = this._state;
-    this.props = this._props;
   }
 
   /**
@@ -66,6 +64,21 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
    */
   setState(state) {
     return this._setState(state);
+  }
+
+  /**
+   * Added getters and setters to support usage of .state.
+   */
+  get state() {
+    return this._state;
+  }
+
+  set state(state) {
+    this.setState(state);
+  }
+
+  get props() {
+    return this._props;
   }
 
   /**
@@ -112,7 +125,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
-    this._handlesToSync = new Set();
+    this._handlesToSync = new Set<string>();
     for (const name of this.config.handleNames) {
       const handle = handles.get(name);
       if (handle && handle.options.keepSynced && handle.options.notifySync) {
@@ -121,7 +134,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
     // TODO(sjmiles): we must invalidate at least once,
     // let's assume we will miss _handlesToProps if handlesToSync is empty
-    if (!this._handlesToSync.length) {
+    if (!this._handlesToSync.size) {
       this._invalidate();
     }
   }
