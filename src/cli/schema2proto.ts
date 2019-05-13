@@ -19,16 +19,16 @@ import {Utils} from '../../shells/lib/runtime/utils.js';
 void (async () => {
   Utils.init('../..');
 
-  const usage = 'Usage: schema2proto <manifest-files>';
+  const usage = 'Usage: schema2proto --out <destination-dir> <manifest-files>';
 
-  async function processFiles(paths) {
+  async function processFiles(paths, destDir) {
 
     const visited = new Set<Schema>();
     for (const path of paths) {
       let manifest;
       try {
         manifest = await Utils.parse("import '" + path + "'");
-        processManifest(manifest, visited);
+        processManifest(manifest, visited, destDir);
       } catch (err) {
         console.error(`Error reading '${path}':`);
         console.log('Is your manifest resource not relative to the Arcs repo root?');
@@ -37,7 +37,7 @@ void (async () => {
     }
   }
 
-  async function processManifest(manifest: Manifest, visited: Set<Schema>) {
+  async function processManifest(manifest: Manifest, visited: Set<Schema>, destDir: string) {
     for (const schemaKey of Object.keys(manifest.schemas)) { 
      try {
       const schema = manifest.schemas[schemaKey];
@@ -45,14 +45,14 @@ void (async () => {
         continue;
       }
       visited.add(schema);
-      const protoFile = await toProtoFile(manifest.schemas[schemaKey]);
-      console.log(protoFile);
+      const protoFile = await toProtoFile(schema);
+      fs.writeFileSync(destDir + '/' + schema.name + '.proto', protoFile);
      } catch(e) {
       console.error(e);
      }
     }
     for (const imp of manifest.imports) {
-      processManifest(imp, visited);
+      processManifest(imp, visited, destDir);
     }
   }
 
@@ -64,7 +64,15 @@ void (async () => {
 
     // First two entries in argv are the node binary and this file.
     const args = process.argv.slice(2);
-    await processFiles(args);
+    if (args[0] !== '--out') {
+      console.log(usage);
+      process.exit(1);
+    }
+    const destDir = args[1];
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, {recursive: true});
+    }
+    await processFiles(args.slice(2), destDir);
   }
 
   console.log();

@@ -18,8 +18,9 @@ export async function toProtoFile(schema: Schema) {
     const protoPromise = new Promise((resolve, reject) => {
      try {
       // For now, default all packages to 'arcs'
-      proto_target(Root.fromJSON({nested: {"arcs": json}}), { syntax: 'proto2' }, 
-        (err, out) => {err != null ? reject(err) : resolve(out)});
+      const jsonInArcsPackage = ({nested: {"arcs": json}});
+      proto_target(Root.fromJSON(jsonInArcsPackage), { syntax: 'proto2' }, 
+        (err, out) => {err != null ? reject(err) : resolve(out);});
      } catch (e) {
       reject(e);
      }
