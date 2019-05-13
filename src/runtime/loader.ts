@@ -63,16 +63,24 @@ export class Loader {
     if (/^https?:\/\//.test(file)) {
       return this._loadURL(file);
     }
-    return this._loadFile(file);
+    return this._loadFile(file, 'utf-8') as Promise<string>;
   }
 
-  async _loadFile(file: string): Promise<string> {
+  async loadBinary(file: string): Promise<ArrayBuffer> {
+    if (/^https?:\/\//.test(file)) {
+      return fetch(file).then(res => res.arrayBuffer());
+    } else {
+      return this._loadFile(file, null) as Promise<ArrayBuffer>;
+    }
+  }
+
+  async _loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(file, (err, data) => {
+      fs.readFile(file, {encoding}, (err, data: string | Buffer) => {
         if (err) {
           reject(err);
         } else {
-          resolve(data.toString('utf-8'));
+          resolve(encoding ? (data as string) : (data as Buffer).buffer);
         }
       });
     });

@@ -31,16 +31,19 @@ export class PlatformLoader extends Loader {
   flushCaches() {
     simpleCache = {};
   }
-  loadResource(name) {
+  loadResource(url) {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
-    return this._loadURL(name);
-  }
-  _loadURL(url) {
     const resolved = this._resolve(url);
     const cacheKey = this.normalizeDots(url);
     const resource = simpleCache[cacheKey];
     return resource || (simpleCache[cacheKey] = super._loadURL(resolved));
+  }
+  loadBinary(url) {
+    const resolved = this._resolve(url);
+    const cacheKey = this.normalizeDots(url);
+    const resource = simpleCache[cacheKey];
+    return resource || (simpleCache[cacheKey] = super.loadBinary(resolved));
   }
   _resolve(path) {
     let url = this._urlMap[path];
