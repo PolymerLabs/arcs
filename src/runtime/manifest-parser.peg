@@ -227,10 +227,10 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args = [];
+    let args: {}[] = [];
     const modality = [];
-    const slotConnections = [];
-    let description = null;
+    const slotConnections: {}[] = [];
+    let description: AstNode.Description | null = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = optional(items, extractIndented, []);

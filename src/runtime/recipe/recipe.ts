@@ -20,6 +20,7 @@ import {Search} from './search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
+import {Cloneable} from './walker.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -27,7 +28,7 @@ export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
 export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean};
 
-export class Recipe {
+export class Recipe implements Cloneable<Recipe> {
   private readonly _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
@@ -460,20 +461,20 @@ export class Recipe {
     return true;
   }
 
-  clone(cloneMap=undefined): Recipe {
+  clone(map: Map<RecipeComponent, RecipeComponent> = undefined): Recipe {
     // for now, just copy everything
 
     const recipe = new Recipe(this.name);
 
-    if (cloneMap == undefined) {
-      cloneMap = new Map();
+    if (map == undefined) {
+      map = new Map();
     }
 
-    this._copyInto(recipe, cloneMap);
+    this._copyInto(recipe, map);
 
     // TODO: figure out a better approach than stashing the cloneMap permanently
     // on the recipe
-    recipe._cloneMap = cloneMap;
+    recipe._cloneMap = map;
 
     return recipe;
   }
@@ -580,7 +581,7 @@ export class Recipe {
   //       lists into a normal ordering.
   //
   // use { showUnresolved: true } in options to see why a recipe can't resolve.
-  toString(options = undefined): string {
+  toString(options: ToStringOptions = undefined): string {
     const nameMap = this._makeLocalNameMap();
     const result = [];
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
