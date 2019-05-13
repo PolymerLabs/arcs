@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'List/List.recipes'
 import 'Profile/Profile.recipes'
 import 'Products/Products.recipe'
@@ -16,3 +17,19 @@ import 'Demo/Demo.recipes'
 import 'TicTacToe/TicTacToe.recipes'
 // Uncomment to enable native particle recipes
 // import 'Native/native.recipes'
+=======
+//import 'List/List.recipes'
+//import 'Profile/Profile.recipes'
+//import 'Products/Products.recipe'
+//import 'Events/Events.recipes'
+//import 'Restaurants/Restaurants.recipes'
+//import 'Music/Music.recipes'
+//import 'TVMaze/TVMaze.recipes'
+//import 'Words/Words.recipes'
+//import 'Demo/Demo.recipes'
+
+// Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
+import 'Tutorial/Tutorial.recipes'
+
+//import 'TicTacToe/TicTacToe.recipes'
+>>>>>>> 975d3d1f... Filter out suggestions with fallback descriptions but haven't updated dev tools.
