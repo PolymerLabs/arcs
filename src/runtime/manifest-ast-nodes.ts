@@ -241,7 +241,7 @@ export interface RequireHandleSection extends BaseNode {
 
 export interface RecipeRequire extends BaseNode {
   kind: 'require';
-  items: RecipeItem;
+  items: RecipeItem[];
 }
 
 export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;

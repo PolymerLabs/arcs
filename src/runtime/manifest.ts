@@ -725,36 +725,36 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
-  private static _processRecipe(manifest, recipeItem, loader) {
-    // TODO: annotate other things too
+  // TODO(cypher): Remove loader dependency.
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.Recipe, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
-    this._buildRecipe(manifest, recipe, recipeItem);
-  }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem: AstNode.Recipe) {
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
+    this._buildRecipe(manifest, recipe, recipeItem.items);
+  }
+
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
     const items = {
-      require: recipeItem.items.filter(item => item.kind === 'require'),
-      handles: recipeItem.items.filter(item => item.kind === 'handle'),
+      require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
+      handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
       byHandle: new Map(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItem.items.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
+      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       byRequireHandle: new Map(),
-      particles: recipeItem.items.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
+      particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
       byParticle: new Map(),
-      slots: recipeItem.items.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
+      slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
-      search: recipeItem.items.find(item => item.kind === 'search') as AstNode.RecipeSearch,
-      description: recipeItem.items.find(item => item.kind === 'description') as AstNode.Description
+      connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
+      search: recipeItems.find(item => item.kind === 'search') as AstNode.RecipeSearch,
+      description: recipeItems.find(item => item.kind === 'description') as AstNode.Description
     };
-
 
     // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item).
     // A recipe should not use both methods.
@@ -1101,7 +1101,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        this._buildRecipe(manifest, requireSection, (item as any) as AstNode.Recipe);
+        this._buildRecipe(manifest, requireSection, item.items);
       }
     }
   }
