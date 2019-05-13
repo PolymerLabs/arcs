@@ -27,7 +27,7 @@
     "s-test-shells": "run-s --print-name --continue-on-error test-wdio-shells",
     "build:tsc": "tsc",
     "watch:tsc": "tsc -w",
-    "build:webpack": "webpack",
+    "build:webpack": "webpack && webpack --config ./src/tools/webpack.config.js",
     "watch:webpack": "webpack --watch",
     "watch": "concurrently npm:watch:*"
   },
@@ -74,7 +74,8 @@
     "wdio-spec-reporter": "^0.1.5",
     "webdriverio": "^4.14.1",
     "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "webpack-cli": "^3.2.3",
+    "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
     "assert": "^1.4.1",

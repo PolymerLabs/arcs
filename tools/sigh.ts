@@ -80,7 +80,7 @@ const eslintCache = '.eslint_sigh_cache';
 const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'src/gen', 'test-output', coverageDir];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
