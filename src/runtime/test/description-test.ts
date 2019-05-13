@@ -708,8 +708,13 @@ recipe
       const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
 
-      assert.equal(description.getRecipeSuggestion(), expectedDescription);
-      assert.deepEqual(description.getRecipeSuggestion(DescriptionDomFormatter),
+      const [recipeDescription, useFallbackDescription] = description.getRecipeSuggestion();
+      assert.equal(useFallbackDescription, true);
+      assert.equal(recipeDescription, expectedDescription);
+      const [recipeDescriptionWithFormatter, useFallbackDescriptionWithFormatter] =
+        description.getRecipeSuggestion(DescriptionDomFormatter);
+      assert.equal(useFallbackDescriptionWithFormatter, true);
+      assert.deepEqual(recipeDescriptionWithFormatter,
                        {template: expectedDescription, model: {}});
     };
 

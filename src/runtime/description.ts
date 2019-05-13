@@ -74,9 +74,9 @@ export class Description {
     const formatter = new (formatterClass)(this.particleDescriptions, this.storeDescById);
     const desc = formatter.getDescription(this.arcRecipes[this.arcRecipes.length - 1]);
     if (desc) {
-      return desc;
+      return [desc, false];
     }
-    return formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription);
+    return [formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription), true];
   }
 
   getHandleDescription(recipeHandle: Handle): string {

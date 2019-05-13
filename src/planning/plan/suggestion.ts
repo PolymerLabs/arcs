@@ -45,6 +45,7 @@ export class Suggestion {
   planString: string;
   // TODO: update Description class to be serializable.
   descriptionByModality = {};
+  usedFallbackDescription = false;
   versionByStore = {};
   readonly hash: string;
   readonly rank: number;
@@ -91,11 +92,16 @@ export class Suggestion {
   }
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
-    this.descriptionByModality['text'] = description.getRecipeSuggestion();
+    this.usedFallbackDescription = false;
+    const [textDescription, usedFallbackDescription] = description.getRecipeSuggestion();
+    if (usedFallbackDescription) {
+      this.usedFallbackDescription = true;
+    }
+    this.descriptionByModality['text'] = textDescription;
     for (const planModality of this.plan.modality.names) {
       if (modality.names.includes(planModality)) {
-        this.descriptionByModality[planModality] =
-          description.getRecipeSuggestion(descriptionFormatter);
+        const [modalityDescription, _] = description.getRecipeSuggestion(descriptionFormatter);
+        this.descriptionByModality[planModality] = modalityDescription;
       }
     }
   }
