@@ -1,6 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const nodeExternals = require('webpack-node-externals');
 
 const buildDir = './build/tools';
 
@@ -15,7 +14,6 @@ module.exports = {
     filename: '[name].js',
     path: path.resolve(__dirname, `../../dist/tools`)
   },
-  externals: [nodeExternals()],
   plugins: [
     new webpack.NormalModuleReplacementPlugin(
       // Replace all the web variants with node ones.
