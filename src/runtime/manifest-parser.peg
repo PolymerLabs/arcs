@@ -312,7 +312,7 @@ ParticleArgument
 ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
-    return text() as string;
+    return text() as AstNode.Direction;
   }
 
 ParticleArgumentType
@@ -366,7 +366,7 @@ TypeVariable "a type variable (e.g. ~foo)"
   }
 
 SlotType
-  = 'Slot' fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+  = 'Slot' &whiteSpace fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
     const data = fields[2];
