@@ -261,13 +261,6 @@ export interface ParticleConnectionTargetComponents extends BaseNode {
   tags: TagList;
 }
 
-export interface ParticleConnnectionTargetComponents extends BaseNode {
-  kind: 'hanlde-connection-components';
-  name: string|null;
-  particle: string|null;
-  tags: TagList;
-}
-
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
   name: string|null;
