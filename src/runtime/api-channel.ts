@@ -37,7 +37,7 @@ interface MappingInfo {
   ignore?: boolean;
 }
 
-interface Literalizer<T, Lit> {
+interface Literalizable<T, Lit> {
   prototype: {
     toLiteral(): Lit;
   };
@@ -46,9 +46,9 @@ interface Literalizer<T, Lit> {
 
 
 
-type TypeLiteralizer = Literalizer<Type, TypeLiteral>;
-type ParticleSpecLiteralizer = Literalizer<ParticleSpec, SerializedParticleSpec>;
-type PropagatedExceptionLiteralizer = Literalizer<PropagatedException, SerializedPropagatedException>;
+type TypeLiteralizer = Literalizable<Type, TypeLiteral>;
+type ParticleSpecLiteralizer = Literalizable<ParticleSpec, SerializedParticleSpec>;
+type PropagatedExceptionLiteralizer = Literalizable<PropagatedException, SerializedPropagatedException>;
 
 
 const targets = new Map<{}, Map<string, MappingInfo[]>>();
