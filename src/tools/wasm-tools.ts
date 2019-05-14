@@ -7,15 +7,19 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema} from './schema.js';
-import { toProtoJSON } from './wasm.js';
+import {Schema} from '../runtime/schema.js';
+import {toProtoJSON} from '../runtime/wasm.js';
 import proto_target from 'protobufjs/cli/targets/proto.js';
 import Root from 'protobufjs/src/root.js';
 
-// Convert a Schema to .proto format that can be used to compile protobuf wrappers
-export async function toProtoFile(schema: Schema) {
+/**
+ * Convert a Schema to .proto format that can be used to compile protobuf wrappers
+ * @param schema a Schema to convert to a proto
+ * @returns a string proto2 representation of a .proto file in the 'arcs' package
+ */
+export async function toProtoFile(schema: Schema):Promise<string> {
     const json = toProtoJSON(schema);
-    const protoPromise = new Promise((resolve, reject) => {
+    const protoPromise = new Promise<string>((resolve, reject) => {
      try {
       // For now, default all packages to 'arcs'
       const jsonInArcsPackage = ({nested: {"arcs": json}});

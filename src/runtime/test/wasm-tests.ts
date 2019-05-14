@@ -13,7 +13,7 @@ import {EntityProtoConverter} from '../wasm.js';
 import {Manifest} from '../manifest.js';
 import protobufjs from 'protobufjs';
 import parse from 'protobufjs/src/parse.js';
-import {toProtoFile} from '../wasm-tools.js';
+import {toProtoFile} from '../../tools/wasm-tools.js';
 
 describe('wasm', () => {
 
@@ -116,36 +116,26 @@ describe('wasm', () => {
 
   it('schema to .proto file conversion supports basic types', async () => {
     const protoFile = await toProtoFile(schema);
-    // don't turn field names into camelcase
-    const {root} = await parse(protoFile, {keepCase: true});
-    const message = root.lookupType(schema.name);
 
-    const entityClass = schema.entityClass();
-    const entityData = {
-      txt: 'abc',
-      lnk: 'http://def',
-      num: 37,
-      flg: true,
-      c_txt: ['g', 'h'],
-      c_lnk: ['http://ijk', 'http://lmn'],
-      c_num: [51, 73, 26],
-      c_flg: [false, true]
-    };
+    assert.deepEqual(`syntax = "proto2";
 
-    const foo = new entityClass(entityData);
-    const epc = new EntityProtoConverter(schema);
-    const buffer = epc.encode(foo);
-    const decoded = message.decode(buffer);
+package arcs;
 
-    // URLs are message objects with href fields in Proto, so we can't compare them
-    // without converting them to an object first
-    /* tslint:disable no-any */
-    const expected = entityData as any;
+message Foo {
 
-    /* tslint:enable no-any */
-    expected['lnk'] = { href: entityData.lnk };
-    expected['c_lnk'] = entityData.c_lnk.map(l => ({href: l}));
+    repeated bool c_flg = 1;
+    repeated Url c_lnk = 2;
+    repeated double c_num = 3;
+    repeated string c_txt = 4;
+    optional bool flg = 5;
+    optional Url lnk = 6;
+    optional double num = 7;
+    optional string txt = 8;
+}
 
-    assert.deepEqual(entityData, decoded.toJSON());
+message Url {
+
+    optional string href = 1;
+}`, protoFile);
   });
 });

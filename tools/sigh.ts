@@ -73,6 +73,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   unit: [unit],
   health: [health],
   bundle: [build, bundle],
+  schema2proto: [build, schema2proto],
   default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
 };
 
@@ -766,6 +767,18 @@ function bundle(args: string[]) {
       '--loader',
       fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
       `build/tools/bundle-cli.js`,
+      ...args
+    ],
+    {stdio: 'inherit'});
+}
+
+// E.g. $ ./tools/sigh schema2proto -o particles/native/wasm/proto particles/Restaurants/Restaurants.recipes
+function schema2proto(args: string[]) {
+  return saneSpawn(`node`, [
+      '--experimental-modules',
+      '--loader',
+      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
+      `build/tools/schema2proto.js`,
       ...args
     ],
     {stdio: 'inherit'});

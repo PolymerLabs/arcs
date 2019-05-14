@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --experimental-modules --no-deprecation --loader=./tools/custom-loader.mjs -r source-map-support/register.js
 /**
  * @license
- * Copyright (c) 2018 Google Inc. All rights reserved.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -12,22 +12,42 @@
 import fs from 'fs';
 import {Manifest} from '../runtime/manifest.js';
 import {Schema} from '../runtime/schema.js';
-import {toProtoFile} from '../runtime/wasm-tools.js';
+import {toProtoFile} from './wasm-tools.js';
 import {Utils} from '../../shells/lib/runtime/utils.js';
+import minimist from 'minimist';
+
+const argv = minimist(process.argv.slice(2), {
+  string: ['output'],
+  boolean: ['help'],
+  alias: {o: 'output'},
+});
+
+if (argv.help || argv._.length === 0) {
+  console.log(`Usage
+  $ schema2proto [-options] [file ...]
+
+Description
+  Creates a .proto files from manifests.
+
+Options
+  --output, -o   output directory name for all proto files
+  --help         usage info
+
+Examples [Must be run from Arcs repository root]
+  $ schema2proto --output particles/native/wasm/proto particles/canonical.manifest`);
+  process.exit();
+}
 
 // Converts schema definitions specifies in Manifest files to proto2 specifications.
-void (async () => {
+(async () => {
   Utils.init('../..');
-
-  const usage = 'Usage: schema2proto --out <destination-dir> <manifest-files>';
 
   async function processFiles(paths, destDir) {
 
     const visited = new Set<Schema>();
     for (const path of paths) {
-      let manifest;
       try {
-        manifest = await Utils.parse("import '" + path + "'");
+        const manifest = await Utils.parse("import '" + path + "'");
         processManifest(manifest, visited, destDir);
       } catch (err) {
         console.error(`Error reading '${path}':`);
@@ -38,9 +58,8 @@ void (async () => {
   }
 
   async function processManifest(manifest: Manifest, visited: Set<Schema>, destDir: string) {
-    for (const schemaKey of Object.keys(manifest.schemas)) { 
+    for (const schema of Object.values(manifest.schemas)) {
      try {
-      const schema = manifest.schemas[schemaKey];
       if (visited.has(schema)) {
         continue;
       }
@@ -57,22 +76,18 @@ void (async () => {
   }
 
   async function main() {
-    if (!fs.existsSync(process.cwd() + '/tools/schema2proto')) {
-      console.log('schema2proto must be run from the root level of the arcs repository.');
-      process.exit(1);
-    }
+    const destDir = argv.o;
 
-    // First two entries in argv are the node binary and this file.
-    const args = process.argv.slice(2);
-    if (args[0] !== '--out') {
-      console.log(usage);
-      process.exit(1);
-    }
-    const destDir = args[1];
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir, {recursive: true});
     }
-    await processFiles(args.slice(2), destDir);
+
+    if (!fs.statSync(destDir).isDirectory()) {
+      console.log(destDir + ' exists, but is not a directory.')
+      process.exit(1);
+    }
+
+    await processFiles(argv._, destDir);
   }
 
   console.log();
