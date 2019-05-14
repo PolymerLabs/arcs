@@ -534,12 +534,12 @@ recipe
       `;
       const manifest = (await Manifest.parse(manifestStr));
       const recipe = manifest.recipes[0];
-      const ScriptDate = manifest.findSchemaByName('ScriptDate').entityClass().type;
-      recipe.handles[0].mapToStorage({id: 'test:1', type: ScriptDate});
+      const scriptDateType = manifest.findSchemaByName('ScriptDate').entityClass().type;
+      recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
-      const store = await arc.createStore(ScriptDate, undefined, 'test:1') as VariableStorageProvider;
+      const store = await arc.createStore(scriptDateType, undefined, 'test:1') as VariableStorageProvider;
       await test.verifySuggestion({arc}, 'Stardate .');
 
       await store.set({id: 1, rawData: {date: 'June 31'}});
