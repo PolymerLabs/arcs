@@ -8,7 +8,7 @@
 A hosted version of Arcs is available in both tagged and bleeding edge forms.
 Neither is stable -- the runtime, database and front-end are all iterating rapidly.
 
-[TypeDoc](https://polymerlabs.github.io/arcs-live/dist/apidocs/)
+[TypeDoc](https://live.arcs.dev/dist/apidocs/)
 generated documentation is available for Arcs Runtime.
 
 ## Tagged Releases
@@ -20,8 +20,8 @@ Tagged release URLs have the form
 path due to a previous version of shell code) is
 [v0.4.1](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.4.1/shell/apps/web/index.html).
 
-Bleeding edge often works and is available via github pages:
-https://polymerlabs.github.io/arcs-live/shells/web-shell
+Bleeding edge often works and is available on:
+https://live.arcs.dev/
 
 
 
