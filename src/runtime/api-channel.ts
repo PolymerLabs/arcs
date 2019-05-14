@@ -23,7 +23,7 @@ import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Literal} from './hot.js';
+import {Literal, Literalizable} from './hot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -36,13 +36,6 @@ interface MappingInfo<T> {
   converter?: Literalizable<T, Literal>;
   identifier?: boolean;
   ignore?: boolean;
-}
-
-interface Literalizable<T, Lit extends Literal> {
-  prototype: {
-    toLiteral(): Lit;
-  };
-  fromLiteral(literal: Lit): T;
 }
 
 // tslint:disable-next-line:no-any
