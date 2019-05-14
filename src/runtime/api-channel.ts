@@ -38,8 +38,7 @@ interface MappingInfo<T> {
   ignore?: boolean;
 }
 
-// tslint:disable-next-line:no-any
-const targets = new Map<{}, Map<string, MappingInfo<any>[]>>();
+const targets = new Map<{}, Map<string, MappingInfo<unknown>[]>>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
   if (!targets.has(target)) {
