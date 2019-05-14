@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {EntityProtoConverter} from '../wasm.js';
 import {Manifest} from '../manifest.js';
-import protobufjs from 'protobufjs';
+import {toProtoFile} from '../../tools/wasm-tools.js';
 
 describe('wasm', () => {
 
@@ -110,5 +110,30 @@ describe('wasm', () => {
     for (const schema of Object.values(manifest.schemas)) {
       assert.throws(() => new EntityProtoConverter(schema), 'not yet supported');
     }
+  });
+
+  it('schema to .proto file conversion supports basic types', async () => {
+    const protoFile = await toProtoFile(schema);
+
+    assert.deepEqual(`syntax = "proto2";
+
+package arcs;
+
+message Foo {
+
+    repeated bool c_flg = 1;
+    repeated Url c_lnk = 2;
+    repeated double c_num = 3;
+    repeated string c_txt = 4;
+    optional bool flg = 5;
+    optional Url lnk = 6;
+    optional double num = 7;
+    optional string txt = 8;
+}
+
+message Url {
+
+    optional string href = 1;
+}`, protoFile);
   });
 });
