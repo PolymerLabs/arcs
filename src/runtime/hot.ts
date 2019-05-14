@@ -55,3 +55,8 @@ export interface Literalizable<T, Lit extends Literal> {
   /** @return the original type from a Literal, statically */
   fromLiteral(literal: Lit): T;
 }
+
+/** A light-weight, parameterized key-value store Type */
+export interface Dictionary<T> {
+  [key: string]: T;
+}

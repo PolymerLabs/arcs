@@ -7,19 +7,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// TODO(alxr): should this go into `functional` or a "types" file?
-interface Dictionary<T> {
-  [key: string]: T;
-}
+import {Dictionary} from './hot.js';
 
-interface Service {
+export interface Service {
   [name: string]: Function;
 }
 
-
 type Registry = Dictionary<Service>;
 
-interface ServiceRequest {
+export interface ServiceRequest {
   service?: string;
   invoke?: string;
   call?: string;
