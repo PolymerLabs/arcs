@@ -12,6 +12,9 @@ import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('tfjs-service');
 
+//const tfUrl = `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js`;
+const tfUrl = `https://unpkg.com/@tensorflow/tfjs@1.1.2/dist/tf.min.js?module`;
+
 // TODO(sjmiles): demonstrate simple concept for tracking objects across the PEC
 
 const references = [];
@@ -31,7 +34,7 @@ const dispose = reference => {
 
 const requireTf = async () => {
   if (!window.tf) {
-    await dynamicScript(`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js`);
+    await dynamicScript(tfUrl);
   }
   return window.tf;
 };
