@@ -13,9 +13,14 @@ import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {TypeVariableInfo} from './type-variable-info.js';
+import {Literal} from './hot.js';
 
-// tslint:disable-next-line: no-any
-export type TypeLiteral = {tag: string, data?: any};
+export interface TypeLiteral extends Literal {
+  tag: string;
+  // tslint:disable-next-line: no-any
+  data?: any;
+}
+
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
   'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle';
 
