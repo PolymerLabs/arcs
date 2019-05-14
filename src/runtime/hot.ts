@@ -37,7 +37,7 @@ export type Predicate<T> = (input: T) => boolean;
  * `JSON.parse(...)` returns an `any` type. Our definition for literal types is stricter: we demand that values are at
  * least objects (they cannot be `null`, `undefined`, or primitive types).
  */
-export interface Literal {}
+export interface Literal extends Object {}
 
 /**
  * An interface for types that can be converted to and from a `Literal` type.
@@ -48,7 +48,9 @@ export interface Literal {}
 export interface Literalizable<T, Lit extends Literal> {
 
   /** Convert the current instance into a Literal */
-  toLiteral(): Lit;
+  prototype: {
+    toLiteral(): Lit;
+  };
 
   /** @return the original type from a Literal, statically */
   fromLiteral(literal: Lit): T;
