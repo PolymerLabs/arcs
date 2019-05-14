@@ -52,8 +52,7 @@ const tests = [
 
       // Use an any variable to override the default string return type
       // tslint:disable-next-line: no-any
-      let suggestion: any;
-      suggestion = description.getArcDescription(DescriptionDomFormatter);
+      const suggestion = description.getArcDescription(DescriptionDomFormatter) as any;
       let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
       Object.keys(suggestion.model).forEach(m => {
         assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
