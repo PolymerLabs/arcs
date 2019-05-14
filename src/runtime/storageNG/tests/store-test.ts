@@ -125,7 +125,6 @@ describe('Store', async () => {
           return true;
         }
         throw new Error();
-        return false;
       });
 
       await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id});    
@@ -149,7 +148,6 @@ describe('Store', async () => {
       // another store
       const id2 = activeStore.on(proxyMessage => {
         throw new Error();
-        return false;
       });
 
       await activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id1});
@@ -176,7 +174,6 @@ describe('Store', async () => {
           return true;
         }
         throw new Error();
-        return false;
       });
   
       const driver = activeStore['driver'] as MockDriver<CountData>;
