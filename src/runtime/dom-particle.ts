@@ -11,7 +11,7 @@
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase, RenderModel} from './dom-particle-base.js';
 import {Collection, Handle, Variable} from './handle.js';
-import {Runnable} from './functional.js';
+import {Runnable} from './hot.js';
 
 
 export interface StatefulDomParticle extends DomParticleBase {
@@ -71,7 +71,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
    * Copy values from `state` into the particle's internal state,
    * triggering an update cycle unless currently updating.
    */
-  setState(state): void {
+  setState(state): boolean | undefined {
     return this._setState(state);
   }
 
