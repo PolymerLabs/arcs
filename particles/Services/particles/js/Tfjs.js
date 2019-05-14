@@ -45,6 +45,12 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       return template;
     }
     update({}, state) {
+      // TODO(sjmiles): update() is called during SpecEx, while
+      // render() is not. We'll put our processing code in render()
+      // to avoid being expensive at SpecEx time.
+    }
+    render({}, state) {
+      // formerly update
       if (!state.run) {
         state.run = true;
         state.training = [
@@ -57,6 +63,14 @@ defineParticle(({DomParticle, log, html, resolver}) => {
         state.fits = 100;
         this.run(state);
       }
+      // render proper
+      const {training, query, fits, response} = state;
+      return {
+        training: JSON.stringify(training),
+        query,
+        fits,
+        outputs: response || 'training...'
+      };
     }
     async run({training, query, fits}) {
       const tf = new Tf(this);
@@ -64,14 +78,6 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       const response = await tf.linearRegression(model, training, fits, query);
       tf.dispose(model);
       this.setState({response});
-    }
-    render({}, {training, query, fits, response}) {
-      return {
-        training: JSON.stringify(training),
-        query,
-        fits,
-        outputs: response || 'training...'
-      };
     }
   };
 
