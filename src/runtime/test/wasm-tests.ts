@@ -11,8 +11,6 @@
 import {assert} from '../../platform/chai-web.js';
 import {EntityProtoConverter} from '../wasm.js';
 import {Manifest} from '../manifest.js';
-import protobufjs from 'protobufjs';
-import parse from 'protobufjs/src/parse.js';
 import {toProtoFile} from '../../tools/wasm-tools.js';
 
 describe('wasm', () => {

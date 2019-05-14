@@ -10,7 +10,7 @@
 import {Schema} from '../runtime/schema.js';
 import {toProtoJSON} from '../runtime/wasm.js';
 import proto_target from 'protobufjs/cli/targets/proto.js';
-import Root from 'protobufjs/src/root.js';
+import protobufjs from 'protobufjs';
 
 /**
  * Convert a Schema to .proto format that can be used to compile protobuf wrappers
@@ -23,7 +23,7 @@ export async function toProtoFile(schema: Schema):Promise<string> {
      try {
       // For now, default all packages to 'arcs'
       const jsonInArcsPackage = ({nested: {"arcs": json}});
-      proto_target(Root.fromJSON(jsonInArcsPackage), { syntax: 'proto2' }, 
+      proto_target(protobufjs.Root.fromJSON(jsonInArcsPackage), { syntax: 'proto2' },
         (err, out) => {err != null ? reject(err) : resolve(out);});
      } catch (e) {
       reject(e);
