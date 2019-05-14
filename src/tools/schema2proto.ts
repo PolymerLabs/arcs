@@ -83,7 +83,7 @@ Examples [Must be run from Arcs repository root]
     }
 
     if (!fs.statSync(destDir).isDirectory()) {
-      console.log(destDir + ' exists, but is not a directory.')
+      console.log(destDir + ' exists, but is not a directory.');
       process.exit(1);
     }
 
