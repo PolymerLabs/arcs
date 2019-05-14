@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
-
 import {Entity} from './entity.js';
 import {BigCollection, Collection, Variable} from './handle.js';
 import {Particle} from './particle.js';
+import {SlotProxy} from './slot-proxy.js';
+
+export type RenderModel = object;
 
 /**
  * Particle that interoperates with DOM.
@@ -53,7 +54,7 @@ export class DomParticleBase extends Particle {
   /**
    * Override to return a dictionary to map into the template.
    */
-  render(stateArgs?): {} {
+  render(stateArgs?): RenderModel {
     return {};
   }
 
@@ -90,7 +91,7 @@ export class DomParticleBase extends Particle {
           } else {
             content.template = Object.entries(content.template).reduce(
                 (templateDictionary, [templateName, templateValue]) => {
-                  templateDictionary[templateName] = this.slotNamesToModelReferences(slot, templateValue);
+                  templateDictionary[templateName] = this.slotNamesToModelReferences(slot, templateValue as string);
                 return templateDictionary;
               }, {});
           }
@@ -110,7 +111,7 @@ export class DomParticleBase extends Particle {
     this.currentSlotName = undefined;
   }
 
-  private slotNamesToModelReferences(slot, template) {
+  private slotNamesToModelReferences(slot: SlotProxy, template: string) {
     slot.providedSlots.forEach((slotId, slotName) => {
       // TODO: This is a simple string replacement right now,
       // ensuring that 'slotid' is an attribute on an HTML element would be an improvement.
@@ -122,7 +123,7 @@ export class DomParticleBase extends Particle {
 
   // We put slot IDs at the top-level of the model as well as in models for sub-templates.
   // This is temporary and should go away when we move from sub-IDs to [(Entity, Slot)] constructs.
-  private enhanceModelWithSlotIDs(model = {}, slotIDs, topLevel = true) {
+  private enhanceModelWithSlotIDs(model: RenderModel, slotIDs: object, topLevel: boolean = true): RenderModel {
     if (topLevel) {
       model = {...slotIDs, ...model};
     }
@@ -137,12 +138,12 @@ export class DomParticleBase extends Particle {
     return model;
   }
 
-  _getStateArgs() {
+  protected _getStateArgs() {
     return [];
   }
 
   forceRenderTemplate(slotName: string = ''): void {
-    this.slotProxiesByName.forEach((slot, name) => {
+    this.slotProxiesByName.forEach((slot: SlotProxy, name: string) => {
       if (!slotName || (name === slotName)) {
         slot.requestedContentTypes.add('template');
       }

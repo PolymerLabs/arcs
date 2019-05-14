@@ -188,15 +188,15 @@ export class ParticleSpec {
     return this.connections;
   }
 
-  get connections() {
+  get connections(): HandleConnectionSpec[] {
     return [...this.handleConnectionMap.values()];
   }
 
-  get inputs() {
+  get inputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isInput);
   }
 
-  get outputs() {
+  get outputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isOutput);
   }
 
