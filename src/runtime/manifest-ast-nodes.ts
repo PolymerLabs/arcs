@@ -213,9 +213,10 @@ export interface ParticleRef extends BaseNode {
   kind: 'particle-ref';
   name: string;
   verbs: VerbList;
+  tags: TagList;
 }
 
-export interface Recipe extends BaseNode {
+export interface RecipeNode extends BaseNode {
   kind: 'recipe';
   name: string;
   verbs: VerbList;
@@ -476,7 +477,7 @@ export interface NameAndTagList {
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Annotation = string;
 export type LocalName = string;
-export type Manifest = ManifestStorageItem[];
+export type Manifest = ManifestItem[];
 export type ManifestStorageItem = string;
 export type ParticleArgumentDirection = string;
 export type ResourceStart = string;
@@ -511,4 +512,4 @@ export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleArgument|
     InterfaceSlot;
 
 export type ManifestItem =
-    Recipe|Particle|Import|Schema|ManifestStorage|Interface|Meta|Resource;
+    RecipeNode|Particle|Import|Schema|ManifestStorage|Interface|Meta|Resource;
