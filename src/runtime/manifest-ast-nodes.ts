@@ -160,7 +160,7 @@ export interface ParticleModality extends BaseNode {
 
 export interface ParticleArgument extends BaseNode {
   kind: 'particle-argument';
-  direction: string;
+  direction: Direction;
   type: ParticleArgumentType;
   isOptional: boolean;
   dependentConnections: string[];
@@ -201,7 +201,6 @@ export interface ParticleProvidedSlot extends BaseNode {
   formFactor: SlotFormFactor;
   handles: ParticleProvidedSlotHandle[];
 
-  // RecipeParticleProvidedSlot
   param: string;
 }
 
@@ -221,6 +220,7 @@ export interface Recipe extends BaseNode {
   name: string;
   verbs: VerbList;
   items: RecipeItem[];
+  annotation: Annotation;
 }
 
 export interface RecipeParticle extends BaseNode {
@@ -235,11 +235,13 @@ export interface RequireHandleSection extends BaseNode {
   kind: 'requireHandle';
   name: string;
   ref: HandleRef;
+  // TODO: remove fates
+  fate: Fate;
 }
 
 export interface RecipeRequire extends BaseNode {
   kind: 'require';
-  items: RecipeItem;
+  items: RecipeItem[];
 }
 
 export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
@@ -268,8 +270,8 @@ export interface ParticleConnnectionTargetComponents extends BaseNode {
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
   name: string|null;
-  ref: string|null;
-  fate: string;
+  ref: HandleRef;
+  fate: Fate;
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -277,7 +279,8 @@ export interface RecipeParticleSlotConnection extends BaseNode {
   param: string;
   tags: TagList;
   name: string;
-  dependentSlotConnections: RecipeParticleProvidedSlot[];
+  dependentSlotConnections: RecipeParticleSlotConnection[];
+  direction: SlotDirection;
 }
 
 export interface RecipeSlotConnectionRef extends BaseNode {
@@ -286,15 +289,9 @@ export interface RecipeSlotConnectionRef extends BaseNode {
   tags: TagList;
 }
 
-export interface RecipeParticleProvidedSlot extends BaseNode {
-  kind: 'slot-connection-ref';
-  param: string;
-  name: string|null;
-}
-
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
-  direction: string;
+  direction: Direction;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }
@@ -307,7 +304,7 @@ export interface RecipeSearch extends BaseNode {
 
 export interface RecipeSlot extends BaseNode {
   kind: 'slot';
-  ref: string|null;
+  ref: HandleRef;
   name: string|null;
 }
 
@@ -436,7 +433,7 @@ export type InterfaceItem = Interface | InterfaceArgument | InterfaceSlot;
 
 export interface InterfaceArgument extends BaseNode {
   kind: 'interface-argument';
-  direction: string;
+  direction: Direction;
   type: string;
   name: string;
 }
@@ -451,7 +448,7 @@ export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
-  direction: string;
+  direction: Direction;
   isSet: boolean;
 }
 
@@ -478,7 +475,6 @@ export interface NameAndTagList {
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Annotation = string;
-export type Direction = string;
 export type LocalName = string;
 export type Manifest = ManifestStorageItem[];
 export type ManifestStorageItem = string;
@@ -501,6 +497,10 @@ export type whiteSpace = string;
 export type eolWhiteSpace = string;
 export type eol = string;
 
+// String-based enums.
+export type Direction = 'in' | 'out' | 'inout' | 'host';
+export type SlotDirection = 'provide' | 'consume';
+export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
 
 export type ParticleArgumentType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;

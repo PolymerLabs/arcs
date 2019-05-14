@@ -8,9 +8,13 @@ import {assert} from '../../platform/chai-web.js';
 describe('Particle definitions', () => {
   const loader = new Loader();
   const filenames = glob.sync('particles/**/*.{manifest,schema,recipe,recipes}');
-
+  
   filenames
     .forEach(filename => {
+      // skip experimental Native partices for now as they need a heavyweight build step
+      if (filename.indexOf('Native') !== -1) {
+        return;
+      }
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await Manifest.load(filename, loader);
         for (const particle of manifest.particles) {

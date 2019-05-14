@@ -1,4 +1,4 @@
-import 'particles/ServiceTest.particle'
+import 'Tfjs.recipes'
+import 'Ml5.recipes'
+import 'ServiceTest.recipes'
 
-recipe ServiceTest
-  ServiceTest

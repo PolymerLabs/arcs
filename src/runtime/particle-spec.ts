@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Modality} from './modality.js';
-import {Direction} from './recipe/handle-connection.js';
+import {Direction} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
@@ -188,15 +188,15 @@ export class ParticleSpec {
     return this.connections;
   }
 
-  get connections() {
+  get connections(): HandleConnectionSpec[] {
     return [...this.handleConnectionMap.values()];
   }
 
-  get inputs() {
+  get inputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isInput);
   }
 
-  get outputs() {
+  get outputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isOutput);
   }
 

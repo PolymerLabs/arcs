@@ -31,6 +31,7 @@ http://polymer.github.io/PATENTS.txt
 <div slotid="modal"></div>
 
 <script>window.logLevel = 2;</script>
+
 <script type="module">
   import '../services/ml5-service.js';
   import {Utils} from '../lib/runtime/utils.js';
@@ -41,7 +42,7 @@ http://polymer.github.io/PATENTS.txt
   const getUrlParam = name => {
     return new URL(document.location.href).searchParams.get(name);
   }
-  const utils = Utils.init('../../');
+  const utils = Utils.init('../..');
 
   const composer = new DomSlotComposer({
     rootContainer: document.body

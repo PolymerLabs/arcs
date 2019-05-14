@@ -532,7 +532,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
          return;
       }
     }
-  
+
     const version = this.version + 1;
     let storageKey;
     if (this.referenceMode && value) {

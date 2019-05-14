@@ -9,7 +9,8 @@ import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
 import {InterfaceType} from '../type.js';
 
-import {HandleConnection, Direction} from './handle-connection.js';
+import {HandleConnection} from './handle-connection.js';
+import {Direction} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';

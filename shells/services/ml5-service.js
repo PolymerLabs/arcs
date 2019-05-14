@@ -8,6 +8,9 @@
  */
 import {dynamicImport} from './dynamic-import.js';
 import {Services} from '../../build/runtime/services.js';
+import {logFactory} from '../../build/platform/log-web.js';
+
+const log = logFactory('ml5-service');
 
 const requireMl5 = async () => {
   if (!window.ml5) {
@@ -16,13 +19,13 @@ const requireMl5 = async () => {
 };
 
 const classifyImage = async ({imageUrl}) => {
-  console.log('classifying...');
+  log('classifying...');
   await requireMl5();
   const image = await loadImage(imageUrl);
   const classifier = await window.ml5.imageClassifier('MobileNet');
   const results = await classifier.classify(image);
   const result = results.shift();
-  console.log('classifying done.');
+  log('classifying done.');
   return {
     label: result.label,
     probability: result.confidence.toFixed(4)

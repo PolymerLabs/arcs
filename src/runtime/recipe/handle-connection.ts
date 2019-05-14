@@ -14,7 +14,7 @@ import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 
-export type Direction = 'in' | 'out' | 'inout' | 'host';
+import {Direction} from '../manifest-ast-nodes.js';
 
 export class HandleConnection {
   private readonly _recipe: Recipe;

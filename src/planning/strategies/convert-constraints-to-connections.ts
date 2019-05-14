@@ -10,7 +10,7 @@ import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
-import { Direction } from '../../runtime/recipe/handle-connection.js';
+import { Direction } from '../../runtime/manifest-ast-nodes.js';
 import { Descendant } from '../../runtime/recipe/walker.js';
 import { Handle } from '../../runtime/recipe/handle.js';
 
