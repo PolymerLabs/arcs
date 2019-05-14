@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Modality} from './modality.js';
-import {Direction} from './recipe/handle-connection.js';
+import {Direction} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';

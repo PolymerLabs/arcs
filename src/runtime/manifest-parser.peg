@@ -21,6 +21,9 @@
   let indent = '';
   let startIndent = '';
   const indents = [];
+
+  const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
+
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
@@ -782,7 +785,7 @@ RecipeHandle
       kind: 'handle',
       location: location(),
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], null),
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate: type
     } as AstNode.RecipeHandle;
   }
@@ -804,7 +807,7 @@ RequireHandleSection
       kind: 'requireHandle',
       location: location(),
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], null)
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
     } as AstNode.RequireHandleSection;
   }
 
@@ -834,6 +837,7 @@ NameAndTagList
    = name:lowerIdent tags:(whiteSpace TagList)?
    {
      return {
+       location: location(),
        name: name,
        tags: tags = optional(tags, list => list[1], [])
      } as AstNode.NameAndTagList;
@@ -841,6 +845,7 @@ NameAndTagList
    / whiteSpace name:lowerIdent
    {
      return {
+       location: location(),
        name: name,
        tags: []
      } as AstNode.NameAndTagList;
@@ -848,6 +853,7 @@ NameAndTagList
    / whiteSpace tags:TagList
    {
       return {
+        location: location(),
         name: tags[0],
         tags: tags
       } as AstNode.NameAndTagList;
@@ -906,7 +912,7 @@ RecipeSlot
     return {
       kind: 'slot',
       location: location(),
-      ref: optional(ref, ref => ref[1], null),
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       name: optional(name, name => name[1], '')
     } as AstNode.RecipeSlot;
   }

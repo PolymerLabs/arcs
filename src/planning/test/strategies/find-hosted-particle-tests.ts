@@ -63,7 +63,7 @@ describe('FindHostedParticle', () => {
     assert.isDefined(handle.id);
     assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
-    assert.equal(handle.type.interfaceInfo.name, 'HostedInterface');
+    assert.equal((handle.type as InterfaceType).interfaceInfo.name, 'HostedInterface');
   });
   it(`respects type system constraints`, async () => {
     const results = await runStrategy(`
