@@ -44,7 +44,7 @@ function jsonBaseType(type) {
 }
 
 // Returns a JSON representation that protobufjs can use to de/serialize entity data as protobufs.
-function toProtoJSON(schema: Schema) {
+export function toProtoJSON(schema: Schema) {
   let id = 0;
   let hasUrl = false;
   const fields = {};

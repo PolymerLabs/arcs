@@ -11,11 +11,12 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Modality} from './modality.js';
-import {Direction} from './recipe/handle-connection.js';
+import {Direction} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
+import {Literal} from './hot.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -123,17 +124,17 @@ export class ConsumeSlotConnectionSpec {
 
 export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
 
-export type SerializedParticleSpec = {
-  name: string,
-  id?: string,
-  verbs: string[],
-  args: SerializedHandleConnectionSpec[],
-  description: {pattern?: string},
-  implFile: string,
-  implBlobUrl: string | null,
-  modality: string[],
-  slotConnections: SerializedSlotConnectionSpec[]
-};
+export interface SerializedParticleSpec extends Literal {
+  name: string;
+  id?: string;
+  verbs: string[];
+  args: SerializedHandleConnectionSpec[];
+  description: {pattern?: string};
+  implFile: string;
+  implBlobUrl: string | null;
+  modality: string[];
+  slotConnections: SerializedSlotConnectionSpec[];
+}
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
@@ -188,15 +189,15 @@ export class ParticleSpec {
     return this.connections;
   }
 
-  get connections() {
+  get connections(): HandleConnectionSpec[] {
     return [...this.handleConnectionMap.values()];
   }
 
-  get inputs() {
+  get inputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isInput);
   }
 
-  get outputs() {
+  get outputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isOutput);
   }
 

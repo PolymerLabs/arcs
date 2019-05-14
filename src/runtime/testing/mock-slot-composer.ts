@@ -13,8 +13,10 @@ import {Particle} from '../recipe/particle.js';
 import {SlotComposerOptions} from '../slot-composer.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {InterfaceType} from '../type.js';
+import {Arc} from '../arc.js';
 
 import {FakeSlotComposer} from './fake-slot-composer.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const logging = false;
 const log = !logging ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
@@ -187,12 +189,16 @@ export class MockSlotComposer extends FakeSlotComposer {
     return Object.values(particle.connections)
         .filter(conn => conn.type instanceof InterfaceType)
         .map(conn => {
-          const allArcs = this.consumers.reduce((arcs, consumer) => arcs.add(consumer.arc), new Set());
-          const store = [...allArcs].map(arc => arc.findStoreById(conn.handle.id)).find(store => !!store);
+          const allArcs = this.consumers.reduce((arcs, consumer) => arcs.add(consumer.arc), new Set<Arc>());
+          const store = [...allArcs].map(arc => arc.findStoreById(conn.handle.id)).find(store => !!store) as StorageProviderBase;
           if (store.referenceMode) {
-            return store.backingStore._model.getValue(store._stored.id).name;
+            // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
+            // tslint:disable-next-line: no-any
+            return store.backingStore._model.getValue((store as any)._stored.id).name;
           }
-          return store._stored.name;
+          // TODO(cypher1): Unsafe. _stored does not exist on StorageProviderBase.
+          // tslint:disable-next-line: no-any
+          return (store as any)._stored.name;
         });
   }
 

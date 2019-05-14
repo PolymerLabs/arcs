@@ -16,8 +16,7 @@ import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 import { StorageProviderBase } from '../storage/storage-provider-base.js';
-
-type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
+import {Fate} from '../manifest-ast-nodes.js';
 
 export class Handle {
   private readonly _recipe: Recipe;
@@ -176,7 +175,7 @@ export class Handle {
   }
 
   _isValid(options: IsValidOptions) {
-    const tags = new Set();
+    const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
       if (this.fate === 'map' && ['out', 'inout'].includes(connection.direction)) {

@@ -28,7 +28,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   //       OR use service worker to enforce
   //
   // TODO(sjmiles): explain failure of `script-src 'strict-dynamic'`
-  // TODO(sjmiles): less-than-ideal unsafe-eval is turned on for ml5 service
+  // TODO(sjmiles): less-than-ideal unsafe-eval is turned on for TensorFlowJs
   //
   const httpEquiv = 'Content-Security-Policy';
   const content = `
@@ -47,6 +47,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://media.w3.org
         https://*.glitch.me
         https://unpkg.com
+        https://cdn.jsdelivr.net
         ;
     font-src
         'self'

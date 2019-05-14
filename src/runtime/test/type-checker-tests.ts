@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker} from '../recipe/type-checker.js';
-import {EntityType, SlotType, TypeVariable, Type,CollectionType} from '../type.js';
+import {EntityType, SlotType, TypeVariable, Type, CollectionType, BigCollectionType} from '../type.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -24,7 +24,7 @@ describe('TypeChecker', () => {
 
     assert.instanceOf(canWriteSuperset, EntityType);
     assert.equal(canWriteSuperset.entitySchema.name, 'Product');
-    assert.equal(result.resolvedType().collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.equal((result.resolvedType() as CollectionType<EntityType>).collectionType.canWriteSuperset.entitySchema.name, 'Product');
     if (result.isCollectionType() && result.collectionType.canWriteSuperset instanceof EntityType) {
       assert.equal(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
     }
@@ -50,7 +50,7 @@ describe('TypeChecker', () => {
     assert.instanceOf(canWriteSuperset, EntityType);
     assert.equal(canWriteSuperset.entitySchema.name, 'Product');
 
-    canWriteSuperset = result.resolvedType().bigCollectionType.canWriteSuperset as EntityType;
+    canWriteSuperset = (result.resolvedType() as BigCollectionType<EntityType>).bigCollectionType.canWriteSuperset as EntityType;
     assert.instanceOf(canWriteSuperset, EntityType);
     assert.equal(canWriteSuperset.entitySchema.name, 'Product');
 
@@ -282,7 +282,7 @@ describe('TypeChecker', () => {
     assert.equal(true, type.canEnsureResolved());
     assert.equal(true, type.maybeEnsureResolved());
     assert.equal(true, type.isResolved());
-    assert.equal('Product', type.resolvedType().collectionType.entitySchema.names[0]);
+    assert.equal('Product', (type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names[0]);
 
     recipe.normalize();
     assert.equal(true, recipe.isResolved());

@@ -14,46 +14,31 @@ import {Arc} from './arc.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {OuterPortAttachment} from './debug/outer-port-attachment.js';
 import {Handle} from './handle.js';
-import {ParticleSpec, SerializedParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {Type, TypeLiteral} from './type.js';
-import {PropagatedException, SerializedPropagatedException} from './arc-exceptions.js';
+import {Type} from './type.js';
+import {PropagatedException} from './arc-exceptions.js';
+import {Literal, Literalizable} from './hot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
-interface MappingInfo {
+interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
   redundant?: boolean;
-  value?: MappingInfo;
-  key?: MappingInfo;
-  converter?: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException;
+  value?: MappingInfo<T>;
+  key?: MappingInfo<T>;
+  converter?: Literalizable<T, Literal>;
   identifier?: boolean;
   ignore?: boolean;
 }
 
-// TODO(shans): are there better types that I can use for this?
-interface Literalizer {
-  prototype: {toLiteral: () => TypeLiteral};
-  fromLiteral: (typeliteral: TypeLiteral) => Type;
-}
-
-interface LiteralizerParticleSpec {
-  prototype: {toLiteral: () => SerializedParticleSpec};
-  fromLiteral: (spec: SerializedParticleSpec) => ParticleSpec;
-}
-
-interface LiteralizerPropagatedException {
-  prototype: {toLiteral: () => SerializedPropagatedException};
-  fromLiteral: (exception: SerializedPropagatedException) => PropagatedException;
-}
-
-const targets = new Map<{}, Map<string, MappingInfo[]>>();
+const targets = new Map<{}, Map<string, MappingInfo<unknown>[]>>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
   if (!targets.has(target)) {
@@ -64,7 +49,7 @@ function setPropertyKey(target: {}, propertyKey: string) {
   }
 }
 
-function set(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo) {
+function set<T>(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo<T>) {
   setPropertyKey(target, propertyKey);
   targets.get(target).get(propertyKey)[parameterIndex] = info;
 }
@@ -77,23 +62,23 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException) {
+function ByLiteral<T>(constructor: Literalizable<T, Literal>) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
+    const info: MappingInfo<T> = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function ObjectMap(key: MappingType, value: MappingType) {
+function ObjectMap<T>(key: MappingType, value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function List(value: MappingType) {
+function List<T>(value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.List, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
@@ -264,7 +249,7 @@ function getArgs(func) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -291,7 +276,7 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);

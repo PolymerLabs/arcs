@@ -73,6 +73,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   unit: [unit],
   health: [health],
   bundle: [build, bundle],
+  schema2proto: [build, schema2proto],
   default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
 };
 
@@ -80,7 +81,7 @@ const eslintCache = '.eslint_sigh_cache';
 const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'src/gen', 'test-output', coverageDir];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
@@ -324,7 +325,7 @@ function build(): boolean {
 
 function tsc(): boolean {
   const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics']);
-  if (result.stdout) {
+  if (result.success) {
     console.log(result.stdout);
   }
   return result.success;
@@ -766,6 +767,18 @@ function bundle(args: string[]) {
       '--loader',
       fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
       `build/tools/bundle-cli.js`,
+      ...args
+    ],
+    {stdio: 'inherit'});
+}
+
+// E.g. $ ./tools/sigh schema2proto -o particles/native/wasm/proto particles/Restaurants/Restaurants.recipes
+function schema2proto(args: string[]) {
+  return saneSpawn(`node`, [
+      '--experimental-modules',
+      '--loader',
+      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
+      `build/tools/schema2proto.js`,
       ...args
     ],
     {stdio: 'inherit'});
