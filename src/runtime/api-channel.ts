@@ -23,21 +23,22 @@ import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type, TypeLiteral} from './type.js';
 import {PropagatedException, SerializedPropagatedException} from './arc-exceptions.js';
+import {Literal} from './hot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
-interface MappingInfo {
+interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
   redundant?: boolean;
-  value?: MappingInfo;
-  key?: MappingInfo;
-  converter?: TypeLiteralizer | ParticleSpecLiteralizer | PropagatedExceptionLiteralizer;
+  value?: MappingInfo<T>;
+  key?: MappingInfo<T>;
+  converter?: Literalizable<T, Literal>;
   identifier?: boolean;
   ignore?: boolean;
 }
 
-interface Literalizable<T, Lit> {
+interface Literalizable<T, Lit extends Literal> {
   prototype: {
     toLiteral(): Lit;
   };
@@ -51,7 +52,8 @@ type ParticleSpecLiteralizer = Literalizable<ParticleSpec, SerializedParticleSpe
 type PropagatedExceptionLiteralizer = Literalizable<PropagatedException, SerializedPropagatedException>;
 
 
-const targets = new Map<{}, Map<string, MappingInfo[]>>();
+// tslint:disable-next-line:no-any
+const targets = new Map<{}, Map<string, MappingInfo<any>[]>>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
   if (!targets.has(target)) {
@@ -62,7 +64,7 @@ function setPropertyKey(target: {}, propertyKey: string) {
   }
 }
 
-function set(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo) {
+function set<T>(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo<T>) {
   setPropertyKey(target, propertyKey);
   targets.get(target).get(propertyKey)[parameterIndex] = info;
 }
@@ -75,23 +77,23 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: TypeLiteralizer | ParticleSpecLiteralizer | PropagatedExceptionLiteralizer) {
+function ByLiteral<T>(constructor: Literalizable<T, Literal>) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
+    const info: MappingInfo<T> = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function ObjectMap(key: MappingType, value: MappingType) {
+function ObjectMap<T>(key: MappingType, value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function List(value: MappingType) {
+function List<T>(value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.List, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
@@ -262,7 +264,7 @@ function getArgs(func) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -289,7 +291,7 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);

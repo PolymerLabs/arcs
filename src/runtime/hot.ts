@@ -12,6 +12,7 @@
  * Higher Order Types
  */
 
+// Higher Order Function Types
 export type Producer<T> = () => T;
 
 export type Consumer<T> = (input: T) => void;
@@ -20,3 +21,8 @@ export type Runnable = () => void;
 
 export type Predicate<T> = (input: T) => boolean;
 
+
+
+// Higher Order Data Types
+
+export type Literal = object;

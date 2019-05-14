@@ -1,4 +1,5 @@
 import {Particle} from './particle';
+import {Literal} from './hot.js';
 
 /**
  * @license
@@ -10,14 +11,14 @@ import {Particle} from './particle';
  * http://polymer.github.io/PATENTS.txt
  */
 
-export type SerializedPropagatedException = {
-  exceptionType: string,
-  cause: {name: string, message: string, stack: string},  // Serialized Error.
-  method: string,
-  particleId: string,
-  particleName: string,
-  stack: string,
-};
+export interface SerializedPropagatedException extends Literal {
+  exceptionType: string;
+  cause: {name: string, message: string, stack: string};  // Serialized Error.
+  method: string;
+  particleId: string;
+  particleName: string;
+  stack: string;
+}
 
 /** An exception that is to be propagated back to the host. */
 export class PropagatedException extends Error {
