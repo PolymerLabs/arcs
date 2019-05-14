@@ -7,56 +7,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../runtime/loader.js';
-import {Particle} from '../runtime/particle.js';
-import {DomParticle} from '../runtime/dom-particle.js';
-import {MultiplexerDomParticle} from '../runtime/multiplexer-dom-particle.js';
-import {TransformationDomParticle} from '../runtime/transformation-dom-particle.js';
+import {PlatformLoaderBase} from './loader-platform.js';
 import {logFactory} from '../platform/log-web.js';
 
 const log = logFactory('loader-web', 'green');
 const warn = logFactory('loader-web', 'green', 'warn');
 const error = logFactory('loader-web', 'green', 'error');
 
-const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
-
-// mono-state data (module scope)
-let simpleCache = {};
-
-export class PlatformLoader extends Loader {
-  constructor(urlMap) {
-    super();
-    this._urlMap = urlMap || [];
-  }
+export class PlatformLoader extends PlatformLoaderBase {
   flushCaches() {
-    simpleCache = {};
+    // punt object urls?
   }
   loadResource(url) {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
     const resolved = this._resolve(url);
-    const cacheKey = this.normalizeDots(url);
-    const resource = simpleCache[cacheKey];
-    return resource || (simpleCache[cacheKey] = super._loadURL(resolved));
-  }
-  loadBinary(url) {
-    const resolved = this._resolve(url);
-    const cacheKey = this.normalizeDots(url);
-    const resource = simpleCache[cacheKey];
-    return resource || (simpleCache[cacheKey] = super.loadBinary(resolved));
-  }
-  _resolve(path) {
-    let url = this._urlMap[path];
-    if (!url && path) {
-      // TODO(sjmiles): inefficient!
-      const macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
-      if (macro) {
-        url = this._urlMap[macro] + path.slice(macro.length);
-      }
-    }
-    url = url || path;
-    //log(`resolve(${path}) = ${url}`);
-    return url;
+    return super._loadURL(resolved);
   }
   async provisionObjectUrl(fileName) {
     const raw = await this.loadResource(fileName);
@@ -79,8 +45,12 @@ export class PlatformLoader extends Loader {
     const particle = this.loadWrappedParticle(url);
     // execute particle wrapper, if we have one
     if (particle) {
-      return this.unwrapParticle(particle, this.provisionLogger(unresolvedPath));
+      const logger = this.provisionLogger(unresolvedPath);
+      return this.unwrapParticle(particle, logger);
     }
+  }
+  provisionLogger(fileName) {
+    return logFactory(fileName.split('/').pop(), '#1faa00');
   }
   loadWrappedParticle(url) {
     let result;
@@ -103,32 +73,5 @@ export class PlatformLoader extends Loader {
     // clean up
     delete self.defineParticle;
     return result;
-  }
-  unwrapParticle(particleWrapper, log) {
-    const resolver = this._resolve.bind(this);
-    return particleWrapper({
-      Particle,
-      DomParticle,
-      MultiplexerDomParticle,
-      SimpleParticle: DomParticle,
-      TransformationDomParticle,
-      resolver,
-      log,
-      html
-    });
-  }
-  mapParticleUrl(fileName) {
-    const path = this._resolve(fileName);
-    const parts = path.split('/');
-    const suffix = parts.pop();
-    const folder = parts.join('/');
-    const name = suffix.split('.').shift();
-    this.mapUrl(name, folder);
-  }
-  mapUrl(prefix, url) {
-    this._urlMap[prefix] = url;
-  }
-  provisionLogger(fileName) {
-    return logFactory(fileName.split('/').pop(), '#1faa00');
   }
 }

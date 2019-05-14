@@ -12,31 +12,37 @@
 defineParticle(({DomParticle, log, html, resolver}) => {
 
   const template = html`
-
-<div style="padding: 16px;">
-  <div>You know what a <i>haza<i> is Frank?!</div>
-  <div>(Service): <span>{{response}}</span></div>
+<div>
+  <img style="max-width: 240px;" src="{{imageUrl}}"><br>
+  <div>
+    <div>Label: </span><span>{{label}}</div>
+    <div>Confidence: </span><span>{{probability}}</div>
+  </div>
 </div>
-
   `;
+
+  const url = resolver(`Ml5/../../assets/waltbird.jpg`);
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     update({}, state) {
-      if (!state.run) {
-        state.run = true;
-        this.test();
+      if (!state.classified) {
+        state.classified = true;
+        this.classify(url);
       }
     }
-    async test() {
-      const response = await this.service({call: 'test.classify'});
+    async classify(imageUrl) {
+      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
       this.setState({response});
     }
     render({}, {response}) {
+      response = response || {label: '<working>', probability: '<working>'};
       return {
-        response: response ? response.data : '<working>'
+        label: response.label,
+        probability: response.probability,
+        imageUrl: url
       };
     }
   };

@@ -6,4 +6,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export const dynamicImport = path => import(path);
+export const dynamicScript = async src => {
+  return new Promise((resolve, reject) => {
+    document.head.appendChild(Object.assign(document.createElement('script'), {
+      src,
+      onload: () => resolve(),
+      onerror: err => reject(err)
+    }));
+  });
+};
