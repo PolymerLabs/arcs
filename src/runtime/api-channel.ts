@@ -45,13 +45,6 @@ interface Literalizable<T, Lit extends Literal> {
   fromLiteral(literal: Lit): T;
 }
 
-
-
-type TypeLiteralizer = Literalizable<Type, TypeLiteral>;
-type ParticleSpecLiteralizer = Literalizable<ParticleSpec, SerializedParticleSpec>;
-type PropagatedExceptionLiteralizer = Literalizable<PropagatedException, SerializedPropagatedException>;
-
-
 // tslint:disable-next-line:no-any
 const targets = new Map<{}, Map<string, MappingInfo<any>[]>>();
 
