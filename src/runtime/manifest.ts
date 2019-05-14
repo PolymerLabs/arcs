@@ -726,7 +726,7 @@ ${e.message}
   }
 
   // TODO(cypher): Remove loader dependency.
-  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.Recipe, loader) {
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
     if (recipeItem.annotation) {
@@ -849,30 +849,30 @@ ${e.message}
     }
 
     // TODO: disambiguate.
-    for (const item of items.particles) {
-      const particle = recipe.newParticle(item.ref.name);
-      particle.verbs = item.ref.verbs;
+    for (const particleItem of items.particles) {
+      const particle = recipe.newParticle(particleItem.ref.name);
+      particle.verbs = particleItem.ref.verbs;
 
       if (!(recipe instanceof RequireSection)) {
-        if (item.ref.name) {
-          const spec = manifest.findParticleByName(item.ref.name);
+        if (particleItem.ref.name) {
+          const spec = manifest.findParticleByName(particleItem.ref.name);
           if (!spec) {
-            throw new ManifestError(item.location, `could not find particle ${item.ref.name}`);
+            throw new ManifestError(particleItem.location, `could not find particle ${particleItem.ref.name}`);
           }
           particle.spec = spec.clone();
         }
       }
-      if (item.name) {
+      if (particleItem.name) {
         // TODO: errors.
-        assert(!items.byName.has(item.name));
-        particle.localName = item.name;
-        items.byName.set(item.name, {item, particle});
+        assert(!items.byName.has(particleItem.name));
+        particle.localName = particleItem.name;
+        items.byName.set(particleItem.name, {particleItem, particle});
       }
-      items.byParticle.set(particle, item);
+      items.byParticle.set(particle, particleItem);
 
-      for (const slotConnectionItem of item.slotConnections) {
+      for (const slotConnectionItem of particleItem.slotConnections) {
         if (slotConnectionItem.direction === 'provide') {
-          throw new ManifestError(item.location, `invalid slot connection: provide slot must be dependent`);
+          throw new ManifestError(particleItem.location, `invalid slot connection: provide slot must be dependent`);
         }
         let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
         if (!slotConn) {
@@ -899,10 +899,10 @@ ${e.message}
         slotConn.tags = slotConnectionItem.tags || [];
         slotConnectionItem.dependentSlotConnections.forEach(ps => {
           if (ps.direction === 'consume') {
-            throw new ManifestError(item.location, `invalid slot connection: consume slot must not be dependent`);
+            throw new ManifestError(particleItem.location, `invalid slot connection: consume slot must not be dependent`);
           }
           if (ps.dependentSlotConnections.length !== 0) {
-            throw new ManifestError(item.location, `invalid slot connection: provide slot must not have dependencies`);
+            throw new ManifestError(particleItem.location, `invalid slot connection: provide slot must not have dependencies`);
           }
           if (recipe instanceof RequireSection) {
             // replace provided slot if it already exist in recipe.
