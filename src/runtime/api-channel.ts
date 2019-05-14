@@ -37,16 +37,14 @@ interface MappingInfo {
   ignore?: boolean;
 }
 
-// TODO(alxr): these should go into a central ADT file
-type Producer<T> = () => T;
-type Mapper<I, O> = (input: I) => O;
-
 interface Literalizer<T, Lit> {
   prototype: {
-    toLiteral: Producer<Lit>;
+    toLiteral(): Lit;
   };
-  fromLiteral: Mapper<Lit, T>;
+  fromLiteral(literal: Lit): T;
 }
+
+
 
 type TypeLiteralizer = Literalizer<Type, TypeLiteral>;
 type ParticleSpecLiteralizer = Literalizer<ParticleSpec, SerializedParticleSpec>;
