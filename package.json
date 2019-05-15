@@ -93,7 +93,7 @@
     "protobufjs": "^6.8.8",
     "source-map-support": "^0.5.9",
     "sourcemapped-stacktrace": "^1.1.9",
-    "typescript": "^3.4.2",
+    "typescript": "^3.4.5",
     "ws": "^4.1.0"
   },
   "repository": {
