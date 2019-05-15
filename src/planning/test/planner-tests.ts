@@ -875,8 +875,9 @@ describe('Automatic resolution', () => {
         description \`This is the test recipe\`
     `, () => {});
 
+    assert.lengthOf(recipes, 5); // Ensure that all the recipes were parsed.
     recipes = recipes.filter(recipe => recipe.search);
-    assert.lengthOf(recipes, 1);
+    assert.lengthOf(recipes, 1); // Ensure that the search was parsed correctly.
     return recipes[0];
   };
 
@@ -944,6 +945,102 @@ describe('Automatic resolution', () => {
   it.skip('searches and coalesces restaurants recipes by particle name', async () => {
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/test/artifacts/Restaurants/Restaurants.recipes'
+      import './src/runtime/test/artifacts/People/Person.schema'
+
+      store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
+
+      recipe
+        search \`find restaurants\`
+    `, () => {});
+
+    assert.lengthOf(recipes, 1);
+    assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+  });
+
+  const SLANDLESverifyRestaurantsPlanSearch = async (searchStr) => {
+    let recipes = await verifyResolvedPlans(`
+      import './src/runtime/test/artifacts/Restaurants/SLANDLESRestaurants.recipes'
+      import './src/runtime/test/artifacts/People/Person.schema'
+
+      store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
+
+      recipe
+        search \`${searchStr}\`
+        // Description is needed to differentiate this recipe from its equivalent in .recipes file.
+        description \`This is the test recipe\`
+    `, () => {});
+
+    assert.lengthOf(recipes, 5); // Ensure that all the recipes were parsed.
+    recipes = recipes.filter(recipe => recipe.search);
+    assert.lengthOf(recipes, 1); // Ensure that the search was parsed correctly.
+    return recipes[0];
+  };
+
+  it('SLANDLES searches and coalesces nearby restaurants by recipe name', async () => {
+    const recipe = await SLANDLESverifyRestaurantsPlanSearch('nearby restaurants');
+    assert.deepEqual(recipe.particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+    assert.lengthOf(recipe.handles, 4);
+  });
+
+  it('SLANDLES searches and coalesces make reservation by recipe name', async () => {
+    const recipe = await SLANDLESverifyRestaurantsPlanSearch('make reservation');
+    assert.deepEqual(recipe.particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+
+    // Verify handles.
+    assert.lengthOf(recipe.handles, 6);
+    // Only descriptions and person handle have one handle connection.
+    assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
+    // Only person handle has fate other than `create`
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
+    // Naive verification that a specific connection name only binds to the same handle.
+    recipe.handles.forEach(handle => handle.connections.every(conn => {
+      assert.isTrue(recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
+                    `Connection name ${conn.name} is bound to multiple handles.`);
+    }));
+  });
+
+  it('SLANDLES searches and coalesces "nearby restaurants make reservation"', async () => {
+    const recipe = await SLANDLESverifyRestaurantsPlanSearch('nearby restaurants make reservation');
+    assert.deepEqual(recipe.particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+    // Verify handles.
+    assert.lengthOf(recipe.handles, 6);
+    // Only descriptions and person handle have one handle connection.
+    assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
+    // Only person handle has fate other than `create`
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
+    // Naive verification that a specific connection name only binds to the same handle.
+    recipe.handles.forEach(handle => handle.connections.every(conn => {
+      assert.isTrue(recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
+                    `Connection name ${conn.name} is bound to multiple handles.`);
+    }));
+  });
+
+  it('SLANDLES searches and coalesces "nearby restaurants calendar"', async () => {
+    const recipe = await SLANDLESverifyRestaurantsPlanSearch('nearby restaurants calendar');
+    assert.deepEqual(recipe.particles.map(p => p.name).sort(),
+      ['Calendar', 'FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+    // Verify handles.
+    assert.lengthOf(recipe.handles, 7);
+    // Only descriptions and person handle have one handle connection.
+    assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
+    // Only person handle has fate other than `create`
+    assert.isTrue(recipe.handles.every(h => h.fate === 'create' || 'person' === h.connections[0].name));
+    // Naive verification that a specific connection name only binds to the same handle.
+    recipe.handles.forEach(handle => handle.connections.every(conn => {
+      assert.isTrue(conn.name === 'descriptions' ||
+                    recipe.handles.every(otherHandle => handle === otherHandle || !otherHandle.connections.some(otherConn => otherConn.name === conn.name)),
+                    `Connection name ${conn.name} is bound to multiple handles.`);
+    }));
+  });
+
+  // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
+  it.skip('SLANDLES searches and coalesces restaurants recipes by particle name', async () => {
+    const recipes = await verifyResolvedPlans(`
+      import './src/runtime/test/artifacts/Restaurants/SLANDLESRestaurants.recipes'
       import './src/runtime/test/artifacts/People/Person.schema'
 
       store User of Person 'User' in './src/runtime/test/artifacts/Things/empty.json'
