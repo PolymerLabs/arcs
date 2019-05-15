@@ -9,11 +9,13 @@
 import {dynamicImport} from './dynamic-import.js';
 import {Services} from '../../build/runtime/services.js';
 import {logFactory} from '../../build/platform/log-web.js';
+import {Runnable} from '../../build/runtime/hot.js';
+import {Mapper} from '../../src/runtime/hot.js';
 
 const log = logFactory('ml5-service');
 
-const requireMl5 = async () => {
-  if (!window.ml5) {
+const requireMl5: Runnable = async () => {
+  if (!window.hasOwnProperty('ml5')) {
     await dynamicImport('https://unpkg.com/ml5@0.2.3/dist/ml5.min.js');
   }
 };
@@ -22,7 +24,7 @@ const classifyImage = async ({imageUrl}) => {
   log('classifying...');
   await requireMl5();
   const image = await loadImage(imageUrl);
-  const classifier = await window.ml5.imageClassifier('MobileNet');
+  const classifier = await window['ml5'].imageClassifier('MobileNet');
   const results = await classifier.classify(image);
   const result = results.shift();
   log('classifying done.');
@@ -32,7 +34,7 @@ const classifyImage = async ({imageUrl}) => {
   };
 };
 
-const loadImage = async url => {
+const loadImage: Mapper<string, Promise<HTMLImageElement>> = async (url) => {
   return new Promise((resolve) => {
     const image = new Image();
     image.src = url;
