@@ -289,8 +289,7 @@ ParticleItem "a particle item"
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
   {
-    dependentConnections = optional(dependentConnections, extractIndented, []);
-    arg.dependentConnections = dependentConnections;
+    arg.dependentConnections = optional(dependentConnections, extractIndented, []);
     return arg as AstNode.ParticleHandle;
   }
 
@@ -303,7 +302,7 @@ ParticleArgument
       direction,
       type: type,
       isOptional: !!isOptional,
-      dependentConnections: [],
+      dependentConnections: [] as AstNode.ParticleHandle[],
       name: nametag.name,
       tags: nametag.tags,
     } as AstNode.ParticleArgument;
@@ -1108,7 +1107,7 @@ upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
-fieldName "a field name (e.g. foo9)"
+fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 whiteSpace "one or more whitespace characters"
   = " "+
