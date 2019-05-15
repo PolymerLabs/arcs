@@ -11,6 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 
@@ -32,7 +33,7 @@ export class PlanningResult {
   contextual = true;
   store: VariableStorageProvider;
   private storeCallback: ({}) => void;
-  private changeCallbacks: (() => void)[] = [];
+  private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
   constructor(envOptions: EnvOptions, store?: VariableStorageProvider) {

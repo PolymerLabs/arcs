@@ -11,6 +11,7 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
+import {Runnable} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
@@ -28,7 +29,7 @@ export class Particle {
   public handles: ReadonlyMap<string, Handle>;
 
   private _idle: Promise<void> = Promise.resolve();
-  private _idleResolver: (() => void);
+  private _idleResolver: Runnable;
   private _busy = 0;
 
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();

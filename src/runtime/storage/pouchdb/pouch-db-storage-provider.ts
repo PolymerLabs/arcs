@@ -10,6 +10,7 @@
 
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {ReferenceType, Type} from '../../type.js';
+import {Runnable} from '../../hot.js';
 import {StorageProviderBase} from '../storage-provider-base.js';
 
 import {PouchDbCollection} from './pouch-db-collection.js';
@@ -34,7 +35,7 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
   // All public methods must call `await initialized` to avoid race
   // conditions on initialization.
   protected readonly initialized: Promise<void>;
-  protected resolveInitialized: () => void;
+  protected resolveInitialized: Runnable;
 
   protected constructor(type: Type, storageEngine: PouchDbStorage, name: string, id: string, key: string, refMode: boolean) {
     super(type, name, id, key);
