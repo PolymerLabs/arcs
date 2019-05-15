@@ -16,7 +16,7 @@ export enum StorageMode {Direct, Backing, ReferenceMode}
 
 export enum ProxyMessageType { SyncRequest, ModelUpdate, Operations }
 
-type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.SyncRequest, id: number} | 
+export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.SyncRequest, id: number} | 
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id: number} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id: number}; 
 

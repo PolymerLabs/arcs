@@ -34,7 +34,7 @@ export type SingletonOperation<T> = {
   clock: VersionMap,
 };
 
-interface CRDTSingletonTypeRecord<T> extends CRDTTypeRecord {
+export interface CRDTSingletonTypeRecord<T> extends CRDTTypeRecord {
   data: SingletonData<T>;
   operation: SingletonOperation<T>;
   consumerType: RawSingleton<T>;
