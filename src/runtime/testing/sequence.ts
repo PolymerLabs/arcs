@@ -291,7 +291,7 @@ export class SequenceTest<T> {
           try {
             output.response.onOutput(value);
           } catch (e) {
-            console.log.apply(console, this.interleavingLog as any);
+            console.log(...this.interleavingLog);
             throw e;
           }
         }
@@ -581,7 +581,7 @@ export class SequenceTest<T> {
           try {
             test(obj[sensor.name]);
           } catch (e) {
-            console.log.apply(console, this.interleavingLog as any);
+            console.log(...this.interleavingLog);
             throw e;
           }
         }

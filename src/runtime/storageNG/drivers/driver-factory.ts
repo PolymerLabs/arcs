@@ -63,8 +63,4 @@ export class DriverFactory {
     }
     return false;
   }
-
-  static clearProvidersForTesting() {
-    this.providers = [];
-  }
 }
