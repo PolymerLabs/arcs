@@ -3,20 +3,21 @@ import {Manifest} from '../manifest.js';
 import {Entity, MutableEntityData} from '../entity.js';
 
 describe('Entity', () => {
-  describe('mutability', async () => {
-    // Define an interface for the Foo schema.
-    interface FooEntity extends Entity {
-      bar: string;
-    }
-    const manifest = await Manifest.parse(`
-      schema Foo
-        Text bar
-    `);
-    const schema = manifest.findSchemaByName('Foo');
-    const entityClass = schema.entityClass();
+  describe('mutability', () => {
 
-    // Helper function to create new Foo entities.
-    const newFooEntity = (bar: string) => new entityClass({bar}) as FooEntity;
+    let entityClass;
+
+    before(async () => {
+      const manifest = await Manifest.parse(`
+        schema Foo
+          Text bar
+      `);
+      entityClass = manifest.findSchemaByName('Foo').entityClass();
+    });
+
+    function newFooEntity(bar) {
+      return new entityClass({bar});
+    }
 
     it('is mutable by default', () => {
       const entity = newFooEntity('abc');

@@ -11,14 +11,11 @@
 import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-
-const fs = require('fs');
+import {fs} from '../../platform/fs-web.js';
 
 // TODO make this a function and test it; it's big enough now
 
-
-(async () => {
+void (async () => {
 
   const configFile = process.argv[1];
   const manifestFile = process.argv[2];
@@ -41,6 +38,8 @@ const fs = require('fs');
   } catch (e) {
     console.error(e);
     process.exit(1);
+    // Make the compiler happy that config is always initialized.
+    return;
   }
 
   const flowchecker = new FlowChecker(config);

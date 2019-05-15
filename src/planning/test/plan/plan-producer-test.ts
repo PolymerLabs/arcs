@@ -152,7 +152,7 @@ describe('plan producer - search', () => {
       this.options = options;
     }
 
-    setNextSearch(search: string) {
+    async setNextSearch(search: string) {
       this.searchStore.set([{arc: this.arc.id.idTreeAsString(), search}]);
       return this.onSearchChanged();
     }

@@ -33,6 +33,12 @@ document.addEventListener('arcs-debug-out', e => {
   }
 });
 
+// Utility event for Arcs Runtime embedders for clearing state of the Arcs Explorer on demand.
+document.addEventListener('clear-arcs-explorer', _ => {
+  // Using the same message as a full page reload of a browser.
+  document.dispatchEvent(new CustomEvent('arcs-debug-out', {detail: [{messageType: 'page-refresh'}]}));
+});
+
 let initialized = false;
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   switch (message.messageType) {

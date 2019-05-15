@@ -280,7 +280,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
 
     generateAndStoreRecoveryKey(): PromiseLike<RecoveryKey> {
         // TODO: Implement
-        return Promise.reject("Not implemented");
+      throw new Error("Not implemented");
     }
 
     generateDeviceKey(): PromiseLike<DeviceKey> {
@@ -315,7 +315,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
             }, true, ["encrypt", "wrapKey"]).then(ikey => new WebCryptoPublicKey(ikey));
     }
 
-    importWrappedKey(wrappedKey: string, wrappedBy: PublicKey):Promise<WrappedKey> {
+    async importWrappedKey(wrappedKey: string, wrappedBy: PublicKey):Promise<WrappedKey> {
       const decodedKey = decode(wrappedKey);
       return Promise.resolve(new WebCryptoWrappedKey(decodedKey, wrappedBy));
     }
@@ -351,7 +351,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
     }
 
     async find(keyId: string): Promise<Key|null> {
-        const result:KeyRecord = await this.runOnStore(store => {
+        const result:KeyRecord = await this.runOnStore(async store => {
             return store.get(keyId);
         });
 
@@ -368,13 +368,13 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             return Promise.resolve(new WebCryptoWrappedKey(result.key as Uint8Array,
                 wrappedBy));
         }
-        return Promise.reject("Unrecognized key type found in keystore.");
+        throw new Error("Unrecognized key type found in keystore.");
     }
 
     async write(keyFingerPrint: string, key: DeviceKey|WrappedKey): Promise<string> {
         if (key instanceof WebCryptoStorableKey) {
             const skey = key as WebCryptoStorableKey<CryptoKey>;
-            await this.runOnStore(store => {
+            await this.runOnStore(async store => {
                 return store.put({keyFingerPrint, key: skey.storableKey()});
             });
             return keyFingerPrint;
@@ -382,13 +382,13 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             const wrappedKey = key as WebCryptoWrappedKey;
             const wrappingKeyFingerprint = await wrappedKey.wrappedBy.fingerprint();
 
-            await this.runOnStore(store => {
+            await this.runOnStore(async store => {
                 return store.put({keyFingerPrint, key:wrappedKey.wrappedKeyData,
                     wrappingKeyFingerprint});
             });
             return keyFingerPrint;
         }
-        return Promise.reject("Can't write key that isn't StorableKey or WrappedKey.");
+        throw new Error("Can't write key that isn't StorableKey or WrappedKey.");
     }
 
     static getInstance() {

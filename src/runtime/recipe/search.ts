@@ -11,7 +11,7 @@ export class Search {
   _phrase: string;
   _unresolvedTokens: string[];
   _resolvedTokens: string[];
-  constructor(phrase: string, unresolvedTokens = undefined) {
+  constructor(phrase: string, unresolvedTokens: string[] = undefined) {
     assert(phrase);
     this._phrase = phrase;
 
@@ -31,7 +31,7 @@ export class Search {
     assert(tokens.length === this.unresolvedTokens.length + this.resolvedTokens.length);
   }
 
-  _append(phrase, unresolvedTokens, resolvedTokens) {
+  _append(phrase: string, unresolvedTokens, resolvedTokens) {
     // concat phrase
     if (this._phrase.length > 0) {
       this._phrase = this.phrase.concat(' ');
@@ -41,9 +41,10 @@ export class Search {
     unresolvedTokens.forEach(t => this._unresolvedTokens.push(t));
   }
 
-  get phrase() { return this._phrase; }
+  get phrase(): string { return this._phrase; }
   get unresolvedTokens() { return this._unresolvedTokens; }
   get resolvedTokens() { return this._resolvedTokens; }
+
   resolveToken(token) {
     const index = this.unresolvedTokens.indexOf(token.toLowerCase());
     assert(index >= 0, `Cannot resolved nonexistent token ${token}`);
@@ -51,18 +52,18 @@ export class Search {
     this._resolvedTokens.push(token.toLowerCase());
   }
 
-  isValid() {
+  isValid(): boolean {
     return this._unresolvedTokens.length > 0 || this._resolvedTokens.length > 0;
   }
 
-  isResolved() {
+  isResolved(): boolean {
     assert(Object.isFrozen(this));
     // Recipe is considered resolved, if at least one of the search tokens was resolved.
     // TODO: Unresolved tokens don't prevent the recipe from being resolved. For now...
     return this._resolvedTokens.length > 0;
   }
 
-  _normalize() {
+  _normalize(): void {
     this._unresolvedTokens.sort();
     this._resolvedTokens.sort();
 
@@ -82,7 +83,7 @@ export class Search {
     return recipe.search;
   }
 
-  toString(options) {
+  toString(options): string {
     const result = [];
     result.push(`search \`${this.phrase}\``);
 

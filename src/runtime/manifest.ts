@@ -171,7 +171,7 @@ export class Manifest {
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
-  private warnings = <ManifestError[]>[];
+  private errors = <ManifestError[]>[];
   constructor({id}) {
     // TODO: Cleanup usage of strings as Ids.
     assert(id instanceof Id || typeof id === 'string');
@@ -381,22 +381,22 @@ export class Manifest {
   static async parse(content: string, options?): Promise<Manifest> {
     options = options || {};
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {session_id, fileName, loader, registry, context} = options;
+    let {session_id, fileName, loader, registry, context, throwImportErrors} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
-    function dumpWarnings(manifest: Manifest) {
-      for (const warning of manifest.warnings) {
+    function dumpErrors(manifest: Manifest) {
+      for (const error of manifest.errors) {
         // TODO: make a decision as to whether we should be logging these here, or if it should
         //       be a responsibility of the caller.
         // TODO: figure out how to have node print the correct message and stack trace
-        if (warning.key) {
-          if (globalWarningKeys.has(warning.key)) {
+        if (error.key) {
+          if (globalWarningKeys.has(error.key)) {
             continue;
           }
-          globalWarningKeys.add(warning.key);
+          globalWarningKeys.add(error.key);
         }
-        console.warn(processError(warning).message);
+        console.warn(processError(error).message);
       }
     }
 
@@ -466,8 +466,8 @@ ${e.message}
           try {
             manifest._imports.push(await Manifest.load(target, loader, {registry}));
           } catch (e) {
-            manifest.warnings.push(e);
-            manifest.warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
+            manifest.errors.push(e);
+            manifest.errors.push(new ManifestError(item.location, `Error importing '${target}'`));
           }
         }
       }));
@@ -494,13 +494,17 @@ ${e.message}
       await processItems('store', item => this._processStore(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
-      dumpWarnings(manifest);
+      dumpErrors(manifest);
       throw processError(e, false);
     }
-    dumpWarnings(manifest);
+    dumpErrors(manifest);
+    if (options.throwImportErrors && manifest.errors.length > 0) {
+      throw manifest.errors[0];
+    }
     return manifest;
   }
-  static _augmentAstWithTypes(manifest, items) {
+
+  private static _augmentAstWithTypes(manifest, items) {
     const visitor = new class extends ManifestVisitor {
       constructor() {
         super();
@@ -601,7 +605,8 @@ ${e.message}
     }();
     visitor.traverse(items);
   }
-  static _processSchema(manifest, schemaItem) {
+
+  private static _processSchema(manifest, schemaItem) {
     let description;
     const fields = {};
     let names = [...schemaItem.names];
@@ -656,10 +661,12 @@ ${e.message}
     }
     manifest._schemas[name] = schema;
   }
-  static _processResource(manifest, schemaItem) {
+
+  private static _processResource(manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
-  static _processParticle(manifest, particleItem, loader) {
+
+  private static _processParticle(manifest, particleItem, loader) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -690,8 +697,9 @@ ${e.message}
 
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
+
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
-  static _processInterface(manifest, interfaceItem) {
+  private static _processInterface(manifest, interfaceItem) {
     const handles = [];
     for (const arg of interfaceItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
@@ -716,43 +724,45 @@ ${e.message}
     const ifaceInfo = new InterfaceInfo(interfaceItem.name, handles, slots);
     manifest._interfaces.push(ifaceInfo);
   }
-  static _processRecipe(manifest, recipeItem, loader) {
-    // TODO: annotate other things too
+
+  // TODO(cypher): Remove loader dependency.
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.Recipe, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
-    this._buildRecipe(manifest, recipe, recipeItem);
-  }
-  static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem) {
+
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
+    this._buildRecipe(manifest, recipe, recipeItem.items);
+  }
+
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
     const items = {
-      require: recipeItem.items.filter(item => item.kind === 'require'),
-      handles: recipeItem.items.filter(item => item.kind === 'handle'),
+      require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
+      handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
       byHandle: new Map(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItem.items.filter(item => item.kind === 'requireHandle'),
+      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       byRequireHandle: new Map(),
-      particles: recipeItem.items.filter(item => item.kind === 'particle'),
+      particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
       byParticle: new Map(),
-      slots: recipeItem.items.filter(item => item.kind === 'slot'),
+      slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind === 'connection'),
-      search: recipeItem.items.find(item => item.kind === 'search'),
-      description: recipeItem.items.find(item => item.kind === 'description')
+      connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
+      search: recipeItems.find(item => item.kind === 'search') as AstNode.RecipeSearch,
+      description: recipeItems.find(item => item.kind === 'description') as AstNode.Description
     };
-
 
     // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item).
     // A recipe should not use both methods.
     assert(!(items.handles.length > 0 && items.requireHandles.length > 0), `Inconsistent handle definitions`);
-    const itemHandles = items.handles.length > 0 ? items.handles : items.requireHandles;
+    const itemHandles = (items.handles.length > 0 ? items.handles : items.requireHandles) as (AstNode.RecipeHandle | AstNode.RequireHandleSection)[];
     for (const item of itemHandles) {
       const handle = recipe.newHandle();
-      const ref = item.ref || {tags: []};
+      const ref = item.ref;
       if (ref.id) {
         handle.id = ref.id;
         const targetStore = manifest.findStoreById(handle.id);
@@ -767,7 +777,7 @@ ${e.message}
       }
       handle.tags = ref.tags;
       if (item.name) {
-        assert(!items.byName.has(item.name));
+        assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
         handle.localName = item.name;
         items.byName.set(item.name, {item, handle});
       }
@@ -824,7 +834,6 @@ ${e.message}
     for (const item of items.slots) {
       // TODO(mmandlis): newSlot requires a name. What should the name be here?
       const slot = recipe.newSlot(undefined);
-      item.ref = item.ref || {};
       if (item.ref.id) {
         slot.id = item.ref.id;
       }
@@ -842,8 +851,6 @@ ${e.message}
     // TODO: disambiguate.
     for (const item of items.particles) {
       const particle = recipe.newParticle(item.ref.name);
-      // TODO: particle doesn't have a tags member. Should we be setting this here?
-      particle['tags'] = item.ref.tags;
       particle.verbs = item.ref.verbs;
 
       if (!(recipe instanceof RequireSection)) {
@@ -1094,7 +1101,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        this._buildRecipe(manifest, requireSection, item);
+        this._buildRecipe(manifest, requireSection, item.items);
       }
     }
   }
@@ -1109,7 +1116,8 @@ ${e.message}
     }
     return null;
   }
-  static async _processStore(manifest, item, loader) {
+
+  private static async _processStore(manifest, item, loader) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1217,16 +1225,18 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
-    store.fromLiteral({version, model});
+    await store.fromLiteral({version, model});
   }
-  static async _createStore(manifest, type, name, id, tags, item, originalId) {
+
+  private static async _createStore(manifest, type, name, id, tags, item, originalId) {
     const store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
     store.originalId = originalId;
     return store;
   }
-  _newRecipe(name) {
+
+  private _newRecipe(name) {
     const recipe = new Recipe(name);
     this._recipes.push(recipe);
     return recipe;

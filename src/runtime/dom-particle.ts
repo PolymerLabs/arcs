@@ -7,13 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
-import {DomParticleBase} from './dom-particle-base.js';
-import {Collection, Variable} from './handle.js';
+import {DomParticleBase, RenderModel} from './dom-particle-base.js';
+import {Collection, Handle, Variable} from './handle.js';
+import {Runnable} from './hot.js';
 
-interface StatefulDomParticle extends DomParticleBase {
+
+export interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here
   _invalidate(): void;
 }
@@ -22,59 +23,84 @@ interface StatefulDomParticle extends DomParticleBase {
 export interface DomParticle extends StatefulDomParticle {
 }
 
-/** @class DomParticle
+export interface DomParticleConfig {
+  handleNames: string[];
+  slotNames: string[];
+}
+
+/**
  * Particle that interoperates with DOM and uses a simple state system
  * to handle updates.
  */
 export class DomParticle extends XenStateMixin(DomParticleBase) {
+  _handlesToSync: Set<string>;
   constructor() {
     super();
-    // alias properties to remove `_`
-    this.state = this._state;
-    this.props = this._props;
   }
-  /** @method willReceiveProps(props, state, oldProps, oldState)
+
+  /**
    * Override if necessary, to do things when props change.
    */
-  willReceiveProps(...args) {
+  willReceiveProps(...args): void {
   }
-  /** @method update(props, state, oldProps, oldState)
+
+  /**
    * Override if necessary, to modify superclass config.
    */
-  update(...args) {
+  update(...args): void {
   }
-  /** @method shouldRender(props, state, oldProps, oldState)
+
+  /**
    * Override to return false if the Particle won't use
    * it's slot.
    */
-  shouldRender(...args) {
+  shouldRender(...args): boolean {
     return true;
   }
-  /** @method render(props, state, oldProps, oldState)
+
+  /**
    * Override to return a dictionary to map into the template.
    */
-  render(...args) {
+  render(...args): RenderModel {
     return {};
   }
-  /** @method setState(state)
+
+  /**
    * Copy values from `state` into the particle's internal state,
    * triggering an update cycle unless currently updating.
    */
-  setState(state) {
+  setState(state): boolean | undefined {
     return this._setState(state);
   }
-  /** @method configureHandles(handles)
+
+  /**
+   * Added getters and setters to support usage of .state.
+   */
+  get state() {
+    return this._state;
+  }
+
+  set state(state) {
+    this.setState(state);
+  }
+
+  get props() {
+    return this._props;
+  }
+
+  /**
    * This is called once during particle setup. Override to control sync and update
    * configuration on specific handles (via their configure() method).
    * `handles` is a map from names to handle instances.
    */
-  configureHandles(handles) {
+  configureHandles(handles: ReadonlyMap<string, Handle>): void {
     // Example: handles.get('foo').configure({keepSynced: false});
   }
-  /** @method get config()
+
+  /**
    * Override if necessary, to modify superclass config.
    */
-  get config() {
+  get config(): DomParticleConfig {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
       handleNames: this.spec.inputs.map(i => i.name),
@@ -83,31 +109,30 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       slotNames: [...this.spec.slotConnections.values()].map(s => s.name)
     };
   }
+
   // affordances for aliasing methods to remove `_`
-  _willReceiveProps(...args) {
+  _willReceiveProps(...args): void {
     this.willReceiveProps(...args);
   }
-  _update(...args) {
+
+  _update(...args): void {
     this.update(...args);
     if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
       this.relevance = 1; // TODO: improve relevance signal.
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
+
   /** @deprecated */
-  get _views() {
+  get _views(): ReadonlyMap<string, Handle>  {
     console.warn(`Particle ${this.spec.name} uses deprecated _views getter.`);
     return this.handles;
   }
-  /** @deprecated */
-  async setViews(views) {
-    console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
-    return this.setHandles(views);
-  }
-  async setHandles(handles) {
+
+  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
-    this._handlesToSync = new Set();
+    this._handlesToSync = new Set<string>();
     for (const name of this.config.handleNames) {
       const handle = handles.get(name);
       if (handle && handle.options.keepSynced && handle.options.notifySync) {
@@ -116,25 +141,29 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
     // TODO(sjmiles): we must invalidate at least once,
     // let's assume we will miss _handlesToProps if handlesToSync is empty
-    if (!this._handlesToSync.length) {
+    if (!this._handlesToSync.size) {
       this._invalidate();
     }
   }
-  async onHandleSync(handle, model) {
+
+  async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
     this._handlesToSync.delete(handle.name);
     if (this._handlesToSync.size === 0) {
       await this._handlesToProps();
     }
   }
-  async onHandleUpdate(handle, update) {
+
+  async onHandleUpdate(handle: Handle, update): Promise<void> {
     // TODO(sjmiles): debounce handles updates
+    // TODO(alxr) Do we need `update`?
     const work = () => {
       //console.warn(handle, update);
       this._handlesToProps();
     };
     this._debounce('handleUpdateDebounce', work, 300);
   }
-  async _handlesToProps() {
+
+  private async _handlesToProps() {
     // convert handle data (array) into props (dictionary)
     const props = Object.create(null);
     // acquire list data from handles
@@ -144,13 +173,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // initialize properties
     this._setProps(props);
   }
-  async _addNamedHandleData(dictionary, handleName) {
+
+  private async _addNamedHandleData(dictionary, handleName) {
     const handle = this.handles.get(handleName);
     if (handle) {
       dictionary[handleName] = await this._getHandleData(handle);
     }
   }
-  async _getHandleData(handle) {
+
+  private async _getHandleData(handle: Handle) {
     if (handle instanceof Collection) {
       return await (handle as Collection).toList();
     }
@@ -160,13 +191,15 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     // other types (e.g. BigCollections) map to the handle itself
     return handle;
   }
+
   fireEvent(slotName: string, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
   }
-  _debounce(key: string, func: Function, delay: number) {
+
+  private _debounce(key: string, func: Runnable, delay: number) {
     const subkey = `_debounce_${key}`;
     if (!this._state[subkey]) {
       this.startBusy();
@@ -179,4 +212,3 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     super._debounce(key, idleThenFunc, delay);
   }
 }
-//# sourceMappingURL=dom-particle.js.map

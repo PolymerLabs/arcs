@@ -56,29 +56,39 @@ export class Loader {
     // remove 'foo/..'
     const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
     for (let n = norm(path); n !== path; path = n, n = norm(path));
+    // remove '//' except after `:`
+    path = path.replace(/([^:])(\/\/)/g, '$1/');
     return path;
   }
 
-  loadResource(file: string): Promise<string> {
+  async loadResource(file: string): Promise<string> {
     if (/^https?:\/\//.test(file)) {
       return this._loadURL(file);
     }
-    return this._loadFile(file);
+    return this._loadFile(file, 'utf-8') as Promise<string>;
   }
 
-  _loadFile(file: string): Promise<string> {
+  async loadBinary(file: string): Promise<ArrayBuffer> {
+    if (/^https?:\/\//.test(file)) {
+      return fetch(file).then(res => res.arrayBuffer());
+    } else {
+      return this._loadFile(file, null) as Promise<ArrayBuffer>;
+    }
+  }
+
+  async _loadFile(file: string, encoding?: string): Promise<string | ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(file, (err, data) => {
+      fs.readFile(file, {encoding}, (err, data: string | Buffer) => {
         if (err) {
           reject(err);
         } else {
-          resolve(data.toString('utf-8'));
+          resolve(encoding ? (data as string) : (data as Buffer).buffer);
         }
       });
     });
   }
 
-  _loadURL(url: string): Promise<string> {
+  async _loadURL(url: string): Promise<string> {
     if (/\/\/schema.org\//.test(url)) {
       if (url.endsWith('/Thing')) {
         return fetch('https://schema.org/Product.jsonld').then(res => res.text()).then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));

@@ -57,7 +57,7 @@ defineParticle(({DomParticle, html, log}) => {
         $template: 'tiled-items',
         models: sorted.map(item => this.renderItem(item, selectedId === item.id))
       };
-      log(items.models);
+      // log(items.models);
       return {
         haveItems: true,
         items

@@ -14,46 +14,31 @@ import {Arc} from './arc.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {OuterPortAttachment} from './debug/outer-port-attachment.js';
 import {Handle} from './handle.js';
-import {ParticleSpec, SerializedParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {Type, TypeLiteral} from './type.js';
-import {PropagatedException, SerializedPropagatedException} from './arc-exceptions.js';
+import {Type} from './type.js';
+import {PropagatedException} from './arc-exceptions.js';
+import {Literal, Literalizable} from './hot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
-interface MappingInfo {
+interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
   redundant?: boolean;
-  value?: MappingInfo;
-  key?: MappingInfo;
-  converter?: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException;
+  value?: MappingInfo<T>;
+  key?: MappingInfo<T>;
+  converter?: Literalizable<T, Literal>;
   identifier?: boolean;
   ignore?: boolean;
 }
 
-// TODO(shans): are there better types that I can use for this?
-interface Literalizer {
-  prototype: {toLiteral: () => TypeLiteral};
-  fromLiteral: (typeliteral: TypeLiteral) => Type;
-}
-
-interface LiteralizerParticleSpec {
-  prototype: {toLiteral: () => SerializedParticleSpec};
-  fromLiteral: (spec: SerializedParticleSpec) => ParticleSpec;
-}
-
-interface LiteralizerPropagatedException {
-  prototype: {toLiteral: () => SerializedPropagatedException};
-  fromLiteral: (exception: SerializedPropagatedException) => PropagatedException;
-}
-
-const targets = new Map<{}, Map<string, MappingInfo[]>>();
+const targets = new Map<{}, Map<string, MappingInfo<unknown>[]>>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
   if (!targets.has(target)) {
@@ -64,7 +49,7 @@ function setPropertyKey(target: {}, propertyKey: string) {
   }
 }
 
-function set(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo) {
+function set<T>(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo<T>) {
   setPropertyKey(target, propertyKey);
   targets.get(target).get(propertyKey)[parameterIndex] = info;
 }
@@ -77,25 +62,25 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException) {
+function ByLiteral<T>(constructor: Literalizable<T, Literal>) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
+    const info: MappingInfo<T> = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function ObjectMap(key: MappingType, value: MappingType) {
+function ObjectMap<T>(key: MappingType, value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function List(value: MappingType) {
+function List<T>(value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.List, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
-  };  
+  };
 }
 
 function LocalMapped(target: {}, propertyKey: string, parameterIndex: number) {
@@ -252,7 +237,7 @@ export class APIPort {
 function getArgs(func) {
   // First match everything inside the function argument parens.
   const args = func.toString().match(/.*?\(([^)]*)\)/)[1];
- 
+
   // Split the arguments string into an array comma delimited.
   return args.split(',').map((arg) => {
     // Ensure no inline comments are parsed and trim the whitespace.
@@ -262,9 +247,9 @@ function getArgs(func) {
 }
 
 // value is covariant with info, and errors will be found
-// at start of runtime. 
+// at start of runtime.
 // tslint:disable-next-line: no-any
-function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -275,10 +260,11 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
       return value;
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = {};
       value.forEach((childvalue, key) => r[convert(info.key, key, mapper)] = convert(info.value, childvalue, mapper));
       return r;
+    }
     case MappingType.List:
       return value.map(v => convert(info.value, v, mapper));
     case MappingType.ByLiteral:
@@ -289,9 +275,9 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
 }
 
 // value is covariant with info, and errors will be found
-// at start of runtime. 
+// at start of runtime.
 // tslint:disable-next-line: no-any
-function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);
@@ -302,12 +288,13 @@ function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
       return mapper.thingForIdentifier(value);
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = new Map();
       for (const key of Object.keys(value)) {
         r.set(unconvert(info.key, key, mapper), unconvert(info.value, value[key], mapper));
       }
       return r;
+    }
     case MappingType.List:
       return value.map(v => unconvert(info.value, v, mapper));
     case MappingType.ByLiteral:
@@ -331,7 +318,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         // If this descriptor records that this argument is the identifier, record it
         // as the requestedId for mapping below.
         const requestedId = descriptor.findIndex(d => d.identifier);
-        
+
         function impl(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
@@ -342,7 +329,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             // Process this argument.
             messageBody[argNames[i]] = convert(descriptor[i], args[i], this._mapper);
           }
-          
+
           // Process the initializer if present.
           if (initializer !== -1) {
             if (descriptor[initializer].redundant) {
@@ -403,7 +390,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         });
       }
     };
-    
+
     doConstruct(constructor, target);
     doConstruct(target, constructor);
   };
@@ -462,6 +449,9 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
+  // TODO(sjmiles): experimental `services` impl
+  abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
+
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
   @NoArgs DevToolsConnected() {}
@@ -514,6 +504,9 @@ export abstract class PECInnerPort extends APIPort {
   abstract onCreateHandleCallback(callback: (proxy: StorageProxy) => void, type: Type, name: string, id: string);
   ArcMapHandle(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: (value: string) => void, id: string);
+
+  // TODO(sjmiles): experimental `services` impl
+  ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
 
   ArcCreateSlot(@LocalMapped callback: (value: string) => void, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: (value: string) => void, hostedSlotId: string);

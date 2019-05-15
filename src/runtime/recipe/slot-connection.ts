@@ -16,10 +16,11 @@ export class SlotConnection {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
   private readonly _name: string;
-  private _targetSlot: Slot | undefined = undefined;
+  private _targetSlot?: Slot = undefined;
   private _providedSlots: {[index: string]: Slot} = {};
   private _tags = <string[]>[];
-  constructor(name, particle) {
+
+  constructor(name: string, particle: Particle) {
     assert(particle);
     assert(particle.recipe);
     assert(name);
@@ -29,26 +30,26 @@ export class SlotConnection {
     this._name = name;
   }
 
-  remove() {
+  remove(): void {
     this._particle.removeSlotConnection(this);
   }
 
-  get recipe() { return this._recipe; }
-  get particle() { return this._particle; }
-  get name() { return this._name; }
-  getQualifiedName() { return `${this.particle.name}::${this.name}`; }
-  get targetSlot() { return this._targetSlot; }
+  get recipe(): Recipe { return this._recipe; }
+  get particle(): Particle  { return this._particle; }
+  get name(): string { return this._name; }
+  getQualifiedName(): string { return `${this.particle.name}::${this.name}`; }
+  get targetSlot(): Slot { return this._targetSlot; }
   set targetSlot(targetSlot: Slot | undefined) { this._targetSlot = targetSlot; }
 
-  get providedSlots() { return this._providedSlots; }
-  get tags() { return this._tags; }
-  set tags(tags) { this._tags = tags; }
+  get providedSlots(): {[index: string]: Slot} { return this._providedSlots; }
+  get tags(): string[] { return this._tags; }
+  set tags(tags: string[]) { this._tags = tags; }
 
   getSlotSpec() {
     return this.particle.spec && this.particle.spec.getSlotSpec(this.name);
   }
 
-  connectToSlot(targetSlot) {
+  connectToSlot(targetSlot: Slot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
     assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
@@ -57,14 +58,14 @@ export class SlotConnection {
     targetSlot.consumeConnections.push(this);
   }
 
-  disconnectFromSlot() {
+  disconnectFromSlot(): void {
     if (this._targetSlot) {
       this._targetSlot.removeConsumeConnection(this);
       this._targetSlot = undefined;
     }
   }
 
-  _clone(particle, cloneMap) {
+  _clone(particle: Particle, cloneMap): SlotConnection {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
@@ -76,7 +77,7 @@ export class SlotConnection {
     return slotConnection;
   }
 
-  _normalize() {
+  _normalize(): void {
     const normalizedSlots = {};
     for (const key of (Object.keys(this._providedSlots).sort())) {
       normalizedSlots[key] = this._providedSlots[key];
@@ -85,15 +86,15 @@ export class SlotConnection {
     Object.freeze(this);
   }
 
-  _compareTo(other) {
-    let cmp;
+  _compareTo(other: SlotConnection): number {
+    let cmp: number;
     if ((cmp = compareStrings(this.name, other.name)) !== 0) return cmp;
     if ((cmp = compareComparables(this._targetSlot, other._targetSlot)) !== 0) return cmp;
     if ((cmp = compareComparables(this._particle, other._particle)) !== 0) return cmp;
     return 0;
   }
 
-  _isValid(options) {
+  _isValid(options): boolean {
     if (this._targetSlot && this._targetSlot.sourceConnection &&
         this._targetSlot !== this._targetSlot.sourceConnection.providedSlots[this._targetSlot.name]) {
       if (options && options.errors) {
@@ -149,18 +150,19 @@ export class SlotConnection {
     });
   }
 
-  isConnectedToInternalSlot() {
+  isConnectedToInternalSlot(): boolean {
     return this.targetSlot && (!!this.targetSlot.sourceConnection);
   }
   isConnectedToRemoteSlot() {
     return this.targetSlot && (!!this.targetSlot.id);
   }
-  isConnected() {
+
+  isConnected(): boolean {
     return this.isConnectedToInternalSlot() || this.isConnectedToRemoteSlot();
   }
 
-  toString(nameMap, options) {
-    const consumeRes = [];
+  toString(nameMap, options): string {
+    const consumeRes: string[] = [];
     consumeRes.push('consume');
     consumeRes.push(`${this.name}`);
     if (this.targetSlot) {
@@ -175,12 +177,12 @@ export class SlotConnection {
       }
     }
 
-    const result = [];
+    const result: string[] = [];
     result.push(consumeRes.join(' '));
 
     Object.keys(this.providedSlots).forEach(psName => {
       const providedSlot = this.providedSlots[psName];
-      const provideRes = [];
+      const provideRes: string[] = [];
       provideRes.push('  provide');
 
       // Only assert that there's a spec for this provided slot if there's a spec for

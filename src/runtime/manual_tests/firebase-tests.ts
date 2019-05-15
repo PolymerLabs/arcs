@@ -436,7 +436,7 @@ describe('firebase', function() {
 
     // Stores a new item for each id in both col and items, with data and key derived
     // from the numerical part of the id in a lexicographically "random" manner.
-    function store(col, items, ...ids) {
+    async function store(col, items, ...ids) {
       const promises = [];
       for (const id of ids) {
         const n = Number(id.slice(1));

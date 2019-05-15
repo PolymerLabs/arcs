@@ -14,7 +14,9 @@ export class CRDTError extends Error {
 }
 
 export interface CRDTOperation {}
-export interface CRDTData {}
+export interface CRDTData {
+  version: VersionMap;
+}
 export interface CRDTConsumerType {}
 
 // A CRDT model is parameterized by:
@@ -47,8 +49,7 @@ export interface CRDTTypeRecord {
 // It is possible that two models can't merge. For example, they may have had divergent operations apply.
 // This is a serious error and will result in merge throwing a CRDTError.
 export interface CRDTModel<T extends CRDTTypeRecord> {
-  merge(other: CRDTData):
-      {modelChange: CRDTChange<T>, otherChange: CRDTChange<T>};
+  merge(other: T['data']): {modelChange: CRDTChange<T>, otherChange: CRDTChange<T>};
   // note that the object-access syntax here & below is in fact a type-level action; op is constrained to 
   // be of the type of the operation field in T, which extends CRDTTypeRecord.
   applyOperation(op: T['operation']): boolean;

@@ -12,7 +12,7 @@ import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord
 
 type RawCount = number;
 
-type CountData = {values: Map<string, number>, version: VersionMap};
+export type CountData = {values: Map<string, number>, version: VersionMap};
 
 type VersionInfo = {from: number, to: number};
 
@@ -32,8 +32,7 @@ type CountChange = CRDTChange<CRDTCountTypeRecord>;
 export class CRDTCount implements CountModel {
   private model: CountData = {values: new Map(), version: new Map()};
 
-  merge(other: CountData):
-      {modelChange: CountChange, otherChange: CountChange} {
+  merge(other: CountData): {modelChange: CountChange, otherChange: CountChange} {
     const otherChanges: CountOperation[] = [];
     const thisChanges: CountOperation[] = [];
 

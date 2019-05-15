@@ -54,6 +54,7 @@ export interface KeyStorage {
 }
 
 
+// eslint-disable-next-line no-var
 declare var global: {};
 
 export class KeyManager {

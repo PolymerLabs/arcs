@@ -17,10 +17,9 @@ import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {Slot} from '../recipe/slot.js';
-import {stringify} from 'querystring';
 
 // Arc-independent handlers for devtools logic.
-DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+void DevtoolsConnection.onceConnected.then(devtoolsChannel => {
   enableTracingAdapter(devtoolsChannel);
 });
 
@@ -33,7 +32,7 @@ export class ArcDebugHandler {
 
     const connectedOnInstantiate = DevtoolsConnection.isConnected;
 
-    DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+    void DevtoolsConnection.onceConnected.then(devtoolsChannel => {
       if (!connectedOnInstantiate) {
         devtoolsChannel.send({
           messageType: 'warning',
@@ -44,8 +43,8 @@ export class ArcDebugHandler {
       this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
 
       if (!!listenerClasses) { // undefined -> false
-      	  listenerClasses.forEach(l => ArcDevtoolsChannel.instantiateListener(l, 
-      	  	  arc, this.arcDevtoolsChannel));
+        listenerClasses.forEach(l => ArcDevtoolsChannel.instantiateListener(l, 
+          arc, this.arcDevtoolsChannel));
       }
 
       this.arcDevtoolsChannel.send({
@@ -60,7 +59,7 @@ export class ArcDebugHandler {
     });
   }
 
-  recipeInstantiated({particles}: {particles: Particle[]}) {
+  recipeInstantiated({particles, activeRecipe}: {particles: Particle[], activeRecipe: string}) {
     if (!this.arcDevtoolsChannel) return;
 
     type TruncatedSlot = {id: string, name: string};
@@ -77,7 +76,7 @@ export class ArcDebugHandler {
     }));
     this.arcDevtoolsChannel.send({
       messageType: 'recipe-instantiated',
-      messageBody: {slotConnections}
+      messageBody: {slotConnections, activeRecipe}
     });
   }
 

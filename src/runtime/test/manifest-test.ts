@@ -24,6 +24,12 @@ async function assertRecipeParses(input, result) {
   assert.deepEqual((await Manifest.parse(input)).recipes[0].toString(), target);
 }
 
+function verifyPrimitiveType(field, type) {
+  const copy = {...field};
+  delete copy.location;
+  assert.deepEqual(copy, {kind: 'schema-primitive', type});
+}
+
 describe('manifest', () => {
   it('can parse a manifest containing a recipe', async () => {
     const manifest = await Manifest.parse(`
@@ -225,7 +231,7 @@ ${particleStr1}
     const manifest = await Manifest.parse(`
       schema Bar
         Text value`);
-    const verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -234,7 +240,7 @@ ${particleStr1}
       schema Foo
         Text value
       schema Bar extends Foo`);
-    const verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -410,7 +416,7 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('treats a failed import as non-fatal', async () => {
+  it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
     const loader = new StubLoader({
       'a': `import 'b'`,
       'b': `lol what is this`,
@@ -474,7 +480,7 @@ ${particleStr1}
             Text value`
     });
     const manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(manifest.schemas.Bar.fields['value'], 'Text');
+    verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
   });
   it('can find all imported recipes', async () => {
     const loader = new StubLoader({
@@ -499,9 +505,12 @@ ${particleStr1}
     const verify = (manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.equal(opt.u.kind, 'schema-union');
-      assert.deepEqual(opt.u.types, ['Text', 'URL']);
+      verifyPrimitiveType(opt.u.types[0], 'Text');
+      verifyPrimitiveType(opt.u.types[1], 'URL');
       assert.equal(opt.t.kind, 'schema-tuple');
-      assert.deepEqual(opt.t.types, ['Number', 'Number', 'Boolean']);
+      verifyPrimitiveType(opt.t.types[0], 'Number');
+      verifyPrimitiveType(opt.t.types[1], 'Number');
+      verifyPrimitiveType(opt.t.types[2], 'Boolean');
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
@@ -824,13 +833,13 @@ ${particleStr1}
     const recipe = manifest.recipes[0];
     // Check that the parser found the handleConnections
     assert.lengthOf(recipe.handleConnections, 2);
-    assert.equal('slotA1', recipe.handleConnections[0]._name);
-    assert.equal('slotA2', recipe.handleConnections[1]._name);
+    assert.equal('slotA1', recipe.handleConnections[0].name);
+    assert.equal('slotA2', recipe.handleConnections[1].name);
 
     // Check that the handle connection
     // wasn't resolved to a handle (even though it was parsed).
-    assert.isUndefined(recipe.handleConnections[0]._handle);
-    assert.isUndefined(recipe.handleConnections[1]._handle);
+    assert.isUndefined(recipe.handleConnections[0].handle);
+    assert.isUndefined(recipe.handleConnections[1].handle);
 
     // The recipe shouldn't resolve (as there is nothing providing slotA1 or
     // consuming slotA2).
@@ -883,14 +892,14 @@ ${particleStr1}
 
     assert.lengthOf(recipe.handleConnections, 3);
     const slotConnA = recipe.handleConnections.find(s => s.name === 'slotA');
-    assert.isUndefined(slotConnA._handle);
+    assert.isUndefined(slotConnA.handle);
 
     assert.lengthOf(recipe.handles, 1);
     const slotB = recipe.handles[0];
     assert.lengthOf(slotB.connections, 2);
 
-    assert.equal(slotB.connections[0]._name, 'slotB');
-    assert.equal(slotB.connections[1]._name, 'slotB');
+    assert.equal(slotB.connections[0].name, 'slotB');
+    assert.equal(slotB.connections[1].name, 'slotB');
 
     const directions = slotB.connections.map(c => c.direction);
     assert.lengthOf(directions, 2);
@@ -1449,7 +1458,7 @@ resource SomeName
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
     const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
-    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+    verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
@@ -1472,7 +1481,7 @@ resource SomeName
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
     const innerSchema = schema.fields.foo.schema.model.getEntitySchema();
-    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+    verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
@@ -1496,7 +1505,7 @@ resource SomeName
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
     const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
-    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+    verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
@@ -1518,7 +1527,7 @@ resource SomeName
     assert(recipe.isResolved());
     const schema = recipe.particles[0].connections.bar.type.getEntitySchema();
     const innerSchema = schema.fields.foo.schema.schema.model.getEntitySchema();
-    assert.deepEqual(innerSchema.fields, {far: 'Text'});
+    verifyPrimitiveType(innerSchema.fields.far, 'Text');
 
     assert.equal(manifest.particles[0].toString(),
 `particle P in 'null'
@@ -1585,8 +1594,11 @@ resource SomeName
     // and {Text value, Text value3}. Hence, the recipe is valid and the type
     // of the handle is * {Text value, Text value2, Text value3};
     assert(suspiciouslyValidRecipe.normalize());
-    const suspiciouslyValidFields = suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.getEntitySchema().fields;
-    assert.deepEqual(suspiciouslyValidFields, {value: 'Text', value2: 'Text', value3: 'Text'});
+    const suspiciouslyValidFields =
+        suspiciouslyValidRecipe.handles[0].type.canWriteSuperset.getEntitySchema().fields;
+    verifyPrimitiveType(suspiciouslyValidFields.value, 'Text');
+    verifyPrimitiveType(suspiciouslyValidFields.value2, 'Text');
+    verifyPrimitiveType(suspiciouslyValidFields.value3, 'Text');
     assert(!invalidRecipe.normalize());
   });
 
