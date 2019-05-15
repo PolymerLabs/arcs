@@ -107,7 +107,7 @@ describe('CRDTSingleton', () => {
       type: SingletonOpTypes.Set,
       value: '2',
       actor: 'B',
-      lock: new Map([['A', 1], ['B', 2]]),
+      clock: new Map([['A', 1], ['B', 2]]),
     });
     assert.deepEqual(
       singleton.getData().values,
