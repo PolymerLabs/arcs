@@ -13,6 +13,7 @@ import {InterfaceType, Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Recipe, RequireSection} from './recipe.js';
+import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
@@ -267,7 +268,7 @@ export class Particle {
     return this.spec.handleConnections.filter(
         connSpec => !connSpec.isOptional &&
                     !this.getConnectionByName(connSpec.name) &&
-                    (!type || type.equals(connSpec.type)));
+                    (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));
   }
 
 

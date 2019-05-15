@@ -10,6 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../manifest.js';
+import {TypeChecker} from '../../recipe/type-checker.js';
 import {CollectionType, InterfaceType, TypeVariable} from '../../type.js';
 
 describe('Recipe Particle', () => {
@@ -50,7 +51,7 @@ describe('Recipe Particle', () => {
       const ifaceVariable = type.interfaceInfo.handles[0].type as TypeVariable;
       const listConnType = listConn.type as CollectionType<TypeVariable>;
       const listUnpackedVariable = listConnType.collectionType;
-      assert.isTrue(ifaceVariable.equals(listUnpackedVariable));
+      assert.isTrue(TypeChecker.compareTypes({type: ifaceVariable}, {type: listUnpackedVariable}));
       assert.strictEqual(ifaceVariable.variable, listUnpackedVariable.variable);
     }
   });

@@ -16,6 +16,7 @@ import {Direction} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
+import {TypeChecker} from './type-checker.js';
 import {Search} from './search.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
@@ -650,7 +651,7 @@ export class Recipe implements Cloneable<Recipe> {
                                   connSpec.name !== 'descriptions' &&
                                   connSpec.direction !== 'host' &&
                                   !particle.connections[connSpec.name] &&
-                                  (!type || type.equals(connSpec.type)));
+                                  (!type || TypeChecker.compareTypes({type}, {type: connSpec.type})));
   }
 
   findHandleByID(id): Handle {
