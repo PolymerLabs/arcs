@@ -98,7 +98,6 @@
         "no-constant-condition": "off",
         "no-empty": "off",
         "no-extra-boolean-cast": "off",
-        "no-inner-declarations": "off",
         "no-irregular-whitespace": "off",
         "no-multiple-empty-lines": "off",
         "no-unreachable": "off",
