@@ -37,7 +37,7 @@ async function synchronized(store1, store2, delay=1) {
 }
 
 describe('firebase', function() {
-  this.timeout(10000); // eslint-disable-line no-invalid-this
+  this.timeout(10000);
 
   let lastStoreId = 0;
   function newStoreKey(name) {

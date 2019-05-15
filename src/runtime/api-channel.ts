@@ -319,6 +319,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         // as the requestedId for mapping below.
         const requestedId = descriptor.findIndex(d => d.identifier);
 
+        /** @this APIPort */
         const impl = function(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
@@ -344,6 +345,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         };
 
 
+        /** @this APIPort */
         const before = async function before(this: APIPort, messageBody) {
           const args = [];
           const promises = [];

@@ -88,7 +88,6 @@
       },
       "rules": {
         // eliminate these as usage is cleaned up
-        "no-invalid-this": "off",
         "comma-spacing": "off",
         "func-call-spacing": "off",
         "generator-star-spacing": "off",
@@ -101,6 +100,13 @@
         "semi-spacing": "off",
         "space-before-blocks": "off",
         "space-before-function-paren": "off"
+      }
+    },
+    {
+      "files": ["**/*test*/**/*.[jt]s"],
+      "rules": {
+        // disable for mocha usages
+        "no-invalid-this": "off"
       }
     }
   ]
