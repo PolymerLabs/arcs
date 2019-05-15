@@ -96,7 +96,6 @@
         "keyword-spacing": "off",
         "quotes": "off",
         "no-constant-condition": "off",
-        "no-empty": "off",
         "no-extra-boolean-cast": "off",
         "no-irregular-whitespace": "off",
         "no-multiple-empty-lines": "off",
