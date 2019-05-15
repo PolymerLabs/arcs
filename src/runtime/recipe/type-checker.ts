@@ -7,7 +7,7 @@
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
 
-interface TypeListInfo {
+export interface TypeListInfo {
   type: Type;
   direction?: string;
   connection?: {direction: string};
@@ -228,7 +228,7 @@ export class TypeChecker {
   // then type resolution is guaranteed to fail.
   //
   // left, right: {type, direction, connection}
-  static compareTypes(left: TypeListInfo, right: TypeListInfo) {
+  static compareTypes(left: TypeListInfo, right: TypeListInfo): boolean {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);

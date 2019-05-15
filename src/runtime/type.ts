@@ -114,14 +114,6 @@ export abstract class Type {
     return this instanceof BigCollectionType;
   }
 
-  /**
-   * @deprecated use the type checker instead (since they will have
-   * additional information about direction etc.)
-   */
-  equals(type): boolean {
-    return TypeChecker.compareTypes({type: this}, {type});
-  }
-
   isResolved(): boolean {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
