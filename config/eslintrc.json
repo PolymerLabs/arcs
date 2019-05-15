@@ -95,7 +95,6 @@
         "key-spacing": "off",
         "keyword-spacing": "off",
         "quotes": "off",
-        "no-constant-condition": "off",
         "no-irregular-whitespace": "off",
         "no-multiple-empty-lines": "off",
         "object-curly-spacing": "off",

@@ -151,6 +151,7 @@ export class Arc {
   // Returns a promise that spins sending a single `AwaitIdle` message until it
   // sees no other messages were sent.
   async _waitForIdle(): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const messageCount = this.pec.messageCount;
       const innerArcs = this.innerArcs;
