@@ -116,7 +116,7 @@ export class RecipeUtil {
           continue;
         }
 
-        const acceptedDirections = {'in': ['in', 'inout'], 'out': ['out', 'inout'], '=': ['in', 'out', 'inout'], 'inout': ['inout'], 'host': ['host']};
+        const acceptedDirections = {'in': ['in', 'inout'], 'out': ['out', 'inout'], '=': ['in', 'out', 'inout'], 'inout': ['inout'], 'host': ['host'], '`consume': ['consume'], '`provide': ['provide']};
         if (recipeConnSpec.direction) {
           assert(Object.keys(acceptedDirections).includes(shapeHC.direction), `${shapeHC.direction} not in ${Object.keys(acceptedDirections)}`);
           if (!acceptedDirections[shapeHC.direction].includes(recipeConnSpec.direction)) {
