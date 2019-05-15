@@ -472,11 +472,11 @@ ${e.message}
         }
       }));
 
-      const processItems = async (kind, f) => {
+      const processItems = async (kind: string, f: Function) => {
         for (const item of items) {
           if (item.kind === kind) {
             Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);
+            await f(item);  // TODO(cypher1): Use Promise.all here.
           }
         }
       };
@@ -666,11 +666,90 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
+  private static _convertSlandle(arg: AstNode.ParticleArgument):
+    AstNode.ParticleSlot {
+    if (!AstNode.isSlotType(arg.type)) {
+      throw new ManifestError(
+          arg.location,
+          `Tried to convert ParticleArgument with type ${
+              arg.type.kind} to ParticleSlot`);
+    }
+
+    const argModel = ((AstNode.isCollectionType(arg.type) ? arg.type.type : arg.type) as any).model;
+
+    const formFactor: AstNode.SlotFormFactor = argModel.formFactor ? {
+      kind: 'form-factor',
+      location: arg.location,
+      formFactor: argModel.formFactor
+    } : undefined;
+
+    return {
+      kind: 'particle-slot',
+      location: arg.location,
+      name: arg.name,
+      tags: arg.tags,
+      isRequired: !arg.isOptional,
+      isSet: false,  // TODO(jopra): Handle set slots.
+      formFactor: formFactor,
+      provideSlotConnections:
+          [...arg.dependentConnections].map(Manifest._convertProvidedSlandle),
+    };
+  };
+
+  private static _convertProvidedSlandle(arg: AstNode.ParticleArgument):
+    AstNode.ParticleProvidedSlot {
+    if (!AstNode.isSlotType(arg.type) &&
+        !(AstNode.isCollectionType(arg.type) && (AstNode.isSlotType(arg.type.type) || AstNode.isTypeVariable(arg.type.type)))) {
+      throw new ManifestError(
+          arg.location,
+          `Tried to convert ParticleArgument with type ${
+              arg.type.kind} to ParticleProvidedSlot`);
+    }
+
+    const argModel = ((AstNode.isCollectionType(arg.type) ? arg.type.type : arg.type) as any).model;
+
+    const formFactor: AstNode.SlotFormFactor = argModel.formFactor ? {
+      kind: 'form-factor',
+      location: arg.location,
+      formFactor: argModel.formFactor
+    } : undefined;
+
+    const handles: AstNode.ParticleProvidedSlotHandle[] = argModel.handle ? [{
+      kind: 'particle-provided-slot-handle',
+      location: arg.location,
+      handle: argModel.handle,
+    }] : [];
+
+    return {
+      kind: 'provided-slot',
+      location: arg.location,
+      name: arg.name,
+      tags: arg.tags,
+      isRequired: !arg.isOptional,
+      isSet: false,  // TODO(jopra): Handle set slots.
+      formFactor: formFactor,
+      handles: handles
+    };
+  };
+
   private static _processParticle(manifest, particleItem, loader) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
-    assert(particleItem.implFile == null || particleItem.args !== null, 'no valid body defined for this particle');
+    assert(
+        particleItem.implFile == null || particleItem.args !== null,
+        'no valid body defined for this particle');
+
+    // SLANDLES: Mirrors slot handles as slots until SLANDLES v2.
+    for (let arg of particleItem.args) {
+      if (arg.type.model instanceof SlotType) {
+        // console.dir(arg);
+        const slandle = Manifest._convertSlandle(arg);
+        // console.dir(slandle);
+        particleItem.slotConnections.push(slandle);
+      }
+    }
+
     if (!particleItem.args) {
       particleItem.args = [];
     }

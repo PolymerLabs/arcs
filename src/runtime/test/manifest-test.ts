@@ -219,8 +219,8 @@ ${particleStr1}
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
-  \`consume Slot thing
-    \`provide Slot otherThing
+  \`consume? Slot thing
+    \`provide? Slot otherThing
   modality dom`;
 
     const manifest = await Manifest.parse(manifestString);

@@ -292,4 +292,42 @@ describe('manifest parser', () => {
           input <- h0
     `);
   });
+  it('parses comment on manifest resource start line', () => {
+    const manifestAst = parse(`
+      import '../Pipes/PipeEntity.schema'
+
+      resource PipeEntityResource
+        start //[{"type": "tv_show", "name": "star trek"}]
+        [{"type": "artist", "name": "in this moment"}]
+
+      store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+    `);
+    console.log(manifestAst);
+  });
+  it('parses comment after manifest resource start line', () => {
+    const manifestAst = parse(`
+      import '../Pipes/PipeEntity.schema'
+
+      resource PipeEntityResource
+        start
+        //[{"type": "tv_show", "name": "star trek"}]
+        [{"type": "artist", "name": "in this moment"}]
+
+      store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+    `);
+    console.log(manifestAst);
+  });
+  it('ignores comments inside manifest resource', () => {
+    const manifestAst = parse(`
+      import '../Pipes/PipeEntity.schema'
+
+      resource PipeEntityResource
+        start
+        [{"type": "artist", "name": "in this moment"}]
+        //[{"type": "tv_show", "name": "star trek"}]
+
+      store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+    `);
+    console.log(manifestAst);
+  });
 });
