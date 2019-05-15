@@ -7,12 +7,28 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Dictionary} from './hot.js';
+
+export interface Service {
+  [name: string]: Function;
+}
+
+type Registry = Dictionary<Service>;
+
+export interface ServiceRequest {
+  service?: string;
+  invoke?: string;
+  call?: string;
+}
+
 export class Services {
-  static registry: {};
-  static register(name, service: {}) {
+  static registry: Registry = {};
+
+  static register(name: string, service: Service): void {
     Services.registry[name] = service;
   }
-  static async request(request) {
+
+  static async request(request: ServiceRequest) {
     let {service: name, invoke, call} = request;
     if (call) {
       [name, invoke] = call.split('.');
@@ -27,7 +43,7 @@ export class Services {
   }
 }
 
-Services.registry = {};
+Object.freeze(Services);
 
 Services.register('test', {
   async classify(request) {
