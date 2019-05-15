@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../../platform/chai-web.js';
-import {ChangeType, CRDTError} from '../crdt';
-import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton';
+import { assert } from '../../../platform/chai-web.js';
+import { ChangeType, CRDTError } from '../crdt';
+import { CRDTSingleton, SingletonOpTypes } from '../crdt-singleton';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
@@ -55,23 +55,23 @@ describe('CRDTSingleton', () => {
     });
     assert.equal(singleton.getParticleView(), '1');
 
-    // Clear requires the same version number.
-    assert.isFalse(singleton.applyOperation({
+    // Clear requires the same version number, so this does not really clear it.
+    singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: new Map([['A', 0]]),
-    }));
-    assert.isFalse(singleton.applyOperation({
+    });
+    assert.equal(singleton.getParticleView(), '1');
+    singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
       clock: new Map([['A', 2]]),
-    }));
+    });
+    assert.equal(singleton.getParticleView(), '1');
 
-    assert.isTrue(singleton.applyOperation({
-      type: SingletonOpTypes.Clear,
-      actor: 'A',
-      clock: new Map([['A', 1]])
-    }));
+    // Up-to-date version number, does clear it.
+    singleton.applyOperation(
+      { type: SingletonOpTypes.Clear, actor: 'A', clock: new Map([['A', 1]]) });
     assert.equal(singleton.getParticleView(), null);
   });
 
@@ -85,29 +85,41 @@ describe('CRDTSingleton', () => {
       actor: 'A',
       clock: new Map([['A', 1]]),
     });
+    assert.deepEqual(
+      singleton.getData().values, new Map([['1', new Map([['A', 1]])]]));
     assert.equal(singleton.getParticleView(), '1');
 
-    // Fails because version is not up to date for "A".
-    assert.isFalse(singleton.applyOperation({
+    // Another actor concurrently setting a value, both values will be kept.
+    singleton.applyOperation({
       type: SingletonOpTypes.Set,
       value: '2',
       actor: 'B',
       clock: new Map([['B', 1]]),
-    }));
+    });
+    assert.deepEqual(
+      singleton.getData().values,
+      new Map([['1', new Map([['A', 1]])], ['2', new Map([['B', 1]])]]));
+    assert.equal(singleton.getParticleView(), '1');
 
-    assert.isTrue(singleton.applyOperation({
+    // Actor B setting a new value after also seeing A's value, old value is
+    // removed.
+    singleton.applyOperation({
       type: SingletonOpTypes.Set,
       value: '2',
       actor: 'B',
-      clock: new Map([['A', 1], ['B', 1]]),
-    }));
+      lock: new Map([['A', 1], ['B', 2]]),
+    });
+    assert.deepEqual(
+      singleton.getData().values,
+      new Map([['2', new Map([['A', 1], ['B', 2]])]]));
     assert.equal(singleton.getParticleView(), '2');
 
-    assert.isTrue(singleton.applyOperation({
+    singleton.applyOperation({
       type: SingletonOpTypes.Clear,
       actor: 'A',
-      clock: new Map([['A', 1], ['B', 1]])
-    }));
+      clock: new Map([['A', 1], ['B', 2]])
+    });
+    assert.deepEqual(singleton.getData().values, new Map());
     assert.equal(singleton.getParticleView(), null);
   });
 
@@ -128,7 +140,7 @@ describe('CRDTSingleton', () => {
       clock: new Map([['B', 1]]),
     });
 
-    const {modelChange, otherChange} = singletonA.merge(singletonB.getData());
+    const { modelChange, otherChange } = singletonA.merge(singletonB.getData());
     const newValues = new Map([
       ['1', new Map([['A', 1]])],
       ['2', new Map([['B', 1]])],
@@ -136,19 +148,20 @@ describe('CRDTSingleton', () => {
     const newVersion = new Map([['A', 1], ['B', 1]]);
     if (modelChange.changeType === ChangeType.Model) {
       assert.deepEqual(
-          modelChange.modelPostChange,
-          {values: newValues, version: newVersion});
+        modelChange.modelPostChange,
+        { values: newValues, version: newVersion });
     } else {
       assert.fail('modelChange.changeType should be ChangeType.Model');
     }
     assert.deepEqual(modelChange, otherChange);
-    // '2' is also in the set now ('1' is returned because of lexicographical sorting)
+    // '2' is also in the set now ('1' is returned because of lexicographical
+    // sorting)
     assert.equal(singletonA.getParticleView(), '1');
 
     // A can now clear the new model.
     assert.isTrue(singletonA.applyOperation({
-      type: SingletonOpTypes.Clear, 
-      actor: 'A', 
+      type: SingletonOpTypes.Clear,
+      actor: 'A',
       clock: newVersion,
     }));
     assert.equal(singletonA.getParticleView(), null);

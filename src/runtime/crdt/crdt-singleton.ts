@@ -102,9 +102,10 @@ export class CRDTSingleton<T> implements SingletonModel<T> {
         clock,
       };
       // If any value fails to remove, we haven't cleared the value and we fail the whole op.
-      if (!this.collection.applyOperation(removeOp)) {
-        return false;
-      }
+      //if (!this.collection.applyOperation(removeOp)) {
+      //   return false;
+      // }
+      this.collection.applyOperation(removeOp);
     }
     return true;
   }
