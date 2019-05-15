@@ -51,6 +51,9 @@ export interface CollectionType extends BaseNode {
   kind: 'collection-type';
   type: ParticleArgumentType;
 }
+export function isCollectionType(node: BaseNode): node is CollectionType {
+  return node.kind === 'collection-type';
+}
 
 export interface ReferenceType extends BaseNode {
   kind: 'reference-type';
@@ -62,10 +65,16 @@ export interface TypeVariable extends BaseNode {
   name: string;
   constraint: ParticleArgument;
 }
+export function isTypeVariable(node: BaseNode): node is TypeVariable {
+  return node.kind === 'variable-type';
+}
 
 export interface SlotType extends BaseNode {
   kind: 'slot-type';
   fields: SlotField[];
+}
+export function isSlotType(node: BaseNode): node is SlotType {
+  return node.kind === 'slot-type';
 }
 // END PARTICLE TYPES
 
@@ -163,7 +172,7 @@ export interface ParticleArgument extends BaseNode {
   direction: Direction;
   type: ParticleArgumentType;
   isOptional: boolean;
-  dependentConnections: string[];
+  dependentConnections: ParticleHandle[];
   name: string;
   tags: TagList;
 }
@@ -200,8 +209,6 @@ export interface ParticleProvidedSlot extends BaseNode {
   isSet: boolean;
   formFactor: SlotFormFactor;
   handles: ParticleProvidedSlotHandle[];
-
-  param: string;
 }
 
 export interface ParticleProvidedSlotHandle extends BaseNode {
