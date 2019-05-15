@@ -108,7 +108,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
 
   onUpdate(ops: CollectionOperation<T>[]) {
     for (const op of ops) {
-      // Pass to change up to the particle.
+      // Pass the change up to the particle.
       // tslint:disable-next-line: no-any
       const update: {added?: any, removed?: any, originator?: any} = {};
       if (op.type === CollectionOpTypes.Add) {
@@ -159,7 +159,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<T>> {
 
   onUpdate(ops: SingletonOperation<T>[]) {
     for (const op of ops) {
-      // Pass to change up to the particle.
+      // Pass the change up to the particle.
       // tslint:disable-next-line: no-any
       const update: {data?: any, originator?: any} = {};
       if (op.type === SingletonOpTypes.Set) {

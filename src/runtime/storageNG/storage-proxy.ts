@@ -60,6 +60,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
           }
         }
         break;
+      // TODO: handle ProxyMessageType.SyncRequest by sending the local model.
       default:
         throw new CRDTError(
             `Invalid operation provided to onMessage, type: ${message.type}`);
