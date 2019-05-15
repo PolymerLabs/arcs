@@ -1,6 +1,6 @@
 # web-shell Flags
 
-e.g. https://live.arcs.dev/shells/web-shell/?storage=$firebase/scott
+e.g. https://live.arcs.dev/shells/web-shell/?log&storage=$firebase/scott
 
 ## Setting User-Persona/Storage-Key
 
