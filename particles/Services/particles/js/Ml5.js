@@ -28,22 +28,28 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       return template;
     }
     update({}, state) {
+      // TODO(sjmiles): update() is called during SpecEx, while
+      // render() is not. We'll put our processing code in render()
+      // to avoid being expensive at SpecEx time.
+    }
+    render({}, state) {
+      // formerly update
       if (!state.classified) {
         state.classified = true;
         this.classify(url);
       }
-    }
-    async classify(imageUrl) {
-      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
-      this.setState({response});
-    }
-    render({}, {response}) {
+      // render proper
+      let {response} = state;
       response = response || {label: '<working>', probability: '<working>'};
       return {
         label: response.label,
         probability: response.probability,
         imageUrl: url
       };
+    }
+    async classify(imageUrl) {
+      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
+      this.setState({response});
     }
   };
 
