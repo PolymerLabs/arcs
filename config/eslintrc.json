@@ -101,7 +101,6 @@
         "no-irregular-whitespace": "off",
         "no-multiple-empty-lines": "off",
         "no-unreachable": "off",
-        "no-useless-escape": "off",
         "object-curly-spacing": "off",
         "semi-spacing": "off",
         "space-before-blocks": "off",
