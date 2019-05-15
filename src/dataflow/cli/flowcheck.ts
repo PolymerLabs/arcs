@@ -11,8 +11,7 @@
 import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-
-const fs = require('fs');
+import {fs} from '../../platform/fs-web.js';
 
 // TODO make this a function and test it; it's big enough now
 

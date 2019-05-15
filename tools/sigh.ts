@@ -402,15 +402,15 @@ function lint(args: string[]): boolean {
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, fullPath => {
-    if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+    if (/build[/\\]/.test(fullPath) || /gen[/\\]/.test(fullPath) || /dist[/\\]/.test(fullPath)) {
       return false;
     }
-    return /\.js$/.test(fullPath);
+    return /\.[jt]s$/.test(fullPath);
   })];
 
   const cli = new CLIEngine({
     useEsLintRc: false,
-    configFile: '.eslintrc.js',
+    configFile: '.eslintrc.json',
     fix: options.fix,
     cacheLocation: eslintCache,
     cache: true

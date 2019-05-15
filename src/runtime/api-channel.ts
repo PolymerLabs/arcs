@@ -260,10 +260,11 @@ function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
       return value;
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = {};
       value.forEach((childvalue, key) => r[convert(info.key, key, mapper)] = convert(info.value, childvalue, mapper));
       return r;
+    }
     case MappingType.List:
       return value.map(v => convert(info.value, v, mapper));
     case MappingType.ByLiteral:
@@ -287,12 +288,13 @@ function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
       return mapper.thingForIdentifier(value);
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = new Map();
       for (const key of Object.keys(value)) {
         r.set(unconvert(info.key, key, mapper), unconvert(info.value, value[key], mapper));
       }
       return r;
+    }
     case MappingType.List:
       return value.map(v => unconvert(info.value, v, mapper));
     case MappingType.ByLiteral:

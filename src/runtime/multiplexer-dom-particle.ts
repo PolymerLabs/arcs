@@ -42,8 +42,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // arc multiple times unnecessarily.
 
       // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
-      let otherHandleStore;
-      otherHandleStore = otherHandle.storage;
+      // tslint:disable-next-line: no-any
+      const otherHandleStore = otherHandle.storage as any;
       otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
       const hostedOtherConnection = hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
