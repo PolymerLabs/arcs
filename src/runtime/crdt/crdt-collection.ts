@@ -49,8 +49,7 @@ export class CRDTCollection<T> implements CollectionModel<T> {
   merge(other: CollectionData<T>):
       {modelChange: CollectionChange<T>, otherChange: CollectionChange<T>} {
     const newValues = this.mergeItems(this.model, other);
-    const newVersion =
-        mergeVersions(this.model.version, other.version);
+    const newVersion = mergeVersions(this.model.version, other.version);
     this.model.values = newValues;
     this.model.version = newVersion;
     // For now this is always returning a model change.

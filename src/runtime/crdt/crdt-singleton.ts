@@ -8,13 +8,31 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {VersionMap, CRDTChange, CRDTModel, CRDTTypeRecord} from "./crdt.js";
+import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap} from './crdt';
+import {CollectionOperation, CollectionOpTypes, CRDTCollection} from './crdt-collection';
 
 type RawSingleton<T> = T;
 
-type SingletonData<T> = {values: Set<{ value: T, clock: VersionMap }>, version: VersionMap};
+type SingletonData<T> = {
+  values: Map<T, VersionMap>,
+  version: VersionMap,
+};
 
-type SingletonOperation<T> = {from: T | null, to: T | null, actor: string};
+export enum SingletonOpTypes {
+  Set,
+  Clear
+}
+
+export type SingletonOperation<T> = {
+  type: SingletonOpTypes.Clear,
+  actor: string,
+  clock: VersionMap,
+}|{
+  type: SingletonOpTypes.Set,
+  value: T,
+  actor: string,
+  clock: VersionMap,
+};
 
 interface CRDTSingletonTypeRecord<T> extends CRDTTypeRecord {
   data: SingletonData<T>;
@@ -26,3 +44,69 @@ type SingletonChange<T> = CRDTChange<CRDTSingletonTypeRecord<T>>;
 
 type SingletonModel<T> = CRDTModel<CRDTSingletonTypeRecord<T>>;
 
+export class CRDTSingleton<T> implements SingletonModel<T> {
+  private collection = new CRDTCollection<T>();
+
+  merge(other: SingletonData<T>):
+      {modelChange: SingletonChange<T>, otherChange: SingletonChange<T>} {
+    this.collection.merge(other);
+    // We cannot pass through the collection ops, so always return the updated model.
+    const change: SingletonChange<T> = {
+      changeType: ChangeType.Model,
+      modelPostChange: this.collection.getData()
+    };
+    return {modelChange: change, otherChange: change};
+  }
+
+  applyOperation(op: SingletonOperation<T>): boolean {
+    if (op.type === SingletonOpTypes.Clear) {
+      return this.clear(op.actor, op.clock);
+    }
+    if (op.type === SingletonOpTypes.Set) {
+      // Remove does not require an increment, but the caller of this method will have incremented
+      // its version, so we hack a version with t-1 for this actor.
+      const removeClock =
+          (new Map(op.clock)).set(op.actor, op.clock.get(op.actor) - 1);
+      if (!this.clear(op.actor, removeClock)) {
+        return false;
+      }
+      const addOp: CollectionOperation<T> = {
+        type: CollectionOpTypes.Add,
+        added: op.value,
+        actor: op.actor,
+        clock: op.clock,
+      };
+      if (!this.collection.applyOperation(addOp)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  getData(): SingletonData<T> {
+    return this.collection.getData();
+  }
+
+  getParticleView(): RawSingleton<T>|null {
+    // Return any value.
+    return [...this.collection.getParticleView()].sort()[0] || null;
+  }
+
+  private clear(actor: string, clock: VersionMap): boolean {
+    // Clear all existing values if our clock allows it.
+    for (const value of this.collection.getData().values.keys()) {
+      const removeOp: CollectionOperation<T> = {
+        type: CollectionOpTypes.Remove,
+        removed: value,
+        actor,
+        clock,
+      };
+      // If any value fails to remove, we haven't cleared the value and we fail the whole op.
+      //if (!this.collection.applyOperation(removeOp)) {
+      //   return false;
+      // }
+      this.collection.applyOperation(removeOp);
+    }
+    return true;
+  }
+}

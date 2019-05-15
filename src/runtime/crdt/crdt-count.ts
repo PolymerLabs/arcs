@@ -57,7 +57,7 @@ export class CRDTCount implements CountModel {
         this.model.version.set(key, otherVersion);
       }
     }
-    
+
     for (const key of this.model.values.keys()) {
       if (other.values.has(key)) {
         continue;
