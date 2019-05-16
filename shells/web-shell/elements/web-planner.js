@@ -16,7 +16,7 @@ const log = Xen.logFactory('WebPlanner', '#104a91');
 
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['config', 'userid', 'arc', 'search'];
+    return ['config', 'arc', 'search'];
   }
   getInitialState() {
     return {
@@ -24,7 +24,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       invalid: 0
     };
   }
-  update({config, userid, arc, search}, state) {
+  update({config, arc, search}, state) {
     const {planificator} = state;
     if (planificator && planificator.arc !== arc && planificator._arc !== arc) {
       planificator.dispose();
@@ -33,16 +33,16 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       log('planificator is disconnected and is disposing');
     }
     if (config && arc && !state.planificator) {
-      this.awaitState('planificator', async () => this._createPlanificator(config, arc, userid));
+      this.awaitState('planificator', async () => this._createPlanificator(config, arc));
     }
     if (state.planificator && search !== state.search) {
       state.search = search;
       state.planificator.setSearch(state.search);
     }
   }
-  async _createPlanificator(config, arc, userid) {
+  async _createPlanificator(config, arc) {
     const options = {
-      userid,
+      userid: 'user',
       storageKeyBase: config.plannerStorage,
       onlyConsumer: config.plannerOnlyConsumer,
       debug: config.plannerDebug

@@ -69,7 +69,6 @@ export class WebConfig extends Xen.Debug(Xen.Async, log) {
       config = ProcessConfig.processConfig(configOptions, params);
       config.version = Const.version;
       config.plannerDebug = !config.plannerNoDebug;
-      config.userid = Const.DEFAULT.userId;
       config.storage = this.expandStorageMacro(config.storage);
       this.state = {config};
     }

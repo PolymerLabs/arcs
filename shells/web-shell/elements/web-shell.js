@@ -56,7 +56,7 @@ const template = Xen.Template.html`
     }
   </style>
   <!-- manage configuration (read and persist) -->
-  <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
+  <web-config arckey="{{arckey}}" on-config="onState"></web-config>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
@@ -73,13 +73,13 @@ const template = Xen.Template.html`
   <!-- user context -->
   <web-context storage="{{storage}}" context="{{precontext}}" on-context="onState"></web-context>
   <!-- web planner -->
-  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
+  <web-planner config="{{config}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- background arcs -->
   <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
   <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
   <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
   <!-- data pipes -->
-  <device-client-pipe userid="{{userid}}" context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
+  <device-client-pipe context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -112,7 +112,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       state._config = config;
       if (config) {
         state.storage = config.storage;
-        state.userid = config.userid;
         state.arckey = config.arc;
         state.ready = true;
       }
@@ -123,25 +122,25 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   readyUpdate({root}, state) {
     // setup environment once we have a root and a user
-    if (!state.env && root && state.userid) {
+    if (!state.env && root) {
       this.updateEnv({root}, state);
-      this.spawnContext(state.userid);
+      this.spawnContext();
     }
     // spin up launcher arc
-    if (!state.launcherConfig && state.env && state.userid) {
-      this.spawnLauncher(state.userid);
+    if (!state.launcherConfig && state.env) {
+      this.spawnLauncher();
     }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
       this.waitForStore(10);
     }
     // spin up nullArc
-    if (!state.nullConfig && state.context && state.userid && state.store) {
-      this.spawnNullArc(state.userid);
+    if (!state.nullConfig && state.context && state.store) {
+      this.spawnNullArc();
     }
     // spin up pipesArc
-    // if (!state.pipesConfig && state.context && state.userid) {
-    //   this.spawnPipesArc(state.userid);
+    // if (!state.pipesConfig && state.context) {
+    //   this.spawnPipesArc();
     // }
     // consume a suggestion
     if (state.suggestion && state.context) {
@@ -171,9 +170,13 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     this.state = {hideLauncher: Boolean(state.arckey)};
   }
   render(props, state) {
-    state.plannerArc = state.hideLauncher ? state.arc : state.nullArc;
-    state.hideArc = !state.hideLauncher;
-    return [props, state];
+    const {hideLauncher, showLogin, arc, nullArc} = state;
+    const renderModel = {
+      plannerArc: hideLauncher ? arc : nullArc,
+      hideArc: showLogin ? true : !hideLauncher,
+      hideLauncher: showLogin ? true : hideLauncher,
+    };
+    return [props, state, renderModel];
   }
   async updateEnv({root}, state) {
     // capture anchor-clicks for SPA behavior
@@ -212,30 +215,30 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       this.state = {plan: suggestion.plan};
     }
   }
-  async spawnContext(userid) {
+  async spawnContext() {
     const precontext = await Utils.parse(manifests.context);
     this.state = {
       precontext,
       contextConfig: {
-        id: `${userid}-context`
+        id: `${Const.DEFAULT.userId}-context`
       }
     };
   }
-  spawnLauncher(userid) {
+  spawnLauncher() {
     this.state = {
       launcherConfig: {
-        id: `${userid}${Const.DEFAULT.launcherSuffix}`,
+        id: `${Const.DEFAULT.userId}${Const.DEFAULT.launcherSuffix}`,
         manifest: manifests.launcher
       }
     };
   }
-  spawnNullArc(userid) {
+  spawnNullArc() {
     this.state = {
-      nullConfig: this.configureBgArc(userid, 'planning')
+      nullConfig: this.configureBgArc('planning')
     };
   }
-  // spawnPipesArc(userid) {
-  //   const pipesConfig = this.configureBgArc(userid, 'pipes');
+  // spawnPipesArc() {
+  //   const pipesConfig = this.configureBgArc('pipes');
   //   pipesConfig.manifest = manifests.pipes;
   //   this.state = {
   //     pipesConfig
@@ -254,7 +257,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   spawnSuggestion(suggestion) {
     const luid = generateId();
-    const id = `${this.state.userid}-${luid}`;
+    const id = `${Const.DEFAULT.userId}-${luid}`;
     const description = suggestion.descriptionText;
     this.spawnArc({id, manifest: null, description});
     this.state = {plan: suggestion.plan};
@@ -282,8 +285,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       manifest: null
     };
   }
-  configureBgArc(userid, name)  {
-    const key = `${userid}-${name.toLowerCase()}`;
+  configureBgArc(name)  {
+    const key = `${Const.DEFAULT.userId}-${name.toLowerCase()}`;
     // this.recordArcMeta({
     //   key: key,
     //   href: `?arc=${key}`,
