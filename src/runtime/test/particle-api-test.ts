@@ -879,7 +879,7 @@ describe('particle-api', () => {
     await util.assertSingletonIs(outStore, 'result', 'hi');
   });
 
-  it.only('particles can indicate that they are busy in onHandleUpdate', async () => {
+  it('particles can indicate that they are busy in onHandleUpdate', async () => {
     const loader = new StubLoader({
       manifest: `
         particle CallsBusy in 'callsBusy.js'
