@@ -252,7 +252,7 @@ export class RecipeIndex {
         for (const [name, slotSpec] of recipeParticle.spec.slotConnections) {
           const recipeSlotConn = recipeParticle.getSlotConnectionByName(name);
           if (recipeSlotConn && recipeSlotConn.targetSlot) continue;
-          if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)){
+          if (SlotUtils.specMatch(slotSpec, providedSlotSpec) && SlotUtils.tagsOrNameMatch(slotSpec, providedSlotSpec)) {
             const slotConn = particle.getSlotConnectionByName(providedSlotSpec.name);
             let matchingHandles = [];
             if (providedSlotSpec.handles.length !== 0 || (slotConn && !SlotUtils.handlesMatch(recipeParticle, slotConn))) {
@@ -351,7 +351,7 @@ export class RecipeIndex {
     const otherToHandle: Map<Handle, Handle> = new Map();
     usedHandles = usedHandles || new Set();
     for (const handle of recipe.handles) {
-      if(usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
+      if (usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
         continue;
       }
       for (const otherHandle of otherRecipe.handles) {

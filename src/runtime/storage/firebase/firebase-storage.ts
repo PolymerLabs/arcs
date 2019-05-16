@@ -1120,7 +1120,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  async cloneFrom(handle): Promise<void>{
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {

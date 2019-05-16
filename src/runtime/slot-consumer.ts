@@ -85,7 +85,7 @@ export class SlotConsumer {
     return this.generateProvidedContexts(predicate).next().value;
   }
 
-  private *generateProvidedContexts(predicate = (_: ProvidedSlotContext) => true): IterableIterator<ProvidedSlotContext> {
+  private* generateProvidedContexts(predicate = (_: ProvidedSlotContext) => true): IterableIterator<ProvidedSlotContext> {
     for (const context of this.directlyProvidedSlotContexts) {
       if (predicate(context)) yield context;
     }

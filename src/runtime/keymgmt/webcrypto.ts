@@ -13,15 +13,15 @@ import rs from 'jsrsasign';
 
 import {crypto} from '../../platform/crypto-web.js';
 import {decode, encode} from './base64';
-import {DeviceKey, Key, PrivateKey, PublicKey, RecoveryKey, SessionKey, WrappedKey} from "./keys";
-import {KeyGenerator, KeyStorage} from "./manager";
-import {TestableKey} from "./testing/cryptotestutils";
+import {DeviceKey, Key, PrivateKey, PublicKey, RecoveryKey, SessionKey, WrappedKey} from './keys';
+import {KeyGenerator, KeyStorage} from './manager';
+import {TestableKey} from './testing/cryptotestutils';
 
 const DEVICE_KEY_ALGORITHM = 'RSA-OAEP';
-const X509_CERTIFICATE_ALGORITHM = "RSA-OAEP";
-const X509_CERTIFICATE_HASH_ALGORITHM = "SHA-1";
-const DEVICE_KEY_HASH_ALGORITHM = "SHA-512";
-const STORAGE_KEY_ALGORITHM = "AES-GCM";
+const X509_CERTIFICATE_ALGORITHM = 'RSA-OAEP';
+const X509_CERTIFICATE_HASH_ALGORITHM = 'SHA-1';
+const DEVICE_KEY_HASH_ALGORITHM = 'SHA-512';
+const STORAGE_KEY_ALGORITHM = 'AES-GCM';
 
 const ARCS_CRYPTO_STORE_NAME = 'ArcsKeyManagementStore';
 const ARCS_CRYPTO_INDEXDB_NAME = 'ArcsKeyManagement';
@@ -78,7 +78,7 @@ class WebCryptoWrappedKey implements WrappedKey {
         const webPrivKey = privKey as WebCryptoPrivateKey;
 
         return crypto.subtle.unwrapKey(
-            "raw",
+            'raw',
             this.wrappedKeyData,
             webPrivKey.cryptoKey(),
             {
@@ -88,7 +88,7 @@ class WebCryptoWrappedKey implements WrappedKey {
                 name: STORAGE_KEY_ALGORITHM,
             },
             true,
-            ["encrypt", "decrypt"]
+            ['encrypt', 'decrypt']
         ).then(key => new WebCryptoSessionKey(key));
     }
 
@@ -149,17 +149,17 @@ class WebCryptoPublicKey extends WebCryptoStorableKey<CryptoKey> implements Publ
     }
 
     // Join all the hex strings into one
-    return hexCodes.join("");
+    return hexCodes.join('');
   }
 
   static sha256(str: string): PromiseLike<string> {
     // We transform the string into an arraybuffer.
     const buffer = new Uint8Array(str.split('').map(x => x.charCodeAt(0)));
-    return crypto.subtle.digest("SHA-256", buffer).then((hash) => WebCryptoPublicKey.hex(hash));
+    return crypto.subtle.digest('SHA-256', buffer).then((hash) => WebCryptoPublicKey.hex(hash));
   }
 
   fingerprint(): PromiseLike<string> {
-    return crypto.subtle.exportKey("jwk", this.cryptoKey())
+    return crypto.subtle.exportKey('jwk', this.cryptoKey())
       // Use the modulus 'n' as the fingerprint since 'e' is fixed
       .then(key => WebCryptoPublicKey.digest(key['n']));
   }
@@ -196,9 +196,9 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
    * removed once the the key-blessing algorithm is implemented.
    */
   export():PromiseLike<string> {
-      return crypto.subtle.exportKey("raw", this.sessionKey).then((raw) => {
+      return crypto.subtle.exportKey('raw', this.sessionKey).then((raw) => {
         const buf = new Uint8Array(raw);
-        let res = "";
+        let res = '';
         buf.forEach((x) => res += (x < 16 ? '0' : '') + x.toString(16));
         return res;
       });
@@ -217,7 +217,7 @@ class WebCryptoSessionKey implements SessionKey, TestableKey {
         try {
             const webPkey = pkey as WebCryptoPublicKey;
 
-            const rawWrappedKey = crypto.subtle.wrapKey("raw",
+            const rawWrappedKey = crypto.subtle.wrapKey('raw',
                 this.sessionKey,
                 (pkey as WebCryptoPublicKey).cryptoKey(),
                 {   //these are the wrapping key's algorithm options
@@ -268,7 +268,7 @@ class WebCryptoDeviceKey extends WebCryptoStorableKey<CryptoKeyPair> implements 
 export class WebCryptoKeyGenerator implements KeyGenerator {
     generateWrappedStorageKey(deviceKey: DeviceKey): PromiseLike<WrappedKey> {
         const generatedKey: PromiseLike<CryptoKey> = crypto.subtle.generateKey({name: 'AES-GCM', length: 256},
-            true, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]);
+            true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
         return generatedKey.then(key => new WebCryptoSessionKey(key))
             .then(skey => skey.disposeToWrappedKeyUsing(deviceKey.publicKey()));
     }
@@ -280,7 +280,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
 
     generateAndStoreRecoveryKey(): PromiseLike<RecoveryKey> {
         // TODO: Implement
-      throw new Error("Not implemented");
+      throw new Error('Not implemented');
     }
 
     generateDeviceKey(): PromiseLike<DeviceKey> {
@@ -295,7 +295,7 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
                 publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
             },
             // false means the key material is not visible to the application
-            false, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]);
+            false, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
         return generatedKey.then(key => new WebCryptoDeviceKey(key));
     }
 
@@ -307,12 +307,12 @@ export class WebCryptoKeyGenerator implements KeyGenerator {
         const key = rs.KEYUTIL.getKey(pemKey);
         const jwk = rs.KEYUTIL.getJWKFromKey(key);
 
-        return crypto.subtle.importKey("jwk",
+        return crypto.subtle.importKey('jwk',
             jwk as JsonWebKey,
             {
                 name: X509_CERTIFICATE_ALGORITHM,
                 hash: {name: X509_CERTIFICATE_HASH_ALGORITHM}
-            }, true, ["encrypt", "wrapKey"]).then(ikey => new WebCryptoPublicKey(ikey));
+            }, true, ['encrypt', 'wrapKey']).then(ikey => new WebCryptoPublicKey(ikey));
     }
 
     async importWrappedKey(wrappedKey: string, wrappedBy: PublicKey):Promise<WrappedKey> {
@@ -337,7 +337,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
         try {
             const db = await idb.open(ARCS_CRYPTO_INDEXDB_NAME, 1,
                 upgradeDB => upgradeDB.createObjectStore(ARCS_CRYPTO_STORE_NAME,
-                    {keyPath: "keyFingerPrint"}));
+                    {keyPath: 'keyFingerPrint'}));
 
             const tx = db.transaction(ARCS_CRYPTO_STORE_NAME, 'readwrite');
             const store = tx.objectStore<KeyRecord, IDBValidKey>(ARCS_CRYPTO_STORE_NAME);
@@ -368,7 +368,7 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             return Promise.resolve(new WebCryptoWrappedKey(result.key as Uint8Array,
                 wrappedBy));
         }
-        throw new Error("Unrecognized key type found in keystore.");
+        throw new Error('Unrecognized key type found in keystore.');
     }
 
     async write(keyFingerPrint: string, key: DeviceKey|WrappedKey): Promise<string> {
@@ -383,12 +383,12 @@ export class WebCryptoKeyIndexedDBStorage implements KeyStorage {
             const wrappingKeyFingerprint = await wrappedKey.wrappedBy.fingerprint();
 
             await this.runOnStore(async store => {
-                return store.put({keyFingerPrint, key:wrappedKey.wrappedKeyData,
+                return store.put({keyFingerPrint, key: wrappedKey.wrappedKeyData,
                     wrappingKeyFingerprint});
             });
             return keyFingerPrint;
         }
-        throw new Error("Can't write key that isn't StorableKey or WrappedKey.");
+        throw new Error('Can\'t write key that isn\'t StorableKey or WrappedKey.');
     }
 
     static getInstance() {

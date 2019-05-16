@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { CRDTOperation, CRDTTypeRecord, VersionMap } from '../crdt/crdt';
+import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
 import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord} from '../crdt/crdt-collection';
 import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton';
 import {Particle} from '../particle';
 
-import { StorageProxy } from './storage-proxy';
+import {StorageProxy} from './storage-proxy';
 
 export interface HandleOptions {
   keepSynced: boolean;

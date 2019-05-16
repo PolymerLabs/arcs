@@ -70,7 +70,7 @@ export class PlanningResult {
   async flush() {
     try {
       await this.store.set(this.toLiteral());
-    } catch(e) {
+    } catch (e) {
       error('Failed storing suggestions: ', e);
       throw e;
     }
@@ -196,7 +196,7 @@ export class PlanningResult {
     }
 
     jointSuggestions.push(...newSuggestions);
-    this._set({suggestions: jointSuggestions, generations: this.generations.concat(...generations), lastUpdated, contextual : contextual && this.contextual});
+    this._set({suggestions: jointSuggestions, generations: this.generations.concat(...generations), lastUpdated, contextual: contextual && this.contextual});
     return true;
   }
 

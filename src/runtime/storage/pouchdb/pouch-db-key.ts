@@ -46,7 +46,7 @@ export class PouchDbKey extends KeyBase {
     this.dbName = parts[1] || 'user';
     this.location = parts.slice(2).join('/') || '';
 
-    if(this.toString() !== key) {
+    if (this.toString() !== key) {
       throw new Error('PouchDb keys must match ' + this.toString() + ' vs ' + key);
     }
   }

@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import { Runtime } from 'arcs';
+import {Runtime} from 'arcs';
 import bodyParser from 'body-parser';
 import express from 'express';
 import logger from 'morgan';
@@ -43,7 +43,7 @@ export abstract class AppBase {
     // This larger setting is required to support PouchDB replication.
     // TODO(lindner): move to a config location and document this.
     this.express.use(bodyParser.json({limit: '5mb'}));
-    this.express.use(bodyParser.urlencoded({ limit: '5mb', extended: false }));
+    this.express.use(bodyParser.urlencoded({limit: '5mb', extended: false}));
   }
 
   /**
@@ -52,7 +52,7 @@ export abstract class AppBase {
    */
   public startBackgroundProcessing(): void {
     // optional method that starts background processing.
-    console.log("Running optional background process");
+    console.log('Running optional background process');
   }
 
   /**
@@ -87,7 +87,7 @@ export abstract class AppBase {
 
       try {
         const manifest = await Runtime.parseManifest(content, {fileName: 'manifest'});
-        res.json({ id: manifest.id.toString(), text: manifest.toString() });
+        res.json({id: manifest.id.toString(), text: manifest.toString()});
       } catch (err) {
         next(err);
       }

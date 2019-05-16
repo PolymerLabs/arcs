@@ -47,10 +47,10 @@ void (async () => {
     console.log('Checking recipe ' + recipe.name);
     const res = flowchecker.flowcheck(recipe);
     if (!res.result) {
-      console.error("Data-flow check failed. Reason: " + res.reason);
+      console.error('Data-flow check failed. Reason: ' + res.reason);
       process.exit(1);
     } else {
-      console.log("Data-flow check passed");
+      console.log('Data-flow check passed');
     }
   });
-}) ();
+})();

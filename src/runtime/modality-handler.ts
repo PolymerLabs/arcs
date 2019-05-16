@@ -16,7 +16,7 @@ import {SlotDomConsumer} from './slot-dom-consumer.js';
 
 export class ModalityHandler {
   constructor(public readonly slotConsumerClass: typeof SlotConsumer,
-              public readonly descriptionFormatter?: typeof DescriptionFormatter){}
+              public readonly descriptionFormatter?: typeof DescriptionFormatter) {}
 
   static createHeadlessHandler(): ModalityHandler {
     return new ModalityHandler(HeadlessSlotDomConsumer);

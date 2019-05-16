@@ -6,14 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import cors from "cors";
-import {NextFunction, Request, Response} from "express";
-import express from "express";
+import cors from 'cors';
+import {NextFunction, Request, Response} from 'express';
+import express from 'express';
 import fetch from 'node-fetch';
 
-import {AppBase} from "./app-base";
-import {CloudManager} from "./deployment/cloud";
-import {Container, DeploymentStatus} from "./deployment/containers";
+import {AppBase} from './app-base';
+import {CloudManager} from './deployment/cloud';
+import {Container, DeploymentStatus} from './deployment/containers';
 
 interface Deployment {
   id: string;
@@ -61,9 +61,9 @@ class ArcsMasterApp extends AppBase {
   }
 
   async lock(req: Request, res: Response, next: NextFunction) {
-    console.log("fingerprint is " + req.params.fingerprint);
+    console.log('fingerprint is ' + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
-    console.log("gcp safe fingerprint " + fingerprint);
+    console.log('gcp safe fingerprint ' + fingerprint);
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().find(fingerprint);
@@ -73,7 +73,7 @@ class ArcsMasterApp extends AppBase {
         if (attached) {
           const container: Container | null = await cloud.containers().find(fingerprint);
           if (container != null) {
-            await fetch("http://" + container.url() + "/lock");
+            await fetch('http://' + container.url() + '/lock');
             disk.dismount();
             return;
           }
@@ -86,9 +86,9 @@ class ArcsMasterApp extends AppBase {
   }
 
   async unlock(req: Request, res: Response, next: NextFunction) {
-    console.log("fingerprint is " + req.params.fingerprint);
+    console.log('fingerprint is ' + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
-    console.log("gcp safe fingerprint " + fingerprint);
+    console.log('gcp safe fingerprint ' + fingerprint);
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().find(fingerprint);
@@ -100,7 +100,7 @@ class ArcsMasterApp extends AppBase {
         const container: Container | null = await cloud.containers().find(fingerprint);
         if (container != null) {
           await disk.mount(req.params.rewrappedKey, await container.node());
-          await fetch("http://" + container.url() + "/unlock");
+          await fetch('http://' + container.url() + '/unlock');
           return;
         } else {
           // TODO: if container not found, deploy a new one?
@@ -112,9 +112,9 @@ class ArcsMasterApp extends AppBase {
   }
 
   async findDeployment(req: Request, res: Response, next: NextFunction) {
-    console.log("fingerprint is " + req.params.fingerprint);
+    console.log('fingerprint is ' + req.params.fingerprint);
     const fingerprint = this.gcpSafeIdentifier(req.params.fingerprint);
-    console.log("gcp safe fingerprint " + fingerprint);
+    console.log('gcp safe fingerprint ' + fingerprint);
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().find(fingerprint);
@@ -144,10 +144,10 @@ class ArcsMasterApp extends AppBase {
 
       const status = container.status();
       if (status !== DeploymentStatus.ATTACHED) {
-        const deployment:Deployment = { id: fingerprint, status: DeploymentStatus.PENDING};
+        const deployment:Deployment = {id: fingerprint, status: DeploymentStatus.PENDING};
         res.send(deployment);
       } else {
-        const deployment:RunningDeployment = {id: fingerprint, status:DeploymentStatus.ATTACHED, url: container.url()};
+        const deployment:RunningDeployment = {id: fingerprint, status: DeploymentStatus.ATTACHED, url: container.url()};
         res.send(deployment);
       }
     } catch (e) {
@@ -164,19 +164,19 @@ class ArcsMasterApp extends AppBase {
     try {
       const cloud = CloudManager.forGCP();
       const disk = await cloud.disks().create(fingerprint, wrappedKey, rewrappedKey);
-      console.log("Disk successfully created with id " + disk.id());
+      console.log('Disk successfully created with id ' + disk.id());
       try {
         const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk);
-        console.log("Container successfully created with fingerprint " + fingerprint + " at url " + container.url());
+        console.log('Container successfully created with fingerprint ' + fingerprint + ' at url ' + container.url());
         res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/find/' + fingerprint + '"}');
       } catch (e) {
-        console.log("Error deploying new container with new disk, deleting disk with id " + disk.id());
+        console.log('Error deploying new container with new disk, deleting disk with id ' + disk.id());
         await disk.delete();
       }
     } catch (e) {
-      console.log("Error");
+      console.log('Error');
       console.dir(e);
-      res.send("Can't deploy because " + JSON.stringify(e));
+      res.send('Can\'t deploy because ' + JSON.stringify(e));
     }
   }
 
@@ -188,12 +188,12 @@ class ArcsMasterApp extends AppBase {
       const disk = await cloud.disks().find(fingerprint);
       if (disk && !await disk.isAttached()) {
         const container = await cloud.containers().deploy(fingerprint, rewrappedKey, disk);
-        console.log("Disk successfully mounted with id " + disk.id());
-        console.log("Container successfully created with fingerprint " + fingerprint + " at url " + container.url());
+        console.log('Disk successfully mounted with id ' + disk.id());
+        console.log('Container successfully created with fingerprint ' + fingerprint + ' at url ' + container.url());
         res.send('{"status": "pending", "id": "' + fingerprint + '", "statusUrl": "/' + fingerprint + '"}');
       }
     } catch (e) {
-      res.send("Can't deploy because " + JSON.stringify(e));
+      res.send('Can\'t deploy because ' + JSON.stringify(e));
     }
   }
 }

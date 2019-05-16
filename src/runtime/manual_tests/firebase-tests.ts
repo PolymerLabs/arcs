@@ -755,7 +755,7 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactory:undefined, slotComposer: undefined, context: manifest});
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactory: undefined, slotComposer: undefined, context: manifest});
       const varStore2 = arc2.findStoreById(varStore.id) as VariableStorageProvider;
       const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
       const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;

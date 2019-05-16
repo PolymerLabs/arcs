@@ -47,7 +47,7 @@ Examples [Must be run from Arcs repository root]
     const visited = new Set<Schema>();
     for (const path of paths) {
       try {
-        const manifest = await Utils.parse("import '" + path + "'");
+        const manifest = await Utils.parse('import \'' + path + '\'');
         processManifest(manifest, visited, destDir);
       } catch (err) {
         console.error(`Error reading '${path}':`);
@@ -66,7 +66,7 @@ Examples [Must be run from Arcs repository root]
       visited.add(schema);
       const protoFile = await toProtoFile(schema);
       fs.writeFileSync(destDir + '/' + schema.name + '.proto', protoFile);
-     } catch(e) {
+     } catch (e) {
       console.error(e);
      }
     }

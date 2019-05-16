@@ -45,7 +45,7 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
         .filter(f => f.entryPoint)
         .map(f => `entry-point: ${f.bundlePath}\n`)
         .join(''));
-    archive.generateNodeStream({streamFiles:true})
+    archive.generateNodeStream({streamFiles: true})
         .pipe(fs.createWriteStream(bundleName))
         .on('finish', () => resolve());
   });

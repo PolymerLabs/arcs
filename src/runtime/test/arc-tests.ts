@@ -520,7 +520,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     assert.equal(newArc.id.idTreeAsString(), 'test');
   });
 
-  it('deserializing a simple serialized arc produces that arc', async function () {
+  it('deserializing a simple serialized arc produces that arc', async function() {
     if (!storageKeyPrefix.startsWith('volatile')) {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
@@ -584,7 +584,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const storageKey = storageKeyPrefix + id.toString();
     const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
 
-    const barType = manifest.findTypeByName('Bar') ;
+    const barType = manifest.findTypeByName('Bar');
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
     recipe.handles[0].mapToStorage(store);
 
@@ -895,7 +895,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       assert.isNotNull(foodStore);
       recipe.handles[0].mapToStorage(foodStore);
 
-      const favoriteFoodType = manifest.findTypeByName('FavoriteFood') ;
+      const favoriteFoodType = manifest.findTypeByName('FavoriteFood');
       assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
 
       const options = {errors: new Map()};

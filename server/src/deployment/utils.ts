@@ -44,7 +44,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
 
     while (waiting && retries-- > 0) {
       try {
-        // if the timeout finishes first, it will reject and skip this
+        // if the timeout finishes first, it will reject and skip this
         waiting = !await waitCond(result);
       } catch (e) {
         if (!(e instanceof Timeout)) {
@@ -68,7 +68,7 @@ export async function waitForGcp<T>(func: () => PromiseLike<[T]>, waitCond:(resu
 async function wait(timeout: number) {
    try {
      await rejectAfter(timeout);
-   } catch(e) {
+   } catch (e) {
      // ignored
    }
 }
@@ -79,4 +79,4 @@ export async function rejectAfter<T>(duration: number):Promise<T> {
   return new Promise<T>((resolve, reject) => setTimeout(() => reject(new Timeout()), duration));
 }
 
-export const ON_DISK_DB = "TARGET_DISK";
+export const ON_DISK_DB = 'TARGET_DISK';

@@ -18,10 +18,10 @@ import {HeadlessSuggestDomConsumer} from './headless-suggest-dom-consumer.js';
 import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 
 
-export class PlanningModalityHandler extends ModalityHandler{
+export class PlanningModalityHandler extends ModalityHandler {
   constructor(slotConsumerClass: typeof SlotConsumer,
               public readonly suggestionConsumerClass: typeof SuggestDomConsumer,
-              descriptionFormatter?: typeof DescriptionFormatter){
+              descriptionFormatter?: typeof DescriptionFormatter) {
     super(slotConsumerClass, descriptionFormatter);
   }
 

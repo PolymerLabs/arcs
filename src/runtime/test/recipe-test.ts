@@ -66,8 +66,8 @@ describe('recipe', () => {
     `);
     const recipe = manifest.recipes[0];
     const clonedRecipe = recipe.clone(); 
-    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "recipe slots don't match");
-    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"], "cloned recipe slots don't match");
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'], 'recipe slots don\'t match');
+    assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'], 'cloned recipe slots don\'t match');
   });
   it('validate handle connection types', async () => {
     const manifest = await Manifest.parse(`
@@ -568,8 +568,8 @@ describe('recipe', () => {
     `)).recipes;
     const recipe1 = recipes[0];
     const recipe2 = recipes[1];
-    assert.isTrue(recipe2.particles[0].matches(recipe1.particles[0]), "particle2 should match particle1 but doesn't");
-    assert.isFalse(recipe1.particles[0].matches(recipe2.particles[0]), "particle1 matches particle2 but it shouldn't");
+    assert.isTrue(recipe2.particles[0].matches(recipe1.particles[0]), 'particle2 should match particle1 but doesn\'t');
+    assert.isFalse(recipe1.particles[0].matches(recipe2.particles[0]), 'particle1 matches particle2 but it shouldn\'t');
   });
   it('slots with local names are the same in the recipe as they are in the require section', async () => {
     const recipe = (await Manifest.parse(`
@@ -590,11 +590,11 @@ describe('recipe', () => {
           consume details as s1
             provide moreDetails
     `)).recipes[0];
-    const s1SlotRecipe = recipe.slots.find(slot => slot.name === "details");
-    const s1SlotRequire = recipe.requires[0].particles[0].consumedSlotConnections["root"].providedSlots["details"];
-    assert.isTrue(s1SlotRecipe === s1SlotRequire, "slot in require section is not the same as slot in recipe");
+    const s1SlotRecipe = recipe.slots.find(slot => slot.name === 'details');
+    const s1SlotRequire = recipe.requires[0].particles[0].consumedSlotConnections['root'].providedSlots['details'];
+    assert.isTrue(s1SlotRecipe === s1SlotRequire, 'slot in require section is not the same as slot in recipe');
   });
-  it("particles in require section don't need to have a particle spec", async () => {
+  it('particles in require section don\'t need to have a particle spec', async () => {
     const recipe = (await Manifest.parse(`
       schema Type
       particle A
@@ -613,7 +613,7 @@ describe('recipe', () => {
     `)).recipes[0];
     assert(recipe.requires[0].particles[0].spec === undefined);
   });
-  it("slots in require section with the same local name match", async () => {
+  it('slots in require section with the same local name match', async () => {
     const recipe = (await Manifest.parse(`
       particle A
         consume details 
@@ -632,8 +632,8 @@ describe('recipe', () => {
         C
           consume details as s0
     `)).recipes[0];
-    assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections["details"].targetSlot, "there is more than one slot");
-    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections["details"].targetSlot, "slot in the require section doesn't match slot in the recipe");
+    assert.isTrue(recipe.requires[0].particles[0].consumedSlotConnections['details'].targetSlot === recipe.requires[0].particles[1].consumedSlotConnections['details'].targetSlot, 'there is more than one slot');
+    assert.isTrue(recipe.slots[0] === recipe.requires[0].particles[0].consumedSlotConnections['details'].targetSlot, 'slot in the require section doesn\'t match slot in the recipe');
   });
   it('recipe with require section toString method works', async () => {
     const recipe = (await Manifest.parse(`
@@ -646,8 +646,8 @@ describe('recipe', () => {
             consume root
         B as p2
           consume root as s0`)).recipes[0];
-    const recipeString = "recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0";
-    assert.isTrue(recipe.toString() === recipeString.toString(), "incorrect recipe toString method");
+    const recipeString = 'recipe\n  require\n    A as p1\n      consume root\n  B as p2\n    consume root as s0';
+    assert.isTrue(recipe.toString() === recipeString.toString(), 'incorrect recipe toString method');
   });
   it('clones connections with type variables', async () => {
     const recipe = (await Manifest.parse(`

@@ -27,7 +27,6 @@ export type Runnable = () => void;
 export type Predicate<T> = (input: T) => boolean;
 
 
-
 // Higher Order Data Types
 
 /**

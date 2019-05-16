@@ -265,7 +265,7 @@ export class Arc {
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
-            if(handle instanceof StorageProviderBase) {
+            if (handle instanceof StorageProviderBase) {
               await handle.ensureBackingStore();
               await this._serializeHandle(handle.backingStore, context, storeId);
             }
