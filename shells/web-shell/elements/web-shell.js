@@ -57,22 +57,12 @@ const template = Xen.Template.html`
   </style>
   <!-- manage configuration (read and persist) -->
   <web-config userid="{{userid}}" arckey="{{arckey}}" on-config="onState"></web-config>
-  <!-- context bootstrap -->
-  <web-arc id="context" storage="volatile://context" config="{{contextConfig}}" context="{{precontext}}"></web-arc>
-  <!-- context feed -->
-  <web-context storage="{{storage}}" userid="{{userid}}" context="{{precontext}}" on-context="onState"></web-context>
-  <!-- web planner -->
-  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
     <launcher-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></launcher-arc>
     <!-- <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc> -->
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
-    <!-- background arcs -->
-    <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
-    <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
-    <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
     <!-- user arc -->
     <web-arc id="arc" hidden="{{hideArc}}" storage="{{storage}}" context="{{context}}" config="{{arcConfig}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="onState"></web-arc>
     <!-- suggestions -->
@@ -80,6 +70,14 @@ const template = Xen.Template.html`
       <div slotid="suggestions" on-plan-choose="onChooseSuggestion"></div>
     </div>
   </web-shell-ui>
+  <!-- user context -->
+  <web-context storage="{{storage}}" context="{{precontext}}" on-context="onState"></web-context>
+  <!-- web planner -->
+  <web-planner config="{{config}}" userid="{{userid}}" arc="{{plannerArc}}" search="{{search}}" on-metaplans="onState" on-suggestions="onSuggestions"></web-planner>
+  <!-- background arcs -->
+  <web-arc id="nullArc" hidden storage="{{storage}}" config="{{nullConfig}}" context="{{context}}" on-arc="onNullArc"></web-arc>
+  <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
+  <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
   <!-- data pipes -->
   <device-client-pipe userid="{{userid}}" context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
 `;
@@ -93,28 +91,36 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   get template() {
     return template;
   }
+  get host() {
+    return this;
+  }
   attributeChangedCallback(n, old, value) {
     this[n] = value;
   }
-  // TODO(sjmiles): only dev-time stuff in this override
+  // TODO(sjmiles): only debug stuff in this override
   async _update(props, state, oldProps, oldState) {
     // globals stored for easy console access
     window.shell = this;
     window.arc = state.arc;
     super._update(props, state, oldProps, oldState);
   }
-  async update({root}, state) {
+  async update(props, state) {
     // new config?
     if (state.config !== state._config) {
       const {config} = state;
-      // memoize config data
       state._config = config;
       if (config) {
         state.storage = config.storage;
         state.userid = config.userid;
         state.arckey = config.arc;
+        state.ready = true;
       }
     }
+    if (state.ready) {
+      this.readyUpdate(props, state);
+    }
+  }
+  readyUpdate({root}, state) {
     // setup environment once we have a root and a user
     if (!state.env && root && state.userid) {
       this.updateEnv({root}, state);
