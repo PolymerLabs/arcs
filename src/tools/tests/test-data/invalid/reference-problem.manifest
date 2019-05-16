@@ -1,0 +1,5 @@
+schema Thing
+  Text name
+
+particle A in 'no-such-particle.js'
+  in Thing thing
