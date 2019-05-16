@@ -131,7 +131,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
       this._itemSubIdByHostedSlotId.set(slotId, item.id);
       try {
-        const recipe = this.constructInnerRecipe(resolvedHostedParticle, item, itemHandle, { name: hostedSlotName, id: slotId }, { connections: otherConnections, handles: otherMappedHandles });
+        const recipe = this.constructInnerRecipe(resolvedHostedParticle, item, itemHandle, {name: hostedSlotName, id: slotId}, {connections: otherConnections, handles: otherMappedHandles});
         await arc.loadRecipe(recipe);
         // tslint:disable-next-line: no-any
         (itemHandle as any).set(item);

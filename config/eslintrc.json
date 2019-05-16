@@ -87,19 +87,7 @@
         // "project": "tsconfig.json"
       },
       "rules": {
-        // eliminate these as usage is cleaned up
-        "comma-spacing": "off",
-        "func-call-spacing": "off",
-        "generator-star-spacing": "off",
-        "key-spacing": "off",
-        "keyword-spacing": "off",
-        "quotes": "off",
-        "no-irregular-whitespace": "off",
-        "no-multiple-empty-lines": "off",
-        "object-curly-spacing": "off",
-        "semi-spacing": "off",
-        "space-before-blocks": "off",
-        "space-before-function-paren": "off"
+        // add typescript specific rules here
       }
     },
     {

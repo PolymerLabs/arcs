@@ -513,19 +513,19 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
   }
 
   _getModelForSync(): never {
-    throw new Error("_getModelForSync not implemented for BigCollectionProxy");
+    throw new Error('_getModelForSync not implemented for BigCollectionProxy');
   }
 
   _processUpdate() : {} {
-    throw new Error("_processUpdate not implemented for BigCollectionProxy");
+    throw new Error('_processUpdate not implemented for BigCollectionProxy');
   }
 
   _synchronizeModel() : boolean {
-    throw new Error("_synchronizeModel not implemented for BigCollectionProxy");
+    throw new Error('_synchronizeModel not implemented for BigCollectionProxy');
   }
   // TODO: surface get()
   async get(id: string) {
-    throw new Error("unimplemented");
+    throw new Error('unimplemented');
   }
   async store(value, keys, particleId): Promise<void> {
     return new Promise<void>(resolve =>

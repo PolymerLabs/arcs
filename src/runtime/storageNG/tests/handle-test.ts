@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { assert } from '../../../platform/chai-web.js';
+import {assert} from '../../../platform/chai-web.js';
 import {PECInnerPort} from '../../api-channel';
-import { CRDTCollection } from '../../crdt/crdt-collection';
+import {CRDTCollection} from '../../crdt/crdt-collection';
 import {CRDTSingleton} from '../../crdt/crdt-singleton';
 import {Particle} from '../../particle';
 import {CollectionHandle, SingletonHandle} from '../handle';

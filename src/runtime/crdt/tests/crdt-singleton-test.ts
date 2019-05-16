@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { assert } from '../../../platform/chai-web.js';
-import { ChangeType, CRDTError } from '../crdt';
-import { CRDTSingleton, SingletonOpTypes } from '../crdt-singleton';
+import {assert} from '../../../platform/chai-web.js';
+import {ChangeType, CRDTError} from '../crdt';
+import {CRDTSingleton, SingletonOpTypes} from '../crdt-singleton';
 
 describe('CRDTSingleton', () => {
   it('can set values from a single actor', () => {
@@ -71,7 +71,7 @@ describe('CRDTSingleton', () => {
 
     // Up-to-date version number, does clear it.
     singleton.applyOperation(
-      { type: SingletonOpTypes.Clear, actor: 'A', clock: new Map([['A', 1]]) });
+      {type: SingletonOpTypes.Clear, actor: 'A', clock: new Map([['A', 1]])});
     assert.equal(singleton.getParticleView(), null);
   });
 
@@ -140,7 +140,7 @@ describe('CRDTSingleton', () => {
       clock: new Map([['B', 1]]),
     });
 
-    const { modelChange, otherChange } = singletonA.merge(singletonB.getData());
+    const {modelChange, otherChange} = singletonA.merge(singletonB.getData());
     const newValues = new Map([
       ['1', new Map([['A', 1]])],
       ['2', new Map([['B', 1]])],
@@ -149,7 +149,7 @@ describe('CRDTSingleton', () => {
     if (modelChange.changeType === ChangeType.Model) {
       assert.deepEqual(
         modelChange.modelPostChange,
-        { values: newValues, version: newVersion });
+        {values: newValues, version: newVersion});
     } else {
       assert.fail('modelChange.changeType should be ChangeType.Model');
     }

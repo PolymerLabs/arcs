@@ -154,7 +154,7 @@ export class TypeChecker {
         [primitiveHandleType, primitiveConnectionType] = unwrap;
         if (!(primitiveHandleType instanceof TypeVariable)) {
           // This should never happen, and the guard above is just here so we type-check.
-          throw new TypeError("unwrapping a wrapped TypeVariable somehow didn't become a TypeVariable");
+          throw new TypeError('unwrapping a wrapped TypeVariable somehow didn\'t become a TypeVariable');
         }
       }
 

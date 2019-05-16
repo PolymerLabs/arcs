@@ -83,7 +83,7 @@ export class CRDTCollection<T> implements CollectionModel<T> {
       return false;
     }
     this.model.version.set(key, version.get(key));
-    this.model.values.set(value,mergeVersions(version, this.model.values.get(value) || new Map()));
+    this.model.values.set(value, mergeVersions(version, this.model.values.get(value) || new Map()));
     return true;
   }
 

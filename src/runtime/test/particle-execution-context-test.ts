@@ -34,7 +34,7 @@ describe('Particle Execution Context', () => {
           };
         });`
       }),
-      slotComposer: new MockSlotComposer({strict:false}).newExpectations('debug'),
+      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
     });
 
     const [recipe] = arc.context.recipes;

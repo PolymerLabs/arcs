@@ -273,8 +273,8 @@ export class Particle {
 
 
   addSlotConnection(name: string) : SlotConnection {
-    assert(!(name in this._consumedSlotConnections), "slot connection already exists");
-    assert(!this.spec || this.spec.slotConnections.has(name), "slot connection not in particle spec");
+    assert(!(name in this._consumedSlotConnections), 'slot connection already exists');
+    assert(!this.spec || this.spec.slotConnections.has(name), 'slot connection not in particle spec');
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
 
@@ -314,14 +314,14 @@ export class Particle {
   }
 
   getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
-    if(!this.spec) return undefined;
+    if (!this.spec) return undefined;
     const slot = this.spec.slotConnections.get(name);
-    if(slot) return slot;
+    if (slot) return slot;
 
     // TODO(jopra): Provided slots should always be listed in the particle spec.
     for (const slot of this.spec.slotConnections.values()) {
-      for(const provided of slot.provideSlotConnections) {
-        if(provided.name === name) return provided;
+      for (const provided of slot.provideSlotConnections) {
+        if (provided.name === name) return provided;
       }
     }
     return undefined;
@@ -335,7 +335,7 @@ export class Particle {
     return this.consumedSlotConnections[consumeName] && this.consumedSlotConnections[consumeName].providedSlots[name];
   }
 
-  getSlotSpecs() : Map<string,ConsumeSlotConnectionSpec> {
+  getSlotSpecs() : Map<string, ConsumeSlotConnectionSpec> {
     if (this.spec) return this.spec.slotConnections;
     return new Map();
   }

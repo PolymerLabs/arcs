@@ -34,7 +34,7 @@ export class Loader {
     return fileName.replace(/[/][^/]+$/, '/');
   }
 
-  join(prefix: string , path: string): string {
+  join(prefix: string, path: string): string {
     if (/^https?:\/\//.test(path)) {
       return path;
     }

@@ -63,7 +63,7 @@ export class ArcDebugHandler {
     if (!this.arcDevtoolsChannel) return;
 
     type TruncatedSlot = {id: string, name: string};
-    const truncate = ({id, name}: Slot) => ({ id, name });
+    const truncate = ({id, name}: Slot) => ({id, name});
     const slotConnections = <{particleId: string, consumed: TruncatedSlot, provided: TruncatedSlot[]}[]>[];
     particles.forEach(p => Object.values(p.consumedSlotConnections).forEach(cs => {
       if (cs.targetSlot) {

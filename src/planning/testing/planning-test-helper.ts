@@ -34,7 +34,7 @@ type TestHelperPlanOptions = TestHelperOptions & {
  *   await helper.acceptSuggestion({particles: ['MyParticle1', 'MyParticle2']});
  *   await helper.verifyData('MyParticle1', 'myHandle1', async (handle) => { ... });
  */
-export class PlanningTestHelper extends TestHelper{
+export class PlanningTestHelper extends TestHelper {
   // TODO(lindner): adding the type here causes many compilation errors.
   suggestions;
   recipeIndex: RecipeIndex;

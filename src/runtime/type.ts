@@ -695,7 +695,7 @@ export class SlotType extends Type {
       }
     }
     let fieldsString = '';
-    if(fields.length !== 0) {
+    if (fields.length !== 0) {
       fieldsString = ` {${fields.join(', ')}}`;
     }
     return `Slot${fieldsString}`;
@@ -709,7 +709,7 @@ export class SlotType extends Type {
       }
     }
     let fieldsString = '';
-    if(fields.length !== 0) {
+    if (fields.length !== 0) {
       fieldsString = ` {${fields.join(', ')}}`;
     }
     return `Slot${fieldsString}`;

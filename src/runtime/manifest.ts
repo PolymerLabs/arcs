@@ -928,7 +928,7 @@ ${e.message}
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
-                items.byName.set(ps.name,providedSlot);
+                items.byName.set(ps.name, providedSlot);
                 recipe.removeSlot(theSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);

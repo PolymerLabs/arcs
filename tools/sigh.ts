@@ -815,6 +815,6 @@ function runSteps(command: string, args: string[]): boolean {
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
 
-if(!keepProcessAlive) { // the watch command is running.
+if (!keepProcessAlive) { // the watch command is running.
   process.exit(result ? 0 : 1);
 }

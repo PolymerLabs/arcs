@@ -31,7 +31,7 @@ export class FlowChecker {
   flowcheck(target : Recipe) : FlowAssertResult {
     const graph = new FlowGraph(target);
     let assertion : FlowAssertion;
-    for(assertion of this.config.assertions) {
+    for (assertion of this.config.assertions) {
       const res = assertion.check(graph);
       if (res.result === false) {
         console.log(res.reason);

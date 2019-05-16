@@ -66,16 +66,16 @@ describe('schema', () => {
     const kind = 'schema-primitive';
     const expected = {
       description: {kind, type: 'Text'},
-      image:       {kind, type: 'URL'},
-      category:    {kind, type: 'Text'},
-      price:       {kind, type: 'Text'},
-      seller:      {kind, type: 'Text'},
-      shipDays:    {kind, type: 'Number'},
-      url:         {kind, type: 'URL'},
-      identifier:  {kind, type: 'Text'},
-      isReal:      {kind, type: 'Boolean'},
-      brand:       {kind, type: 'Object'},
-      name:        {kind, type: 'Text'}
+      image: {kind, type: 'URL'},
+      category: {kind, type: 'Text'},
+      price: {kind, type: 'Text'},
+      seller: {kind, type: 'Text'},
+      shipDays: {kind, type: 'Number'},
+      url: {kind, type: 'URL'},
+      identifier: {kind, type: 'Text'},
+      isReal: {kind, type: 'Boolean'},
+      brand: {kind, type: 'Object'},
+      name: {kind, type: 'Text'}
     };
     assert.deepEqual(deleteLocations(schema).fields, expected);
   });

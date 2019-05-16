@@ -15,7 +15,7 @@ import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
-import { StorageProviderBase } from '../storage/storage-provider-base.js';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
 import {Fate} from '../manifest-ast-nodes.js';
 
 export class Handle {
@@ -140,7 +140,7 @@ export class Handle {
     this._id = id;
   }
   mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string}) {
-    if(!storage) {
+    if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
     this._id = storage.id;

@@ -30,15 +30,15 @@ import {
   V1ServiceSpec,
   V1Volume,
   V1VolumeMount
-} from "@kubernetes/client-node";
+} from '@kubernetes/client-node';
 
-import {ExtensionsV1beta1Deployment} from "../../../node_modules/@kubernetes/client-node/dist/api";
-import {CloudManager} from "../cloud";
-import {Container, ContainerManager, DeploymentStatus} from "../containers";
-import {Disk} from "../disks";
-import {GCE_PERSISTENT_DISK_TYPE} from "../gcp/gcp-constants";
-import {DEFAULT_GCP_DISK_SIZE} from "../gcp/gcpdisk";
-import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from "../utils";
+import {ExtensionsV1beta1Deployment} from '../../../node_modules/@kubernetes/client-node/dist/api';
+import {CloudManager} from '../cloud';
+import {Container, ContainerManager, DeploymentStatus} from '../containers';
+import {Disk} from '../disks';
+import {GCE_PERSISTENT_DISK_TYPE} from '../gcp/gcp-constants';
+import {DEFAULT_GCP_DISK_SIZE} from '../gcp/gcpdisk';
+import {ARCS_KEY_PREFIX, arcsKeyFor, DISK_MOUNT_PATH, ON_DISK_DB, VM_URL_PREFIX} from '../utils';
 
 import {
   ARCS_DOCKER_IMAGE,
@@ -46,7 +46,7 @@ import {
   CONTAINER_PORT,
   EXTERNAL_PORT,
   K18S_NAMESPACE
-} from "./k18s-constants";
+} from './k18s-constants';
 
 
 const USE_PREFIX_MAPPING = true;
@@ -79,7 +79,7 @@ class K18sDeployment implements Container {
       if (lb && lb.ingress) {
         return 'http://' + lb && lb.ingress[0].ip;
       } else {
-        return "pending";
+        return 'pending';
       }
     }
   }
@@ -98,12 +98,12 @@ class K18sDeployment implements Container {
       const disk:Disk = disks[0] as Disk;
       return Promise.resolve(disk);
     }
-    return Promise.reject(new Error("Container has no disk associated"));
+    return Promise.reject(new Error('Container has no disk associated'));
   }
 
   async node(): Promise<string> {
-    const {body:v1Pod} = await this.k8sApi.readNamespacedPod(this.v1Deployment.metadata.name, K18S_NAMESPACE,
-      undefined, false,false);
+    const {body: v1Pod} = await this.k8sApi.readNamespacedPod(this.v1Deployment.metadata.name, K18S_NAMESPACE,
+      undefined, false, false);
     return Promise.resolve(v1Pod.spec.nodeName);
   }
 }
@@ -121,12 +121,12 @@ export class K18sContainerManager implements ContainerManager {
     kc.loadFromDefault();
     this.k8sApi = kc.makeApiClient(Core_v1Api);
     this.k8sBetaApi = kc.makeApiClient(Extensions_v1beta1Api);
-    this.k8sName = process.env['MY_NODE_NAME'] || "";
-    this.appName = process.env['MY_APP_NAME'] || "";
-    this.releaseName = process.env['MY_RELEASE_NAME'] || "";
-    if (this.k8sName === "" || this.appName === "" || this.releaseName === "") {
-      console.log("Missing environment variable MY_NODE_NAME, MY_APP_NAME, MY_RELEASE_NAME for Docker environment");
-      throw new Error("Missing MY_NODE_NAME, MY_APP_NAME, or MY_RELEASE_NAME environment variable");
+    this.k8sName = process.env['MY_NODE_NAME'] || '';
+    this.appName = process.env['MY_APP_NAME'] || '';
+    this.releaseName = process.env['MY_RELEASE_NAME'] || '';
+    if (this.k8sName === '' || this.appName === '' || this.releaseName === '') {
+      console.log('Missing environment variable MY_NODE_NAME, MY_APP_NAME, MY_RELEASE_NAME for Docker environment');
+      throw new Error('Missing MY_NODE_NAME, MY_APP_NAME, or MY_RELEASE_NAME environment variable');
     }
   }
 
@@ -163,17 +163,17 @@ export class K18sContainerManager implements ContainerManager {
        */
       const node = await this.findAvailableNode();
       const mounted = await encryptedDisk.mount(rewrappedKey, node);
-      console.log("Disk mounted " + mounted);
+      console.log('Disk mounted ' + mounted);
       const {body: createdPersistentVolume} = await this.requestNewPersistentVolume(encryptedDisk);
-      console.log("Created new persistent volume " + createdPersistentVolume.metadata.name);
+      console.log('Created new persistent volume ' + createdPersistentVolume.metadata.name);
       const {body: createDeployment} = await this.requestCreateDeployment(encryptedDisk, fingerprint, rewrappedKey, node);
-      console.log("Created new deployment " + createDeployment.metadata.name);
+      console.log('Created new deployment ' + createDeployment.metadata.name);
       const {body: createdService} = await this.requestCreateService(fingerprint, createDeployment);
-      console.log("Created new service " + createdService.metadata.name);
+      console.log('Created new service ' + createdService.metadata.name);
       let ingress;
       if (USE_PREFIX_MAPPING) {
         const {body: updatedIngress} = await this.requestUpdateIngress(fingerprint, createdService);
-        console.log("Ingress updated " + JSON.stringify(updatedIngress));
+        console.log('Ingress updated ' + JSON.stringify(updatedIngress));
         ingress = updatedIngress;
       }
       return Promise.resolve(new K18sDeployment(this.k8sApi, createDeployment, createdService, ingress));
@@ -270,7 +270,7 @@ export class K18sContainerManager implements ContainerManager {
     container.volumeMounts = [volumeMount];
     const targetDiskEnv = new V1EnvVar();
     targetDiskEnv.name = ON_DISK_DB;
-    targetDiskEnv.value = "true";
+    targetDiskEnv.value = 'true';
     const urlPrefix = new V1EnvVar();
 
     urlPrefix.name = VM_URL_PREFIX;
@@ -321,7 +321,7 @@ export class K18sContainerManager implements ContainerManager {
 
   private makePersistentVolumeSpec(encryptedDisk: Disk) {
     const spec = new V1PersistentVolumeSpec();
-    spec.accessModes = ["ReadWriteOnce"];
+    spec.accessModes = ['ReadWriteOnce'];
     spec.capacity = {storage: DEFAULT_GCP_DISK_SIZE + 'Gi'};
     spec.gcePersistentDisk = new V1GCEPersistentDiskVolumeSource();
     spec.gcePersistentDisk.fsType = 'ext4';
@@ -331,7 +331,7 @@ export class K18sContainerManager implements ContainerManager {
 
   async find(fingerprint: string): Promise<Container | null> {
 
-    const {body:v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(
+    const {body: v1Deployment} = await this.k8sBetaApi.listNamespacedDeployment(
       K18S_NAMESPACE,
       true // includeUnitialized
     );
@@ -341,12 +341,12 @@ export class K18sContainerManager implements ContainerManager {
     const deploymentList = v1Deployment.items;
     if (deploymentList.length > 0) {
 
-      const {body:v1Service} = await this.k8sApi.listNamespacedService(
+      const {body: v1Service} = await this.k8sApi.listNamespacedService(
         K18S_NAMESPACE,
         true, // includeUnitialized
         undefined, // pretty
         undefined, // _continue
-        "metadata.name=svc-"+fingerprint, // fieldSelector
+        'metadata.name=svc-'+fingerprint, // fieldSelector
         undefined // labelSelector
       );
       if (v1Service.items.length > 0) {

@@ -22,7 +22,7 @@ export class FindRequiredParticle extends Strategy {
         
         return particlesMatch.map(particleMatch => ((recipe: Recipe, particle: Particle) => {
           if (!particle.matches(particleMatch)) return undefined;
-          for (const [name,slotConn] of Object.entries(particle.consumedSlotConnections)) {
+          for (const [name, slotConn] of Object.entries(particle.consumedSlotConnections)) {
             const oldSlot = slotConn.targetSlot;
             const newSlot = particleMatch.consumedSlotConnections[name].targetSlot;
             if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return undefined;

@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../../platform/chai-web.js';
-import { CrdtCollectionModel, ModelValue } from '../../storage/crdt-collection-model.js';
+import {CrdtCollectionModel, ModelValue} from '../../storage/crdt-collection-model.js';
 
 describe('crdt-collection-model', () => {
   it('can add values', async () => {
@@ -79,8 +79,8 @@ describe('crdt-collection-model', () => {
   });
   it('allows keys to be initialized empty', async () => {
     const model = new CrdtCollectionModel([
-      { id: 'nokeys', value: {id: 'id', rawData: {rawValue: 1}}, keys: [] },
-      { id: 'keys', value: {id: 'id', rawData: {rawValue: 2}}, keys: ['key1'] },
+      {id: 'nokeys', value: {id: 'id', rawData: {rawValue: 1}}, keys: []},
+      {id: 'keys', value: {id: 'id', rawData: {rawValue: 2}}, keys: ['key1']},
     ]);
     assert.equal(model.size, 2);
     assert.isEmpty(model.getKeys('nokeys'));

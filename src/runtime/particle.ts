@@ -167,12 +167,12 @@ export class Particle {
    */
   // TODO(sjmiles): experimental services impl
   async service(request) {
-    if (!this.capabilities["serviceRequest"]) {
+    if (!this.capabilities['serviceRequest']) {
       console.warn(`${this.spec.name} has no service support.`);
       return null;
     }
     return new Promise(resolve => {
-      this.capabilities["serviceRequest"](this, request, response => resolve(response));
+      this.capabilities['serviceRequest'](this, request, response => resolve(response));
     });
   }
 

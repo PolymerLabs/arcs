@@ -111,8 +111,8 @@ describe('interface', () => {
             provide set of randomSlot
       `);
     const type = new EntityType(manifest.schemas.Test);
-    const iface = new InterfaceInfo('Test',[
-      {direction: 'in', type}],[
+    const iface = new InterfaceInfo('Test', [
+      {direction: 'in', type}], [
         {name: 'one'},
         {direction: 'provide', isSet: true}]);
 
