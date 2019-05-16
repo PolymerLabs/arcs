@@ -69,6 +69,7 @@ async function wait(timeout: number) {
    try {
      await rejectAfter(timeout);
    } catch(e) {
+     // ignored
    }
 }
 

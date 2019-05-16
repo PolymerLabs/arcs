@@ -88,25 +88,25 @@
       },
       "rules": {
         // eliminate these as usage is cleaned up
-        "no-invalid-this": "off",
         "comma-spacing": "off",
         "func-call-spacing": "off",
         "generator-star-spacing": "off",
         "key-spacing": "off",
         "keyword-spacing": "off",
         "quotes": "off",
-        "no-constant-condition": "off",
-        "no-empty": "off",
-        "no-extra-boolean-cast": "off",
-        "no-inner-declarations": "off",
         "no-irregular-whitespace": "off",
         "no-multiple-empty-lines": "off",
-        "no-unreachable": "off",
-        "no-useless-escape": "off",
         "object-curly-spacing": "off",
         "semi-spacing": "off",
         "space-before-blocks": "off",
         "space-before-function-paren": "off"
+      }
+    },
+    {
+      "files": ["**/*test*/**/*.[jt]s"],
+      "rules": {
+        // disable for mocha usages
+        "no-invalid-this": "off"
       }
     }
   ]

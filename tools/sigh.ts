@@ -663,7 +663,7 @@ function health(args: string[]): boolean {
 
     // Read and parse existing TsLint config.
     const tsLintConfig = fs.readFileSync(pathToTsLintConfig, 'utf-8');
-    const tsLintConfigNoComments = tsLintConfig.replace(/\ *\/\/.*\n/g, '');
+    const tsLintConfigNoComments = tsLintConfig.replace(/ *\/\/.*\n/g, '');
     const parsedConfig = JSON.parse(tsLintConfigNoComments);
 
     modifier(parsedConfig);

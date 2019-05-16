@@ -9,7 +9,6 @@
  */
 
 /* global browser */
-/* eslint-disable no-invalid-this */
 
 const {/*seconds,*/waitFor, click, keys, openNewArc} = require('../utils.js');
 
