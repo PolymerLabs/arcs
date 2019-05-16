@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {Handle, handleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
+import {Runnable} from './hot.js';
 import {Loader} from './loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
@@ -201,7 +202,7 @@ export class ParticleExecutionContext {
 
   // tslint:disable-next-line: no-any
   async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>): Promise<[any, () => Promise<void>]> {
-    let resolve : () => void = null;
+    let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
     const clazz = await this.loader.loadParticleClass(spec);

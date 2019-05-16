@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Runnable} from '../../runtime/hot.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {KeyBase} from "../../runtime/storage/key-base.js";
 import {StorageProviderBase, VariableStorageProvider} from "../../runtime/storage/storage-provider-base.js";
@@ -50,7 +51,7 @@ export class Planificator {
   consumer: PlanConsumer;
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
-  dataChangeCallback: () => void;
+  dataChangeCallback: Runnable;
   search: string|null = null;
   searchStore: VariableStorageProvider;
 

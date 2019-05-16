@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException} from './arc-exceptions.js';
 import {Arc} from './arc.js';
+import {Runnable} from './hot.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -37,7 +38,7 @@ export type StopRenderOptions = {
 
 export class ParticleExecutionHost {
   private readonly _apiPort : PECOuterPort;
-  close : () => void;
+  close : Runnable;
   private readonly arc: Arc;
   private nextIdentifier = 0;
   public readonly slotComposer: SlotComposer;

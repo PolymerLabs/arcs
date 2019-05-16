@@ -15,6 +15,7 @@ import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
+import {Runnable} from './hot.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
@@ -68,7 +69,7 @@ export class Arc {
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   // Public for debug access
   public readonly _loader: Loader;
-  private readonly dataChangeCallbacks = new Map<object, () => void>();
+  private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
   private readonly storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
@@ -666,7 +667,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  onDataChange(callback: () => void, registration: object): void {
+  onDataChange(callback: Runnable, registration: object): void {
     this.dataChangeCallbacks.set(registration, callback);
   }
 

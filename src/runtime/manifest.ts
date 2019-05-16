@@ -14,6 +14,7 @@ import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Runnable} from './hot.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -145,7 +146,7 @@ class ManifestVisitor {
 
   // Parents are visited before children, but an implementation can force
   // children to be visted by calling `visitChildren()`.
-  visit(node: AstNode.BaseNode, visitChildren: () => void) {
+  visit(node: AstNode.BaseNode, visitChildren: Runnable) {
   }
 }
 
