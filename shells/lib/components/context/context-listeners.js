@@ -152,7 +152,7 @@ export const ProfileListener = class extends ShareListener {
     return (simpleNameOfType(store.type) === 'Friend' && store.type.isCollection);
   }
   async add(entity, store) {
-    //this.log('add', entity);
+    this.log('add', entity);
     await super.add(entity, store);
     if (this.isFriendStore(store)) {
       const launcher = await getLauncherStore(entity.rawData.publicKey);

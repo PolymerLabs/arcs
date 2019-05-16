@@ -20,7 +20,8 @@ export class StoreObserver {
     this.store = store;
     this.listener = listener;
     this.owner = owner;
-    this.log = logFactory('StoreObserver', 'orange');
+    const type = store.type.tag === 'Handle' ? 'Handle' : store.type.getEntitySchema().names[0];
+    this.log = logFactory(`StoreObserver::${type}`, `orange`);
     // prepare ready promise
     this.ready = new Promise(resolve => this._resolveReady = resolve);
     // TODO(sjmiles): connecting is async, beware race-condition vs. dispose()
@@ -50,7 +51,7 @@ export class StoreObserver {
     await forEachEntity(this.store, value => this.remove(value));
   }
   async onChange(change) {
-    //this.log('onChange', change, this.listener);
+    this.log('onChange', change); //, this.listener);
     const {add, remove, data} = change;
     if (data) {
       this.add(data);
