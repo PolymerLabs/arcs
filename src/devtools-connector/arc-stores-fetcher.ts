@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../arc.js';
-import {ArcDebugListener, ArcDevtoolsChannel} from './abstract-devtools-channel.js';
-import {Manifest, StorageStub} from '../manifest.js';
-import {StorageProviderBase, VariableStorageProvider, CollectionStorageProvider} from '../storage/storage-provider-base.js';
-import {Type} from '../type.js';
+import {Arc} from '../runtime/arc.js';
+import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
+import {Manifest, StorageStub} from '../runtime/manifest.js';
+import {StorageProviderBase, VariableStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import {Type} from '../runtime/type.js';
 
 type Result = {
   name: string,
@@ -25,11 +25,10 @@ type Result = {
   value: any,
 };
 
-export class ArcStoresFetcher extends ArcDebugListener {
+export class ArcStoresFetcher {
   private arc: Arc;
   
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
-    super(arc, arcDevtoolsChannel);    
     this.arc = arc;
 
     arcDevtoolsChannel.listen('fetch-stores', async () => arcDevtoolsChannel.send({

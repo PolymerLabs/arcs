@@ -17,7 +17,7 @@
 import './config.js';
 
 // platform agnostic code
-import {DevtoolsConnection} from '../../build/runtime/debug/devtools-connection.js';
+import {DevtoolsConnection} from '../../build/devtools-connector/devtools-connection.js';
 import {Utils} from '../lib/runtime/utils.js';
 import {ArcHost} from '../lib/components/arc-host.js';
 import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';

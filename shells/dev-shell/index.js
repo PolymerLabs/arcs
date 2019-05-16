@@ -12,7 +12,7 @@ import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {SlotDomConsumer} from '../../../build/runtime/slot-dom-consumer.js';
 import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
-import {defaultCoreDebugListeners} from '../../../build/runtime/debug/arc-debug-handler.js';
+import {devtoolsInspectorFactory} from '../../../build/devtools-connector/devtools-inspector.js';
 
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
@@ -59,7 +59,7 @@ async function wrappedExecute() {
       slotComposer,
       loader,
       storageProviderFactory: storage,
-      listenerClasses: defaultCoreDebugListeners
+      inspectorFactory: devtoolsInspectorFactory
     });
     arcPanel.attachArc(arc);
 
