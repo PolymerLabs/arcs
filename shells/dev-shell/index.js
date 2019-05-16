@@ -88,6 +88,7 @@ function execute() {
 }
 
 document.getElementById('execute').addEventListener('click', execute);
+document.getElementById('toggle-files').addEventListener('click', files.toggleFiles.bind(files));
 document.getElementById('export').addEventListener('click', files.exportFiles.bind(files));
 files.setExecuteCallback(execute);
 

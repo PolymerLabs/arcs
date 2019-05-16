@@ -39,11 +39,13 @@ const template = `
   </style>
   <textarea id="manifest" rows="10" spellcheck="false"></textarea>
   <div class="tab-panel">
-    <div class="tab-row">
-      <div id="tabs"></div>
-      <button id="add-button">+</button>
+    <div id="toggle">
+      <div class="tab-row">
+        <div id="tabs"></div>
+        <button id="add-button">+</button>
+      </div>
+      <div id="files"></div>
     </div>
-    <div id="files"></div>
   </div>`;
 
 export class FilePane extends HTMLElement {
@@ -52,6 +54,7 @@ export class FilePane extends HTMLElement {
     shadowRoot.innerHTML = template;
 
     this.manifest = shadowRoot.getElementById('manifest');
+    this.toggle = shadowRoot.getElementById('toggle');
     this.tabs = shadowRoot.getElementById('tabs');
     this.files = shadowRoot.getElementById('files');
     this.addButton = shadowRoot.getElementById('add-button');
@@ -114,6 +117,16 @@ export class FilePane extends HTMLElement {
       fileMap['./' + tab.textContent] = tab.linkedFile.value;
     }
     return fileMap;
+  }
+
+  toggleFiles(event) {
+    if (this.toggle.style.display === 'none') {
+      this.toggle.style.display = 'block';
+      event.target.textContent = 'Hide files';
+    } else {
+      this.toggle.style.display = 'none';
+      event.target.textContent = 'Show files';
+    }
   }
 
   exportFiles() {
