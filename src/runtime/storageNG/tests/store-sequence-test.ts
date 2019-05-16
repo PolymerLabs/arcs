@@ -13,11 +13,12 @@ import {Store, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage} from '.
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../crdt/crdt-count.js';
 import {DriverFactory, Driver, ReceiveMethod, StorageDriverProvider, Exists} from '../drivers/driver-factory.js';
+import {StorageKey} from '../storage-key.js';
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
-  async read(key: string) { throw new Error('unimplemented'); }
-  async write(key: string, value: {}) { throw new Error('unimplemented'); }
+  async read(key: StorageKey) { throw new Error('unimplemented'); }
+  async write(key: StorageKey, value: {}) { throw new Error('unimplemented'); }
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
@@ -27,13 +28,19 @@ class MockDriver<Data> extends Driver<Data> {
 }
 
 class MockStorageDriverProvider implements StorageDriverProvider {
-  willSupport(storageKey: string) {
+  willSupport(storageKey: StorageKey) {
     return true;
   }
-  driver<Data>(storageKey: string, exists: Exists): Driver<Data> {
+  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
     return new MockDriver<Data>(storageKey, exists);
   }
 }
+
+class MockStorageKey extends StorageKey {
+  protocol = 'testing';
+}
+
+const testKey = new MockStorageKey();
 
 describe('Store Flow', async () => {
   // Tests a model resync request happening synchronously with model updates from the driver
@@ -43,7 +50,7 @@ describe('Store Flow', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
     
-      const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
     });    
@@ -111,7 +118,7 @@ describe('Store Flow', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
     
-      const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
     });    

@@ -8,9 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
-import {Type} from '../type.js';
-import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt.js";
+import {Type} from "../type.js";
+import {Exists, Driver, DriverFactory} from "./drivers/driver-factory.js";
+import {StorageKey} from "./storage-key.js";
 
 export enum StorageMode {Direct, Backing, ReferenceMode}
 
@@ -28,7 +29,7 @@ type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boo
 //
 // Calling 'activate() will generate an interactive store and return it. 
 export class Store<T extends CRDTTypeRecord> {
-  readonly storageKey: string;
+  readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: Type;
   readonly mode: StorageMode;
@@ -38,7 +39,7 @@ export class Store<T extends CRDTTypeRecord> {
                                    [StorageMode.ReferenceMode, null]]);
   modelConstructor: new () => CRDTModel<T>;
 
-  constructor(storageKey: string, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     this.storageKey = storageKey;
     this.exists = exists;
     this.type = type;
@@ -70,7 +71,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   inSync = true;
   private nextCallbackID = 1;
 
-  constructor(storageKey: string, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     super(storageKey, exists, type, mode, modelConstructor);
     this.localModel = new modelConstructor();
     this.driver = DriverFactory.driverInstance(storageKey, exists);
