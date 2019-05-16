@@ -21,6 +21,7 @@ import {SlotProxy} from './slot-proxy.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
+import {WasmParticle} from './wasm.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -81,7 +82,7 @@ export class ParticleExecutionContext {
       }
 
       async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
-        return pec._instantiateParticle(id, spec, proxies);
+        return pec.instantiateParticle(id, spec, proxies);
       }
 
       onSimpleCallback(callback: ({}) => void, data: {}) {
@@ -201,15 +202,20 @@ export class ParticleExecutionContext {
   }
 
   // tslint:disable-next-line: no-any
-  async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>): Promise<[any, () => Promise<void>]> {
+  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>): Promise<[any, () => Promise<void>]> {
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
-    const clazz = await this.loader.loadParticleClass(spec);
-    const capabilities = this.defaultCapabilitySet();
-    const particle = new clazz();
-    particle.setCapabilities(capabilities);
 
+    let particle;
+    if (spec.implFile && spec.implFile.endsWith('.wasm')) {
+      particle = await this.loadWasmParticle(spec);
+      particle.setCapabilities({});
+    } else {
+      const clazz = await this.loader.loadParticleClass(spec);
+      particle = new clazz();
+      particle.setCapabilities(this.defaultCapabilitySet());
+    }
     this.particles.push(particle);
 
     const handleMap = new Map();
@@ -232,6 +238,19 @@ export class ParticleExecutionContext {
       this.pendingLoads.splice(idx, 1);
       resolve();
     }];
+  }
+
+  private async loadWasmParticle(spec: ParticleSpec) {
+    // TODO: use instantiateStreaming? requires passing the fetch() Response, not its ArrayBuffer
+    const buffer = await this.loader.loadBinary(spec.implFile);
+    assert(buffer && buffer.byteLength > 0);
+
+    // Particle constructor expects spec to be attached to the class object.
+    WasmParticle.spec = spec;
+    const particle = new WasmParticle();
+    await particle.initialize(buffer);
+    WasmParticle.spec = null;
+    return particle;
   }
 
   get relevance() {
