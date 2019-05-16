@@ -43,8 +43,8 @@ before_deploy:
   # with the exception of exe files as Github complains about them.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^\*\*\/node_modules$/\*\*\/node_modules\/\*\*\/\*\.exe/' .gitignore
   # Configure for live.arcs.dev domain name and default web-shells redirect
-  - echo "live.arcs.dev" > CNAME
-  - echo '<head><meta http-equiv="refresh" content="0;/shells/web-shell/"></head>' > index.html
+  - cd ${TRAVIS_BUILD_DIR} && echo "live.arcs.dev" > CNAME
+  - cd ${TRAVIS_BUILD_DIR} && echo '<head><meta http-equiv="refresh" content="0;/shells/web-shell/"></head>' > index.html
 
 
 deploy:

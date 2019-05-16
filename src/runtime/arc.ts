@@ -57,8 +57,6 @@ type DeserializeArcOptions = Readonly<{
   listenerClasses?: ArcDebugListenerDerived[];
 }>;
 
-export type PlanCallback = (recipe: Recipe) => void;
-
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
 export class Arc {
@@ -82,7 +80,6 @@ export class Arc {
   public readonly storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
   private readonly storeDescriptions = new Map<StorageProviderBase, string>();
-  private readonly instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
   private readonly debugHandler: ArcDebugHandler;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
@@ -135,24 +132,10 @@ export class Arc {
     return this.activeRecipe.modality;
   }
 
-  registerInstantiatePlanCallback(callback: PlanCallback): void {
-    this.instantiatePlanCallbacks.push(callback);
-  }
-
-  unregisterInstantiatePlanCallback(callback: PlanCallback): boolean {
-    const index = this.instantiatePlanCallbacks.indexOf(callback);
-    if (index >= 0) {
-      this.instantiatePlanCallbacks.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
   dispose(): void {
     for (const innerArc of this.innerArcs) {
       innerArc.dispose();
     }
-    this.instantiatePlanCallbacks.length = 0;
     // TODO: disconnect all associated store event handlers
     this.pec.stop();
     this.pec.close();
@@ -522,7 +505,6 @@ ${this.activeRecipe.toString()}`;
    * - Processes the Handles and creates stores for them.
    * - Instantiates the new Particles
    * - Passes these particles for initialization in the PEC
-   * - For non-speculative Arcs processes instantiatePlanCallbacks
    *
    * Waits for completion of an existing Instantiate before returning.
    */
@@ -622,10 +604,6 @@ ${this.activeRecipe.toString()}`;
       await this.pec.slotComposer.initializeRecipe(this, particles);
     }
     
-    if (!this.isSpeculative) { // Note: callbacks not triggered for speculative arcs.
-      this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
-    }
-
     this.debugHandler.recipeInstantiated({particles, activeRecipe: this.activeRecipe.toString()});
   }
 
