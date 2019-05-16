@@ -10,7 +10,6 @@
 import {Dictionary} from './hot.js';
 
 export interface Service {
-  [name: string]: Function;
 }
 
 type Registry = Dictionary<Service>;
