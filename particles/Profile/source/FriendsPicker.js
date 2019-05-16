@@ -85,9 +85,9 @@ defineParticle(({DomParticle, html, resolver, log}) => {
 </style>
 
 <template friend-avatars>
-  <div item>
+  <div item title$="{{publicKey}}">
     <model-img src="{{url}}">
-      <img selected$="{{selected}}" key="{{key}}" value="{{value}}" on-dblclick="onRemoveFriend">
+      <img selected$="{{selected}}" key="{{key}}" value="{{publicKey}}" on-dblclick="onRemoveFriend">
     </model-img>
     <br>
     <span>{{name}}</span>
@@ -127,7 +127,7 @@ defineParticle(({DomParticle, html, resolver, log}) => {
           const profile = await this.getUserProfile(friend.publicKey, avatars, userNames);
           return {
             key: i,
-            value: profile.publicKey,
+            publicKey: profile.publicKey,
             name: profile.name,
             url: profile.avatar
           };
