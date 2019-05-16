@@ -366,7 +366,7 @@ TypeVariable "a type variable (e.g. ~foo)"
   }
 
 SlotType
-  = 'Slot' &whiteSpace fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+  = 'Slot' &([^a-z0-9_]i) fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
     const data = fields[2];
