@@ -17,8 +17,14 @@
 /** A function type that returns a value of type `T` */
 export type Producer<T> = () => T;
 
+/** A function that can accept anything (or nothing), but must return something of type `T`. */
+export type Produces<T> = (...args) => T;
+
 /** A function that takes a value of type `T` as input. */
 export type Consumer<T> = (input: T) => void;
+
+/** A function who must accept input of type `T` and can return anything (or nothing). */
+export type Consumes<T> = (input: T) => void | unknown | never;
 
 /** A function that just runs; it takes no values and returns nothing. */
 export type Runnable = () => void;
