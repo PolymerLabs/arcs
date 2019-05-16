@@ -202,7 +202,7 @@ export class ParticleExecutionContext {
 
   // tslint:disable-next-line: no-any
   async _instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>): Promise<[any, () => Promise<void>]> {
-    let resolve: Runnable = null;
+    let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
     const clazz = await this.loader.loadParticleClass(spec);
