@@ -708,18 +708,15 @@ recipe
       const arc = createTestArc(recipe, manifest);
       const description = await Description.create(arc);
 
-      const [recipeDescription, useFallbackDescription] = description.getRecipeSuggestion();
-      assert.equal(useFallbackDescription, true);
+      const recipeDescription = description.getRecipeSuggestion();
       assert.equal(recipeDescription, expectedDescription);
-      const [recipeDescriptionWithFormatter, useFallbackDescriptionWithFormatter] =
-        description.getRecipeSuggestion(DescriptionDomFormatter);
-      assert.equal(useFallbackDescriptionWithFormatter, true);
+      const recipeDescriptionWithFormatter = description.getRecipeSuggestion(DescriptionDomFormatter);
       assert.deepEqual(recipeDescriptionWithFormatter,
                        {template: expectedDescription, model: {}});
     };
 
-    await verify(`recipe`, 'I\'m feeling lucky.');
-    await verify(`recipe Hello`, 'Hello.');
+    await verify(`recipe`, undefined);
+    await verify(`recipe Hello`, undefined);
   });
 
   it('generates type description', async () => {

@@ -79,6 +79,7 @@ export class EntityProtoConverter {
   constructor(schema: Schema) {
     assert(schema.names.length > 0, 'At least one schema name is required for proto conversion');
 
+    console.log("XXX", protobufjs);
     const protoRoot = protobufjs.Root.fromJSON(toProtoJSON(schema));
     this.schema = schema;
     this.message = protoRoot.lookupType(schema.name);

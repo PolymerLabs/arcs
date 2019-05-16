@@ -45,7 +45,7 @@ export class Suggestion {
   planString: string;
   // TODO: update Description class to be serializable.
   descriptionByModality = {};
-  usedFallbackDescription = false;
+  hasTextDescription = false;
   versionByStore = {};
   readonly hash: string;
   readonly rank: number;
@@ -87,21 +87,17 @@ export class Suggestion {
   }
 
   getDescription(modality: string): string|{} {
-    assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
+    //assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
     return this.descriptionByModality[modality];
   }
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
-    this.usedFallbackDescription = false;
-    const [textDescription, usedFallbackDescription] = description.getRecipeSuggestion();
-    if (usedFallbackDescription) {
-      this.usedFallbackDescription = true;
-    }
-    this.descriptionByModality['text'] = textDescription;
+    const descriptionText = description.getRecipeSuggestion();
+    this.hasTextDescription = !!descriptionText;
+    this.descriptionByModality['text'] = descriptionText;
     for (const planModality of this.plan.modality.names) {
       if (modality.names.includes(planModality)) {
-        const [modalityDescription, _] = description.getRecipeSuggestion(descriptionFormatter);
-        this.descriptionByModality[planModality] = modalityDescription;
+        this.descriptionByModality[planModality] = description.getRecipeSuggestion(descriptionFormatter);
       }
     }
   }

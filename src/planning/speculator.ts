@@ -36,9 +36,9 @@ export class Speculator {
     const description = await Description.create(speculativeArc, relevance);
     suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(
-      description,
-      arc.modality,
-      arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
+        description,
+        arc.modality,
+        arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
 
     this.suggestionByHash[hash] = suggestion;
 
