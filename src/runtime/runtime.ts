@@ -11,14 +11,39 @@
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
+import {RuntimeCacheService} from './runtime-cache.js';
 
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
+  private cacheService: RuntimeCacheService;
+
+  static getRuntime() {
+    if (runtime == null) {
+      runtime = new Runtime();
+    }
+    return runtime;
+  }
+
+  static clearRuntimeForTesting() {
+    if (runtime !== null) {
+      runtime.destroy();
+      runtime = null;
+    }
+  }
 
   constructor() {
+    this.cacheService = new RuntimeCacheService();
     // user information. One persona per runtime for now.
+  }
+
+  getCacheService() {
+    return this.cacheService;
+  }
+
+  destroy() {
+
   }
 
   // Stuff the shell needs
@@ -52,3 +77,7 @@ export class Runtime {
   // stuff the strategizer needs
 
 }
+
+let runtime: Runtime = null;
+
+

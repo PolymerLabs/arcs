@@ -13,10 +13,12 @@ import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
+import {Runtime} from '../runtime.js';
 
 export function resetVolatileStorageForTesting() {
-  for (const key of Object.keys(__storageCache)) {
-    __storageCache[key]._memoryMap = {};
+  const cache = storageCache();
+  for (const value of cache.values()) {
+    value._memoryMap = {};
   }
 }
 
@@ -65,8 +67,7 @@ class VolatileKey extends KeyBase {
   }
 }
 
-// tslint:disable-next-line: variable-name
-const __storageCache = {};
+const storageCache = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, VolatileStorage>('volatileStorageCache');
 
 export class VolatileStorage extends StorageBase {
   _memoryMap: {[index: string]: VolatileStorageProvider};
@@ -82,7 +83,7 @@ export class VolatileStorage extends StorageBase {
     this.typePromiseMap = {};
     // TODO(shans): re-add this assert once we have a runtime object to put it on.
     // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-    __storageCache[this.arcId.toString()] = this;
+    storageCache().set(this.arcId.toString(), this);
   }
 
   async construct(id: string, type: Type, keyFragment: string) : Promise<VolatileStorageProvider> {
@@ -117,10 +118,10 @@ export class VolatileStorage extends StorageBase {
   async connect(id: string, type: Type, key: string) : Promise<VolatileStorageProvider> {
     const imKey = new VolatileKey(key);
     if (imKey.arcId !== this.arcId.toString()) {
-      if (__storageCache[imKey.arcId] == undefined) {
+      if (storageCache().get(imKey.arcId) == undefined) {
         return null;
       }
-      return __storageCache[imKey.arcId].connect(id, type, key);
+      return storageCache().get(imKey.arcId).connect(id, type, key);
     }
     if (this._memoryMap[key] === undefined) {
       return null;
