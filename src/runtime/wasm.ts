@@ -137,6 +137,8 @@ export class WasmParticle extends Particle {
   private innerParticle: WasmAddress;
   private handleMap = new Map<Handle, WasmAddress>();
   private revHandleMap = new Map<WasmAddress, Handle>();
+  private slotProxies = new Set<string>();
+
   private converters = new Map<Schema, EntityProtoConverter>();
 
   async initialize(buffer: ArrayBuffer) {
@@ -148,7 +150,7 @@ export class WasmParticle extends Particle {
       // Memory setup
       memory: this.memory,
       __memory_base: 1024,
-      table: new WebAssembly.Table({initial: 35, maximum: 35, element: 'anyfunc'}),
+      table: new WebAssembly.Table({initial: 39, maximum: 39, element: 'anyfunc'}),
       __table_base: 0,
       DYNAMICTOP_PTR: 4096,
 
@@ -168,8 +170,8 @@ export class WasmParticle extends Particle {
       _handleSet: async (wasmHandle, num) => setVariable(this.revHandleMap.get(wasmHandle), num),
 
       // Logging functions
-      _console: i => console.log(`<${this.spec.name}> ${this.readString(i)}`),
-      _consoleN: (i, n) => console.log(`<${this.spec.name}> ${this.readString(i)} ${n}`),
+      __console: (line, strp) => console.log(`[${this.spec.name}:${line}] ${this.readString(strp)}`),
+      __consoleN: (line, strp, num) => console.log(`[${this.spec.name}:${line}] ${this.readString(strp)} ${num}`),
     };
     this.wasm = await WebAssembly.instantiate(buffer, {env});
     this.exports = this.wasm.instance.exports;
@@ -213,21 +215,32 @@ export class WasmParticle extends Particle {
   // tslint:disable-next-line: no-any
   async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}) {}
   async onHandleDesync(handle: Handle) {}
-  renderSlot(slotName: string, contentTypes: string[]) {}
+
+  renderSlot(slotName: string, contentTypes: string[]) {
+    const slot = this.slotProxiesByName.get(slotName);
+    if (!slot) return;
+
+    // We allocate space for the name and the particle allocates space for the content; we free them both.
+    const np = this.storeString(slotName);
+    const cp = this.exports._render(this.innerParticle, np);
+    contentTypes.forEach(ct => slot.requestedContentTypes.add(ct));
+    slot.render({template: this.readString(cp), model: {}, templateName: 'default'});
+    this.exports._free(np);
+    this.exports._free(cp);
+  }
+
   renderHostedSlot(slotName: string, hostedSlotId: string, content: string) {}
   fireEvent(slotName: string, event: {}) {}
 
   // Allocates memory in the wasm container.
-  private storeBuffer(buf: Uint8Array) {
+  private storeBuffer(buf: Uint8Array): WasmAddress {
     const p = this.exports._malloc(buf.length);
-    for (let i = 0; i < buf.length; i++) {
-      this.heap[p + i] = buf[i];
-    }
+    this.heap.set(buf, p);
     return p;
   }
 
   // Allocates memory in the wasm container.
-  private storeString(str: string) {
+  private storeString(str: string): WasmAddress {
     const p = this.exports._malloc(str.length + 1);
     for (let i = 0; i < str.length; i++) {
       this.heap[p + i] = str.charCodeAt(i);
@@ -236,7 +249,8 @@ export class WasmParticle extends Particle {
     return p;
   }
 
-  private readString(idx: number) {
+  // Currently only supports ASCII.
+  private readString(idx: number): string {
     let str = '';
     while (idx < this.heap.length && this.heap[idx] !== 0) {
       str += String.fromCharCode(this.heap[idx++]);
