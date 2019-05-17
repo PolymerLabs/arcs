@@ -161,7 +161,7 @@ function init(): void {
   }
 
   module_.exports.wrap = (info: TraceInfo, fn: Function) => {
-    return function(...args) {
+    return (...args) => {
       const t = module_.exports.start(info);
       try {
         return fn(...args);
