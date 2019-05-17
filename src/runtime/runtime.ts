@@ -10,14 +10,34 @@
 
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
-import {Arc} from './arc.js';
+import {Arc, ArcOptions} from './arc.js';
 import {RuntimeCacheService} from './runtime-cache.js';
+import {Id, IdGenerator} from './id.js';
+import {PecFactory} from './particle-execution-context.js';
+import {SlotComposer} from './slot-composer.js';
+import {Loader} from './loader.js';
+import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
+import {assert} from '../platform/assert-web.js';
+import {FakeSlotComposer} from './testing/fake-slot-composer.js';
+
+export type RuntimeArcOptions = Readonly<{
+  pecFactory?: PecFactory;
+  storageProviderFactory?: StorageProviderFactory;
+  speculative?: boolean;
+  innerArc?: boolean;
+  stub?: boolean
+  listenerClasses?: ArcDebugListenerDerived[];
+}>;
 
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
 export class Runtime {
   private cacheService: RuntimeCacheService;
+  private loader: Loader | null;
+  private composerClass: new () => SlotComposer | null;
+  private context: Manifest;
 
   static getRuntime() {
     if (runtime == null) {
@@ -33,8 +53,15 @@ export class Runtime {
     }
   }
 
-  constructor() {
+  static newForNodeTesting(context?: Manifest) {
+    return new Runtime(new Loader(), FakeSlotComposer, context);
+  }
+
+  constructor(loader?: Loader, composerClass?: new () => SlotComposer, context?: Manifest) {
     this.cacheService = new RuntimeCacheService();
+    this.loader = loader;
+    this.composerClass = composerClass;
+    this.context = context || new Manifest({id: 'manifest:default'});
     // user information. One persona per runtime for now.
   }
 
@@ -44,6 +71,12 @@ export class Runtime {
 
   destroy() {
 
+  }
+
+  newArc(name: string, storageKeyPrefix: string, options?: RuntimeArcOptions) {
+    const id = IdGenerator.newSession().newArcId(name);
+    const storageKey = storageKeyPrefix + id.toString();
+    return new Arc({id, storageKey, loader: this.loader, slotComposer: new this.composerClass(), context: this.context, ...options});
   }
 
   // Stuff the shell needs

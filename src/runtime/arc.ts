@@ -33,7 +33,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 
-type ArcOptions = Readonly<{
+export type ArcOptions = Readonly<{
   id: Id;
   context: Manifest;
   pecFactory?: PecFactory;
