@@ -9,30 +9,17 @@
 import {Services} from '../../build/runtime/services.js';
 import {dynamicScript} from './dynamic-script.js';
 import {logFactory} from '../../build/platform/log-web.js';
+import {ResourceManager as rmgr} from './ResourceManager.js';
 
 const log = logFactory('tfjs-service');
 
 //const tfUrl = `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js`;
 const tfUrl = `https://unpkg.com/@tensorflow/tfjs@1.1.2/dist/tf.min.js?module`;
 
-// TODO(sjmiles): demonstrate simple concept for tracking objects across the PEC
-
-const references = [];
-const reference = value => {
-  return references.push(value) - 1;
-};
-
-const deref = reference => {
-  return references[reference];
-};
-
-const dispose = reference => {
-  delete references[reference];
-};
 
 // Utility
 
-const requireTf = async () => {
+export const requireTf = async () => {
   if (!window.tf) {
     await dynamicScript(tfUrl);
   }
@@ -46,14 +33,14 @@ const sequential = async () => {
   const tf = await requireTf();
   // Define a model
   const model = tf.sequential();
-  return reference(model);
+  return rmgr.ref(model);
 };
 
 const linearRegression = async ({model: modelRef, training, query, fits}) => {
   // lazy-load TensorFlow
   const tf = await requireTf();
   // get the referenced model
-  const model = deref(modelRef);
+  const model = rmgr.deref(modelRef);
   // Define a model for linear regression.
   //const model = tf.sequential();
   model.add(tf.layers.dense({units: 1, inputShape: [1]}));
@@ -82,5 +69,5 @@ const linearRegression = async ({model: modelRef, training, query, fits}) => {
 Services.register('tfjs', {
   linearRegression,
   sequential,
-  dispose
+  dispose: rmgr.dispose
 });
