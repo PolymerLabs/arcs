@@ -1,0 +1,22 @@
+schema Data
+  Number num
+
+resource DataResource
+  start
+  [
+    {"num": 73}
+  ]
+
+store DataStore of Data in DataResource
+
+particle TestParticle in 'output.wasm'
+  consume root
+  inout Data data
+  inout Data res
+
+recipe
+  use DataStore as h1
+  create as h2
+  TestParticle
+    data = h1
+    res = h2
