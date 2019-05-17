@@ -56,6 +56,9 @@ const template = Xen.Template.html`
 
   <div tools open$="{{open}}" on-click="onToolsPanelClick">
     <simple-tabs>
+      <div tab="Arc Info">
+        <pre style="padding: 8px; white-space: pre-wrap;">{{serialization}}</pre>
+      </div>
       <div tab="Store Explorer">
         <simple-tabs on-change="onTabChange">
           <div tab="User Arc" style="padding-top: 8px;">
@@ -87,6 +90,11 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
   }
   get template() {
     return template;
+  }
+  update({arc, nullarc}) {
+    if (arc || nullarc) {
+      (arc||nullarc).serialize().then(serialization => this.state = {serialization});
+    }
   }
   render(props, state) {
     const renderModel = {

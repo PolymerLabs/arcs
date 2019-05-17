@@ -12,7 +12,6 @@ import {crackStorageKey, simpleNameOfType} from './context-utils.js';
 import {Reference} from '../../../../build/runtime/reference.js';
 import {Type} from '../../../../build/runtime/type.js';
 import {logFactory} from '../../../../build/platform/log-web.js';
-import {generateId} from '../../../../modalities/dom/components/generate-id.js';
 
 const log = logFactory('ContextStores', 'lime');
 
@@ -34,7 +33,7 @@ const ContextStoresImpl = class {
       return metrics;
     }
   }
-  async getShareStore(context, type, name, id, tags) {
+  async getShareStore(context, schema, name, id, tags) {
     // cache and return promises in case of re-entrancy
     let promise = pendingStores[id];
     if (!promise) {
@@ -43,7 +42,7 @@ const ContextStoresImpl = class {
         if (store) {
           resolve(store);
         } else {
-          const store = await this.createReferenceStore(context, type, name, id, tags);
+          const store = await this.createReferenceStore(context, schema, name, id, tags);
           resolve(store);
         }
       });
@@ -51,25 +50,24 @@ const ContextStoresImpl = class {
     }
     return promise;
   }
-  getDecoratedId(entity, uid) {
-    return `${entity.id}:uid:${uid}`;
-  }
+  // getDecoratedId(entity, uid) {
+  //   return `${entity.id}:uid:${uid}`;
+  // }
   async storeEntityWithUid(store, entity, backingStorageKey, uid) {
     this.storeEntityReference(store, entity, backingStorageKey, uid);
   }
-  removeEntityWithUid(store, entity, uid) {
+  removeEntityWithUid(store, entity) {
     store.remove(`shared-${entity.id}`);
   }
-  async createReferenceStore(context, type, name, id, tags) {
-    const shareType = this.generateReferenceType(type).collectionOf();
-    const store = await context.createStore(shareType, name, `${id}Ref`, tags);
+  async createReferenceStore(context, schema, name, id, tags) {
+    const shareType = schema.type.collectionOf();
+    const store = await context.createStore(shareType, name, `${id}`, tags);
     return store;
   }
   async storeEntityReference(store, entity, backingStorageKey, uid) {
-    // TODO(sjmiles): storageKey will be baked into entity in future
+    // TODO(sjmiles): runtime-team tells me storageKey will be baked into entity in future
     entity.storageKey = backingStorageKey;
-    const ref = new Reference(entity);
-    await ref.stored;
+    const ref = await createReferenceFor(entity);
     const refEntity = {
       id: `shared-${entity.id}`,
       rawData: {
@@ -79,23 +77,13 @@ const ContextStoresImpl = class {
     };
     store.store(refEntity, [String(Math.random())]);
   }
-  generateReferenceType(type) {
-    // TODO(sjmiles): note there need to be matching* types in Particles
-    // (*matching is fuzzy based on the current capabilities of the type system)
-    const refType = simpleNameOfType(type);
-    const literalShareType = {
-      tag: `Entity`,
-      data: {
-        names: [`${refType}Share`],
-        fields: {
-          entity: `Reference<${refType}>`,
-          fromKey: `Text`,
-          fromArc: `Text`
-        }
-      }
-    };
-    return Type.fromLiteral(literalShareType);
-  }
+};
+
+const createReferenceFor = async entity => {
+  const ref = new Reference(entity);
+  await ref.stored;
+  return ref;
 };
 
 export const ContextStores = new ContextStoresImpl();
+

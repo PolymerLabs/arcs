@@ -102,6 +102,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // globals stored for easy console access
     window.shell = this;
     window.arc = state.arc;
+    window.context = state.context;
     super._update(props, state, oldProps, oldState);
   }
   async update(props, state) {

@@ -13,7 +13,6 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
-import {Runnable} from '../../hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
@@ -377,7 +376,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
   private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
-  private resolveInitialized: Runnable;
+  private resolveInitialized: () => void;
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
@@ -535,7 +534,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
          return;
       }
     }
-
     this.version++;
     const version = this.version;
     let storageKey;
@@ -654,7 +652,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   private remoteState: {items: Dictionary<{value: {}, keys: Dictionary<null>}>};
   private readonly initialized: Promise<void>;
   private pendingWrites: {value: {}, storageKey: string}[] = [];
-  private resolveInitialized: Runnable;
+  private resolveInitialized: () => void;
   private localKeyId = Date.now();
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
@@ -1511,7 +1509,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     }
   }
 
-  private async storeSingle(value, keys: string[]) {
+  private storeSingle(value, keys: string[]) {
     return this.childRef(value.id).transaction(data => {
       if (data === null) {
         data = {value, keys: {}};
@@ -1542,7 +1540,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     }
   }
 
-  private async removeSingle(id: string, keys: string[]) {
+  private removeSingle(id: string, keys: string[]) {
     return this.childRef(id).transaction(data => {
       if (data === null) {
         return null;
@@ -1611,7 +1609,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 
-  async cloneFrom(store: StorageProviderBase): Promise<void> {
+  cloneFrom(store: StorageProviderBase): Promise<void> {
     throw new Error('FirebaseBackingStore does not implement cloneFrom');
   }
 }

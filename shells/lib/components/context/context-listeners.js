@@ -97,45 +97,46 @@ export const ShareListener = class extends AbstractListener {
     const handle = store.handle;
     const metrics = ContextStores.getHandleMetrics(handle, this.isProfile);
     if (metrics) {
-      const {base: userid} = crackStorageKey(store.storageKey);
       const typeName = simpleNameOfType(store.type);
-      //
-      let share = boxes[metrics.storeId];
-      if (!share) {
-        this.log(`found new share:`, typeName, metrics.storeName);
-        // TODO(sjmiles): critical re-entry situation, anybody trying to access the box
-        // during the `await` on the next line will see no store.
-        // We attempt to avoid this by await'ing `add` when looping over change records.
-        share = boxes[metrics.storeId] = {};
-        share.shareStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
+      const shareType = `${typeName}Share`;
+      const shareSchema = this.context.findSchemaByName(shareType);
+      if (!shareSchema) {
+        this.log(`found a share type [${shareType}] with no schema, ignoring`);
+      } else {
+        let share = boxes[metrics.storeId];
+        if (!share) {
+          this.log(`found new share:`, typeName, metrics.storeName);
+          // TODO(sjmiles): critical re-entry situation, anybody trying to access the box
+          // during the `await` on the next line will see no store.
+          // We attempt to avoid this by await'ing `add` when looping over change records.
+          share = boxes[metrics.storeId] = {};
+          share.shareStorePromise = ContextStores.getShareStore(this.context, shareSchema, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
+        }
+        const shareStore = await share.shareStorePromise;
+        ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, metrics.userid);
+        //
+        let box = boxes[metrics.boxStoreId];
+        if (!box) {
+          box = boxes[metrics.boxStoreId] = {};
+          box.boxStorePromise = ContextStores.getShareStore(this.context, shareSchema, metrics.type, metrics.boxStoreId, metrics.boxStoreId, ['shared']);
+        }
+        const boxStore = await box.boxStorePromise;
+        ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, metrics.userid);
       }
-      const shareStore = await share.shareStorePromise;
-      ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, userid);
-      //
-      let box = boxes[metrics.boxStoreId];
-      if (!box) {
-        box = boxes[metrics.boxStoreId] = {};
-        box.boxStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.boxStoreId, metrics.boxStoreId, ['shared']);
-      }
-      const boxStore = await box.boxStorePromise;
-      ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, userid);
     }
   }
   async remove(entity, store) {
+    const _remove = async (box, promiseName) => {
+      if (box && box[promiseName]) {
+        const store = await box[promiseName];
+        ContextStores.removeEntityWithUid(store, entity/*, metrics.userid*/);
+      }
+    };
     //this.log('removing entity', entity);
-    const {base: userid} = crackStorageKey(store.storageKey);
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
     if (metrics) {
-      const share = boxes[metrics.storeId];
-      if (share && share.shareStorePromise) {
-        const shareStore = await share.shareStorePromise;
-        ContextStores.removeEntityWithUid(shareStore, entity, userid);
-      }
-      const box = boxes[metrics.boxStoreId];
-      if (box && box.boxStorePromise) {
-        const boxStore = await box.boxStorePromise;
-        ContextStores.removeEntityWithUid(boxStore, entity, userid);
-      }
+      _remove(boxes[metrics.storeId], 'shareStorePromise');
+      _remove(boxes[metrics.boxStoreId], 'boxStorePromise');
     }
   }
 };

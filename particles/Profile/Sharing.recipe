@@ -1,5 +1,6 @@
 import 'Avatar.schema'
 import 'UserName.schema'
+import '../Profile/FavoriteFood.recipes'
 
 resource PROFILE_avatarResource
   start
@@ -10,6 +11,11 @@ resource PROFILE_userNameResource
   start
   []
 store PROFILE_userName of [UserNameShare] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
+
+resource PROFILE_favoriteFoodsResource
+  start
+  []
+store PROFILE_favoriteFoods of [FavoriteFoodShare] 'PROFILE_favoriteFoods' @0 #profile in PROFILE_favoriteFoodsResource
 
 resource BOXED_avatarResource
   start
