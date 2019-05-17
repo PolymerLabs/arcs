@@ -93,7 +93,7 @@ function init() {
   const params = new URLSearchParams(window.location.search);
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
-    manifest = `import '${manifestParam}'`
+    manifest = `import '${manifestParam}'`;
     toggleFiles.click();
   } else {
     manifest = `\
