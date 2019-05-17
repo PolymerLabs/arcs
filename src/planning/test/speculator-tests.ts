@@ -24,7 +24,8 @@ describe('speculator', () => {
     assert(recipe.normalize());
     const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
     const speculator = new Speculator();
-    const suggestion = await speculator.speculate(arc, recipe, hash);
-    assert.equal(suggestion.rank, 1);
+    const {speculativeArc, relevance} = await speculator.speculate(arc, recipe, hash);
+    assert.equal(relevance.calcRelevanceScore(), 1);
+    assert.lengthOf(speculativeArc.recipeDeltas, 1);
   });
 });
