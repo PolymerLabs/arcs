@@ -81,6 +81,8 @@ const XenStateMixin = Base => class extends Base {
   _setState(object) {
     let dirty = false;
     const state = this._state;
+
+    // eslint-disable-next-line guard-for-in
     for (const property in object) {
       const value = object[property];
       if (this._wouldChangeState(property, value)) {

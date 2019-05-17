@@ -187,6 +187,7 @@ class ArcsPlanning extends MessengerMixin(PolymerElement) {
           };
           break;
         case 'visible-suggestions-changed':
+          // eslint-disable-next-line guard-for-in
           for (const index in this.lastPlanning.suggestions) {
             this.set(`lastPlanning.suggestions.${index}.isVisible`,
                 msg.messageBody.visibleSuggestionHashes.some(

@@ -58,6 +58,7 @@ const deepishClone = (obj, depth) => {
     return obj;
   }
   const clone = Object.create(null);
+  // eslint-disable-next-line guard-for-in
   for (const n in obj) {
     let value = obj[n];
     //try {

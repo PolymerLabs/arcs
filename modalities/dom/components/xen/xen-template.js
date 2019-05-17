@@ -70,6 +70,7 @@ class Annotator {
 
 const locateNodes = function(root, locator, map) {
   map = map || [];
+  // eslint-disable-next-line guard-for-in
   for (const n in locator) {
     const loc = locator[n];
     if (loc) {
@@ -182,10 +183,12 @@ const annotate = function(root, key, opts) {
 /* Annotation Consumer */
 const mapEvents = function(notes, map, mapper) {
   // add event listeners
+  // eslint-disable-next-line guard-for-in
   for (const key in notes) {
     const node = map[key];
     const events = notes[key] && notes[key].events;
     if (node && events) {
+      // eslint-disable-next-line guard-for-in
       for (const name in events) {
         mapper(node, name, events[name]);
       }
@@ -203,6 +206,7 @@ const listen = function(controller, node, eventName, handlerName) {
 
 const set = function(notes, map, scope, controller) {
   if (scope) {
+    // eslint-disable-next-line guard-for-in
     for (const key in notes) {
       const node = map[key];
       if (node) {
@@ -210,6 +214,8 @@ const set = function(notes, map, scope, controller) {
         node.scope = scope;
         // now get your regularly scheduled bindings
         const mustaches = notes[key].mustaches;
+
+        // eslint-disable-next-line guard-for-in
         for (const name in mustaches) {
           const property = mustaches[name];
           if (property in scope) {

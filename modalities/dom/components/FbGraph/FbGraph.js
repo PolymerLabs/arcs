@@ -81,6 +81,7 @@ export const FbGraph = Firedb => {
     // TODO(sjmiles): These methods preserve Object identity while modulating
     // properties. (1) Do we need this preservation still? (2) Use Map instead of Object.
     _replaceProperties(object, neo) {
+      // eslint-disable-next-line guard-for-in
       for (const field in neo) {
         this._replaceSubProperties(object, field, neo[field]);
       }
