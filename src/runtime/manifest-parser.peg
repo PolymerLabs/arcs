@@ -102,7 +102,7 @@ Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent
   } as AstNode.Resource;
 }
 
-ResourceStart = 'start' eolWhiteSpace { startIndent = indent; }
+ResourceStart = 'start' eol { startIndent = indent; }
 
 ResourceBody = lines:(SameOrMoreIndent ResourceLine)+ {
   return lines.map(line => line[0].substring(startIndent.length) + line[1]).join('');
@@ -366,7 +366,7 @@ TypeVariable "a type variable (e.g. ~foo)"
   }
 
 SlotType
-  = 'Slot' &whiteSpace fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+  = 'Slot' &([^a-z0-9_]i) fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
     const data = fields[2];
@@ -1110,7 +1110,7 @@ fieldName "a field name (e.g. foo9)"
   = [a-z][a-z0-9_]i* { return text(); }
 whiteSpace "one or more whitespace characters"
   = " "+
-eolWhiteSpace "a new line"
+eolWhiteSpace "a group of new lines (and optionally comments)"
   = [ ]* !.
   / [ ]* '//' [^\n]* eolWhiteSpace
   / [ ]* eol eolWhiteSpace?
