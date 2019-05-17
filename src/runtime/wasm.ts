@@ -133,7 +133,7 @@ export class WasmParticle extends Particle {
   private wasm: WebAssembly.ResultObject;
   // tslint:disable-next-line: no-any
   private exports: any;
-  
+
   private innerParticle: WasmAddress;
   private handleMap = new Map<Handle, WasmAddress>();
   private revHandleMap = new Map<WasmAddress, Handle>();
@@ -150,7 +150,7 @@ export class WasmParticle extends Particle {
       // Memory setup
       memory: this.memory,
       __memory_base: 1024,
-      table: new WebAssembly.Table({initial: 39, maximum: 39, element: 'anyfunc'}),
+      table: new WebAssembly.Table({initial: 43, maximum: 43, element: 'anyfunc'}),
       __table_base: 0,
       DYNAMICTOP_PTR: 4096,
 
@@ -203,7 +203,7 @@ export class WasmParticle extends Particle {
       this.converters.set(model.schema, converter);
     }
     const buf = converter.encode(model);
-    
+
     // Encode and send the protobuf... but for now just stuff 'num' in as the first byte to be extracted wasm-side.
     buf[0] = model.num & 0xff;
 
@@ -221,16 +221,23 @@ export class WasmParticle extends Particle {
     if (!slot) return;
 
     // We allocate space for the name and the particle allocates space for the content; we free them both.
-    const np = this.storeString(slotName);
-    const cp = this.exports._render(this.innerParticle, np);
+    const sp = this.storeString(slotName);
+    const cp = this.exports._renderSlot(this.innerParticle, sp);
     contentTypes.forEach(ct => slot.requestedContentTypes.add(ct));
     slot.render({template: this.readString(cp), model: {}, templateName: 'default'});
-    this.exports._free(np);
+    this.exports._free(sp);
     this.exports._free(cp);
   }
 
   renderHostedSlot(slotName: string, hostedSlotId: string, content: string) {}
-  fireEvent(slotName: string, event: {}) {}
+
+  fireEvent(slotName: string, event) {
+    const sp = this.storeString(slotName);
+    const hp = this.storeString(event.handler);
+    this.exports._fireEvent(this.innerParticle, sp, hp);
+    this.exports._free(sp);
+    this.exports._free(hp);
+  }
 
   // Allocates memory in the wasm container.
   private storeBuffer(buf: Uint8Array): WasmAddress {

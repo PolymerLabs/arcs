@@ -76,6 +76,7 @@ public:
   virtual void init() {}
   virtual void onHandleSync(Handle* handle) {}
   virtual std::string renderSlot(std::string_view slotName) { return ""; }
+  virtual void fireEvent(std::string_view slotName, std::string_view handler) {}
 
   std::map<std::string_view, Handle*> handles_;
 };
@@ -99,10 +100,14 @@ public:
   }
 
   std::string renderSlot(std::string_view slotName) override {
-    std::string content = "<i>Hello from wasm! This slot is '";
+    std::string content = "<div on-click=\"me\"><i>Hello from <span on-click=\"THE_WASM\">wasm!</span> This slot is '";
     content += slotName;
-    content += "'</i>";
+    content += "'</i></div>";
     return content;
+  }
+
+  void fireEvent(std::string_view slotName, std::string_view handler) override {
+    console(mkstr("You clicked ", std::string(handler) + "!"));
   }
 };
 
@@ -134,8 +139,14 @@ void syncHandle(Particle* particle, Handle* handle, void* buffer, int size) {
 // Does not take ownership of slotName; external caller frees.
 // Caller also takes ownership of returned allocated buffer.
 EMSCRIPTEN_KEEPALIVE
-void* render(Particle* particle, const char* slotName) {
+void* renderSlot(Particle* particle, const char* slotName) {
   return particle->render(slotName);
+}
+
+// Does not take ownership of slotName or handler; external caller frees.
+EMSCRIPTEN_KEEPALIVE
+void fireEvent(Particle* particle, const char* slotName, const char* handler) {
+  particle->fireEvent(slotName, handler);
 }
 
 }
