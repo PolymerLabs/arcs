@@ -45,7 +45,6 @@ export class Suggestion {
   planString: string;
   // TODO: update Description class to be serializable.
   descriptionByModality = {};
-  hasTextDescription = false;
   versionByStore = {};
   readonly hash: string;
   readonly rank: number;
@@ -93,7 +92,6 @@ export class Suggestion {
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
     const descriptionText = description.getRecipeSuggestion();
-    this.hasTextDescription = !!descriptionText;
     this.descriptionByModality['text'] = descriptionText;
     for (const planModality of this.plan.modality.names) {
       if (modality.names.includes(planModality)) {
