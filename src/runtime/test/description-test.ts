@@ -711,8 +711,7 @@ recipe
       const recipeDescription = description.getRecipeSuggestion();
       assert.equal(recipeDescription, expectedDescription);
       const recipeDescriptionWithFormatter = description.getRecipeSuggestion(DescriptionDomFormatter);
-      assert.deepEqual(recipeDescriptionWithFormatter,
-                       {template: expectedDescription, model: {}});
+      assert.deepEqual(recipeDescriptionWithFormatter, expectedDescription);
     };
 
     await verify(`recipe`, undefined);
