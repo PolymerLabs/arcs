@@ -78,10 +78,10 @@ export function isSlotType(node: BaseNode): node is SlotType {
   return node.kind === 'slot-type';
 }
 export function slandleType(arg: ParticleArgument): SlotType | undefined {
-  if(isSlotType(arg.type)) {
+  if (isSlotType(arg.type)) {
     return arg.type;
   }
-  if(isCollectionType(arg.type) && isSlotType(arg.type.type)) {
+  if (isCollectionType(arg.type) && isSlotType(arg.type.type)) {
     return arg.type.type;
   }
   return undefined;

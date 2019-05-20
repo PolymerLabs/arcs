@@ -728,7 +728,7 @@ ${e.message}
   }
 
   // TODO(cypher): Remove loader dependency.
-  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.Recipe, loader) {
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
     if (recipeItem.annotation) {

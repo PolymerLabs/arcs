@@ -1,13 +1,13 @@
 {
   "extends": "./config/tsconfig.base.json",
   "include": [
-    "src/**/*.ts",
+    "src/**/*.ts"
   ],
   "compilerOptions": {
     "outDir": "build",
     "declaration": true,
     "experimentalDecorators": true,
-    "incremental": true,
+    "incremental": true
   },
   "exclude": [
     "build/**/*",
