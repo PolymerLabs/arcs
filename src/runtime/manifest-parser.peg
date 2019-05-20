@@ -289,8 +289,7 @@ ParticleItem "a particle item"
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
   {
-    dependentConnections = optional(dependentConnections, extractIndented, []);
-    arg.dependentConnections = dependentConnections;
+    arg.dependentConnections = optional(dependentConnections, extractIndented, []);
     return arg as AstNode.ParticleHandle;
   }
 
@@ -303,7 +302,7 @@ ParticleArgument
       direction,
       type: type,
       isOptional: !!isOptional,
-      dependentConnections: [],
+      dependentConnections: [] as AstNode.ParticleHandle[],
       name: nametag.name,
       tags: nametag.tags,
     } as AstNode.ParticleArgument;
@@ -366,7 +365,7 @@ TypeVariable "a type variable (e.g. ~foo)"
   }
 
 SlotType
-  = 'Slot' &([^a-z0-9_]i) fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+  = 'Slot' &([^a-z0-9_]i) fields:(whiteSpace? '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
     const data = fields[2];
@@ -562,7 +561,7 @@ Recipe
       name: optional(name, name => name[1], null),
       verbs,
       items: optional(items, extractIndented, []),
-    } as AstNode.Recipe;
+    } as AstNode.RecipeNode;
   }
 
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
@@ -867,6 +866,7 @@ ParticleRef
       location: location(),
       name,
       verbs: [],
+      tags: []
     } as AstNode.ParticleRef;
   }
   / verb:Verb
@@ -875,6 +875,7 @@ ParticleRef
       kind: 'particle-ref',
       location: location(),
       verbs: [verb],
+      tags: []
     } as AstNode.ParticleRef;
   }
 
@@ -1106,7 +1107,7 @@ upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
-fieldName "a field name (e.g. foo9)"
+fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 whiteSpace "one or more whitespace characters"
   = " "+
