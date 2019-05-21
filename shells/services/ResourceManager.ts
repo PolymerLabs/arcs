@@ -14,7 +14,7 @@ import {logFactory} from '../../build/platform/log-web.js';
 
 const log = logFactory('resource-mgr');
 
-type Reference = number;
+export type Reference = number;
 
 // TODO(sjmiles): demonstrate simple concept for tracking objects across the PEC
 
@@ -38,7 +38,7 @@ export class ResourceManager {
   }
 
   /** @return the cached value associated with the input reference. */
-  static deref(r: Reference) {
+  static deref(r: Reference): unknown {
     return this.references[r];
   }
 

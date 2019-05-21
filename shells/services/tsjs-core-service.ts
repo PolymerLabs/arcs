@@ -25,11 +25,4 @@ class TfCoreService implements Service {
   }
 }
 
-class ReshapeService extends TfCoreService {
-}
-
-Services.register('tfjs-core', {
-
-});
-
 
