@@ -40,6 +40,9 @@ import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.j
 import {Strategizer, StrategyDerived, GenerationRecord} from './strategizer.js';
 import {Descendant} from '../runtime/recipe/walker.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
+import {Description} from '../runtime/description.js';
+import {Relevance} from '../runtime/relevance.js';
+import {SuggestionCache} from './plan/suggestion-cache.js';
 
 interface AnnotatedDescendant extends Descendant<Recipe> {
   active?: boolean;
@@ -54,17 +57,21 @@ interface Generation {
 
 export class Planner {
   private _arc: Arc;
+  private suggestionCache: SuggestionCache;
   // public for debug tools
   strategizer: Strategizer;
+  speculator: Speculator;
   blockDevtools: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, blockDevtools = false} = {}) {
+  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, suggestionCache = null, speculator = null, blockDevtools = false} = {}) {
     strategyArgs = Object.freeze({...strategyArgs});
     this._arc = arc;
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
     this.strategizer = new Strategizer(strategyImpls, [], ruleset);
     this.blockDevtools = blockDevtools;
+    this.speculator = speculator;
+    this.suggestionCache = suggestionCache;
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -143,10 +150,9 @@ export class Planner {
     return groups;
   }
 
-  async suggest(timeout?: number, generations: Generation[] = [], speculator?: Speculator) : Promise<Suggestion[]> {
+  async suggest(timeout?: number, generations: Generation[] = []) : Promise<Suggestion[]> {
     const trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     const plans = await trace.wait(this.plan(timeout, generations));
-    speculator = speculator || new Speculator();
     // We don't actually know how many threads the VM will decide to use to
     // handle the parallel speculation, but at least we know we won't kick off
     // more than this number and so can somewhat limit resource utilization.
@@ -171,15 +177,14 @@ export class Planner {
           args: {groupIndex}
         });
 
-        const suggestion = await speculator.speculate(this._arc, plan, hash);
+        const suggestion = await this.retriveOrCreateSuggestion(hash, plan, this._arc);
         if (!suggestion) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', args: {hash, groupIndex}});
           continue;
         }
-        this._updateGeneration(generations, hash, async (g) => g.description = suggestion.descriptionText);
+        this._updateGeneration(generations, hash, g => g.description = suggestion.descriptionText);
         suggestion.groupIndex = groupIndex;
-
         results.push(suggestion);
 
         planTrace.end({name: suggestion.descriptionText, args: {rank: suggestion.rank, hash, groupIndex}});
@@ -189,6 +194,37 @@ export class Planner {
     results = [].concat(...results);
 
     return trace.endWith(results);
+  }
+
+  private async retriveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion> {
+    if (this.suggestionCache) {
+      const suggestion = this.suggestionCache.getSuggestion(hash, plan, arc);
+      if (suggestion) {
+        return suggestion;
+      }
+    }
+    let relevance = null;
+    let description = null;
+    if (this.speculator) {
+      const result = await this.speculator.speculate(this._arc, plan, hash);
+      if (!result) {
+        return undefined;
+      }
+      const speculativeArc = result.speculativeArc;
+      relevance = result.relevance;
+      description = await Description.create(speculativeArc, relevance);
+    } else {
+      description = await Description.createForPlan(plan);
+    }
+    const suggestion = Suggestion.create(plan, hash, relevance);
+    suggestion.setDescription(
+        description,
+        this._arc.modality,
+        this._arc.pec.slotComposer ? this._arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
+    if (this.suggestionCache) {
+      this.suggestionCache.setSuggestion(hash, suggestion);
+    }
+    return suggestion;
   }
 
   _updateGeneration(generations: Generation[], hash: string, handler: (_: AnnotatedDescendant) => void) {

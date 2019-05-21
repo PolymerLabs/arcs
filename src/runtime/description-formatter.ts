@@ -201,7 +201,7 @@ export class DescriptionFormatter {
 
     const handleConn = particle.connections[handleNames[0]];
     if (handleConn) { // handle connection
-      assert(handleConn.handle && handleConn.handle.id, 'Missing id???');
+      assert(handleConn.handle, 'Missing handle???');
       return [{
         fullName: valueTokens[0],
         handleName: handleConn.name,
@@ -210,8 +210,7 @@ export class DescriptionFormatter {
         extra,
         _handleConn: handleConn,
         value: particleDescription._connections[handleConn.name].value
-      }];
-        
+      }];  
     }
 
     // slot connection
@@ -267,6 +266,9 @@ export class DescriptionFormatter {
 
         // Transformation's hosted particle.
         if (token._handleConn.type instanceof InterfaceType) {
+          if (!token.value) {
+            return undefined;
+          }
           assert(token.value.interfaceValue, `Missing interface type value for '${token._handleConn.type}'.`);
           const particleSpec = ParticleSpec.fromLiteral(token.value.interfaceValue);
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
@@ -431,7 +433,9 @@ export class DescriptionFormatter {
 
   _formatStoreDescription(handleConn): string|undefined {
     if (handleConn.handle) {
-      assert(handleConn.handle.id, `no id for ${handleConn.name}?`);
+      if (!handleConn.handle.id) {
+        return undefined;
+      }
       const storeDescription = this.storeDescById[handleConn.handle.id];
       const handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).

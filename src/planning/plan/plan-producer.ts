@@ -25,6 +25,7 @@ import {StrategyDerived} from '../strategizer.js';
 
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
+import {SuggestionCache} from './suggestion-cache.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -41,6 +42,7 @@ export class PlanProducer {
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
   speculator: Speculator;
+  suggestionCache: SuggestionCache;
   needReplan = false;
   replanOptions: {};
   _isPlanning = false;
@@ -57,7 +59,8 @@ export class PlanProducer {
     this.arc = arc;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
-    this.speculator = new Speculator(this.result);
+    this.speculator = new Speculator();
+    this.suggestionCache = new SuggestionCache(this.result);
     this.searchStore = searchStore;
     if (this.searchStore) {
       this.searchStoreCallback = () => this.onSearchChanged();
@@ -191,10 +194,12 @@ export class PlanProducer {
         search: options['search'],
         recipeIndex: this.recipeIndex
       },
+      speculator: this.speculator,
+      suggestionCache: this.suggestionCache,
       blockDevtools: true // Devtools communication is handled by PlanConsumer in Producer+Consumer setup.
     });
 
-    suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations, this.speculator);
+    suggestions = await this.planner.suggest(options['timeout'] || defaultTimeoutMs, generations);
     if (this.planner) {
       this.planner = null;
       return suggestions;

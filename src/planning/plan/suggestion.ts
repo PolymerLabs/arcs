@@ -55,9 +55,11 @@ export class Suggestion {
   static create(plan: Recipe, hash: string, relevance: Relevance): Suggestion {
     assert(plan, `plan cannot be null`);
     assert(hash, `hash cannot be null`);
-    assert(relevance, `relevance cannot be null`);
-    const suggestion = new Suggestion(plan, hash, relevance.calcRelevanceScore(),
-        relevance.versionByStore);
+    const suggestion = new Suggestion(
+        plan,
+        hash,
+        relevance ? relevance.calcRelevanceScore() : 0,
+        relevance ? relevance.versionByStore : {});
     suggestion.setSearch(plan.search);
     return suggestion;
   }
