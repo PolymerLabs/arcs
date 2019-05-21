@@ -1,4 +1,5 @@
 import 'Tfjs.recipes'
 import 'Ml5.recipes'
+import 'MobileNet.recipes'
 import 'ServiceTest.recipes'
 
