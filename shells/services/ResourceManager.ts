@@ -23,6 +23,7 @@ type Reference = number;
  * @see src/service.ts
  */
 export class ResourceManager {
+
   static references: Reference[] = [];
 
   /**
@@ -30,7 +31,10 @@ export class ResourceManager {
    *  @return Reference a `number` associated with the cached resource.
    */
   static ref(val): Reference {
-    return this.references.push(val) - 1;
+    if(!(val in this.references)){
+      return this.references.push(val) - 1;
+    }
+    return this.references.indexOf(val);
   }
 
   /** @return the cached value associated with the input reference. */
