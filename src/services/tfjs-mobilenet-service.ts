@@ -105,8 +105,13 @@ const extractEmbeddings = async ({model, img}): Promise<MobilenetEmbedding> => {
   return {version: model_.version, alpha: model_.alpha, feature: inference};
 };
 
+
+/** Clean up model resources. */
+const dispose = ({reference}) => ResourceManager.dispose(reference);
+
 Services.register('mobilenet', {
   load,
   classifiy,
   extractEmbeddings,
+  dispose,
 });
