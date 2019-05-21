@@ -9,8 +9,7 @@
 import {dynamicImport} from './dynamic-import.js';
 import {Services} from '../../build/runtime/services.js';
 import {logFactory} from '../../build/platform/log-web.js';
-import {Runnable} from '../../build/runtime/hot.js';
-import {Mapper} from '../../build/runtime/hot.js';
+import {Runnable, Mapper} from '../../build/runtime/hot.js';
 
 const log = logFactory('ml5-service');
 
