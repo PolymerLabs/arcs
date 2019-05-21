@@ -13,7 +13,7 @@ import {IdGenerator} from '../../../build/runtime/id.js';
 import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {PlatformLoader} from '../../../build/platform/loader-web.js';
 import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
-import {debugListeners} from './debug-listeners.js';
+import {devtoolsInspectorFactory} from '../../../build/devtools-connector/devtools-inspector.js';
 
 const log = console.log.bind(console);
 const warn = console.warn.bind(console);
@@ -75,7 +75,7 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     slotComposer: composer,
     pecFactory: env.pecFactory,
     loader: env.loader,
-    listenerClasses: debugListeners
+    inspectorFactory: devtoolsInspectorFactory
   };
   Object.assign(params, env.params);
   return serialization ? Arc.deserialize(params) : new Arc(params);

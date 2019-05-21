@@ -1,6 +1,6 @@
-import {PropagatedException} from "./arc-exceptions";
-import {Type} from "./type";
-import {ParticleExecutionContext} from "./particle-execution-context";
+import {PropagatedException} from './arc-exceptions';
+import {Type} from './type';
+import {ParticleExecutionContext} from './particle-execution-context';
 import {ModelValue} from './storage/crdt-collection-model.js';
 
 /**

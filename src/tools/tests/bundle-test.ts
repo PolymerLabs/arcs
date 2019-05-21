@@ -60,6 +60,34 @@ describe('Bundle Tool', () => {
         ]
     );
   });
+  it('fails for a non existent manifest', done => {
+    bundle(['src/tools/tests/test-data/no-such-manifest.recipes'], 'test-output/bundle/nope.zip', false)
+        .then(_ => assert.fail('should have failed'))
+        .catch(e => {
+          assert.include(e.message, 'no such file');
+          assert.include(e.message, 'no-such-manifest.recipes');
+          done();
+        });
+  });
+  it('fails for a syntax error', done => {
+    bundle(['src/tools/tests/test-data/invalid/syntax-problem.manifest'], 'test-output/bundle/nope.zip', false)
+        .then(_ => assert.fail('should have failed'))
+        .catch(e => {
+          assert.include(e.message, 'Parse error');
+          assert.include(e.message, 'schema thing');
+          assert.include(e.message, 'Expected "*" or an uppercase identifier');
+          done();
+        });
+  });
+  it('fails for a non existent file reference', done => {
+    bundle(['src/tools/tests/test-data/invalid/reference-problem.manifest'], 'test-output/bundle/nope.zip', false)
+        .then(_ => assert.fail('should have failed'))
+        .catch(e => {
+          assert.include(e.message, 'no such file');
+          assert.include(e.message, 'no-such-particle.js');
+          done();
+        });
+  });
   it('bundles Products demo', async () => {
     await bundle(['src/runtime/test/artifacts/Products/Products.recipes'], 'test-output/bundle/products.zip', false);
     const data = fs.readFileSync('test-output/bundle/products.zip');

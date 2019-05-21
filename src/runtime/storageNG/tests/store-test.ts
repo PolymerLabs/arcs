@@ -15,13 +15,13 @@ import {CRDTCount, CountOpTypes, CountData, CountOperation} from '../../crdt/crd
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
-  async read(key: string) { throw new Error("unimplemented"); }
-  async write(key: string, value: {}) { throw new Error("unimplemented"); }
+  async read(key: string) { throw new Error('unimplemented'); }
+  async write(key: string, value: {}) { throw new Error('unimplemented'); }
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
   async send(model: Data): Promise<boolean> {
-    throw new Error("send implementation required for testing");
+    throw new Error('send implementation required for testing');
   }
 }
 
@@ -74,7 +74,7 @@ describe('Store', async () => {
     assert.deepEqual(capturedModel, count.getData());
   });
 
-  it('will apply and propagate operation updates from proxies to drivers', async() => {
+  it('will apply and propagate operation updates from proxies to drivers', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
@@ -191,7 +191,7 @@ describe('Store', async () => {
     remoteCount.applyOperation({type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}});
 
     const driver = activeStore['driver'] as MockDriver<CountData>;
-    driver.send = async model => {throw new Error("Should not be invoked");};
+    driver.send = async model => {throw new Error('Should not be invoked');};
 
     // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
     // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send(). 

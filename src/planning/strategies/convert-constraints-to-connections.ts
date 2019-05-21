@@ -10,9 +10,9 @@ import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
-import { Direction } from '../../runtime/manifest-ast-nodes.js';
-import { Descendant } from '../../runtime/recipe/walker.js';
-import { Handle } from '../../runtime/recipe/handle.js';
+import {Direction} from '../../runtime/manifest-ast-nodes.js';
+import {Descendant} from '../../runtime/recipe/walker.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
 
@@ -238,7 +238,7 @@ export class ConvertConstraintsToConnections extends Strategy {
                 const to = new InstanceEndPoint(recipeMap[obligation.to.particle.name], obligation.to.connection);
                 recipe.newObligation(from, to, obligation.direction);
               } else {
-                throw new Error("constraints with a particle endpoint at one end but not at the other are not supported");
+                throw new Error('constraints with a particle endpoint at one end but not at the other are not supported');
               }
             }
             return score;

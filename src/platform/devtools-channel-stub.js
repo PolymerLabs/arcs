@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
   _flush(messages) {

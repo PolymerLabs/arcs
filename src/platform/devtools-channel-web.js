@@ -10,7 +10,7 @@
 'use strict';
 
 import {offerWebRtcSignal} from '../../devtools/shared/web-rtc-signalling.js';
-import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 
 // configures a firebase instance

@@ -10,11 +10,11 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
-import {ArcDebugHandler} from './debug/arc-debug-handler.js';
+import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from './loader.js';
+import {Runnable} from './hot.js';
 import {Manifest, StorageStub} from './manifest.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
@@ -32,7 +32,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 
-type ArcOptions = Readonly<{
+export type ArcOptions = Readonly<{
   id: Id;
   context: Manifest;
   pecFactory?: PecFactory;
@@ -43,7 +43,7 @@ type ArcOptions = Readonly<{
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean
-  listenerClasses?: ArcDebugListenerDerived[];
+  inspectorFactory?: ArcInspectorFactory
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -53,10 +53,8 @@ type DeserializeArcOptions = Readonly<{
   loader: Loader;
   fileName: string;
   context: Manifest;
-  listenerClasses?: ArcDebugListenerDerived[];
+  inspectorFactory?: ArcInspectorFactory
 }>;
-
-export type PlanCallback = (recipe: Recipe) => void;
 
 type SerializeContext = {handles: string, resources: string, interfaces: string, dataResources: Map<string, string>};
 
@@ -70,7 +68,7 @@ export class Arc {
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   // Public for debug access
   public readonly _loader: Loader;
-  private readonly dataChangeCallbacks = new Map<object, () => void>();
+  private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
   private readonly storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
@@ -81,11 +79,10 @@ export class Arc {
   public readonly storeTags = new Map<StorageProviderBase, Set<string>>();
   // Map from each store to its description (originating in the manifest).
   private readonly storeDescriptions = new Map<StorageProviderBase, string>();
-  private readonly instantiatePlanCallbacks: PlanCallback[] = [];
   private waitForIdlePromise: Promise<void> | null;
-  private readonly debugHandler: ArcDebugHandler;
+  private readonly inspectorFactory: ArcInspectorFactory;
+  public readonly inspector: ArcInspector;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
-  private readonly listenerClasses: ArcDebugListenerDerived[];
   private readonly instantiateMutex = new Mutex();
 
   readonly id: Id;
@@ -93,7 +90,7 @@ export class Arc {
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, StorageProviderBase>}>();
   readonly pec: ParticleExecutionHost;
 
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, listenerClasses} : ArcOptions) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -112,15 +109,13 @@ export class Arc {
     this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
     this._loader = loader;
-
+    this.inspectorFactory = inspectorFactory;
+    this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
-
     const pecId = this.generateID();
     const innerPecPort = this.pecFactory(pecId, this.idGenerator);
     this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
-    this.listenerClasses = listenerClasses;
-    this.debugHandler = new ArcDebugHandler(this, listenerClasses);
   }
 
   get loader(): Loader {
@@ -134,24 +129,10 @@ export class Arc {
     return this.activeRecipe.modality;
   }
 
-  registerInstantiatePlanCallback(callback: PlanCallback): void {
-    this.instantiatePlanCallbacks.push(callback);
-  }
-
-  unregisterInstantiatePlanCallback(callback: PlanCallback): boolean {
-    const index = this.instantiatePlanCallbacks.indexOf(callback);
-    if (index >= 0) {
-      this.instantiatePlanCallbacks.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
   dispose(): void {
     for (const innerArc of this.innerArcs) {
       innerArc.dispose();
     }
-    this.instantiatePlanCallbacks.length = 0;
     // TODO: disconnect all associated store event handlers
     this.pec.stop();
     this.pec.close();
@@ -168,6 +149,7 @@ export class Arc {
   // Returns a promise that spins sending a single `AwaitIdle` message until it
   // sees no other messages were sent.
   async _waitForIdle(): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const messageCount = this.pec.messageCount;
       const innerArcs = this.innerArcs;
@@ -212,7 +194,7 @@ export class Arc {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, listenerClasses: this.listenerClasses});
+    const innerArc = new Arc({id, pecFactory: this.pecFactory, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -280,7 +262,7 @@ export class Arc {
             context.dataResources.set(storageKey, storeId);
             // TODO: can't just reach into the store for the backing Store like this, should be an
             // accessor that loads-on-demand in the storage objects.
-            if(handle instanceof StorageProviderBase) {
+            if (handle instanceof StorageProviderBase) {
               await handle.ensureBackingStore();
               await this._serializeHandle(handle.backingStore, context, storeId);
             }
@@ -392,7 +374,7 @@ ${this.activeRecipe.toString()}`;
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, listenerClasses}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: Id.fromString(manifest.meta.name),
@@ -402,7 +384,7 @@ ${this.activeRecipe.toString()}`;
       loader,
       storageProviderFactory: manifest.storageProviderFactory,
       context,
-      listenerClasses
+      inspectorFactory
     });
     await Promise.all(manifest.stores.map(async store => {
       const tags = manifest.storeTags.get(store);
@@ -473,7 +455,7 @@ ${this.activeRecipe.toString()}`;
                          loader: this._loader,
                          speculative: true,
                          innerArc: this.isInnerArc,
-                         listenerClasses: this.listenerClasses});
+                         inspectorFactory: this.inspectorFactory});
     const storeMap: Map<StorageProviderBase, StorageProviderBase> = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
@@ -521,7 +503,6 @@ ${this.activeRecipe.toString()}`;
    * - Processes the Handles and creates stores for them.
    * - Instantiates the new Particles
    * - Passes these particles for initialization in the PEC
-   * - For non-speculative Arcs processes instantiatePlanCallbacks
    *
    * Waits for completion of an existing Instantiate before returning.
    */
@@ -620,12 +601,10 @@ ${this.activeRecipe.toString()}`;
       // TODO: pass slot-connections instead
       await this.pec.slotComposer.initializeRecipe(this, particles);
     }
-    
-    if (!this.isSpeculative) { // Note: callbacks not triggered for speculative arcs.
-      this.instantiatePlanCallbacks.forEach(callback => callback(recipe));
-    }
 
-    this.debugHandler.recipeInstantiated({particles, activeRecipe: this.activeRecipe.toString()});
+    if (this.inspector) {
+      this.inspector.recipeInstantiated(particles, this.activeRecipe.toString());
+    }
   }
 
   async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey: string = undefined): Promise<StorageProviderBase> {
@@ -687,7 +666,7 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  onDataChange(callback: () => void, registration: object): void {
+  onDataChange(callback: Runnable, registration: object): void {
     this.dataChangeCallbacks.set(registration, callback);
   }
 

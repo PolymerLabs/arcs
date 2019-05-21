@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsBroker} from '../../devtools/shared/devtools-broker.js';
 import WebSocket from 'ws';
 

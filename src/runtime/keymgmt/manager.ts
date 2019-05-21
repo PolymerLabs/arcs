@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {DeviceKey, Key, PublicKey, RecoveryKey, WrappedKey} from "./keys";
-import {WebCryptoMemoryKeyStorage} from "./testing/cryptotestutils";
+import {DeviceKey, Key, PublicKey, RecoveryKey, WrappedKey} from './keys';
+import {WebCryptoMemoryKeyStorage} from './testing/cryptotestutils';
 import {
     WebCryptoKeyGenerator,
     WebCryptoKeyIndexedDBStorage,
-} from "./webcrypto";
+} from './webcrypto';
 
 
 /**

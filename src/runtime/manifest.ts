@@ -14,6 +14,7 @@ import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Runnable} from './hot.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -145,7 +146,7 @@ class ManifestVisitor {
 
   // Parents are visited before children, but an implementation can force
   // children to be visted by calling `visitChildren()`.
-  visit(node: AstNode.BaseNode, visitChildren: () => void) {
+  visit(node: AstNode.BaseNode, visitChildren: Runnable) {
   }
 }
 
@@ -727,7 +728,7 @@ ${e.message}
   }
 
   // TODO(cypher): Remove loader dependency.
-  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.Recipe, loader) {
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
     if (recipeItem.annotation) {
@@ -927,7 +928,7 @@ ${e.message}
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
-                items.byName.set(ps.name,providedSlot);
+                items.byName.set(ps.name, providedSlot);
                 recipe.removeSlot(theSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);

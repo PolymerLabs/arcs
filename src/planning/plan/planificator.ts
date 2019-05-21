@@ -10,9 +10,10 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Runnable} from '../../runtime/hot.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-import {KeyBase} from "../../runtime/storage/key-base.js";
-import {StorageProviderBase, VariableStorageProvider} from "../../runtime/storage/storage-provider-base.js";
+import {KeyBase} from '../../runtime/storage/key-base.js';
+import {StorageProviderBase, VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EntityType} from '../../runtime/type.js';
 import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 
@@ -50,16 +51,9 @@ export class Planificator {
   consumer: PlanConsumer;
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
-  dataChangeCallback: () => void;
+  dataChangeCallback: Runnable;
   search: string|null = null;
   searchStore: VariableStorageProvider;
-
-  // In <0.6 shell, this is needed to backward compatibility, in order to (1)
-  // (1) trigger replanning with a local producer and (2) notify shell of the
-  // last activated plan, to allow serialization.
-  // TODO(mmandlis): Is this really needed in the >0.6 shell?
-  arcCallback: ({}) => void = this._onPlanInstantiated.bind(this);
-  lastActivatedPlan: Recipe|null;
 
   constructor(arc: Arc, userid: string, result: PlanningResult, searchStore: VariableStorageProvider, onlyConsumer: boolean = false, debug: boolean = false) {
     this.arc = arc;
@@ -75,9 +69,6 @@ export class Planificator {
     }
     this.consumer = new PlanConsumer(this.arc, this.result);
 
-    this.lastActivatedPlan = null;
-    this.arc.registerInstantiatePlanCallback(this.arcCallback);
-
     PlanningExplorerAdapter.subscribeToForceReplan(this);
   }
 
@@ -87,7 +78,7 @@ export class Planificator {
     }
   }
 
-  get consumerOnly() { return !Boolean(this.producer); }
+  get consumerOnly(): boolean { return !this.producer; }
 
   async loadSuggestions() {
     return this.result.load();
@@ -116,7 +107,6 @@ export class Planificator {
   }
 
   dispose() {
-    this.arc.unregisterInstantiatePlanCallback(this.arcCallback);
     if (!this.consumerOnly) {
       this._unlistenToArcStores();
       this.producer.dispose();
@@ -128,18 +118,6 @@ export class Planificator {
   async deleteAll() {
     await this.producer.result.clear();
     this.setSearch(null);
-  }
-
-  getLastActivatedPlan() {
-    return {plan: this.lastActivatedPlan};
-  }
-
-  private _onPlanInstantiated(plan) {
-    this.lastActivatedPlan = plan;
-    this.requestPlanning({metadata: {
-      trigger: Trigger.PlanInstantiated,
-      particleNames: plan.particles.map(p => p.name).join(',')
-    }});
   }
 
   private _listenToArcStores() {

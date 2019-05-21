@@ -11,13 +11,14 @@
   limitations under the License.
 */
 
-// tslint:disable: no-any only-arrow-functions
+// tslint:disable: no-any
 
 export type TraceInfo = {
   cat?: string;
   name?: string;
   overview?: boolean;
   sequence?: string;
+  ts?: number;
   args?: {[index: string]: any};
 };
 
@@ -34,7 +35,7 @@ export type TraceEvent = {
   args: {[index: string]: any};
   id?: number;
   flowId?: number;
-  seq: string;
+  seq?: string;
 };
 
 export interface Trace {
@@ -59,17 +60,18 @@ export interface TracingInterface {
   __clearForTests(): void;
 }
 
-const events = [];
-let pid;
-let now;
+const events: TraceEvent[] = [];
+let pid: number;
+let now: () => number;
+
 if (typeof document === 'object') {
   pid = 42;
-  now = function() {
+  now = () => {
     return performance.now() * 1000;
   };
 } else {
   pid = process.pid;
-  now = function() {
+  now = () => {
     const t = process.hrtime();
     return t[0] * 1000000 + t[1] / 1000;
   };
@@ -77,7 +79,7 @@ if (typeof document === 'object') {
 
 let flowId = 0;
 
-function parseInfo(info) {
+function parseInfo(info?: any) {
   if (!info) {
     return {};
   }
@@ -90,8 +92,9 @@ function parseInfo(info) {
   return info;
 }
 
-const streamingCallbacks = [];
-function pushEvent(event) {
+const streamingCallbacks: {callback: (e: TraceEvent) => any, predicate?: (e: TraceEvent) => boolean}[] = [];
+
+function pushEvent(event: TraceEvent) {
     event.pid = pid;
     event.tid = 0;
     if (!event.args) {
@@ -116,16 +119,16 @@ const module_: any = {exports: {}};
 // tslint:disable-next-line: variable-name
 export const Tracing: TracingInterface = module_.exports;
 module_.exports.enabled = false;
-module_.exports.enable = function() {
+module_.exports.enable = () => {
   if (!module_.exports.enabled) {
     module_.exports.enabled = true;
     init();
   }
 };
 
-function init() {
+function init(): void {
   const result = {
-    async wait(v) {
+    async wait<T>(v: Promise<T>) {
       return v;
     },
     start() {
@@ -143,13 +146,13 @@ function init() {
       return v;
     },
   };
-  module_.exports.wrap = function(info, fn) {
+  module_.exports.wrap = (info: TraceInfo, fn: Function) => {
     return fn;
   };
-  module_.exports.start = function(info) {
+  module_.exports.start = (info: TraceInfo) => {
     return result;
   };
-  module_.exports.flow = function(info) {
+  module_.exports.flow = (info: TraceInfo) => {
     return result;
   };
 
@@ -157,8 +160,8 @@ function init() {
     return;
   }
 
-  module_.exports.wrap = function(info, fn) {
-    return function(...args) {
+  module_.exports.wrap = (info: TraceInfo, fn: Function) => {
+    return (...args) => {
       const t = module_.exports.start(info);
       try {
         return fn(...args);
@@ -168,12 +171,12 @@ function init() {
     };
   };
 
-  function startSyncTrace(info) {
+  function startSyncTrace(info: TraceInfo) {
     info = parseInfo(info);
     let args = info.args;
     const begin = now();
     return {
-      addArgs(extraArgs) {
+      addArgs(extraArgs: {[index: string]: any}) {
         args = {...(args || {}), ...extraArgs};
       },
       end(endInfo: any = {}, flow) {
@@ -199,12 +202,13 @@ function init() {
       beginTs: begin
     } as any;
   }
-  module_.exports.start = function(info) {
+
+  module_.exports.start = (info: TraceInfo) => {
     let trace = startSyncTrace(info);
     let flow;
     const baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview, sequence: info.sequence};
     return {
-      async wait(v, info) {
+      async wait<T>(v: Promise<T>, info?: TraceInfo): Promise<T> {
         const flowExisted = !!flow;
         if (!flowExisted) {
           flow = module_.exports.flow(baseInfo);
@@ -225,13 +229,13 @@ function init() {
       addArgs(extraArgs) {
         trace.addArgs(extraArgs);
       },
-      end(endInfo) {
+      end(endInfo?: TraceInfo) {
         trace.end(endInfo, flow);
         if (flow) {
           flow.end({ts: trace.beginTs});
         }
       },
-      async endWith(v, endInfo) {
+      async endWith(v, endInfo: TraceInfo) {
         if (Promise.resolve(v) === v) { // If v is a promise.
           v = this.wait(v, null);
           try {
@@ -246,12 +250,12 @@ function init() {
       }
     };
   };
-  module_.exports.flow = function(info) {
+  module_.exports.flow = (info: TraceInfo) => {
     info = parseInfo(info);
     const id = flowId++;
     let started = false;
     return {
-      start(startInfo) {
+      start(startInfo?: TraceInfo) {
         const ts = (startInfo && startInfo.ts) || now();
         started = true;
         pushEvent({
@@ -266,7 +270,7 @@ function init() {
         });
         return this;
       },
-      end(endInfo) {
+      end(endInfo: TraceInfo) {
         if (!started) return this;
         const ts = (endInfo && endInfo.ts) || now();
         endInfo = parseInfo(endInfo);
@@ -283,7 +287,7 @@ function init() {
         });
         return this;
       },
-      step(stepInfo) {
+      step(stepInfo?: TraceInfo) {
         if (!started) return this;
         const ts = (stepInfo && stepInfo.ts) || now();
         stepInfo = parseInfo(stepInfo);
@@ -302,22 +306,22 @@ function init() {
       id: () => id
     };
   };
-  module_.exports.save = function() {
+  module_.exports.save = () => {
     return {traceEvents: events};
   };
-  module_.exports.download = function() {
+  module_.exports.download = () => {
     const a = document.createElement('a');
     a.download = 'trace.json';
     a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module_.exports.save()));
     a.click();
   };
   module_.exports.now = now;
-  module_.exports.stream = function(callback, predicate) {
+  module_.exports.stream = (callback: (e: TraceEvent) => any, predicate: (e: TraceEvent) => boolean) => {
     // Once we start streaming we no longer keep events in memory.
     events.length = 0;
     streamingCallbacks.push({callback, predicate});
   };
-  module_.exports.__clearForTests = function() {
+  module_.exports.__clearForTests = () => {
     events.length = 0;
     streamingCallbacks.length = 0;
   };

@@ -26,6 +26,7 @@ export class Particle {
   private _localName?: string = undefined;
   spec?: ParticleSpec = undefined;
   private _verbs: string[] = [];
+  private _tags: string[] = [];
   private _connections: {[index: string]: HandleConnection} = {};
   
   // TODO: replace with constraint connections on the recipe
@@ -44,6 +45,7 @@ export class Particle {
     const particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._verbs = [...this._verbs];
+    particle._tags = [...this._tags];
     particle.spec = this.spec ? this.spec.cloneWithResolutions(variableMap) : undefined;
 
     Object.keys(this._connections).forEach(key => {
@@ -91,6 +93,7 @@ export class Particle {
   _startNormalize(): void {
     this._localName = null;
     this._verbs.sort();
+    this._tags.sort();
     const normalizedConnections = {};
     for (const key of (Object.keys(this._connections).sort())) {
       normalizedConnections[key] = this._connections[key];
@@ -116,6 +119,7 @@ export class Particle {
     if ((cmp = compareStrings(this._localName, other._localName)) !== 0) return cmp;
     // TODO: spec?
     if ((cmp = compareArrays(this._verbs, other._verbs, compareStrings)) !== 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
     // TODO: slots
     return 0;
   }
@@ -219,6 +223,7 @@ export class Particle {
   get consumedSlotConnections() { return this._consumedSlotConnections; }
   get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
   set verbs(verbs) { this._verbs = verbs; }
+  set tags(tags) { this._tags = tags; }
 
   addUnnamedConnection() {
     const connection = new HandleConnection(undefined, this);
@@ -273,8 +278,8 @@ export class Particle {
 
 
   addSlotConnection(name: string) : SlotConnection {
-    assert(!(name in this._consumedSlotConnections), "slot connection already exists");
-    assert(!this.spec || this.spec.slotConnections.has(name), "slot connection not in particle spec");
+    assert(!(name in this._consumedSlotConnections), 'slot connection already exists');
+    assert(!this.spec || this.spec.slotConnections.has(name), 'slot connection not in particle spec');
     const slotConn = new SlotConnection(name, this);
     this._consumedSlotConnections[name] = slotConn;
 
@@ -314,14 +319,14 @@ export class Particle {
   }
 
   getSlotSpecByName(name: string) : ConsumeSlotConnectionSpec {
-    if(!this.spec) return undefined;
+    if (!this.spec) return undefined;
     const slot = this.spec.slotConnections.get(name);
-    if(slot) return slot;
+    if (slot) return slot;
 
     // TODO(jopra): Provided slots should always be listed in the particle spec.
     for (const slot of this.spec.slotConnections.values()) {
-      for(const provided of slot.provideSlotConnections) {
-        if(provided.name === name) return provided;
+      for (const provided of slot.provideSlotConnections) {
+        if (provided.name === name) return provided;
       }
     }
     return undefined;
@@ -335,7 +340,7 @@ export class Particle {
     return this.consumedSlotConnections[consumeName] && this.consumedSlotConnections[consumeName].providedSlots[name];
   }
 
-  getSlotSpecs() : Map<string,ConsumeSlotConnectionSpec> {
+  getSlotSpecs() : Map<string, ConsumeSlotConnectionSpec> {
     if (this.spec) return this.spec.slotConnections;
     return new Map();
   }

@@ -8,16 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../../runtime/arc.js';
-import {ArcDebugListener, ArcDebugListenerDerived, ArcDevtoolsChannel, DevtoolsMessage} from '../../runtime/debug/abstract-devtools-channel.js';
-import {Manifest} from '../../runtime/manifest.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
-import {Descendant} from '../../runtime/recipe/walker.js';
-import {Planner} from '../planner.js';
-import {RecipeIndex} from '../recipe-index.js';
-import {CoalesceRecipes} from '../strategies/coalesce-recipes.js';
-import * as Rulesets from '../strategies/rulesets.js';
-import {Strategizer, Strategy, StrategyDerived} from '../strategizer.js';
+import {Arc} from '../runtime/arc.js';
+import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
+import {Descendant} from '../runtime/recipe/walker.js';
+import {Planner} from '../planning/planner.js';
+import {RecipeIndex} from '../planning/recipe-index.js';
+import {CoalesceRecipes} from '../planning/strategies/coalesce-recipes.js';
+import * as Rulesets from '../planning/strategies/rulesets.js';
+import {Strategizer, Strategy, StrategyDerived} from '../planning/strategizer.js';
 
 class InitialRecipe extends Strategy {
   private recipe: Recipe;
@@ -42,12 +42,11 @@ class InitialRecipe extends Strategy {
   }
 }
 
-export class ArcPlannerInvoker extends ArcDebugListener {
+export class ArcPlannerInvoker {
   private arc: Arc;
   private recipeIndex: RecipeIndex;
   
   constructor(arc: Arc, arcDevtoolsChannel: ArcDevtoolsChannel) {
-    super(arc, arcDevtoolsChannel);
     this.arc = arc;
 
     arcDevtoolsChannel.listen('fetch-strategies', () => arcDevtoolsChannel.send({
@@ -210,8 +209,3 @@ export class ArcPlannerInvoker extends ArcDebugListener {
     return depth;
   }
 }
-
-// TODO: This should move to the planning interface file when it exists. 
-export const defaultPlanningDebugListeners: ArcDebugListenerDerived[] = [
-  ArcPlannerInvoker
-];

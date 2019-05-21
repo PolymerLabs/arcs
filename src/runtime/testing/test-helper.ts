@@ -14,8 +14,8 @@ import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {InterfaceType} from '../type.js';
 import {Id} from '../id.js';
+import {devtoolsInspectorFactory} from '../../devtools-connector/devtools-inspector.js';
 
 export type TestHelperOptions = {
   slotComposerStrict?: boolean,
@@ -57,7 +57,8 @@ export class TestHelper {
       slotComposer: helper.slotComposer,
       loader: helper.loader,
       context: options.context,
-      storageKey: options.storageKey
+      storageKey: options.storageKey,
+      inspectorFactory: devtoolsInspectorFactory
     });
     helper.slotComposer.pec = helper.arc.pec;
     helper.logging = options.logging;

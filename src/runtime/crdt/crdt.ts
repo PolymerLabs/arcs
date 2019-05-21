@@ -68,4 +68,3 @@ export enum ChangeType {Operations, Model}
 export type CRDTChange<T extends CRDTTypeRecord> = {changeType: ChangeType.Operations, operations: T['operation'][]} | {changeType: ChangeType.Model, modelPostChange: T['data']};
 
 
-

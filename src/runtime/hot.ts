@@ -40,7 +40,6 @@ export type Predicate<T> = (input: T) => boolean;
 /** A function that maps an input to an output. */
 export type Mapper<I, O> = (input: I) => O;
 
-
 // Higher Order Data Types
 
 /**

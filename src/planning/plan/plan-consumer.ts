@@ -10,8 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {ArcDevtoolsChannel} from '../../runtime/debug/abstract-devtools-channel.js';
-import {DevtoolsConnection} from '../../runtime/debug/devtools-connection.js';
+import {ArcDevtoolsChannel} from '../../devtools-connector/abstract-devtools-channel.js';
+import {DevtoolsConnection} from '../../devtools-connector/devtools-connection.js';
 import {Modality} from '../../runtime/modality.js';
 import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';

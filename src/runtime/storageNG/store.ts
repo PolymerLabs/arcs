@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt.js";
-import {Type} from "../type.js";
-import {Exists, Driver, DriverFactory} from "./drivers/driver-factory.js";
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
+import {Type} from '../type.js';
+import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 
 export enum StorageMode {Direct, Backing, ReferenceMode}
 
@@ -136,7 +136,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
         return true;
       }
       default:
-        throw new CRDTError("Invalid operation provided to onProxyMessage");
+        throw new CRDTError('Invalid operation provided to onProxyMessage');
     }
   }
 

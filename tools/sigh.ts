@@ -541,7 +541,7 @@ function runTests(args: string[]): boolean {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/runtime/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
@@ -625,7 +625,7 @@ function watch(args: string[]): boolean {
   }
   const command = args.shift() || 'webpack';
   const watcher = chokidar.watch('.', {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache})`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js)`),
     persistent: true
   });
   keepProcessAlive = true; // Tell the runner to not exit.
@@ -663,7 +663,7 @@ function health(args: string[]): boolean {
 
     // Read and parse existing TsLint config.
     const tsLintConfig = fs.readFileSync(pathToTsLintConfig, 'utf-8');
-    const tsLintConfigNoComments = tsLintConfig.replace(/\ *\/\/.*\n/g, '');
+    const tsLintConfigNoComments = tsLintConfig.replace(/ *\/\/.*\n/g, '');
     const parsedConfig = JSON.parse(tsLintConfigNoComments);
 
     modifier(parsedConfig);
@@ -815,6 +815,6 @@ function runSteps(command: string, args: string[]): boolean {
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
 
-if(!keepProcessAlive) { // the watch command is running.
+if (!keepProcessAlive) { // the watch command is running.
   process.exit(result ? 0 : 1);
 }

@@ -18,11 +18,13 @@ export class PlatformLoader extends PlatformLoaderBase {
   flushCaches() {
     // punt object urls?
   }
-  loadResource(url) {
+  async loadResource(url) {
     // subclass impl differentiates paths and URLs,
     // for browser env we can feed both kinds into _loadURL
-    const resolved = this._resolve(url);
-    return super._loadURL(resolved);
+    return super._loadURL(this._resolve(url));
+  }
+  async loadBinary(url) {
+    return super.loadBinary(this._resolve(url));
   }
   async provisionObjectUrl(fileName) {
     const raw = await this.loadResource(fileName);

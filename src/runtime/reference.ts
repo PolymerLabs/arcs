@@ -47,7 +47,7 @@ export class Reference implements Storable {
   }
 
   async dereference(): Promise<Entity|null> {
-    assert(this.context, "Must have context to dereference");
+    assert(this.context, 'Must have context to dereference');
 
     if (this.entity) {
       return this.entity;
