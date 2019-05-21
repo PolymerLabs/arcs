@@ -1,6 +1,3 @@
-import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from "./driver-factory";
-import {StorageKey} from "../storage-key";
-
 /**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
@@ -11,30 +8,86 @@ import {StorageKey} from "../storage-key";
  * http://polymer.github.io/PATENTS.txt
  */
 
-class VolatileMemory {
-  
+import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
+import {StorageKey} from '../storage-key.js';
+import {Runtime} from '../../runtime.js';
+
+type VolatileEntry = {data: unknown, version: number};
+
+export class VolatileStorageKey extends StorageKey {
+  readonly unique: string;
+
+  constructor(unique: string) {
+    super('volatile');
+    this.unique = unique;
+  }
+}
+
+export class VolatileMemory {
+  entries = new Map<StorageKey, VolatileEntry>();
 }
 
 export class VolatileDriver<Data> extends Driver<Data> {
+  private memory: VolatileMemory;
+  private lastWrittenVersion = 0;
+  private pendingModel: Data | null = null;
+  private receiver: ReceiveMethod<Data>;
 
   constructor(storageKey: StorageKey, exists: Exists) {
     super(storageKey, exists);
+    this.memory = Runtime.getRuntime().getVolatileMemory();
+    switch (exists) {
+      case Exists.ShouldCreate:
+        if (this.memory.entries.has(storageKey)) {
+          throw new Error(`requested creation of memory location ${storageKey} can't proceed as location already exists`);
+        }
+        return;
+      case Exists.ShouldExist:
+        if (!this.memory.entries.has(storageKey)) {
+          throw new Error(`requested connection to memory location ${storageKey} can't proceed as location doesn't exist`);
+        }
+      /* falls through */
+      case Exists.MayExist:
+        {
+          const data = this.memory.entries.get(storageKey);
+          if (data) {
+            this.pendingModel = data.data as Data;
+            this.lastWrittenVersion = data.version;
+          } else {
+            this.lastWrittenVersion = 0;
+          }
+          return;
+        }
+      default:
+        throw new Error(`unknown Exists code ${exists}`); 
+    }
   }
 
   registerReceiver(receiver: ReceiveMethod<Data>) {
-    throw new Error("Method not implemented.");
+    this.receiver = receiver;
+    if (this.pendingModel) {
+      receiver(this.pendingModel);
+      this.pendingModel = null;
+    }
   }
   
   async send(model: Data): Promise<boolean> {
-    throw new Error("Method not implemented.");
+    const data = this.memory.entries.get(this.storageKey);
+    if (data.version !== this.lastWrittenVersion) {
+      return false;
+    }
+    data.data = model;
+    data.version += 1;
+    this.lastWrittenVersion += 1;
+    return true;
   }
   
   async write(key: StorageKey, value: Data): Promise<void> {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   
   async read(key: StorageKey): Promise<Data> {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 }
 

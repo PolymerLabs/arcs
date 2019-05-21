@@ -16,8 +16,8 @@ import {StorageKey} from '../storage-key.js';
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
-  async read(key: StorageKey) { throw new Error("unimplemented"); }
-  async write(key: StorageKey, value: {}) { throw new Error("unimplemented"); }
+  async read(key: StorageKey) { throw new Error('unimplemented'); }
+  async write(key: StorageKey, value: {}) { throw new Error('unimplemented'); }
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }

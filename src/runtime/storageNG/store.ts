@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt.js";
-import {Type} from "../type.js";
-import {Exists, Driver, DriverFactory} from "./drivers/driver-factory.js";
-import {StorageKey} from "./storage-key.js";
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
+import {Type} from '../type.js';
+import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
+import {StorageKey} from './storage-key.js';
 
 export enum StorageMode {Direct, Backing, ReferenceMode}
 
