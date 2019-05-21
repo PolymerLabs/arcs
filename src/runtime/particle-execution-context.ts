@@ -22,6 +22,7 @@ import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmParticle} from './wasm.js';
+import {Dictionary} from './hot.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -39,7 +40,7 @@ export class ParticleExecutionContext {
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
   private readonly scheduler: StorageProxyScheduler = new StorageProxyScheduler();
-  private readonly keyedProxies: { [index: string]: StorageProxy | Promise<StorageProxy>} = {};
+  private readonly keyedProxies: Dictionary<StorageProxy | Promise<StorageProxy>> = {};
 
   readonly idGenerator: IdGenerator;
 

@@ -13,6 +13,7 @@ import {ParticleSpec} from '../../runtime/particle-spec.js';
 import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
+import {Dictionary} from '../../runtime/hot.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
 
@@ -34,8 +35,8 @@ export class ConvertConstraintsToConnections extends Strategy {
         const handles = new Set<string>();
         // The map object tracks the connections between particles that need to be found/created.
         // It's another input to RecipeUtil.makeShape.
-        const map: {[index: string]: {[index: string]: HandleRepr}} = {};
-        const particlesByName: {[index: string]: ParticleSpec} = {};
+        const map: Dictionary<Dictionary<HandleRepr>> = {};
+        const particlesByName: Dictionary<ParticleSpec> = {};
 
         let handleNameIndex = 0;
         function nameForHandle(handle: Handle, existingNames: Map<Handle, string>): string {
@@ -183,7 +184,7 @@ export class ConvertConstraintsToConnections extends Strategy {
         const processedResults = results.filter(match => {
           // Ensure that every handle is either matched, or an input of at least one
           // connected particle in the constraints.
-          const resolvedHandles : {[index: string]: boolean} = {};
+          const resolvedHandles : Dictionary<boolean> = {};
           for (const particle of Object.keys(map)) {
             for (const connection of Object.keys(map[particle])) {
               const handle = map[particle][connection].handle;

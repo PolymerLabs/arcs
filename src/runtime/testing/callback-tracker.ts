@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Dictionary} from '../hot.js';
 
 /**
  * Simple class to verify callbacks used in the Arcs storage APIs.
@@ -24,7 +25,7 @@ import {StorageProviderBase} from '../storage/storage-provider-base.js';
 // TODO(lindner): make this more generic when we have a mocking toolkit available
 export class CallbackTracker {
   // tslint:disable-next-line: no-any
-  events: {[index: string]: any}[] = [];
+  events: Dictionary<any>[] = [];
 
   constructor(storageProvider: StorageProviderBase, public expectedEvents = 0) {
     storageProvider.on('change', (val) => this.changeEvent(val), {});
@@ -32,7 +33,7 @@ export class CallbackTracker {
 
   // called for each change event
   // tslint:disable-next-line: no-any
-  public changeEvent(c: {[index: string]: any}): void {
+  public changeEvent(c: Dictionary<any>): void {
     this.events.push(c);
   }
 

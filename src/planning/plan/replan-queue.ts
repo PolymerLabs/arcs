@@ -12,12 +12,13 @@
 import {now} from '../../platform/date-web.js';
 
 import {PlanProducer, Trigger} from './plan-producer.js';
+import {Dictionary} from '../../runtime/hot.js';
 
 const defaultDefaultReplanDelayMs = 3000;
 
 export class ReplanQueue {
   planProducer: PlanProducer;
-  options: {[index: string]: number} = {};
+  options: Dictionary<number> = {};
   changes: number[];
   // setTimeout return number on browser and a timer on node...
   // tslint:disable-next-line: no-any

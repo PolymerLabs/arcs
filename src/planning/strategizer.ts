@@ -11,20 +11,21 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {RecipeWalker} from '../runtime/recipe/recipe-walker.js';
 import {WalkerTactic} from '../runtime/recipe/walker.js';
 import {Action, Descendant} from '../runtime/recipe/walker.js';
+import {Dictionary} from '../runtime/hot.js';
 
 export interface GenerationRecord {
   generation: number;
   sizeOfLastGeneration: number;
-  generatedDerivationsByStrategy: {[index: string]: number};
+  generatedDerivationsByStrategy: Dictionary<number>;
   generatedDerivations?: number;
   nullDerivations?: number;
   invalidDerivations?: number;
   duplicateDerivations?: number;
   duplicateSameParentDerivations?: number;
-  nullDerivationsByStrategy?: {[index: string]: number};
-  invalidDerivationsByStrategy?: {[index: string]: number};
-  duplicateDerivationsByStrategy?: {[index: string]: number};
-  duplicateSameParentDerivationsByStrategy?: {[index: string]: number};
+  nullDerivationsByStrategy?: Dictionary<number>;
+  invalidDerivationsByStrategy?: Dictionary<number>;
+  duplicateDerivationsByStrategy?: Dictionary<number>;
+  duplicateSameParentDerivationsByStrategy?: Dictionary<number>;
   survivingDerivations?: number;
 }
 

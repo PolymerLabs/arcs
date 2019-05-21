@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 import {assert} from '../../platform/assert-web.js';
+import {Dictionary} from '../hot.js';
 
 export function compareNulls<T>(o1: T | null, o2: T | null) {
   if (o1 === o2) return 0;
@@ -38,7 +39,7 @@ export function compareArrays<a>(a1: a[], a2: a[], compare: (first: a, second: a
   return 0;
 }
 
-export function compareObjects<a>(o1: {[index: string]: a} | null, o2: {[index: string]: a} | null, compare: (first: a, second: a) => number) {
+export function compareObjects<a>(o1: Dictionary<a> | null, o2: Dictionary<a> | null, compare: (first: a, second: a) => number) {
   const keys = Object.keys(o1);
   let result: number;
   if ((result = compareNumbers(keys.length, Object.keys(o2).length)) !== 0) return result;
