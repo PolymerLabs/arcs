@@ -27,7 +27,7 @@ export class ResourceManager {
   static references: Reference[] = [];
 
   /**
-   *  Cache the value later use.
+   *  Cache the value for later use (try for no duplicates).
    *  @return Reference a `number` associated with the cached resource.
    */
   static ref(val): Reference {
