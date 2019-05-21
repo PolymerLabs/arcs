@@ -1,0 +1,36 @@
+import 'Friend.schema'
+import 'UserName.schema'
+import 'Avatar.schema'
+
+particle SlandleUserNameForm in 'source/UserNameForm.js'
+  inout UserName userName
+  `consume Slot userName
+
+particle SlandleFriendsPicker in 'source/FriendsPicker.js'
+  inout [Friend] friends
+  in [Avatar] avatars
+  in [UserName] userNames
+  `consume Slot friends
+  description `select friends`
+
+particle SlandleBasicProfile in 'source/BasicProfile.js'
+  inout Avatar avatar
+  `consume Slot root
+    `provide Slot userName
+    `provide Slot friends
+
+recipe SlandleBasicProfile
+  create #avatar as avatar
+  create #userName as userName
+  create #friends as friends
+  map 'BOXED_avatar' as avatars
+  map 'BOXED_userName' as userNames
+  SlandleBasicProfile
+    avatar = avatar
+  SlandleUserNameForm
+    userName = userName
+  SlandleFriendsPicker
+    friends = friends
+    avatars = avatars
+    userNames = userNames
+  description `edit user profile (name, avatar, and friends)`
