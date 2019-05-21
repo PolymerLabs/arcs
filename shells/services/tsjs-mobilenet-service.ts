@@ -52,7 +52,7 @@ interface MobilenetClassifier extends Classifier, MobilenetParams {}
  * The length of the vector is determined by the `version` and `alpha` of the ML model. Thus, the embedding and model
  * version should be grouped.
  */
-interface MobilenetEmbedding extends MobilenetParams{
+interface MobilenetEmbedding extends MobilenetParams {
   feature: number[];
 }
 
@@ -66,7 +66,9 @@ interface MobilenetEmbedding extends MobilenetParams{
  * @return a reference number to the model, maintained by the `ResourceManager`.
  */
 const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Reference> => {
+  log('Loading tfjs');
   const tf = await requireTf();
+  log('Loading MobileNet');
   await dynamicScript(modelUrl);
   const model = await tf.mobilenet.load(version, alpha);
   model.version = version;
@@ -84,6 +86,7 @@ const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Referenc
  */
 const classifiy = async ({model, img, topK = 3}): Promise<ClassificationPrediction[]>=> {
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
+  log('Classifying...');
   return await model_.classify(img, topK);
 };
 
@@ -97,6 +100,7 @@ const classifiy = async ({model, img, topK = 3}): Promise<ClassificationPredicti
  */
 const extractEmbeddings = async ({model, img}): Promise<MobilenetEmbedding> => {
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
+  log('Inferring...');
   const inference = await model_.infer(img);
   return { version: model_.version, alpha: model_.alpha, feature: inference};
 };
