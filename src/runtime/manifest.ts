@@ -475,11 +475,11 @@ ${e.message}
         }
       }));
 
-      const processItems = async (kind, f) => {
+      const processItems = async (kind: string, f: Function) => {
         for (const item of items) {
           if (item.kind === kind) {
             Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);
+            await f(item);  // TODO(cypher1): Use Promise.all here.
           }
         }
       };

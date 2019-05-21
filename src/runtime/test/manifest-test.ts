@@ -137,8 +137,8 @@ schema Person
     \`provide Slot {formFactor:medium} preamble
     \`provide Slot annotation
   \`consume Slot other
-    \`provide [~cell] myProvidedSetCell
-  \`consume [~cell] mySetCell
+    \`provide [Slot] myProvidedSetCell
+  \`consume [Slot] mySetCell
   modality dom
   modality dom-touch
   description \`hello world \${list}\`
@@ -220,8 +220,8 @@ ${particleStr1}
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
-  \`consume Slot thing
-    \`provide Slot otherThing
+  \`consume? Slot thing
+    \`provide? Slot otherThing
   modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
@@ -675,7 +675,8 @@ ${particleStr1}
             slotA consume s0
       `)).recipes[0];
       recipe.normalize();
-      assert.equal(args.expectedIsResolved, recipe.isResolved());
+      assert.equal(args.expectedIsResolved, recipe.isResolved(),
+                   `Expected recipe to be ${args.expectedIsResolved ? '' : 'un'}resolved`);
     };
     await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
