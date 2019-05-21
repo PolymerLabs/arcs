@@ -1,5 +1,5 @@
-import {AbstractDevtoolsChannel, DevtoolsMessage, DevtoolsListener} from '../abstract-devtools-channel';
-import {Arc} from '../../arc';
+import {DevtoolsMessage, DevtoolsListener} from '../abstract-devtools-channel';
+import {Arc} from '../../runtime/arc';
 
 /**
  * @license

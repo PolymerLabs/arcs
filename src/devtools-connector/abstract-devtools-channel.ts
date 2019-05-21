@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../arc.js';
+import {assert} from '../platform/assert-web.js';
+import {Arc} from '../runtime/arc.js';
 
 export type DevtoolsListener = (msg: DevtoolsMessage) => void;
 export type DevtoolsMessage = {
@@ -114,16 +114,4 @@ export class ArcDevtoolsChannel {
   listen(messageType: string, callback: DevtoolsListener) {
     this.channel.listen(this.arcId, messageType, callback);
   }
-
-  static instantiateListener(listenerClass: ArcDebugListenerDerived, 
-                             arc: Arc,
-                             channel: ArcDevtoolsChannel): ArcDebugListener {
-    return new listenerClass(arc, channel);
-  }
 }
-
-export abstract class ArcDebugListener {
-  constructor(_arc: Arc, _channel: ArcDevtoolsChannel) {}
-}
-type ArcDebugListenerClass = typeof ArcDebugListener;
-export interface ArcDebugListenerDerived extends ArcDebugListenerClass {}

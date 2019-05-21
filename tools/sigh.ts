@@ -541,7 +541,7 @@ function runTests(args: string[]): boolean {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/runtime/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
