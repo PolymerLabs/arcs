@@ -10,11 +10,11 @@
 
 'use strict';
 
-import {logFactory} from '../../build/platform/log-web.js';
-import {Services} from '../../build/runtime/services.js';
 import {dynamicScript} from './dynamic-script.js';
 import {requireTf} from './tfjs-service.js';
-import {ResourceManager, Reference} from './ResourceManager.js';
+import {Reference, ResourceManager} from './ResourceManager.js';
+import {logFactory} from '../platform/log-web.js';
+import {Services} from '../runtime/services.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 

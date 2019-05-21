@@ -6,29 +6,27 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Services} from '../../build/runtime/services.js';
 import {dynamicScript} from './dynamic-script.js';
-import {logFactory} from '../../build/platform/log-web.js';
-import {ResourceManager as rmgr} from './ResourceManager.js';
+import {Reference, ResourceManager as rmgr} from './ResourceManager.js';
+import {logFactory} from '../platform/log-web.js';
+import {Services} from '../runtime/services.js';
 
 const log = logFactory('tfjs-service');
 
-//const tfUrl = `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js`;
-const tfUrl = `https://unpkg.com/@tensorflow/tfjs@1.1.2/dist/tf.min.js?module`;
+const TF_VERSION = '1.1.2';
+const tfUrl = `https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`;
 
-
-// Utility
-
+/** Dynamically loads and returns the `tfjs` module. */
 export const requireTf = async () => {
-  if (!window.tf) {
+  if (!window['tf']) {
     await dynamicScript(tfUrl);
   }
-  return window.tf;
+  return window['tf'];
 };
 
 // Map some TF API to a Service
 
-const sequential = async () => {
+const sequential = async (): Promise<Reference> => {
   // lazy-load TensorFlow
   const tf = await requireTf();
   // Define a model
@@ -39,8 +37,10 @@ const sequential = async () => {
 const linearRegression = async ({model: modelRef, training, query, epochs}) => {
   // lazy-load TensorFlow
   const tf = await requireTf();
+
+  // @ts-ignore
   // get the referenced model
-  const model = rmgr.deref(modelRef);
+  const model: tf.LayersModel = rmgr.deref(modelRef);
   // Define a model for linear regression.
   //const model = tf.sequential();
   model.add(tf.layers.dense({units: 1, inputShape: [1]}));

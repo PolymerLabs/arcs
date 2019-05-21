@@ -10,7 +10,7 @@
 
 'use strict';
 
-import {logFactory} from '../../build/platform/log-web.js';
+import {logFactory} from '../platform/log-web.js';
 
 const log = logFactory('resource-mgr');
 

@@ -7,9 +7,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {dynamicImport} from './dynamic-import.js';
-import {Services} from '../../build/runtime/services.js';
-import {logFactory} from '../../build/platform/log-web.js';
-import {Runnable, Mapper} from '../../build/runtime/hot.js';
+import {logFactory} from '../platform/log-web.js';
+import {Mapper, Runnable} from '../runtime/hot.js';
+import {Services} from '../runtime/services.js';
 
 const log = logFactory('ml5-service');
 
