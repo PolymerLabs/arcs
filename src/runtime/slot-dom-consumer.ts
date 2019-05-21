@@ -16,12 +16,13 @@ import {Arc} from './arc.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {SlotConsumer, Content, Rendering} from './slot-consumer.js';
 import {ProvidedSlotContext} from './slot-context.js';
+import {Runtime} from './runtime.js';
 
 export interface DomRendering extends Rendering {
   liveDom?: Template;
 }
 
-const templateByName = new Map<string, HTMLElement>();
+const templateByName = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, HTMLElement>('templateByName');
 
 // this style sheet is installed in every particle shadow-root
 let commonStyleTemplate;
@@ -45,7 +46,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   static hasTemplate(templatePrefix: string): string {
-    return [...templateByName.keys()].find(key => key.startsWith(templatePrefix));
+    return [...templateByName().keys()].find(key => key.startsWith(templatePrefix));
   }
 
   isSameContainer(container, contextContainer): boolean {
@@ -164,7 +165,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   static clearCache(): void {
-    templateByName.clear();
+    templateByName().clear();
   }
 
   static findRootContainers(topContainer) {
@@ -190,12 +191,12 @@ export class SlotDomConsumer extends SlotConsumer {
     if (templateName) {
       rendering.templateName = [templatePrefix, templateName].filter(s => s).join('::');
       if (template) {
-        if (templateByName.has(rendering.templateName)) {
+        if (templateByName().has(rendering.templateName)) {
           // TODO: check whether the new template is different from the one that was previously used.
           // Template is being replaced.
           this.clearContainer(rendering);
         }
-        templateByName.set(rendering.templateName, this.createTemplateElement(template));
+        templateByName().set(rendering.templateName, this.createTemplateElement(template));
       }
     }
   }
@@ -204,7 +205,7 @@ export class SlotDomConsumer extends SlotConsumer {
     this._observe(rendering.container);
 
     if (rendering.templateName) {
-      const template = templateByName.get(rendering.templateName);
+      const template = templateByName().get(rendering.templateName);
       assert(template, `No template for ${rendering.templateName}`);
       this._stampTemplate(rendering, template);
     }
