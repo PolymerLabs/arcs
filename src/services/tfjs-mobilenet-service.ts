@@ -12,7 +12,7 @@
 
 import {dynamicScript} from './dynamic-script.js';
 import {requireTf} from './tfjs-service.js';
-import {Reference, ResourceManager} from './ResourceManager.js';
+import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 

@@ -7,7 +7,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {dynamicScript} from './dynamic-script.js';
-import {Reference, ResourceManager as rmgr} from './ResourceManager.js';
+import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 
@@ -66,8 +66,11 @@ const linearRegression = async ({model: modelRef, training, query, epochs}) => {
   return buffer.values;
 };
 
+
+const dispose = ({reference}) => rmgr.dispose(reference);
+
 Services.register('tfjs', {
   linearRegression,
   sequential,
-  dispose: rmgr.dispose
+  dispose,
 });

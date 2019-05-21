@@ -24,17 +24,18 @@ export type Reference = number;
  */
 export class ResourceManager {
 
-  static references: Reference[] = [];
+  static references = [];
 
   /**
    *  Cache the value for later use (try for no duplicates).
    *  @return Reference a `number` associated with the cached resource.
    */
   static ref(val): Reference {
-    if (!(val in this.references)) {
+    const idx = this.references.indexOf(val);
+    if (idx === -1) {
       return this.references.push(val) - 1;
     }
-    return this.references.indexOf(val);
+    return idx;
   }
 
   /** @return the cached value associated with the input reference. */
