@@ -134,13 +134,12 @@ export class SequenceTest<T> {
    * with a series of data updates.
    * 
    * @param name the function name to invoke in order to provide input
-   * @param asyncCount the number of internal awaits within the function
+   * @param asyncCount the maximum number of internal awaits within the function (including
+   *                   child functions)
    * @param response either {type: Void} (the function should not return a value),
    *                 or {type: Constant, response: v} (the function should return v)
    *                 or {type: Defer, checkResponse: (v) => void} (the return value of
    *                         the function will be passed to checkResponse)
-   * 
-   * returns: an input key.
    */
   registerInput(name: string, asyncCount: number, response: InputResponseObject): string {
     const key = name + this.currentID++;
@@ -153,7 +152,8 @@ export class SequenceTest<T> {
    * invoked as the object is fed changes. The parameters provided to the output can be
    * inspected as part of the test.
    * 
-   * @param name the function name to replace or register with
+   * @param name the function name to replace or register with. Note that dotted syntax can
+   *             be used to register outputs on sub-objects.
    * @param response either {type: Void} (the function won't return a value),
    *                 or {type: Constant, response: v} (the function will return v),
    *                 or {type: Defer, default: v} (the function will return v initially).
@@ -167,7 +167,17 @@ export class SequenceTest<T> {
    *                 the result of invoking the registration function will be stored in that
    *                 variable.
    * 
-   * returns: an output key.
+   * Example: if a 'onOutput' function is invoked on the object under test, and you want to
+   * hook that:
+   * sequenceTest.registerOutput('onOutput', {type: Void}, SequenceOutput.Replace);
+   * 
+   * If a 'registerOutputHandler function exists on the object under test and you want to
+   * hook that and store the resulting handle in a variable named outputID:
+   * sequenceTest.registerOutput('registerOutputHandler', {type: Void}, SequenceOutput.Register, outputID);
+   * 
+   * If the object under test has a property 'foo' with an output function 'bar' that you want
+   * to replace:
+   * sequenceTest.registerOutput('foo.bar', {type: Void}, SequenceOutput.Replace);
    */
   registerOutput(name: string, response: OutputResponseObject, behavior: SequenceOutput, variable: string = null) {
     if (behavior !== SequenceOutput.Register) {
