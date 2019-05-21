@@ -17,7 +17,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {Loader} from './loader.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {ArcDebugListenerDerived} from './debug/abstract-devtools-channel.js';
+import {ArcInspectorFactory} from './arc-inspector.js';
 import {assert} from '../platform/assert-web.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 
@@ -26,8 +26,8 @@ export type RuntimeArcOptions = Readonly<{
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
-  stub?: boolean
-  listenerClasses?: ArcDebugListenerDerived[];
+  stub?: boolean;
+  listenerClasses?: ArcInspectorFactory[];
 }>;
 
 // To start with, this class will simply hide the runtime classes that are
