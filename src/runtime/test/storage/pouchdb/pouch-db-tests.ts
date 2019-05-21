@@ -20,15 +20,20 @@ import {CallbackTracker} from '../../../testing/callback-tracker.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {Id, ArcId} from '../../../id.js';
 
-const testUrl = 'pouchdb://memory/user-test';
-
 // TODO(lindner): run tests for remote and local variants
 ['pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((testUrl) => {
 
 describe('pouchdb for ' + testUrl, () => {
   let lastStoreId = 0;
-  function newStoreKey(name) {
+
+  // Returns a unique storage key for the given name using the testUrl prefix
+  function newStoreKey(name: string) {
     return `${testUrl}/${name}-${lastStoreId++}`;
+  }
+
+  // Returns the synced storage key for an existing key.  Replaces user-test with user-test1
+  function syncedStoreKey(name: string) {
+    return name.replace('user-test', 'user-test1');
   }
 
   // TODO(lindner): switch back to before()?
@@ -176,6 +181,7 @@ describe('pouchdb for ' + testUrl, () => {
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
+
     it('resolves concurrent add of same id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -217,6 +223,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.isEmpty(await collection1.toList());
       assert.isEmpty(await collection2.toList());
     });
+
     it('resolves concurrent add of different id', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -285,7 +292,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.isEmpty(await collection.toList());
       collectionCallbacks.verify();
     });
-
+    
     it('supports references', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -312,6 +319,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.isNull(collection1.backingStore);
       callbackTracker.verify();
     });
+
     it('supports removeMultiple', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -328,6 +336,56 @@ describe('pouchdb for ' + testUrl, () => {
         {id: 'id1', keys: ['key1']}, {id: 'id2', keys: ['key2']}
       ]);
       assert.isEmpty(await collection.toList());
+    });
+  });
+
+  describe('syncing', () => {
+
+    it('supports syncing construct and mutatation', async () => {
+      const manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const storage = createStorage(arc.id);
+
+      const barType = new EntityType(manifest.schemas.Bar);
+      const value1 = 'Hi there' + Math.random();
+      const value2 = 'Goodbye' + Math.random();
+
+      const localStoreKey = newStoreKey('collection');
+      const syncStoreKey = syncedStoreKey(localStoreKey);
+      
+      const localCollection = await storage.construct('test1', barType.collectionOf(), localStoreKey) as PouchDbCollection;
+
+      const syncCollection = await storage.construct('test1', barType.collectionOf(), syncStoreKey) as PouchDbCollection;
+      const storageEngine = syncCollection.storageEngineForTesting;
+
+      // set up syncing between
+      storageEngine.syncForTesting(syncStoreKey, localStoreKey);
+ //     storageEngine.syncForTesting(localStoreKey, syncStoreKey);
+
+      await localCollection.store({id: 'id0', value: value1}, ['key0']);
+      // wait for sync?
+
+      while (localCollection.version !== syncCollection.version) {
+        console.log('waiting for versions ', localCollection.version, syncCollection.version);
+        await new Promise(resolve => {setTimeout(resolve, 200);});
+      }
+
+      await syncCollection.store({id: 'id1', value: value2}, ['key1']);
+       // wait for sync?
+      await 0;
+
+      let result = await localCollection.get('id0');
+      assert.equal(result.value, value1);
+
+      result = await syncCollection.get('id0');
+      assert.equal(result.value, value1);
+      
+      result = await localCollection.toList();
+      assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
   });
   // TODO(lindner): add big collection tests here when implemented.

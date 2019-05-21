@@ -42,7 +42,7 @@ export async function upsert<T extends UpsertDoc>(
     db: PouchDB.Database,
     docId: string,
     mutatorFn?: UpsertMutatorFn<T>,
-    defaultValue?: PouchDB.Core.NewDocument<T>): Promise<T> {
+    defaultValue?: PouchDB.Core.NewDocument<T>): Promise<Readonly<T>> {
 
   // Keep retrying the operation until it succeeds.
 

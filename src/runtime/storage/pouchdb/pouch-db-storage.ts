@@ -37,7 +37,7 @@ export class PouchDbStorage extends StorageBase {
   private static dbLocationToInstance: Map<string, PouchDB.Database> = new Map();
 
   /** Tracks replication status and allows cancellation in tests */
-  private static syncHandler: PouchDB.Replication.Sync<{}> | undefined;
+  private static syncHandlers: PouchDB.Replication.Sync<{}>[] = [];
 
   constructor(arcId: Id) {
     super(arcId);
@@ -141,9 +141,9 @@ export class PouchDbStorage extends StorageBase {
   /** Unit tests should call this in an 'after' block. */
   async shutdown() {
     // Stop syncing
-    if (PouchDbStorage.syncHandler) {
-      PouchDbStorage.syncHandler.cancel();
-    }
+    PouchDbStorage.syncHandlers.forEach(handler => {
+      handler.cancel();
+    });
     // Close databases
     for (const db of PouchDbStorage.dbLocationToInstance.values()) {
       try {
@@ -242,6 +242,8 @@ export class PouchDbStorage extends StorageBase {
       PouchDB.plugin(PouchDbMemory);
       db = new PouchDB(key.dbName, {adapter: 'memory'});
     } else {
+      // TODO(lindner) validate
+
       // Create a local db to sync to the remote
       db = new PouchDB(key.dbName);
 
@@ -277,23 +279,38 @@ export class PouchDbStorage extends StorageBase {
   }
 
   /**
+   * A way to test sync between two databases. Set up one-way sync of changes
+   * from source to target.
+   */
+  public async syncForTesting(sourceKey: string, remoteKey: string) {
+    
+    const synchandler = this.setupSync(this.dbForKey(new PouchDbKey(sourceKey)),
+                                       this.dbForKey(new PouchDbKey(remoteKey)));
+  }
+
+  /**
    * Starts syncing between the remote and local Pouch databases.
    * Installs an event handler that propagates changes arriving from
    * remote to local objects using matching location IDs.
    */
-  private setupSync(localDb: PouchDB.Database, remoteDb: PouchDB.Database) {
+  private setupSync(localDb: PouchDB.Database, remoteDb: PouchDB.Database): PouchDB.Replication.Sync<{}> {
     console.log('Replicating DBs');
 
     const syncHandler = localDb.sync(remoteDb, {live: true, retry: true});
 
     // Handle inbound changes.
     syncHandler.on('change', info => {
+      console.log('CHANGE', info);
+      console.log('CHANGEDOC', info.change.docs);
+
       const dir = info.direction; // push or pull.
       if (dir === 'pull') {
         // handle change from the server
         for (const doc of info.change.docs) {
           // Find the handler for the id and pass the changed doc to it.
           const handler = this.providerByLocationCache.get(doc._id);
+          console.log('found handler for ' + doc._id + ' ' + handler != undefined);
+
           if (handler) {
             handler.onRemoteStateSynced(doc);
           }
@@ -324,6 +341,7 @@ export class PouchDbStorage extends StorageBase {
         console.log('DB Replication error', err);
       });
 
-    PouchDbStorage.syncHandler = syncHandler;
+    PouchDbStorage.syncHandlers.push(syncHandler);
+    return syncHandler;
   }
 }

@@ -34,6 +34,9 @@ interface CollectionStorage extends UpsertDoc {
  */
 export class PouchDbCollection extends PouchDbStorageProvider implements CollectionStorageProvider {
   private upsertMutex = new Mutex();
+  // A copy of the last document to be upserted, used in onRemoteStateSynced to
+  // calculate the keys that were added/removed.
+  private lastDocSeen: Readonly<CollectionStorage>;
 
   /**
    * Create a new PouchDbCollection.
@@ -311,22 +314,79 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
   }
 
   /**
-   * Triggered when the storage key has been modified.
+   * Triggered when the storage key has been modified outside of the local context.
+   *
+   * When called:
+   * - Compares the last doc seen with the new doc.
+   * - Finds keys that are added/removed, and fires events.
    */
-  // TODO(lindner): Fire listeners when we have replication working again.
-  public onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<CollectionStorage>) {
-    // updates internal state
+  public async onRemoteStateSynced(newdoc: PouchDB.Core.ExistingDocument<CollectionStorage>) {
+    console.log('HEY ', newdoc);
+    // acquire the upsert lock because we are reading from the shared state.
+    const release = await this.upsertMutex.acquire();
 
-    // remote revision is different, update local copy.
-    const model = doc.model;
 
-    //this._model = new CrdtCollectionModel(model);
-    this.bumpVersion();
+    try {
+      // TODO(lindner) skip if no one's listening..
+      if (!newdoc || !newdoc.model) {
+        // corrupt data?  skip
+      }
 
-    // TODO(lindner): handle referenceMode
-    // TODO(lindner): calculate added/removed keys from previousModel/model
-    // TODO(lindner): fire change events here?
-    //   this._fire('change', new ChangeEvent({add, remove, version: this.version}));
+      if (this.referenceMode !== newdoc.referenceMode) {
+        console.warn('Unsupported: switch from reference mode to non-reference mode');
+        return;
+      }
+
+      let newModel: CrdtCollectionModel;
+      let oldModel: CrdtCollectionModel;
+
+      if (this.referenceMode) {
+        const backingStore = await this.ensureBackingStore();
+        // TODO(lindner): we need to keep the previous state.. somewhere.
+        newModel = null;
+        oldModel = null;
+        return;
+      }
+
+      newModel = new CrdtCollectionModel(newdoc.model);
+
+      // remote revision is different, update local copy.
+      oldModel =  (this.lastDocSeen && this.lastDocSeen.model)
+        ? new CrdtCollectionModel(this.lastDocSeen.model)
+        : new CrdtCollectionModel();
+
+      // Calculate added/removed keys from oldModel/newModel
+      const added = [];
+      const removed = [];
+
+      for (const modelValue of oldModel.toList()) {
+        if (!newModel.has(modelValue.id)) {
+          const item = {value: oldModel.getValue(modelValue.id),
+                        keys: oldModel.getKeys(modelValue.id), // TODO(???)
+                        effective: true};
+
+          removed.push(modelValue);
+        }
+      }
+
+      for (const modelValue of newModel.toList()) {
+        if (!oldModel.has(modelValue.id)) {
+          const item = {value: newModel.getValue(modelValue.id),
+                        keys: newModel.getKeys(modelValue.id),
+                        effective: true};
+
+          added.push(item);
+        }
+      }
+       
+      this.lastDocSeen = newdoc;
+      this.version = newdoc.version;
+      console.log('updating to version ' + newdoc.version);
+
+      this._fire('change', new ChangeEvent({add: added, remove: removed, version: this.version}));
+    } finally {
+      release();
+    }
   }
 
   /**
@@ -340,8 +400,12 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
 
   /**
    * Get/Modify/Set the data stored for this collection.
+   *
+   * Also performs the following actions
+   * - Acquires a mutex so upserts for this doc are serialized.
+   * - Updates local state for version/referenceMode and the last doc seen.
    */
-  private async upsert(mutatorFn: UpsertMutatorFn<CollectionStorage>): Promise<CollectionStorage> {
+  private async upsert(mutatorFn: UpsertMutatorFn<CollectionStorage>): Promise<Readonly<CollectionStorage>> {
     const defaultDoc: CollectionStorage = {
       referenceMode: this.referenceMode,
       type: this.type.toLiteral(),
@@ -354,6 +418,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       const doc = await upsert(this.db, this.pouchDbKey.location, mutatorFn, defaultDoc);
       this.version = doc.version;
       this.referenceMode = doc.referenceMode;
+      this.lastDocSeen = doc;
       return doc;
     } finally {
       release();

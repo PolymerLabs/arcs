@@ -23,7 +23,7 @@ import {PouchDbStorage} from './pouch-db-storage.js';
  */
 export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /** The Storage Engine instance we were initialized with */
-  protected storageEngine: PouchDbStorage;
+  protected readonly storageEngine: PouchDbStorage;
 
   // Manages backing store
   backingStore: PouchDbCollection | null = null;
@@ -71,6 +71,10 @@ export abstract class PouchDbStorageProvider extends StorageProviderBase {
    */
   protected get db(): PouchDB.Database {
     return this.storageEngine.dbForKey(this.pouchDbKey);
+  }
+
+  public get storageEngineForTesting(): PouchDbStorage {
+    return this.storageEngine;
   }
 
   /**
