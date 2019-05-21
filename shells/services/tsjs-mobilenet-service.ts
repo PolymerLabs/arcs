@@ -102,7 +102,7 @@ const extractEmbeddings = async ({model, img}): Promise<MobilenetEmbedding> => {
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
   log('Inferring...');
   const inference = await model_.infer(img);
-  return { version: model_.version, alpha: model_.alpha, feature: inference};
+  return {version: model_.version, alpha: model_.alpha, feature: inference};
 };
 
 Services.register('mobilenet', {

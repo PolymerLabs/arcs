@@ -31,7 +31,7 @@ export class ResourceManager {
    *  @return Reference a `number` associated with the cached resource.
    */
   static ref(val): Reference {
-    if(!(val in this.references)){
+    if (!(val in this.references)) {
       return this.references.push(val) - 1;
     }
     return this.references.indexOf(val);
