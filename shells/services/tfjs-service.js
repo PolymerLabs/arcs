@@ -36,7 +36,7 @@ const sequential = async () => {
   return rmgr.ref(model);
 };
 
-const linearRegression = async ({model: modelRef, training, query, fits}) => {
+const linearRegression = async ({model: modelRef, training, query, epochs}) => {
   // lazy-load TensorFlow
   const tf = await requireTf();
   // get the referenced model
@@ -53,9 +53,9 @@ const linearRegression = async ({model: modelRef, training, query, fits}) => {
   log(x, y, l);
   const xs = tf.tensor2d(x, [l, 1]);
   const ys = tf.tensor2d(y, [l, 1]);
-  fits = fits || 500;
+  epochs = epochs || 500;
   // Train the model using the data.
-  for (let i=0; i<fits; i++) {
+  for (let i=0; i<epochs; i++) {
     await model.fit(xs, ys);
   }
   // Use the model to do inference on a data point the model hasn't seen before:
