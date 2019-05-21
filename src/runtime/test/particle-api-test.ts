@@ -14,8 +14,13 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
+import {IdGenerator} from '../id.js';
+import {Manifest} from '../manifest.js';
+import {Schema} from '../schema.js';
+import {EntityType} from '../type.js';
+import {VariableStore} from '../store.js';
 
-async function loadFilesIntoNewArc(fileMap) {
+async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}) {
   const testHelper = await TestHelper.create({
     manifestString: fileMap.manifest,
     loader: new StubLoader(fileMap)
@@ -772,6 +777,157 @@ describe('particle-api', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
     await inspector.verify('v1,v2,v3', 'v4,v5', 'done');
+  });
+
+  it('particles can indicate that they are busy in setHandles', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle CallsBusy in 'callsBusy.js'
+          in * {} bar
+          out * {Text result} far
+
+        recipe
+          use 'test:0' as foo
+          use 'test:1' as faz
+          CallsBusy
+            bar <- foo
+            far -> faz
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.startBusy();
+              this.out = handles.get('far');
+            }
+            async onHandleSync(handle, model) {
+              setTimeout(async () => {
+                this.out.set(new this.out.entityClass({result: 'hi'}));
+                this.doneBusy();
+              }, 100);
+            }
+          }
+        });
+      `
+    });
+    
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+
+    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    recipe.handles[0].mapToStorage(inStore);
+    recipe.handles[1].mapToStorage(outStore);
+    recipe.normalize();
+    
+    await arc.instantiate(recipe);
+
+    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    await arc.idle;
+    await util.assertSingletonIs(outStore, 'result', 'hi');
+  });
+
+  it('particles can indicate that they are busy in onHandleSync', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle CallsBusy in 'callsBusy.js'
+          in * {} bar
+          out * {Text result} far
+
+        recipe
+          use 'test:0' as foo
+          use 'test:1' as faz
+          CallsBusy
+            bar <- foo
+            far -> faz
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.out = handles.get('far');
+            }
+            async onHandleSync(handle, model) {
+              this.startBusy();
+              setTimeout(async () => {
+                await this.out.set(new this.out.entityClass({result: 'hi'}));
+                this.doneBusy();
+              }, 100);
+            }
+          }
+        });
+      `
+    });
+    
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+
+    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    recipe.handles[0].mapToStorage(inStore);
+    recipe.handles[1].mapToStorage(outStore);
+    recipe.normalize();
+    
+    await arc.instantiate(recipe);
+
+    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    await arc.idle;
+    await util.assertSingletonIs(outStore, 'result', 'hi');
+  });
+
+  it('particles can indicate that they are busy in onHandleUpdate', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle CallsBusy in 'callsBusy.js'
+          in * {} bar
+          out * {Text result} far
+
+        recipe
+          use 'test:0' as foo
+          use 'test:1' as faz
+          CallsBusy
+            bar <- foo
+            far -> faz
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.out = handles.get('far');
+            }
+            async onHandleUpdate(handle, update) {
+              this.startBusy();
+              setTimeout(async () => {
+                await this.out.set(new this.out.entityClass({result: 'hi'}));
+                this.doneBusy();
+              }, 100);
+            }
+          }
+        });
+      `
+    });
+    
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+
+    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
+    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'faz', 'test:2');
+    recipe.handles[0].mapToStorage(inStore);
+    recipe.handles[1].mapToStorage(outStore);
+    recipe.normalize();
+    
+    await arc.instantiate(recipe);
+
+    await arc.idle;
+    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    await arc.idle;
+    await util.assertSingletonIs(outStore, 'result', 'hi');
   });
 
   it('loadRecipe returns ids of provided slots', async () => {
