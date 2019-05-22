@@ -21,15 +21,17 @@ export type Reference = number;
  */
 export class ResourceManager {
 
-  /** Collection of a mixture of types, associated with the index in the array. */
+  /** Collection of a mixture of types, associated with an identifier (references) */
   // tslint:disable-next-line:no-any
   static references: any[] = [];
 
   /**
-   *  Cache the value for later use (try for no duplicates).
-   *  @return Reference a `number` associated with the cached resource.
+   * Cache the value for later use (try for no duplicates).
+   *
+   * @param val A value, object, etc. to be cached for later use.
+   * @return Reference a `number` associated with the cached resource.
    */
-  static ref(val): Reference {
+  static ref(val: unknown): Reference {
     const idx = this.references.indexOf(val);
     if (idx === -1) {
       return this.references.push(val) - 1;
@@ -37,12 +39,21 @@ export class ResourceManager {
     return idx;
   }
 
-  /** @return the cached value associated with the input reference. */
+  /**
+   * Get a stored value, given an identifier to it.
+   *
+   * @param r An identifier or reference for a value
+   * @return the cached value associated with the input reference.
+   */
   static deref(r: Reference): unknown {
     return this.references[r];
   }
 
-  /** Delete the cached resource associated with the reference `r`. */
+  /**
+   * Delete the cached resource associated with the reference `r`.
+   *
+   * @param r An identifier or reference to the value to be cleaned up.
+   */
   static dispose(r: Reference): void {
     delete this.references[r];
   }
