@@ -96,14 +96,14 @@ export class ParticleExecutionHost {
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
-        await (handle as any).store(data.value, data.keys, particleId);
+        await (handle as CollectionStorageProvider).store(data.value, data.keys, particleId);
         this.SimpleCallback(callback, {});
       }
 
       async onHandleRemove(handle: StorageProviderBase, callback: number, data: {id: string, keys: string[]}, particleId) {
         // TODO(shans): fix typing once we have types for Singleton/Collection/etc
         // tslint:disable-next-line: no-any
-        await (handle as any).remove(data.id, data.keys, particleId);
+        await (handle as CollectionStorageProvider).remove(data.id, data.keys, particleId);
         this.SimpleCallback(callback, {});
       }
 
