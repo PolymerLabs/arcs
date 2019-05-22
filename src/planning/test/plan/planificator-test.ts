@@ -102,7 +102,7 @@ describe('remote planificator', () => {
 
     for (const description of expectedDescriptions) {
       const filteredSuggestions = producePlanificator.producer.result.suggestions.filter(
-          s => s.descriptionText.includes(description));
+          s => !!s.descriptionText && s.descriptionText.includes(description));
       if (filteredSuggestions.length === 0) {
         console.log(`Existing suggestions:${producePlanificator.producer.result.suggestions.map(suggestion => suggestion.descriptionText)}`);
       }
