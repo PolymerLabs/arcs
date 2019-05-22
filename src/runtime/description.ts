@@ -24,7 +24,6 @@ import {Dictionary} from './hot.js';
 export class Description {
   private constructor(
       private readonly storeDescById: Dictionary<string> = {},
-      private readonly arcRecipeName: string,
       // TODO(mmandlis): replace Particle[] with serializable json objects.
       private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
       private readonly particleDescriptions: ParticleDescription[] = []) {
@@ -32,7 +31,7 @@ export class Description {
 
   static async createForPlan(plan: Recipe): Promise<Description> {
     const particleDescriptions = await Description.initDescriptionHandles(plan.particles);
-    return new Description({}, plan.name, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
+    return new Description({}, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
   }
 
   /**
@@ -53,7 +52,7 @@ export class Description {
     }
 
     // ... and pass to the private constructor.
-    return new Description(storeDescById, arc.activeRecipe.name, arc.recipeDeltas, particleDescriptions);
+    return new Description(storeDescById, arc.recipeDeltas, particleDescriptions);
   }
 
   getArcDescription(formatterClass = DescriptionFormatter): string|undefined {
@@ -73,11 +72,7 @@ export class Description {
 
   getRecipeSuggestion(formatterClass = DescriptionFormatter) {
     const formatter = new (formatterClass)(this.particleDescriptions, this.storeDescById);
-    const desc = formatter.getDescription(this.arcRecipes[this.arcRecipes.length - 1]);
-    if (desc) {
-      return desc;
-    }
-    return formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription);
+    return formatter.getDescription(this.arcRecipes[this.arcRecipes.length - 1]);
   }
 
   getHandleDescription(recipeHandle: Handle): string {
@@ -170,7 +165,4 @@ export class Description {
     }
     return undefined;
   }
-
-  /** A fallback description if none other can be found */
-  static defaultDescription = `i'm feeling lucky`;
 }
