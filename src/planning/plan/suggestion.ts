@@ -86,16 +86,16 @@ export class Suggestion {
   }
 
   getDescription(modality: string): string|{} {
-    //assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
+    assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
     return this.descriptionByModality[modality];
   }
 
   setDescription(description: Description, modality: Modality, descriptionFormatter = DescriptionFormatter) {
-    const descriptionText = description.getRecipeSuggestion();
-    this.descriptionByModality['text'] = descriptionText;
+    this.descriptionByModality['text'] = description.getRecipeSuggestion();
     for (const planModality of this.plan.modality.names) {
       if (modality.names.includes(planModality)) {
-        this.descriptionByModality[planModality] = description.getRecipeSuggestion(descriptionFormatter);
+        this.descriptionByModality[planModality] =
+          description.getRecipeSuggestion(descriptionFormatter);
       }
     }
   }
