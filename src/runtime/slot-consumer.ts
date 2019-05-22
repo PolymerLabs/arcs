@@ -11,6 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
+import {Predicate} from './hot.js';
 import {Description} from './description.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConnection} from './recipe/slot-connection.js';
@@ -81,7 +82,7 @@ export class SlotConsumer {
     return [...this.generateProvidedContexts()];
   }
 
-  findProvidedContext(predicate: (_: ProvidedSlotContext) => boolean) {
+  findProvidedContext(predicate: Predicate<ProvidedSlotContext>) {
     return this.generateProvidedContexts(predicate).next().value;
   }
 

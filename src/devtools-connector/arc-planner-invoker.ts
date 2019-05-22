@@ -9,6 +9,7 @@
  */
 
 import {Arc} from '../runtime/arc.js';
+import {Predicate} from '../runtime/hot.js';
 import {ArcDevtoolsChannel, DevtoolsMessage} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
@@ -191,13 +192,13 @@ export class ArcPlannerInvoker {
     return {suggestion, error: ((({location, message}) => ({location, message}))(error))};
   }
 
-  findManifestNames(manifest: Manifest, predicate: (_ : Manifest) => boolean): string[] {
+  findManifestNames(manifest: Manifest, predicate: Predicate<Manifest>): string[] {
     const map: Map<string, number> = new Map();
     this.findManifestNamesRecursive(manifest, predicate, map);
     return [...map.entries()].sort(([a, depthA], [b, depthB]) => (depthA - depthB)).map(v => v[0]);
   }
 
-  findManifestNamesRecursive(manifest: Manifest, predicate: (_ : Manifest) => boolean, fileNames: Map<string, number>): number {
+  findManifestNamesRecursive(manifest: Manifest, predicate: Predicate<Manifest>, fileNames: Map<string, number>): number {
     let depth = predicate(manifest) ? 0 : Number.MAX_SAFE_INTEGER;
     for (const child of manifest.imports) {
       depth = Math.min(depth, this.findManifestNamesRecursive(child, predicate, fileNames) + 1);
