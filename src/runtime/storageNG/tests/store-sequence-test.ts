@@ -16,8 +16,8 @@ import {DriverFactory, Driver, ReceiveMethod, StorageDriverProvider, Exists} fro
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
-  async read(key: string) { throw new Error("unimplemented"); }
-  async write(key: string, value: {}) { throw new Error("unimplemented"); }
+  async read(key: string) { throw new Error('unimplemented'); }
+  async write(key: string, value: {}) { throw new Error('unimplemented'); }
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
@@ -116,7 +116,7 @@ describe('Store Flow', async () => {
       return activeStore;
     });    
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 1, {type: ExpectedResponse.Constant, response: true});
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, {type: ExpectedResponse.Constant, response: true});
     const onReceive = sequenceTest.registerInput('onReceive', 1, {type: ExpectedResponse.Void}); 
 
     const meCount = sequenceTest.registerVariable(0);
