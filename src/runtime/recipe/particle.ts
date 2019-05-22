@@ -18,6 +18,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 import {Id} from '../id.js';
+import {Dictionary} from '../hot.js';
 
 export class Particle {
   private readonly _recipe: Recipe;
@@ -27,13 +28,13 @@ export class Particle {
   spec?: ParticleSpec = undefined;
   private _verbs: string[] = [];
   private _tags: string[] = [];
-  private _connections: {[index: string]: HandleConnection} = {};
+  private _connections: Dictionary<HandleConnection> = {};
   
   // TODO: replace with constraint connections on the recipe
   _unnamedConnections: HandleConnection[] = [];
 
   // map of consumed Slot connections by slot name.
-  _consumedSlotConnections: {[index: string]: SlotConnection} = {};
+  _consumedSlotConnections: Dictionary<SlotConnection> = {};
 
   constructor(recipe: Recipe, name: string) {
     assert(recipe);
