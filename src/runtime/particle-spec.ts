@@ -320,7 +320,9 @@ export class ParticleSpec {
       if (s.formFactor) {
         results.push(`${indent}  formFactor ${s.formFactor}`);
       }
--     s.handles.forEach(handle => results.push(`${indent}  handle ${handle}`));
+      for (const handle of s.handles) {
+        results.push(`${indent}  handle ${handle}`);
+      }
       if (s.provideSlotConnections) {
         // Provided slots.
         s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));
