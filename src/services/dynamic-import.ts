@@ -7,5 +7,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// @ts-ignore
+// @ts-ignore TS1323 dynamic import
 export const dynamicImport = path => import(path);
