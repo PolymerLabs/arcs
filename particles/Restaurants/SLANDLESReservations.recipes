@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../List/List.recipes'
-import '../Layout/Layout.recipes'
-import '../Events/Events.recipes'
+import '../List/SLANDLESList.recipes'
+import '../Layout/SLANDLESLayout.recipes'
+import '../Events/SLANDLESEvents.recipes'
 import '../Restaurants/Restaurant.schema'
 import '../Common/Description.schema'
 
@@ -44,7 +44,7 @@ recipe SlandleMakeReservations
   create #reservation as event
   create #volatile as calendarDescriptions
   create #volatile as annotationDescriptions
-  slot 'rootslotid-toproot' as toproot
+  `slot 'rootslotid-toproot' as toproot
   SlandleCalendar
     event = event
     descriptions = calendarDescriptions
@@ -52,20 +52,20 @@ recipe SlandleMakeReservations
   SlandleReservationForm
     restaurant = restaurant
     event = event
-    consume action as toproot
+    action consume toproot
   // per-restaurant tile scheduler
   SlandleAnnotationMultiplexer
     list = restaurants
     annotation = event
-    hostedParticle = ReservationMultiAnnotation
+    hostedParticle = SlandleReservationMultiAnnotation
   // event editor (+scheduler) on restaurant detail
   SlandleDetailReservationForm
      restaurant = restaurant
      event = event
-     consume detailAction
-       provide annotation as detailAnnotation
+     detailAction consume
+       annotation provide detailAnnotation
   SlandleReservationAnnotation
     restaurant = restaurant
     event = event
     descriptions = annotationDescriptions
-    consume annotation as detailAnnotation
+    annotation consume detailAnnotation

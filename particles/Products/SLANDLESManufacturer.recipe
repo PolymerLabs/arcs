@@ -18,5 +18,5 @@ recipe SlandleProductManufacturerInfo
   use as shoplist
   SlandleSimpleAnnotationMultiplexer
     list = shoplist
-    hostedParticle = ManufacturerInfo
+    hostedParticle = SlandleManufacturerInfo
   description `check manufacturer information`

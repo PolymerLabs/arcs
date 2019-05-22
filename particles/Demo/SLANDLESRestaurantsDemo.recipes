@@ -18,11 +18,11 @@ recipe SlandleRestaurantsDemo
   create #restaurant as selected
   create #event as event
   create as descriptions
-  slot #toproot as toproot
+  `slot #toproot as toproot
   SlandleReservationForm
     restaurant = selected
     event = event
-    consume action as toproot
+    action consume toproot
   SlandleGeolocate
     location = location
   SlandleRestaurantFind
@@ -33,19 +33,19 @@ recipe SlandleRestaurantsDemo
     selected = selected
   SlandleTileMultiplexer
     list = restaurants
-    hostedParticle = RestaurantTile
+    hostedParticle = SlandleRestaurantTile
   SlandleAnnotationMultiplexer
     list = restaurants
     annotation = event
-    hostedParticle = ReservationAnnotation
+    hostedParticle = SlandleReservationAnnotation
   SlandleDetailSlider
     selected = selected
   SlandleRestaurantDetail
     restaurant = selected
-    consume content
-      provide detailAction as actionSlot
+    content consume
+      detailAction provide actionSlot
   SlandleReservationForm
     restaurant = selected
     event = event
-    consume action as actionSlot
+    action consume actionSlot
   description `[demo] find restaurants and make reservations near ${RestaurantFind.location}`

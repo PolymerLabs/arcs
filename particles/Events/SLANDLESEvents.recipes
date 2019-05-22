@@ -8,7 +8,7 @@
 import 'Event.schema'
 import '../Common/Description.schema'
 
-particle SlandleSlandleCalendar in 'source/Calendar.js'
+particle SlandleCalendar in 'source/Calendar.js'
   inout Event event
   out [Description] descriptions
   `consume Slot action

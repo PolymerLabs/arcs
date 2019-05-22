@@ -48,11 +48,11 @@ recipe SlandleTVMazeApp
     watchers = watchers
     watcherText = alsoWatch
     descriptions = descriptions
-    consume root as root
-      provide recommended as recommended
-      provide shows as shows
-      provide searchbar as searchbar
-      provide search as search
+    root consume root
+      recommended provide recommended
+      shows provide shows
+      searchbar provide searchbar
+      search provide search
   //
   // slot `shows` holds my primary show list
   create #volatile #uniqueProfile as uniqueProfileShows
@@ -60,15 +60,15 @@ recipe SlandleTVMazeApp
     shows = profileShows
     uniqueShows = uniqueProfileShows
   SlandleSelectableTiles
-    consume root as shows
-      provide tile as tile1
-      provide annotation as action1
+    root consume shows
+      tile provide tile1
+      annotation provide action1
     list = uniqueProfileShows
     selected = selected
   SlandleTileMultiplexer
     list = uniqueProfileShows
-    hostedParticle = TVMazeShowTile
-    consume tile as tile1
+    hostedParticle = SlandleTVMazeShowTile
+    tile consume tile1
   //
   // slot `recommended` holds recommendations
   // which are pulled from `allPipedShows`
@@ -77,42 +77,42 @@ recipe SlandleTVMazeApp
     shows = allPipedShows
     uniqueShows = uniquePipedShows
   SlandleSelectableTiles
-    consume root as recommended
-      provide tile as tile2
-      provide annotation as action2
+    root consume recommended
+      tile provide tile2
+      annotation provide action2
     list = uniquePipedShows
     selected = selected
   SlandleTileMultiplexer
-    consume tile as tile2
+    tile consume tile2
     list = uniquePipedShows
-    hostedParticle = TVMazeShowTile
+    hostedParticle = SlandleTVMazeShowTile
   SlandleActionMultiplexer
-    consume action as action2
+    action consume action2
     list = uniquePipedShows
     shows = myshows
-    hostedParticle = TVMazeShowActions
+    hostedParticle = SlandleTVMazeShowActions
   //
   // slot `search` contains search ui
   create #volatile #query as query
   SlandleTVMazeSearchBar
-    consume toproot as searchbar
+    toproot consume searchbar
     query = query
   SlandleTVMazeSearchShows
     query = query
     shows = foundshows
   SlandleSelectableTiles
-    consume root as search
-      provide tile as tile3
-      provide annotation as action3
+    root consume search
+      tile provide tile3
+      annotation provide action3
     list = foundshows
     selected = selected
   SlandleTileMultiplexer
-    consume tile as tile3
-    hostedParticle = TVMazeShowTile
+    tile consume tile3
+    hostedParticle = SlandleTVMazeShowTile
     list = foundshows
   SlandleActionMultiplexer
-    consume action as action3
-    hostedParticle = TVMazeShowActions
+    action consume action3
+    hostedParticle = SlandleTVMazeShowActions
     list = foundshows
     shows = myshows
   //

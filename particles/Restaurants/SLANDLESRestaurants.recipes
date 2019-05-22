@@ -26,7 +26,7 @@ recipe SlandleRestaurants
     selected = selected
   SlandleTileMultiplexer
     list = restaurants
-    hostedParticle = RestaurantTile
+    hostedParticle = SlandleRestaurantTile
   SlandleDetailSlider
     selected = selected
   SlandleRestaurantDetail

@@ -23,6 +23,6 @@ recipe SlandleFavoriteFoodAnnotation
   SlandleCombinedAnnotationMultiplexer
     list = restaurants
     choices = foods
-    hostedParticle = FavoriteFoodAnnotation
+    hostedParticle = SlandleFavoriteFoodAnnotation
   description `[inline] check restaurants for favorite foods`
 

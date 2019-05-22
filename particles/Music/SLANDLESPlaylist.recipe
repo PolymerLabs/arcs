@@ -21,7 +21,7 @@ recipe SlandlePlaylistView
   create #selected as selected
   SlandleItemMultiplexer
     list = items
-    hostedParticle = PlaylistItem
+    hostedParticle = SlandlePlaylistItem
   SlandleSelectableItems
     list = items
     selected = selected

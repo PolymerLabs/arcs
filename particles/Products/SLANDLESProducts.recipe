@@ -19,7 +19,7 @@ recipe SlandleProducts
     list = products
   SlandleItemMultiplexer
     list = products
-    hostedParticle = ProductItem
+    hostedParticle = SlandleProductItem
 
 recipe SlandleCreateShoppingList
   copy as products
@@ -27,7 +27,7 @@ recipe SlandleCreateShoppingList
     list = products
   SlandleItemMultiplexer
     list = products
-    hostedParticle = ProductItem
+    hostedParticle = SlandleProductItem
   description `create shopping list from ${Items.list}`
 
 recipe SlandleShopForOccasion
@@ -37,8 +37,8 @@ recipe SlandleShopForOccasion
     person = person
   SlandleSimpleAnnotationMultiplexer
     list = shoplist
-    hostedParticle = Arrivinator
-    consume annotation as annotationSlot
+    hostedParticle = SlandleArrivinator
+    annotation consume annotationSlot
 
 recipe SlandleUseWishlist
   map #wishlist as wishlist
@@ -48,11 +48,11 @@ recipe SlandleUseWishlist
   // annotates shoplist
   SlandleChoicesMultiplexer
     // This is probably wrong, but it works now (instead of annotationSlot)
-    // consume choice as annotationSlot
-    consume choice as actionSlot
+    // choice consume annotationSlot
+    choice consume actionSlot
     list = shoplist
     choices = wishlist
-    hostedParticle = AlsoOn
+    hostedParticle = SlandleAlsoOn
   // recommend products from wishlist
   SlandleRecommend
     population = wishlist
@@ -60,7 +60,7 @@ recipe SlandleUseWishlist
     recommendations = recommendations
   // present recommendations for adding to shoplist
   SlandleChooser
-    consume action as actionSlot
+    action consume actionSlot
     person = person
     choices = recommendations
     resultList = shoplist

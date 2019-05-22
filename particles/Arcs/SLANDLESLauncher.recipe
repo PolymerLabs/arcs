@@ -13,8 +13,7 @@ particle SlandleLauncher in 'source/Launcher.js'
 
 recipe SlandleLauncher
   create 'SYSTEM_arcs' as arcs
-  slot 'rootslotid-root' as root
+  `slot 'rootslotid-root' as root
   SlandleLauncher
     arcs = arcs
-    consume root as root
-
+    root consume root

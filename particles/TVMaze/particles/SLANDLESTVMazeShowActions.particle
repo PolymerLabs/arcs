@@ -14,5 +14,4 @@ particle SlandleActionMultiplexer in '../../List/source/Multiplexer.js'
   host SlandleHostedActionParticleInterface hostedParticle
   in [~a] list
   in [TVMazeShow] shows
-  // `consume [Slot] action
-  consume set of action
+  `consume [Slot] action

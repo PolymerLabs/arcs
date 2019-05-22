@@ -7,7 +7,7 @@ particle SlandleWasmTest in 'source/WasmTest.js'
 
 recipe SlandleWasmTest
   create as thunk
-  slot 'rootslotid-root' as root
+  `slot 'rootslotid-root' as root
   SlandleWasmTest
     thunk = thunk
-    consume root as root
+    root consume root
