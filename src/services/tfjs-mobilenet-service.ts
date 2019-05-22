@@ -31,6 +31,15 @@ interface MobilenetParams {
   alpha: number;
 }
 
+/** @see https://github.com/tensorflow/tfjs-models/tree/master/mobilenet#making-a-classification */
+type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // | tf.Tensor3D;
+
+interface ImageInferenceParams {
+  model: Reference;
+  image?: MobilenetImageInput;
+  imageUrl?: string;
+}
+
 interface ClassificationPrediction {
   className: string;
   probability: number;
@@ -81,9 +90,9 @@ const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Referenc
  * @param image An image DOM element or 3D tensor
  * @param imageUrl An image URL
  * @param topK The number of predictions to return.
- * @return A list of `ClassificationPrediction`s, which are label, confidence tuples.
+ * @return A list (or single item) of `ClassificationPrediction`s, which are "label, confidence" tuples.
  */
-const classify = async ({model, image, imageUrl, topK = 1}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
+const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams & {topK: number}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
 
   const img = await getImage(image, imageUrl);
@@ -108,13 +117,13 @@ const classify = async ({model, image, imageUrl, topK = 1}): Promise<Classificat
  * @return A `MobilenetEmbedding`
  * @see MobilenetEmbedding
  */
-const extractEmbeddings = async ({model, image, imageUrl}): Promise<MobilenetEmbedding> => {
+const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams): Promise<MobilenetEmbedding> => {
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
   const img = await getImage(image, imageUrl);
 
-  log('Inferring...');
+  log('inferring...');
   const inference = await model_.infer(img);
-  log('Embedding inferred.');
+  log('embedding inferred.');
 
   return {version: model_.version, alpha: model_.alpha, feature: inference};
 };
@@ -123,8 +132,21 @@ const extractEmbeddings = async ({model, image, imageUrl}): Promise<MobilenetEmb
 /** Clean up model resources. */
 const dispose = ({reference}) => ResourceManager.dispose(reference);
 
-const getImage = async <T> (image: T | undefined, imageUrl: string): Promise<HTMLImageElement | T | undefined> => {
-  log('Loading image...');
+/**
+ * Helper method that uses a DOM image element or loads the image from a URL.
+ *
+ * @param image An image that Mobilnet will accept
+ * @param imageUrl A URL string to an image.
+ *
+ * @see MobilenetImageInput
+ * @throws Error if both parameters are falsy.
+ */
+const getImage = async (image: MobilenetImageInput | undefined, imageUrl: string | undefined): Promise<MobilenetImageInput | undefined> => {
+  if (!image && !imageUrl) {
+    throw new Error('Must specify at least one: a DOM Image element or Image URL!');
+  }
+
+  log('loading image...');
   return !image && imageUrl ? await loadImage(imageUrl): image;
 };
 
