@@ -65,7 +65,7 @@ interface MobilenetEmbedding extends MobilenetParams {
  * @param alpha Model fidelity ratio. Choose between performant (~0) or highly accurate (~1). Default: 1
  * @return a reference number to the model, maintained by the `ResourceManager`.
  */
-const load = async ({version = 1, alpha = 1}: MobilenetParams): Promise<Reference> => {
+const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Reference> => {
   log('Loading tfjs...');
   const tf = await requireTf();
   log('Loading MobileNet...');
