@@ -15,12 +15,13 @@ import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
 import {Content} from './slot-consumer.js';
+import {Dictionary} from './hot.js';
 
 export class MultiplexerDomParticle extends TransformationDomParticle {
 
   private _itemSubIdByHostedSlotId: Map<string, string> = new Map();
   private _connByHostedConn: Map<string, string> = new Map();
-  handleIds: {[key: string]: Promise<Handle>};
+  handleIds: Dictionary<Promise<Handle>>;
 
   async _mapParticleConnections(
       listHandleName: string,

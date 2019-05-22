@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../../platform/assert-web.js';
+import {Dictionary} from '../hot.js';
 
 // Bulding block for CRDT collections. Tracks the membership (keys) of
 // values identified by unique IDs. A value is considered to be part
@@ -20,7 +21,7 @@ import {assert} from '../../platform/assert-web.js';
 export interface ModelValue {
   id: string;
   // tslint:disable-next-line: no-any
-  rawData?: {[index: string]: any};
+  rawData?: Dictionary<any>;
   storageKey?: string;
 }
 

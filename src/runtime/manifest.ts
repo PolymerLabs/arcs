@@ -29,6 +29,7 @@ import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
+import {Dictionary} from './hot.js';
 
 class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -160,8 +161,8 @@ export class Manifest {
   private _recipes = <Recipe[]>[];
   private _imports = <Manifest[]>[];
   // TODO: These should be lists, possibly with a separate flattened map.
-  private _particles: {[index: string]: ParticleSpec} = {};
-  private _schemas: {[index: string]: Schema} = {};
+  private _particles: Dictionary<ParticleSpec> = {};
+  private _schemas: Dictionary<Schema> = {};
   private _stores = <(StorageProviderBase|StorageStub)[]>[];
   private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
@@ -218,7 +219,7 @@ export class Manifest {
   get imports() {
     return this._imports;
   }
-  get schemas(): {[index: string]: Schema} {
+  get schemas(): Dictionary<Schema> {
     return this._schemas;
   }
   get fileName() {

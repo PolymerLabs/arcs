@@ -22,6 +22,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
+import {Dictionary} from '../hot.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -523,7 +524,7 @@ export class Recipe implements Cloneable<Recipe> {
   }
   
   // tslint:disable-next-line: no-any
-  updateToClone(dict): {[index: string]: any} {
+  updateToClone(dict: Dictionary<any>): Dictionary<any> {
     const result = {};
     Object.keys(dict).forEach(key => result[key] = this._cloneMap.get(dict[key]));
     return result;

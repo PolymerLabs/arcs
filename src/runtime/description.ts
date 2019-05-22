@@ -19,10 +19,11 @@ import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProv
 import {StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
+import {Dictionary} from './hot.js';
 
 export class Description {
   private constructor(
-      private readonly storeDescById: {[id: string]: string} = {},
+      private readonly storeDescById: Dictionary<string> = {},
       private readonly arcRecipeName: string,
       // TODO(mmandlis): replace Particle[] with serializable json objects.
       private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
@@ -119,14 +120,14 @@ export class Description {
     return pDesc;
   }
 
-  private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<{[key: string]: string}> {
+  private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<Dictionary<string>> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
       const descHandle = arc.findStoreById(descriptionConn.handle.id) as CollectionStorageProvider;
 
       if (descHandle) {
         // TODO(shans): fix this mess when there's a unified Collection class or interface.
-        const descByName: {[key: string]: string} = {};
+        const descByName: Dictionary<string> = {};
         for (const d of await descHandle.toList()) {
           descByName[d.rawData.key] = d.rawData.value;
         }

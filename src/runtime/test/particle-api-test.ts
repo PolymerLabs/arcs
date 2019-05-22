@@ -14,11 +14,13 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
+import {Description} from '../description.js';
 import {IdGenerator} from '../id.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {VariableStore} from '../store.js';
+import {Speculator} from '../../planning/speculator.js';
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}) {
   const testHelper = await TestHelper.create({
@@ -928,6 +930,111 @@ describe('particle-api', () => {
     (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
     await arc.idle;
     await util.assertSingletonIs(outStore, 'result', 'hi');
+  });
+
+  it('particles call startBusy in setHandles and set values in descriptions', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle CallsBusy in 'callsBusy.js'
+          in * {} bar
+          out * {Text result} far
+          description \`out is \${far.result}!\`
+        recipe
+          use 'test:0' as h0
+          use 'test:1' as h1
+          CallsBusy
+            bar <- h0
+            far -> h1
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.startBusy();
+              this.out = handles.get('far');
+            }
+            async onHandleSync(handle, model) {
+              setTimeout(async () => {
+                this.out.set(new this.out.entityClass({result: 'hi'}));
+                this.doneBusy();
+              }, 100);
+            }
+          }
+        });
+      `
+    });
+
+     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+
+     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
+    const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'h1', 'test:1');
+    recipe.handles[0].mapToStorage(inStore);
+    recipe.handles[1].mapToStorage(outStore);
+    recipe.normalize();
+
+     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const description = await Description.create(speculativeArc, relevance);
+    assert.equal(description.getRecipeSuggestion(), 'Out is hi!');
+  });
+
+   it('particles call startBusy in setHandles with no value and set values in descriptions', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle SetBar in 'setBar.js'
+          out * {} bar
+        particle CallsBusy in 'callsBusy.js'
+          in * {} bar
+          out * {Text result} far
+          description \`out is \${far.result}!\`
+        recipe
+          create as h0
+          create as h1
+          SetBar
+            bar -> h0
+          CallsBusy
+            bar <- h0
+            far -> h1
+      `,
+      'setBar.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.bar = handles.get('bar');
+              this.bar.set(new this.bar.entityClass({}));
+            }
+          }
+        });
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              this.startBusy();
+              this.out = handles.get('far');
+            }
+            async onHandleSync(handle, model) {
+              setTimeout(async () => {
+                this.out.set(new this.out.entityClass({result: 'hi'}));
+                this.doneBusy();
+              }, 100);
+            }
+          }
+        });
+      `
+    });
+
+     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+
+     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const description = await Description.create(speculativeArc, relevance);
+    assert.equal(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
   it('loadRecipe returns ids of provided slots', async () => {

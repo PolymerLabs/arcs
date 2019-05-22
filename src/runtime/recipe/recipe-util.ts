@@ -15,13 +15,14 @@ import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
+import {Dictionary} from '../hot.js';
 
 class Shape {
   recipe: Recipe;
-  particles: {[index: string]: Particle};
+  particles: Dictionary<Particle>;
   handles: Map<string, Handle>;
   reverse: Map<RecipeComponent, string>;
-  constructor(recipe: Recipe, particles: {[index: string]: Particle}, handles: Map<string, Handle>, hcs: {[index: string]: HandleConnection}) {
+  constructor(recipe: Recipe, particles: Dictionary<Particle>, handles: Map<string, Handle>, hcs: Dictionary<HandleConnection>) {
     this.recipe = recipe;
     this.particles = particles;
     this.handles = handles;
@@ -46,11 +47,11 @@ type RecipeUtilComponent = RecipeComponent | HandleConnectionSpec;
 type Match = {forward: Map<RecipeComponent, RecipeUtilComponent>, reverse: Map<RecipeUtilComponent, RecipeComponent>, score: number};
 
 export class RecipeUtil {
-  static makeShape(particles: string[], handles: string[], map: {[index: string]: {[index: string]: HandleRepr}}, recipe?: Recipe) {
+  static makeShape(particles: string[], handles: string[], map: Dictionary<Dictionary<HandleRepr>>, recipe?: Recipe) {
     recipe = recipe || new Recipe();
-    const pMap: {[index:string]: Particle} = {};
+    const pMap: Dictionary<Particle> = {};
     const hMap: Map<string, Handle> = new Map();
-    const hcMap: {[index: string]: HandleConnection} = {};
+    const hcMap: Dictionary<HandleConnection> = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     handles.forEach(handle => hMap.set(handle, recipe.newHandle()));
     Object.keys(map).forEach(key => {
