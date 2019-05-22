@@ -21,7 +21,9 @@ export type Reference = number;
  */
 export class ResourceManager {
 
-  static references = [];
+  /** Collection of a mixture of types, associated with the index in the array. */
+  // tslint:disable-next-line:no-any
+  static references: any[] = [];
 
   /**
    *  Cache the value for later use (try for no duplicates).
@@ -44,5 +46,4 @@ export class ResourceManager {
   static dispose(r: Reference): void {
     delete this.references[r];
   }
-
 }
