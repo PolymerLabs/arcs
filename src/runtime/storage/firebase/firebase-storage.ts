@@ -18,6 +18,7 @@ import {setDiff} from '../../util.js';
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from '../storage-provider-base.js';
+import {Dictionary} from '../../hot.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -110,8 +111,8 @@ let _nextAppNameSuffix = 0;
 enum Mode {direct, reference, backing}
 
 export class FirebaseStorage extends StorageBase {
-  private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
-  private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
+  private readonly apps: Dictionary<{app: firebase.app.App, owned: boolean}>;
+  private readonly sharedStores: Dictionary<FirebaseStorageProvider|null>;
   private baseStores: Map<string, FirebaseBackingStore>;
   private baseStorePromises: Map<string, Promise<FirebaseBackingStore>>;
 
@@ -653,7 +654,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   private localChanges: Map<string, {add: string[], remove: string[]}>;
   private addSuppressions: Map<string, {keys: Set<string>, barrierVersion: number}>;
   private model: CrdtCollectionModel;
-  private remoteState: {items: {[index: string]: {value: {}, keys: { [index: string]: null}}}};
+  private remoteState: {items: Dictionary<{value: {}, keys: Dictionary<null>}>};
   private readonly initialized: Promise<void>;
   private pendingWrites: {value: {}, storageKey: string}[] = [];
   private resolveInitialized: Runnable;

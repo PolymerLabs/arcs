@@ -13,6 +13,7 @@ import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
+import {Dictionary} from '../hot.js';
 import {Runtime} from '../runtime.js';
 
 export function resetVolatileStorageForTesting() {
@@ -70,9 +71,9 @@ class VolatileKey extends KeyBase {
 const storageCache = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, VolatileStorage>('volatileStorageCache');
 
 export class VolatileStorage extends StorageBase {
-  _memoryMap: {[index: string]: VolatileStorageProvider};
-  _typeMap: {[index: string]: VolatileCollection};
-  private readonly typePromiseMap: {[index: string]: Promise<VolatileCollection>};
+  _memoryMap: Dictionary<VolatileStorageProvider>;
+  _typeMap: Dictionary<VolatileCollection>;
+  private readonly typePromiseMap: Dictionary<Promise<VolatileCollection>>;
   localIDBase: number;
 
   constructor(arcId: Id) {
@@ -509,7 +510,7 @@ class VolatileCursor {
 }
 
 class VolatileBigCollection extends VolatileStorageProvider implements BigCollectionStorageProvider {
-  private items: Map<string, {index: number, value: {}, keys: {[index: string]: number}}>;
+  private items: Map<string, {index: number, value: {}, keys: Dictionary<number>}>;
   private cursors: Map<number, VolatileCursor>;
   private cursorIndex: number;
 

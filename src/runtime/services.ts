@@ -9,9 +9,7 @@
 
 import {Dictionary} from './hot.js';
 
-export interface Service {
-  [name: string]: Function;
-}
+export type Service = Dictionary<Function>;
 
 type Registry = Dictionary<Service>;
 

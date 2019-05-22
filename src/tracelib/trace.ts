@@ -11,6 +11,7 @@
   limitations under the License.
 */
 
+import {Dictionary, Producer, Predicate} from '../runtime/hot.js';
 // tslint:disable: no-any
 
 export type TraceInfo = {
@@ -19,7 +20,7 @@ export type TraceInfo = {
   overview?: boolean;
   sequence?: string;
   ts?: number;
-  args?: {[index: string]: any};
+  args?: Dictionary<any>;
 };
 
 export type TraceEvent = {
@@ -32,7 +33,7 @@ export type TraceEvent = {
   cat: string;
   name: string;
   ov: boolean;
-  args: {[index: string]: any};
+  args: Dictionary<any>;
   id?: number;
   flowId?: number;
   seq?: string;
@@ -41,22 +42,22 @@ export type TraceEvent = {
 export interface Trace {
   wait<T>(v: Promise<T>, info?: TraceInfo): T;
   start(info?: TraceInfo);
-  addArgs(extraArgs: {[index: string]: any});
+  addArgs(extraArgs: Dictionary<any>);
   step(info?: TraceInfo);
   end(info?: TraceInfo);
   endWith(v, info?: TraceInfo);
-  id: () => number;
+  id: Producer<number>;
 }
 
 export interface TracingInterface {
   enable(): void;
-  now: () => number;
+  now: Producer<number>;
   wrap(info: TraceInfo, fn: Function): Function;
   start(info: TraceInfo): Trace;
   flow(info: TraceInfo): Trace;
   save(): {traceEvents: TraceEvent[]};
   download(): void;
-  stream(callback: (e: TraceEvent) => any, predicate?: (e: TraceEvent) => boolean): void;
+  stream(callback: (e: TraceEvent) => any, predicate?: Predicate<TraceEvent>): void;
   __clearForTests(): void;
 }
 
@@ -176,7 +177,7 @@ function init(): void {
     let args = info.args;
     const begin = now();
     return {
-      addArgs(extraArgs: {[index: string]: any}) {
+      addArgs(extraArgs: Dictionary<any>) {
         args = {...(args || {}), ...extraArgs};
       },
       end(endInfo: any = {}, flow) {

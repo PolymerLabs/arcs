@@ -16,6 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {Dictionary} from '../hot.js';
 
 async function assertRecipeParses(input, result) {
   // Strip common leading whitespace.
@@ -437,7 +438,7 @@ ${particleStr1}
     }
   });
   it('can load a manifest via a loader', async () => {
-    const registry: {[index: string] : Promise<Manifest>} = {};
+    const registry: Dictionary<Promise<Manifest>> = {};
 
     const loader = new StubLoader({'*': 'recipe'});
     const manifest = await Manifest.load('some-path', loader, {registry});
@@ -445,7 +446,7 @@ ${particleStr1}
     assert.equal(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
-    const registry: {[index: string] : Promise<Manifest>} = {};
+    const registry: Dictionary<Promise<Manifest>> = {};
     const loader = new StubLoader({
       a: `import 'b'`,
       b: `recipe`,
@@ -455,7 +456,7 @@ ${particleStr1}
     assert.equal(manifest.imports[0], await registry.b);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
-    const registry: {[index: string] : Promise<Manifest>} = {};
+    const registry: Dictionary<Promise<Manifest>> = {};
     const loader = new StubLoader({
       a: `
         import 'b'

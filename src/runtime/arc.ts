@@ -31,6 +31,7 @@ import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, 
 import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
+import {Dictionary} from './hot.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -72,7 +73,7 @@ export class Arc {
   // All the stores, mapped by store ID
   private readonly storesById = new Map<string, StorageProviderBase>();
   // storage keys for referenced handles
-  private storageKeys: {[index: string]: string} = {};
+  private storageKeys: Dictionary<string> = {};
   public readonly storageKey: string;
   storageProviderFactory: StorageProviderFactory;
   // Map from each store to a set of tags. public for debug access

@@ -13,18 +13,19 @@ import {assert} from '../platform/assert-web.js';
 import {EntityClass, Entity} from './entity.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {EntityType, Type} from './type.js';
+import {Dictionary} from './hot.js';
 
 export class Schema {
   readonly names: string[];
   // tslint:disable-next-line: no-any
-  readonly fields: {[index: string]: any};
-  description: {[index: string]: string} = {};
+  readonly fields: Dictionary<any>;
+  description: Dictionary<string> = {};
   isAlias: boolean;
 
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
-  constructor(names: string[], fields: {[index: string]: any}, description?) {
+  constructor(names: string[], fields: Dictionary<any>, description?) {
     this.names = names;
     this.fields = {};
     for (const [name, field] of Object.entries(fields)) {
