@@ -42,7 +42,7 @@ export interface SequenceChange {
   input?: any;
   inputFn?: () => any;
   output?: {[index: string]: any};
-  key?: string;
+  id?: string;
 }
 
 type InterleavingEntry = {
@@ -142,9 +142,9 @@ export class SequenceTest<T> {
    *                         the function will be passed to checkResponse)
    */
   registerInput(name: string, asyncCount: number, response: InputResponseObject): string {
-    const key = name + this.currentID++;
-    this.inputs.set(key, {name, delay: asyncCount, response, results: []});
-    return key;
+    const id = name + this.currentID++;
+    this.inputs.set(id, {name, delay: asyncCount, response, results: []});
+    return id;
   }
 
   /**
@@ -163,7 +163,7 @@ export class SequenceTest<T> {
    *                                  to register an output function)
    *                 or Replace (the function of name `name` will be replaced with an output
    *                             function)
-   * @param variable if behavior is Register and a valid variable key is provided here, then
+   * @param variable if behavior is Register and a valid variable id is provided here, then
    *                 the result of invoking the registration function will be stored in that
    *                 variable.
    * 
@@ -183,9 +183,9 @@ export class SequenceTest<T> {
     if (behavior !== SequenceOutput.Register) {
       assert.equal(variable, null);
     }
-    const key = name + this.currentID++;
-    this.outputs.set(key, {name, response, value: response.default, behavior, variable});
-    return key;
+    const id = name + this.currentID++;
+    this.outputs.set(id, {name, response, value: response.default, behavior, variable});
+    return id;
   }
 
   /**
@@ -193,13 +193,11 @@ export class SequenceTest<T> {
    * is tested, and can be accessed as part of invariant specification.
    * 
    * @param name the name of the field to read.
-   * 
-   * returns: a sensor key.
    */
   registerSensor(name: string) {
-    const key = name + this.currentID++;
-    this.sensors.set(key, {name, endInvariants: []});
-    return key;
+    const id = name + this.currentID++;
+    this.sensors.set(id, {name, endInvariants: []});
+    return id;
   }
 
   /**
@@ -210,13 +208,13 @@ export class SequenceTest<T> {
    * @param initializerIsFunction True if the initial value is a function.
    */
   registerVariable(initialValue: any, initializerIsFunction=false) {
-    const key = 'var' + this.currentID++;
+    const id = 'var' + this.currentID++;
     if (initializerIsFunction) {
-      this.variables.set(key, {initialFn: initialValue, value: initialValue()});
+      this.variables.set(id, {initialFn: initialValue, value: initialValue()});
     } else {
-      this.variables.set(key, {initialValue, value: initialValue});
+      this.variables.set(id, {initialValue, value: initialValue});
     }
-    return key;
+    return id;
   }
 
   /**
@@ -254,7 +252,7 @@ export class SequenceTest<T> {
    */
   setChanges(id: string, changes: SequenceChange[]) {
     this.changes[id] = changes.map(({input, inputFn, output, variable}) => 
-      ({input, inputFn, output, variable, key: id})
+      ({input, inputFn, output, variable, id})
     );
   }
 
@@ -517,9 +515,9 @@ export class SequenceTest<T> {
           return 'DELAY';
         }
         if (a.change.input || a.change.inputFn) {
-          return this.inputs.get(a.change.key).name;
+          return this.inputs.get(a.change.id).name;
         }
-        return `(${this.inputs.get(a.change.key).name})`;
+        return `(${this.inputs.get(a.change.id).name})`;
       }).join(', ');
       
       this.resetResults();
@@ -536,21 +534,21 @@ export class SequenceTest<T> {
           continue;
         }
 
-        const input = this.inputs.get(item.change.key);
+        const input = this.inputs.get(item.change.id);
 
         this.interleavingLog.push(input.name);
 
         if (item.change.output) {
-          for (const key of Object.keys(item.change.output)) {
-            this.interleavingLog = this.interleavingLog.concat(['[', '->', this.outputs.get(key).name, item.change.output[key], ']', '\n']);
-            this.outputs.get(key).value = item.change.output[key];
+          for (const id of Object.keys(item.change.output)) {
+            this.interleavingLog = this.interleavingLog.concat(['[', '->', this.outputs.get(id).name, item.change.output[id], ']', '\n']);
+            this.outputs.get(id).value = item.change.output[id];
           }
         }
 
         if (item.change.variable) {
-          for (const key of Object.keys(item.change.variable)) {
-            this.interleavingLog = this.interleavingLog.concat(['[', '!', key, item.change.variable[key]]);
-            this.variables.get(key).value = item.change.variable[key];
+          for (const id of Object.keys(item.change.variable)) {
+            this.interleavingLog = this.interleavingLog.concat(['[', '!', id, item.change.variable[id]]);
+            this.variables.get(id).value = item.change.variable[id];
           }
         }
 
