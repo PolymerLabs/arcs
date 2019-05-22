@@ -30,28 +30,7 @@ export class Speculator {
       return null;
     }
 
-<<<<<<< HEAD
     return {speculativeArc, relevance};
-=======
-    const description = await Description.create(speculativeArc, relevance);
-    suggestion = Suggestion.create(plan, hash, relevance);
-    suggestion.setDescription(
-        description,
-        arc.modality,
-        arc.pec.slotComposer ? arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
-
-    this.suggestionByHash[hash] = suggestion;
-
-    // TODO: Find a better way to associate arcs with descriptions.
-    //       Ideally, a way that works also for non-speculative arcs.
-    if (DevtoolsConnection.isConnected) {
-      DevtoolsConnection.get().forArc(speculativeArc).send({
-        messageType: 'arc-description',
-        messageBody: suggestion.descriptionText
-      });
-    }
-    return suggestion;
->>>>>>> bab28bd6... Filter out suggestions with fallback descriptions but haven't updated dev tools.
   }
 
   private async awaitCompletion(relevance: Relevance, speculativeArc: Arc) {
