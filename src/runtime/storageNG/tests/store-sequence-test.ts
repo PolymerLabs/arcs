@@ -37,7 +37,9 @@ class MockStorageDriverProvider implements StorageDriverProvider {
 }
 
 class MockStorageKey extends StorageKey {
-  protocol = 'testing';
+  constructor() {
+    super('testing');
+  }
 }
 
 const testKey = new MockStorageKey();

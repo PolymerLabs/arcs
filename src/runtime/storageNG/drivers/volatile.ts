@@ -12,7 +12,7 @@ import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} fro
 import {StorageKey} from '../storage-key.js';
 import {Runtime} from '../../runtime.js';
 
-type VolatileEntry = {data: unknown, version: number};
+type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 
 export class VolatileStorageKey extends StorageKey {
   readonly unique: string;
@@ -24,7 +24,8 @@ export class VolatileStorageKey extends StorageKey {
 }
 
 export class VolatileMemory {
-  entries = new Map<StorageKey, VolatileEntry>();
+  entries = new Map<StorageKey, VolatileEntry<unknown>>();
+
 }
 
 export class VolatileDriver<Data> extends Driver<Data> {
@@ -32,6 +33,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
   private lastWrittenVersion = 0;
   private pendingModel: Data | null = null;
   private receiver: ReceiveMethod<Data>;
+  private data: VolatileEntry<Data>;
 
   constructor(storageKey: StorageKey, exists: Exists) {
     super(storageKey, exists);
@@ -41,7 +43,9 @@ export class VolatileDriver<Data> extends Driver<Data> {
         if (this.memory.entries.has(storageKey)) {
           throw new Error(`requested creation of memory location ${storageKey} can't proceed as location already exists`);
         }
-        return;
+        this.data = {data: null, version: 0, drivers: []};
+        this.memory.entries.set(storageKey, this.data as VolatileEntry<unknown>);
+        break;
       case Exists.ShouldExist:
         if (!this.memory.entries.has(storageKey)) {
           throw new Error(`requested connection to memory location ${storageKey} can't proceed as location doesn't exist`);
@@ -51,16 +55,19 @@ export class VolatileDriver<Data> extends Driver<Data> {
         {
           const data = this.memory.entries.get(storageKey);
           if (data) {
+            this.data = data as VolatileEntry<Data>;
             this.pendingModel = data.data as Data;
             this.lastWrittenVersion = data.version;
           } else {
-            this.lastWrittenVersion = 0;
+            this.data = {data: null, version: 0, drivers: []};
+            this.memory.entries.set(storageKey, this.data as VolatileEntry<unknown>);
           }
-          return;
+          break;
         }
       default:
         throw new Error(`unknown Exists code ${exists}`); 
     }
+    this.data.drivers.push(this);
   }
 
   registerReceiver(receiver: ReceiveMethod<Data>) {
@@ -72,13 +79,19 @@ export class VolatileDriver<Data> extends Driver<Data> {
   }
   
   async send(model: Data): Promise<boolean> {
-    const data = this.memory.entries.get(this.storageKey);
-    if (data.version !== this.lastWrittenVersion) {
+    if (this.data.version !== this.lastWrittenVersion) {
       return false;
     }
-    data.data = model;
-    data.version += 1;
+    this.data.data = model;
+    this.data.version += 1;
     this.lastWrittenVersion += 1;
+    this.data.drivers.forEach(driver => {
+      if (driver === this) {
+        return;
+      }
+      driver.lastWrittenVersion = this.lastWrittenVersion;
+      driver.receiver(model);
+    })
     return true;
   }
   
