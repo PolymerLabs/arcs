@@ -163,18 +163,26 @@ export class SequenceTest<T> {
    *                                  to register an output function)
    *                 or Replace (the function of name `name` will be replaced with an output
    *                             function)
+   *                 (i.e. use Replace if you want to override a function on the object under
+   *                 test with one that captures the value it's invoked with and returns
+   *                 something under test framework control. Use Register if the object under
+   *                 test has some capability for registering a callback and you want to do
+   *                 that.)
    * @param variable if behavior is Register and a valid variable id is provided here, then
    *                 the result of invoking the registration function will be stored in that
    *                 variable.
    * 
-   * Example: if a 'onOutput' function is invoked on the object under test, and you want to
-   * hook that:
+   * Example: if a 'onOutput' function on the object under test is invoked by the object, and
+   * you want to replace it with something that always returns void:
    * sequenceTest.registerOutput('onOutput', {type: Void}, SequenceOutput.Replace);
    * 
-   * If a 'registerOutputHandler function exists on the object under test and you want to
-   * hook that and store the resulting handle in a variable named outputID:
+   * If a 'registerOutputHandler function exists on the object under test, which is used to
+   * register callbacks on the object, and you want to register a callback:
    * sequenceTest.registerOutput('registerOutputHandler', {type: Void}, SequenceOutput.Register, outputID);
-   * 
+   * Note that functions that register callbacks often return some kind of identifier that can
+   * be used to refer to the callback later. In this example, that value will be stored in the
+   * variable 'outputID'.
+   *  
    * If the object under test has a property 'foo' with an output function 'bar' that you want
    * to replace:
    * sequenceTest.registerOutput('foo.bar', {type: Void}, SequenceOutput.Replace);
@@ -283,6 +291,11 @@ export class SequenceTest<T> {
   }
 
   private async awaitResults() {
+    const allInputs = [...this.inputs.values()].reduce((a, b) => a.concat(b), []);
+    allInputs.forEach(promise => {
+      const uniquePromise = Promise.resolve("YOONIQ");
+      console.log([promise, uniquePromise]);
+    });
     for (const input of this.inputs.values()) {
       input.results = await Promise.all(input.results);
     }
@@ -327,21 +340,50 @@ export class SequenceTest<T> {
     }  
   }
 
-    /*
-   * length: total number of stages.
-   * amounts: an array of inputs, with the number of stages in each input.
+  /*
+   * This generator produces all interleavings of a list of ordered lists
+   * of choices. The orderings in each list can't be violated but each item
+   * can be chosen from any list.
+   * 
+   * For example, if the list of ordered lists is [[a,b,c], [d,e], [f]] then
+   * the first choice can be a, d, or f. Then:
+   * - if the first choice was a, the second choice could be b, d or f.
+   * - if the first choice was d, the second choice could be a, e or f.
+   * - if the first choice was f, the second choice could be a or d.
+   * 
+   * This function doesn't care what the actual choices are, it just returns
+   * information representing the possible orderings. As input it takes: 
+   * - length: total number of choices across all lists (6 in our example above).
+   * - amounts: the number of choices in each list ([3, 2, 1] in our example above)
    *
-   * Generate all the permutations of choice of the next stage in each input
-   * until all stages are exhausted.
+   * As output, the generator will return a list of indexes into the list of lists;
+   * the represent "choose from this list next".
    * 
-   * Note that rather than maintaining indices into possibly empty inputs,
-   * this function removes inputs as they become empty, and thus produces
-   * interleavings that act on dynamically reassigned input numbers.
+   * However! As an implementation detail, it turns out to be *way* easier to 
+   * iteratively generate these outputs if exhausted lists (i.e. those with all
+   * inputs selected) are removed from the lists of lists, and future output indexes
+   * take this into account.
    * 
-   * For example, if there are two inputs [a,b] and [c,d] then the possible
-   * interleavings are: [a,b,c,d], [a,c,b,d], [a,c,d,b], [c,a,b,d], [c,a,d,b], [c,d,a,b]
-   * These will be expressed at this level as:
-   * [0, 0, 0, 0], [0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 0, 0], [1, 0, 1, 0], [1, 1, 0, 0]
+   * So you'd expect the interleaving adbefc to be output as [0,1,0,1,2,0]. But
+   * you'd be wrong. After the second '1', there's no choices left in [d,e], so
+   * it gets dropped from the list of lists and the next choice is between 0 (c) 
+   * or 1 (f). This means that adbefc is in fact represented as [0,1,0,1,1,0].
+   *
+   * If you're curious, the reason for this is that by dropping exhausted inputs
+   * the code can iterate as if its counting - [0,0,0,0,0,0] is always valid, then
+   * starting from the RHS we can test if incrementing a choice by 1 would be
+   * valid or not; if it is, that's the next output. If it isn't, then we reset
+   * that choice to 0 (always valid) and try incrementing the next left-most
+   * output. So our list of orderings for [[a,b,c], [d,e], [f]] would be:
+   * 000000 (abcdef)
+   * 000010 (abcdfe)
+   * 000100 (abcfde)
+   * 001000 (abdcef)
+   * 001010 (abdcfe)
+   * 001100 (abdecf)
+   * 001110 (abdefc)
+   * 001200 (abdfce)
+   * etc..
    */
   private *interleavings_raw(length: number, amounts: number[]) {
     const currentChoice = [];
