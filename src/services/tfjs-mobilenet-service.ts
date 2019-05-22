@@ -7,9 +7,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
-'use strict';
-
 import {dynamicScript} from './dynamic-script.js';
 import {requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';

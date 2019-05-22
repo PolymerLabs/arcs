@@ -7,9 +7,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
-'use strict';
-
 import {logFactory} from '../platform/log-web.js';
 
 const log = logFactory('resource-mgr');
