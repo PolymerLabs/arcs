@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
+
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
