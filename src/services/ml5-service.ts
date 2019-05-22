@@ -8,8 +8,9 @@
  */
 import {dynamicImport} from './dynamic-import.js';
 import {logFactory} from '../platform/log-web.js';
-import {Mapper, Runnable} from '../runtime/hot.js';
+import {Runnable} from '../runtime/hot.js';
 import {Services} from '../runtime/services.js';
+import {loadImage} from './tfjs-service.js';
 
 const log = logFactory('ml5-service');
 
@@ -31,14 +32,6 @@ const classifyImage = async ({imageUrl}) => {
     label: result.label,
     probability: result.confidence.toFixed(4)
   };
-};
-
-const loadImage: Mapper<string, Promise<HTMLImageElement>> = async (url) => {
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.src = url;
-    image.onload = async () => resolve(image);
-  });
 };
 
 Services.register('ml5', {

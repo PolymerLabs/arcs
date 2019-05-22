@@ -11,14 +11,14 @@
 'use strict';
 
 import {dynamicScript} from './dynamic-script.js';
-import {requireTf} from './tfjs-service.js';
+import {loadImage, requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
-const modelUrl = 'https://unpkg.com/@tensorflow-models/mobilenet@1.0.1/dist/mobilenet.min.js';
+const modelUrl = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0';
 
 
 /**
@@ -65,12 +65,13 @@ interface MobilenetEmbedding extends MobilenetParams {
  * @param alpha Model fidelity ratio. Choose between performant (~0) or highly accurate (~1). Default: 1
  * @return a reference number to the model, maintained by the `ResourceManager`.
  */
-const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Reference> => {
-  log('Loading tfjs');
+const load = async ({version = 1, alpha = 1}: MobilenetParams): Promise<Reference> => {
+  log('Loading tfjs...');
   const tf = await requireTf();
-  log('Loading MobileNet');
+  log('Loading MobileNet...');
   await dynamicScript(modelUrl);
-  const model = await tf.mobilenet.load(version, alpha);
+  const model = await window['mobilenet'].load(version, alpha);
+  log('MobileNet Loaded.');
   model.version = version;
   model.alpha = alpha;
   return ResourceManager.ref(model);
@@ -80,28 +81,44 @@ const load = async ({version = 2, alpha = 1}: MobilenetParams): Promise<Referenc
  * Find the top k images classes given an input image and a model.
  *
  * @param model A classification model reference
- * @param img An image DOM element or 3D tensor
+ * @param image An image DOM element or 3D tensor
+ * @param imageUrl An image URL
  * @param topK The number of predictions to return.
  * @return A list of `ClassificationPrediction`s, which are label, confidence tuples.
  */
-const classifiy = async ({model, img, topK = 3}): Promise<ClassificationPrediction[]>=> {
+const classify = async ({model, image, imageUrl, topK = 1}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
-  log('Classifying...');
-  return await model_.classify(img, topK);
+
+  const img = await getImage(image, imageUrl);
+
+  log('classifying...');
+  const predictions = await model_.classify(img, topK);
+  log('classified.');
+
+  if (topK === 1) {
+    return predictions.shift();
+  }
+
+  return predictions;
 };
 
 /**
  * Produce a concept vector or image embeddings given a model and an image.
  *
  * @param model A classification model reference
- * @param img A image DOM element or 3d tensor
+ * @param image An image DOM element or 3D tensor
+ * @param imageUrl An image URL
  * @return A `MobilenetEmbedding`
  * @see MobilenetEmbedding
  */
-const extractEmbeddings = async ({model, img}): Promise<MobilenetEmbedding> => {
+const extractEmbeddings = async ({model, image, imageUrl}): Promise<MobilenetEmbedding> => {
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
+  const img = await getImage(image, imageUrl);
+
   log('Inferring...');
   const inference = await model_.infer(img);
+  log('Embedding inferred.');
+
   return {version: model_.version, alpha: model_.alpha, feature: inference};
 };
 
@@ -109,9 +126,14 @@ const extractEmbeddings = async ({model, img}): Promise<MobilenetEmbedding> => {
 /** Clean up model resources. */
 const dispose = ({reference}) => ResourceManager.dispose(reference);
 
+const getImage = async <T> (image: T | undefined, imageUrl: string): Promise<HTMLImageElement | T | undefined> => {
+  log('Loading image...');
+  return !image && imageUrl ? await loadImage(imageUrl): image;
+};
+
 Services.register('mobilenet', {
   load,
-  classifiy,
+  classify,
   extractEmbeddings,
   dispose,
 });

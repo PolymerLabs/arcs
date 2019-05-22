@@ -43,15 +43,17 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       let {response} = state;
       response = response || {label: '<working>', probability: '<working>'};
       return {
-        label: response.label,
-        probability: response.probability,
+        label: response.className,
+        probability: response.probability.toFixed(4),
         imageUrl: url
       };
     }
     async classify(imageUrl) {
-      const model = await this.service(({call: 'mobilenet.load', version: 2}));
-      const responses = await this.service({call: 'mobilenet.classify', model, img: imageUrl, topK: 1});
-      this.setState({response: responses[0].className});
+      const model = await this.service(({call: 'mobilenet.load'}));
+      const response = await this.service({call: 'mobilenet.classify', model, imageUrl});
+      if (response) {
+        this.setState({response: response});
+      }
     }
   };
 
