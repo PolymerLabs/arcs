@@ -86,7 +86,6 @@ export class Suggestion {
   }
 
   getDescription(modality: string): string|{} {
-    assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
     return this.descriptionByModality[modality];
   }
 
