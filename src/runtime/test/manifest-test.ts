@@ -1822,6 +1822,48 @@ resource SomeName
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
+  modality dom
+  consume thing #main #tagname
+    provide otherThing #testtag`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+
+  it('can round-trip particles with fields', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  in ~a thingy
+  modality dom
+  must consume thing #main #tagname
+    formFactor big
+    must provide otherThing #testtag
+      handle thingy`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+
+  it('SLANDLES can round-trip particles with tags', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot {formFactor:big} thing #main #tagname
+    \`provide Slot {handle:thingy} otherThing #testtag
+  modality dom`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with fields', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  in ~a thingy
   \`consume Slot {formFactor:big} thing #main #tagname
     \`provide Slot {handle:thingy} otherThing #testtag
   modality dom`;
@@ -1831,7 +1873,19 @@ resource SomeName
     assert.equal(manifestString, manifest.particles[0].toString());
   });
 
-  it('can round-trip particles with fields', async () => {
+  it('SLANDLES can round-trip particles with tags', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot thing #main #tagname
+    \`provide Slot otherThing #testtag
+  modality dom`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output

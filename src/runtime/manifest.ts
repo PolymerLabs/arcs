@@ -1007,7 +1007,7 @@ ${e.message}
             items.byName.set(handle.localName, entry);
             items.byHandle.set(handle, handle['item']);
           } else if (!entry.item) {
-            throw new ManifestError(connectionItem.location, `did not expect ${entry} expected handle or particle`);
+            throw new ManifestError(connectionItem.location, `did not expect '${entry}' expected handle or particle`);
           }
 
           if (entry.item.kind === 'handle' || entry.item.kind === 'requireHandle') {
