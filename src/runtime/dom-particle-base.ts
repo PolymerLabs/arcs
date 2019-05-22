@@ -271,8 +271,9 @@ export class DomParticleBase extends Particle {
   /**
    * Return array of Entities dereferenced from array of Share-Type Entities
    */
-  async derefShares(shares): Promise<Array<Entity>> {
-    return (await Promise.all(shares.map(async share => share.ref.dereference())))
+  async derefShares(shares): Promise<Entity[]> {
+    const derefPromises = shares.map(async share => share.ref.dereference());
+    return await Promise.all(derefPromises);
   }
 
   /**

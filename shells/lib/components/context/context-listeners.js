@@ -14,7 +14,7 @@ import {StoreObserver} from './store-observer.js';
 import {ContextStores} from './context-stores.js';
 import {simpleNameOfType, boxes, crackStorageKey} from './context-utils.js';
 
-// Existence and purpose of `user-launcher` is a Shell convention
+// Existence and purpose of `user-launcher` are Shell conventions
 const getLauncherStore = async storage => {
   return await SyntheticStores.getStore(storage, 'user-launcher');
 };
@@ -51,7 +51,7 @@ export const ArcHandleListener = class extends AbstractListener {
     return logFactory(`ArcHandleListener`, `#4040FF`);
   }
   async add(handle) {
-    //this.log('add', handle);
+    this.log('add', handle);
     const store = await SyntheticStores.getHandleStore(handle);
     // TODO(sjmiles): sketchy
     store.handle = handle;
@@ -94,6 +94,9 @@ export const ShareListener = class extends AbstractListener {
       // TODO(sjmiles): property is not called 'storageKey' for pouchdb
       backingStorageKey = store.backingStore.storageKey;
     }
+    // TODO(sjmiles): store/handles are similar but different, we shoved the handle
+    // relating to this store onto the store object in ArcHandleListener. Probably
+    // this can be unified to use one or t'other.
     const handle = store.handle;
     const metrics = ContextStores.getHandleMetrics(handle, this.isProfile);
     if (metrics) {
@@ -103,18 +106,16 @@ export const ShareListener = class extends AbstractListener {
       if (!shareSchema) {
         this.log(`found a share type [${shareType}] with no schema, ignoring`);
       } else {
+        // arc shares
         let share = boxes[metrics.storeId];
         if (!share) {
           this.log(`found new share:`, typeName, metrics.storeName);
-          // TODO(sjmiles): critical re-entry situation, anybody trying to access the box
-          // during the `await` on the next line will see no store.
-          // We attempt to avoid this by await'ing `add` when looping over change records.
           share = boxes[metrics.storeId] = {};
           share.shareStorePromise = ContextStores.getShareStore(this.context, shareSchema, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
         }
         const shareStore = await share.shareStorePromise;
         ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, metrics.userid);
-        //
+        // collation boxes
         let box = boxes[metrics.boxStoreId];
         if (!box) {
           box = boxes[metrics.boxStoreId] = {};
