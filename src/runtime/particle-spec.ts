@@ -321,14 +321,14 @@ export class ParticleSpec {
         results.push(`${indent}  formFactor ${s.formFactor}`);
       }
 -     s.handles.forEach(handle => results.push(`${indent}  handle ${handle}`));
-      if(s.provideSlotConnections) {
+      if (s.provideSlotConnections) {
         // Provided slots.
-        s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+"  "));
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));
       }
     };
 
     this.slotConnections.forEach(
-      s => slotToString(s, 'consume', "  ")
+      s => slotToString(s, 'consume', '  ')
     );
     // Description
     if (this.pattern) {
