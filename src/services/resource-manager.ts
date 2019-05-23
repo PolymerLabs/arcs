@@ -26,17 +26,13 @@ export class ResourceManager {
   static references: any[] = [];
 
   /**
-   * Cache the value for later use (try for no duplicates).
+   * Cache the value for later use.
    *
    * @param val A value, object, etc. to be cached for later use.
    * @return Reference a `number` associated with the cached resource.
    */
   static ref(val: unknown): Reference {
-    const idx = this.references.indexOf(val);
-    if (idx === -1) {
-      return this.references.push(val) - 1;
-    }
-    return idx;
+    return this.references.push(val) - 1;
   }
 
   /**
