@@ -15,4 +15,4 @@ export async function dynamicScript(src: string): Promise<void> {
       onerror: err => reject(err)
     }));
   });
-};
+}
