@@ -7,24 +7,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {logFactory} from '../platform/log-web.js';
-import {Runnable} from '../runtime/hot.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from './tfjs-service.js';
 
 const log = logFactory('ml5-service');
 
-const requireMl5: Runnable = async () => {
+const requireMl5 = async () => {
   if (!window.hasOwnProperty('ml5')) {
     // @ts-ignore TS1323 dynamic import
     await import('https://unpkg.com/ml5@0.2.3/dist/ml5.min.js');
+    return window['ml5'];
   }
 };
 
 const classifyImage = async ({imageUrl}) => {
   log('classifying...');
-  await requireMl5();
+  const ml5 = await requireMl5();
   const image = await loadImage(imageUrl);
-  const classifier = await window['ml5'].imageClassifier('MobileNet');
+  const classifier = await ml5.imageClassifier('MobileNet');
   const results = await classifier.classify(image);
   const result = results.shift();
   log('classifying done.');
