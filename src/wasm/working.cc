@@ -1,25 +1,20 @@
 #include <emscripten.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string_view>
 #include <string>
 #include <map>
-
-EM_JS(void, _console, (int line, const char* msg), {})
-EM_JS(void, _consoleN, (int line, const char* msg, int num), {})
-
-#define console(msg)        _console(__LINE__, msg)
-#define consoleN(msg, num)  _consoleN(__LINE__, msg, num)
-#define mkstr(text, args)   (std::string(text) + args).c_str()
-
+#include "arcs.h"
+#include "entity-data.h"
 
 class Handle;
 
 EM_JS(void, handleSet, (Handle* handle, int num), {})
-
+EM_JS(void, render, (const char* slotName, const char* content), {})
 
 class Handle {
 public:
-  Handle(const char* name) : name_(name), num_(0) {}
+  Handle(const char* name) : name_(name) {}
 
   ~Handle() {
     if (name_ != nullptr) {
@@ -29,15 +24,43 @@ public:
   }
 
   const char* name() { return name_; }
-  int get() { return num_; }
 
-  void set(int num) {
-    num_ = num;
-    handleSet(this, num);
+  void sync(const char* encoded) {
+    console("sync %s [%s]\n", name_, encoded);
+    data_ = arcs::Data::decode(encoded);
+
+    console("txt: %s\n", data_.txt.c_str());
+    console("lnk: %s\n", data_.lnk.href.c_str());
+    console("num: %.2f\n", data_.num);
+    console("flg: %d\n", data_.flg);
+
+    console("c_txt:");
+    for (const auto& v : data_.c_txt) {
+      console(" [%s]", v.c_str());
+    }
+    console("\n");
+
+    console("c_lnk:");
+    for (const auto& v : data_.c_lnk) {
+      console(" [%s]", v.href.c_str());
+    }
+    console("\n");
+
+    console("c_num:");
+    for (const auto& v : data_.c_num) {
+      console(" %.2f", v);
+    }
+    console("\n");
+
+    console("c_flg:");
+    for (const auto& v : data_.c_flg) {
+      console(" %s", v ? "true" : "false");
+    }
+    console("\n");
   }
 
   const char* name_;
-  int num_;
+  arcs::Data data_;
 };
 
 
@@ -46,37 +69,17 @@ public:
   virtual ~Particle() {}
 
   Handle* newHandle(const char* name) {
-    console(mkstr("newHandle: ", name));
     Handle* h = new Handle(name);
     handles_[name] = h;
     return h;
   }
 
-  void sync(Handle* handle, void* buffer, int size) {
-    console(mkstr("sync: ", handle->name()));
-    consoleN("  buffer size:", size);
-
-    // Will eventually decode protobuf; just extract 'num' for now.
-    handle->num_ = ((unsigned char*)buffer)[0];
-    consoleN("  num:", handle->get());
-
-    onHandleSync(handle);
-  }
-
-  void* render(const char* slotName) {
-    console(mkstr("render: ", slotName));
-    std::string content = renderSlot(slotName);
-    unsigned char* buf = (unsigned char*)malloc(content.size() + 1);
-    memcpy(buf, content.c_str(), content.size());
-    buf[content.size()] = 0;
-    return buf;
-  }
-
   // Equivalent to setHandles() in the JS Particle.
   virtual void init() {}
+
   virtual void onHandleSync(Handle* handle) {}
-  virtual std::string renderSlot(std::string_view slotName) { return ""; }
-  virtual void fireEvent(std::string_view slotName, std::string_view handler) {}
+  virtual void requestRender(const char* slotName) {}
+  virtual void fireEvent(const char* slotName, const char* handler) {}
 
   std::map<std::string_view, Handle*> handles_;
 };
@@ -86,40 +89,43 @@ class TestParticle : public Particle {
 public:
   virtual ~TestParticle() {}
 
-  void init() override {
-    consoleN("init", handles_.size());
-  }
-
   void onHandleSync(Handle* handle) override {
-    console(mkstr("onHandleSync: ", handle->name()));
     if (strcmp(handle->name(), "data") == 0) {
-      int newValue = handle->get() * 2;
-      consoleN("writing res =", newValue);
-      handles_["res"]->set(newValue);
+      console("onHandleSync\n");
     }
   }
 
-  std::string renderSlot(std::string_view slotName) override {
-    std::string content = "<div on-click=\"me\"><i>Hello from <span on-click=\"THE_WASM\">wasm!</span> This slot is '";
+  void requestRender(const char* slotName) override {
+    const char* style = toggle_ ? "b" : "i";
+    std::string content = "<div on-click=\"me\"><";
+    content += style;
+    content += ">Hello from <span on-click=\"THE_WASM\">wasm!</span> This slot is '";
     content += slotName;
-    content += "'</i></div>";
-    return content;
+    content += "'</";
+    content += style;
+    content += "></div>";
+    render(slotName, content.c_str());
   }
 
-  void fireEvent(std::string_view slotName, std::string_view handler) override {
-    console(mkstr("You clicked ", std::string(handler) + "!"));
+  void fireEvent(const char* slotName, const char* handler) override {
+    if (strcmp(handler, "me") == 0) {
+      console("You clicked %s!\n", handler);
+    } else {
+      error("You clicked %s!\n", handler);
+    }
+    toggle_ = 1 - toggle_;
+    requestRender("root");
   }
+
+  int toggle_ = 0;
 };
+
+DEFINE_PARTICLE(TestParticle)
 
 
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE
-Particle* newParticle() {
-  return new TestParticle();
-}
-
-// Takes ownership of name.
+// Takes ownership of 'name'.
 EMSCRIPTEN_KEEPALIVE
 Handle* newHandle(Particle* particle, const char* name) {
   return particle->newHandle(name);
@@ -130,20 +136,21 @@ void initParticle(Particle* particle) {
   particle->init();
 }
 
-// Does not take ownership of buffer; external caller frees.
+// Does not take ownership of 'buffer'; external caller frees.
 EMSCRIPTEN_KEEPALIVE
-void syncHandle(Particle* particle, Handle* handle, void* buffer, int size) {
-  particle->sync(handle, buffer, size);
+void syncHandle(Particle* particle, Handle* handle, const char* encoded) {
+  handle->sync(encoded);
+  particle->onHandleSync(handle);
 }
 
-// Does not take ownership of slotName; external caller frees.
+// Does not take ownership of 'slotName'; external caller frees.
 // Caller also takes ownership of returned allocated buffer.
 EMSCRIPTEN_KEEPALIVE
-void* renderSlot(Particle* particle, const char* slotName) {
-  return particle->render(slotName);
+void requestRender(Particle* particle, const char* slotName) {
+  particle->requestRender(slotName);
 }
 
-// Does not take ownership of slotName or handler; external caller frees.
+// Does not take ownership of 'slotName' or 'handler'; external caller frees.
 EMSCRIPTEN_KEEPALIVE
 void fireEvent(Particle* particle, const char* slotName, const char* handler) {
   particle->fireEvent(slotName, handler);
