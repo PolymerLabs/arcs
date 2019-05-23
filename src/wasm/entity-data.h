@@ -19,22 +19,22 @@ public:
 
   std::string encode() {
     internal::StringEncoder encoder;
-    if (this->num != 0)
-      encoder.encodeValue("num:N", this->num, "|");
-    if (!this->txt.empty())
-      encoder.encodeValue("txt:T", this->txt, "|");
-    if (!this->lnk.href.empty())
-      encoder.encodeValue("lnk:U", this->lnk, "|");
-    if (this->flg)
-      encoder.encodeValue("flg:B", this->flg, "|");
-    if (!this->c_num.empty())
-      encoder.encodeCollection("c_num:CN", this->c_num);
-    if (!this->c_txt.empty())
-      encoder.encodeCollection("c_txt:CT", this->c_txt);
-    if (!this->c_lnk.empty())
-      encoder.encodeCollection("c_lnk:CU", this->c_lnk);
-    if (!this->c_flg.empty())
-      encoder.encodeCollection("c_flg:CB", this->c_flg);
+    if (num != 0)
+      encoder.encodeValue("num:N", num, "|");
+    if (!txt.empty())
+      encoder.encodeValue("txt:T", txt, "|");
+    if (!lnk.href.empty())
+      encoder.encodeValue("lnk:U", lnk, "|");
+    if (flg)
+      encoder.encodeValue("flg:B", flg, "|");
+    if (!c_num.empty())
+      encoder.encodeCollection("c_num:CN", c_num);
+    if (!c_txt.empty())
+      encoder.encodeCollection("c_txt:CT", c_txt);
+    if (!c_lnk.empty())
+      encoder.encodeCollection("c_lnk:CU", c_lnk);
+    if (!c_flg.empty())
+      encoder.encodeCollection("c_flg:CB", c_flg);
     return encoder.result();
   }
 

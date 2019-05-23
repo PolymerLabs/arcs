@@ -57,7 +57,7 @@ function generate(schemaName, schema) {
     decl.push(`${type} ${name};`);
 
     encode.push(`if (${condition})`,
-                `  encoder.encodeValue("${name}:${typeChar}", this->${name}, "|");`);
+                `  encoder.encodeValue("${name}:${typeChar}", ${name}, "|");`);
 
     decode.push(`} else if (name == "${name}") {`,
                 `  decoder.validate("${typeChar}");`,
@@ -67,8 +67,8 @@ function generate(schemaName, schema) {
   const processCollection = (name, type, typeChar) => {
     decl.push(`std::unordered_set<${type}> ${name};`);
 
-    encode.push(`if (!this->${name}.empty())`,
-                `  encoder.encodeCollection("${name}:C${typeChar}", this->${name});`);
+    encode.push(`if (!${name}.empty())`,
+                `  encoder.encodeCollection("${name}:C${typeChar}", ${name});`);
 
     decode.push(`} else if (name == "${name}") {`,
                 `  decoder.validate("C${typeChar}");`,
@@ -80,19 +80,19 @@ function generate(schemaName, schema) {
     fieldCount++;
     switch (typeSummary(field)) {
       case 'schema-primitive:Text':
-        processValue(name, 'std::string', 'T', `!this->${name}.empty()`);
+        processValue(name, 'std::string', 'T', `!${name}.empty()`);
         break;
 
       case 'schema-primitive:URL':
-        processValue(name, 'URL', 'U', `!this->${name}.href.empty()`);
+        processValue(name, 'URL', 'U', `!${name}.href.empty()`);
         break;
 
       case 'schema-primitive:Number':
-        processValue(name, 'double', 'N', `this->${name} != 0`);
+        processValue(name, 'double', 'N', `${name} != 0`);
         break;
 
       case 'schema-primitive:Boolean':
-        processValue(name, 'bool', 'B', `this->${name}`);
+        processValue(name, 'bool', 'B', name);
         break;
 
       case 'schema-collection:Text':
