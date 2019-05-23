@@ -13,7 +13,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
   const template_ = html`
 <div>
-  <h2>Classification with MobileNetv2</h2>
+  <h2>Classification with MobileNet</h2>
   <img style="max-width: 240px;" src="{{imageUrl}}"><br>
   <div>
     <div>Label: </span><span>{{label}}</div>
