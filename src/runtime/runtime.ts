@@ -28,7 +28,7 @@ export type RuntimeArcOptions = Readonly<{
   innerArc?: boolean;
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
-}>;
+}>
 
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
