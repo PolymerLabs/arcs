@@ -6,10 +6,10 @@ namespace arcs {
 
 class Data {
 public:
-  double num;
+  double num = 0;
   std::string txt;
   URL lnk;
-  bool flg;
+  bool flg = false;
   std::unordered_set<double> c_num;
   std::unordered_set<std::string> c_txt;
   std::unordered_set<URL, HashURL, EqualURL> c_lnk;
@@ -41,7 +41,7 @@ public:
   static Data decode(std::string str) {
     Data obj;
     internal::StringDecoder decoder(str.c_str());
-    for (int i = 0; !decoder.done() && i < Data::FIELD_COUNT; i++) {
+    for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
       std::string name = decoder.upTo(':');
       if (0) {
       } else if (name == "num") {

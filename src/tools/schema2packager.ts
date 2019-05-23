@@ -53,8 +53,8 @@ function generate(schemaName, schema) {
   const encode = [];
   const decode = [];
 
-  const processValue = (name, type, typeChar, condition) => {
-    decl.push(`${type} ${name};`);
+  const processValue = (name, type, typeChar, condition, initial) => {
+    decl.push(`${type} ${name}${initial};`);
 
     encode.push(`if (${condition})`,
                 `  encoder.encodeValue("${name}:${typeChar}", ${name}, "|");`);
@@ -80,19 +80,19 @@ function generate(schemaName, schema) {
     fieldCount++;
     switch (typeSummary(field)) {
       case 'schema-primitive:Text':
-        processValue(name, 'std::string', 'T', `!${name}.empty()`);
+        processValue(name, 'std::string', 'T', `!${name}.empty()`, '');
         break;
 
       case 'schema-primitive:URL':
-        processValue(name, 'URL', 'U', `!${name}.href.empty()`);
+        processValue(name, 'URL', 'U', `!${name}.href.empty()`, '');
         break;
 
       case 'schema-primitive:Number':
-        processValue(name, 'double', 'N', `${name} != 0`);
+        processValue(name, 'double', 'N', `${name} != 0`, ' = 0');
         break;
 
       case 'schema-primitive:Boolean':
-        processValue(name, 'bool', 'B', name);
+        processValue(name, 'bool', 'B', name, ' = false');
         break;
 
       case 'schema-collection:Text':
@@ -140,7 +140,7 @@ public:
   static ${schemaName} decode(std::string str) {
     ${schemaName} obj;
     internal::StringDecoder decoder(str.c_str());
-    for (int i = 0; !decoder.done() && i < ${schemaName}::FIELD_COUNT; i++) {
+    for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
       std::string name = decoder.upTo(':');
       if (0) {
       ${decode.join('\n      ')}

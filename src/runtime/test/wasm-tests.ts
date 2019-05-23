@@ -37,9 +37,9 @@ describe('wasm', () => {
       lnk: 'http://def',
       num: 37,
       flg: true,
-      c_txt: ['g', 'h'],
-      c_lnk: ['http://ijk', 'http://lmn'],
-      c_num: [51, 73, 26],
+      c_txt: ['gh', 'i:jk|'],
+      c_lnk: ['http://lmn', 'https://opq/rst?u=vw&x=y'],
+      c_num: [-51, 73.8, 26, -0.82],
       c_flg: [false, true]
     });
 
@@ -121,7 +121,7 @@ describe('wasm', () => {
       flg: true,
       c_txt: ['gh', 'i:jk|'],
       c_lnk: ['http://lmn', 'https://opq/rst?u=vw&x=y'],
-      c_num: [51, 73.8, 26],
+      c_num: [-51, 73.8, 26, -0.82],
       c_flg: [false, true]
     });
 

@@ -385,7 +385,11 @@ export class WasmParticle extends Particle {
   }
 
   async onHandleSync(handle: Handle, model) {
-    if (!model) return;  // TODO
+    if (!model) {
+      // Send a nullptr to indicate an empty model.
+      this.exports._syncHandle(this.innerParticle, this.handleMap.get(handle), 0);
+      return;
+    }
 
     let converter = this.converters.get(model.schema);
     if (!converter) {

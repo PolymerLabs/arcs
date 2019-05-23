@@ -2,7 +2,7 @@
 #define _ARCS_H
 
 #include <unordered_set>
-#include <sstream>
+#include <string.h>
 
 // Defines an exported function 'newParticleName()' that the runtime will call to create
 // particles inside the wasm container.
@@ -48,7 +48,6 @@ struct EqualURL {
 
 namespace internal {
 
-// TODO: stringstream is a pain to use in wasm; change to string/sprintf?
 class StringEncoder {
 public:
   StringEncoder() = default;
@@ -65,39 +64,50 @@ public:
 
   template<typename T, typename H = std::hash<T>, typename E = std::equal_to<T>>
   void encodeCollection(const char* prefix, const std::unordered_set<T, H, E>& collection) {
-    stream_ << prefix << collection.size() << ':';
+    str_ += prefix + numString(collection.size()) + ":";
     for (auto item : collection) {
       encodeValue("", item, "");
     }
-    stream_ << "|";
+    str_ += "|";
+  }
+
+  // Strips trailing zeros (and possibly the decimal point) from std::to_string(double).
+  std::string numString(double num) {
+    std::string s = std::to_string(num);
+    auto i = s.size() - 1;
+    while (i > 0 && (s[i] == '0' || s[i] == '.')) {
+      i--;
+    }
+    s.erase(i + 1);
+    return s;
   }
 
   std::string result() {
-    return stream_.str();
+    return str_;
   }
 
 private:
-  std::stringstream stream_;
+  std::string str_;
 };
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const std::string& str, const char* postfix) {
-  stream_ << prefix << str.size() << ":" << str << postfix;
+  str_ += prefix + numString(str.size()) + ":" + str + postfix;
 }
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const URL& url, const char* postfix) {
-  stream_ << prefix << url.href.size() << ":" << url.href << postfix;
+  str_ += prefix + numString(url.href.size()) + ":" + url.href + postfix;
 }
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const double& num, const char* postfix) {
-  stream_ << prefix << num << ":" << postfix;
+  str_ += prefix + numString(num) + ":" + postfix;
 }
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const bool& flag, const char* postfix) {
-  stream_ << prefix << (flag ? "1" : "0") << postfix;
+  str_ += prefix + std::to_string(flag) + postfix;
 }
 
 
