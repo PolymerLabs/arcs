@@ -20,12 +20,12 @@ store DataStore of Data in DataResource
 
 particle TestParticle in 'output.wasm'
   consume root
-  inout Data data
-  inout Data res
+  in Data data
+  out Data res
 
 recipe
   use DataStore as h1
   create as h2
   TestParticle
-    data = h1
-    res = h2
+    data <- h1
+    res -> h2
