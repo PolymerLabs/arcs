@@ -9,7 +9,7 @@
 
 class Handle;
 
-EM_JS(void, handleSet, (Handle* handle, int num), {})
+EM_JS(void, handleSet, (Handle* handle, const char* encoded), {})
 EM_JS(void, render, (const char* slotName, const char* content), {})
 
 class Handle {
@@ -28,35 +28,6 @@ public:
   void sync(const char* encoded) {
     console("sync %s [%s]\n", name_, encoded);
     data_ = arcs::Data::decode(encoded);
-
-    console("txt: %s\n", data_.txt.c_str());
-    console("lnk: %s\n", data_.lnk.href.c_str());
-    console("num: %.2f\n", data_.num);
-    console("flg: %d\n", data_.flg);
-
-    console("c_txt:");
-    for (const auto& v : data_.c_txt) {
-      console(" [%s]", v.c_str());
-    }
-    console("\n");
-
-    console("c_lnk:");
-    for (const auto& v : data_.c_lnk) {
-      console(" [%s]", v.href.c_str());
-    }
-    console("\n");
-
-    console("c_num:");
-    for (const auto& v : data_.c_num) {
-      console(" %.2f", v);
-    }
-    console("\n");
-
-    console("c_flg:");
-    for (const auto& v : data_.c_flg) {
-      console(" %s", v ? "true" : "false");
-    }
-    console("\n");
   }
 
   const char* name_;
@@ -90,31 +61,59 @@ public:
   virtual ~TestParticle() {}
 
   void onHandleSync(Handle* handle) override {
+    console("onHandleSync '%s'\n", handle->name());
     if (strcmp(handle->name(), "data") == 0) {
-      console("onHandleSync\n");
+      console("  txt: %s\n", handle->data_.txt.c_str());
+      console("  lnk: %s\n", handle->data_.lnk.href.c_str());
+      console("  num: %.2f\n", handle->data_.num);
+      console("  flg: %d\n", handle->data_.flg);
+
+      console("  c_txt:");
+      for (const auto& v : handle->data_.c_txt) {
+        console(" [%s]", v.c_str());
+      }
+      console("\n");
+
+      console("  c_lnk:");
+      for (const auto& v : handle->data_.c_lnk) {
+        console(" [%s]", v.href.c_str());
+      }
+      console("\n");
+
+      console("  c_num:");
+      for (const auto& v : handle->data_.c_num) {
+        console(" %.2f", v);
+      }
+      console("\n");
+
+      console("  c_flg:");
+      for (const auto& v : handle->data_.c_flg) {
+        console(" %s", v ? "true" : "false");
+      }
+      console("\n");
     }
   }
 
   void requestRender(const char* slotName) override {
-    const char* style = toggle_ ? "b" : "i";
-    std::string content = "<div on-click=\"me\"><";
-    content += style;
-    content += ">Hello from <span on-click=\"THE_WASM\">wasm!</span> This slot is '";
-    content += slotName;
-    content += "'</";
-    content += style;
-    content += "></div>";
+    std::string style = toggle_ ? "b" : "i";
+    std::string content =
+      "<div on-click=\"me\"><" + style + ">Hello from <span on-click=\"THE_WASM\">wasm!</span> This slot is '" +
+      slotName + "'</" + style + "></div><br><button on-click=\"send\">Send data</button>";
     render(slotName, content.c_str());
   }
 
   void fireEvent(const char* slotName, const char* handler) override {
     if (strcmp(handler, "me") == 0) {
       console("You clicked %s!\n", handler);
+      toggle_ = 1 - toggle_;
+      requestRender("root");
+    } else if (strcmp(handler, "send") == 0) {
+      console("Writing to 'res' handle\n");
+      std::string res = handles_["data"]->data_.encode();
+      handleSet(handles_["res"], res.c_str());
     } else {
       error("You clicked %s!\n", handler);
     }
-    toggle_ = 1 - toggle_;
-    requestRender("root");
   }
 
   int toggle_ = 0;
