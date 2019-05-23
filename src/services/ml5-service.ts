@@ -8,7 +8,7 @@
  */
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {loadImage} from './tfjs-service.js';
+import {loadImage} from '../platform/image-web.js';
 
 const log = logFactory('ml5-service');
 

@@ -10,7 +10,6 @@ import {dynamicScript} from '../platform/dynamic-script-web.js';
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {Mapper} from '../runtime/hot.js';
 
 const log = logFactory('tfjs-service');
 
@@ -67,14 +66,6 @@ const linearRegression = async ({model: modelRef, training, query, epochs}) => {
   return buffer.values;
 };
 
-
-export const loadImage = async (url: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.src = url;
-    image.onload = async () => resolve(image);
-  });
-};
 
 const dispose = ({reference}) => rmgr.dispose(reference);
 

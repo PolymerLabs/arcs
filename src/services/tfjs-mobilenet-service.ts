@@ -8,10 +8,11 @@
  */
 
 import {dynamicScript} from '../platform/dynamic-script-web.js';
-import {loadImage, requireTf} from './tfjs-service.js';
+import {requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
+import {loadImage} from '../platform/image-web.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
