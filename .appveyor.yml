@@ -9,7 +9,6 @@ init:
 install:
   - ps: Install-Product node $env:nodejs_version
   - npm install -g npm@6.9.0
-  - choco install gtk-runtime
   - appveyor-retry npm install
 
 build: off
