@@ -8,6 +8,7 @@ init:
 
 install:
   - ps: Install-Product node $env:nodejs_version
+  - choco install -y python2 gtk-runtime microsoft-build-tools libjpeg-turbo
   - npm install -g npm@6.9.0
   - appveyor-retry npm install
 
