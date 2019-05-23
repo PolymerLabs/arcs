@@ -1026,15 +1026,87 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const arc = new Arc({id, loader, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.equal(description.getRecipeSuggestion(), 'Out is hi!');
+  });
+
+  it('particles call startBusy with non-null value, and sets descriptions', async () => {
+    const loader = new StubLoader({
+      manifest: `
+        particle SetBar in 'setBar.js'
+          out * {Text foo} bar
+        particle CallsBusy in 'callsBusy.js'
+          in * {Text foo} bar
+          out * {Text result} far
+          description \`out is \${far.result}!\`
+        recipe
+          create as h0
+          create as h1
+          SetBar
+            bar -> h0
+          CallsBusy
+            bar <- h0
+            far -> h1
+      `,
+      'setBar.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              console.log('- SetBar::setHandles');
+              this.bar = handles.get('bar');
+              this.bar.set(new this.bar.entityClass({foo: 'hello'}));
+            }
+          }
+        });
+      `,
+      'callsBusy.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              console.log('- CallBusy::setHandle');
+              this.out = handles.get('far');
+              this.bar = handles.get('bar');
+            }
+            async onHandleUpdate(handle, update) {
+              console.log('- Callbusy::onHandleUpdate - ', handle.name, ' <- ', JSON.stringify(update));
+              if (handle.name === 'bar') {
+                const barValue = await this.bar.get();
+                if (!barValue) {
+                  console.log('- Callbusy::onHandleUpdate - null, returning...');
+                  return;
+                }
+                console.log('- Callbusy::onHandleUpdate - calling startBusy() ', this.busy);
+                this.startBusy();
+                console.log('- Callbusy::onHandleUpdate - called startBusy()', this.busy);
+  
+                setTimeout(async () => {
+                  console.log('- Callbusy::onHandleUpdate - this.out.result =', barValue.foo);
+                  this.out.set(new this.out.entityClass({result: \`\${barValue.foo}!!!\`}));
+                  this.doneBusy();
+                }, 100);
+              }
+            }
+          }
+        });
+      `
+    });
+
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const arc = new Arc({id, loader, context: null});
+    const manifest = await Manifest.load('manifest', loader);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+
+    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const description = await Description.create(speculativeArc, relevance);
+    assert.equal(description.getRecipeSuggestion(), 'Out is hello!!!!');
   });
 
   it('loadRecipe returns ids of provided slots', async () => {
