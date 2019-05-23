@@ -81,9 +81,9 @@ describe('Store Flow', async () => {
       return activeStore;
     });
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 1,
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, 
       {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 1, {type: ExpectedResponse.Void});
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
 
     const send = sequenceTest.registerOutput('driver.send',
       {
@@ -150,7 +150,7 @@ describe('Store Flow', async () => {
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 1, {type: ExpectedResponse.Void});
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
 
     const meCount = sequenceTest.registerVariable(0);
 
