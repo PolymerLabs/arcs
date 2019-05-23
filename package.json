@@ -80,7 +80,7 @@
   },
   "dependencies": {
     "assert": "^1.4.1",
-    "canvas": "^2.2.0",
+    "canvas": "~2.2.0",
     "esm": "^3.0.84",
     "firebase": "^5.8.2",
     "idb": "^2.1.3",
