@@ -94,8 +94,14 @@ export class CRDTCount implements CountModel {
     return true;
   }
 
+  private cloneMap<K, V>(map: Map<K, V>) {
+    const result = new Map<K, V>();
+    map.forEach((value, key) => result.set(key, value));
+    return result;
+  }
+
   getData() {
-    return this.model;
+    return {values: this.cloneMap(this.model.values), version: this.cloneMap(this.model.version)};
   }
 
   getParticleView() {

@@ -13,7 +13,7 @@ import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {Literal} from './hot.js';
+import {Predicate, Literal} from './hot.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -123,7 +123,7 @@ export abstract class Type {
     return this;
   }
 
-  _applyExistenceTypeTest(test: (type: Type) => boolean) {
+  _applyExistenceTypeTest(test: Predicate<Type>) {
     return test(this);
   }
 
@@ -417,7 +417,7 @@ export class CollectionType<T extends Type> extends Type {
     return (result === collectionType) ? this : result.collectionOf();
   }
 
-  _applyExistenceTypeTest(test: (type: Type) => boolean): boolean {
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
     return this.collectionType._applyExistenceTypeTest(test);
   }
 

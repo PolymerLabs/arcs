@@ -38,6 +38,9 @@ export abstract class Driver<Data> {
 }
 
 export class DriverFactory {
+  static clearRegistrationsForTesting() {
+    this.providers = [];
+  }
   static providers: StorageDriverProvider[] = [];
   static driverInstance<Data>(storageKey: string, exists: Exists): Driver<Data> {
     for (const provider of this.providers) {
@@ -59,9 +62,5 @@ export class DriverFactory {
       }
     }
     return false;
-  }
-
-  static clearProvidersForTesting() {
-    this.providers = [];
   }
 }

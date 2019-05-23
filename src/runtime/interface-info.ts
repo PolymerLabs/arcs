@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
+import {Predicate} from '../runtime/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -168,7 +169,7 @@ export class InterfaceInfo {
     return true;
   }
 
-  _applyExistenceTypeTest(test: (t: TypeVarReference) => boolean) {
+  _applyExistenceTypeTest(test: Predicate<TypeVarReference>) {
     for (const typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
