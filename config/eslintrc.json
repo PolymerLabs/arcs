@@ -32,6 +32,7 @@
     "padded-blocks": "off",
     "spaced-comment": "off",
     "block-spacing": "off",
+    "no-constant-condition": "off",
     "no-trailing-spaces": "off",
     "eol-last": "off",
     "max-len": "off",

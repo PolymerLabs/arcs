@@ -7,7 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {SequenceTest, ExpectedResponse} from "../sequence";
+
+import {SequenceTest, ExpectedResponse} from '../sequence.js';
 import {assert} from '../../../platform/chai-web.js';
 
 class BadClass {

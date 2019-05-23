@@ -392,7 +392,7 @@ export class SequenceTest<T> {
    * 001200 (abdfce)
    * etc..
    */
-  private *interleavings_raw(length: number, amounts: number[]) {
+  private* interleavings_raw(length: number, amounts: number[]) {
     const currentChoice = [];
     for (let i = 0; i < length; i++) {
       currentChoice.push(0);
@@ -428,6 +428,52 @@ export class SequenceTest<T> {
     }
   }
 
+  private* choosePoint(previous: number, interleaving: InterleavingEntry[], interleavingDelays: number[]): IterableIterator<InterleavingEntry[]> {
+    if (interleavingDelays[interleavingDelays.length - 1] === 0) {
+      yield interleaving;
+      return;
+    }
+    for (let i = interleaving.length; i > previous; i--) {
+      if (interleavingDelays[i - 1] > 0) {
+        if (i < interleaving.length && interleaving[i].index === -1) {
+          continue;
+        }
+        const nextInterleaving = interleaving.slice();
+        nextInterleaving.splice(i, 0, {index: -1, delay: 0, change: null});
+        let nextInterleavingDelays = interleavingDelays.slice(0, i);
+        nextInterleavingDelays.push(interleavingDelays[i - 1] - 1);
+        nextInterleavingDelays = nextInterleavingDelays.concat(
+          this.computeInterleavingDelays(interleavingDelays[i - 1] - 1, interleaving.slice(i))
+        );
+        const iter = this.choosePoint(i, nextInterleaving, nextInterleavingDelays);
+        while (true) {
+          const next = iter.next();
+          if (next.done) {
+            break;
+          }
+          yield next.value;
+        }
+      }
+    }
+  }
+
+  // TODO: not all steps in an input sequence are actually inputs.
+  // Need to ensure that those which are not don't increase the
+  // delays.
+  private computeInterleavingDelays(max: number, interleaving: InterleavingEntry[]) {
+    const result: number[] = [];
+    for (const entry of interleaving) {
+      if (entry.index === -1) {
+        max -= 1;
+      } else if (entry.change.input !== undefined || entry.change.inputFn !== undefined) {
+        max = Math.max(max, entry.delay);
+      }
+      result.push(max);
+    }
+
+    return result;
+  }
+
   /*
    * length: total number of stages.
    * amounts: an array of inputs, with the number of stages in each input.
@@ -438,7 +484,7 @@ export class SequenceTest<T> {
    * The algorithm then inserts wait states based on the number of internal awaits listed against
    * each input.
    */
-  private *interleavings() {
+  private* interleavings() {
     let length = 0;
     const amounts = [];
     for (const input of this.inputs.keys()) {
@@ -447,6 +493,7 @@ export class SequenceTest<T> {
     }
 
     const raw = this.interleavings_raw(length, amounts);
+
     while (true) {
       const next = raw.next();
       if (next.done) {
@@ -482,55 +529,9 @@ export class SequenceTest<T> {
         return {index, delay: delays[index], change: this.changes[inputs[index]][idx]};
       });
 
-      // TODO: not all steps in an input sequence are actually inputs.
-      // Need to ensure that those which are not don't increase the
-      // delays.
-      function computeInterleavingDelays(max: number, interleaving: InterleavingEntry[]) {
-        const result: number[] = [];
-        for (const entry of interleaving) {
-          if (entry.index === -1) {
-            max -= 1;
-          } else if (entry.change.input !== undefined || entry.change.inputFn !== undefined) {
-            max = Math.max(max, entry.delay);
-          }
-          result.push(max);
-        }
+      const interleavingDelays = this.computeInterleavingDelays(0, newInterleaving);
 
-        return result;
-      }
-
-      const interleavingDelays = computeInterleavingDelays(0, newInterleaving);
-
-      function *choosePoint(previous: number, interleaving: InterleavingEntry[], interleavingDelays: number[]): IterableIterator<InterleavingEntry[]> {
-        if (interleavingDelays[interleavingDelays.length - 1] === 0) {
-          yield interleaving;
-          return;
-        }
-        for (let i = interleaving.length; i > previous; i--) {
-          if (interleavingDelays[i - 1] > 0) {
-            if (i < interleaving.length && interleaving[i].index === -1) {
-              continue;
-            }
-            const nextInterleaving = interleaving.slice();
-            nextInterleaving.splice(i, 0, {index: -1, delay: 0, change: null});
-            let nextInterleavingDelays = interleavingDelays.slice(0, i);
-            nextInterleavingDelays.push(interleavingDelays[i - 1] - 1);
-            nextInterleavingDelays = nextInterleavingDelays.concat(
-              computeInterleavingDelays(interleavingDelays[i - 1] - 1, interleaving.slice(i))
-            );
-            const iter = choosePoint(i, nextInterleaving, nextInterleavingDelays);
-            while (true) {
-              const next = iter.next();
-              if (next.done) {
-                break;
-              }
-              yield next.value;
-            }
-          }
-        }
-      }
-
-      const iter = choosePoint(0, newInterleaving, interleavingDelays);
+      const iter = this.choosePoint(0, newInterleaving, interleavingDelays);
       while (true) {
         const next = iter.next();
         if (next.done) {
