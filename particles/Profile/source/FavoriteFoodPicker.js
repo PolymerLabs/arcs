@@ -14,7 +14,6 @@ defineParticle(({DomParticle, html, resolver}) => {
   const allFoods = {
     Hotdogs: '1f32d',
     Tacos: '1f32e',
-    Burritos: '1f32f',
     Corn: '1f33d',
     Rice: '1f35a',
     Udon: '1f35c',
