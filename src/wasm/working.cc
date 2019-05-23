@@ -28,35 +28,10 @@ public:
   void sync(const char* encoded) {
     console("sync %s [%s]\n", name_, encoded);
     data_ = arcs::Data::decode(encoded);
-
     console("txt: %s\n", data_.txt.c_str());
     console("lnk: %s\n", data_.lnk.href.c_str());
     console("num: %.2f\n", data_.num);
     console("flg: %d\n", data_.flg);
-
-    console("c_txt:");
-    for (const auto& v : data_.c_txt) {
-      console(" [%s]", v.c_str());
-    }
-    console("\n");
-
-    console("c_lnk:");
-    for (const auto& v : data_.c_lnk) {
-      console(" [%s]", v.href.c_str());
-    }
-    console("\n");
-
-    console("c_num:");
-    for (const auto& v : data_.c_num) {
-      console(" %.2f", v);
-    }
-    console("\n");
-
-    console("c_flg:");
-    for (const auto& v : data_.c_flg) {
-      console(" %s", v ? "true" : "false");
-    }
-    console("\n");
   }
 
   const char* name_;
