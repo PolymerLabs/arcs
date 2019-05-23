@@ -6,7 +6,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {dynamicScript} from './dynamic-script.js';
+import {dynamicScript} from '../platform/dynamic-script-web.js';
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';

@@ -7,7 +7,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {dynamicScript} from './dynamic-script.js';
+import {dynamicScript} from '../platform/dynamic-script-web.js';
 import {loadImage, requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';

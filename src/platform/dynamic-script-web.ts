@@ -7,7 +7,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export const dynamicScript = async (src: string): Promise<void> => {
+export async function dynamicScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     document.head.appendChild(Object.assign(document.createElement('script'), {
       src,
