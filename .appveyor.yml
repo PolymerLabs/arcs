@@ -9,8 +9,8 @@ init:
 install:
   - ps: Install-Product node $env:nodejs_version
   - choco install -y python2 gtk-runtime libjpeg-turbo
-  - ps: Invoke-WebRequest "http://ftp.gnome.org/pub/GNOME/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip" -OutFile "C:\gtk.zip"
-  - ps: 7z e C:\gtk.zip -oC:\GTK\ -y
+  - ps: Invoke-WebRequest "http://ftp.gnome.org/pub/GNOME/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip" -OutFile "C:\GTK.zip"
+  - ps: 7z e C:\GTK.zip -y
   - npm install -g npm@6.9.0
   - appveyor-retry npm install
 
