@@ -74,8 +74,8 @@ defineParticle(({Particle}) => {
       // Range checks
       if (nextMove.x < 0 || nextMove.x > 2 || nextMove.y < 0 ||
           nextMove.y > 2) {
-        return `Invalid location: ${nextMove.x}, ${nextMove.y}`
-      };
+        return `Invalid location: ${nextMove.x}, ${nextMove.y}`;
+      }
 
       const boardMatrix = boardToMatrix(board);
       if (boardMatrix[nextMove.y][nextMove.x] !== 0) {
