@@ -7,7 +7,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {loadImage} from 'canvas';
+// TODO(alxr) Create a node version of this, or solve the issues with Canvas
+import {loadImage} from './image-web.js';
 export {loadImage};
-
-
