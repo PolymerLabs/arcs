@@ -17,68 +17,48 @@ describe('JsonldToManifest', () => {
     return true;
   };
 
-  describe('convert', () => {
+  const asyncProductStr: Promise<string> = fetch('https://schema.org/Product.jsonld')
+    .then(r => r.text());
 
-    it('works on objects without @graph', () => {
-      const valids = [
-        {
-          '@id': 'schema:itemShipped',
-          'schema:rangeIncludes': {
-            '@id': 'schema:Product'
-          }
-        },
-        {
-          '@id': 'schema:isSimilarTo',
-          '@type': 'rdf:Property',
-          'dcterms:source': {
-            '@id': 'http://www.w3.org/wiki/WebSchemas/SchemaDotOrgSources#source_GoodRelationsTerms'
-          },
-          'rdfs:comment': 'A pointer to another, functionally similar product (or multiple products).',
-          'rdfs:label': 'isSimilarTo',
-          'schema:domainIncludes': [
-            {
-              '@id': 'schema:Service'
-            },
-            {
-              '@id': 'schema:Product'
-            }
-          ],
-          'schema:rangeIncludes': [
-            {
-              '@id': 'schema:Product'
-            },
-            {
-              '@id': 'schema:Service'
-            }
-          ]
-        },
-        {
-          '@id': 'schema:url',
-          '@type': 'rdf:Property',
-          'rdfs:comment': 'URL of the item.',
-          'rdfs:label': 'url',
-          'schema:domainIncludes': {
-            '@id': 'schema:Thing'
-          },
-          'schema:rangeIncludes': {
-            '@id': 'schema:URL'
-          }
-        },
-      ];
+  const asyncLocalBusinessStr: Promise<string> = fetch('https://schema.org/LocalBusiness.jsonld')
+    .then(r => r.text());
+
+  describe('convert', () => {
+    it('works on objects without @graph', async () => {
+      const valids = await asyncProductStr
+        .then((s: string) => JSON.parse(s))
+        .then((j: JSON) => j['@graph']);
 
       valids.map(obj => JSON.stringify(obj))
-        .map(s => JsonldToManifest.convert(s, {'@id': 'schema:Thing'}))
-        .forEach(manifest => {
+        .map((s: string) => JsonldToManifest.convert(s, {'@id': 'schema:Thing'}))
+        .forEach((manifest: string) => {
           assert.isTrue(isValidManifest(manifest));
         });
     });
 
     it('should work on a real schema.org json linked-data file', () => {
-      fetch('https://schema.org/Product.jsonld')
-        .then(r => r.text())
-        .then(d => JsonldToManifest.convert(d, {'@id': 'schema:Thing'}))
-        .then(converted => {
+      asyncProductStr
+        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}))
+        .then((converted: string) => {
           assert.isTrue(isValidManifest(converted));
+        });
+    });
+
+    it('should add schema.org imports given superclasses', () => {
+      const containsSchemaOrgImportStatements: Predicate<string> = (manifest: string): boolean => {
+        const instances = manifest.match(/(import\s'https:\/\/schema.org\/.+'\s+)+/g);
+        return !!instances;
+      };
+
+      const classExtendsSuperclasses: Predicate<string> = (manifest: string): boolean => {
+        return manifest.indexOf(' extends ') !== -1;
+      };
+
+      asyncLocalBusinessStr
+        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness', superclass: [{'@id': 'schema:Place'}]}))
+        .then((converted: string)=> {
+          assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
+          assert.isTrue(classExtendsSuperclasses(converted), 'manifest should extend at least one superclass.');
         });
 
     });
