@@ -1,0 +1,4 @@
+import 'particles/SLANDLESTfjs.particle'
+recipe SlandleTfjs
+  SlandleTfjs
+  description `linear regression example using TensorFlowJs (service)`
