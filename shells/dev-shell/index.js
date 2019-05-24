@@ -12,10 +12,11 @@ import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
 import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {SlotDomConsumer} from '../../../build/runtime/slot-dom-consumer.js';
 import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
-import {defaultCoreDebugListeners} from '../../../build/runtime/debug/arc-debug-handler.js';
+import {devtoolsInspectorFactory} from '../../../build/devtools-connector/devtools-inspector.js';
 
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
+const toggleFiles = document.getElementById('toggle-files');
 
 async function wrappedExecute() {
   SlotDomConsumer.clearCache();  // prevent caching of template strings
@@ -58,7 +59,7 @@ async function wrappedExecute() {
       slotComposer,
       loader,
       storageProviderFactory: storage,
-      listenerClasses: defaultCoreDebugListeners
+      inspectorFactory: devtoolsInspectorFactory
     });
     arcPanel.attachArc(arc);
 
@@ -87,21 +88,25 @@ function execute() {
   wrappedExecute().catch(e => output.showError('Unhandled exception', e.stack));
 }
 
-document.getElementById('execute').addEventListener('click', execute);
-document.getElementById('export').addEventListener('click', files.exportFiles.bind(files));
-files.setExecuteCallback(execute);
-
-const exampleManifest = `\
+function init() {
+  let manifest;
+  const params = new URLSearchParams(window.location.search);
+  const manifestParam = params.get('m') || params.get('manifest');
+  if (manifestParam) {
+    manifest = `import '${manifestParam}'`;
+    toggleFiles.click();
+  } else {
+    manifest = `\
 import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.recipe'
 
 particle P in 'a.js'
   consume root
 
 recipe
-  P
-`;
+  P`;
+  }
 
-const exampleParticle = `\
+  const exampleParticle = `\
 defineParticle(({DomParticle, html}) => {
   return class extends DomParticle {
     get template() {
@@ -110,4 +115,11 @@ defineParticle(({DomParticle, html}) => {
   };
 });`;
 
-files.seedExample(exampleManifest, exampleParticle);
+  files.seedExample(manifest, exampleParticle);
+}
+
+document.getElementById('execute').addEventListener('click', execute);
+document.getElementById('export').addEventListener('click', files.exportFiles.bind(files));
+toggleFiles.addEventListener('click', files.toggleFiles.bind(files));
+files.setExecuteCallback(execute);
+init();

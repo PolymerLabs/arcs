@@ -292,4 +292,61 @@ describe('manifest parser', () => {
           input <- h0
     `);
   });
+  it('parses handle with type with prefix "Slot"', () => {
+    parse(`
+      particle P in './p.js'
+        in Sloturnicus s
+    `);
+  });
+  it('does not parse comment at start of manifest resource', () => {
+    let data;
+    assert.throws(() => {
+      const manifestAst = parse(`
+        import '../Pipes/PipeEntity.schema'
+
+        resource PipeEntityResource
+          start
+          //[{"type": "tv_show", "name": "star trek"}]
+          [{"type": "artist", "name": "in this moment"}]
+
+        store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+      `);
+      data = JSON.parse(manifestAst[1].data);
+    }, `Unexpected token / in JSON at position 0`);
+    assert.equal(data, undefined);
+  });
+  it('does not parse comment inside manifest resource', () => {
+    let data;
+    assert.throws(() => {
+      const manifestAst = parse(`
+        import '../Pipes/PipeEntity.schema'
+
+        resource PipeEntityResource
+          start
+          [{"type": "artist", "name": "in this moment"}]
+          //[{"type": "tv_show", "name": "star trek"}]
+
+        store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+      `);
+      data = JSON.parse(manifestAst[1].data);
+    }, `Unexpected token / in JSON at position 47`);
+    assert.equal(data, undefined);
+  });
+  it('ignores comments inside manifest resource', () => {
+    const manifestAst = parse(`
+      import '../Pipes/PipeEntity.schema'
+
+      resource PipeEntityResource
+        start
+        [{"type": "artist", "name": "in this moment"}]
+      //[{"type": "tv_show", "name": "star trek"}]
+
+      store ExamplePipeEntity of PipeEntity 'ExamplePipeEntity' @0 in PipeEntityResource
+    `);
+    assert.lengthOf(manifestAst, 3, 'Incorrectly parsed manifest');
+    assert.deepEqual(
+      JSON.stringify(JSON.parse(manifestAst[1].data)),
+      '[{"type":"artist","name":"in this moment"}]'
+    );
+  });
 });

@@ -11,11 +11,12 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Modality} from './modality.js';
-import {Direction} from './recipe/handle-connection.js';
+import {Direction} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {TypeVariableInfo} from './type-variable-info.js';
 import {InterfaceType, SlotType, Type, TypeLiteral} from './type.js';
+import {Literal} from './hot.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -123,17 +124,17 @@ export class ConsumeSlotConnectionSpec {
 
 export class ProvideSlotConnectionSpec extends ConsumeSlotConnectionSpec {}
 
-export type SerializedParticleSpec = {
-  name: string,
-  id?: string,
-  verbs: string[],
-  args: SerializedHandleConnectionSpec[],
-  description: {pattern?: string},
-  implFile: string,
-  implBlobUrl: string | null,
-  modality: string[],
-  slotConnections: SerializedSlotConnectionSpec[]
-};
+export interface SerializedParticleSpec extends Literal {
+  name: string;
+  id?: string;
+  verbs: string[];
+  args: SerializedHandleConnectionSpec[];
+  description: {pattern?: string};
+  implFile: string;
+  implBlobUrl: string | null;
+  modality: string[];
+  slotConnections: SerializedSlotConnectionSpec[];
+}
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
@@ -188,15 +189,15 @@ export class ParticleSpec {
     return this.connections;
   }
 
-  get connections() {
+  get connections(): HandleConnectionSpec[] {
     return [...this.handleConnectionMap.values()];
   }
 
-  get inputs() {
+  get inputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isInput);
   }
 
-  get outputs() {
+  get outputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isOutput);
   }
 
@@ -302,45 +303,35 @@ export class ParticleSpec {
     }
 
     this.modality.names.forEach(a => results.push(`  modality ${a}`));
-    this.slotConnections.forEach(s => {
-      // Consume slot.
-      const consume = [];
+    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: string, indent: string):void => {
+      const tokens = [];
       if (s.isRequired) {
-        consume.push('must');
+        tokens.push('must');
       }
-      consume.push('consume');
+      tokens.push(direction);
       if (s.isSet) {
-        consume.push('set of');
+        tokens.push('set of');
       }
-      consume.push(s.name);
+      tokens.push(s.name);
       if (s.tags.length > 0) {
-        consume.push(s.tags.map(a => `#${a}`).join(' '));
+        tokens.push(s.tags.map(a => `#${a}`).join(' '));
       }
-      results.push(`  ${consume.join(' ')}`);
+      results.push(`${indent}${tokens.join(' ')}`);
       if (s.formFactor) {
-        results.push(`    formFactor ${s.formFactor}`);
+        results.push(`${indent}  formFactor ${s.formFactor}`);
       }
-      // Provided slots.
-      s.provideSlotConnections.forEach(ps => {
-        const provide = [];
-        if (ps.isRequired) {
-          provide.push('must');
-        }
-        provide.push('provide');
-        if (ps.isSet) {
-          provide.push('set of');
-        }
-        provide.push(ps.name);
-        if (ps.tags.length > 0) {
-          provide.push(ps.tags.map(a => `#${a}`).join(' '));
-        }
-        results.push(`    ${provide.join(' ')}`);
-        if (ps.formFactor) {
-          results.push(`      formFactor ${ps.formFactor}`);
-        }
-        ps.handles.forEach(handle => results.push(`      handle ${handle}`));
-      });
-    });
+      for (const handle of s.handles) {
+        results.push(`${indent}  handle ${handle}`);
+      }
+      if (s.provideSlotConnections) {
+        // Provided slots.
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provide', indent+'  '));
+      }
+    };
+
+    this.slotConnections.forEach(
+      s => slotToString(s, 'consume', '  ')
+    );
     // Description
     if (this.pattern) {
       results.push(`  description \`${this.pattern}\``);

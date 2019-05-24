@@ -36,7 +36,10 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
   }
 
   return new Promise(resolve => {
-    fs.mkdirSync(path.dirname(bundleName), {recursive: true});
+    const dirname = path.dirname(bundleName);
+    if (!fs.existsSync(dirname)) {
+      fs.mkdirSync(dirname, {recursive: true});
+    }
     const archive = new JSZip();
     for (const file of listing) {
       archive.file(file.bundlePath, fs.readFileSync(file.filePath));
@@ -45,7 +48,7 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
         .filter(f => f.entryPoint)
         .map(f => `entry-point: ${f.bundlePath}\n`)
         .join(''));
-    archive.generateNodeStream({streamFiles:true})
+    archive.generateNodeStream({streamFiles: true})
         .pipe(fs.createWriteStream(bundleName))
         .on('finish', () => resolve());
   });

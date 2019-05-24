@@ -11,6 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 
@@ -32,7 +33,7 @@ export class PlanningResult {
   contextual = true;
   store: VariableStorageProvider;
   private storeCallback: ({}) => void;
-  private changeCallbacks: (() => void)[] = [];
+  private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
   constructor(envOptions: EnvOptions, store?: VariableStorageProvider) {
@@ -69,7 +70,7 @@ export class PlanningResult {
   async flush() {
     try {
       await this.store.set(this.toLiteral());
-    } catch(e) {
+    } catch (e) {
       error('Failed storing suggestions: ', e);
       throw e;
     }
@@ -195,7 +196,7 @@ export class PlanningResult {
     }
 
     jointSuggestions.push(...newSuggestions);
-    this._set({suggestions: jointSuggestions, generations: this.generations.concat(...generations), lastUpdated, contextual : contextual && this.contextual});
+    this._set({suggestions: jointSuggestions, generations: this.generations.concat(...generations), lastUpdated, contextual: contextual && this.contextual});
     return true;
   }
 

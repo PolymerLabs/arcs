@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
+import {Predicate} from '../runtime/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -168,7 +169,7 @@ export class InterfaceInfo {
     return true;
   }
 
-  _applyExistenceTypeTest(test: (t: TypeVarReference) => boolean) {
+  _applyExistenceTypeTest(test: Predicate<TypeVarReference>) {
     for (const typeRef of this.typeVars) {
       if (test(typeRef.object[typeRef.field])) {
         return true;
@@ -321,7 +322,9 @@ ${this._slotsToManifestString()}`;
   }
 
   _equalHandle(handle: Handle, otherHandle: Handle) {
-    return handle.name === otherHandle.name && handle.direction === otherHandle.direction && handle.type.equals(otherHandle.type);
+    return handle.name === otherHandle.name
+      && handle.direction === otherHandle.direction
+      && TypeChecker.compareTypes({type: handle.type}, {type: otherHandle.type});
   }
 
   _equalSlot(slot: Slot, otherSlot: Slot) {
@@ -380,7 +383,7 @@ ${this._slotsToManifestString()}`;
     if (left instanceof TypeVariable) {
       return [{var: left, value: right, direction: interfaceHandle.direction}];
     } else {
-      return left.equals(right);
+      return TypeChecker.compareTypes({type: left}, {type: right});
     }
   }
 
@@ -473,7 +476,9 @@ ${this._slotsToManifestString()}`;
         if (!TypeChecker.processTypeList(constraint.var, [{
             type: constraint.value, direction: constraint.direction}])) return false;
       } else {
-        if (!constraint.var.variable.resolution.equals(constraint.value)) return false;
+        if (!TypeChecker.compareTypes({type: constraint.var.variable.resolution}, {type: constraint.value})) {
+          return false;
+        }
       }
     }
 

@@ -14,7 +14,9 @@ export class CRDTError extends Error {
 }
 
 export interface CRDTOperation {}
-export interface CRDTData {}
+export interface CRDTData {
+  version: VersionMap;
+}
 export interface CRDTConsumerType {}
 
 // A CRDT model is parameterized by:
@@ -64,6 +66,5 @@ export interface CRDTModel<T extends CRDTTypeRecord> {
 // of the model.
 export enum ChangeType {Operations, Model}
 export type CRDTChange<T extends CRDTTypeRecord> = {changeType: ChangeType.Operations, operations: T['operation'][]} | {changeType: ChangeType.Model, modelPostChange: T['data']};
-
 
 

@@ -7,7 +7,7 @@
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
 
-interface TypeListInfo {
+export interface TypeListInfo {
   type: Type;
   direction?: string;
   connection?: {direction: string};
@@ -154,7 +154,7 @@ export class TypeChecker {
         [primitiveHandleType, primitiveConnectionType] = unwrap;
         if (!(primitiveHandleType instanceof TypeVariable)) {
           // This should never happen, and the guard above is just here so we type-check.
-          throw new TypeError("unwrapping a wrapped TypeVariable somehow didn't become a TypeVariable");
+          throw new TypeError('unwrapping a wrapped TypeVariable somehow didn\'t become a TypeVariable');
         }
       }
 
@@ -228,7 +228,7 @@ export class TypeChecker {
   // then type resolution is guaranteed to fail.
   //
   // left, right: {type, direction, connection}
-  static compareTypes(left: TypeListInfo, right: TypeListInfo) {
+  static compareTypes(left: TypeListInfo, right: TypeListInfo): boolean {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {DevtoolsForTests} from '../../debug/devtools-connection.js';
+import {DevtoolsForTests} from '../../../devtools-connector/devtools-connection.js';
 import {StubLoader} from '../../testing/stub-loader.js';
 import {TestHelper} from '../../testing/test-helper.js';
 import {Arc} from '../../arc.js';

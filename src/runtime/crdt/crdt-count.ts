@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord} from "./crdt.js";
+import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord} from './crdt.js';
 
 type RawCount = number;
 
@@ -57,7 +57,7 @@ export class CRDTCount implements CountModel {
         this.model.version.set(key, otherVersion);
       }
     }
-    
+
     for (const key of this.model.values.keys()) {
       if (other.values.has(key)) {
         continue;
@@ -94,8 +94,14 @@ export class CRDTCount implements CountModel {
     return true;
   }
 
+  private cloneMap<K, V>(map: Map<K, V>) {
+    const result = new Map<K, V>();
+    map.forEach((value, key) => result.set(key, value));
+    return result;
+  }
+
   getData() {
-    return this.model;
+    return {values: this.cloneMap(this.model.values), version: this.cloneMap(this.model.version)};
   }
 
   getParticleView() {

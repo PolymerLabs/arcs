@@ -1,0 +1,25 @@
+schema Data
+  Number num
+  Text txt
+  URL lnk
+  Boolean flg
+
+resource DataResource
+  start
+  [
+    {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
+  ]
+
+store DataStore of Data in DataResource
+
+particle TestParticle in 'output.wasm'
+  consume root
+  in Data data
+  out Data res
+
+recipe
+  use DataStore as h1
+  create as h2
+  TestParticle
+    data <- h1
+    res -> h2

@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { Particle } from './particle';
-import { PECInnerPort } from './api-channel';
+import {Particle} from './particle';
+import {PECInnerPort} from './api-channel';
 
 /**
  * A representation of a consumed slot. Retrieved from a particle using
@@ -20,6 +20,7 @@ export class SlotProxy {
   readonly particle: Particle;
   readonly providedSlots: ReadonlyMap<string, string>;
   private readonly apiPort: PECInnerPort;
+  // eslint-disable-next-line func-call-spacing
   private readonly handlers = new Map<string, ((event: {}) => void)[]>();
   readonly requestedContentTypes = new Set<string>();
   private _isRendered = false;

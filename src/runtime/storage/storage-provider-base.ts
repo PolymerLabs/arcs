@@ -15,14 +15,14 @@ import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
 import {BigCollectionStore, CollectionStore, Store, VariableStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
-
+import {Dictionary, Consumer} from '../hot.js';
 
 enum EventKind {
   change = 'Change'
 }
 
 // tslint:disable-next-line: no-any
-type Callback = (v: {[index: string]: any}) => void;
+type Callback = Consumer<Dictionary<any>>;
 
 /**
  * Methods that must be implemented by a Variable Storage Provider

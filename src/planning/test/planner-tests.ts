@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- 'use strict';
+ 
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
@@ -16,6 +16,7 @@ import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
+import {Speculator} from '../speculator.js';
 
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 import {Id, ArcId} from '../../runtime/id.js';
@@ -78,7 +79,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
   const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: loadedManifest, loader});
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
   planner.init(arc, options);
 
   const plans = await planner.suggest(Infinity);
@@ -590,18 +591,18 @@ describe('Automatic resolution', () => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
-      assert.isTrue(plan.isResolved());
+      assert.isTrue(plan.isResolved(), `Plans were not able to be resolved from ${manifestStr}.`);
     }
     return plans;
   };
   const verifyResolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
-    assert.lengthOf(plans, 1);
+    assert.lengthOf(plans, 1, `Plan was not able to be resolved from ${manifestStr}.`);
     return plans[0];
   };
   const verifyUnresolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
-    assert.isEmpty(plans);
+    assert.isEmpty(plans, `Plan was unexpectedly able to be resolved from ${manifestStr}`);
   };
 
   it('introduces create handles for particle communication', async () => {
@@ -876,7 +877,7 @@ describe('Automatic resolution', () => {
     `, () => {});
 
     recipes = recipes.filter(recipe => recipe.search);
-    assert.lengthOf(recipes, 1);
+    assert.lengthOf(recipes, 1, 'Expected the recipe list to contain a search.');
     return recipes[0];
   };
 

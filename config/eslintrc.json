@@ -1,0 +1,76 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "google"
+  ],
+
+  "parserOptions": {
+    "ecmaVersion": 2019,
+    "sourceType": "module"
+  },
+  "rules": {
+    // Things we do, but probably shouldn't.
+    "no-console": "off",
+    "no-throw-literal": "off",
+    "brace-style": "off",
+    "camelcase": "off",
+    "no-unused-vars": "off",
+    "new-cap": "off",
+    "arrow-parens": "off", // puts parens around single arg arrow functions
+    "no-undef": "off", // Particles use importScripts+globals, need to move to JS modules to fix
+    "no-empty-pattern": "off", // No {} in patterns, but sometimes we use {} to denote an unused argument?
+
+    // eslint-config-google 0.10.0 introduced indent checks
+    // most projects are opting for prettier instead, so disable
+    "indent": "off",
+
+    // Things we don't care about.
+    "require-jsdoc": "off",
+    "valid-jsdoc": "off",
+    "quote-props": "off",
+    "guard-for-in": "off",
+    "padded-blocks": "off",
+    "spaced-comment": "off",
+    "block-spacing": "off",
+    "no-constant-condition": "off",
+    "no-trailing-spaces": "off",
+    "eol-last": "off",
+    "max-len": "off",
+    "comma-dangle": "off",
+    "linebreak-style": "off",
+    "no-multi-spaces": "off",
+    "keyword-spacing": [1, {"before": true, "after": true}]
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+    "worker": true,
+    "mocha": true
+  },
+  // Typescript configuration
+  "overrides": [
+    {
+      "files": ["**/*.ts"],
+      "excludedFiles": ["src/gen/**/*.ts"],
+      "parser":  "@typescript-eslint/parser",  // Specifies the ESLint parser
+      "parserOptions":  {
+        // TODO(lindner): For now this option causes severe slowdown. See following issue for updates
+        //   https://github.com/typescript-eslint/typescript-eslint/issues/389
+        // and re-enable 
+        // "project": "tsconfig.json"
+      },
+      "rules": {
+        // add typescript specific rules here
+        "strict": "error"
+      }
+    },
+    {
+      "files": ["**/*test*/**/*.[jt]s"],
+      "rules": {
+        // disable for mocha usages
+        "no-invalid-this": "off"
+      }
+    }
+  ]
+}

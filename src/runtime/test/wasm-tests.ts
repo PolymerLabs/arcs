@@ -9,9 +9,11 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {EntityProtoConverter} from '../wasm.js';
+import {EntityProtoConverter, EntityPackager} from '../wasm.js';
 import {Manifest} from '../manifest.js';
-import protobufjs from 'protobufjs';
+import {EntityType, ReferenceType} from '../type.js';
+import {Reference} from '../reference.js';
+import {toProtoFile} from '../../tools/wasm-tools.js';
 
 describe('wasm', () => {
 
@@ -22,12 +24,8 @@ describe('wasm', () => {
         Text      txt
         URL       lnk
         Number    num
-        Boolean   flg
-        [Text]    c_txt
-        [URL]     c_lnk
-        [Number]  c_num
-        [Boolean] c_flg`);
-    schema = manifest.findSchemaByName('Foo');
+        Boolean   flg`);
+    schema = manifest.schemas.Foo;
   });
 
   it('entity to proto conversion supports basic types', async () => {
@@ -36,11 +34,7 @@ describe('wasm', () => {
       txt: 'abc',
       lnk: 'http://def',
       num: 37,
-      flg: true,
-      c_txt: ['g', 'h'],
-      c_lnk: ['http://ijk', 'http://lmn'],
-      c_num: [51, 73, 26],
-      c_flg: [false, true]
+      flg: true
     });
 
     const epc = new EntityProtoConverter(schema);
@@ -51,7 +45,7 @@ describe('wasm', () => {
 
   it('entity to proto conversion supports partially assigned values', async () => {
     const entityClass = schema.entityClass();
-    const foo = new entityClass({txt: 'abc', c_num: [51, 73]});
+    const foo = new entityClass({txt: 'abc', num: -5.1});
 
     const epc = new EntityProtoConverter(schema);
     const buffer = epc.encode(foo);
@@ -65,11 +59,7 @@ describe('wasm', () => {
       txt: '',
       lnk: '',
       num: 0,
-      flg: false,
-      c_txt: new Set(),
-      c_lnk: new Set(),
-      c_num: new Set(),
-      c_flg: new Set()
+      flg: false
     });
 
     const epc = new EntityProtoConverter(schema);
@@ -92,16 +82,6 @@ describe('wasm', () => {
         (Text or URL or Number) foo
       schema TupleFail
         (Text, URL, Number) foo
-      schema BytesCollectionFail
-        [Bytes] foo
-      schema ObjectCollectionFail
-        [Object] foo
-      schema UnionCollectionFail
-        [(Text or Bytes)] foo
-      schema TupleCollectionFail
-        [(Number, Object)] foo
-      schema NestedCollectionFail
-        [[Text]] foo
       schema NamedRefFail
         Reference<BytesFail> foo
       schema InlineRefFail
@@ -110,5 +90,93 @@ describe('wasm', () => {
     for (const schema of Object.values(manifest.schemas)) {
       assert.throws(() => new EntityProtoConverter(schema), 'not yet supported');
     }
+  });
+
+  it('entity packaging supports basic types', async () => {
+    const entityClass = schema.entityClass();
+    const foo = new entityClass({
+      txt: 'abc',
+      lnk: 'http://def',
+      num: 37,
+      flg: true
+    });
+
+    const packager = new EntityPackager(schema);
+    const encoded = packager.encode(foo);
+    assert.deepEqual(foo, packager.decode(encoded));
+  });
+
+  it('entity packaging supports partially assigned values', async () => {
+    const entityClass = schema.entityClass();
+    const foo = new entityClass({txt: 'abc', num: -5.1});
+
+    const packager = new EntityPackager(schema);
+    const encoded = packager.encode(foo);
+    assert.deepEqual(foo, packager.decode(encoded));
+  });
+
+  it('entity packaging supports zero and empty values', async () => {
+    const entityClass = schema.entityClass();
+    const foo = new entityClass({
+      txt: '',
+      lnk: '',
+      num: 0,
+      flg: false
+    });
+
+    const packager = new EntityPackager(schema);
+    const encoded = packager.encode(foo);
+    assert.deepEqual(foo, packager.decode(encoded));
+  });
+
+  it('entity packaging fails for not-yet-supported types', async () => {
+    const manifest = await Manifest.parse(`
+      schema BytesFail
+        Bytes foo
+      schema ObjectFail
+        Object foo
+      schema UnionFail
+        (Text or URL or Number) foo
+      schema TupleFail
+        (Text, Number) foo
+      schema NamedRefFail
+        Reference<BytesFail> foo
+      schema InlineRefFail
+        Reference<Bar {Text val}> foo`);
+
+    const verify = (schema, value) => {
+      const entity = new (schema.entityClass())({foo: value});
+      assert.throws(() => new EntityPackager(schema).encode(entity), 'not yet supported');
+    };
+
+    const makeRef = entityType => new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(entityType), null);
+
+    verify(manifest.schemas.BytesFail, new Uint8Array([2]));
+    verify(manifest.schemas.ObjectFail, {x: 1});
+    verify(manifest.schemas.UnionFail, 12);
+    verify(manifest.schemas.TupleFail, ['abc', 78]);
+    verify(manifest.schemas.NamedRefFail, makeRef(new EntityType(manifest.schemas.BytesFail)));
+    verify(manifest.schemas.InlineRefFail, makeRef(EntityType.make(['Bar'], {val: 'Text'})));
+  });
+
+  it('schema to .proto file conversion supports basic types', async () => {
+    const protoFile = await toProtoFile(schema);
+
+    assert.deepEqual(`syntax = "proto2";
+
+package arcs;
+
+message Foo {
+
+    optional bool flg = 1;
+    optional Url lnk = 2;
+    optional double num = 3;
+    optional string txt = 4;
+}
+
+message Url {
+
+    optional string href = 1;
+}`, protoFile);
   });
 });

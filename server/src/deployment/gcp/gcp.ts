@@ -7,12 +7,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Cloud} from "../cloud";
-import {ContainerManager} from "../containers";
-import {DiskManager} from "../disks";
-import {K18sContainerManager} from "../k18s/manager";
+import {Cloud} from '../cloud';
+import {ContainerManager} from '../containers';
+import {DiskManager} from '../disks';
+import {K18sContainerManager} from '../k18s/manager';
 
-import {GCPDiskManager} from "./gcpdisk";
+import {GCPDiskManager} from './gcpdisk';
 
 /**
  * Implementation of Cloud interface for GCP.

@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
+
 
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
@@ -63,7 +63,7 @@ describe('FindHostedParticle', () => {
     assert.isDefined(handle.id);
     assert.isTrue(handle.type instanceof InterfaceType);
     assert.isTrue(handle.type.isResolved());
-    assert.equal(handle.type.interfaceInfo.name, 'HostedInterface');
+    assert.equal((handle.type as InterfaceType).interfaceInfo.name, 'HostedInterface');
   });
   it(`respects type system constraints`, async () => {
     const results = await runStrategy(`

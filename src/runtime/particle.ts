@@ -11,6 +11,7 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
+import {Runnable} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
@@ -28,7 +29,7 @@ export class Particle {
   public handles: ReadonlyMap<string, Handle>;
 
   private _idle: Promise<void> = Promise.resolve();
-  private _idleResolver: (() => void);
+  private _idleResolver: Runnable;
   private _busy = 0;
 
   protected slotProxiesByName: Map<string, SlotProxy> = new Map();
@@ -76,7 +77,7 @@ export class Particle {
    * @param model For Variable-backed Handles, the Entity data or null if the Variable is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
-  onHandleSync(handle: Handle, model) {
+  async onHandleSync(handle: Handle, model): Promise<void> {
   }
 
   /**
@@ -166,12 +167,12 @@ export class Particle {
    */
   // TODO(sjmiles): experimental services impl
   async service(request) {
-    if (!this.capabilities["serviceRequest"]) {
+    if (!this.capabilities['serviceRequest']) {
       console.warn(`${this.spec.name} has no service support.`);
       return null;
     }
     return new Promise(resolve => {
-      this.capabilities["serviceRequest"](this, request, response => resolve(response));
+      this.capabilities['serviceRequest'](this, request, response => resolve(response));
     });
   }
 

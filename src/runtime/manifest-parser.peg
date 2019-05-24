@@ -21,6 +21,9 @@
   let indent = '';
   let startIndent = '';
   const indents = [];
+
+  const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
+
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
@@ -99,7 +102,7 @@ Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent
   } as AstNode.Resource;
 }
 
-ResourceStart = 'start' eolWhiteSpace { startIndent = indent; }
+ResourceStart = 'start' eol { startIndent = indent; }
 
 ResourceBody = lines:(SameOrMoreIndent ResourceLine)+ {
   return lines.map(line => line[0].substring(startIndent.length) + line[1]).join('');
@@ -227,10 +230,10 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args = [];
+    let args: {}[] = [];
     const modality = [];
-    const slotConnections = [];
-    let description = null;
+    const slotConnections: {}[] = [];
+    let description: AstNode.Description | null = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = optional(items, extractIndented, []);
@@ -286,8 +289,7 @@ ParticleItem "a particle item"
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
   {
-    dependentConnections = optional(dependentConnections, extractIndented, []);
-    arg.dependentConnections = dependentConnections;
+    arg.dependentConnections = optional(dependentConnections, extractIndented, []);
     return arg as AstNode.ParticleHandle;
   }
 
@@ -300,7 +302,7 @@ ParticleArgument
       direction,
       type: type,
       isOptional: !!isOptional,
-      dependentConnections: [],
+      dependentConnections: [] as AstNode.ParticleHandle[],
       name: nametag.name,
       tags: nametag.tags,
     } as AstNode.ParticleArgument;
@@ -309,7 +311,7 @@ ParticleArgument
 ParticleArgumentDirection "a direction (e.g. inout, in, out, host, `consume, `provide)"
   = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
-    return text() as string;
+    return text() as AstNode.Direction;
   }
 
 ParticleArgumentType
@@ -363,7 +365,7 @@ TypeVariable "a type variable (e.g. ~foo)"
   }
 
 SlotType
-  = 'Slot' fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+  = 'Slot' &([^a-z0-9_]i) fields:(whiteSpace? '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
   fields = optional(fields, fields => {
     const data = fields[2];
@@ -559,7 +561,7 @@ Recipe
       name: optional(name, name => name[1], null),
       verbs,
       items: optional(items, extractIndented, []),
-    } as AstNode.Recipe;
+    } as AstNode.RecipeNode;
   }
 
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
@@ -782,7 +784,7 @@ RecipeHandle
       kind: 'handle',
       location: location(),
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], null),
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate: type
     } as AstNode.RecipeHandle;
   }
@@ -804,7 +806,7 @@ RequireHandleSection
       kind: 'requireHandle',
       location: location(),
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], null)
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
     } as AstNode.RequireHandleSection;
   }
 
@@ -834,6 +836,7 @@ NameAndTagList
    = name:lowerIdent tags:(whiteSpace TagList)?
    {
      return {
+       location: location(),
        name: name,
        tags: tags = optional(tags, list => list[1], [])
      } as AstNode.NameAndTagList;
@@ -841,6 +844,7 @@ NameAndTagList
    / whiteSpace name:lowerIdent
    {
      return {
+       location: location(),
        name: name,
        tags: []
      } as AstNode.NameAndTagList;
@@ -848,6 +852,7 @@ NameAndTagList
    / whiteSpace tags:TagList
    {
       return {
+        location: location(),
         name: tags[0],
         tags: tags
       } as AstNode.NameAndTagList;
@@ -861,6 +866,7 @@ ParticleRef
       location: location(),
       name,
       verbs: [],
+      tags: []
     } as AstNode.ParticleRef;
   }
   / verb:Verb
@@ -869,6 +875,7 @@ ParticleRef
       kind: 'particle-ref',
       location: location(),
       verbs: [verb],
+      tags: []
     } as AstNode.ParticleRef;
   }
 
@@ -906,7 +913,7 @@ RecipeSlot
     return {
       kind: 'slot',
       location: location(),
-      ref: optional(ref, ref => ref[1], null),
+      ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       name: optional(name, name => name[1], '')
     } as AstNode.RecipeSlot;
   }
@@ -989,7 +996,7 @@ SchemaField
 SchemaType
   = SchemaReferenceType / SchemaCollectionType / SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
 
-SchemaCollectionType = '[' whiteSpace* schema:SchemaType whiteSpace* ']'
+SchemaCollectionType = '[' whiteSpace* schema:SchemaReferenceType whiteSpace* ']'
   {
     return {
       kind: 'schema-collection',
@@ -1100,11 +1107,11 @@ upperIdent "an uppercase identifier (e.g. Foo)"
   = [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord [a-z][a-z0-9_]i* { return text(); }
-fieldName "a field name (e.g. foo9)"
+fieldName "a field name (e.g. foo9)" // Current handle and formFactor.
   = [a-z][a-z0-9_]i* { return text(); }
 whiteSpace "one or more whitespace characters"
   = " "+
-eolWhiteSpace "a new line"
+eolWhiteSpace "a group of new lines (and optionally comments)"
   = [ ]* !.
   / [ ]* '//' [^\n]* eolWhiteSpace
   / [ ]* eol eolWhiteSpace?

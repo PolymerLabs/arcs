@@ -1,16 +1,20 @@
-import { fs } from '../../platform/fs-web.js';
-import { Manifest } from '../../runtime/manifest.js';
+import {fs} from '../../platform/fs-web.js';
+import {Manifest} from '../../runtime/manifest.js';
 import glob from 'glob';
-import { Loader } from '../../runtime/loader.js';
+import {Loader} from '../../runtime/loader.js';
 import {assert} from '../../platform/chai-web.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
   const loader = new Loader();
   const filenames = glob.sync('particles/**/*.{manifest,schema,recipe,recipes}');
-
+  
   filenames
     .forEach(filename => {
+      // skip experimental Native partices for now as they need a heavyweight build step
+      if (filename.indexOf('Native') !== -1) {
+        return;
+      }
       it(`parses successfully: ${filename}`, async () => {
         const manifest = await Manifest.load(filename, loader);
         for (const particle of manifest.particles) {

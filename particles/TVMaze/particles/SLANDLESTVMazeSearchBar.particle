@@ -1,0 +1,5 @@
+import '../schemas/TVMazeQuery.schema'
+
+particle SlandleTVMazeSearchBar in './js/TVMazeSearchBar.js'
+  out TVMazeQuery query
+  `consume Slot toproot

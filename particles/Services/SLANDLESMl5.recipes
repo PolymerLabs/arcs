@@ -1,0 +1,4 @@
+import 'particles/SLANDLESMl5.particle'
+recipe SlandleMl5
+  SlandleMl5
+  description `image classification using ml5 (service)`

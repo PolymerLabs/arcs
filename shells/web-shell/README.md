@@ -1,6 +1,6 @@
 ## web-shell Flags
 
-e.g. https://polymerlabs.github.io/arcs-live/shells/web-shell/?storage=pouchdb&user=barney
+e.g. https://live.arcs.dev/shells/web-shell/?storage=pouchdb&user=barney
 
 ### Setting Storage Provider
 

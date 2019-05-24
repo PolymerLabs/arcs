@@ -11,12 +11,14 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
+import {Runnable} from '../../hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from '../storage-provider-base.js';
+import {Dictionary} from '../../hot.js';
 
 export async function resetStorageForTesting(key) {
   key = new FirebaseKey(key);
@@ -109,8 +111,8 @@ let _nextAppNameSuffix = 0;
 enum Mode {direct, reference, backing}
 
 export class FirebaseStorage extends StorageBase {
-  private readonly apps: {[index: string]: {app: firebase.app.App, owned: boolean}};
-  private readonly sharedStores: {[index: string]: FirebaseStorageProvider|null};
+  private readonly apps: Dictionary<{app: firebase.app.App, owned: boolean}>;
+  private readonly sharedStores: Dictionary<FirebaseStorageProvider|null>;
   private baseStores: Map<string, FirebaseBackingStore>;
   private baseStorePromises: Map<string, Promise<FirebaseBackingStore>>;
 
@@ -374,7 +376,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
   private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
-  private resolveInitialized: () => void;
+  private resolveInitialized: Runnable;
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
@@ -532,7 +534,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
          return;
       }
     }
-  
+
     const version = this.version + 1;
     let storageKey;
     if (this.referenceMode && value) {
@@ -652,10 +654,10 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   private localChanges: Map<string, {add: string[], remove: string[]}>;
   private addSuppressions: Map<string, {keys: Set<string>, barrierVersion: number}>;
   private model: CrdtCollectionModel;
-  private remoteState: {items: {[index: string]: {value: {}, keys: { [index: string]: null}}}};
+  private remoteState: {items: Dictionary<{value: {}, keys: Dictionary<null>}>};
   private readonly initialized: Promise<void>;
   private pendingWrites: {value: {}, storageKey: string}[] = [];
-  private resolveInitialized: () => void;
+  private resolveInitialized: Runnable;
   private localKeyId = Date.now();
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
@@ -1119,7 +1121,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     await this._persistChanges();
   }
 
-  async cloneFrom(handle): Promise<void>{
+  async cloneFrom(handle): Promise<void> {
     this.referenceMode = handle.referenceMode;
     const literal = await handle.toLiteral();
     if (this.referenceMode && literal.model.length > 0) {

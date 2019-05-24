@@ -11,8 +11,7 @@
 import {FlowConfig, FlowChecker} from '../arcs-dataflow.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-
-const fs = require('fs');
+import {fs} from '../../platform/fs-web.js';
 
 // TODO make this a function and test it; it's big enough now
 
@@ -39,6 +38,8 @@ void (async () => {
   } catch (e) {
     console.error(e);
     process.exit(1);
+    // Make the compiler happy that config is always initialized.
+    return;
   }
 
   const flowchecker = new FlowChecker(config);
@@ -46,10 +47,10 @@ void (async () => {
     console.log('Checking recipe ' + recipe.name);
     const res = flowchecker.flowcheck(recipe);
     if (!res.result) {
-      console.error("Data-flow check failed. Reason: " + res.reason);
+      console.error('Data-flow check failed. Reason: ' + res.reason);
       process.exit(1);
     } else {
-      console.log("Data-flow check passed");
+      console.log('Data-flow check passed');
     }
   });
-}) ();
+})();

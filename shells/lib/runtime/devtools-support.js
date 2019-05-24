@@ -7,7 +7,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {DevtoolsConnection} from '../../../build/runtime/debug/devtools-connection.js';
+import {DevtoolsConnection} from '../../../build/devtools-connector/devtools-connection.js';
 
 export const DevtoolsSupport = async () => {
   const params = (new URL(document.location)).searchParams;

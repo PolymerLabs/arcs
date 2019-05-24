@@ -73,6 +73,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   unit: [unit],
   health: [health],
   bundle: [build, bundle],
+  schema2proto: [build, schema2proto],
+  schema2pkg: [build, schema2pkg],
   default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
 };
 
@@ -80,7 +82,7 @@ const eslintCache = '.eslint_sigh_cache';
 const coverageDir = 'coverage';
 // Files to be deleted by clean, if they aren't in one of the cleanDirs.
 const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', eslintCache];
-const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'src/gen', 'test-output', coverageDir];
+const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
 const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
@@ -324,7 +326,7 @@ function build(): boolean {
 
 function tsc(): boolean {
   const result = saneSpawnWithOutput('node_modules/.bin/tsc', ['--diagnostics']);
-  if (result.stdout) {
+  if (result.success) {
     console.log(result.stdout);
   }
   return result.success;
@@ -401,15 +403,15 @@ function lint(args: string[]): boolean {
   });
 
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, fullPath => {
-    if (/build/.test(fullPath) || /server/.test(fullPath) || /dist/.test(fullPath)) {
+    if (/build[/\\]/.test(fullPath) || /gen[/\\]/.test(fullPath) || /dist[/\\]/.test(fullPath)) {
       return false;
     }
-    return /\.js$/.test(fullPath);
+    return /\.[jt]s$/.test(fullPath);
   })];
 
   const cli = new CLIEngine({
     useEsLintRc: false,
-    configFile: '.eslintrc.js',
+    configFile: '.eslintrc.json',
     fix: options.fix,
     cacheLocation: eslintCache,
     cache: true
@@ -540,7 +542,7 @@ function runTests(args: string[]): boolean {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/runtime/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
@@ -624,7 +626,7 @@ function watch(args: string[]): boolean {
   }
   const command = args.shift() || 'webpack';
   const watcher = chokidar.watch('.', {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache})`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/)`),
     persistent: true
   });
   keepProcessAlive = true; // Tell the runner to not exit.
@@ -662,7 +664,7 @@ function health(args: string[]): boolean {
 
     // Read and parse existing TsLint config.
     const tsLintConfig = fs.readFileSync(pathToTsLintConfig, 'utf-8');
-    const tsLintConfigNoComments = tsLintConfig.replace(/\ *\/\/.*\n/g, '');
+    const tsLintConfigNoComments = tsLintConfig.replace(/ *\/\/.*\r?\n/g, '');
     const parsedConfig = JSON.parse(tsLintConfigNoComments);
 
     modifier(parsedConfig);
@@ -759,16 +761,30 @@ function health(args: string[]): boolean {
   return true;
 }
 
-// E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes
-function bundle(args: string[]) {
+function spawnTool(toolPath: string, args: string[]) {
   return saneSpawn(`node`, [
       '--experimental-modules',
       '--loader',
       fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
-      `build/tools/bundle-cli.js`,
+      toolPath,
       ...args
     ],
     {stdio: 'inherit'});
+}
+
+// E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes
+function bundle(args: string[]) {
+  return spawnTool('build/tools/bundle-cli.js', args);
+}
+
+// E.g. $ ./tools/sigh schema2proto -o particles/native/wasm/proto particles/Restaurants/Restaurants.recipes
+function schema2proto(args: string[]) {
+  return spawnTool('build/tools/schema2proto.js', args);
+}
+
+// E.g. $ ./tools/sigh schema2pkg particles/Products/Product.schema
+function schema2pkg(args: string[]) {
+  return spawnTool('build/tools/schema2packager.js', args);
 }
 
 // Looks up the steps for `command` and runs each with `args`.
@@ -776,7 +792,12 @@ function runSteps(command: string, args: string[]): boolean {
   const funcs = steps[command];
   if (funcs === undefined) {
     console.log(`Unknown command: '${command}'`);
-    console.log('Available commands are:', Object.keys(steps).join(', '));
+    console.log('Available commands are:');
+    const cmds = Object.keys(steps);
+    let chunk;
+    while ((chunk = cmds.splice(0, 8)).length) {
+      console.log(' ', chunk.join(', '));
+    }
     process.exit(2);
   }
 
@@ -802,6 +823,6 @@ function runSteps(command: string, args: string[]): boolean {
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
 
-if(!keepProcessAlive) { // the watch command is running.
+if (!keepProcessAlive) { // the watch command is running.
   process.exit(result ? 0 : 1);
 }

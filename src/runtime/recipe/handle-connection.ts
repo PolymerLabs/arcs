@@ -12,9 +12,10 @@ import {Type} from '../type.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe} from './recipe.js';
+import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
 
-export type Direction = 'in' | 'out' | 'inout' | 'host';
+import {Direction} from '../manifest-ast-nodes.js';
 
 export class HandleConnection {
   private readonly _recipe: Recipe;
@@ -260,7 +261,7 @@ export class HandleConnection {
     return this.particle.spec.handleConnections.filter(specConn => {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
-                 this.handle.type.equals(specConn.type) &&
+                 TypeChecker.compareTypes({type: this.handle.type}, {type: specConn.type}) &&
                  !this.particle.getConnectionByName(specConn.name);
         });
   }

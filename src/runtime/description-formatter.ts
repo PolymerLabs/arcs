@@ -16,11 +16,12 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
 import {ModelValue} from './storage/crdt-collection-model.js';
+import {Dictionary} from './hot.js';
 
 export type ParticleDescription = {
   _particle: Particle,
   pattern?: string,
-  _connections: {[index: string]: HandleDescription},
+  _connections: Dictionary<HandleDescription>,
   _rank?: number
 };
 
@@ -35,7 +36,7 @@ export class DescriptionFormatter {
   excludeValues = false;
 
   constructor(private readonly particleDescriptions = <ParticleDescription[]>[],
-              private readonly storeDescById: {[id: string]: string} = {}) {}
+              private readonly storeDescById: Dictionary<string> = {}) {}
 
   getDescription(recipe: {patterns: string[], particles: Particle[]}) {
     if (recipe.patterns.length > 0) {
@@ -122,7 +123,7 @@ export class DescriptionFormatter {
     assert(sentence);
     // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
     const last = sentence.length - 1;
-    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9()'>\]]/i) ? '.' : ''}`;
+    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9()' >\]]/i) ? '.' : ''}`;
   }
 
   patternToSuggestion(pattern, particleDescription) {
@@ -201,7 +202,7 @@ export class DescriptionFormatter {
 
     const handleConn = particle.connections[handleNames[0]];
     if (handleConn) { // handle connection
-      assert(handleConn.handle && handleConn.handle.id, 'Missing id???');
+      assert(handleConn.handle, 'Missing handle???');
       return [{
         fullName: valueTokens[0],
         handleName: handleConn.name,
@@ -210,8 +211,7 @@ export class DescriptionFormatter {
         extra,
         _handleConn: handleConn,
         value: particleDescription._connections[handleConn.name].value
-      }];
-        
+      }];  
     }
 
     // slot connection
@@ -267,6 +267,9 @@ export class DescriptionFormatter {
 
         // Transformation's hosted particle.
         if (token._handleConn.type instanceof InterfaceType) {
+          if (!token.value) {
+            return undefined;
+          }
           assert(token.value.interfaceValue, `Missing interface type value for '${token._handleConn.type}'.`);
           const particleSpec = ParticleSpec.fromLiteral(token.value.interfaceValue);
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
@@ -329,6 +332,9 @@ export class DescriptionFormatter {
   }
 
   _propertyTokenToString(handleName: string, value: DescriptionValue, properties: string[]) {
+    if (!value) {
+      return '';
+    }
     assert(value.entityValue, `Cannot return property ${properties.join(',')} for non EntityType.`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     const valueVar = value.entityValue;
@@ -428,7 +434,9 @@ export class DescriptionFormatter {
 
   _formatStoreDescription(handleConn): string|undefined {
     if (handleConn.handle) {
-      assert(handleConn.handle.id, `no id for ${handleConn.name}?`);
+      if (!handleConn.handle.id) {
+        return undefined;
+      }
       const storeDescription = this.storeDescById[handleConn.handle.id];
       const handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).

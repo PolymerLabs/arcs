@@ -15,12 +15,13 @@ import {Handle} from './handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {Type} from './type.js';
 import {Content} from './slot-consumer.js';
+import {Dictionary} from './hot.js';
 
 export class MultiplexerDomParticle extends TransformationDomParticle {
 
   private _itemSubIdByHostedSlotId: Map<string, string> = new Map();
   private _connByHostedConn: Map<string, string> = new Map();
-  handleIds: {[key: string]: Promise<Handle>};
+  handleIds: Dictionary<Promise<Handle>>;
 
   async _mapParticleConnections(
       listHandleName: string,
@@ -42,8 +43,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // arc multiple times unnecessarily.
 
       // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
-      let otherHandleStore;
-      otherHandleStore = otherHandle.storage;
+      // tslint:disable-next-line: no-any
+      const otherHandleStore = otherHandle.storage as any;
       otherMappedHandles.push(`use '${await arc.mapHandle(otherHandleStore)}' as v${index}`);
       const hostedOtherConnection = hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
@@ -131,7 +132,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       }
       this._itemSubIdByHostedSlotId.set(slotId, item.id);
       try {
-        const recipe = this.constructInnerRecipe(resolvedHostedParticle, item, itemHandle, { name: hostedSlotName, id: slotId }, { connections: otherConnections, handles: otherMappedHandles });
+        const recipe = this.constructInnerRecipe(resolvedHostedParticle, item, itemHandle, {name: hostedSlotName, id: slotId}, {connections: otherConnections, handles: otherMappedHandles});
         await arc.loadRecipe(recipe);
         // tslint:disable-next-line: no-any
         (itemHandle as any).set(item);

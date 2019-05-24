@@ -12,6 +12,7 @@ import {SyntheticStorage} from './synthetic-storage.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {KeyBase} from './key-base.js';
+import {Dictionary} from '../hot.js';
 
 // TODO(sjmiles): StorageProviderFactory.register can be used
 // to install additional providers, as long as it's invoked
@@ -27,7 +28,7 @@ export class StorageProviderFactory {
     providers[name] = instance;
   }
 
-  private _storageInstances: {[index: string]: {storage: StorageBase, isPersistent: boolean}};
+  private _storageInstances: Dictionary<{storage: StorageBase, isPersistent: boolean}>;
 
   constructor(private readonly arcId: Id) {
     this._storageInstances = {};

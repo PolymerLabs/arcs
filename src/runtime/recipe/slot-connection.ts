@@ -11,13 +11,14 @@ import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings} from './comparable.js';
+import {Dictionary} from '../hot.js';
 
 export class SlotConnection {
   private readonly _recipe: Recipe;
   private readonly _particle: Particle;
   private readonly _name: string;
   private _targetSlot?: Slot = undefined;
-  private _providedSlots: {[index: string]: Slot} = {};
+  private _providedSlots: Dictionary<Slot> = {};
   private _tags = <string[]>[];
 
   constructor(name: string, particle: Particle) {
@@ -41,7 +42,7 @@ export class SlotConnection {
   get targetSlot(): Slot { return this._targetSlot; }
   set targetSlot(targetSlot: Slot | undefined) { this._targetSlot = targetSlot; }
 
-  get providedSlots(): {[index: string]: Slot} { return this._providedSlots; }
+  get providedSlots(): Dictionary<Slot> { return this._providedSlots; }
   get tags(): string[] { return this._tags; }
   set tags(tags: string[]) { this._tags = tags; }
 

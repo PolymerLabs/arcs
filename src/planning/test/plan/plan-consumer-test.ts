@@ -57,6 +57,7 @@ recipe
       provide other as other
   Test2
     consume other as other
+  description \`Test Recipe\`
 `
       });
       const consumer = await createPlanConsumer(

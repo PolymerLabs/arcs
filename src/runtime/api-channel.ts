@@ -11,49 +11,33 @@
 import {assert} from '../platform/assert-web.js';
 
 import {Arc} from './arc.js';
-import {DevtoolsConnection} from './debug/devtools-connection.js';
-import {OuterPortAttachment} from './debug/outer-port-attachment.js';
+import {ArcInspector} from './arc-inspector.js';
 import {Handle} from './handle.js';
-import {ParticleSpec, SerializedParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy} from './storage-proxy.js';
 import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {Type, TypeLiteral} from './type.js';
-import {PropagatedException, SerializedPropagatedException} from './arc-exceptions.js';
+import {Type} from './type.js';
+import {PropagatedException} from './arc-exceptions.js';
+import {Literal, Literalizable} from './hot.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
-interface MappingInfo {
+interface MappingInfo<T> {
   type: MappingType;
   initializer?: boolean;
   redundant?: boolean;
-  value?: MappingInfo;
-  key?: MappingInfo;
-  converter?: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException;
+  value?: MappingInfo<T>;
+  key?: MappingInfo<T>;
+  converter?: Literalizable<T, Literal>;
   identifier?: boolean;
   ignore?: boolean;
 }
 
-// TODO(shans): are there better types that I can use for this?
-interface Literalizer {
-  prototype: {toLiteral: () => TypeLiteral};
-  fromLiteral: (typeliteral: TypeLiteral) => Type;
-}
-
-interface LiteralizerParticleSpec {
-  prototype: {toLiteral: () => SerializedParticleSpec};
-  fromLiteral: (spec: SerializedParticleSpec) => ParticleSpec;
-}
-
-interface LiteralizerPropagatedException {
-  prototype: {toLiteral: () => SerializedPropagatedException};
-  fromLiteral: (exception: SerializedPropagatedException) => PropagatedException;
-}
-
-const targets = new Map<{}, Map<string, MappingInfo[]>>();
+const targets = new Map<{}, Map<string, MappingInfo<unknown>[]>>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
   if (!targets.has(target)) {
@@ -64,7 +48,7 @@ function setPropertyKey(target: {}, propertyKey: string) {
   }
 }
 
-function set(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo) {
+function set<T>(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo<T>) {
   setPropertyKey(target, propertyKey);
   targets.get(target).get(propertyKey)[parameterIndex] = info;
 }
@@ -77,23 +61,23 @@ function Mapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.Mapped});
 }
 
-function ByLiteral(constructor: Literalizer | LiteralizerParticleSpec | LiteralizerPropagatedException) {
+function ByLiteral<T>(constructor: Literalizable<T, Literal>) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ByLiteral, converter: constructor};
+    const info: MappingInfo<T> = {type: MappingType.ByLiteral, converter: constructor};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function ObjectMap(key: MappingType, value: MappingType) {
+function ObjectMap<T>(key: MappingType, value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.ObjectMap, key: {type: key}, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
 
-function List(value: MappingType) {
+function List<T>(value: MappingType) {
   return (target: {}, propertyKey: string, parameterIndex: number) => {
-    const info: MappingInfo = {type: MappingType.List, value: {type: value}};
+    const info: MappingInfo<T> = {type: MappingType.List, value: {type: value}};
     set(target.constructor, propertyKey, parameterIndex, info);
   };
 }
@@ -207,15 +191,15 @@ class ThingMapper {
 export class APIPort {
   private _port: MessagePort;
   _mapper: ThingMapper;
-  protected _debugAttachment: OuterPortAttachment;
-  protected _attachStack: boolean;
+  protected inspector: ArcInspector;
+  protected attachStack: boolean;
   messageCount: number;
   constructor(messagePort: MessagePort, prefix: string) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._port.onmessage = async e => this._processMessage(e);
-    this._debugAttachment = null;
-    this._attachStack = false;
+    this.inspector = null;
+    this.attachStack = false;
     this.messageCount = 0;
 
     this._testingHook();
@@ -232,17 +216,17 @@ export class APIPort {
   async _processMessage(e) {
     assert(this['before' + e.data.messageType] !== undefined);
     const count = this.messageCount++;
-    if (this._debugAttachment) {
-      this._debugAttachment.handlePecMessage('on' + e.data.messageType, e.data.messageBody, count, e.data.stack);
+    if (this.inspector) {
+      this.inspector.pecMessage('on' + e.data.messageType, e.data.messageBody, count, e.data.stack);
     }
     this['before' + e.data.messageType](e.data.messageBody);
   }
 
   send(name: string, args: {}) {
-    const call = {messageType: name, messageBody: args, stack: this._attachStack ? new Error().stack : undefined};
+    const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
-    if (this._debugAttachment) {
-      this._debugAttachment.handlePecMessage(name, args, count, new Error().stack);
+    if (this.inspector) {
+      this.inspector.pecMessage(name, args, count, new Error().stack);
     }
     this._port.postMessage(call);
   }
@@ -264,7 +248,7 @@ function getArgs(func) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -275,10 +259,11 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
       return value;
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = {};
       value.forEach((childvalue, key) => r[convert(info.key, key, mapper)] = convert(info.value, childvalue, mapper));
       return r;
+    }
     case MappingType.List:
       return value.map(v => convert(info.value, v, mapper));
     case MappingType.ByLiteral:
@@ -291,7 +276,7 @@ function convert(info: MappingInfo, value: any, mapper: ThingMapper) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
+function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);
@@ -302,12 +287,13 @@ function unconvert(info: MappingInfo, value: any, mapper: ThingMapper) {
       return mapper.thingForIdentifier(value);
     case MappingType.Direct:
       return value;
-    case MappingType.ObjectMap:
+    case MappingType.ObjectMap: {
       const r = new Map();
       for (const key of Object.keys(value)) {
         r.set(unconvert(info.key, key, mapper), unconvert(info.value, value[key], mapper));
       }
       return r;
+    }
     case MappingType.List:
       return value.map(v => unconvert(info.value, v, mapper));
     case MappingType.ByLiteral:
@@ -332,7 +318,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
         // as the requestedId for mapping below.
         const requestedId = descriptor.findIndex(d => d.identifier);
 
-        function impl(this: APIPort, ...args) {
+        /** @this APIPort */
+        const impl = function(this: APIPort, ...args) {
           const messageBody = {};
           for (let i = 0; i < descriptor.length; i++) {
             if (i === initializer) {
@@ -354,10 +341,11 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
           }
 
           this.send(f, messageBody);
-        }
+        };
 
 
-        async function before(this: APIPort, messageBody) {
+        /** @this APIPort */
+        const before = async function before(this: APIPort, messageBody) {
           const args = [];
           const promises = [];
           for (let i = 0; i < descriptor.length; i++) {
@@ -388,7 +376,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
             assert(messageBody['identifier']);
             await this._mapper.establishThingMapping(messageBody['identifier'], result);
           }
-        }
+        };
 
         Object.defineProperty(me.prototype, f, {
           get() {
@@ -412,10 +400,10 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 export abstract class PECOuterPort extends APIPort {
   constructor(messagePort: MessagePort, arc: Arc) {
     super(messagePort, 'o');
-    DevtoolsConnection.onceConnected.then(devtoolsChannel => {
-      this.DevToolsConnected();
-      this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel);
-    });
+    this.inspector = arc.inspector;
+    if (this.inspector) {
+      this.inspector.onceActive.then(() => this.DevToolsConnected());
+    }
   }
 
   @NoArgs Stop() {}
@@ -533,6 +521,6 @@ export abstract class PECInnerPort extends APIPort {
   // send it along with the message. We only want to do this after a DevTools connection has been detected, which
   // we can't directly detect inside a worker context, so the PECOuterPort will send an API message instead.
   onDevToolsConnected() {
-    this._attachStack = true;
+    this.attachStack = true;
   }
 }

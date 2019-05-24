@@ -94,7 +94,7 @@ describe('Dataflow analysis', () => {
   it('Object with incorrect negative fails to parse', () => {
     let threw = false;
     try {
-      const a = new FlowAssertion("onlyTrustedDontResolve: 0 : untrusted particles : don't resolve");
+      const a = new FlowAssertion('onlyTrustedDontResolve: 0 : untrusted particles : don\'t resolve');
     } catch (e) {
       threw = true;
     }

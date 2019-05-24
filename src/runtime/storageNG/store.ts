@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from "../crdt/crdt.js";
-import {Type} from "../type.js";
-import {Exists, Driver, DriverFactory} from "./drivers/driver-factory.js";
+import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError} from '../crdt/crdt.js';
+import {Type} from '../type.js';
+import {Exists, Driver, DriverFactory} from './drivers/driver-factory.js';
 
 export enum StorageMode {Direct, Backing, ReferenceMode}
 
 export enum ProxyMessageType { SyncRequest, ModelUpdate, Operations }
 
-type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.SyncRequest, id: number} | 
+export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.SyncRequest, id: number} | 
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id: number} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id: number}; 
 
@@ -82,7 +82,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // The driver will invoke this method when it has an updated remote model
   async onReceive(model: T['data']): Promise<void> {
     const {modelChange, otherChange} = this.localModel.merge(model);
-    this.processModelChange(modelChange, otherChange, true);
+    await this.processModelChange(modelChange, otherChange, true);
   }
   
   private async processModelChange(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, messageFromDriver) {
@@ -130,12 +130,13 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
         }
         await this.processModelChange({changeType: ChangeType.Operations, operations: message.operations}, null, false);
         return true;
-      case ProxyMessageType.ModelUpdate:
+      case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
         await this.processModelChange(modelChange, otherChange, false);
         return true;
+      }
       default:
-        throw new CRDTError("Invalid operation provided to onProxyMessage");
+        throw new CRDTError('Invalid operation provided to onProxyMessage');
     }
   }
 

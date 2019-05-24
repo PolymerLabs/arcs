@@ -14,6 +14,7 @@ import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator, ArcId} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
+import {Runnable} from './hot.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -23,10 +24,12 @@ import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
+import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
+import {Dictionary} from './hot.js';
 
 class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -144,7 +147,7 @@ class ManifestVisitor {
 
   // Parents are visited before children, but an implementation can force
   // children to be visted by calling `visitChildren()`.
-  visit(node: AstNode.BaseNode, visitChildren: () => void) {
+  visit(node: AstNode.BaseNode, visitChildren: Runnable) {
   }
 }
 
@@ -158,8 +161,8 @@ export class Manifest {
   private _recipes = <Recipe[]>[];
   private _imports = <Manifest[]>[];
   // TODO: These should be lists, possibly with a separate flattened map.
-  private _particles: {[index: string]: ParticleSpec} = {};
-  private _schemas: {[index: string]: Schema} = {};
+  private _particles: Dictionary<ParticleSpec> = {};
+  private _schemas: Dictionary<Schema> = {};
   private _stores = <(StorageProviderBase|StorageStub)[]>[];
   private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
@@ -216,7 +219,7 @@ export class Manifest {
   get imports() {
     return this._imports;
   }
-  get schemas(): {[index: string]: Schema} {
+  get schemas(): Dictionary<Schema> {
     return this._schemas;
   }
   get fileName() {
@@ -334,7 +337,7 @@ export class Manifest {
         return false;
       }
 
-      return store.type.equals(type);
+      return TypeChecker.compareTypes({type: store.type}, {type});
     }
     function tagPredicate(manifest: Manifest, store: StorageProviderBase | StorageStub) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
@@ -472,11 +475,11 @@ ${e.message}
         }
       }));
 
-      const processItems = async (kind, f) => {
+      const processItems = async (kind: string, f: Function) => {
         for (const item of items) {
           if (item.kind === kind) {
             Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);
+            await f(item);  // TODO(cypher1): Use Promise.all here.
           }
         }
       };
@@ -725,44 +728,44 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
-  private static _processRecipe(manifest, recipeItem, loader) {
-    // TODO: annotate other things too
+  // TODO(cypher): Remove loader dependency.
+  private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode, loader) {
     const recipe = manifest._newRecipe(recipeItem.name);
-    this._buildRecipe(manifest, recipe, recipeItem);
-  }
 
-  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItem) {
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
+    this._buildRecipe(manifest, recipe, recipeItem.items);
+  }
+
+  private static _buildRecipe(manifest: Manifest, recipe: Recipe, recipeItems: AstNode.RecipeItem[]) {
     const items = {
-      require: recipeItem.items.filter(item => item.kind === 'require'),
-      handles: recipeItem.items.filter(item => item.kind === 'handle'),
+      require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
+      handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
       byHandle: new Map(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItem.items.filter(item => item.kind === 'requireHandle'),
+      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       byRequireHandle: new Map(),
-      particles: recipeItem.items.filter(item => item.kind === 'particle'),
+      particles: recipeItems.filter(item => item.kind === 'particle') as AstNode.RecipeParticle[],
       byParticle: new Map(),
-      slots: recipeItem.items.filter(item => item.kind === 'slot'),
+      slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
       bySlot: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind === 'connection'),
-      search: recipeItem.items.find(item => item.kind === 'search'),
-      description: recipeItem.items.find(item => item.kind === 'description')
+      connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
+      search: recipeItems.find(item => item.kind === 'search') as AstNode.RecipeSearch,
+      description: recipeItems.find(item => item.kind === 'description') as AstNode.Description
     };
-
 
     // A recipe should either source handles by the 'handle' keyword (requireHandle item) or use fates (handle item).
     // A recipe should not use both methods.
     assert(!(items.handles.length > 0 && items.requireHandles.length > 0), `Inconsistent handle definitions`);
-    const itemHandles = items.handles.length > 0 ? items.handles : items.requireHandles;
+    const itemHandles = (items.handles.length > 0 ? items.handles : items.requireHandles) as (AstNode.RecipeHandle | AstNode.RequireHandleSection)[];
     for (const item of itemHandles) {
       const handle = recipe.newHandle();
-      const ref = item.ref || {tags: []};
+      const ref = item.ref;
       if (ref.id) {
         handle.id = ref.id;
         const targetStore = manifest.findStoreById(handle.id);
@@ -834,7 +837,6 @@ ${e.message}
     for (const item of items.slots) {
       // TODO(mmandlis): newSlot requires a name. What should the name be here?
       const slot = recipe.newSlot(undefined);
-      item.ref = item.ref || {};
       if (item.ref.id) {
         slot.id = item.ref.id;
       }
@@ -852,8 +854,6 @@ ${e.message}
     // TODO: disambiguate.
     for (const item of items.particles) {
       const particle = recipe.newParticle(item.ref.name);
-      // TODO: particle doesn't have a tags member. Should we be setting this here?
-      particle['tags'] = item.ref.tags;
       particle.verbs = item.ref.verbs;
 
       if (!(recipe instanceof RequireSection)) {
@@ -929,7 +929,7 @@ ${e.message}
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
-                items.byName.set(ps.name,providedSlot);
+                items.byName.set(ps.name, providedSlot);
                 recipe.removeSlot(theSlot);
               } else {
                 items.byName.set(ps.name, providedSlot);
@@ -1007,7 +1007,7 @@ ${e.message}
             items.byName.set(handle.localName, entry);
             items.byHandle.set(handle, handle['item']);
           } else if (!entry.item) {
-            throw new ManifestError(connectionItem.location, `did not expect ${entry} expected handle or particle`);
+            throw new ManifestError(connectionItem.location, `did not expect '${entry}' expected handle or particle`);
           }
 
           if (entry.item.kind === 'handle' || entry.item.kind === 'requireHandle') {
@@ -1104,7 +1104,7 @@ ${e.message}
     if (items.require) {
       for (const item of items.require) {
         const requireSection = recipe.newRequireSection();
-        this._buildRecipe(manifest, requireSection, item);
+        this._buildRecipe(manifest, requireSection, item.items);
       }
     }
   }

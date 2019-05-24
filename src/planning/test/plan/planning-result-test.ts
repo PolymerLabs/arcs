@@ -198,7 +198,7 @@ recipe R4
     assert.lengthOf(result2.suggestions, 2);
 
     // Increment store 'thing-id-0' version in result1.
-    result2.suggestions[0].versionByStore["thing-id-0"] = 1;
+    result2.suggestions[0].versionByStore['thing-id-0'] = 1;
     assert.isTrue(result1.merge({suggestions: result2.suggestions}, helper.arc));
     assert.lengthOf(result1.suggestions, 2);
     assert.equal(result1.suggestions[0].versionByStore['thing-id-0'], 1);

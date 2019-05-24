@@ -15,9 +15,8 @@ import {HandleConnection} from './handle-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsValidOptions, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings} from './comparable.js';
-import { StorageProviderBase } from '../storage/storage-provider-base.js';
-
-type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
+import {StorageProviderBase} from '../storage/storage-provider-base.js';
+import {Fate} from '../manifest-ast-nodes.js';
 
 export class Handle {
   private readonly _recipe: Recipe;
@@ -141,7 +140,7 @@ export class Handle {
     this._id = id;
   }
   mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: string}) {
-    if(!storage) {
+    if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
     this._id = storage.id;
@@ -176,7 +175,7 @@ export class Handle {
   }
 
   _isValid(options: IsValidOptions) {
-    const tags = new Set();
+    const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
       if (this.fate === 'map' && ['out', 'inout'].includes(connection.direction)) {

@@ -14,6 +14,7 @@ import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
 import {CursorNextValue, PECInnerPort} from './api-channel.js';
 import {PropagatedException, SystemException} from './arc-exceptions.js';
 import {Handle, HandleOptions} from './handle.js';
+import {Runnable} from './hot.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Particle} from './particle.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/crdt-collection-model.js';
@@ -512,19 +513,19 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
   }
 
   _getModelForSync(): never {
-    throw new Error("_getModelForSync not implemented for BigCollectionProxy");
+    throw new Error('_getModelForSync not implemented for BigCollectionProxy');
   }
 
   _processUpdate() : {} {
-    throw new Error("_processUpdate not implemented for BigCollectionProxy");
+    throw new Error('_processUpdate not implemented for BigCollectionProxy');
   }
 
   _synchronizeModel() : boolean {
-    throw new Error("_synchronizeModel not implemented for BigCollectionProxy");
+    throw new Error('_synchronizeModel not implemented for BigCollectionProxy');
   }
   // TODO: surface get()
   async get(id: string) {
-    throw new Error("unimplemented");
+    throw new Error('unimplemented');
   }
   async store(value, keys, particleId): Promise<void> {
     return new Promise<void>(resolve =>
@@ -556,7 +557,7 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
 export class StorageProxyScheduler {
   private _scheduled = false;
   private _queues = new Map<Particle, Map<Handle, [string, Particle, {}][]>>();
-  private _idleResolver: (() => void) | null = null;
+  private _idleResolver: Runnable | null = null;
   private _idle: Promise<void> | null = null;
   constructor() {
     this._scheduled = false;

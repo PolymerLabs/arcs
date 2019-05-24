@@ -73,7 +73,7 @@ describe('Id', () => {
   });
 
   it('parses IDs from strings without exclamation marks', () => {
-    assert.deepEqual(Id.fromString('x'), createId('',['x']));
+    assert.deepEqual(Id.fromString('x'), createId('', ['x']));
     assert.deepEqual(Id.fromString('x:y'), createId('', ['x', 'y']));
   });
 
