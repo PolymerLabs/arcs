@@ -137,8 +137,8 @@ schema Person
     \`provide Slot {formFactor:medium} preamble
     \`provide Slot annotation
   \`consume Slot other
-    \`provide [~cell] myProvidedSetCell
-  \`consume [~cell] mySetCell
+    \`provide [Slot] myProvidedSetCell
+  \`consume [Slot] mySetCell
   modality dom
   modality dom-touch
   description \`hello world \${list}\`
@@ -220,8 +220,8 @@ ${particleStr1}
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
-  \`consume Slot thing
-    \`provide Slot otherThing
+  \`consume? Slot thing
+    \`provide? Slot otherThing
   modality dom`;
 
     const manifest = await Manifest.parse(manifestString);
@@ -675,7 +675,8 @@ ${particleStr1}
             slotA consume s0
       `)).recipes[0];
       recipe.normalize();
-      assert.equal(args.expectedIsResolved, recipe.isResolved());
+      assert.equal(args.expectedIsResolved, recipe.isResolved(),
+                   `Expected recipe to be ${args.expectedIsResolved ? '' : 'un'}resolved`);
     };
     await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
     await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
@@ -1821,6 +1822,48 @@ resource SomeName
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output
+  modality dom
+  consume thing #main #tagname
+    provide otherThing #testtag`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+
+  it('can round-trip particles with fields', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  in ~a thingy
+  modality dom
+  must consume thing #main #tagname
+    formFactor big
+    must provide otherThing #testtag
+      handle thingy`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+
+  it('SLANDLES can round-trip particles with tags', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot {formFactor:big} thing #main #tagname
+    \`provide Slot {handle:thingy} otherThing #testtag
+  modality dom`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with fields', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  in ~a thingy
   \`consume Slot {formFactor:big} thing #main #tagname
     \`provide Slot {handle:thingy} otherThing #testtag
   modality dom`;
@@ -1830,7 +1873,19 @@ resource SomeName
     assert.equal(manifestString, manifest.particles[0].toString());
   });
 
-  it('can round-trip particles with fields', async () => {
+  it('SLANDLES can round-trip particles with tags', async () => {
+    const manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot thing #main #tagname
+    \`provide Slot otherThing #testtag
+  modality dom`;
+
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with fields', async () => {
     const manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
     out [Product {}] output

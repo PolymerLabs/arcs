@@ -1,0 +1,10 @@
+import 'User.schema'
+
+particle SlandleEchoUser in './source/EchoUser.js'
+  `consume Slot root
+  in User user
+
+recipe SlandleEchoUser
+  map 'SYSTEM_user' as user
+  SlandleEchoUser
+    user = user

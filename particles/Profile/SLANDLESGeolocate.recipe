@@ -1,0 +1,12 @@
+import './Geolocation.schema'
+
+particle SlandleGeolocate in './source/Geolocate.js'
+  `consume Slot root
+  out Geolocation location
+  description `you`
+    location `you`
+
+recipe SlandleGeolocate
+  create as location
+  SlandleGeolocate
+    location = location

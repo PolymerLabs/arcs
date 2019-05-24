@@ -64,26 +64,18 @@ public:
 
   template<typename T, typename H = std::hash<T>, typename E = std::equal_to<T>>
   void encodeCollection(const char* prefix, const std::unordered_set<T, H, E>& collection) {
-    str_ += prefix + numString(collection.size()) + ":";
+    str_ += prefix + std::to_string(collection.size()) + ":";
     for (auto item : collection) {
       encodeValue("", item, "");
     }
     str_ += "|";
   }
 
-  // Strips trailing zeros (and possibly the decimal point) from std::to_string(double).
-  std::string numString(double num) {
-    std::string s = std::to_string(num);
-    auto i = s.size() - 1;
-    while (i > 0 && (s[i] == '0' || s[i] == '.')) {
-      i--;
-    }
-    s.erase(i + 1);
-    return s;
-  }
-
+  // Clears the internal contents.
   std::string result() {
-    return str_;
+    std::string res = std::move(str_);
+    str_ = "";
+    return res;
   }
 
 private:
@@ -92,17 +84,24 @@ private:
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const std::string& str, const char* postfix) {
-  str_ += prefix + numString(str.size()) + ":" + str + postfix;
+  str_ += prefix + std::to_string(str.size()) + ":" + str + postfix;
 }
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const URL& url, const char* postfix) {
-  str_ += prefix + numString(url.href.size()) + ":" + url.href + postfix;
+  str_ += prefix + std::to_string(url.href.size()) + ":" + url.href + postfix;
 }
 
 template<>
 void StringEncoder::encodeValue(const char* prefix, const double& num, const char* postfix) {
-  str_ += prefix + numString(num) + ":" + postfix;
+  // Strip trailing zeros (and possibly the decimal point).
+  std::string s = std::to_string(num);
+  auto i = s.size() - 1;
+  while (i > 0 && s[i] == '0') {
+    i--;
+  }
+  s.erase((s[i] == '.') ? i : i + 1);
+  str_ += prefix + s + ":" + postfix;
 }
 
 template<>
@@ -122,7 +121,7 @@ public:
   StringDecoder& operator=(const StringDecoder&) const = delete;
 
   bool done() {
-    return *str_ == 0;
+    return str_ == nullptr || *str_ == 0;
   }
 
   std::string upTo(char sep) {

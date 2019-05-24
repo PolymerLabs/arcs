@@ -134,12 +134,12 @@ public:
   std::string encode() {
     internal::StringEncoder encoder;
     ${encode.join('\n    ')}
-    return encoder.result();
+    return std::move(encoder.result());
   }
 
-  static ${schemaName} decode(std::string str) {
+  static ${schemaName} decode(const char* str) {
     ${schemaName} obj;
-    internal::StringDecoder decoder(str.c_str());
+    internal::StringDecoder decoder(str);
     for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
       std::string name = decoder.upTo(':');
       if (0) {

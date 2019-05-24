@@ -1,0 +1,23 @@
+import './Json.schema'
+
+schema Artist
+  Text type
+  Text name
+  Text source
+
+particle SlandleRandomArtist in './source/RandomArtist.js'
+  out Artist artist
+
+particle SlandleSuggestArtist in './source/SuggestArtist.js'
+  in Artist artist
+  out Json suggestion
+  `consume Slot app
+
+recipe SlandleCom_spotify_music &autofill
+  create as artist
+  create as suggestion
+  SlandleRandomArtist
+    artist = artist
+  SlandleSuggestArtist
+    artist = artist
+    suggestion = suggestion

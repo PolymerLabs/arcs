@@ -1,0 +1,5 @@
+import 'Product.schema'
+
+particle SlandleProductItem in 'source/ProductItem.js'
+  in Product product
+  `consume Slot item

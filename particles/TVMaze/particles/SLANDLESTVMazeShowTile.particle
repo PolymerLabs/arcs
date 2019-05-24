@@ -1,0 +1,6 @@
+import '../schemas/TVMazeShow.schema'
+
+particle SlandleTVMazeShowTile in './js/TVMazeShowTile.js'
+  in TVMazeShow show
+  `consume Slot tile
+    `provide [Slot] action
