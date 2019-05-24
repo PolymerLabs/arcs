@@ -52,7 +52,7 @@ describe('TicTacToe MoveApplier tests', () => {
       p10: 0, p11: 0, p12: 0,
       p20: 0, p21: 0, p22: 0}});
 
-    await nextMoveStore.set({id: 'id0', rawData: {x: 1, y:1, player: 1}});
+    await nextMoveStore.set({id: 'id0', rawData: {x: 1, y: 1, player: 1}});
 
     util.assertSingletonWillChangeTo(
       arc,
@@ -98,7 +98,7 @@ describe('TicTacToe MoveApplier tests', () => {
       p10: 0, p11: 0, p12: 0,
       p20: 0, p21: 0, p22: 0}});
 
-    await nextMoveStore.set({id: 'id0', rawData: {x: 1, y:1, player: 1}});
+    await nextMoveStore.set({id: 'id0', rawData: {x: 1, y: 1, player: 1}});
 
     util.assertSingletonWillChangeTo(
       arc,
