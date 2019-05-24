@@ -60,7 +60,6 @@ describe('JsonldToManifest', () => {
           assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
           assert.isTrue(classExtendsSuperclasses(converted), 'manifest should extend at least one superclass.');
         });
-
     });
 
   });
