@@ -25,7 +25,7 @@ describe('wasm', () => {
         URL       lnk
         Number    num
         Boolean   flg`);
-    schema = manifest.schemas.Foo
+    schema = manifest.schemas.Foo;
   });
 
   it('entity to proto conversion supports basic types', async () => {
