@@ -3,17 +3,11 @@ schema Data
   Text txt
   URL lnk
   Boolean flg
-  [Number] c_num
-  [Text] c_txt
-  [URL] c_lnk
-  [Boolean] c_flg
 
 resource DataResource
   start
   [
-    {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true,
-     "c_txt": ["a", "b"], "c_num": [12.5, 0, 27], "c_flg": [true, false],
-     "c_lnk": ["http://abc"] }
+    {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}
   ]
 
 store DataStore of Data in DataResource
