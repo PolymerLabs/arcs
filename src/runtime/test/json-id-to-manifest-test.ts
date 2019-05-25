@@ -1,7 +1,7 @@
 /** @see LICENSE */
 
 import {assert} from '../../platform/chai-web.js';
-import {JsonldToManifest} from '../converters/jsonldToManifest.js';
+import {JsonldToManifest, supportedTypes} from '../converters/jsonldToManifest.js';
 import {fetch} from '../../platform/fetch-web.js';
 import {Predicate} from '../hot.js';
 import {Manifest} from '../manifest.js';
@@ -23,6 +23,26 @@ describe('JsonldToManifest', () => {
   const asyncLocalBusinessStr: Promise<string> = fetch('https://schema.org/LocalBusiness.jsonld')
     .then(r => r.text());
 
+
+
+
+  const messyOmit = (obj: object, p: Predicate<[string, unknown]>): void => {
+    Object.entries(obj).forEach((kv) => {
+      const key = kv[0];
+
+      if (p(kv)) {
+        delete obj[key];
+      }
+
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        messyOmit(obj[key], p);
+      }
+    });
+
+  };
+
+  const omitKey = (obj: object, key: string) => messyOmit(obj, (kv) => kv[0] === key);
+
   describe('convert', () => {
     it('works on objects without @graph', async () => {
       const valids = await asyncProductStr
@@ -37,6 +57,7 @@ describe('JsonldToManifest', () => {
     });
 
     it('should work on a real schema.org json linked-data file', () => {
+      //TODO(alxr): Parameterize these tests to work on a variety of schemas.
       asyncProductStr
         .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}))
         .then((converted: string) => {
@@ -51,7 +72,7 @@ describe('JsonldToManifest', () => {
       };
 
       const classExtendsSuperclasses: Predicate<string> = (manifest: string): boolean => {
-        return manifest.indexOf(' extends ') !== -1;
+        return manifest.includes(' extends ');
       };
 
       asyncLocalBusinessStr
@@ -62,5 +83,41 @@ describe('JsonldToManifest', () => {
         });
     });
 
+    it('should produce a manifest even if the schema contains no domains', () => {
+      asyncLocalBusinessStr
+        .then((data: string) => JSON.parse(data))
+        .then((j: JSON) => { omitKey(j, 'schema:domainIncludes'); return JSON.stringify(j);})
+        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'}))
+        .then( (converted: string) => {
+          assert.isTrue(isValidManifest(converted));
+        });
+    });
+
+    // TODO(alxr) get test to pass
+    xit('should produce a manifest even if there are no relevant properties', () => {
+      const omitSupportedRangeIncludes = (obj: object, target: string) => messyOmit(obj, (kv: [string, unknown]) => {
+        const key = kv[0];
+
+        if (key !== 'schema:rangeIncludes') {
+          return false;
+        }
+
+        const val = kv[1] as object;
+        return val['@id'] === target;
+      });
+
+      asyncLocalBusinessStr
+        .then((data: string) => JSON.parse(data))
+        .then((j: JSON) => {
+          supportedTypes.forEach((type: string) => {
+            omitSupportedRangeIncludes(j, `schema:${type}`);
+          });
+          return JSON.stringify(j);
+        })
+        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'}))
+        .then( (converted: string) => {
+          assert.isTrue(isValidManifest(converted));
+        });
+    });
   });
 });

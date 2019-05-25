@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
+export const supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
 interface Class {
   superclass?: Class[];
