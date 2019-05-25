@@ -23,9 +23,6 @@ describe('JsonldToManifest', () => {
   const asyncLocalBusinessStr: Promise<string> = fetch('https://schema.org/LocalBusiness.jsonld')
     .then(r => r.text());
 
-
-
-
   const messyOmit = (obj: object, p: Predicate<[string, unknown]>): void => {
     Object.entries(obj).forEach((kv) => {
       const key = kv[0];
