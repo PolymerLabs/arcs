@@ -29,6 +29,7 @@ export type RuntimeArcOptions = Readonly<{
   innerArc?: boolean;
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
+  inspectorFactory?: ArcInspectorFactory;
 }>;
 
 // To start with, this class will simply hide the runtime classes that are

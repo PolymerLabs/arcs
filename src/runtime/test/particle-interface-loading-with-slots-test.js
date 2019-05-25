@@ -10,19 +10,19 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {Loader} from '../loader.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-import {TestHelper} from '../testing/test-helper.js';
-import {ProvidedSlotContext, HostedSlotContext} from '../slot-context.js';
 import {ArcId} from '../id.js';
+import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 
 describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
     slotComposer._contexts[0].spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
-    const manifest = await TestHelper.parseManifest(`
+    const manifest = await Manifest.parse(`
       import './src/runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
@@ -32,7 +32,7 @@ describe('particle interface loading with slots', function() {
           particle0 = SingleSlotParticle
           foos <- handle0
           consume annotationsSet as slot0
-      `, loader);
+      `, {loader, fileName: ''});
     const recipe = manifest.recipes[0];
 
     const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest});
