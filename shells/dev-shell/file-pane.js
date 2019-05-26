@@ -37,7 +37,7 @@ const template = `
       border: 1px solid #ccc;
     }
   </style>
-  <textarea id="manifest" rows="10" spellcheck="false"></textarea>
+  <textarea id="manifest" rows="10" autofocus="true" spellcheck="false"></textarea>
   <div class="tab-panel">
     <div id="toggle">
       <div class="tab-row">
@@ -142,10 +142,14 @@ export class FilePane extends HTMLElement {
     a.click();
   }
 
+  seedManifest(lines) {
+    this.manifest.rows = lines.length + 1;
+    this.manifest.value = lines.join('\n');
+  }
+
   seedExample(manifest, particle) {
-    this.manifest.textContent = manifest;
-    this.files.children[0].textContent = particle;
-    this.manifest.focus();
+    this.manifest.value = manifest;
+    this.files.children[0].value = particle;
   }
 }
 
