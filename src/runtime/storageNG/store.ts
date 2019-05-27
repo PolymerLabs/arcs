@@ -87,7 +87,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     await this.processModelChange(modelChange, otherChange, version, true);
   }
   
-  private async processModelChange(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, version, messageFromDriver) {
+  private async processModelChange(thisChange: CRDTChange<T>, otherChange: CRDTChange<T>, version: number, messageFromDriver: boolean) {
     if (thisChange.changeType === ChangeType.Operations && thisChange.operations.length > 0) {
       this.callbacks.forEach((cb, id) => cb({type: ProxyMessageType.Operations, operations: thisChange.operations, id}));
     } else if (thisChange.changeType === ChangeType.Model) {
@@ -96,6 +96,8 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
        
     // Don't send to the driver if we're already in sync and there are no driver-side changes.
     if (this.inSync && this.noDriverSideChanges(thisChange, otherChange, messageFromDriver)) {
+      // Need to record the driver version so that we can continue to send.
+      this.version = version;
       return;
     }
 
