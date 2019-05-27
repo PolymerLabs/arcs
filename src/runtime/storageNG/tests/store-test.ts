@@ -42,11 +42,12 @@ class MockStorageKey extends StorageKey {
   }
 }
 
-const testKey = new MockStorageKey();
+let testKey: StorageKey;
 
 describe('Store', async () => {
 
   beforeEach(() => {
+    testKey = new MockStorageKey();
     DriverFactory.clearRegistrationsForTesting();
   });
 

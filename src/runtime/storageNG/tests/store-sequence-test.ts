@@ -42,9 +42,12 @@ class MockStorageKey extends StorageKey {
   }
 }
 
-const testKey = new MockStorageKey();
+let testKey: StorageKey;
 
 describe('Store Flow', async () => {
+
+  before(() => {testKey = new MockStorageKey();});
+
   // Tests a model resync request happening synchronously with model updates from the driver
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
