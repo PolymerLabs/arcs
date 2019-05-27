@@ -1,0 +1,12 @@
+import '../../Common/Description.schema'
+import '../schemas/TVMazeShow.schema'
+import '../schemas/Text.schema'
+
+particle SlandleTVMazeShowPanel in './js/TVMazeShowPanel.js'
+  in TVMazeShow show
+  in? Text alsoWatch
+  out [Description] descriptions
+  `consume Slot content #tv_show_panel
+    `provide Slot action
+    `provide Slot items
+  description `${show} details`

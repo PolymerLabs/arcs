@@ -39,7 +39,8 @@
     "comma-dangle": "off",
     "linebreak-style": "off",
     "no-multi-spaces": "off",
-    "keyword-spacing": [1, {"before": true, "after": true}]
+    "keyword-spacing": [1, {"before": true, "after": true}],
+    "no-constant-condition": "off"
   },
   "env": {
     "browser": true,

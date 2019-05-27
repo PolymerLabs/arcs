@@ -35,12 +35,12 @@ public:
       encoder.encodeCollection("c_lnk:CU", c_lnk);
     if (!c_flg.empty())
       encoder.encodeCollection("c_flg:CB", c_flg);
-    return encoder.result();
+    return std::move(encoder.result());
   }
 
-  static Data decode(std::string str) {
+  static Data decode(const char* str) {
     Data obj;
-    internal::StringDecoder decoder(str.c_str());
+    internal::StringDecoder decoder(str);
     for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
       std::string name = decoder.upTo(':');
       if (0) {

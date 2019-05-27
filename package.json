@@ -27,7 +27,8 @@
     "s-test-shells": "run-s --print-name --continue-on-error test-wdio-shells",
     "build:tsc": "tsc",
     "watch:tsc": "tsc -w",
-    "build:webpack": "webpack && webpack --config ./src/tools/webpack.config.js",
+    "build:webpack": "webpack",
+    "build:webpack-tools": "webpack --config ./src/tools/webpack.config.js",
     "watch:webpack": "webpack --watch",
     "watch": "concurrently npm:watch:*"
   },

@@ -1,0 +1,67 @@
+// Copyright (c) 2019 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import '../List/SLANDLESList.recipes'
+import '../Products/SLANDLESProducts.recipe'
+import '../Products/SLANDLESGifts.recipe'
+import '../Products/SLANDLESRecommend.recipe'
+import '../Products/SLANDLESManufacturer.recipe'
+import '../Products/SLANDLESInterests.recipe'
+
+recipe SlandleProducts
+  // &displayProducts
+  copy #shoplist as shoplist
+  create #selected as selected
+  SlandleSelectableItems
+    root consume
+      annotation provide annotationSlot
+      action provide actionSlot
+    list = shoplist
+    selected = selected
+  SlandleItemMultiplexer
+    list = shoplist
+    hostedParticle = SlandleProductItem
+  //
+  // &shopForOccasion
+  map #claire as person
+  SlandleGiftList
+    person = person
+  SlandleSimpleAnnotationMultiplexer
+    list = shoplist
+    hostedParticle = SlandleArrivinator
+    annotation consume annotationSlot
+  //
+  // &addFromWishlist
+  map #wishlist as wishlist
+  create #volatile as recommendations
+  // annotates shoplist
+  SlandleChoicesMultiplexer
+    choice consume annotationSlot
+    list = shoplist
+    choices = wishlist
+    hostedParticle = SlandleAlsoOn
+  // recommend products from wishlist
+  SlandleRecommend
+    population = wishlist
+    known = shoplist
+    recommendations = recommendations
+  // present recommendations for adding to shoplist
+  SlandleChooser
+    action consume actionSlot
+    person = person
+    choices = recommendations
+    resultList = shoplist
+  //
+  // &manufacturerInfo
+  SlandleSimpleAnnotationMultiplexer
+    list = shoplist
+    hostedParticle = SlandleManufacturerInfo
+  //
+  // &productInterests
+  SlandleInterests
+    list = shoplist
+    person = person

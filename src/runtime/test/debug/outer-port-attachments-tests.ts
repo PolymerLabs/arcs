@@ -10,34 +10,36 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {DevtoolsForTests} from '../../../devtools-connector/devtools-connection.js';
+import {devtoolsInspectorFactory} from '../../../devtools-connector/devtools-inspector.js';
+import {MockSlotComposer} from '../../testing/mock-slot-composer.js';
 import {StubLoader} from '../../testing/stub-loader.js';
-import {TestHelper} from '../../testing/test-helper.js';
 import {Arc} from '../../arc.js';
+import {Manifest} from '../../manifest.js';
+import {Runtime} from '../../runtime.js';
 
 describe('OuterPortAttachment', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
   it('produces PEC Log messages on devtools channel', async () => {
-    const testHelper = await TestHelper.create({
-      manifestString: `
-        schema Foo
-          Text value
-        particle P in 'p.js'
-          inout Foo foo
-        recipe
-          use as foo
-          P
-            foo = foo`,
-      loader: new StubLoader({
-        'p.js': `defineParticle(({Particle}) => class P extends Particle {
-          async setHandles(handles) {
-            let foo = handles.get('foo');
-            foo.set(new foo.entityClass({value: 'FooBar'}));
-          }
-        });`
-      })
+    const loader = new StubLoader({
+      'p.js': `defineParticle(({Particle}) => class P extends Particle {
+        async setHandles(handles) {
+          let foo = handles.get('foo');
+          foo.set(new foo.entityClass({value: 'FooBar'}));
+        }
+      });`
     });
-    const arc = testHelper.arc as Arc;
+    const context = await Manifest.parse(`
+      schema Foo
+        Text value
+      particle P in 'p.js'
+        inout Foo foo
+      recipe
+        use as foo
+        P
+          foo = foo`, loader);
+    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const arc = runtime.newArc('demo', 'volatile://', {inspectorFactory: devtoolsInspectorFactory});
 
     const foo = arc.context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');

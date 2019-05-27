@@ -20,6 +20,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {assert} from '../platform/assert-web.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
+import {VolatileMemory} from './storageNG/drivers/volatile.js';
 
 export type RuntimeArcOptions = Readonly<{
   pecFactory?: PecFactory;
@@ -28,6 +29,7 @@ export type RuntimeArcOptions = Readonly<{
   innerArc?: boolean;
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
+  inspectorFactory?: ArcInspectorFactory;
 }>;
 
 // To start with, this class will simply hide the runtime classes that are
@@ -38,6 +40,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: new () => SlotComposer | null;
   private context: Manifest;
+  private readonly volatileMemory: VolatileMemory;
 
   static getRuntime() {
     if (runtime == null) {
@@ -62,11 +65,16 @@ export class Runtime {
     this.loader = loader;
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
+    this.volatileMemory = new VolatileMemory();
     // user information. One persona per runtime for now.
   }
 
   getCacheService() {
     return this.cacheService;
+  }
+
+  getVolatileMemory(): VolatileMemory {
+    return this.volatileMemory;
   }
 
   destroy() {

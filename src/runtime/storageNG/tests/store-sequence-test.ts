@@ -13,11 +13,12 @@ import {Store, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage} from '.
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../crdt/crdt-count.js';
 import {DriverFactory, Driver, ReceiveMethod, StorageDriverProvider, Exists} from '../drivers/driver-factory.js';
+import {StorageKey} from '../storage-key.js';
 
 class MockDriver<Data> extends Driver<Data> {
   receiver: ReceiveMethod<Data>;
-  async read(key: string) { throw new Error('unimplemented'); }
-  async write(key: string, value: {}) { throw new Error('unimplemented'); }
+  async read(key: StorageKey) { throw new Error('unimplemented'); }
+  async write(key: StorageKey, value: {}) { throw new Error('unimplemented'); }
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
   }
@@ -27,15 +28,26 @@ class MockDriver<Data> extends Driver<Data> {
 }
 
 class MockStorageDriverProvider implements StorageDriverProvider {
-  willSupport(storageKey: string) {
+  willSupport(storageKey: StorageKey) {
     return true;
   }
-  driver<Data>(storageKey: string, exists: Exists): Driver<Data> {
+  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
     return new MockDriver<Data>(storageKey, exists);
   }
 }
 
+class MockStorageKey extends StorageKey {
+  constructor() {
+    super('testing');
+  }
+}
+
+let testKey: StorageKey;
+
 describe('Store Flow', async () => {
+
+  before(() => {testKey = new MockStorageKey();});
+
   // Tests a model resync request happening synchronously with model updates from the driver
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
@@ -43,7 +55,7 @@ describe('Store Flow', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
     
-      const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
     });    
@@ -84,8 +96,8 @@ describe('Store Flow', async () => {
         }
       }, SequenceOutput.Register, idVar);
       
-    const storageProxyChanges: {inputFn: () => ProxyMessage<CRDTCountTypeRecord>, variable: {}}[] 
-      = [{inputFn: () => ({type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}), 
+    const storageProxyChanges: {inputFn: () => [ProxyMessage<CRDTCountTypeRecord>], variable: {}}[] 
+      = [{inputFn: () => [{type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}], 
           variable: {[isSyncRequest]: true}}]; 
 
     const makeModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData => 
@@ -93,9 +105,9 @@ describe('Store Flow', async () => {
           version: new Map([['me', meVersion], ['them', themVersion]])});
     const driverChanges = [
       {output: {[send]: false}},
-      {input: makeModel(7, 12, 3, 4), output: {[send]: true}},
+      {input: [makeModel(7, 12, 3, 4)], output: {[send]: true}},
       {output: {[send]: false}},
-      {input: makeModel(8, 12, 4, 4), output: {[send]: true}}
+      {input: [makeModel(8, 12, 4, 4)], output: {[send]: true}}
     ];
 
     sequenceTest.setChanges(onProxyMessage, storageProxyChanges);
@@ -111,7 +123,7 @@ describe('Store Flow', async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
     
-      const store = new Store('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
+      const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
     });    
@@ -142,7 +154,7 @@ describe('Store Flow', async () => {
         operations: [{type: CountOpTypes.Increment, actor, version: {from, to: from + 1}}],
         id: 1
       });
-    const storageProxyChanges = [{input: incOp('me', 0)}, {input: incOp('me', 1)}, {input: incOp('me', 2)}];
+    const storageProxyChanges = [{input: [incOp('me', 0)]}, {input: [incOp('me', 1)]}, {input: [incOp('me', 2)]}];
 
     const makeModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData => 
         ({values: new Map([['me', meCount], ['them', themCount]]), 
@@ -150,9 +162,9 @@ describe('Store Flow', async () => {
     const driverChanges = [
       {output: {[send]: false}}, // at some point data arrives at the driver
       // the sendCount at driverChanges[0] is the inc count for ‘me’ 
-      {inputFn: () => makeModel(sequenceTest.getVariable(meCount), 1, sequenceTest.getVariable(meCount), 1), output: {[send]: true}},
+      {inputFn: () => [makeModel(sequenceTest.getVariable(meCount), 1, sequenceTest.getVariable(meCount), 1), 1], output: {[send]: true}},
       {output: {[send]: false}}, // more data arrives
-      {inputFn: () => makeModel(sequenceTest.getVariable(meCount), 2, sequenceTest.getVariable(meCount), 2), output: {[send]: true}}
+      {inputFn: () => [makeModel(sequenceTest.getVariable(meCount), 2, sequenceTest.getVariable(meCount), 2), 2], output: {[send]: true}}
     ];
 
     sequenceTest.setChanges(onProxyMessage, storageProxyChanges);

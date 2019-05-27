@@ -1,0 +1,5 @@
+import '../schemas/TVMazeShow.schema'
+
+particle SlandleTVMazeDeduplicate in './js/TVMazeDeduplicate.js'
+  in [TVMazeShow] shows
+  inout [TVMazeShow] uniqueShows

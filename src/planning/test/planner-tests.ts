@@ -591,18 +591,18 @@ describe('Automatic resolution', () => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
     for (const plan of plans) {
       plan.normalize();
-      assert.isTrue(plan.isResolved());
+      assert.isTrue(plan.isResolved(), `Plans were not able to be resolved from ${manifestStr}.`);
     }
     return plans;
   };
   const verifyResolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
-    assert.lengthOf(plans, 1);
+    assert.lengthOf(plans, 1, `Plan was not able to be resolved from ${manifestStr}.`);
     return plans[0];
   };
   const verifyUnresolvedPlan = async (manifestStr: string, arcCreatedCallback?) => {
     const plans = await loadAndPlan(manifestStr, arcCreatedCallback);
-    assert.isEmpty(plans);
+    assert.isEmpty(plans, `Plan was unexpectedly able to be resolved from ${manifestStr}`);
   };
 
   it('introduces create handles for particle communication', async () => {
@@ -877,7 +877,7 @@ describe('Automatic resolution', () => {
     `, () => {});
 
     recipes = recipes.filter(recipe => recipe.search);
-    assert.lengthOf(recipes, 1);
+    assert.lengthOf(recipes, 1, 'Expected the recipe list to contain a search.');
     return recipes[0];
   };
 
