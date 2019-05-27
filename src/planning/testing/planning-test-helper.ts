@@ -42,6 +42,7 @@ export class PlanningTestHelper extends TestHelper {
 
   static async create(options: TestHelperPlanOptions = {}): Promise<PlanningTestHelper> {
     await TestHelper.setupOptions(options);
+    Planner.clearCache();
     const helper = new PlanningTestHelper();
     TestHelper.setupHelper(options, helper);
     helper.recipeIndex = RecipeIndex.create(helper.arc);
