@@ -186,7 +186,7 @@ describe('Store', async () => {
       });
   
       const driver = activeStore['driver'] as MockDriver<CountData>;
-      await driver.receiver(count.getData());
+      await driver.receiver(count.getData(), 1);
     });
   });
 
@@ -204,7 +204,7 @@ describe('Store', async () => {
 
     // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
     // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send(). 
-    await driver.receiver(remoteCount.getData());
+    await driver.receiver(remoteCount.getData(), 1);
   });
 
   it('will resend failed driver updates after merging', async () => {
@@ -233,7 +233,7 @@ describe('Store', async () => {
     let capturedModel: CountData = null;
     driver.send = async model => {sendInvoked = true; capturedModel = model; return true;};
 
-    await driver.receiver(remoteCount.getData());
+    await driver.receiver(remoteCount.getData(), 1);
     assert.isTrue(sendInvoked);
 
     count.merge(remoteCount.getData());

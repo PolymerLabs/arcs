@@ -93,8 +93,8 @@ describe('Store Flow', async () => {
         }
       }, SequenceOutput.Register, idVar);
       
-    const storageProxyChanges: {inputFn: () => ProxyMessage<CRDTCountTypeRecord>, variable: {}}[] 
-      = [{inputFn: () => ({type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}), 
+    const storageProxyChanges: {inputFn: () => [ProxyMessage<CRDTCountTypeRecord>], variable: {}}[] 
+      = [{inputFn: () => [{type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}], 
           variable: {[isSyncRequest]: true}}]; 
 
     const makeModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData => 
@@ -102,9 +102,9 @@ describe('Store Flow', async () => {
           version: new Map([['me', meVersion], ['them', themVersion]])});
     const driverChanges = [
       {output: {[send]: false}},
-      {input: makeModel(7, 12, 3, 4), output: {[send]: true}},
+      {input: [makeModel(7, 12, 3, 4)], output: {[send]: true}},
       {output: {[send]: false}},
-      {input: makeModel(8, 12, 4, 4), output: {[send]: true}}
+      {input: [makeModel(8, 12, 4, 4)], output: {[send]: true}}
     ];
 
     sequenceTest.setChanges(onProxyMessage, storageProxyChanges);
@@ -151,7 +151,7 @@ describe('Store Flow', async () => {
         operations: [{type: CountOpTypes.Increment, actor, version: {from, to: from + 1}}],
         id: 1
       });
-    const storageProxyChanges = [{input: incOp('me', 0)}, {input: incOp('me', 1)}, {input: incOp('me', 2)}];
+    const storageProxyChanges = [{input: [incOp('me', 0)]}, {input: [incOp('me', 1)]}, {input: [incOp('me', 2)]}];
 
     const makeModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData => 
         ({values: new Map([['me', meCount], ['them', themCount]]), 
@@ -159,9 +159,9 @@ describe('Store Flow', async () => {
     const driverChanges = [
       {output: {[send]: false}}, // at some point data arrives at the driver
       // the sendCount at driverChanges[0] is the inc count for ‘me’ 
-      {inputFn: () => makeModel(sequenceTest.getVariable(meCount), 1, sequenceTest.getVariable(meCount), 1), output: {[send]: true}},
+      {inputFn: () => [makeModel(sequenceTest.getVariable(meCount), 1, sequenceTest.getVariable(meCount), 1), 1], output: {[send]: true}},
       {output: {[send]: false}}, // more data arrives
-      {inputFn: () => makeModel(sequenceTest.getVariable(meCount), 2, sequenceTest.getVariable(meCount), 2), output: {[send]: true}}
+      {inputFn: () => [makeModel(sequenceTest.getVariable(meCount), 2, sequenceTest.getVariable(meCount), 2), 2], output: {[send]: true}}
     ];
 
     sequenceTest.setChanges(onProxyMessage, storageProxyChanges);

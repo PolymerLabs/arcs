@@ -30,7 +30,7 @@ export class VolatileMemory {
 
 export class VolatileDriver<Data> extends Driver<Data> {
   private memory: VolatileMemory;
-  private lastWrittenVersion = 0;
+  private pendingVersion = 0;
   private pendingModel: Data | null = null;
   private receiver: ReceiveMethod<Data>;
   private data: VolatileEntry<Data>;
@@ -57,7 +57,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
           if (data) {
             this.data = data as VolatileEntry<Data>;
             this.pendingModel = data.data as Data;
-            this.lastWrittenVersion = data.version;
+            this.pendingVersion = data.version;
           } else {
             this.data = {data: null, version: 0, drivers: []};
             this.memory.entries.set(storageKey, this.data as VolatileEntry<unknown>);
@@ -73,25 +73,23 @@ export class VolatileDriver<Data> extends Driver<Data> {
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
     if (this.pendingModel) {
-      receiver(this.pendingModel);
+      receiver(this.pendingModel, this.pendingVersion);
       this.pendingModel = null;
     }
   }
   
-  async send(model: Data): Promise<boolean> {
-    if (this.data.version !== this.lastWrittenVersion) {
+  async send(model: Data, version: number): Promise<boolean> {
+    if (this.data.version !== version - 1) {
       return false;
     }
     this.data.data = model;
     this.data.version += 1;
-    this.lastWrittenVersion += 1;
     this.data.drivers.forEach(driver => {
       if (driver === this) {
         return;
       }
-      driver.lastWrittenVersion = this.lastWrittenVersion;
-      driver.receiver(model);
-    })
+      driver.receiver(model, this.data.version);
+    });
     return true;
   }
   

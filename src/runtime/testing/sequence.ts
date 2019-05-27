@@ -39,8 +39,8 @@ export interface OutputResponseObject {
 
 export interface SequenceChange {
   variable?: any;
-  input?: any;
-  inputFn?: () => any;
+  input?: any[];
+  inputFn?: () => any[];
   output?: {[index: string]: any};
   id?: string;
 }
@@ -604,8 +604,10 @@ export class SequenceTest<T> {
 
         if (item.change.input || item.change.inputFn) {
           const value = item.change.input ? item.change.input : item.change.inputFn();
-          this.interleavingLog = this.interleavingLog.concat(['<-', value, '\n']);
-          input.results.push(obj[input.name](value));
+          this.interleavingLog.push('<-');
+          this.interleavingLog = this.interleavingLog.concat(value);
+          this.interleavingLog.push(']');
+          input.results.push(obj[input.name](...value));
         }
 
         this.interleavingLog.push('\n');

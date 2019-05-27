@@ -12,7 +12,7 @@ import {StorageKey} from '../storage-key.js';
 
 export enum Exists {ShouldExist, ShouldCreate, MayExist}
 
-export type ReceiveMethod<T> = (model: T) => void;
+export type ReceiveMethod<T> = (model: T, version: number) => void;
 
 export interface StorageDriverProvider {
   // information on the StorageDriver and characteristics
@@ -29,7 +29,7 @@ export abstract class Driver<Data> {
     this.exists = exists;
   }
   abstract registerReceiver(receiver: ReceiveMethod<Data>): void;
-  abstract async send(model: Data): Promise<boolean>;
+  abstract async send(model: Data, version: number): Promise<boolean>;
 
   // these methods only available to Backing Stores and will
   // be removed once entity mutation is performed on CRDTs
