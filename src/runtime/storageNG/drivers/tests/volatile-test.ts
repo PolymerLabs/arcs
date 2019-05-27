@@ -17,7 +17,7 @@ describe('Volatile Driver', async () => {
 
   afterEach(() => {
     Runtime.clearRuntimeForTesting();
-  })
+  });
 
   it('can be multiply instantiated against the same storage location', () => {
     const volatileKey = new VolatileStorageKey('unique');
