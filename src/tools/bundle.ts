@@ -42,7 +42,11 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
     }
     const archive = new JSZip();
     for (const file of listing) {
-      archive.file(file.bundlePath, fs.readFileSync(file.filePath));
+      archive.file(
+        file.bundlePath,
+        fs.readFileSync(file.filePath),
+        // Java ZipInputStream has issues with how JsZip represents 0-byte files.
+        {createFolders: false});
     }
     archive.file('bundle-manifest.mf', listing
         .filter(f => f.entryPoint)
