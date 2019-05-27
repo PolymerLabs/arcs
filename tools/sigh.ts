@@ -64,6 +64,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
+  webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
   lint: [peg, build, lint, tslint],
@@ -75,7 +76,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   bundle: [build, bundle],
   schema2proto: [build, schema2proto],
   schema2pkg: [build, schema2pkg],
-  default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
+  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -433,6 +434,10 @@ function webpack(): boolean {
     console.log(result.stdout);
   }
   return result.success;
+}
+
+function webpackTools() {
+  return saneSpawn('npm', ['run', 'build:webpack-tools'], {stdio: 'inherit'});
 }
 
 type SpawnOptions = {
