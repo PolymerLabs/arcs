@@ -37,28 +37,6 @@ describe('Particle Execution Context', () => {
     });
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
     const arc = new Arc({id: ArcId.newForTest('demo'), storageKey: 'volatile://', slotComposer, loader, context});
-
-    // const {arc, slotComposer} = await TestHelper.create({
-    //   manifestString: `
-    //     particle A in 'A.js'
-    //       consume root
-    //         provide detail
-    //         provide annotation
-
-    //     recipe
-    //       slot 'rootslotid-root' as slot0
-    //       A
-    //         consume root as slot0`,
-    //   loader: new StubLoader({
-    //     'A.js': `defineParticle(({DomParticle}) => {
-    //       return class extends DomParticle {
-    //         get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
-    //       };
-    //     });`
-    //   }),
-    //   slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
-    // });
-
     const [recipe] = arc.context.recipes;
     recipe.normalize();
     await arc.instantiate(recipe);
