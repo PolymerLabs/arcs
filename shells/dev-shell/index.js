@@ -2,17 +2,17 @@ import {FilePane} from './file-pane.js';
 import {OutputPane} from './output-pane.js';
 import {DevShellLoader} from './loader.js';
 
-import {Runtime} from '../../../build/runtime/runtime.js';
-import {Arc} from '../../../build/runtime/arc.js';
-import {IdGenerator} from '../../../build/runtime/id.js';
-import {Modality} from '../../../build/runtime/modality.js';
-import {ModalityHandler} from '../../../build/runtime/modality-handler.js';
-import {PecIndustry} from '../../../build/platform/pec-industry-web.js';
-import {RecipeResolver} from '../../../build/runtime/recipe/recipe-resolver.js';
-import {SlotComposer} from '../../../build/runtime/slot-composer.js';
-import {SlotDomConsumer} from '../../../build/runtime/slot-dom-consumer.js';
-import {StorageProviderFactory} from '../../../build/runtime/storage/storage-provider-factory.js';
-import {devtoolsInspectorFactory} from '../../../build/devtools-connector/devtools-inspector.js';
+import {Runtime} from '../../build/runtime/runtime.js';
+import {Arc} from '../../build/runtime/arc.js';
+import {IdGenerator} from '../../build/runtime/id.js';
+import {Modality} from '../../build/runtime/modality.js';
+import {ModalityHandler} from '../../build/runtime/modality-handler.js';
+import {PecIndustry} from '../../build/platform/pec-industry-web.js';
+import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
+import {SlotComposer} from '../../build/runtime/slot-composer.js';
+import {SlotDomConsumer} from '../../build/runtime/slot-dom-consumer.js';
+import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
+import {devtoolsInspectorFactory} from '../../build/devtools-connector/devtools-inspector.js';
 
 const files = document.getElementById('file-pane');
 const output = document.getElementById('output-pane');
@@ -80,7 +80,6 @@ async function wrappedExecute() {
     if (description) {
       arcPanel.setDescription(description);
     }
-    arcPanel.setSerialization(await arc.serialize());
   }
 }
 
@@ -93,10 +92,10 @@ function init() {
   const params = new URLSearchParams(window.location.search);
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
-    manifest = `import '${manifestParam}'`;
     toggleFiles.click();
+    files.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
   } else {
-    manifest = `\
+    const exampleManifest = `\
 import 'https://$particles/Tutorial/1_HelloWorld/HelloWorld.recipe'
 
 particle P in 'a.js'
@@ -104,9 +103,8 @@ particle P in 'a.js'
 
 recipe
   P`;
-  }
 
-  const exampleParticle = `\
+    const exampleParticle = `\
 defineParticle(({DomParticle, html}) => {
   return class extends DomParticle {
     get template() {
@@ -115,7 +113,8 @@ defineParticle(({DomParticle, html}) => {
   };
 });`;
 
-  files.seedExample(manifest, exampleParticle);
+    files.seedExample(exampleManifest, exampleParticle);
+  }
 }
 
 document.getElementById('execute').addEventListener('click', execute);
