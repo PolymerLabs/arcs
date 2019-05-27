@@ -821,7 +821,7 @@ function runSteps(command: string, args: string[]): boolean {
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? '🎉' : '😱');
+    console.log(result ? '🎉 SUCCESS' : '😱 FAILURE');
   }
   return result;
 }

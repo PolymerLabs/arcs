@@ -31,7 +31,7 @@ describe('Sequence testing infrastructure', async () => {
         {type: ExpectedResponse.Constant, response: true});
     const total = flowTest.registerSensor('total');
 
-    const inputChanges = [{input: 1}, {input: 2}];
+    const inputChanges = [{input: [1]}, {input: [2]}];
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.equal(value, 3));
@@ -51,7 +51,7 @@ describe('Sequence testing infrastructure', async () => {
         {type: ExpectedResponse.Void});
     const total = flowTest.registerSensor('total');
 
-    const inputChanges = [{input: 1}, {input: 2}];
+    const inputChanges = [{input: [1]}, {input: [2]}];
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.equal(value, 3));
@@ -71,7 +71,7 @@ describe('Sequence testing infrastructure', async () => {
         {type: ExpectedResponse.Void});
     const total = flowTest.registerSensor('total');
 
-    const inputChanges = [{input: 1}];
+    const inputChanges = [{input: [1]}];
     flowTest.setChanges(input, inputChanges);
 
     flowTest.setEndInvariant(total, (value) => assert.equal(value, 1));
