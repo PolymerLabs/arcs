@@ -16,14 +16,13 @@ import {Loader} from '../runtime/loader.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
-import {TestHelper} from '../runtime/testing/test-helper.js';
 import {PlanningTestHelper, StrategyTestHelper} from '../planning/testing/arcs-planning-testing.js';
 import {Id, ArcId} from '../runtime/id.js';
+import {Manifest} from '../runtime/manifest.js';
 
 async function initSlotComposer(recipeStr) {
   const slotComposer = new MockSlotComposer().newExpectations();
-
-  const manifest = await TestHelper.parseManifest(recipeStr, new Loader());
+  const manifest = await Manifest.parse(recipeStr);
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });

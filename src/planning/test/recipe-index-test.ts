@@ -13,13 +13,12 @@ import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {TestHelper} from '../../runtime/testing/test-helper.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 
 describe('RecipeIndex', () => {
   async function createIndex(manifestContent) {
-    const manifest = (await TestHelper.parseManifest(manifestContent, new Loader()));
+    const manifest = await await Manifest.parse(manifestContent);
     for (const recipe of manifest.recipes) {
       assert(recipe.normalize());
     }
