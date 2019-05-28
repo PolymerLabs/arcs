@@ -6,7 +6,7 @@ const optionSet = {
   string: ['port', 'log'],
   boolean: ['help', 'version', 'stdio'],
   alias: {'v': 'version', 'h': 'help', 'p': 'port', 'l': 'log'},
-  default: {'port': 2089, 'log': 'console'}
+  default: {'port': 2089, 'log': 'null'}
 };
 
 function main() {

@@ -63,7 +63,7 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
 };
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
-  lsp: [peg, build, lsp],
+  lsp: [peg, build, webpackTools, lsp],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],

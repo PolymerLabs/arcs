@@ -31,14 +31,16 @@ function createReader(id:number, inS, outS, options, logger: Logger) {
 }
 
 export function serve(options: AmlServiceOptions) {
-  let logger: Logger = new DevNullLogger();
+  let logger: Logger = null;
   switch (options.log) {
     case 'console':
       logger = console;
       break;
-    default:
-      // Already set.
+    case 'null':
+      logger = new DevNullLogger();
       break;
+    default:
+      throw new Error(`Unknown logger ${options.log}`);
   }
 
   if (options.stdio) {
