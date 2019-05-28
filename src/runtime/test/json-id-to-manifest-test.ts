@@ -102,7 +102,7 @@ describe('JsonldToManifest', () => {
     });
 
     // TODO(alxr) get test to pass
-    xit('should produce a manifest even if there are no relevant properties', async () => {
+    it.skip('should produce a manifest even if there are no relevant properties', async () => {
       const omitSupportedRangeIncludes = (obj: object, target: string) => messyOmit(obj, (kv: [string, unknown]) => {
         const key = kv[0];
 
