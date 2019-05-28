@@ -2,9 +2,9 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {JsonldToManifest, supportedTypes} from '../converters/jsonldToManifest.js';
-import {fetch} from '../../platform/fetch-web.js';
 import {Predicate} from '../hot.js';
 import {Manifest} from '../manifest.js';
+import fs from 'fs';
 
 describe('JsonldToManifest', () => {
 
@@ -17,8 +17,13 @@ describe('JsonldToManifest', () => {
     return true;
   };
 
-  const getSchema = (schema: string = 'Product'): Promise<string> => fetch(`https://schema.org/${schema}.jsonld`)
-    .then(r => r.text());
+  const getSchema = (schema: string = 'Product'): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+      fs.readFile(`src/runtime/test/assets/${schema}.jsonld`, 'utf8', (err, data) => {
+        err ? reject(err) : resolve(data);
+      });
+    });
+  };
 
   const messyOmit = (obj: object, p: Predicate<[string, unknown]>): void => {
     Object.entries(obj).forEach((kv) => {
