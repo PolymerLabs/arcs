@@ -68,23 +68,14 @@ describe('JsonldToManifest', () => {
     });
 
     it('should add schema.org imports given superclasses', async () => {
-      const containsSchemaOrgImportStatements: Predicate<string> = (manifest: string): boolean => {
-        const instances = manifest.match(/(import\s'https:\/\/schema.org\/.+'\s+)+/g);
-        return Boolean(instances);
-      };
-
-      const classExtendsSuperclasses: Predicate<string> = (manifest: string): boolean => {
-        return manifest.includes(' extends ');
-      };
-
       const schema = await getSchema('LocalBusiness');
       const converted = JsonldToManifest.convert(schema, {
         '@id': 'schema:LocalBusiness',
         superclass: [{'@id': 'schema:Place'}]
       });
 
-      assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
-      assert.isTrue(classExtendsSuperclasses(converted), 'manifest should extend at least one superclass.');
+      assert.match(converted, /(import\s'https:\/\/schema.org\/.+'\s+)+/g, 'manifest should contain (multiple) import statements from schema.org');
+      assert.include(converted, ' extends ', 'manifest should extend at least one superclass.');
     });
 
     it('should produce a manifest even if the schema contains no domains', async () => {
