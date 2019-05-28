@@ -6,12 +6,20 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-export const dynamicScript = async src => {
+
+
+export async function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    document.head.appendChild(Object.assign(document.createElement('script'), {
-      src,
-      onload: () => resolve(),
-      onerror: err => reject(err)
-    }));
+    const image = new Image();
+
+    function cleanup() {
+      image.onload = null;
+      image.onerror = null;
+    }
+
+    image.src = url;
+    image.onload = async () => {cleanup(); resolve(image);};
+    image.onerror = async (error) => {cleanup(); reject(error);};
+
   });
-};
+}
