@@ -104,7 +104,7 @@ export class FilePane extends HTMLElement {
       file.style.display = 'none';
     }
     event.target.classList.add('active');
-    event.target.linkedFile.style.display = 'block';
+    event.target.linkedFile.style.display = '';
   }
 
   getManifest() {
@@ -121,7 +121,7 @@ export class FilePane extends HTMLElement {
 
   toggleFiles(event) {
     if (this.toggle.style.display === 'none') {
-      this.toggle.style.display = 'block';
+      this.toggle.style.display = '';
       event.target.textContent = 'Hide files';
     } else {
       this.toggle.style.display = 'none';
