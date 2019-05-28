@@ -11,9 +11,9 @@
 
 defineParticle(({DomParticle, log, html, resolver}) => {
 
-  const template = html`
+  const template_ = html`
 <div>
-  <h2>Classification with ML5</h2>
+  <h2>Classification with MobileNet</h2>
   <img style="max-width: 240px;" src="{{imageUrl}}"><br>
   <div>
     <div>Label: </span><span>{{label}}</div>
@@ -22,11 +22,11 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 </div>
   `;
 
-  const url = resolver(`Ml5/../../assets/waltbird.jpg`);
+  const url = resolver(`MobileNet/../../assets/waltbird.jpg`);
 
   return class extends DomParticle {
     get template() {
-      return template;
+      return template_;
     }
     update({}, state) {
       // TODO(sjmiles): update() is called during SpecEx, while
@@ -43,14 +43,17 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       let {response} = state;
       response = response || {label: '<working>', probability: '<working>'};
       return {
-        label: response.label,
-        probability: response.probability,
+        label: response.className,
+        probability: response.probability.toFixed(4),
         imageUrl: url
       };
     }
     async classify(imageUrl) {
-      const response = await this.service({call: 'ml5.classifyImage', imageUrl});
-      this.setState({response});
+      const model = await this.service(({call: 'mobilenet.load'}));
+      const response = await this.service({call: 'mobilenet.classify', model, imageUrl});
+      if (response) {
+        this.setState({response: response});
+      }
     }
   };
 

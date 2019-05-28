@@ -26,6 +26,8 @@ export type Runnable = () => void;
 /** A function that converts some input into a boolean, often use for calls like `filter`. */
 export type Predicate<T> = (input: T) => boolean;
 
+/** A function that maps an input to an output. */
+export type Mapper<I, O> = (input: I) => O;
 
 // Higher Order Data Types
 
@@ -36,7 +38,8 @@ export type Predicate<T> = (input: T) => boolean;
  * `JSON.parse(...)` returns an `any` type. Our definition for literal types is stricter: we demand that values are at
  * least objects (they cannot be `null`, `undefined`, or primitive types).
  */
-export interface Literal {}
+export interface Literal {
+}
 
 /**
  * An interface for types that can be converted to and from a `Literal` type.
@@ -59,3 +62,4 @@ export interface Literalizable<T, Lit extends Literal> {
 export interface Dictionary<T> {
   [key: string]: T;
 }
+
