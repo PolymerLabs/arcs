@@ -35,6 +35,7 @@
     "no-namespace": [true, "allow-declarations"],
     "no-reference": true,
     "no-string-throw": true,
+    "no-switch-case-fallthrough": true,
     "no-unsafe-finally": true,
     "no-unused-expression": true,
     "no-var-keyword": true,
