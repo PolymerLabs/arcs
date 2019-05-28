@@ -13,6 +13,7 @@ import {JsonldToManifest, supportedTypes} from '../converters/jsonldToManifest.j
 import {Predicate} from '../hot.js';
 import {Manifest} from '../manifest.js';
 import fs from 'fs';
+import {promisify} from 'util';
 
 describe('JsonldToManifest', () => {
 
@@ -26,11 +27,8 @@ describe('JsonldToManifest', () => {
   };
 
   const getSchema = async (schema: string = 'Product'): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      fs.readFile(`src/runtime/test/assets/${schema}.jsonld`, 'utf8', (err, data) => {
-        err ? reject(err) : resolve(data);
-      });
-    });
+    const readFileAsync = promisify(fs.readFile);
+    return readFileAsync(`src/runtime/test/assets/${schema}.jsonld`, {encoding: 'utf8'});
   };
 
   const messyOmit = (obj: object, p: Predicate<[string, unknown]>): void => {
