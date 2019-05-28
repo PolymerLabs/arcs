@@ -17,7 +17,7 @@ describe('JsonldToManifest', () => {
     return true;
   };
 
-  const getSchema = (schema: string = 'Product'): Promise<string> => {
+  const getSchema = async (schema: string = 'Product'): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       fs.readFile(`src/runtime/test/assets/${schema}.jsonld`, 'utf8', (err, data) => {
         err ? reject(err) : resolve(data);
