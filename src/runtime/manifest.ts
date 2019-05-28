@@ -31,7 +31,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 
-class ManifestError extends Error {
+export class ManifestError extends Error {
   location: AstNode.SourceLocation;
   key: string;
   constructor(location: AstNode.SourceLocation, message: string) {
@@ -360,7 +360,7 @@ export class Manifest {
     return this._idGenerator.newChildId(this.id);
   }
 
-  static async load(fileName: string, loader: {loadResource}, options?): Promise<Manifest> {
+  static async load(fileName: string, loader: {loadResource, path?, join?}, options?): Promise<Manifest> {
     options = options || {};
     let {registry, id} = options;
     registry = registry || {};
@@ -379,6 +379,10 @@ export class Manifest {
       });
     })();
     return await registry[fileName];
+  }
+
+  static getErrors(manifest: Manifest): ManifestError[] {
+    return manifest.errors;
   }
 
   static async parse(content: string, options?): Promise<Manifest> {

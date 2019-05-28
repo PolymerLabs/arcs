@@ -63,6 +63,7 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
 };
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
+  lsp: [peg, build, lsp],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
@@ -224,6 +225,16 @@ function linkUnit(dummySrc: string, dummyDest: string): boolean {
     return false;
   }
   return true;
+}
+
+function lsp(): boolean {
+  keepProcessAlive = true; // Tell the runner to not exit.
+  const languageServerExit = saneSpawn(
+    `tools/aml-language-server`,
+    [],
+    {stdio: 'inherit'}
+  );
+  return languageServerExit;
 }
 
 function peg(): boolean {
@@ -831,6 +842,6 @@ function runSteps(command: string, args: string[]): boolean {
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
 
-if (!keepProcessAlive) { // the watch command is running.
+if (!keepProcessAlive) { // the watch command or lsp command is running.
   process.exit(result ? 0 : 1);
 }

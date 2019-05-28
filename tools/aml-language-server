@@ -1,0 +1,4 @@
+#!/bin/sh
+ARCS_DIR="$(dirname "$(dirname "$0")")"
+cd $ARCS_DIR
+node './dist/tools/aml-language-server.js' $@
