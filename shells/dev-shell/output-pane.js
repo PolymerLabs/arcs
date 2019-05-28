@@ -1,3 +1,5 @@
+import {StorePanel} from './store-panel.js';
+
 const mainTemplate = `
   <style>
     #arcs {
@@ -10,69 +12,6 @@ const mainTemplate = `
   </style>
   <div id="arcs"></div>
   <error-panel id="error"></error-panel>`;
-
-const arcTemplate = `
-  <style>
-    .spacer {
-      margin-top: 20px;
-    }
-    #arc-label {
-      font-family: Arial;
-      font-size: 13px;
-      font-style: italic;
-    }
-    #kill {
-      cursor: pointer;
-      float: right;
-      margin-right: 8px;
-    }
-    #arc-root {
-      margin: 4px 0 6px 0;
-      border: 1px solid;
-    }
-    #toggle {
-      cursor: pointer;
-      color: #777;
-      font-size: 15px;
-      vertical-align: top;
-    }
-    #serialization {
-      display: none;
-      font-size: 11px;
-      width: fit-content;
-      margin: 0;
-      padding: 4px 8px;
-      border: 1px dashed;
-    }
-  </style>
-  <div class="spacer">
-    <span id="arc-label"></span>
-    <span id="kill">✘</span>
-  </div>
-  <div id="arc-root"></div>
-  <span id="toggle"></span>
-  <pre id="serialization"></pre>`;
-
-const errorTemplate = `
-  <style>
-    .container {
-      color: red;
-    }
-    #header {
-      font-family: Arial;
-      font-style: italic;
-      margin: 8px;
-    }
-    #message {
-      overflow: auto;
-      font-size: 12px;
-      margin: 0 0 8px 8px;
-    }
-  </style>
-  <div class="container">
-    <div id="header"></div>
-    <pre id="message"></pre>
-  </div>`;
 
 export class OutputPane extends HTMLElement {
   connectedCallback() {
@@ -111,20 +50,77 @@ export class OutputPane extends HTMLElement {
   }
 }
 
+const arcTemplate = `
+  <style>
+    .spacer {
+      margin-top: 30px;
+    }
+    #arc-label {
+      font-family: Arial;
+      font-size: 13px;
+      font-style: italic;
+    }
+    #kill {
+      cursor: pointer;
+      float: right;
+      margin-right: 8px;
+    }
+    #arc-root {
+      margin: 4px 0 16px 0;
+      border: 1px solid;
+    }
+    .control {
+      cursor: pointer;
+      font-size: 18px;
+      vertical-align: top;
+      padding: 4px 2px;
+      border-radius: 8px;
+    }
+    .active {
+      background: #80d2ff;
+    }
+    .control-panel {
+      display: none;
+      max-width: calc(100% - 80px);
+      overflow: auto;
+      margin-left: 8px;
+    }
+    #serial {
+      border: 1px dashed;
+    }
+    #serial pre {
+      font-size: 11px;
+      margin: 4px 8px;
+    }
+  </style>
+  <div class="spacer">
+    <span id="arc-label"></span>
+    <span id="kill">✘</span>
+  </div>
+  <div id="arc-root"></div>
+  <span id="stores-control" class="control">🗄</span>
+  <span id="serial-control" class="control">📄</span>
+  <div id="stores" class="control-panel"></div>
+  <div id="serial" class="control-panel">
+    <pre></pre>
+  </div>`;
+
 class ArcPanel extends HTMLElement {
   connectedCallback() {
     const shadowRoot = this.attachShadow({mode: 'open'});
     shadowRoot.innerHTML = arcTemplate;
 
     this.arcLabel = shadowRoot.getElementById('arc-label');
-    this.description = shadowRoot.getElementById('description');
     this.arcRoot = shadowRoot.getElementById('arc-root');
-    this.toggle = shadowRoot.getElementById('toggle');
-    this.serialization = shadowRoot.getElementById('serialization');
-
+    this.storesControl = shadowRoot.getElementById('stores-control');
+    this.serialControl = shadowRoot.getElementById('serial-control');
+    this.stores = shadowRoot.getElementById('stores');
+    this.serial = shadowRoot.getElementById('serial');
     this.linkedArc = null;
-    this.toggle.addEventListener('click', this.toggleSerialization.bind(this));
+
     shadowRoot.getElementById('kill').addEventListener('click', this.kill.bind(this));
+    this.storesControl.addEventListener('click', this.toggleStores.bind(this));
+    this.serialControl.addEventListener('click', this.toggleSerial.bind(this));
   }
 
   init(host, arcId) {
@@ -140,18 +136,42 @@ class ArcPanel extends HTMLElement {
     this.arcLabel.textContent += ` - "${text.trim()}"`;
   }
 
-  setSerialization(text) {
-    this.serialization.textContent = text.trim().replace(/ +\n/g, '\n').replace(/\n{2,}/g, '\n\n');
-    this.toggleSerialization();
+  async toggleStores() {
+    while (this.stores.firstChild) {
+      this.stores.firstChild.dispose();
+      this.stores.removeChild(this.stores.firstChild);
+    }
+
+    if (this.storesControl.classList.toggle('active')) {
+      for (const store of this.linkedArc._stores) {
+        if (store.stream) {
+          console.warn(`BigCollection stores not supported: '${store.id}'`);
+          continue;
+        }
+        const storePanel = document.createElement('store-panel');
+        this.stores.appendChild(storePanel);
+        await storePanel.attach(store);
+      }
+
+      this.stores.style.display = 'inline-block';
+      this.serial.style.display = 'none';
+      this.serialControl.classList.remove('active');
+    } else {
+      this.stores.style.display = 'none';
+    }
   }
 
-  toggleSerialization() {
-    if (this.serialization.style.display === 'none') {
-      this.serialization.style.display = 'inline-block';
-      this.toggle.innerHTML = '⯆';
+  async toggleSerial() {
+    if (this.serialControl.classList.toggle('active')) {
+      const text = await this.linkedArc.serialize();
+      const cleaned = text.trim().replace(/ +\n/g, '\n').replace(/\n{2,}/g, '\n\n');
+      this.serial.firstElementChild.textContent = cleaned;
+
+      this.serial.style.display = 'inline-block';
+      this.stores.style.display = 'none';
+      this.storesControl.classList.remove('active');
     } else {
-      this.serialization.style.display = 'none';
-      this.toggle.innerHTML = '⯈';
+      this.serial.style.display = 'none';
     }
   }
 
@@ -172,6 +192,28 @@ class ArcPanel extends HTMLElement {
     }
   }
 }
+
+const errorTemplate = `
+  <style>
+    .container {
+      color: red;
+    }
+    #header {
+      font-family: Arial;
+      font-style: italic;
+      margin: 8px;
+    }
+    #message {
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 0 0 8px 8px;
+    }
+  </style>
+  <div class="container">
+    <div id="header"></div>
+    <pre id="message"></pre>
+  </div>`;
 
 class ErrorPanel extends HTMLElement {
   connectedCallback() {

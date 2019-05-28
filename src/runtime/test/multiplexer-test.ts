@@ -10,15 +10,15 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
+import {Id, ArcId} from '../id.js';
 import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {TestHelper} from '../testing/test-helper.js';
-import {Id, ArcId} from '../id.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
-    const manifest = await TestHelper.parseManifest(`
+    const manifest = await Manifest.parse(`
       import 'src/runtime/test/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/test/artifacts/test-particles.manifest'
 
@@ -29,7 +29,7 @@ describe('Multiplexer', () => {
           hostedParticle = ConsumerParticle
           consume annotation as slot0
           list <- handle0
-    `, new Loader());
+    `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
 

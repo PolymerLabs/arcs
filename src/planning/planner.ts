@@ -42,7 +42,7 @@ import {Descendant} from '../runtime/recipe/walker.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Description} from '../runtime/description.js';
 import {Relevance} from '../runtime/relevance.js';
-import {SuggestionCache} from './plan/suggestion-cache.js';
+import {Runtime} from '../runtime/runtime.js';
 
 interface AnnotatedDescendant extends Descendant<Recipe> {
   active?: boolean;
@@ -55,23 +55,23 @@ interface Generation {
   record: GenerationRecord;
 }
 
+const suggestionByHash = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, Suggestion>('suggestionByHash');
+
 export class Planner {
   private _arc: Arc;
-  private suggestionCache: SuggestionCache;
   // public for debug tools
   strategizer: Strategizer;
   speculator: Speculator;
   blockDevtools: boolean;
 
   // TODO: Use context.arc instead of arc
-  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, suggestionCache = null, speculator = null, blockDevtools = false} = {}) {
+  init(arc: Arc, {strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = null, blockDevtools = false} = {}) {
     strategyArgs = Object.freeze({...strategyArgs});
     this._arc = arc;
     const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
     this.strategizer = new Strategizer(strategyImpls, [], ruleset);
     this.blockDevtools = blockDevtools;
     this.speculator = speculator;
-    this.suggestionCache = suggestionCache;
   }
 
   // Specify a timeout value less than zero to disable timeouts.
@@ -196,12 +196,14 @@ export class Planner {
     return trace.endWith(results);
   }
 
+  static clearCache() {
+    suggestionByHash().clear();
+  }
+
   private async retriveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion> {
-    if (this.suggestionCache) {
-      const suggestion = this.suggestionCache.getSuggestion(hash, plan, arc);
-      if (suggestion) {
-        return suggestion;
-      }
+    const cachedSuggestion = suggestionByHash().get(hash);
+    if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
+      return cachedSuggestion;
     }
     let relevance = null;
     let description = null;
@@ -221,9 +223,7 @@ export class Planner {
         description,
         this._arc.modality,
         this._arc.pec.slotComposer ? this._arc.pec.slotComposer.modalityHandler.descriptionFormatter : undefined);
-    if (this.suggestionCache) {
-      this.suggestionCache.setSuggestion(hash, suggestion);
-    }
+    suggestionByHash().set(hash, suggestion);
     return suggestion;
   }
 

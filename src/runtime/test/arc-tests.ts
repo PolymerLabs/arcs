@@ -22,7 +22,6 @@ import {CallbackTracker} from '../testing/callback-tracker.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {TestHelper} from '../testing/test-helper.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import * as util from '../testing/test-util.js';
 import {ArcType} from '../type.js';
@@ -827,26 +826,26 @@ describe('Arc ' + storageKeyPrefix, () => {
       current = next;
     }
 
-    const {arc, slotComposer} = await TestHelper.create({
-      storageKey: storageKeyPrefix + Id.fromString('demo').toString(),
-      manifestString: `
+    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const loader = new StubLoader({
+      ...sources,
+      'Z.js': `defineParticle(({DomParticle}) => {
+        return class extends DomParticle {
+          getTemplate() { return 'Z'; }
+        };
+      });`,
+    });
+    const context = await Manifest.parse(`
         particle A in 'A.js'
           consume root
 
         recipe
           slot 'rootslotid-root' as root
           A
-            consume root as root`,
-      loader: new StubLoader({
-        ...sources,
-        'Z.js': `defineParticle(({DomParticle}) => {
-          return class extends DomParticle {
-            getTemplate() { return 'Z'; }
-          };
-        });`,
-      }),
-      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug')
-    });
+            consume root as root
+    `, loader);
+    const arc = new Arc({id: IdGenerator.newSession().newArcId('arcid'),
+      storageKey: 'key', loader, slotComposer, context});
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();

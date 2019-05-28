@@ -14,12 +14,13 @@ import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
+import {Runtime} from '../runtime.js';
+import {EntityType, ReferenceType} from '../type.js';
 import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
+import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {TestHelper} from '../testing/test-helper.js';
-import {EntityType, ReferenceType} from '../type.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -680,13 +681,10 @@ describe('firebase', function() {
           });
         `
       };
-      const testHelper = await TestHelper.create({
-        manifestString: fileMap.manifest,
-        loader: new StubLoader(fileMap)
-      });
-      const arc = testHelper.arc;
-      const manifest = arc._context;
-
+      const loader = new StubLoader(fileMap);
+      const manifest = await Manifest.parse(fileMap.manifest, loader);
+      const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+      const arc = runtime.newArc('demo', 'volatile://');
       const storage = createStorage(arc.id);
       const dataType = new EntityType(manifest.schemas.Data);
       const bigStore = await storage.construct('test0', dataType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;

@@ -9,34 +9,34 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {Arc} from '../arc.js';
+import {ArcId} from '../id.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
+import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {TestHelper} from '../testing/test-helper.js';
 
 describe('Particle Execution Context', () => {
   it('substitutes slot names for model references', async () => {
-    const {arc, slotComposer} = await TestHelper.create({
-      manifestString: `
-        particle A in 'A.js'
-          consume root
-            provide detail
-            provide annotation
+    const context = await Manifest.parse(`
+      particle A in 'A.js'
+        consume root
+          provide detail
+          provide annotation
 
-        recipe
-          slot 'rootslotid-root' as slot0
-          A
-            consume root as slot0`,
-      loader: new StubLoader({
-        'A.js': `defineParticle(({DomParticle}) => {
-          return class extends DomParticle {
-            get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
-          };
-        });`
-      }),
-      slotComposer: new MockSlotComposer({strict: false}).newExpectations('debug'),
+      recipe
+        slot 'rootslotid-root' as slot0
+        A
+          consume root as slot0`);
+    const loader = new StubLoader({
+      'A.js': `defineParticle(({DomParticle}) => {
+        return class extends DomParticle {
+          get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
+        };
+      });`
     });
-
+    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const arc = new Arc({id: ArcId.newForTest('demo'), storageKey: 'volatile://', slotComposer, loader, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
     await arc.instantiate(recipe);
