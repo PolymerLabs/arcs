@@ -18,5 +18,4 @@ import '../lib/database/firebase-upload.js';
 // TODO(sjmiles): TensorFlowJs (tfjs, also part of ml5) uses `new Function()` which requires `unsafe-eval` csp
 import '../services/tfjs-service.js';
 import '../services/ml5-service.js';
-import '../services/textclassifier-service.js';
 

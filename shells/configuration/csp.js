@@ -31,7 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // TODO(sjmiles): less-than-ideal unsafe-eval is turned on for TensorFlowJs
   //
   const httpEquiv = 'Content-Security-Policy';
-  const content = `   
+  const content = `
     script-src
         'self'
         'unsafe-eval'
