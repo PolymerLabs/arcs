@@ -6,54 +6,41 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Services} from '../../build/runtime/services.js';
-import {dynamicScript} from './dynamic-script.js';
-import {logFactory} from '../../build/platform/log-web.js';
+import {dynamicScript} from '../platform/dynamic-script-web.js';
+import {Reference, ResourceManager as rmgr} from './resource-manager.js';
+import {logFactory} from '../platform/log-web.js';
+import {Services} from '../runtime/services.js';
 
 const log = logFactory('tfjs-service');
 
-//const tfUrl = `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js`;
-const tfUrl = `https://unpkg.com/@tensorflow/tfjs@1.1.2/dist/tf.min.js?module`;
+const TF_VERSION = '1.1.2';
+const tfUrl = `https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`;
 
-// TODO(sjmiles): demonstrate simple concept for tracking objects across the PEC
-
-const references = [];
-const reference = value => {
-  return references.push(value) - 1;
-};
-
-const deref = reference => {
-  return references[reference];
-};
-
-const dispose = reference => {
-  delete references[reference];
-};
-
-// Utility
-
-const requireTf = async () => {
-  if (!window.tf) {
+/** Dynamically loads and returns the `tfjs` module. */
+export const requireTf = async () => {
+  if (!window['tf']) {
     await dynamicScript(tfUrl);
   }
-  return window.tf;
+  return window['tf'];
 };
 
 // Map some TF API to a Service
 
-const sequential = async () => {
+const sequential = async (): Promise<Reference> => {
   // lazy-load TensorFlow
   const tf = await requireTf();
   // Define a model
   const model = tf.sequential();
-  return reference(model);
+  return rmgr.ref(model);
 };
 
-const linearRegression = async ({model: modelRef, training, query, fits}) => {
+const linearRegression = async ({model: modelRef, training, query, epochs}) => {
   // lazy-load TensorFlow
   const tf = await requireTf();
+
+  // @ts-ignore
   // get the referenced model
-  const model = deref(modelRef);
+  const model: tf.LayersModel = rmgr.deref(modelRef);
   // Define a model for linear regression.
   //const model = tf.sequential();
   model.add(tf.layers.dense({units: 1, inputShape: [1]}));
@@ -66,9 +53,9 @@ const linearRegression = async ({model: modelRef, training, query, fits}) => {
   log(x, y, l);
   const xs = tf.tensor2d(x, [l, 1]);
   const ys = tf.tensor2d(y, [l, 1]);
-  fits = fits || 500;
+  epochs = epochs || 500;
   // Train the model using the data.
-  for (let i=0; i<fits; i++) {
+  for (let i=0; i<epochs; i++) {
     await model.fit(xs, ys);
   }
   // Use the model to do inference on a data point the model hasn't seen before:
@@ -79,8 +66,12 @@ const linearRegression = async ({model: modelRef, training, query, fits}) => {
   return buffer.values;
 };
 
+
+const dispose = ({reference}) => rmgr.dispose(reference);
+
 Services.register('tfjs', {
   linearRegression,
   sequential,
-  dispose
+  dispose,
 });
+

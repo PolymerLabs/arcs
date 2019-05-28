@@ -30,7 +30,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
 <div style="padding: 8px;">
   <h2>TensorFlowJS Linear Regression</h2>
-  <h4>training (<span>{{fits}}</span> calls to .fit)</h4>
+  <h4>training (<span>{{epochs}}</span> calls to .fit)</h4>
   <pre>{{training}}</pre>
   <h4>inputs</h4>
   <pre>{{query}}</pre>
@@ -60,22 +60,22 @@ defineParticle(({DomParticle, log, html, resolver}) => {
           [4, 7],
         ];
         state.query = 5;
-        state.fits = 100;
+        state.epochs = 100;
         this.run(state);
       }
       // render proper
-      const {training, query, fits, response} = state;
+      const {training, query, epochs, response} = state;
       return {
         training: JSON.stringify(training),
         query,
-        fits,
+        epochs,
         outputs: response || 'training...'
       };
     }
-    async run({training, query, fits}) {
+    async run({training, query, epochs}) {
       const tf = new Tf(this);
       const model = await tf.sequential();
-      const response = await tf.linearRegression(model, training, fits, query);
+      const response = await tf.linearRegression(model, training, epochs, query);
       tf.dispose(model);
       this.setState({response});
     }

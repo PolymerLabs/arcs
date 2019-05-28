@@ -10,7 +10,7 @@
 
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
-import {Arc, ArcOptions} from './arc.js';
+import {Arc} from './arc.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {Id, IdGenerator} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -18,7 +18,6 @@ import {SlotComposer} from './slot-composer.js';
 import {Loader} from './loader.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
-import {assert} from '../platform/assert-web.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {VolatileMemory} from './storageNG/drivers/volatile.js';
 
@@ -66,6 +65,7 @@ export class Runtime {
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.volatileMemory = new VolatileMemory();
+    runtime = this;
     // user information. One persona per runtime for now.
   }
 

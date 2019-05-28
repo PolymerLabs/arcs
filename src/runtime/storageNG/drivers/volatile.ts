@@ -25,7 +25,6 @@ export class VolatileStorageKey extends StorageKey {
 
 export class VolatileMemory {
   entries = new Map<StorageKey, VolatileEntry<unknown>>();
-
 }
 
 export class VolatileDriver<Data> extends Driver<Data> {
@@ -102,7 +101,7 @@ export class VolatileDriver<Data> extends Driver<Data> {
   }
 }
 
-class VolatileStorageDriverProvider implements StorageDriverProvider {
+export class VolatileStorageDriverProvider implements StorageDriverProvider {
   
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'volatile';
@@ -112,9 +111,17 @@ class VolatileStorageDriverProvider implements StorageDriverProvider {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
-
+    
     return new VolatileDriver<Data>(storageKey, exists);
+  }
+
+  static register() {
+    DriverFactory.register(new VolatileStorageDriverProvider());
   }
 }
 
-DriverFactory.register(new VolatileStorageDriverProvider());
+// Note that this will automatically register for any production code
+// that uses volatile drivers; but it won't automatically register in 
+// testing; for safety, call VolatileStorageDriverProvider.register()
+// from your test code somewhere.
+VolatileStorageDriverProvider.register();
