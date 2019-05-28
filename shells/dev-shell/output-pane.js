@@ -2,9 +2,6 @@ import {StorePanel} from './store-panel.js';
 
 const mainTemplate = `
   <style>
-    #arcs {
-      display: none;
-    }
     #error {
       display: none;
       margin-top: 30px;
@@ -23,12 +20,11 @@ export class OutputPane extends HTMLElement {
   }
 
   reset() {
-    this.arcs.style.display = 'block';
-    this.error.style.display = 'none';
     while (this.arcs.firstChild) {
       this.arcs.firstChild.disposeArc();
       this.arcs.removeChild(this.arcs.firstChild);
     }
+    this.error.style.display = 'none';
     this.error.clear();
   }
 
@@ -44,7 +40,6 @@ export class OutputPane extends HTMLElement {
   }
 
   showError(header, message = '') {
-    this.arcs.style.display = 'none';
     this.error.style.display = 'block';
     this.error.show(header, message);
   }
