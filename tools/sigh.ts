@@ -80,6 +80,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   bundle: [build, bundle],
   schema2proto: [build, schema2proto],
   schema2pkg: [build, schema2pkg],
+  licenses: [build],
   default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
 };
 
@@ -430,6 +431,14 @@ function lint(args: string[]): boolean {
   }
 
   return report.errorCount === 0;
+}
+
+function licenses(): boolean {
+  const result = saneSpawnWithOutput('npm', ['run', 'test:licenses']);
+  if (result.stdout) {
+    console.log(result.stdout);
+  }
+  return result.success;
 }
 
 function webpack(): boolean {

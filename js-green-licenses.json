@@ -1,0 +1,13 @@
+{
+  "packageWhitelist": [
+    /* Apache 2.0, but not discoverable */
+    "@tensorflow/tfjs-node",
+    /** WTFPL license via PouchDB **/
+    "argsarray",
+    /** WTFPL license via PouchDB **/
+    "expand-template",
+    /** WTFPL license via PouchDB **/
+    "spark-md5"
+  ]
+}
+  
