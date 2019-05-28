@@ -19,6 +19,7 @@ const storeTemplate = `
       font-family: monospace;
     }
     #collapse {
+      cursor: pointer;
       color: #777;
       float: right;
     }
