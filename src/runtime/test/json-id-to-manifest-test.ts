@@ -8,7 +8,7 @@ import {Manifest} from '../manifest.js';
 
 describe('JsonldToManifest', () => {
 
-  const isValidManifest: Predicate<string> = (manifestStr: string): boolean => {
+  const isValidManifest = (manifestStr: string): boolean => {
     try {
       Manifest.parse(manifestStr);
     } catch (error) {
