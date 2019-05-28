@@ -44,9 +44,8 @@ describe('JsonldToManifest', () => {
 
   describe('convert', () => {
     it('works on objects without @graph', async () => {
-      const valids = await getSchema()
-        .then((s: string) => JSON.parse(s))
-        .then((j: JSON) => j['@graph']);
+      const schema = await getSchema();
+      const valids = JSON.parse(schema)['@graph'];
 
       valids.map(obj => JSON.stringify(obj))
         .map((s: string) => JsonldToManifest.convert(s, {'@id': 'schema:Thing'}))
@@ -55,16 +54,14 @@ describe('JsonldToManifest', () => {
         });
     });
 
-    it('should work on a real schema.org json linked-data file', () => {
+    it('should work on a real schema.org json linked-data file', async () => {
       //TODO(alxr): Parameterize these tests to work on a variety of schemas.
-      getSchema()
-        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}))
-        .then((converted: string) => {
-          assert.isTrue(isValidManifest(converted));
-        });
+      const schema = await getSchema();
+      const converted = JsonldToManifest.convert(schema, {'@id': 'schema:Thing'});
+      assert.isTrue(isValidManifest(converted));
     });
 
-    it('should add schema.org imports given superclasses', () => {
+    it('should add schema.org imports given superclasses', async () => {
       const containsSchemaOrgImportStatements: Predicate<string> = (manifest: string): boolean => {
         const instances = manifest.match(/(import\s'https:\/\/schema.org\/.+'\s+)+/g);
         return !!instances;
@@ -74,26 +71,30 @@ describe('JsonldToManifest', () => {
         return manifest.includes(' extends ');
       };
 
-      getSchema('LocalBusiness')
-        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness', superclass: [{'@id': 'schema:Place'}]}))
-        .then((converted: string)=> {
-          assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
-          assert.isTrue(classExtendsSuperclasses(converted), 'manifest should extend at least one superclass.');
-        });
+      const schema = await getSchema('LocalBusiness');
+      const converted = JsonldToManifest.convert(schema, {
+        '@id': 'schema:LocalBusiness',
+        superclass: [{'@id': 'schema:Place'}]
+      });
+
+      assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
+      assert.isTrue(classExtendsSuperclasses(converted), 'manifest should extend at least one superclass.');
     });
 
-    it('should produce a manifest even if the schema contains no domains', () => {
-      getSchema('LocalBusiness')
-        .then((data: string) => JSON.parse(data))
-        .then((j: JSON) => { omitKey(j, 'schema:domainIncludes'); return JSON.stringify(j);})
-        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'}))
-        .then( (converted: string) => {
-          assert.isTrue(isValidManifest(converted));
-        });
+    it('should produce a manifest even if the schema contains no domains', async () => {
+      const schema = await getSchema('LocalBusiness');
+
+      const json = JSON.parse(schema);
+      omitKey(json, 'schema:domainIncludes');
+
+      const testSchema = JSON.stringify(json);
+      const converted =  JsonldToManifest.convert(testSchema, {'@id': 'schema:LocalBusiness'});
+
+      assert.isTrue(isValidManifest(converted));
     });
 
     // TODO(alxr) get test to pass
-    xit('should produce a manifest even if there are no relevant properties', () => {
+    xit('should produce a manifest even if there are no relevant properties', async () => {
       const omitSupportedRangeIncludes = (obj: object, target: string) => messyOmit(obj, (kv: [string, unknown]) => {
         const key = kv[0];
 
@@ -105,18 +106,18 @@ describe('JsonldToManifest', () => {
         return val['@id'] === target;
       });
 
-      getSchema('LocalBusiness')
-        .then((data: string) => JSON.parse(data))
-        .then((j: JSON) => {
-          supportedTypes.forEach((type: string) => {
-            omitSupportedRangeIncludes(j, `schema:${type}`);
-          });
-          return JSON.stringify(j);
-        })
-        .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'}))
-        .then( (converted: string) => {
-          assert.isTrue(isValidManifest(converted));
-        });
+      const schema = await getSchema('LocalBusiness');
+      const json = JSON.parse(schema);
+
+      supportedTypes.forEach((type: string) => {
+        omitSupportedRangeIncludes(json, `schema:${type}`);
+      });
+
+      const data = JSON.stringify(json);
+
+      const converted = JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'});
+
+      assert.isTrue(isValidManifest(converted));
     });
   });
 });
