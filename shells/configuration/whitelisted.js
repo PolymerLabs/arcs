@@ -9,6 +9,7 @@ import '../../modalities/dom/components/elements/geo-location.js';
 import '../../modalities/dom/components/elements/model-input.js';
 import '../../modalities/dom/components/elements/model-img.js';
 import '../../modalities/dom/components/elements/dom-repeater.js';
+import '../../modalities/dom/components/elements/youtube-viewer.js';
 
 // requires app-level firebase configuration
 import '../lib/database/firebase-upload.js';
@@ -17,3 +18,5 @@ import '../lib/database/firebase-upload.js';
 // TODO(sjmiles): TensorFlowJs (tfjs, also part of ml5) uses `new Function()` which requires `unsafe-eval` csp
 import '../services/tfjs-service.js';
 import '../services/ml5-service.js';
+import '../services/textclassifier-service.js';
+
