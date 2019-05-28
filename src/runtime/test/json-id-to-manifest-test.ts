@@ -17,10 +17,7 @@ describe('JsonldToManifest', () => {
     return true;
   };
 
-  const asyncProductStr: Promise<string> = fetch('https://schema.org/Product.jsonld')
-    .then(r => r.text());
-
-  const asyncLocalBusinessStr: Promise<string> = fetch('https://schema.org/LocalBusiness.jsonld')
+  const getSchema = (schema: string = 'Product'): Promise<string> => fetch(`https://schema.org/${schema}.jsonld`)
     .then(r => r.text());
 
   const messyOmit = (obj: object, p: Predicate<[string, unknown]>): void => {
@@ -42,7 +39,7 @@ describe('JsonldToManifest', () => {
 
   describe('convert', () => {
     it('works on objects without @graph', async () => {
-      const valids = await asyncProductStr
+      const valids = await getSchema()
         .then((s: string) => JSON.parse(s))
         .then((j: JSON) => j['@graph']);
 
@@ -55,7 +52,7 @@ describe('JsonldToManifest', () => {
 
     it('should work on a real schema.org json linked-data file', () => {
       //TODO(alxr): Parameterize these tests to work on a variety of schemas.
-      asyncProductStr
+      getSchema()
         .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}))
         .then((converted: string) => {
           assert.isTrue(isValidManifest(converted));
@@ -72,7 +69,7 @@ describe('JsonldToManifest', () => {
         return manifest.includes(' extends ');
       };
 
-      asyncLocalBusinessStr
+      getSchema('LocalBusiness')
         .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness', superclass: [{'@id': 'schema:Place'}]}))
         .then((converted: string)=> {
           assert.isTrue(containsSchemaOrgImportStatements(converted), 'manifest should contain (multiple) import statements from schema.org');
@@ -81,7 +78,7 @@ describe('JsonldToManifest', () => {
     });
 
     it('should produce a manifest even if the schema contains no domains', () => {
-      asyncLocalBusinessStr
+      getSchema('LocalBusiness')
         .then((data: string) => JSON.parse(data))
         .then((j: JSON) => { omitKey(j, 'schema:domainIncludes'); return JSON.stringify(j);})
         .then((data: string) => JsonldToManifest.convert(data, {'@id': 'schema:LocalBusiness'}))
@@ -103,7 +100,7 @@ describe('JsonldToManifest', () => {
         return val['@id'] === target;
       });
 
-      asyncLocalBusinessStr
+      getSchema('LocalBusiness')
         .then((data: string) => JSON.parse(data))
         .then((j: JSON) => {
           supportedTypes.forEach((type: string) => {
