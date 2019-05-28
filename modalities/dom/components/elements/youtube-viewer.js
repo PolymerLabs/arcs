@@ -116,10 +116,6 @@ class YoutubeViewer extends Xen.Async {
     return ['videoid', 'time'];
   }
 
-  get template() {
-    return template;
-  }
-
   _getInitialState() {
     return {
       videoid: '',
