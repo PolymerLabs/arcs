@@ -48,6 +48,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.glitch.me
         https://unpkg.com
         https://cdn.jsdelivr.net
+        https://*.youtube.com
+        https://*.ytimg.com
         ;
     font-src
         'self'
@@ -73,6 +75,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         http://*.gstatic.com
         https://s1.ticketm.net
         https://i.scdn.co
+        https://*.youtube.com
         ;
     style-src
         'self'
@@ -84,6 +87,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://xenonjs.com
         https://behelits.com
         https://media.w3.org
+        https://*.youtube.com
         ;
   `
   // (optional) compress whitespace
