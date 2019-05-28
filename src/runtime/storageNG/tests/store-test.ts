@@ -51,6 +51,10 @@ describe('Store', async () => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
+  after(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
     assert.throws(() => store.activate(), 'No driver exists');
