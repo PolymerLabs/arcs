@@ -19,10 +19,10 @@ describe('JsonldToManifest', () => {
   const isValidManifest = (manifestStr: string): boolean => {
     try {
       Manifest.parse(manifestStr);
+      return true;
     } catch (error) {
       return false;
     }
-    return true;
   };
 
   const getSchema = async (schema: string = 'Product'): Promise<string> => {
