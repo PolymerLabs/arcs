@@ -72,7 +72,7 @@ describe('JsonldToManifest', () => {
     it('should add schema.org imports given superclasses', async () => {
       const containsSchemaOrgImportStatements: Predicate<string> = (manifest: string): boolean => {
         const instances = manifest.match(/(import\s'https:\/\/schema.org\/.+'\s+)+/g);
-        return !!instances;
+        return Boolean(instances);
       };
 
       const classExtendsSuperclasses: Predicate<string> = (manifest: string): boolean => {
