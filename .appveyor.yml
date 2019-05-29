@@ -13,6 +13,7 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
+  - npm install -g node-gyp
   - node-gyp configure --verbose --jobs 4 --msvs_version=2015 --python C:\Python27\python.exe
   - appveyor-retry npm install
 
