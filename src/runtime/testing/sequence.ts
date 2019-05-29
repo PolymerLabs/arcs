@@ -110,7 +110,7 @@ interface Sensor {
  * in practise.
  */
 export class SequenceTest<T> {
-  private prepareFunction: () => T;
+  private prepareFunction: (() => T) | (() => Promise<T>);
   private currentID = 0;
 
   private changes: {[index: string]: SequenceChange[]} = {};
@@ -125,7 +125,7 @@ export class SequenceTest<T> {
   /**
    * Set a function that constructs a fresh instance of the object under test for each ordering.
    */
-  setTestConstructor(prepareFunction: () => T) {
+  setTestConstructor(prepareFunction: (() => T) | (() => Promise<T>)) {
     this.prepareFunction = prepareFunction;
   }
 
@@ -576,7 +576,10 @@ export class SequenceTest<T> {
       
       this.resetResults();
       this.resetVariables();
-      const obj = this.prepareFunction();
+      let obj = this.prepareFunction();
+      if (obj instanceof Promise) {
+        obj = await obj;
+      }
       this.setupOutputs(obj);
 
       this.interleavingLog = ['--', description, '\n'];

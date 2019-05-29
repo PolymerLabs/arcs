@@ -107,7 +107,7 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
     return storageKey.protocol === 'volatile';
   }
   
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  async driver<Data>(storageKey: StorageKey, exists: Exists) {
     if (!this.willSupport(storageKey)) {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }

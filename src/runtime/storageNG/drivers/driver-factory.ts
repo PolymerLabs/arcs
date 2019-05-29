@@ -18,7 +18,7 @@ export interface StorageDriverProvider {
   // information on the StorageDriver and characteristics
   // of the Storage
   willSupport(storageKey: StorageKey): boolean;
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data>;
+  driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
 
 export abstract class Driver<Data> {
@@ -44,7 +44,7 @@ export class DriverFactory {
     this.providers = [];
   }
   static providers: StorageDriverProvider[] = [];
-  static driverInstance<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
         return provider.driver<Data>(storageKey, exists);
@@ -53,11 +53,11 @@ export class DriverFactory {
     return null;
   }
 
-  static register(storageDriverProvider: StorageDriverProvider): void {
+  static register(storageDriverProvider: StorageDriverProvider) {
     this.providers.push(storageDriverProvider);
   }
 
-  static willSupport(storageKey: StorageKey): boolean {
+  static willSupport(storageKey: StorageKey) {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
         return true;

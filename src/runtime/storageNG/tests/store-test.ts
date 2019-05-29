@@ -31,7 +31,7 @@ class MockStorageDriverProvider implements StorageDriverProvider {
   willSupport(storageKey: StorageKey) {
     return true;
   }
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  async driver<Data>(storageKey: StorageKey, exists: Exists) {
     return new MockDriver<Data>(storageKey, exists);
   }
 }
@@ -57,14 +57,19 @@ describe('Store', async () => {
 
   it(`will throw an exception if an appropriate driver can't be found`, async () => {
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    assert.throws(() => store.activate(), 'No driver exists');
+    try {
+      await store.activate();
+      assert.fail('store.activate() should not have succeeded');
+    } catch (e) {
+      assert.match(e.toString(), /No driver exists/);
+    }
   });
 
   it('will construct Direct stores when required', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     assert.equal(activeStore.constructor, DirectStore);
   });
@@ -73,7 +78,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;    
     let capturedModel: CountData = null;
@@ -92,7 +97,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;
     let capturedModel: CountData = null;
@@ -113,7 +118,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     const driver = activeStore['driver'] as MockDriver<CountData>;
     driver.send = async model => true;
@@ -149,7 +154,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
     
     return new Promise(async (resolve, reject) => {
       // requesting store
@@ -172,7 +177,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
@@ -199,7 +204,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     const remoteCount = new CRDTCount();
     remoteCount.applyOperation({type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}});
@@ -216,7 +221,7 @@ describe('Store', async () => {
     DriverFactory.register(new MockStorageDriverProvider());
 
     const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-    const activeStore = store.activate();
+    const activeStore = await store.activate();
 
     // local count from proxy
     const count = new CRDTCount();
