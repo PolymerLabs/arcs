@@ -13,6 +13,7 @@ import {atob} from '../../../platform/atob-web.js';
 import {btoa} from '../../../platform/btoa-web.js';
 import {firebase} from '../../../platform/firebase-web.js';
 import {Id} from '../../id.js';
+import {Runnable} from '../../hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
@@ -376,7 +377,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
   private localKeyId = Date.now();
   private pendingWrites: {storageKey: string, value: {}}[] = [];
   wasConnect: boolean; // for debugging
-  private resolveInitialized: () => void;
+  private resolveInitialized: Runnable;
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
   constructor(type, storageEngine, id, reference, firebaseKey, shouldExist) {
@@ -534,6 +535,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
          return;
       }
     }
+
     this.version++;
     const version = this.version;
     let storageKey;
@@ -652,7 +654,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
   private remoteState: {items: Dictionary<{value: {}, keys: Dictionary<null>}>};
   private readonly initialized: Promise<void>;
   private pendingWrites: {value: {}, storageKey: string}[] = [];
-  private resolveInitialized: () => void;
+  private resolveInitialized: Runnable;
   private localKeyId = Date.now();
   private readonly valueChangeCallback: (dataSnapshot: firebase.database.DataSnapshot, s?: string) => void;
 
