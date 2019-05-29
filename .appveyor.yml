@@ -15,7 +15,7 @@ install:
   - npm install -g npm@6.9.0
   - npm install -g node-gyp
   - npm config set msvs_version 2015
-  - node-gyp configure --verbose --jobs 4 --python C:\Python27
+  - node-gyp configure --verbose --jobs 4 --python C:\Python27\python.exe
   - appveyor-retry npm install
 
 build: off
