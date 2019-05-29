@@ -9,7 +9,7 @@
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {requireTf} from '../../build/platform/tf-web.js';
+import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 // Map some TF API to a Service
