@@ -8,11 +8,11 @@
  */
 
 import {dynamicScript} from '../platform/dynamic-script-web.js';
-import {requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
+import {tf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
@@ -33,7 +33,7 @@ interface MobilenetParams {
 }
 
 /** @see https://github.com/tensorflow/tfjs-models/tree/master/mobilenet#making-a-classification */
-type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // | tf.Tensor3D;
+type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D;
 
 interface ImageInferenceParams {
   model: Reference;
@@ -73,8 +73,6 @@ interface MobilenetEmbedding extends MobilenetParams {
  * @return a reference number to the model, maintained by the `ResourceManager`.
  */
 const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Reference> => {
-  log('Loading tfjs...');
-  const tf = await requireTf();
   log('Loading MobileNet...');
   await dynamicScript(modelUrl);
   const model = await window['mobilenet'].load(version, alpha);
