@@ -9,6 +9,7 @@ init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
 
 install:
+  - ps: $Env:Path # What's currently in the path?
   - ps: Install-Product node $env:nodejs_version
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
