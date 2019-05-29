@@ -386,7 +386,7 @@ export class BigCollection extends Handle {
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     assert(kind === 'sync', 'BigCollection._notify only supports sync events');
-    particle.callOnHandleSync(this, [], e => this.reportUserExceptionInHost(e, particle, 'onHandleSync'));
+    await particle.callOnHandleSync(this, [], e => this.reportUserExceptionInHost(e, particle, 'onHandleSync'));
   }
 
   /**
