@@ -19,5 +19,3 @@ export const requireTf = async () => {
   return window['tf'];
 };
 
-
-
