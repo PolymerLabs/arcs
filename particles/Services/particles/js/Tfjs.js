@@ -9,7 +9,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log, html, resolver}) => {
+defineParticle(({DomParticle, html, resolver}) => {
 
   // TODO(sjmiles): es6 `import` not supported yet in workers, `import_` is an MVP attempt
   // to model `import` using `importScripts`
@@ -26,7 +26,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   // import our Tf proxy-to-service
   const Tf = import_('Tf', '../../lib/tf.js');
 
-  const template = html`
+  const template_ = html`
 
 <div style="padding: 8px;">
   <h2>TensorFlowJS Linear Regression</h2>
@@ -42,7 +42,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
   return class extends DomParticle {
     get template() {
-      return template;
+      return template_;
     }
     update({}, state) {
       // TODO(sjmiles): update() is called during SpecEx, while
@@ -72,12 +72,11 @@ defineParticle(({DomParticle, log, html, resolver}) => {
         outputs: response || 'training...'
       };
     }
+    // TODO(alxr): get linear regression working using new portable ML models (#3094)
     async run({training, query, epochs}) {
-      const tf = new Tf(this);
-      const model = await tf.sequential();
-      const response = await tf.linearRegression(model, training, epochs, query);
-      tf.dispose(model);
-      this.setState({response});
+      // const tf = new Tf(this);
+      // tf.dispose(model);
+      // this.setState({response});
     }
   };
 
