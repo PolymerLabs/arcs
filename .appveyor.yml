@@ -3,7 +3,7 @@ version: '0.0.{build}'
 environment:
   nodejs_version: '10'
 
-image: Visual Studio 2017
+image: Visual Studio 2015
 
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
@@ -12,6 +12,9 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
+  - npm install -g node-gyp
+  - npm config set msvs_version 2015
+  - node-gyp configure --verbose
   - appveyor-retry npm install
 
 build: off
