@@ -11,7 +11,6 @@ init:
 install:
   - ps: $Env:Path # What's currently in the path?
   - ps: Install-Product node $env:nodejs_version
-  - choco install visualcpp-build-tools
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
   - npm install -g node-gyp
