@@ -535,10 +535,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
       }
     }
 
-    const version = this.version + 1;
+    this.version++;
+    const version = this.version;
     let storageKey;
     if (this.referenceMode && value) {
       storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
+      this.value = {id: value.id, storageKey};
       this.pendingWrites.push({value, storageKey});
     } else {
       this.value = value;
@@ -546,11 +548,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     this.localModified = true;
 
     await this._persistChanges();
-    this.version = version;
-    if (this.referenceMode && value)
-    {
-      this.value = {id: value.id, storageKey};
-    }
 
     this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
@@ -582,7 +579,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
-
     if (this.referenceMode && this.value !== null) {
       const value = this.value as {id: string, storageKey: string};
 
