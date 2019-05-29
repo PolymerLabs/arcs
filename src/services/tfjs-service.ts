@@ -9,7 +9,6 @@
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {tf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 
