@@ -8,13 +8,16 @@ import 'ArcMeta.schema'
 
 particle Launcher in 'source/Launcher.js'
   inout [ArcMeta] arcs
+  in [ArcMetaShare] shared
   consume root
   description `arcs launcher`
 
 recipe Launcher
-  create 'SYSTEM_arcs' as arcs
+  create 'SYSTEM_arcs' #arcs as arcs
+  map 'BOXED_arc' as shared
   slot 'rootslotid-root' as root
   Launcher
     arcs = arcs
+    shared = shared
     consume root as root
 

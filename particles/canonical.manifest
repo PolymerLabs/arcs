@@ -11,6 +11,9 @@ import 'Services/Services.recipes'
 import 'Stardate/Stardate.recipes'
 import 'Demo/Demo.recipes'
 
+// for ArcMetaShare
+import 'Arcs/ArcMeta.schema'
+
 // Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
 // import 'Tutorial/Tutorial.recipes'
 

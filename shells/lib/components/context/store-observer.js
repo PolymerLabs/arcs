@@ -51,7 +51,7 @@ export class StoreObserver {
     await forEachEntity(this.store, value => this.remove(value));
   }
   async onChange(change) {
-    this.log('onChange', change); //, this.listener);
+    this.log('onChange', change);
     const {add, remove, data} = change;
     if (data) {
       this.add(data);

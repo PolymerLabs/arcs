@@ -1,5 +1,6 @@
 import 'Avatar.schema'
 import 'UserName.schema'
+import '../Arcs/ArcMeta.schema'
 import '../Profile/FavoriteFood.recipes'
 
 resource PROFILE_avatarResource
@@ -26,6 +27,11 @@ resource BOXED_userNameResource
   start
   []
 store BOXED_userName of [UserNameShare] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
+
+resource BOXED_arcResource
+  start
+  []
+store BOXED_arc of [ArcMetaShare] 'BOXED_arc' @0 #boxed in BOXED_arcResource
 
 // the below is required to make the arc aware of these stores
 

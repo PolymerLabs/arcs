@@ -62,71 +62,32 @@ export const ArcHandleListener = class extends AbstractListener {
   }
 };
 
-export const ArcMetaListener = class extends AbstractListener {
-  async add(entity, store) {
-    const {rawData: {key, deleted}} = entity;
-    if (!deleted) {
-      const {base} = crackStorageKey(store.storageKey);
-      this.observe(key, await SyntheticStores.getStore(base, key));
-    }
-  }
-  remove(entity) {
-    this.unobserve(entity.rawData.key);
-  }
-};
-
-export const ShareListener = class extends AbstractListener {
+const ContextAwareListener = class extends AbstractListener {
   constructor(context, listener) {
     super(listener);
     this.context = context;
   }
-  get isProfile() {
-    return false;
-  }
-  createLogger() {
-    return logFactory(`ShareListener`, 'blue');
-  }
-  async add(entity, store) {
-    //this.log('add', entity);
-    // TODO(sjmiles): roll this into 'metrics'?
-    let backingStorageKey = store.storageKey;
-    if (store.backingStore) {
-      // TODO(sjmiles): property is not called 'storageKey' for pouchdb
-      backingStorageKey = store.backingStore.storageKey;
+  async addSharedEntity({entity, shareSchema}, {userid, storeId, storeName, backingStorageKey, typeName}) {
+    let share = boxes[storeId];
+    if (!share) {
+      this.log(`found new share:`, typeName, storeName);
+      share = boxes[storeId] = {};
+      share.shareStorePromise = ContextStores.getShareStore(this.context, shareSchema, storeName, storeId, ['shared']);
     }
-    // TODO(sjmiles): store/handles are similar but different, we shoved the handle
-    // relating to this store onto the store object in ArcHandleListener. Probably
-    // this can be unified to use one or t'other.
-    const handle = store.handle;
-    const metrics = ContextStores.getHandleMetrics(handle, this.isProfile);
-    if (metrics) {
-      const typeName = simpleNameOfType(store.type);
-      const shareType = `${typeName}Share`;
-      const shareSchema = this.context.findSchemaByName(shareType);
-      if (!shareSchema) {
-        this.log(`found a share type [${shareType}] with no schema, ignoring`);
-      } else {
-        // arc shares
-        let share = boxes[metrics.storeId];
-        if (!share) {
-          this.log(`found new share:`, typeName, metrics.storeName);
-          share = boxes[metrics.storeId] = {};
-          share.shareStorePromise = ContextStores.getShareStore(this.context, shareSchema, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
-        }
-        const shareStore = await share.shareStorePromise;
-        ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, metrics.userid);
-        // collation boxes
-        let box = boxes[metrics.boxStoreId];
-        if (!box) {
-          box = boxes[metrics.boxStoreId] = {};
-          box.boxStorePromise = ContextStores.getShareStore(this.context, shareSchema, metrics.type, metrics.boxStoreId, metrics.boxStoreId, ['shared']);
-        }
-        const boxStore = await box.boxStorePromise;
-        ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, metrics.userid);
-      }
+    const shareStore = await share.shareStorePromise;
+    ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, userid);
+  }
+  async addBoxedEntity({entity, shareSchema}, {userid, boxStoreId, backingStorageKey}) {
+    let box = boxes[boxStoreId];
+    if (!box) {
+      box = boxes[boxStoreId] = {};
+      box.boxStorePromise = ContextStores.getShareStore(this.context, shareSchema, boxStoreId, boxStoreId, ['shared']);
     }
+    const boxStore = await box.boxStorePromise;
+    ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, userid);
   }
   async remove(entity, store) {
+    this.unobserve(entity.rawData.key);
     const _remove = async (box, promiseName) => {
       if (box && box[promiseName]) {
         const store = await box[promiseName];
@@ -135,9 +96,70 @@ export const ShareListener = class extends AbstractListener {
     };
     //this.log('removing entity', entity);
     const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
-    if (metrics) {
+    if (metrics.tag) {
       _remove(boxes[metrics.storeId], 'shareStorePromise');
       _remove(boxes[metrics.boxStoreId], 'boxStorePromise');
+    }
+  }
+};
+
+export const ArcMetaListener = class extends ContextAwareListener {
+  async add(entity, store) {
+    const {rawData: {key, deleted}} = entity;
+    if (!deleted) {
+      const {base} = crackStorageKey(store.storageKey);
+      this.observe(key, await SyntheticStores.getStore(base, key));
+    }
+  }
+};
+
+export const FriendArcMetaListener = class extends ArcMetaListener {
+  createLogger() {
+    return logFactory(`FriendArcMetaListener`, `#5321a5`);
+  }
+  async add(entity, store) {
+    const {rawData: {key, deleted}} = entity;
+    if (!deleted) {
+      const {base} = crackStorageKey(store.storageKey);
+      this.observe(key, await SyntheticStores.getStore(base, key));
+      //
+      const metrics = ContextStores.getStoreMetrics(store);
+      this.log(`add shared arc [${base}]`/*, store*/);
+      const shareSchema = this.context.findSchemaByName(metrics.shareTypeName);
+      if (!shareSchema) {
+        this.log(`found a share type [${metrics.shareTypeName}] with no schema, ignoring`);
+      } else {
+        // TODO(sjmiles): historically, no `tag` on ArcMeta store, so we have
+        // to simulate that info
+        metrics.boxStoreId = metrics.boxStoreId.replace(/null/g, 'arc');
+        // metrics needed: {userid, boxStoreId, backingStorageKey}
+        //this.addBoxedEntity({entity, shareSchema}, metrics);
+      }
+    }
+  }
+};
+
+export const ShareListener = class extends ContextAwareListener {
+  get isProfile() {
+    return false;
+  }
+  createLogger() {
+    return logFactory(`ShareListener`, 'blue');
+  }
+  async add(entity, store) {
+    // TODO(sjmiles): `store.handle` is expected by getStoreMetrics, this is part
+    // of the handle/store confusion I didn't resolve properly here
+    const metrics = ContextStores.getStoreMetrics(store, this.isProfile);
+    if (metrics.tag) {
+      const shareSchema = this.context.findSchemaByName(metrics.shareTypeName);
+      if (!shareSchema) {
+        this.log(`found a share type [${metrics.shareTypeName}] with no schema, ignoring`);
+      } else {
+        // individual shares
+        this.addSharedEntity({entity, shareSchema}, metrics);
+        // collated (boxed) shares
+        this.addBoxedEntity({entity, shareSchema}, metrics);
+      }
     }
   }
 };

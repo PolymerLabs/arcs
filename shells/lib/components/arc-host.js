@@ -111,8 +111,9 @@ export class ArcHost {
   async persistSerialization(arc) {
     const {id, storageKey} = arc;
     if (!storageKey.includes('volatile')) {
-      log(`persisting serialization to [${id}/serialization]`);
+      log(`compiling serialization for [${id}]...`);
       const serialization = await arc.serialize();
+      log(`persisting serialization to [${id}/serialization]...`);
       await arc.persistSerialization(serialization);
     }
   }

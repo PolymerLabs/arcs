@@ -75,6 +75,8 @@ const template = html`
   <cx-tab>Shared</cx-tab>
 </cx-tabs>
 
+<div shares>{{shares}}</div>
+
 <div columns>
   <div style="flex: 1;">{{columnA}}</div>
   <div style="flex: 1;">{{columnB}}</div>
@@ -106,15 +108,31 @@ return class extends DomParticle {
       selected: 1
     };
   }
-  update({arcs}, state) {
+  update({arcs, shared}, state) {
     if (arcs) {
       this.setState(this.collateItems(arcs));
     }
+    if (shared) {
+      //this.composeShares(shared);
+    }
+  }
+  async composeShares(shared) {
+    const models = [];
+    const arcs = await this.derefShares(shared);
+    arcs.forEach(arc => {
+     if (arc.description && !arc.deleted) {
+      models.push(this.renderArc(arc));
+      }
+    });
+    this.setState({shares: {
+      $template: 'shares',
+      models
+    }});
   }
   shouldRender(props, {items}) {
     return Boolean(items);
   }
-  render(props, {items, shared, starred, recent, selected}) {
+  render(props, {items, shared, starred, recent, selected, shares}) {
     const columns = [[], []];
     const chosen = [items, recent, starred, shared][selected || 0];
     chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
@@ -132,6 +150,7 @@ return class extends DomParticle {
       });
     }
     return {
+      shares,
       columnA: {
         $template: 'column',
         models: columns[0],

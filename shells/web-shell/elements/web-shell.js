@@ -200,13 +200,16 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     const {launcherArc, store} = this.state;
     if (launcherArc && !store) {
       if (launcherArc._stores.length) {
-        const store = launcherArc._stores.pop();
-        store.on('change', info => this.state = {info}, this);
-        this.state = {store};
-      } else {
-        setTimeout(() => this.waitForStore(), pollInterval);
+        const store = launcherArc._stores.find(store => store.originalId === 'SYSTEM_arcs');
+        //const store = launcherArc._stores.pop();
+        if (store) {
+          this.state = {store: store};
+          store.on('change', info => this.state = {info}, this);
+          return;
+        }
       }
     }
+    setTimeout(() => this.waitForStore(), pollInterval);
   }
   applySuggestion(suggestion) {
     if (!this.state.arckey) {
