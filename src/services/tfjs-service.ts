@@ -15,6 +15,8 @@ const log = logFactory('tfjs-service');
 
 const dispose = ({reference}) => rmgr.dispose(reference);
 
+// TODO(alxr) Will add generic ML model service functions in #3094
+
 Services.register('tfjs', {
   dispose,
 });
