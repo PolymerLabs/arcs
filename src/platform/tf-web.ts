@@ -7,5 +7,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as tf from '../../node_modules/@tensorflow/tfjs/dist/tf.js';
-export {tf};
+import {dynamicScript} from './dynamic-script-web.js';
+
+const TF_VERSION = '1.1.2';
+const tfUrl = `https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`;
+
+/** Dynamically loads and returns the `tfjs` module. */
+export const requireTf = async () => {
+  if (!window['tf']) {
+    await dynamicScript(tfUrl);
+  }
+  return window['tf'];
+};
+
+
+
