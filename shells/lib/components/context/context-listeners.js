@@ -133,7 +133,7 @@ export const FriendArcMetaListener = class extends ArcMetaListener {
         // to simulate that info
         metrics.boxStoreId = metrics.boxStoreId.replace(/null/g, 'arc');
         // metrics needed: {userid, boxStoreId, backingStorageKey}
-        //this.addBoxedEntity({entity, shareSchema}, metrics);
+        this.addBoxedEntity({entity, shareSchema}, metrics);
       }
     }
   }
