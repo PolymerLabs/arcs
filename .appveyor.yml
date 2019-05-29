@@ -8,6 +8,9 @@ init:
 
 install:
   - ps: Install-Product node $env:nodejs_version
+  - choco install python2
+  - python --version
+  - npm install -g --production windows-build-tools
   - npm install -g npm@6.9.0
   - appveyor-retry npm install
 
