@@ -22,7 +22,7 @@ export const Const = {
     storageKey: pouchdb, //firebase,
     plannerStorageKey: 'volatile',
     manifest: `https://$particles/canonical.manifest`,
-    launcherSuffix: `-launcher`,
+    launcherId: 'arc-launcher'
   },
   LOCALSTORAGE: {
     user: `${version}-user`,

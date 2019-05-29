@@ -60,7 +60,7 @@ const template = Xen.Template.html`
   <!-- ui chrome -->
   <web-shell-ui arc="{{arc}}" launcherarc="{{launcherArc}}" context="{{context}}" nullarc="{{nullArc}}" pipesarc="{{pipesArc}}" search="{{search}}" on-search="onState" showhint="{{showHint}}">
     <!-- launcher -->
-    <launcher-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></launcher-arc>
+    <arc-element id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></arc-element>
     <!-- <web-arc id="launcher" hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" config="{{launcherConfig}}" on-arc="onLauncherArc"></web-arc> -->
     <!-- <web-launcher hidden="{{hideLauncher}}" storage="{{storage}}" context="{{context}}" info="{{info}}"></web-launcher> -->
     <!-- user arc -->
@@ -79,7 +79,7 @@ const template = Xen.Template.html`
   <!-- <web-arc id="folksArc" hidden storage="{{storage}}" config="{{folksConfig}}" context="{{context}}" on-arc="onFolksArc"></web-arc> -->
   <!-- <web-arc id="pipesArc" hidden storage="{{storage}}" config="{{pipesConfig}}" context="{{context}}" on-arc="onPipesArc"></web-arc> -->
   <!-- data pipes -->
-  <device-client-pipe context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onSpawn" on-reset="onReset"></device-client-pipe>
+  <!-- <device-client-pipe context="{{context}}" storage="{{storage}}" arc="{{arc}}" pipearc="{{pipesArc}}" suggestions="{{suggestions}}" on-search="onState" on-client-arc="onPipeClientArc" on-suggestion="onChooseSuggestion" on-spawn="onRequestPipeArc" on-reset="onReset"></device-client-pipe> -->
 `;
 
 const log = Xen.logFactory('WebShell', '#6660ac');
@@ -124,41 +124,35 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     // setup environment once we have a root and a user
     if (!state.env && root) {
       this.updateEnv({root}, state);
-      this.spawnContext();
+      this.configureContext();
     }
     // spin up launcher arc
     if (!state.launcherConfig && state.env) {
-      this.spawnLauncher();
+      this.configureLauncher();
     }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
-      this.waitForStore(10);
+      this.waitForStore(500);
     }
     // spin up nullArc
     if (!state.nullConfig && state.context && state.store) {
-      this.spawnNullArc();
+      this.configureNullArc();
     }
     // spin up pipesArc
     // if (!state.pipesConfig && state.context) {
-    //   this.spawnPipesArc();
+    //   this.configurePipesArc();
     // }
     // consume a suggestion
     if (state.suggestion && state.context) {
-      if (!this.state.arckey) {
-        // spin up new arc
-        this.spawnSuggestion(state.suggestion);
-      } else {
-        // add plan to existing arc
-        this.state = {plan: state.suggestion.plan};
-      }
+      this.applySuggestion(state.suggestion);
       state.suggestion = null;
     }
     // consume an arckey
     if (state.env && state.arckey && state.context) {
-      if (!state.arcConfig || state.arcConfig.id !== state.arckey) {
+      //if (!state.arcConfig || (state.arcConfig.key !== state.arckey)) {
         // spin up arc from key
-        this.spawnSerialization(state.arckey);
-      }
+        this.configureArcFromKey(state.arckey);
+      //}
     }
     // flush arc metadata to storage
     if (state.arc && state.arcMeta) {
@@ -197,90 +191,93 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   }
   // TODO(sjmiles): use SyntheticStore instead, see web-context.js
   waitForStore(pollInterval) {
-    const {launcherArc, store} = this.state;
-    if (launcherArc && !store) {
-      if (launcherArc._stores.length) {
-        const store = launcherArc._stores.find(store => store.originalId === 'SYSTEM_arcs');
-        //const store = launcherArc._stores.pop();
-        if (store) {
-          this.state = {store: store};
-          store.on('change', info => this.state = {info}, this);
-          return;
-        }
+    const {context, launcherArc, store} = this.state;
+    if (context && launcherArc && !store) {
+      const shareSchema = context.findSchemaByName('ArcMeta');
+      const store = launcherArc.findStoresByType(shareSchema.type.collectionOf()).pop();
+      if (store) {
+        this.state = {store: store};
+        store.on('change', info => this.state = {info}, this);
+        return;
       }
     }
-    setTimeout(() => this.waitForStore(), pollInterval);
+    log('waitForStore: waiting for launcher store...');
+    setTimeout(() => this.waitForStore(pollInterval), pollInterval);
   }
   applySuggestion(suggestion) {
     if (!this.state.arckey) {
-      this.spawnSuggestion(suggestion);
-    } else {
-      this.state = {plan: suggestion.plan};
+      this.configureArcFromSuggestion(suggestion);
     }
+    this.state = {plan: suggestion.plan};
   }
-  async spawnContext() {
+  async configureContext() {
     const precontext = await Utils.parse(manifests.context);
     this.state = {
       precontext,
       contextConfig: {
-        id: `${Const.DEFAULT.userId}-context`
+        id: `arc-context`
       }
     };
   }
-  spawnLauncher() {
+  configureLauncher() {
     this.state = {
       launcherConfig: {
-        id: `${Const.DEFAULT.userId}${Const.DEFAULT.launcherSuffix}`,
+        id: Const.DEFAULT.launcherId,
         manifest: manifests.launcher
       }
     };
   }
-  spawnNullArc() {
+  configureNullArc() {
     this.state = {
       nullConfig: this.configureBgArc('planning')
     };
   }
-  // spawnPipesArc() {
-  //   const pipesConfig = this.configureBgArc('pipes');
-  //   pipesConfig.manifest = manifests.pipes;
-  //   this.state = {
-  //     pipesConfig
-  //   };
-  // }
-  spawnSerialization(key) {
-    this.state = {
-      search: '',
-      arc: null,
-      arckey: key,
-      arcConfig: {
-        id: key,
-        suggestionContainer: this.getSuggestionSlot()
-      }
-    };
+  configureArcFromKey(arckey) {
+    // TODO(sjmiles): current middleware keeps arc-id and storage-key separate, which was a mistake.
+    // Fixed at this high-level at the moment. Note this code still works for old arc-keys (uses default storage).
+    const parts = arckey.split('/');
+    const id = parts.pop();
+    const storage = parts.join('/');
+    // TODO(sjmiles): don't manipulate state if we can avoid it
+    const {arcConfig} = this.state;
+    if (!arcConfig || arcConfig.id !== id) {
+      this.state = {
+        search: '',
+        arc: null,
+        arckey,
+        arcConfig: {
+          storage,
+          id,
+          suggestionContainer: this.getSuggestionSlot()
+        }
+      };
+    }
   }
-  spawnSuggestion(suggestion) {
+  configureArcFromSuggestion(suggestion) {
+    const storage = this.state.config.storage;
     const luid = generateId();
-    const id = `${Const.DEFAULT.userId}-${luid}`;
+    const id = `arc-${luid}`;
     const description = suggestion.descriptionText;
-    this.spawnArc({id, manifest: null, description});
-    this.state = {plan: suggestion.plan};
+    this.configureArc({storage, id, description});
   }
-  spawnArc({id, manifest, description}) {
+  configureArc({storage, id, manifest, description}) {
     //log(id, manifest);
+    const arckey = `${storage}/${id}`;
     const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
     this.state = {
       search: '',
       arc: null,
-      arckey: id,
+      arckey,
       arcMeta: {
         key: id,
-        href: `?arc=${id}`,
+        href: `?arc=${arckey}`,
         description,
         color,
         touched: Date.now()
       },
       // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
       arcConfig: {
+        key: arckey,
         id,
         manifest,
         suggestionContainer: this.getSuggestionSlot()
@@ -289,14 +286,8 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     };
   }
   configureBgArc(name)  {
-    const key = `${Const.DEFAULT.userId}-${name.toLowerCase()}`;
-    // this.recordArcMeta({
-    //   key: key,
-    //   href: `?arc=${key}`,
-    //   description: `${name} arc`,
-    //   color: 'silver',
-    //   touched: 0
-    // });
+    const key = `arc-${name.toLowerCase()}`;
+    // this.recordArcMeta({key: key, href: `?arc=${key}`, description: `${name} arc`, color: 'silver', touched: 0});
     return {
       id: key,
       suggestionContainer: this.getSuggestionSlot()
@@ -324,9 +315,6 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
   onNullArc(e, nullArc) {
     this.state = {nullArc};
   }
-  // onPipesArc(e, pipesArc) {
-  //   this.state = {pipesArc};
-  // }
   onSuggestions(e, suggestions) {
     const showHint = Boolean(suggestions.length);
     this.state = {suggestions, showHint};
@@ -341,42 +329,37 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     log('onChooseSuggestion', suggestion);
     this.state = {suggestion};
   }
-  onPipeClientArc(e, arc) {
-    // TODO(sjmiles): `arc.key` is ad-hoc data from device-client-pipe
-    const key = arc.key;
-    this.recordArcMeta({
-      key: key,
-      href: `?arc=${key}`,
-      description: `Piped Data Arc`,
-      color: 'purple',
-      touched: Date.now()
-    });
-  }
-  onSpawn(e, {id, manifest, description}) {
-    const color = ['purple', 'blue', 'green', 'orange', 'brown'][Math.floor(Math.random()*5)];
-    this.state = {
-      search: '',
-      arc: null,
-      arckey: id,
-      arcMeta: {
-        key: id,
-        href: `?arc=${id}`,
-        description,
-        color,
-        touched: Date.now()
-      },
-      // TODO(sjmiles): see web-arc.js for why there are two things called `manifest`
-      arcConfig: {
-        id: id,
-        manifest,
-        suggestionContainer: this.getSuggestionSlot()
-      },
-      manifest: null
-    };
-  }
   onReset() {
     this.openLauncher();
   }
+  //
+  // pipes
+  //
+  // configurePipesArc() {
+  //   const pipesConfig = this.configureBgArc('pipes');
+  //   pipesConfig.manifest = manifests.pipes;
+  //   this.state = {
+  //     pipesConfig
+  //   };
+  // }
+  // onPipesArc(e, pipesArc) {
+  //   this.state = {pipesArc};
+  // }
+  // onRequestPipeArc(e, {id, manifest, description}) {
+  //   const storage = this.state.config.storage;
+  //   this.configureArc({storage, id, manifest, description});
+  // }
+  // onPipeClientArc(e, arc) {
+  //   // TODO(sjmiles): `arc.key` is ad-hoc data from device-client-pipe
+  //   const key = arc.key;
+  //   this.recordArcMeta({
+  //     key: key,
+  //     href: `?arc=${key}`,
+  //     description: `Piped Data Arc`,
+  //     color: 'purple',
+  //     touched: Date.now()
+  //   });
+  // }
 }
 
 customElements.define('web-shell', WebShell);

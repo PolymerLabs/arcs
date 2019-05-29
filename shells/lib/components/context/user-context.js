@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Const} from '../../../configuration/constants.js';
 import {SyntheticStores} from '../../runtime/synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
 import {ArcHandleListener, ArcMetaListener, FriendArcMetaListener, ProfileListener, ShareListener} from './context-listeners.js';
@@ -19,7 +20,7 @@ const FriendArcMetaContext = (context, listener) => new ArcHandleListener(new Fr
 
 const ContextObserver = (context, store) => new StoreObserver(store,
   // each handle is some Arc Metadata (including key)
-  ArcMetaContext(context, 
+  ArcMetaContext(context,
     // handles from each referenced Arc contains arbitrary profile data
     ProfileContext(context,
       // consume profile data of type [Friend] to look up Friend Arcs
@@ -37,7 +38,7 @@ export class UserContext {
     this.connect(context, storageKey);
   }
   async connect(context, storageKey) {
-    const store = await SyntheticStores.getStore(storageKey, 'user-launcher');
+    const store = await SyntheticStores.getStore(storageKey, Const.DEFAULT.launcherId);
     if (store) {
       this.observer = ContextObserver(context, store);
       // wait for ready connection

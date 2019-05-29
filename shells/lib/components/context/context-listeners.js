@@ -8,15 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Const} from '../../../configuration/constants.js';
 import {logFactory} from '../../../../build/platform/log-web.js';
 import {SyntheticStores} from '../../runtime/synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
 import {ContextStores} from './context-stores.js';
 import {simpleNameOfType, boxes, crackStorageKey} from './context-utils.js';
 
-// Existence and purpose of `user-launcher` are Shell conventions
+// Existence and purpose of launcher arc are Shell conventions
 const getLauncherStore = async storage => {
-  return await SyntheticStores.getStore(storage, 'user-launcher');
+  return await SyntheticStores.getStore(storage, Const.DEFAULT.launcherId);
 };
 
 const AbstractListener = class {
