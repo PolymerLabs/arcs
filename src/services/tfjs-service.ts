@@ -13,8 +13,6 @@ import {tf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 
-const TF_VERSION = '1.1.2';
-
 const dispose = ({reference}) => rmgr.dispose(reference);
 
 Services.register('tfjs', {
