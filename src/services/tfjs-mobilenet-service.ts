@@ -32,9 +32,8 @@ interface MobilenetParams {
   alpha: number;
 }
 
-
 /** @see https://github.com/tensorflow/tfjs-models/tree/master/mobilenet#making-a-classification */
-type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // tf.Tensor3D;
+type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // | tf.Tensor3D;
 
 interface ImageInferenceParams {
   model: Reference;
