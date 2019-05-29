@@ -7,5 +7,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '../../node_modules/@tensorflow/tfjs/dist/tf.js';
 export {tf};
