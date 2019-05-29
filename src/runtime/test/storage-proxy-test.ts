@@ -145,11 +145,11 @@ class TestParticle {
     this._report = report;
   }
 
-  onHandleSync(handle, model) {
+  callOnHandleSync(handle, model) {
     this._report(['onHandleSync', this.id, handle.name, this._toString(model)].join(':'));
   }
 
-  onHandleUpdate(handle, update) {
+  callOnHandleUpdate(handle, update) {
     let details = '';
     if ('data' in update) {
       details += this._toString(update.data);
@@ -169,7 +169,7 @@ class TestParticle {
     this._report(['onHandleUpdate', this.id, handle.name, details].join(':'));
   }
 
-  onHandleDesync(handle) {
+  callOnHandleDesync(handle) {
     this._report(['onHandleDesync', this.id, handle.name].join(':'));
   }
 

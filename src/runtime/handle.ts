@@ -147,11 +147,7 @@ export class Collection extends Handle {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
-        try {
-          particle.onHandleSync(this, this._restore(details));
-        } catch (e) {
-          this.reportUserExceptionInHost(e, particle, 'onHandleSync');
-        }
+        particle.callOnHandleSync(this, this._restore(details), e => this.reportUserExceptionInHost(e, particle, 'onHandleSync'));
         return;
       case 'update': {
         // tslint:disable-next-line: no-any
@@ -164,11 +160,11 @@ export class Collection extends Handle {
           update.removed = this._restore(details.remove);
         }
         update.originator = details.originatorId === this._particleId;
-        particle.onHandleUpdate(this, update);
+        particle.callOnHandleUpdate(this, update, e => this.reportUserExceptionInHost(e, particle, 'onHandleUpdate'));
         return;
       }
       case 'desync':
-        particle.onHandleDesync(this);
+        particle.callOnHandleDesync(this, e => this.reportUserExceptionInHost(e, particle, 'onHandleUpdate'));
         return;
       default:
         throw new Error('unsupported');
@@ -262,28 +258,16 @@ export class Variable extends Handle {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     switch (kind) {
       case 'sync':
-        try {
-          await particle.onHandleSync(this, this._restore(details));
-        } catch (e) {
-          this.reportUserExceptionInHost(e, particle, 'onHandleSync');
-        }
+        await particle.callOnHandleSync(this, this._restore(details), e => this.reportUserExceptionInHost(e, particle, 'onHandleSync'));
         return;
       case 'update': {
-        try {
-          const data = this._restore(details.data);
-          const oldData = this._restore(details.oldData);
-          await particle.onHandleUpdate(this, {data, oldData});
-        } catch (e) {
-          this.reportUserExceptionInHost(e, particle, 'onHandleUpdate');
-        }
+        const data = this._restore(details.data);
+        const oldData = this._restore(details.oldData);
+        await particle.callOnHandleUpdate(this, {data, oldData}, e => this.reportUserExceptionInHost(e, particle, 'onHandleUpdate'));
         return;
       }
       case 'desync':
-        try {
-          await particle.onHandleDesync(this);
-        } catch (e) {
-          this.reportUserExceptionInHost(e, particle, 'onHandleDesync');
-        }
+        await particle.callOnHandleDesync(this, e => this.reportUserExceptionInHost(e, particle, 'onHandleDesync'));
         return;
       default:
         throw new Error('unsupported');
@@ -402,7 +386,7 @@ export class BigCollection extends Handle {
   async _notify(kind: string, particle: Particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     assert(kind === 'sync', 'BigCollection._notify only supports sync events');
-    await particle.onHandleSync(this, []);
+    particle.callOnHandleSync(this, [], e => this.reportUserExceptionInHost(e, particle, 'onHandleSync'));
   }
 
   /**
