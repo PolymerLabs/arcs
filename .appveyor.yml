@@ -15,7 +15,7 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - ps: Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
   - npm install -g npm@6.9.0
-  - npm -g install --production --vs2015 windows-build-tools
+  - npm config set --global msvs_version 2015
   - npm config get
   - node -e "console.log(process.arch);"
   - IF /I "%PLATFORM%" == "x64" set PATH=C:\Python27-x64;%PATH%
