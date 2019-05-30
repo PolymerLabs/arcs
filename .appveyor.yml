@@ -5,9 +5,9 @@ environment:
 
 os: Visual Studio 2015
 
-#platform:
-#  - x64
-#  - x86
+platform:
+  - x64
+  - x86
 
 shallow_clone: true
 
@@ -16,7 +16,7 @@ init:
 
 install:
   - ps: $Env:Path # What's currently in the path?
-  - ps: Install-Product node $env:nodejs_version # $env:Platform
+  - ps: Install-Product node $env:nodejs_version $env:Platform
   - ps: Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
   - npm install -g npm@6.9.0
   - npm -g install --production --vs2015 windows-build-tools
