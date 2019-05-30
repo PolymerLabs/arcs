@@ -73,9 +73,8 @@ interface MobilenetEmbedding extends MobilenetParams {
  * @return a reference number to the model, maintained by the `ResourceManager`.
  */
 const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Reference> => {
-  log('Loading tensorflow');
-  await requireTf();
-
+  log('Loading tfjs...');
+  const tf = await requireTf();
   log('Loading MobileNet...');
   await dynamicScript(modelUrl);
   const model = await window['mobilenet'].load(version, alpha);
@@ -95,8 +94,8 @@ const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Refere
  * @return A list (or single item) of `ClassificationPrediction`s, which are "label, confidence" tuples.
  */
 const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams & {topK: number}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
-  log('Loading tensorflow');
-  await requireTf();
+  log('Loading tfjs...');
+  const tf = await requireTf();
 
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
 
@@ -123,8 +122,8 @@ const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams
  * @see MobilenetEmbedding
  */
 const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams): Promise<MobilenetEmbedding> => {
-  log('Loading tensorflow');
-  await requireTf();
+  log('Loading tfjs...');
+  const tf = await requireTf();
 
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
   const img = await getImage(image, imageUrl);
