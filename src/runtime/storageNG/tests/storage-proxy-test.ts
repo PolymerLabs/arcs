@@ -14,6 +14,7 @@ import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpT
 import {Particle} from '../../particle';
 import {Exists} from '../drivers/driver-factory';
 import {Handle} from '../handle';
+import {StorageKey} from '../storage-key';
 import {StorageProxy} from '../storage-proxy';
 import {ActiveStore, StorageMode, ProxyCallback, ProxyMessage, ProxyMessageType} from '../store';
 
@@ -21,7 +22,7 @@ import {ActiveStore, StorageMode, ProxyCallback, ProxyMessage, ProxyMessageType}
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   constructor() {
-    super('string', Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
+    super(new MockStorageKey(), Exists.ShouldCreate, null, StorageMode.Direct, CRDTSingleton);
   }
   on(callback: ProxyCallback<T>): number {
     return 1;
@@ -32,6 +33,12 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
     this.lastCapturedMessage = message;
     return Promise.resolve(true);
+  }
+}
+
+class MockStorageKey extends StorageKey {
+  constructor() {
+    super('testing');
   }
 }
 
