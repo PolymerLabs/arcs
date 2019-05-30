@@ -5,8 +5,6 @@ environment:
 
 os: Visual Studio 2015
 
-platform: x64
-
 shallow_clone: true
 
 init:
@@ -16,12 +14,8 @@ install:
   - ps: $Env:Path # What's currently in the path?
   - ps: Install-Product node $env:nodejs_version $env:Platform
   - ps: Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
-  - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
-  - npm -g install --production --vs2015 windows-build-tools
-  - npm config set --global python C:\Python27\python.exe
-  - npm config set --global msvs_version 2015
-  - npm config set --global jobs 4
+#  - npm -g install --production --vs2015 windows-build-tools
   - npm config get
   - node -e "console.log(process.arch);"
   - IF /I "%PLATFORM%" == "x64" set PATH=C:\Python27-x64;%PATH%
