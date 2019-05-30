@@ -3,8 +3,6 @@ version: '0.0.{build}'
 environment:
   nodejs_version: '10'
 
-image: Visual Studio 2015
-
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
 
