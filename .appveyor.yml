@@ -20,7 +20,9 @@ install:
   - npm config set --global jobs 4
   - appveyor-retry npm install
 
-build: off
+build:
+  parallel: true
+  verbosity: detailed
 
 # Instead of specific targets, this should use `npm test`.
 # But, that needs some work, and the tests themselves aren't stable so I'm
