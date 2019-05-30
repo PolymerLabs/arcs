@@ -10,7 +10,7 @@ platform: x64
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
 
-install:
+build_script:
   - ps: $Env:Path # What's currently in the path?
   - ps: Install-Product node $env:nodejs_version
   - python --version  # Need python 2.x
@@ -21,10 +21,6 @@ install:
   - npm config set --global msvs_version 2015
   - npm config set --global jobs 4
   - appveyor-retry npm install
-
-build:
-  parallel: true
-  verbosity: detailed
 
 # Instead of specific targets, this should use `npm test`.
 # But, that needs some work, and the tests themselves aren't stable so I'm
