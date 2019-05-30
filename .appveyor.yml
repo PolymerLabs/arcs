@@ -5,7 +5,7 @@ environment:
 
 image: Visual Studio 2015
 
-platform: x64
+#platform: x64
 
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
@@ -16,7 +16,6 @@ build_script:
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
   - npm -g install --production --vs2015 windows-build-tools
-  - npm install -g node-gyp
   - npm config set --global python C:\Python27\python.exe
   - npm config set --global msvs_version 2015
   - npm config set --global jobs 4
