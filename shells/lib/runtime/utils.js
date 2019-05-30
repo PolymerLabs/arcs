@@ -72,7 +72,7 @@ const spawn = async ({id, serialization, context, composer, storage}) => {
     fileName: './serialized.manifest',
     serialization,
     context,
-    storageKey: storage,
+    storageKey: storage || 'volatile',
     slotComposer: composer,
     pecFactory: env.pecFactory,
     loader: env.loader,
