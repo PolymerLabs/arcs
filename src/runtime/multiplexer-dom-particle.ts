@@ -76,7 +76,6 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
             await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc);
       }
     }
-
     this.setState({
       arc,
       type: handles.get(listHandleName).type,
@@ -87,13 +86,20 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     await super.setHandles(handles);
   }
 
-  async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
+  async update({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
     arc: InnerArcHandle,
     type: Type,
     hostedParticle: ParticleSpec,
     otherMappedHandles: string[],
     otherConnections: string[],
-  }) {
+  }, oldProps, oldState) {
+    //console.warn(`[${this.spec.name}]::update`, list, arc);
+    if (!list || !arc) {
+      return;
+    }
+    if (oldProps.list === list && oldState.arc === arc) {
+      return;
+    }
     if (list.length > 0) {
       this.relevance = 0.1;
     }
@@ -145,19 +151,18 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
   combineHostedModel(slotName: string, hostedSlotId: string, content: Content): void {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
-    if (!subId) {
-      return;
+    if (subId) {
+      const items = this._state.renderModel ? this._state.renderModel.items : [];
+      const listIndex = items.findIndex(item => item.subId === subId);
+      const item = {...content.model, subId};
+      if (listIndex >= 0 && listIndex < items.length) {
+        items[listIndex] = item;
+      }
+      else {
+        items.push(item);
+      }
+      this.setState({renderModel: {items}});
     }
-    const items = this._state.renderModel ? this._state.renderModel.items : [];
-    const listIndex = items.findIndex(item => item.subId === subId);
-    const item = {...content.model, subId};
-    if (listIndex >= 0 && listIndex < items.length) {
-      items[listIndex] = item;
-    }
-    else {
-      items.push(item);
-    }
-    this._setState({renderModel: {items}});
   }
 
   combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content): void {
@@ -167,7 +172,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     }
     assert(content.templateName, `Template name is missing for slot '${slotName}' (hosted slot ID: '${hostedSlotId}')`);
     const templateName = {...this._state.templateName, [subId]: `${content.templateName}`};
-    this._setState({templateName});
+    this.setState({templateName});
     if (content.template) {
       let template = content.template as string;
       // Append subid$={{subid}} attribute to all provided slots, to make it usable for the transformation particle.
@@ -177,7 +182,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this._connByHostedConn.forEach((conn, hostedConn) => {
           template = template.replace(new RegExp(`{{${hostedConn}.description}}`, 'g'), `{{${conn}.description}}`);
       });
-      this._setState({template: {...this._state.template, [content.templateName as string]: template}});
+      this.setState({template: {...this._state.template, [content.templateName as string]: template}});
       this.forceRenderTemplate();
     }
   }
