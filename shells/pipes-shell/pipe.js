@@ -33,7 +33,6 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
     },
     async marshalProcessArc(msg, tid, bus) {
       const composer = composerFactory(msg.modality);
-      //return marshalProcessArc(msg.entity, composer, context, storage);
       const arc = await marshalArc(tid, composer, context, storage, bus);
       let callback;
       if (msg.entity) {
@@ -45,6 +44,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
         callback = suggestions => deliverSuggestions(tid, bus, suggestions);
       }
       installPlanner(tid, bus, arc, callback);
+      log('marshalProcessArc:', arc);
       return arc;
     },
     async marshalSpawnArc(msg, tid, bus) {
@@ -53,6 +53,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
       installPlanner(tid, bus, arc, suggestions => deliverSuggestions(tid, bus, suggestions));
       // forward output to the bus
       observeOutput(tid, bus, arc);
+      log('marshalSpawnArc:', arc);
       return arc;
     }
   };

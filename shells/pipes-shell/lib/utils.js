@@ -39,7 +39,11 @@ export const createPlanificator = async arc => {
     debug: true
   };
   const planificator = await Planificator.create(arc, options);
-  planificator.loadSuggestions && await planificator.loadSuggestions();
+  //
+  await planificator.consumer.result.flush();
+  await planificator.requestPlanning({metadata: {trigger: 'forced'}});
+  await planificator.loadSuggestions();
+  //
   return planificator;
 };
 

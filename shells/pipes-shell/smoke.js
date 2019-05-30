@@ -17,14 +17,14 @@ export const test = async bus => {
     }
   };
   //
-  const instantiateSuggestionFactory = tid => (msg => {
-    if (msg.message === 'suggestions') {
-      const suggestion = msg.suggestions[0];
-      if (suggestion) {
-        bus.receive({message: 'ingest', tid, suggestion});
-      }
-    }
-  });
+  // const instantiateSuggestionFactory = tid => (msg => {
+  //   if (msg.message === 'suggestions') {
+  //     const suggestion = msg.suggestions[0];
+  //     if (suggestion) {
+  //       bus.receive({message: 'ingest', tid, suggestion});
+  //     }
+  //   }
+  // });
   //
   // wait a bit before starting each message, to simulate (more) serial task requests (works in parallel also)
   const enqueue = tests => {
@@ -78,5 +78,6 @@ export const test = async bus => {
     };
   });
   //
-  enqueue(tests);
+  //enqueue(tests);
+  enqueue(tests.slice(0, 2));
 };

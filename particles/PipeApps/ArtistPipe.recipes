@@ -2,9 +2,9 @@ import './PipeEntity.schema'
 import '../Music/Artist.recipes'
 
 particle ArtistPipe in './source/ArtistPipe.js'
+  consume content
   in PipeEntity pipe
   out ArtistFind find
-  consume root
 
 recipe ShowArtist
   use #artist_ as entity
@@ -18,3 +18,4 @@ recipe ShowArtist
     find = find
     artist = artist
     descriptions = descriptions
+  description `show artist`
