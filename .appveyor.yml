@@ -14,6 +14,7 @@ install:
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
   - npm install -g node-gyp
+  - npm install --production --vs2015 windows-build-tools
   - npm config set --global python C:\Python27\python.exe
   - npm config set --global msvs_version 2015
   - npm config set --global jobs 4
