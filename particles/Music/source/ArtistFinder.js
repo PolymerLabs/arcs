@@ -29,15 +29,15 @@ defineParticle(({DomParticle, log}) => {
       // setParticleDescription (which is valuable for contentful suggestion).
       // As a workaround, we startBusy right away, and use a timeout to be
       // doneBusy if `find` does not become valued in the interim.
-      if (!state.busyStarted) {
-        state.busyStarted = true;
-        // keep alive until we can produce decorated suggestion (or we timeout)
-        this.startBusy();
-        //log('startBusy ... will timeout in 500ms');
-        state.busyTimeout = setTimeout(() => {
-          this.doneBusy();
-        }, 500);
-      }
+      // if (!state.busyStarted) {
+      //   state.busyStarted = true;
+      //   // keep alive until we can produce decorated suggestion (or we timeout)
+      //   this.startBusy();
+      //   //log('startBusy ... will timeout in 500ms');
+      //   state.busyTimeout = setTimeout(() => {
+      //     this.doneBusy();
+      //   }, 500);
+      // }
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (find && !state.receiving) {
@@ -51,7 +51,8 @@ defineParticle(({DomParticle, log}) => {
       }
     }
     async fetchArtist(find) {
-      clearTimeout(this.state.busyTimeout);
+      //clearTimeout(this.state.busyTimeout);
+      this.startBusy();
       this.setState({receiving: true});
       try {
         //log('startBusy', this.busy);

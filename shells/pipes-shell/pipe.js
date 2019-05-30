@@ -36,10 +36,10 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
       const arc = await marshalArc(tid, composer, context, storage, bus);
       let callback;
       if (msg.entity) {
-        ingestEntity(arc, msg.entity);
+        await ingestEntity(arc, msg.entity);
         callback = consumeOneSuggestionCallbackFactory(tid, bus, arc);
       } else if (msg.recipe) {
-        ingestRecipe(arc, msg.recipe);
+        await ingestRecipe(arc, msg.recipe);
         observeOutput(tid, bus, arc);
         callback = suggestions => deliverSuggestions(tid, bus, suggestions);
       }

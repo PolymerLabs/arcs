@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -78,6 +78,7 @@ export const test = async bus => {
     };
   });
   //
-  //enqueue(tests);
-  enqueue(tests.slice(0, 2));
+  enqueue(tests);
+  //enqueue(tests.slice(0, 3));
+  //enqueue([tests[0], tests[2]]);
 };

@@ -18,3 +18,4 @@ recipe AutofillMaps &autofill
   SuggestAddress
     recentEntities = recentEntities
     suggestion = suggestion
+  description `suggest address`

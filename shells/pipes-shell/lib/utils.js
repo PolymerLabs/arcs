@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -6,6 +6,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 import {Type} from '../../../build/runtime/type.js';
 import {Planificator} from '../../../build/planning/plan/planificator.js';
 import {Utils} from '../../lib/runtime/utils.js';
@@ -40,10 +41,13 @@ export const createPlanificator = async arc => {
   };
   const planificator = await Planificator.create(arc, options);
   //
-  await planificator.consumer.result.flush();
-  await planificator.requestPlanning({metadata: {trigger: 'forced'}});
-  await planificator.loadSuggestions();
+  // setTimeout(async () => {
+  //   await planificator.consumer.result.flush();
+  //   await planificator.requestPlanning({metadata: {trigger: 'forced'}});
+  //   await planificator.loadSuggestions();
+  // }, 300);
   //
+  console.log('planificator:', planificator);
   return planificator;
 };
 

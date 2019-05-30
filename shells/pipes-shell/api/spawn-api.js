@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -24,12 +24,12 @@ export const marshalArc = async (tid, composer, context, storage, bus) => {
 export const installPlanner = async (tid, bus, arc, suggestionsCallback) => {
   // attach planificator
   const planr = await createPlanificator(arc);
-  log('waiting for planner to suggest something ... might be never!');
-  const callback = suggestionsCallbackFactory(arc, planr, tid, bus, suggestionsCallback);
+  const callback = suggestionsCallbackFactory(arc, suggestionsCallback);
   planr.registerVisibleSuggestionsChangedCallback(callback);
+  log('waiting for planner to suggest something ... might be never!');
 };
 
-const suggestionsCallbackFactory = (arc, planr, tid, bus, callback) => {
+const suggestionsCallbackFactory = (arc, callback) => {
   return async suggestions => {
     // TODO(sjmiles): hack
     arc._pipe_suggestions = suggestions;
@@ -57,7 +57,7 @@ export const observeOutput = async (tid, bus, arc) => {
 export const ingestEntity = async (arc, entity) => {
   // instantiate bespoke recipe for entity
   const recipe = await marshalPipeRecipe(entity);
-  instantiateRecipe(arc, recipe);
+  await instantiateRecipe(arc, recipe);
 };
 
 const marshalPipeRecipe = async ({type, source, name}) => {

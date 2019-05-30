@@ -12,3 +12,4 @@ recipe CaptionThis &caption
   CaptionThis
     query = query
     output = suggestion
+  description `caption this`
