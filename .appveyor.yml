@@ -3,23 +3,33 @@ version: '0.0.{build}'
 environment:
   nodejs_version: '10'
 
-image: Visual Studio 2015
+os: Visual Studio 2015
 
 #platform: x64
+
+shallow_clone: true
 
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
 
-build_script:
+install:
   - ps: $Env:Path # What's currently in the path?
-  - ps: Install-Product node $env:nodejs_version
+  - ps: Install-Product node $env:nodejs_version $env:Platform
   - python --version  # Need python 2.x
   - npm install -g npm@6.9.0
   - npm -g install --production --vs2015 windows-build-tools
   - npm config set --global python C:\Python27\python.exe
   - npm config set --global msvs_version 2015
   - npm config set --global jobs 4
+  - npm config get
+  - node -e "console.log(process.arch);"
+  - IF /I "%PLATFORM%" == "x64" set PATH=C:\Python27-x64;%PATH%
+  - IF /I "%PLATFORM%" == "x86" SET PATH=C:\python27;%PATH%
+  - IF /I "%PLATFORM%" == "x64" CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+  - IF /I "%PLATFORM%" == "x86" CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
   - appveyor-retry npm install
+
+build: off
 
 # Instead of specific targets, this should use `npm test`.
 # But, that needs some work, and the tests themselves aren't stable so I'm
@@ -28,3 +38,5 @@ test_script:
   - node --version
   - npm --version
   - npm run test-no-web
+
+deploy: off
