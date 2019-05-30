@@ -8,7 +8,32 @@
     "ecmaVersion": 2019,
     "sourceType": "module"
   },
+
+  "plugins": [
+    "header"
+  ],
+
   "rules": {
+    // Things we want beyond the defaults
+    "header/header": [
+      "error",
+      "block", [
+        "*",
+        " * @license",
+        // Matches many variants of Google Inc/LLC, with (c) or without, with ARR or not
+        {
+          "pattern":  " \\* Copyright (\\(c\\) )?\\d{4} Google (Inc|LLC)\\.( All rights reserved\\.)?",
+          "template": " * Copyright 2019 Google LLC."
+        },
+        " * This code may only be used under the BSD style license found at",
+        " * http://polymer.github.io/LICENSE.txt",
+        " * Code distributed by Google as part of this project is also",
+        " * subject to an additional IP rights grant found at",
+        " * http://polymer.github.io/PATENTS.txt",
+        " "
+      ]
+    ],
+
     // Things we do, but probably shouldn't.
     "no-console": "off",
     "no-throw-literal": "off",
@@ -58,7 +83,7 @@
       "parserOptions":  {
         // TODO(lindner): For now this option causes severe slowdown. See following issue for updates
         //   https://github.com/typescript-eslint/typescript-eslint/issues/389
-        // and re-enable 
+        // and re-enable
         // "project": "tsconfig.json"
       },
       "rules": {

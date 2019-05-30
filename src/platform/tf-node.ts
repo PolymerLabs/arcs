@@ -1,6 +1,5 @@
 /**
- * @license
- * Copyright 2019 Google LLC.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,12 +7,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-'use strict';
+import * as tf from '@tensorflow/tfjs-node';
+export const requireTf = async () => tf;
 
-defineParticle(({DomParticle}) => {
-  return class extends DomParticle {
-    get template() {
-      return '&nbsp;';
-    }
-  };
-});

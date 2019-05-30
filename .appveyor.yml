@@ -3,12 +3,16 @@ version: '0.0.{build}'
 environment:
   nodejs_version: '10'
 
+platform: x64
+
 init:
   - cmd: set NODE_OPTIONS=--max-old-space-size=1024
 
 install:
-  - ps: Install-Product node $env:nodejs_version
+  - ps: $Env:Path # What's currently in the path?
+  - ps: Install-Product node $env:nodejs_version $env:Platform
   - npm install -g npm@6.9.0
+  - node -e "console.log(process.arch);"
   - appveyor-retry npm install
 
 build: off

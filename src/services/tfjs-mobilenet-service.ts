@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * @license
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,11 +9,11 @@
  */
 
 import {dynamicScript} from '../platform/dynamic-script-web.js';
-import {requireTf} from './tfjs-service.js';
 import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
+import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
@@ -94,6 +95,9 @@ const load = async ({version = 1, alpha = 1.0}: MobilenetParams): Promise<Refere
  * @return A list (or single item) of `ClassificationPrediction`s, which are "label, confidence" tuples.
  */
 const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams & {topK: number}): Promise<ClassificationPrediction[] | ClassificationPrediction> => {
+  log('Loading tfjs...');
+  const tf = await requireTf();
+
   const model_: Classifier = ResourceManager.deref(model) as Classifier;
 
   const img = await getImage(image, imageUrl);
@@ -119,6 +123,9 @@ const classify = async ({model, image, imageUrl, topK = 1}: ImageInferenceParams
  * @see MobilenetEmbedding
  */
 const extractEmbeddings = async ({model, image, imageUrl}: ImageInferenceParams): Promise<MobilenetEmbedding> => {
+  log('Loading tfjs...');
+  const tf = await requireTf();
+
   const model_ = ResourceManager.deref(model) as MobilenetClassifier;
   const img = await getImage(image, imageUrl);
 
