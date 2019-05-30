@@ -1,3 +1,5 @@
+/* eslint-disable header/header */
+
 // ISC License (ISC)
 //
 // Copyright 2017 Rhett Robinson
