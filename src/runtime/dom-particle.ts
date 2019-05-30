@@ -13,7 +13,6 @@ import {DomParticleBase, RenderModel} from './dom-particle-base.js';
 import {Handle, Collection, Singleton} from './handle.js';
 import {Runnable} from './hot.js';
 
-
 export interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here
   _invalidate(): void;
@@ -33,11 +32,6 @@ export interface DomParticleConfig {
  * to handle updates.
  */
 export class DomParticle extends XenStateMixin(DomParticleBase) {
-  _handlesToSync: Set<string>;
-  constructor() {
-    super();
-  }
-
   /**
    * Override if necessary, to do things when props change.
    */
@@ -74,7 +68,7 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
 
   /**
-   * Added getters and setters to support usage of .state.
+   * Getters and setters for removing underscores.
    */
   get state() {
     return this._state;
@@ -123,67 +117,53 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
 
+  _async(fn) {
+    // asynchrony in Particle code must be bookended with start/doneBusy
+    this.startBusy();
+    const done = () => {
+      try {
+        fn.call(this);
+      } finally {
+        this.doneBusy();
+      }
+    };
+    // TODO(sjmiles): superclass uses Promise.resolve(), try a short timeout here to provide a bit more debouncing
+    return setTimeout(done, 10);
+  }
+
   async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
-    this._handlesToSync = new Set<string>();
-    for (const name of this.config.handleNames) {
-      const handle = handles.get(name);
-      if (handle && handle.options.keepSynced && handle.options.notifySync) {
-        this._handlesToSync.add(name);
-      }
-    }
-    // TODO(sjmiles): we must invalidate at least once,
-    // let's assume we will miss _handlesToProps if handlesToSync is empty
-    if (!this._handlesToSync.size) {
-      this._invalidate();
-    }
+    // TODO(sjmiles): we must invalidate at least once, is there a way to know
+    // whether handleSync/update will be called?
+    this._invalidate();
   }
 
   async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
-    this._handlesToSync.delete(handle.name);
-    if (this._handlesToSync.size === 0) {
-      await this._handlesToProps();
-    }
+    //console.log(`[${this.spec.name}]:onHandleSync`, handle.name, model);
+    this._setProperty(handle.name, model);
   }
 
   async onHandleUpdate(handle: Handle, update): Promise<void> {
-    // TODO(sjmiles): debounce handles updates
-    // TODO(alxr) Do we need `update`?
-    const work = () => {
-      //console.warn(handle, update);
-      this._handlesToProps();
-    };
-    this._debounce('handleUpdateDebounce', work, 300);
-  }
-
-  private async _handlesToProps() {
-    // convert handle data (array) into props (dictionary)
-    const props = Object.create(null);
-    // acquire list data from handles
-    const {handleNames} = this.config;
-    // data-acquisition is async
-    await Promise.all(handleNames.map(name => this._addNamedHandleData(props, name)));
-    // initialize properties
-    this._setProps(props);
-  }
-
-  private async _addNamedHandleData(dictionary, handleName) {
-    const handle = this.handles.get(handleName);
-    if (handle) {
-      dictionary[handleName] = await this._getHandleData(handle);
+    //onsole.log(`[${this.spec.name}]:onHandleUpdate`, handle.name, update);
+    const {name} = handle;
+    if (update.data) {
+      //console.log(`[${this.spec.name}]::onHandleUpdate::setProperty`, name, JSON.stringify(update.data));
+      this._setProperty(name, update.data);
     }
-  }
-
-  private async _getHandleData(handle: Handle) {
-    if (handle instanceof Collection) {
-      return await (handle as Collection).toList();
+    if (update.added) {
+      const prop = (this.props[name] || []).concat(update.added);
+      // TODO(sjmiles): it's generally improper to mess with `this.props` directly, but this is a special case
+      this.props[name] = prop;
+      this._setProperty(name, prop);
+      //console.warn(name, update.added, prop);
     }
-    if (handle instanceof Singleton) {
-      return await (handle as Singleton).get();
+    if (update.removed) {
+      // TODO(sjmiles): probably should update prop instead...(as above)
+      const data = await handle["toList"]();
+      //console.log(`[${this.spec.name}]::onHandleUpdate::setProperty`, name, data);
+      this._setProperty(name, data);
     }
-    // other types (e.g. BigCollections) map to the handle itself
-    return handle;
   }
 
   fireEvent(slotName: string, {handler, data}) {
