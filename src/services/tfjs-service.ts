@@ -7,24 +7,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {dynamicScript} from '../platform/dynamic-script-web.js';
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
+import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
-
-const TF_VERSION = '1.1.2';
-const tfUrl = `https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`;
-
-/** Dynamically loads and returns the `tfjs` module. */
-export const requireTf = async () => {
-  if (!window['tf']) {
-    await dynamicScript(tfUrl);
-  }
-  return window['tf'];
-};
-
 // Map some TF API to a Service
 
 const sequential = async (): Promise<Reference> => {
@@ -69,6 +57,8 @@ const linearRegression = async ({model: modelRef, training, query, epochs}) => {
 
 
 const dispose = ({reference}) => rmgr.dispose(reference);
+
+// TODO(alxr) Will add generic ML model service functions in #3094
 
 Services.register('tfjs', {
   linearRegression,
