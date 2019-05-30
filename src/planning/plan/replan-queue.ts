@@ -14,7 +14,7 @@ import {now} from '../../platform/date-web.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {Dictionary} from '../../runtime/hot.js';
 
-const defaultDefaultReplanDelayMs = 3000;
+const defaultDefaultReplanDelayMs = 300;
 
 export class ReplanQueue {
   planProducer: PlanProducer;
