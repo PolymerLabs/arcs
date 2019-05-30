@@ -14,55 +14,11 @@ import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 // Map some TF API to a Service
-
-const sequential = async (): Promise<Reference> => {
-  // lazy-load TensorFlow
-  const tf = await requireTf();
-  // Define a model
-  const model = tf.sequential();
-  return rmgr.ref(model);
-};
-
-const linearRegression = async ({model: modelRef, training, query, epochs}) => {
-  // lazy-load TensorFlow
-  const tf = await requireTf();
-
-  // @ts-ignore
-  // get the referenced model
-  const model: tf.LayersModel = rmgr.deref(modelRef);
-  // Define a model for linear regression.
-  //const model = tf.sequential();
-  model.add(tf.layers.dense({units: 1, inputShape: [1]}));
-  // Prepare the model for training: Specify the loss and the optimizer.
-  model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
-  // Generate some synthetic data for training.
-  const x = training.map(e => e[0]);
-  const y = training.map(e => e[1]);
-  const l = training.length;
-  log(x, y, l);
-  const xs = tf.tensor2d(x, [l, 1]);
-  const ys = tf.tensor2d(y, [l, 1]);
-  epochs = epochs || 500;
-  // Train the model using the data.
-  for (let i=0; i<epochs; i++) {
-    await model.fit(xs, ys);
-  }
-  // Use the model to do inference on a data point the model hasn't seen before:
-  const t = model.predict(tf.tensor2d([query], [1, 1]));
-  // extract results
-  const buffer = await t.buffer();
-  log(buffer.values);
-  return buffer.values;
-};
-
-
 const dispose = ({reference}) => rmgr.dispose(reference);
 
 // TODO(alxr) Will add generic ML model service functions in #3094
 
 Services.register('tfjs', {
-  linearRegression,
-  sequential,
   dispose,
 });
 

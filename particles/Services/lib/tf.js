@@ -14,12 +14,6 @@ self.Tf = class {
   constructor(scope) {
     this.scope = scope;
   }
-  async sequential() {
-    return await this.scope.service({call: 'tfjs.sequential'});
-  }
-  async linearRegression(model, training, epochs, query) {
-    return await this.scope.service({call: 'tfjs.linearRegression', model, training, epochs, query});
-  }
   dispose(reference) {
     this.scope.service({call: 'tfjs.dispose', reference});
   }
