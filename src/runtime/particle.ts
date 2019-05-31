@@ -74,7 +74,7 @@ export class Particle {
    * thereafter if the handle is resynchronized.
    *
    * @param handle The Handle instance that was updated.
-   * @param model For Variable-backed Handles, the Entity data or null if the Variable is not set.
+   * @param model For Singleton-backed Handles, the Entity data or null if the Singleton is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
   async onHandleSync(handle: Handle, model): Promise<void> {
@@ -88,8 +88,8 @@ export class Particle {
    *
    * @param handle The Handle instance that was updated.
    * @param update An object containing one of the following fields:
-   *  - data: The full Entity for a Variable-backed Handle.
-   *  - oldData: The previous value of a Variable before it was updated.
+   *  - data: The full Entity for a Singleton-backed Handle.
+   *  - oldData: The previous value of a Singleton before it was updated.
    *  - added: An Array of Entities added to a Collection-backed Handle.
    *  - removed: An Array of Entities removed from a Collection-backed Handle.
    */
@@ -99,7 +99,7 @@ export class Particle {
 
   /**
    * Called for handles that are configured with both keepSynced and notifyDesync, when they are
-   * detected as being out-of-date against the backing store. For Variables, the event that triggers
+   * detected as being out-of-date against the backing store. For Singletons, the event that triggers
    * this will also resync the data and thus this call may usually be ignored. For Collections, the
    * underlying proxy will automatically request a full copy of the stored data to resynchronize.
    * onHandleSync will be invoked when that is received.

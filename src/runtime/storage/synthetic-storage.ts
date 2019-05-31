@@ -16,13 +16,12 @@ import {Handle} from '../recipe/handle.js';
 import {ArcHandle, ArcInfo} from '../synthetic-types.js';
 import {ArcType, HandleType, Type} from '../type.js';
 import {setDiffCustom} from '../util.js';
-
 import {KeyBase} from './key-base.js';
-import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
+import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from './storage-provider-base.js';
 import {StorageProviderFactory} from './storage-provider-factory.js';
 
 enum Scope {
-  arc = 1  // target must be a storage key for an ArcInfo Variable
+  arc = 1  // target must be a storage key for an ArcInfo Singleton
 }
 
 enum Category {
@@ -115,7 +114,7 @@ export class SyntheticStorage extends StorageBase {
   async connect(id: string, type: Type, key: string) : Promise<SyntheticCollection> {
     assert(type === null, 'SyntheticStorage does not accept a type parameter');
     const synthKey = new SyntheticKey(key, this.storageFactory);
-    const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey) as VariableStorageProvider;
+    const targetStore = await this.storageFactory.connect(id, synthKey.targetType, synthKey.targetKey) as SingletonStorageProvider;
     if (targetStore === null) {
       return null;
     }
@@ -135,7 +134,7 @@ export class SyntheticStorage extends StorageBase {
   }
 }
 
-// Currently hard-wired to parse serialized data in an ArcInfo Variable to provide a list of ArcHandles.
+// Currently hard-wired to parse serialized data in an ArcInfo Singleton to provide a list of ArcHandles.
 class SyntheticCollection extends StorageProviderBase implements CollectionStorageProvider {
   private readonly targetStore: StorageProviderBase;
   private readonly storageFactory: StorageProviderFactory;
@@ -143,7 +142,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   private model: ArcHandle[] = [];
   backingStore = undefined;
 
-  constructor(type: Type, id: string, key:string, targetStore: VariableStorageProvider, storageFactory: StorageProviderFactory) {
+  constructor(type: Type, id: string, key:string, targetStore: SingletonStorageProvider, storageFactory: StorageProviderFactory) {
     super(type, undefined, id, key);
     this.targetStore = targetStore;
     this.storageFactory = storageFactory;

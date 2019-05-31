@@ -64,7 +64,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
       // the overall pattern between WritePosts and EditPost.
       if (post &&
           (this.hasContent(post.message) || this.hasContent(post.image))) {
-        this.updateSet('posts', post);
+        this.updateCollection('posts', post);
         // Clear out the post under edit so that the editor goes away.
         this.handles.get('post').clear();
       }
@@ -76,7 +76,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     }
     onOpenEditor(e, state) {
       // TODO(wkorman): Set existing post data to edit existing.
-      this.updateVariable('post', {message: '', image: ''});
+      this.updateSingleton('post', {message: '', image: ''});
     }
   };
 });

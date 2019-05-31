@@ -60,7 +60,7 @@ defineParticle(({DomParticle, html}) => {
       const {show} = this._props;
       if (show) {
         this._setState({favorite: true});
-        this.updateSet('shows', show);
+        this.updateCollection('shows', show);
       }
     }
   };

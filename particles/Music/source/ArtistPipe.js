@@ -18,7 +18,7 @@ defineParticle(({DomParticle, log}) => {
     }
     update({pipe, find}, state) {
       if (this.pipeIsValid(pipe)) {
-        this.updateVariable('find', {
+        this.updateSingleton('find', {
           name: pipe.name
         });
       }

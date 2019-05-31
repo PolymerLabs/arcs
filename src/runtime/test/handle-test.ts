@@ -11,11 +11,11 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-import {handleFor, Collection, Variable} from '../handle.js';
+import {handleFor, Collection, Singleton} from '../handle.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
-import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
 import {EntityType, InterfaceType} from '../type.js';
@@ -35,18 +35,18 @@ describe('Handle', () => {
 
   it('clear singleton store', async () => {
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: undefined, loader: new Loader()});
-    const barStore = await arc.createStore(Bar.type) as VariableStorageProvider;
+    const barStore = await arc.createStore(Bar.type) as SingletonStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
     assert.isNull(await barStore.get());
   });
 
-  it('ignores duplicate stores of the same entity value (variable)', async () => {
+  it('ignores duplicate stores of the same entity value (singleton)', async () => {
     // NOTE: Until entity mutation is distinct from collection modification,
     // referenceMode stores *can't* ignore duplicate stores of the same
     // entity value.
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: undefined, loader: new Loader()});
-    const store = await arc.createStore(Bar.type) as VariableStorageProvider;
+    const store = await arc.createStore(Bar.type) as SingletonStorageProvider;
     let version = 0;
     store.on('change', () => version++, {});
     assert.equal(version, 0);
@@ -105,13 +105,13 @@ describe('Handle', () => {
     assert.equal(stored.value, '2');
   });
 
-  it('allows updates with same user-provided ids but different value (variable)', async () => {
+  it('allows updates with same user-provided ids but different value (singleton)', async () => {
     const manifest = await Manifest.load(manifestFile, new Loader());
     const arc = new Arc({slotComposer: new FakeSlotComposer(), id: Id.fromString('test'), context: manifest, loader: new Loader()});
     // tslint:disable-next-line: variable-name
     const Foo = manifest.schemas.Foo.entityClass();
 
-    const fooHandle = handleFor(await arc.createStore(Foo.type), IdGenerator.newSession()) as Variable;
+    const fooHandle = handleFor(await arc.createStore(Foo.type), IdGenerator.newSession()) as Singleton;
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));
@@ -138,7 +138,7 @@ describe('Handle', () => {
     ], []);
     assert(iface.interfaceInfo.particleMatches(manifest.particles[0]));
 
-    const ifaceStore = await arc.createStore(iface) as VariableStorageProvider;
+    const ifaceStore = await arc.createStore(iface) as SingletonStorageProvider;
     await ifaceStore.set(manifest.particles[0]);
     assert.equal(await ifaceStore.get(), manifest.particles[0]);
   });
@@ -164,7 +164,7 @@ describe('Handle', () => {
       Text value
     `);
     const arc = new Arc({id: Id.fromString('test'), storageKey: 'pouchdb://memory/yyy/test', context: manifest, loader: new Loader()});
-    const variable = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as VariableStorageProvider;
-    assert.equal(variable.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
+    const singleton = await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1') as SingletonStorageProvider;
+    assert.equal(singleton.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });
 });

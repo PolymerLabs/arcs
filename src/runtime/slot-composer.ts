@@ -186,7 +186,7 @@ export class SlotComposer {
           for (const hostedConsumer of ctx.slotConsumers) {
             const store = hostedConsumer.arc.findStoreById(ctx.storeId);
             assert(store);
-            // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc
+            // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc
             // tslint:disable-next-line: no-any
             (store as any).get().then(value => {
               if (value && (value.id === eventlet.data.key)) {

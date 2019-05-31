@@ -25,7 +25,7 @@ defineParticle(({DomParticle, log}) => {
           neo.name = name && name.userName || '';
         }
         log(neo);
-        this.updateVariable('person', neo);
+        this.updateSingleton('person', neo);
       }
     }
   };

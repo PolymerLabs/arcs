@@ -53,7 +53,7 @@ defineParticle(({DomParticle, html}) => {
       };
     }
     onNameInputChange(e) {
-      this.updateVariable('userName', {userName: e.data.value});
+      this.updateSingleton('userName', {userName: e.data.value});
     }
   };
 

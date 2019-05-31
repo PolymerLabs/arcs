@@ -20,7 +20,7 @@ defineParticle(({DomParticle, html, log}) => {
         {type: 'artist', name: 'Metallica', source: 'com.weaseldev.fortunecookies'}
       ];
       const artist = entities[Math.floor(Math.random() * entities.length)];
-      this.updateVariable('artist', artist);
+      this.updateSingleton('artist', artist);
     }
   };
 });

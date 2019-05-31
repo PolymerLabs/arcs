@@ -15,7 +15,7 @@ import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './des
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
-import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
@@ -151,14 +151,14 @@ export class Description {
         return {bigCollectionValues: value[0]};
       }
     } else if (store.type instanceof EntityType) {
-      const variableStore = store as VariableStorageProvider;
-      const value = await variableStore.get();
+      const singletonStore = store as SingletonStorageProvider;
+      const value = await singletonStore.get();
       if (value && value['rawData']) {
         return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
       }
     } else if (store.type instanceof InterfaceType) {
-      const variableStore = store as VariableStorageProvider;
-      const interfaceValue = await variableStore.get();
+      const singletonStore = store as SingletonStorageProvider;
+      const interfaceValue = await singletonStore.get();
       if (interfaceValue) {
         return {interfaceValue};
       }

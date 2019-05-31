@@ -15,7 +15,7 @@ defineParticle(({DomParticle}) => {
     update({artist}) {
       if (artist) {
         const json = JSON.stringify(artist.rawData);
-        this.updateVariable('suggestion', {json});
+        this.updateSingleton('suggestion', {json});
       }
     }
   };

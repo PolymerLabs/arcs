@@ -13,7 +13,7 @@ import {protobufjs} from '../platform/protobufjs-web.js';
 import {Schema} from './schema.js';
 import {EntityInterface} from './entity.js';
 import {Particle} from './particle.js';
-import {Handle, Variable} from './handle.js';
+import {Handle, Singleton} from './handle.js';
 
 function jsonBaseType(type) {
   const kind = (type.kind === 'schema-primitive') ? type.type : type.kind;
@@ -367,7 +367,7 @@ export class WasmParticle extends Particle {
   async setHandles(handles: ReadonlyMap<string, Handle>) {
     for (const [name, handle] of handles) {
       // TODO: currently only Variables are supported.
-      assert(handle instanceof Variable);
+      assert(handle instanceof Singleton);
 
       // Ownership of 'name' is passed to the inner particle.
       const p = this.storeString(name);
@@ -398,7 +398,7 @@ export class WasmParticle extends Particle {
   async onHandleDesync(handle: Handle) {}
 
   async setVariable(wasmHandle: WasmAddress, encoded: WasmAddress) {
-    const handle = this.revHandleMap.get(wasmHandle) as Variable;
+    const handle = this.revHandleMap.get(wasmHandle) as Singleton;
     const payload = this.readString(encoded);
     const converter = this.getOrCreateConverter(handle);
     console.log(`Received on '${handle.name}' handle: ${payload}`);

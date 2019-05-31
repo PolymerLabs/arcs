@@ -10,7 +10,7 @@
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase, RenderModel} from './dom-particle-base.js';
-import {Collection, Handle, Variable} from './handle.js';
+import {Handle, Collection, Singleton} from './handle.js';
 import {Runnable} from './hot.js';
 
 
@@ -179,8 +179,8 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     if (handle instanceof Collection) {
       return await (handle as Collection).toList();
     }
-    if (handle instanceof Variable) {
-      return await (handle as Variable).get();
+    if (handle instanceof Singleton) {
+      return await (handle as Singleton).get();
     }
     // other types (e.g. BigCollections) map to the handle itself
     return handle;

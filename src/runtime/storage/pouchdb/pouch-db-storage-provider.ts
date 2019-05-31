@@ -12,14 +12,13 @@ import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {ReferenceType, Type} from '../../type.js';
 import {Runnable} from '../../hot.js';
 import {StorageProviderBase} from '../storage-provider-base.js';
-
 import {PouchDbCollection} from './pouch-db-collection.js';
 import {PouchDbKey} from './pouch-db-key.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
 
 /**
  * Base class for PouchDb related Storage classes
- * (PouchDbVariable/PouchDbCollection)
+ * (PouchDbSingleton/PouchDbCollection)
  */
 export abstract class PouchDbStorageProvider extends StorageProviderBase {
   /** The Storage Engine instance we were initialized with */

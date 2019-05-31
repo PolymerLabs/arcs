@@ -52,7 +52,7 @@ defineParticle(({DomParticle, log}) => {
       } else {
         const artist = artists.itemListElement[0].result;
         log(artist);
-        this.updateVariable('artist', {
+        this.updateSingleton('artist', {
           artistid: artist['@id'],
           type: artist['@type'].join(','),
           name: artist.name,
