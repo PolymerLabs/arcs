@@ -15,7 +15,7 @@ import {Type} from '../type.js';
 import {StorageStub} from '../manifest.js';
 import {ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
-import {BigCollectionStore, CollectionStore, Store, VariableStore} from '../store.js';
+import {Store, BigCollectionStore, CollectionStore, SingletonStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Dictionary, Consumer} from '../hot.js';
 
@@ -27,10 +27,10 @@ enum EventKind {
 type Callback = Consumer<Dictionary<any>>;
 
 /**
- * Methods that must be implemented by a Variable Storage Provider
- * that are not already defined in VariableStore.
+ * Methods that must be implemented by a Singleton Storage Provider
+ * that are not already defined in SingletonStore.
  */
-export interface VariableStorageProvider extends StorageProviderBase, VariableStore {
+export interface SingletonStorageProvider extends StorageProviderBase, SingletonStore {
   set(value: {}, originatorId?: string, barrier?: string): Promise<void>;
   clear(originatorId?: string, barrier?: string): Promise<void>;
 }

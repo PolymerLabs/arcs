@@ -73,7 +73,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       this.commit(e.data.value);
     }
     commit(text) {
-      this.updateVariable('query', {query: text || ''});
+      this.updateSingleton('query', {query: text || ''});
     }
     render(props, state) {
       return state;

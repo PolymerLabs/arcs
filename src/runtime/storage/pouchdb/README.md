@@ -4,7 +4,7 @@ This code allows for data to be stored in [PouchDB](https://pouchdb.com).
 
 ## Keys
 
-## Variables/Collections
+## Singletons/Collections
 
 ## Replication
 

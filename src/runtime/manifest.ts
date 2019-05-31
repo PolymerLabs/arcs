@@ -1180,7 +1180,7 @@ ${e.message}
       let hasSerializedId = false;
       entities = entities.map(entity => {
         if (entity == null) {
-          // FIXME: perhaps this happens when we have an empty variable?
+          // FIXME: perhaps this happens when we have an empty singleton?
           // we should just generate an empty list in that case.
           return null;
         }

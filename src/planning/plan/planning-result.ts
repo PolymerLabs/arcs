@@ -13,8 +13,7 @@ import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
-
+import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 
 const error = logFactory('PlanningResult', '#ff0090', 'error');
@@ -31,12 +30,12 @@ export class PlanningResult {
   lastUpdated: Date = new Date(null);
   generations: {population: {}[], record: {}}[] = [];
   contextual = true;
-  store: VariableStorageProvider;
+  store: SingletonStorageProvider;
   private storeCallback: ({}) => void;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
-  constructor(envOptions: EnvOptions, store?: VariableStorageProvider) {
+  constructor(envOptions: EnvOptions, store?: SingletonStorageProvider) {
     this.envOptions = envOptions;
     assert(envOptions.context, `context cannot be null`);
     assert(envOptions.loader, `loader cannot be null`);

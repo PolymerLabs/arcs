@@ -13,10 +13,9 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {VariableStorageProvider} from '../../../runtime/storage/storage-provider-base';
+import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base';
 import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
-
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {Id, ArcId} from '../../../runtime/id.js';
 
@@ -173,10 +172,9 @@ describe('FindHostedParticle', () => {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType) as VariableStorageProvider;
+    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType) as SingletonStorageProvider;
     const particleSpec = await particleSpecStore.get();
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
-    delete particleSpec.id;
-    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    delete particleSpec.id;    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
   });
 });

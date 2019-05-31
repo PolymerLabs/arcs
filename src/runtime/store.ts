@@ -27,7 +27,7 @@ export interface Store {
   reportExceptionInHost(exception: PropagatedException): void;
 }
 
-export interface VariableStore extends Store {
+export interface SingletonStore extends Store {
   // tslint:disable-next-line: no-any
   get(): Promise<any>;
   

@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {EntityType, ReferenceType} from '../type.js';
@@ -48,7 +48,7 @@ describe('volatile', () => {
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
+      const variable = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await variable.set({id: 'test0:test', value});
       const result = await variable.get();
       assert.equal(value, result.value);
@@ -62,8 +62,8 @@ describe('volatile', () => {
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
-      const var1 = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
-      const var2 = await storage.connect('test0', barType, var1.storageKey) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
+      const var2 = await storage.connect('test0', barType, var1.storageKey) as SingletonStorageProvider;
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
       assert.deepEqual(await var1.get(), await var2.get());
     });
@@ -78,7 +78,7 @@ describe('volatile', () => {
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
 
-      const var1 = await storage.construct('test0', barType, storeKey) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
       
       const result = await var1.get();
@@ -100,7 +100,7 @@ describe('volatile', () => {
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
 
-      const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
       
       const result = await var1.get();

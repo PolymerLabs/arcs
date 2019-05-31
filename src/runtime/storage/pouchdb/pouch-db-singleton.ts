@@ -11,19 +11,17 @@
 import {PouchDB} from '../../../platform/pouchdb-web.js';
 import {assert} from '../../../platform/assert-web.js';
 import {Type} from '../../type.js';
-import {ChangeEvent, VariableStorageProvider} from '../storage-provider-base.js';
+import {ChangeEvent, SingletonStorageProvider} from '../storage-provider-base.js';
 import {SerializedModelEntry, ModelValue} from '../crdt-collection-model.js';
-
 import {PouchDbStorageProvider} from './pouch-db-storage-provider.js';
 import {PouchDbStorage} from './pouch-db-storage.js';
-
 import {upsert, UpsertDoc, UpsertMutatorFn} from './pouch-db-upsert.js';
 
 
 /**
- * A representation of a Variable in Pouch storage.
+ * A representation of a Singleton in Pouch storage.
  */
-interface VariableStorage extends UpsertDoc {
+interface SingletonStorage extends UpsertDoc {
   value: ModelValue;
 
   /** ReferenceMode state for this data */
@@ -35,15 +33,15 @@ interface VariableStorage extends UpsertDoc {
 
 
 /**
- * The PouchDB-based implementation of a Variable.
+ * The PouchDB-based implementation of a Singleton.
  */
-export class PouchDbVariable extends PouchDbStorageProvider implements VariableStorageProvider {
+export class PouchDbSingleton extends PouchDbStorageProvider implements SingletonStorageProvider {
   private localKeyId = 0;
 
   /**
-   * Create a new PouchDbVariable.
+   * Create a new PouchDbSingleton.
    *
-   * @param type the underlying type for this variable.
+   * @param type the underlying type for this singleton.
    * @param storageEngine a reference back to the PouchDbStorage, used for baseStorageKey calls.
    * @param name appears unused.
    * @param id see base class.
@@ -69,10 +67,10 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
     return this.type;
   }
 
-  async clone(): Promise<PouchDbVariable> {
-    const variable = new PouchDbVariable(this.type, this.storageEngine, this.name, this.id, null, this.referenceMode);
-    await variable.cloneFrom(this);
-    return variable;
+  async clone(): Promise<PouchDbSingleton> {
+    const singleton = new PouchDbSingleton(this.type, this.storageEngine, this.name, this.id, null, this.referenceMode);
+    await singleton.cloneFrom(this);
+    return singleton;
   }
 
   async cloneFrom(handle): Promise<void> {
@@ -129,7 +127,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Returns the state of this variable based as an object of the form
+   * Returns the state of this singleton based as an object of the form
    * {version, model: [{id, value}]}
    */
   async toLiteral(): Promise<{version: number; model: SerializedModelEntry[]}> {
@@ -155,7 +153,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Updates the internal state of this variable with the supplied data.
+   * Updates the internal state of this singleton with the supplied data.
    */
   async fromLiteral({version, model}): Promise<void> {
     await this.initialized;
@@ -179,7 +177,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * @return a promise containing the variable value or null if it does not exist.
+   * @return a promise containing the singleton value or null if it does not exist.
    */
   async get(): Promise<ModelValue> {
     await this.initialized;
@@ -199,21 +197,21 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
       return value;
     } catch (err) {
       // TODO(plindner): caught for compatibility: pouchdb layer can throw, firebase layer never does
-      console.warn('PouchDbVariable.get err=', err);
+      console.warn('PouchDbSingleton.get err=', err);
       return null;
     }
   }
 
   /**
-   * Set the value for this variable.
-   * @param value the value we want to set.  If null remove the variable from storage
+   * Set the value for this singleton.
+   * @param value the value we want to set.  If null remove the singleton from storage
    * @param originatorId TBD
    * @param barrier TBD
    */
   async set(value, originatorId: string = null, barrier: string|null = null): Promise<void> {
     assert(value !== undefined);
 
-    let stored: VariableStorage;
+    let stored: SingletonStorage;
     if (this.referenceMode && value) {
       // Even if this value is identical to the previously written one,
       // we can't suppress an event here because we don't actually have
@@ -248,7 +246,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         } catch (err) {
           // Deleting an already deleted item is acceptable.
           if (err.name !== 'not_found') {
-            console.warn('PouchDbVariable.remove err=', err);
+            console.warn('PouchDbSingleton.remove err=', err);
             throw err;
           }
         }
@@ -268,7 +266,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Clear a variable from storage.
+   * Clear a singleton from storage.
    * @param originatorId TBD
    * @param barrier TBD
    */
@@ -279,7 +277,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   /**
    * Triggered when the storage key has been modified or deleted.
    */
-  onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<VariableStorage>): void {
+  onRemoteStateSynced(doc: PouchDB.Core.ExistingDocument<SingletonStorage>): void {
     // TODO(lindner): reimplement as simple fires when we have replication working again
     // TODO(lindner): consider using doc._deleted to special case.
     const value = doc.value;
@@ -293,7 +291,7 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
         const data = await store.get(value.id);
         if (!data) {
           // TODO(lindner): data referred to by this data is missing.
-          console.log('PouchDbVariable.onRemoteSynced: possible race condition for id=' + value.id);
+          console.log('PouchDbSingleton.onRemoteSynced: possible race condition for id=' + value.id);
           return;
         }
         this._fire('change', new ChangeEvent({data, version: this.version}));
@@ -306,10 +304,10 @@ export class PouchDbVariable extends PouchDbStorageProvider implements VariableS
   }
 
   /**
-   * Get/Modify/Set the data stored for this variable.
+   * Get/Modify/Set the data stored for this singleton.
    */
-  private async upsert(mutatorFn: UpsertMutatorFn<VariableStorage>): Promise<VariableStorage> {
-    const defaultDoc: VariableStorage = {
+  private async upsert(mutatorFn: UpsertMutatorFn<SingletonStorage>): Promise<SingletonStorage> {
+    const defaultDoc: SingletonStorage = {
       value: null,
       version: 0,
       referenceMode: this.referenceMode

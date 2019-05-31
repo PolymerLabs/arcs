@@ -19,7 +19,7 @@ defineParticle(({DomParticle, log}) => {
         state.item_id = item.id;
         // TODO(sjmiles): was supposed to be type agnostic ... oh well
         //if (!collection.find(show => show.showid === item.showid)) {
-          this.updateSet('collection', item);
+          this.updateCollection('collection', item);
         //}
       }
     }
