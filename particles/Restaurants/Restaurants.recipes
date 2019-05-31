@@ -14,7 +14,7 @@ import '../Profile/Geolocate.recipe'
 
 recipe Restaurants
   create #volatile as location
-  create as restaurants
+  create #volatile as restaurants
   create #volatile #selected as selected
   Geolocate
     location = location
