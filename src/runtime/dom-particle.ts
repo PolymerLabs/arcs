@@ -147,21 +147,33 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._setProperty(handle.name, model);
   }
 
-  async onHandleUpdate(handle: Handle, update): Promise<void> {
-    const {name} = handle;
-    if (update.data) {
-      this._setProperty(name, update.data);
+  async onHandleUpdate({name}: Handle, {data, added, removed}): Promise<void> {
+    if (data) {
+      //console.log('update.data:', JSON.stringify(data, null, '  '));
+      this._setProps({[name]: data});
     }
-    if (update.added) {
-      const prop = (this.props[name] || []).concat(update.added);
-      // TODO(sjmiles): generally improper to mess with `this.props`, this is a special case
-      this.props[name] = prop;
-      this._setProperty(name, prop);
+    if (added) {
+      //console.log('update.added:', JSON.stringify(added, null, '  '));
+      const prop = (this.props[name] || []).concat(added);
+      // TODO(sjmiles): generally improper to set `this._props` directly, this is a special case
+      this._props[name] = prop;
+      this._setProps({[name]: prop});
     }
-    if (update.removed) {
-      // TODO(sjmiles): probably should update prop instead...(as above)
-      const data = await handle["toList"]();
-      this._setProperty(name, data);
+    if (removed) {
+      //console.log('update.removed:', JSON.stringify(removed, null, '  '));
+      const prop = this.props[name];
+      if (Array.isArray(prop)) {
+        removed.forEach(removed => {
+          // TODO(sjmiles): linear search is inefficient
+          const index = prop.findIndex(entry => entry.id === removed.id);
+          if (index >= 0) {
+            prop.splice(index, 1);
+          } else {
+            console.warn(`dom-particle::onHandleUpdate: couldn't find item to remove`);
+          }
+        });
+        this._setProps({[name]: prop});
+      }
     }
   }
 
@@ -172,16 +184,19 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
 
-  // private _debounce(key: string, func: Runnable, delay: number) {
-  //   const subkey = `_debounce_${key}`;
-  //   if (!this._state[subkey]) {
-  //     this.startBusy();
-  //   }
-  //   const idleThenFunc = () => {
-  //     this.doneBusy();
-  //     func();
-  //     this._state[subkey] = null;
-  //   };
-  //   super._debounce(key, idleThenFunc, delay);
-  // }
+  debounce(key: string, func: Runnable, delay: number) {
+    const subkey = `_debounce_${key}`;
+    const state = this.state;
+    if (!state[subkey]) {
+      state[subkey] = true;
+      this.startBusy();
+    }
+    const idleThenFunc = () => {
+      this.doneBusy();
+      func();
+      state[subkey] = null;
+    };
+    // TODO(sjmiles): rewrite Xen debounce so caller has idle control
+    super._debounce(key, idleThenFunc, delay);
+  }
 }
