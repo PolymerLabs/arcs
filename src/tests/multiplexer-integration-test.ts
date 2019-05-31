@@ -17,7 +17,7 @@ import {CollectionStorageProvider} from '../runtime/storage/storage-provider-bas
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../planning/testing/arcs-planning-testing.js';
 
-describe.skip('Multiplexer', () => {
+describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const helper = await PlanningTestHelper.create({
       manifestFilename: './src/tests/particles/artifacts/polymorphic-muxing.recipes'

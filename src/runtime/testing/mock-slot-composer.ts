@@ -203,46 +203,42 @@ export class MockSlotComposer extends FakeSlotComposer {
   }
 
   _verifyRenderContent(particle, slotName, content) {
-    return true;
+    const index = this.expectQueue.findIndex(e => {
+      return e.type === 'render'
+          && e.particleName === particle.name
+          && e.slotName === slotName
+          && (!e.hostedParticle ||
+             ((names) => names.length === 1 && names[0] === e.hostedParticle)(this._getHostedParticleNames(particle)));
+    });
+    if (index < 0) {
+      console.log('\tno match');
+      return false;
+    }
+    const expectation = this.expectQueue[index];
+
+    let found = false;
+    let complete = false;
+    if (expectation.verifyComplete) {
+      found = true;
+      complete = expectation.verifyComplete(content);
+    } else if (expectation.contentTypes) {
+      Object.keys(content).forEach(contentType => {
+        const contentIndex = expectation.contentTypes.indexOf(contentType);
+        found = found || (contentIndex >= 0);
+        if (contentIndex >= 0) {
+          expectation.contentTypes.splice(contentIndex, 1);
+        }
+      });
+      complete = expectation.contentTypes.length === 0;
+    } else {
+      assert(false, `Invalid expectation: ${JSON.stringify(expectation)}`);
+    }
+
+    if (complete) {
+      this.expectQueue.splice(index, 1);
+    }
+    return found;
   }
-
-  // _verifyRenderContent(particle, slotName, content) {
-  //   const index = this.expectQueue.findIndex(e => {
-  //     return e.type === 'render'
-  //         && e.particleName === particle.name
-  //         && e.slotName === slotName
-  //         && (!e.hostedParticle ||
-  //            ((names) => names.length === 1 && names[0] === e.hostedParticle)(this._getHostedParticleNames(particle)));
-  //   });
-  //   if (index < 0) {
-  //     console.log('\tno match');
-  //     return false;
-  //   }
-  //   const expectation = this.expectQueue[index];
-
-  //   let found = false;
-  //   let complete = false;
-  //   if (expectation.verifyComplete) {
-  //     found = true;
-  //     complete = expectation.verifyComplete(content);
-  //   } else if (expectation.contentTypes) {
-  //     Object.keys(content).forEach(contentType => {
-  //       const contentIndex = expectation.contentTypes.indexOf(contentType);
-  //       found = found || (contentIndex >= 0);
-  //       if (contentIndex >= 0) {
-  //         expectation.contentTypes.splice(contentIndex, 1);
-  //       }
-  //     });
-  //     complete = expectation.contentTypes.length === 0;
-  //   } else {
-  //     assert(false, `Invalid expectation: ${JSON.stringify(expectation)}`);
-  //   }
-
-  //   if (complete) {
-  //     this.expectQueue.splice(index, 1);
-  //   }
-  //   return found;
-  // }
 
   renderSlot(particle, slotName, content) {
     this._addDebugMessages(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
@@ -262,7 +258,7 @@ export class MockSlotComposer extends FakeSlotComposer {
         console.log('expected? add this line:');
         console.log(`  .expectRenderSlot('${particle.name}', '${slotName}', {'contentTypes': ['${Object.keys(content).join('\', \'')}']})`);
       }
-      assert(canIgnore, `Unexpected render slot "${slotName}" for particle "${particle.name}" (content types: ${Object.keys(content).join(',')})`);
+      assert(canIgnore, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
     }
 
     this._expectationsMet();

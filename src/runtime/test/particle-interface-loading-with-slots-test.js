@@ -17,7 +17,7 @@ import {Manifest} from '../manifest.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 
-describe.skip('particle interface loading with slots', function() {
+describe('particle interface loading with slots', function() {
   async function initializeManifestAndArc(contextContainer) {
     const loader = new Loader();
     const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});

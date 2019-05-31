@@ -565,11 +565,14 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
 
-    // let slotsCreated = 0;
-    // slotComposer.createHostedSlot = (...args) => {
-    //   slotsCreated++;
-    //   return slotComposer.createHostedSlot.apply(slotComposer, args);
-    // };
+    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
+
+    let slotsCreated = 0;
+
+    slotComposer.createHostedSlot = (...args) => {
+      slotsCreated++;
+      return slotComposerCreateHostedSlot.apply(slotComposer, args);
+    };
 
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();
@@ -594,7 +597,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     await store.store({id: 'a', rawData: {value: 'one'}}, ['somekey']);
 
     await newArc.idle;
-    //assert.equal(slotsCreated, 1);
+    assert.equal(slotsCreated, 1);
   });
 
   it('serialization roundtrip preserves data for volatile stores', async function() {
