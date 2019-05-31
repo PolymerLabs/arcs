@@ -12,4 +12,3 @@ recipe Com_google_android_gm &autofill
   SuggestPerson
     recentEntities = recentEntities
     suggestion = suggestion
-  description `suggest person`

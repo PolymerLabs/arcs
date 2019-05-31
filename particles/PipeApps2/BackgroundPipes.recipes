@@ -1,0 +1,9 @@
+import 'PipeEntity.schema'
+
+particle BackgroundPipes in './source/Noop.js'
+  in [PipeEntity] entities
+
+recipe BackgroundPipes
+  create #pipeEntities as entities
+  BackgroundPipes
+    entities = entities

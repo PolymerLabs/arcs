@@ -7,15 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
-export {paths} from './paths.js';
-
 export let manifest;
 const {params} = global;
 if ('solo' in params) {
   manifest = `import '${params.solo}'`;
 }
 
-export const storage = `volatile://`;
-//export const storage = `pouchdb://local/arcs/`;
-export const version = `version: apr-30`;

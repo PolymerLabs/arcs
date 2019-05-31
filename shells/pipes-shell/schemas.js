@@ -22,14 +22,5 @@ export const Schemas = {
         source: 'Text',
       }
     }
-  },
-  Json: {
-    tag: 'Entity',
-    data: {
-      names: ['Json'],
-      fields: {
-        json: 'Text'
-      }
-    }
   }
 };

@@ -22,4 +22,3 @@ if (typeof window !== 'undefined') {
 
 const factory = logLevel > 0 ? _factory : () => () => {};
 export const logFactory = (...args) => factory(...args);
-

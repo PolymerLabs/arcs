@@ -11,18 +11,12 @@
 'use strict';
 
 defineParticle(({DomParticle}) => {
-
   return class extends DomParticle {
-    get template() {
-      return `<span>{{json}}</span>`;
-    }
-    render({artist}) {
+    update({artist}) {
       if (artist) {
         const json = JSON.stringify(artist.rawData);
         this.updateSingleton('suggestion', {json});
-        return {json};
       }
     }
   };
-
 });

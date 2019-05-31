@@ -13,13 +13,12 @@
 defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     get template() {
-      return html`<span>{{json}}</span>`;
+      return html`<div slotid="assistance"></div>`;
     }
-    render({recentEntities}, state) {
+    update({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
         this.updateSingleton('suggestion', {json});
-        return {json};
       }
     }
     query(entities) {

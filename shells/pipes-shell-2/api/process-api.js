@@ -9,7 +9,7 @@
  */
 
 
-import {logsFactory} from '../../../build/platform/log-web.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
 import {recipeByName, createPlanificator, instantiateRecipe, marshalOutput} from '../lib/utils.js';

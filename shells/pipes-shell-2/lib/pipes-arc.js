@@ -9,7 +9,7 @@
  */
 
 
-import {logFactory} from '../../../build/platform/log-web.js';
+import {logFactory} from '../../../build/runtime/log-factory.js';
 import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
 import {ArcHost} from '../../lib/components/arc-host.js';
 

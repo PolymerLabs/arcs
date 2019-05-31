@@ -1,0 +1,21 @@
+import './PipeEntity.schema'
+import './Json.schema'
+
+particle SuggestAddress in './source/SuggestAddress.js'
+  in [PipeEntity] recentEntities
+  out Json suggestion
+  consume content
+
+particle RequireQuery in './source/Noop.js'
+  in PipeEntity query
+
+recipe AutofillMaps &autofill
+  create as suggestion
+  map 'pipe-entities' as recentEntities
+  use #autofill_com_google_android_apps_maps as query
+  RequireQuery
+    query = query
+  SuggestAddress
+    recentEntities = recentEntities
+    suggestion = suggestion
+  description `suggest address`

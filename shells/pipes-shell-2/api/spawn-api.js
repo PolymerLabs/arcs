@@ -10,11 +10,11 @@
 
 
 import {generateId} from '../../../modalities/dom/components/generate-id.js';
-import {logsFactory} from '../../../build/platform/log-web.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {createPlanificator, recipeByName, instantiateRecipe, marshalOutput} from '../lib/utils.js';
 
-const {log, warn} = logsFactory('spawn-arc');
+const {log, warn} = logsFactory('spawn-api', 'navy');
 
 export const marshalArc = async (tid, composer, context, storage, bus) => {
   log('marshalling new arc');
@@ -28,7 +28,7 @@ export const installPlanner = async (tid, bus, arc, suggestionsCallback) => {
   const planr = await createPlanificator(arc);
   const callback = suggestionsCallbackFactory(arc, suggestionsCallback);
   planr.registerVisibleSuggestionsChangedCallback(callback);
-  log('waiting for planner to suggest something ... might be never!');
+  log(`[${arc.id.idTreeAsString()}] waiting for planner to suggest something ... might be never!`);
 };
 
 const suggestionsCallbackFactory = (arc, callback) => {

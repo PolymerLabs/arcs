@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 export const test = async bus => {
   bus.client.channels = {};
   bus.client.receive = json => {
@@ -80,7 +79,8 @@ export const test = async bus => {
     };
   });
   //
-  enqueue(tests);
+  //enqueue(tests);
   //enqueue(tests.slice(0, 3));
   //enqueue([tests[0], tests[2]]);
+  enqueue([tests[0], tests[1]]);
 };

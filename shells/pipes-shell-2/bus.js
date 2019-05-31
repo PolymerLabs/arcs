@@ -9,7 +9,7 @@
  */
 
 
-import {logsFactory} from '../../build/platform/log-web.js';
+import {logsFactory} from '../../build/runtime/log-factory.js';
 const {log} = logsFactory('BUS', '#d32e1b');
 
 export const Bus = class {
