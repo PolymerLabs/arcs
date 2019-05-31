@@ -48,7 +48,6 @@ const signalClientWhenReady = async client => {
 
 const marshalRecipeContext = async () => {
   const manifest = await Utils.parse(recipeManifest);
-  console.warn(manifest.allRecipes.map(recipe => recipe.name));
   recipes = manifest.findRecipesByVerb('autofill');
   const types = recipes.map(recipe => recipe.name.toLowerCase().replace(/_/g, '.'));
   const json = JSON.stringify(types);
