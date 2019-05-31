@@ -24,9 +24,9 @@ interface Inferrable {
 
 abstract class TfModel {
 
-  public abstract load(modelUrl, options): Promise<Reference>;
+  public abstract async load(modelUrl, options): Promise<Reference>;
 
-  public async predict(model, inputs, config) {
+  public async predict(model, inputs, config): Promise<number[]> {
     const tf = await requireTf();
 
     log('Referencing model');
@@ -68,9 +68,8 @@ class LayersModel extends TfModel {
 }
 
 
-const tensorToOutput = (tensor) => {
-  const tf = requireTf();
-
+const tensorToOutput = async (tensor) => {
+  return await tensor.array();
 };
 
 
