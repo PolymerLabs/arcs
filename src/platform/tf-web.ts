@@ -9,7 +9,7 @@
  */
 
 import {dynamicScript} from './dynamic-script-web.js';
-import * as tf from '../../node_modules/@tensorflow/tfjs';
+import * as tf from '../../node_modules/@tensorflow/tfjs/dist/tf.js';
 
 const TF_VERSION = '1.1.2';
 
