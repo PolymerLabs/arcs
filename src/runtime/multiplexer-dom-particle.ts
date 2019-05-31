@@ -151,17 +151,17 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
   combineHostedModel(slotName: string, hostedSlotId: string, content: Content): void {
     const subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
-    if (subId) {
-      const items = this._state.renderModel ? this._state.renderModel.items : [];
-      const listIndex = items.findIndex(item => item.subId === subId);
-      const item = {...content.model, subId};
-      if (listIndex >= 0 && listIndex < items.length) {
-        items[listIndex] = item;
-      }
-      else {
-        items.push(item);
-      }
-      this.setState({renderModel: {items}});
+    if (!subId) {
+      return;
+    }
+    const items = this._state.renderModel ? this._state.renderModel.items : [];
+    const listIndex = items.findIndex(item => item.subId === subId);
+    const item = {...content.model, subId};
+    if (listIndex >= 0 && listIndex < items.length) {
+      items[listIndex] = item;
+    }
+    else {
+      items.push(item);
     }
   }
 
