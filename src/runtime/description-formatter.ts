@@ -456,7 +456,7 @@ export class DescriptionFormatter {
       // Choose connections with patterns (manifest-based or dynamic).
       const connectionSpec = connection.spec;
       const particleDescription = this.particleDescriptions.find(desc => desc._particle === connection.particle);
-      return Boolean(connectionSpec.pattern) || Boolean(particleDescription && particleDescription._connections[connection.name].pattern);
+      return !!connectionSpec.pattern || !!particleDescription._connections[connection.name].pattern;
     });
 
     possibleConnections.sort((c1, c2) => {
