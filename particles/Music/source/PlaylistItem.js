@@ -18,7 +18,7 @@ defineParticle(({DomParticle, html}) => {
     <style>
       [${host}] {
         padding: 8px 0;
-        margin: -1px 0; /* removing the borders from the styling of the List.js */
+        /* margin: -1px 0;*/ /*removing the borders from the styling of the List.js*/
         background-color: white;
         display: flex;
         height: 60px;

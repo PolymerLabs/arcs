@@ -24,13 +24,14 @@ defineParticle(({DomParticle, resolver, html}) => {
     [${host}] > [items] {
       background-color: white;
     }
-    [${host}] > [items] > [item] {
-      /* no padding/margin/etc so the item can use full bleed */
+    /* no padding/margin/etc so the item can use full bleed */
+    /* [${host}] > [items] > [item] {
       border-top: 1px solid #eeeeee;
-    }
-    [${host}] > [items] > [item]:last-child {
+    } */
+    /* [${host}] > [items] > [item]:last-child {
       border-bottom: 1px solid #eeeeee;
     }
+    */
     [${host}] > [items] > [item][selected] {
       background-color: whitesmoke;
     }
