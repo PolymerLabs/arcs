@@ -42,7 +42,6 @@ describe.skip('particle interface loading with slots', function() {
 
     return {manifest, recipe, slotComposer, arc};
   }
-
   async function instantiateRecipeAndStore(arc, recipe, manifest) {
     await arc.instantiate(recipe);
     const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
@@ -54,14 +53,13 @@ describe.skip('particle interface loading with slots', function() {
   const expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
 
   function verifyFooItems(slotConsumer, expectedValues) {
-    return true;
-    // const renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
-    // assert.equal(renderings.length, Object.keys(expectedValues).length);
-    // for (const [subId, {model, templateName}] of renderings) {
-    //   assert.equal(expectedValues[subId], model.value);
-    //   assert.equal(expectedTemplateName, templateName);
-    //   assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
-    // }
+    const renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
+    assert.equal(renderings.length, Object.keys(expectedValues).length);
+    for (const [subId, {model, templateName}] of renderings) {
+      assert.equal(expectedValues[subId], model.value);
+      assert.equal(expectedTemplateName, templateName);
+      assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
+    }
   }
 
   it('multiplex recipe with slots - immediate', async () => {
@@ -71,10 +69,9 @@ describe.skip('particle interface loading with slots', function() {
 
     slotComposer
       .newExpectations()
-      // .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-      // .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
-      // .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true})
-      ;
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
 
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
     await arc.pec.idle;
