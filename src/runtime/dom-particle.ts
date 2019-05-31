@@ -68,27 +68,21 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
 
   /**
-   * Getters and setters for removing underscores.
+   * Getters and setters for working with state/props.
    */
   get state() {
     return this._state;
   }
 
+  /**
+   * Syntactic sugar: `this.state = {state}` is equivalent to `this.setState(state)`.
+   */
   set state(state) {
     this.setState(state);
   }
 
   get props() {
     return this._props;
-  }
-
-  /**
-   * This is called once during particle setup. Override to control sync and update
-   * configuration on specific handles (via their configure() method).
-   * `handles` is a map from names to handle instances.
-   */
-  configureHandles(handles: ReadonlyMap<string, Handle>): void {
-    // Example: handles.get('foo').configure({keepSynced: false});
   }
 
   /**
@@ -127,7 +121,8 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
         this.doneBusy();
       }
     };
-    // TODO(sjmiles): superclass uses Promise.resolve(), try a short timeout here to provide a bit more debouncing
+    // TODO(sjmiles): superclass uses Promise.resolve(),
+    // but here use a short timeout for a wider debounce
     return setTimeout(done, 10);
   }
 
@@ -139,29 +134,33 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this._invalidate();
   }
 
+  /**
+   * This is called once during particle setup. Override to control sync and update
+   * configuration on specific handles (via their configure() method).
+   * `handles` is a map from names to handle instances.
+   */
+  configureHandles(handles: ReadonlyMap<string, Handle>): void {
+    // Example: handles.get('foo').configure({keepSynced: false});
+  }
+
   async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
-    //console.log(`[${this.spec.name}]:onHandleSync`, handle.name, model);
     this._setProperty(handle.name, model);
   }
 
   async onHandleUpdate(handle: Handle, update): Promise<void> {
-    //onsole.log(`[${this.spec.name}]:onHandleUpdate`, handle.name, update);
     const {name} = handle;
     if (update.data) {
-      //console.log(`[${this.spec.name}]::onHandleUpdate::setProperty`, name, JSON.stringify(update.data));
       this._setProperty(name, update.data);
     }
     if (update.added) {
       const prop = (this.props[name] || []).concat(update.added);
-      // TODO(sjmiles): it's generally improper to mess with `this.props` directly, but this is a special case
+      // TODO(sjmiles): generally improper to mess with `this.props`, this is a special case
       this.props[name] = prop;
       this._setProperty(name, prop);
-      //console.warn(name, update.added, prop);
     }
     if (update.removed) {
       // TODO(sjmiles): probably should update prop instead...(as above)
       const data = await handle["toList"]();
-      //console.log(`[${this.spec.name}]::onHandleUpdate::setProperty`, name, data);
       this._setProperty(name, data);
     }
   }
@@ -173,16 +172,16 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
 
-  private _debounce(key: string, func: Runnable, delay: number) {
-    const subkey = `_debounce_${key}`;
-    if (!this._state[subkey]) {
-      this.startBusy();
-    }
-    const idleThenFunc = () => {
-      this.doneBusy();
-      func();
-      this._state[subkey] = null;
-    };
-    super._debounce(key, idleThenFunc, delay);
-  }
+  // private _debounce(key: string, func: Runnable, delay: number) {
+  //   const subkey = `_debounce_${key}`;
+  //   if (!this._state[subkey]) {
+  //     this.startBusy();
+  //   }
+  //   const idleThenFunc = () => {
+  //     this.doneBusy();
+  //     func();
+  //     this._state[subkey] = null;
+  //   };
+  //   super._debounce(key, idleThenFunc, delay);
+  // }
 }
