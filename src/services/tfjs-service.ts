@@ -35,7 +35,7 @@ abstract class TfModel {
     log('Predicting');
     const yHat = await model_.predict(inputs, config);
 
-    return tensorToOutput(yHat);
+    return await tensorToOutput(yHat);
   }
 
   public dispose({reference}): void {
