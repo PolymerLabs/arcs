@@ -49,30 +49,35 @@ function typeSummary(field) {
 }
 
 function generate(schemaName, schema) {
-  const decl = [];
-  const encode = [];
+  const fields = [];
+  const api = [];
   const decode = [];
+  const encode = [];
+  const toString = [];
 
-  const processValue = (name, type, typeChar, condition, initial) => {
-    decl.push(`${type} ${name}${initial};`);
+  const processValue = (name, type, typeChar, passByReference) => {
+    const [ref1, ref2] = passByReference ? ['const ', '&'] : ['', ''];
 
-    encode.push(`if (${condition})`,
-                `  encoder.encodeValue("${name}:${typeChar}", ${name}, "|");`);
+    fields.push(`${type} ${name}_ = ${type}();`,
+                `bool ${name}_valid_ = false;`,
+                ``);
+
+    api.push(`${ref1}${type}${ref2} ${name}() const { return ${name}_; }`,
+             `void set_${name}(${ref1}${type}${ref2} value) { ${name}_ = value; ${name}_valid_ = true; }`,
+             `void clear_${name}() { ${name}_ = ${type}(); ${name}_valid_ = false; }`,
+             `bool has_${name}() const { return ${name}_valid_; }`,
+             ``);
 
     decode.push(`} else if (name == "${name}") {`,
                 `  decoder.validate("${typeChar}");`,
-                `  decoder.decodeValue(obj.${name});`);
-  };
+                `  decoder.decode(entity->${name}_);`,
+                `  entity->${name}_valid_ = true;`);
 
-  const processCollection = (name, type, typeChar) => {
-    decl.push(`std::unordered_set<${type}> ${name};`);
+    encode.push(`if (entity.has_${name}())`,
+                `  encoder.encode("${name}:${typeChar}", entity.${name}());`);
 
-    encode.push(`if (!${name}.empty())`,
-                `  encoder.encodeCollection("${name}:C${typeChar}", ${name});`);
-
-    decode.push(`} else if (name == "${name}") {`,
-                `  decoder.validate("C${typeChar}");`,
-                `  decoder.decodeCollection(obj.${name});`);
+    toString.push(`if (entity.has_${name}())`,
+                  `  printer.add("${name}: ", entity.${name}());`);
   };
 
   let fieldCount = 0;
@@ -80,35 +85,19 @@ function generate(schemaName, schema) {
     fieldCount++;
     switch (typeSummary(field)) {
       case 'schema-primitive:Text':
-        processValue(name, 'std::string', 'T', `!${name}.empty()`, '');
+        processValue(name, 'std::string', 'T', true);
         break;
 
       case 'schema-primitive:URL':
-        processValue(name, 'URL', 'U', `!${name}.href.empty()`, '');
+        processValue(name, 'URL', 'U', true);
         break;
 
       case 'schema-primitive:Number':
-        processValue(name, 'double', 'N', `${name} != 0`, ' = 0');
+        processValue(name, 'double', 'N', false);
         break;
 
       case 'schema-primitive:Boolean':
-        processValue(name, 'bool', 'B', name, ' = false');
-        break;
-
-      case 'schema-collection:Text':
-        processCollection(name, 'std::string', 'T');
-        break;
-
-      case 'schema-collection:URL':
-        processCollection(name, 'URL, HashURL, EqualURL', 'U');
-        break;
-
-      case 'schema-collection:Number':
-        processCollection(name, 'double', 'N');
-        break;
-
-      case 'schema-collection:Boolean':
-        processCollection(name, 'bool', 'B');
+        processValue(name, 'bool', 'B', false);
         break;
 
       default:
@@ -117,44 +106,63 @@ function generate(schemaName, schema) {
         process.exit(1);
     }
   }
+
   const headerGuard = `_ARCS_ENTITY_${schemaName.toUpperCase()}_H`;
-  return `\
+  const content = `\
 #ifndef ${headerGuard}
 #define ${headerGuard}
-// GENERATED CODE
+
+// GENERATED CODE - DO NOT EDIT
 
 namespace arcs {
 
 class ${schemaName} {
 public:
-  ${decl.join('\n  ')}
+  ${api.join('\n  ')}
+  std::string _internal_id;  // TODO
 
+private:
+  ${fields.join('\n  ')}
   static const int FIELD_COUNT = ${fieldCount};
-
-  std::string encode() {
-    internal::StringEncoder encoder;
-    ${encode.join('\n    ')}
-    return std::move(encoder.result());
-  }
-
-  static ${schemaName} decode(const char* str) {
-    ${schemaName} obj;
-    internal::StringDecoder decoder(str);
-    for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
-      std::string name = decoder.upTo(':');
-      if (0) {
-      ${decode.join('\n      ')}
-      }
-      decoder.validate("|");
-    }
-    return obj;
-  }
+  friend void decode_entity<${schemaName}>(${schemaName}* entity, const char* str);
 };
 
+template<>
+void decode_entity(${schemaName}* entity, const char* str) {
+  if (str == nullptr) return;
+  internal::StringDecoder decoder(str);
+  decoder.decode(entity->_internal_id);
+  decoder.validate("|");
+  for (int i = 0; !decoder.done() && i < ${schemaName}::FIELD_COUNT; i++) {
+    std::string name = decoder.upTo(':');
+    if (0) {
+    ${decode.join('\n    ')}
+    }
+    decoder.validate("|");
+  }
 }
+
+template<>
+std::string encode_entity(const ${schemaName}& entity) {
+  internal::StringEncoder encoder;
+  encoder.encode("", entity._internal_id);
+  ${encode.join('\n  ')}
+  return std::move(encoder.result());
+}
+
+template<>
+std::string entity_to_str(const ${schemaName}& entity, const char* join) {
+  internal::StringPrinter printer;
+  printer.addId(entity._internal_id);
+  ${toString.join('\n  ')}
+  return std::move(printer.result(join));
+}
+
+}  // namespace arcs
 
 #endif
 `;
+  return content.replace(/ +\n/g, '\n');
 }
 
 // TODO: handle schemas with multiple names and schemas with parents
