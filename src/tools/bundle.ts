@@ -45,14 +45,16 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
       archive.file(
         file.bundlePath,
         fs.readFileSync(file.filePath),
-        // Java ZipInputStream has issues with how JsZip represents 0-byte files.
+        // Some unpackers have issues with 0-byte files.
         {createFolders: false});
     }
     archive.file('bundle-manifest.mf', listing
         .filter(f => f.entryPoint)
         .map(f => `entry-point: ${f.bundlePath}\n`)
         .join(''));
-    archive.generateNodeStream({streamFiles: true})
+    // Don't use {streamFiles: true}.
+    // Java ZipInputStream does not accept the data descriptors that it generates.
+    archive.generateNodeStream()
         .pipe(fs.createWriteStream(bundleName))
         .on('finish', () => resolve());
   });
