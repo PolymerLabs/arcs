@@ -16,21 +16,21 @@ import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/assert-web.js';
 
 export class FirebaseStorageKey extends StorageKey {
-  public readonly url: string;
+  public readonly databaseURL: string;
   public readonly projectId: string;
   public readonly apiKey: string;
   public readonly location: string;
 
   constructor(url: string, projectId: string, apiKey: string, location: string) {
     super('firebase');
-    this.url = url;
+    this.databaseURL = url;
     this.projectId = projectId;
     this.apiKey = apiKey;
     this.location = location;
   }
 }
 
-class FirebaseAppCache {
+export class FirebaseAppCache {
   private appCache: Map<FirebaseStorageKey, firebase.app.App>;
 
   constructor(runtime: Runtime) {
@@ -42,6 +42,16 @@ class FirebaseAppCache {
       this.appCache.set(key, firebase.initializeApp(key));
     }
     return this.appCache.get(key);
+  }
+
+  stopAllApps() {
+    this.appCache.forEach(app => {
+      app.delete();
+    });
+  }
+
+  static stop() {
+    new FirebaseAppCache(Runtime.getRuntime()).stopAllApps();
   }
 }
 
@@ -60,14 +70,15 @@ export class FirebaseDriver<Data> extends Driver<Data> {
     const app = this.appCache.getApp(this.storageKey);
     const reference = firebase.database(app).ref(this.storageKey.location);
     const currentSnapshot = await reference.once('value');
-    if (this.exists === Exists.ShouldCreate && currentSnapshot.exists) {
+
+    if (this.exists === Exists.ShouldCreate && currentSnapshot.exists()) {
       throw new Error(`requested creation of memory location ${this.storageKey} can't proceed as location already exists`);
     }
-    if (this.exists === Exists.ShouldExist && !currentSnapshot.exists) {
+    if (this.exists === Exists.ShouldExist && !currentSnapshot.exists()) {
       throw new Error(`requested connection to memory location ${this.storageKey} can't proceed as location doesn't exist`);
     }
 
-    if (!currentSnapshot.exists) {
+    if (!currentSnapshot.exists()) {
       await reference.transaction(data => {
         if (data !== null) {
           return undefined;
@@ -75,7 +86,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
         return {version: 0};
       });
     } else {
-      this.pendingModel = currentSnapshot.val().model;
+      this.pendingModel = currentSnapshot.val().model || null;
       this.pendingVersion = currentSnapshot.val().version;
     }
       
@@ -85,6 +96,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   registerReceiver(receiver: ReceiveMethod<Data>) {
     this.receiver = receiver;
     if (this.pendingModel !== null) {
+      assert(this.pendingModel);
       receiver(this.pendingModel, this.pendingVersion);
       this.pendingModel = null;
       this.seenVersion = this.pendingVersion;
@@ -95,12 +107,11 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   async send(model: Data, version: number) {
     let completed = false;
     await this.reference.transaction(data => {
-      if (data.version !== version - 1) {
+      if (data && data.version !== version - 1) {
         return undefined;
       }
       return {version, model};
     }, (err: Error, complete: boolean) => completed = complete);
-
     // If this write was successful, we don't want to send events based
     // on this write back to the store.
     if (completed) {
