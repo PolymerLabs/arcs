@@ -163,6 +163,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     else {
       items.push(item);
     }
+    this.setState({renderModel: {items}});
   }
 
   combineHostedTemplate(slotName: string, hostedSlotId: string, content: Content): void {
