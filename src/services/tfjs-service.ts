@@ -13,12 +13,67 @@ import {Services} from '../runtime/services.js';
 import {requireTf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
-// Map some TF API to a Service
-const dispose = ({reference}) => rmgr.dispose(reference);
 
-// TODO(alxr) Will add generic ML model service functions in #3094
+interface Disposable {
+  dispose(): void;
+}
 
-Services.register('tfjs', {
-  dispose,
-});
+interface Inferrable {
+  predict(input, options: object): Promise<unknown>;
+}
+
+abstract class TfModel {
+
+  public abstract load(modelUrl, options): Promise<Reference>;
+
+  public async predict(model, inputs, config) {
+    const tf = await requireTf();
+
+    log('Referencing model');
+    const model_  = await rmgr.deref(model) as Inferrable;
+
+    log('Predicting');
+    const yHat = await model_.predict(inputs, config);
+
+    return tensorToOutput(yHat);
+  }
+
+  public dispose({reference}): void {
+    rmgr.dispose(reference);
+  }
+}
+
+
+class GraphModel extends TfModel {
+  public async load(modelUrl, options): Promise<Reference> {
+    const tf = await requireTf();
+    const model: Inferrable = await tf.loadGraphModel(modelUrl, options);
+    return rmgr.ref(model);
+  }
+
+  public dispose({reference}): void {
+    const model_ = rmgr.deref(reference) as Inferrable & Disposable;
+    model_.dispose();
+    super.dispose(reference);
+  }
+
+}
+
+class LayersModel extends TfModel {
+  async load(modelUrl, options): Promise<Reference> {
+    const tf = await requireTf();
+    const model = await tf.loadLayersModel(modelUrl, options);
+    return rmgr.ref(model);
+  }
+}
+
+
+const tensorToOutput = (tensor) => {
+  const tf = requireTf();
+
+};
+
+
+Services.register('graph-model', new GraphModel());
+Services.register('layer-model', new LayersModel());
 
