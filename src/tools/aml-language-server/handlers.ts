@@ -104,7 +104,7 @@ async function gatherDiagnostics(uri: string, context: AmlServiceContext):
       const errors: ManifestError[] = [];
       try {
         const manifest = await Manifest.load(path, new LspLoader(context));
-        errors.splice(0, 0, ...Manifest.getErrors(manifest));
+        errors.push(...Manifest.getErrors(manifest));
       } catch (e) {
         errors.push(e);
       }
