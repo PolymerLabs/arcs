@@ -19,10 +19,6 @@ import {Bus} from './bus.js';
 
 const {log, warn} = logsFactory('pipe');
 
-const sleep = async ms => {
-  await new Promise(resolve => setTimeout(resolve, ms));
-};
-
 export const initPipe = async (client, paths, storage, composerFactory) => {
   // configure arcs environment
   Utils.init(paths.root, paths.map);
@@ -38,20 +34,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
     async marshalProcessArc(msg, tid, bus) {
       const composer = composerFactory(msg.modality);
       const arc = await marshalArc(tid, composer, context, storage, bus);
-      let callback;
-      if (msg.entity) {
-        await ingestEntity(arc, msg.entity);
-        callback = consumeOneSuggestionCallbackFactory(tid, bus, arc);
-      } else if (msg.recipe) {
-        await ingestRecipe(arc, msg.recipe);
-        observeOutput(tid, bus, arc);
-        callback = suggestions => deliverSuggestions(tid, bus, suggestions);
-      }
-      //
-      //await sleep(1000);
-      //console.log(await arc.serialize());
-      //await sleep(1000);
-      //
+      const callback = await api.ingestAndObserve(msg, tid, bus, arc);
       installPlanner(tid, bus, arc, callback);
       log('marshalProcessArc:', arc);
       return arc;
@@ -60,7 +43,7 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
       const composer = composerFactory(msg.modality);
       const arc = await marshalArc(tid, composer, context, storage, bus);
       installPlanner(tid, bus, arc, suggestions => deliverSuggestions(tid, bus, suggestions));
-      // forward output to the bus
+      // create a handle to use as an output slot, forward handle changes to the bus
       observeOutput(tid, bus, arc);
       log('marshalSpawnArc:', arc);
       return arc;
@@ -99,6 +82,18 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
   return new Bus(dispatcher, client);
 };
 
+const ingestAndObserve = async (msg, tid, bus, arc) => {
+  if (msg.entity) {
+    await ingestEntity(arc, msg.entity);
+    return consumeOneSuggestionCallbackFactory(tid, bus, arc);
+  } else if (msg.recipe) {
+    await ingestRecipe(arc, msg.recipe);
+    // create a handle to use as an output slot, forward handle changes to the bus
+    observeOutput(tid, bus, arc);
+    return suggestionCallbackFactory(tid, bus);
+  }
+};
+
 // TODO(sjmiles): a lot of jumping-about for two stage suggestion handling, simplify
 const consumeOneSuggestionCallbackFactory = (tid, bus, arc) => {
   let didOne;
@@ -116,4 +111,8 @@ const consumeOneSuggestionCallbackFactory = (tid, bus, arc) => {
       deliverSuggestions(tid, bus, suggestions);
     }
   };
+};
+
+const suggestionCallbackFactory = (tid, bus) => {
+  return suggestions => deliverSuggestions(tid, bus, suggestions);
 };

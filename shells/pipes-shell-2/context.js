@@ -13,7 +13,6 @@ import {Stores} from '../lib/runtime/stores.js';
 import {Schemas} from './schemas.js';
 
 const manifest = `
-//import 'https://$particles/canonical.manifest'
 import 'https://$particles/PipeApps2/PipeApps.recipes'
 `;
 

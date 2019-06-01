@@ -60,7 +60,7 @@ export const instantiateRecipe = async (arc, recipe) => {
   }
 };
 
-export const marshalOutput = async (arc) => {
+export const marshalOutput = async arc => {
   let data;
   let store = arc.__outputStore;
   if (!store) {
