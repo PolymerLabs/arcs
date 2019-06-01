@@ -1,0 +1,6 @@
+import '../../TVMaze/schemas/TVMazeQuery.schema'
+import '../schemas/TMDBSearchResult.schema'
+
+particle TMDBSearch in './js/TMDBSearch.js'
+  in TVMazeQuery query
+  out [TMDBSearchResult] results

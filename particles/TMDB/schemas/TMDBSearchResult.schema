@@ -1,0 +1,8 @@
+schema TMDBSearchResult
+  Text id
+  Text name
+  Text media_type
+  Boolean adult
+  Text backdrop_path
+  Text poster_path
+  Text overview
