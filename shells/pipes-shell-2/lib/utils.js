@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {Type} from '../../../build/runtime/type.js';
 import {Planificator} from '../../../build/planning/plan/planificator.js';
 import {Utils} from '../../lib/runtime/utils.js';
