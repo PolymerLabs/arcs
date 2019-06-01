@@ -16,6 +16,7 @@
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-extension",
     "test-shells": "run-p --print-name --race start s-test-shells",
     "test-sigh": "cross-env tools/sigh",
+    "test-health": "cross-env tools/sigh health",
     "test-extension": "mocha-chrome extension/test/index.test.html",
     "start": "cross-env http-server --silent -a localhost -p 8786",
     "test-wdio-shells": "wdio -b http://localhost:8786/ shells/test/wdio.conf.js",
