@@ -43,12 +43,13 @@ const XenStateMixin = Base => class extends Base {
     }
   }
   _wouldChangeValue(map, name, value) {
-    // TODO(sjmiles): fundamental dirty-checking issue here. Can be overridden to change
-    // behavior, but the default implementation will use strict reference checking.
-    // To modify structured values one must create a new Object with the new values.
-    // See `_setImmutableState`.
+    // Important dirty-checking behavior controlled here,
+    // can be overridden.
+    // The default implementation will use strict reference checking.
+    // To modify structured values one must create a new Object to
+    // replace the old one.
     return (map[name] !== value);
-    // TODO(sjmiles): an example of dirty-checking that instead simply punts on structured data
+    // an example of dirty-checking that instead simply punts on structured data
     //return (typeof value === 'object') || (map[name] !== value);
   }
   _wouldChangeProp(name, value) {
@@ -64,18 +65,6 @@ const XenStateMixin = Base => class extends Base {
   }
   _invalidateProps() {
     this._propsInvalid = true;
-    this._invalidate();
-  }
-  _setImmutableState(name, value) {
-    if (typeof name === 'object') {
-      console.warn('Xen:: _setImmutableState takes name and value args for a single property, dictionaries not supported.');
-      value = Object.values(name)[0];
-      name = Object.names(name)[0];
-    }
-    if (typeof value === 'object') {
-      value = Object.assign(Object.create(null), value);
-    }
-    this._state[name] = value;
     this._invalidate();
   }
   _setState(object) {
@@ -95,7 +84,6 @@ const XenStateMixin = Base => class extends Base {
   }
   _async(fn) {
     return Promise.resolve().then(fn.bind(this));
-    //return setTimeout(fn.bind(this), 10);
   }
   _invalidate() {
     if (!this._validator) {
