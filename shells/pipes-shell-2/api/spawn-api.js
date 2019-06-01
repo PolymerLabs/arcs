@@ -71,7 +71,7 @@ const marshalPipeRecipe = async ({type, source, name}) => {
 };
 
 const buildEntityManifest = ({type, source, name}) => `
-import 'https://$particles/PipeApps/Trigger.recipes'
+import 'https://$particles/PipeApps2/Trigger.recipes'
 resource PipeEntityResource
   start
   [{"type": "${type}", "name": "${name}", "source": "${source}"}]

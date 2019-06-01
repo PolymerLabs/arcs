@@ -4,4 +4,3 @@ import 'ArtistAutofill.recipes'
 import 'Caption.recipes'
 import 'UpdateMe.recipes'
 import 'ArtistPipe.recipes'
-

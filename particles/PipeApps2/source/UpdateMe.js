@@ -25,7 +25,7 @@ defineParticle(({DomParticle, html, log}) => {
         log(`will update in ${dur}s`);
         state.async = setTimeout(() => {
           const json = JSON.stringify(`The time is now ${new Date().toLocaleTimeString()}`);
-          this.updateVariable('output', {json});
+          this.updateSingleton('output', {json});
           log(`set output to`, json);
           this.setState({async: null, json});
         }, dur*1000) + 1;

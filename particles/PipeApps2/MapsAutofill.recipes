@@ -10,9 +10,9 @@ particle RequireQuery in './source/Noop.js'
   in PipeEntity query
 
 recipe AutofillMaps &autofill
-  create as suggestion
-  map 'pipe-entities' as recentEntities
   use #autofill_com_google_android_apps_maps as query
+  map 'pipe-entities' as recentEntities
+  create as suggestion
   RequireQuery
     query = query
   SuggestAddress

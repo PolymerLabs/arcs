@@ -5,7 +5,7 @@ particle ArtistPipe in './source/ArtistPipe.js'
   in PipeEntity pipe
   out ArtistFind find
 
-recipe ShowArtist
+recipe FindArtist
   use #artist_ as entity
   create as find
   create as descriptions
@@ -17,3 +17,15 @@ recipe ShowArtist
     find = find
     artist = artist
     descriptions = descriptions
+
+particle ShowArtist in '../Music/source/ArtistShow.js'
+  in ArtistMusic artist
+  consume app
+  description `Learn more about ${artist}`
+
+recipe ShowArtist
+  use as artist
+  ShowArtist
+    artist = artist
+  description `${ShowArtist}`
+

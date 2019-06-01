@@ -48,9 +48,9 @@ export const initPipe = async (client, paths, storage, composerFactory) => {
         callback = suggestions => deliverSuggestions(tid, bus, suggestions);
       }
       //
-      await sleep(1000);
-      console.log(await arc.serialize());
-      await sleep(1000);
+      //await sleep(1000);
+      //console.log(await arc.serialize());
+      //await sleep(1000);
       //
       installPlanner(tid, bus, arc, callback);
       log('marshalProcessArc:', arc);
@@ -108,7 +108,7 @@ const consumeOneSuggestionCallbackFactory = (tid, bus, arc) => {
       const suggestion = suggestions[0];
       if (suggestion) {
         // simulate receiving a message to instantiate this suggestion (weird?)
-        //bus.receive({message: 'ingest', tid, suggestion: suggestion.descriptionText});
+        bus.receive({message: 'ingest', tid, suggestion: suggestion.descriptionText});
         // forward output to the bus
         observeOutput(tid, bus, arc);
       }

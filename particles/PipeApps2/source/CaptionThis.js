@@ -21,7 +21,7 @@ defineParticle(({DomParticle, html, log}) => {
         log('update');
         const text = query.name.split(' ');
         const json = JSON.stringify(text);
-        this.updateVariable('output', {json});
+        this.updateSingleton('output', {json});
         return {json};
       }
     }
