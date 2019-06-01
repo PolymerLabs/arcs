@@ -552,7 +552,7 @@ function runTests(args: string[]): boolean {
     if (options.explore) {
       chainImports.push(`
       import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
-      console.log("Waiting for Arcs Explorer");
+      console.log('Waiting for Arcs Explorer');
       DevtoolsConnection.ensure();
     `);
     }
@@ -564,7 +564,7 @@ function runTests(args: string[]): boolean {
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
-              process.on("exit", function() {
+              process.on('exit', function() {
                 process.exit(failures > 0 ? 1 : 0);
               });
             });
@@ -728,12 +728,12 @@ function health(args: string[]): boolean {
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
-  const health_information: string[][] = [];
+  const healthInformation: string[][] = [];
 
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
   const show = (desc, score, points, info) => {
-    health_information.push([desc, score, points, info].map(String));
-    console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`)
+    healthInformation.push([desc, score, points, info].map(String));
+    console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
   };
 
   line();
@@ -773,7 +773,7 @@ function health(args: string[]): boolean {
   line();
 
   if (process.env.CONTINUOUS_INTEGRATION) {
-    return uploadCodeHealthStats(health_information);
+    return uploadCodeHealthStats(healthInformation);
   }
   return true;
 }
@@ -786,14 +786,14 @@ function uploadCodeHealthStats(data: string[][]) {
     return false;
   }
 
-  const branch = process.env.TRAVIS_BRANCH || "unknown-branch";
+  const branch = process.env.TRAVIS_BRANCH || 'unknown-branch';
 
-  const info = ["Branch", branch, "Date", new Date().toString()];
+  const info = ['Branch', branch, 'Date', new Date().toString()];
 
   request.post(trigger, {
     json: [info, ...data]
   }, (error, response, body) => {
-    if (error || response.statusCode != 200) {
+    if (error || response.statusCode !== 200) {
       console.error(error);
       console.error(response.toJSON());
       return;
