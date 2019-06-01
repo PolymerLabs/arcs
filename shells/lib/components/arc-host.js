@@ -89,7 +89,7 @@ export class ArcHost {
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
     if (!plan.isResolved()) {
-      log(`Suggestion plan ${plan.toString({showUnresolved: true})} is not resolved.`);
+      log(`plan ${plan.toString({showUnresolved: true})} is not resolved.`);
     }
     try {
       await arc.instantiate(plan);
@@ -110,7 +110,6 @@ export class ArcHost {
   }
   async persistSerialization(arc) {
     const {id, storageKey} = arc;
-    //const {config: {id}, storage} = this;
     if (!storageKey.includes('volatile')) {
       log(`persisting serialization to [${id}/serialization]`);
       const serialization = await arc.serialize();

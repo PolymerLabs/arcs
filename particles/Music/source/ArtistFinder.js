@@ -25,7 +25,6 @@ defineParticle(({DomParticle, log}) => {
       return Boolean(find);
     }
     update({find}, state) {
-      //log('updating, find =', find);
       // If we are asynchronously populating data, wait until this is done before
       // handling additional updates.
       if (find && !state.receiving) {
@@ -39,15 +38,12 @@ defineParticle(({DomParticle, log}) => {
       }
     }
     async fetchArtist(find) {
-      //clearTimeout(this.state.busyTimeout);
       this.startBusy();
       this.state = {receiving: true};
       try {
-        //log('startBusy', this.busy);
         const response = await fetch(`${service}&query=${encodeURI(find.name)}`);
         const artists = await response.json();
         this.receiveArtists(artists);
-        //log('doneBusy');
       } finally {
         this.state = {receiving: false};
         this.doneBusy();
