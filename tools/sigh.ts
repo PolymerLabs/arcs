@@ -786,9 +786,10 @@ function uploadCodeHealthStats(data: string[][]) {
     return false;
   }
 
-  const branch = process.env.TRAVIS_BRANCH || 'unknown-branch';
+  const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
+  const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
 
-  const info = ['Branch', branch, 'Date', new Date().toString()];
+  const info = ['BranchTo', branchTo, 'BranchFrom', branchFrom, 'Date', new Date().toString()];
 
   request.post(trigger, {
     json: [info, ...data]
