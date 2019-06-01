@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import fs from 'fs';
+import path from 'path';
 
 import {AmlServiceContext} from './util.js';
 
@@ -21,31 +22,15 @@ export class LspLoader {
     return fileName.replace(/[/][^/]+$/, '/');
   }
 
-  join(prefix: string, path: string): string {
-    if (/^https?:\/\//.test(path)) {
-      return path;
+  join(prefix: string, filepath: string): string {
+    if (/^https?:\/\//.test(filepath)) {
+      return filepath;
     }
     // TODO: replace this with something that isn't hacky
-    if (path[0] === '/' || path[1] === ':') {
-      return path;
+    if (filepath[0] === '/' || filepath[1] === ':') {
+      return filepath;
     }
-    prefix = this.path(prefix);
-    path = this.normalizeDots(`${prefix}${path}`);
-    return path;
-  }
-
-  // convert `././foo/bar/../baz` to `./foo/baz`
-  normalizeDots(path: string): string {
-    // only unix slashes
-    path = path.replace(/\\/g, '/');
-    // remove './'
-    path = path.replace(/\/\.\//g, '/');
-    // remove 'foo/..'
-    const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
-    for (let n = norm(path); n !== path; path = n, n = norm(path));
-    // remove '//' except after `:`
-    path = path.replace(/([^:])(\/\/)/g, '$1/');
-    return path;
+    return path.join( path.normalize(prefix), filepath);
   }
 
   async loadResource(fileName: string): Promise<string> {
