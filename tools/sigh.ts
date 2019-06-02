@@ -731,13 +731,15 @@ function health(args: string[]): boolean {
   const healthInformation: string[] = [];
 
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
-  const show = (desc, score, points, info) => {
-    healthInformation.push(...[desc, score, points, info].map(String));
+  const show = (desc, score, points, info, ignore=false) => {
+    if(!ignore) {
+      healthInformation.push(...[desc, score, points, info].map(String));
+    }
     console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
   };
 
   line();
-  show('Category', 'Result', 'Points', 'Detailed report');
+  show('Category', 'Result', 'Points', 'Detailed report', true);
   line();
 
   const slocOutput = saneSpawnWithOutput('node_modules/.bin/sloc', ['--detail', '--keys source', ...migrationFiles()]).stdout;
@@ -789,7 +791,7 @@ function uploadCodeHealthStats(data: string[]) {
   const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
   const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
 
-  const info = ['BranchTo', branchTo, 'BranchFrom', branchFrom, 'Date', new Date().toString()];
+  const info = [branchTo, branchFrom, new Date().toString()];
 
   request.post(trigger, {
     json: [[...info, ...data]]
