@@ -728,11 +728,11 @@ function health(args: string[]): boolean {
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
-  const healthInformation: string[][] = [];
+  const healthInformation: string[] = [];
 
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
   const show = (desc, score, points, info) => {
-    healthInformation.push([desc, score, points, info].map(String));
+    healthInformation.push(...[desc, score, points, info].map(String));
     console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
   };
 
@@ -778,7 +778,7 @@ function health(args: string[]): boolean {
   return true;
 }
 
-function uploadCodeHealthStats(data: string[][]) {
+function uploadCodeHealthStats(data: string[]) {
   console.log('Uploading health data');
   const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
 
@@ -792,7 +792,7 @@ function uploadCodeHealthStats(data: string[][]) {
   const info = ['BranchTo', branchTo, 'BranchFrom', branchFrom, 'Date', new Date().toString()];
 
   request.post(trigger, {
-    json: [info, ...data]
+    json: [[...info, ...data]]
   }, (error, response, body) => {
     if (error || response.statusCode !== 200) {
       console.error(error);
