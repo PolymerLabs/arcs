@@ -732,7 +732,7 @@ function health(args: string[]): boolean {
 
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
   const show = (desc, score, points, info, ignore=false) => {
-    if(!ignore) {
+    if (!ignore) {
       healthInformation.push(...[desc, score, points, info].map(String));
     }
     console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
