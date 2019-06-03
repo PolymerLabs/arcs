@@ -133,7 +133,7 @@ describe('Store Flow', async () => {
   // Tests 3 operation updates happening synchronously with 2 model updates from the driver
   it.only('applies 3 operations and 2 models simultaneously', async function() {    
 
-    this.timeout(20);
+    this.timeout(5000);
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
     sequenceTest.setTestConstructor(() => {
