@@ -36,3 +36,5 @@ default.profraw
 # pouch local database
 user-test/
 test-output
+# large files in node_modules that cause failure to deploy to github pages
+node_modules/@tensorflow/tfjs-node/deps/lib/libtensorflow.so 
