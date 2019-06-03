@@ -16,24 +16,11 @@ defineParticle(({DomParticle, resolver, html}) => {
 
   const template = html`
 <style>
-  :host {
-    /*
-    --shell-bg: #333333;
-    --shell-color: whitesmoke;
-    --tiles-bg: whitesmoke;
-    --tiles-color: white;
-    */
-  }
   [search] {
     display: flex;
     align-items: center;
     padding: 8px 16px;
-    /* background-color: whitesmoke;
-    color: black; */
   }
-  /* icon {
-    color: black;
-  } */
   input {
     flex: 1;
     font-size: 1.2em;
