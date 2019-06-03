@@ -1,0 +1,5 @@
+import './schema/SearchQuery.schema'
+
+particle SearchBar in './source/SearchBar.js'
+  out SearchQuery query
+  consume toproot

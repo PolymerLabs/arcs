@@ -9,10 +9,12 @@ cp -fR ../../../lib/build/worker.js dist/
 mkdir dist/particles
 #
 mkdir dist/particles/Common
-cp -fR ../../../../particles/Common/Description.schema dist/particles/Common
+mkdir dist/particles/Common/schema
+cp -fR ../../../../particles/Common/schema/Description.schema dist/particles/Common/schema
 #
 mkdir dist/particles/PipeApps
 cp -fR ../../../../particles/PipeApps/* dist/particles/PipeApps
+#
 # collate sources
 echo packing...
 npx webpack

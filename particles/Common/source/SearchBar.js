@@ -20,6 +20,8 @@ defineParticle(({DomParticle, resolver, html}) => {
     display: flex;
     align-items: center;
     padding: 8px 16px;
+    color: var(--input-color, #333333);
+    background-color: var(--slug-color, whitesmoke);
   }
   input {
     flex: 1;
@@ -29,8 +31,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     border-radius: 16px;
     border: none;
     outline: none;
-    background-color: whitesmoke;
-    color: #333333;
+    background-color: var(--input-bg, white);
   }
 </style>
 
