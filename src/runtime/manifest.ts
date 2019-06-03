@@ -412,7 +412,7 @@ export class Manifest {
       if (!((e instanceof ManifestError) || e.location)) {
         return e;
       }
-      processManifestError(e);
+      return processManifestError(e, parseError);
     }
 
     function processManifestError(e: ManifestError, parseError: boolean|undefined = undefined) {
