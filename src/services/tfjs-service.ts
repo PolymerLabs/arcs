@@ -10,8 +10,9 @@
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {requireTf} from '../platform/tf-web.js';
+import {requireTf, tf} from '../platform/tf-web.js';
 import {Consumer, Mapper} from '../runtime/hot.js';
+import {loadImage} from '../platform/image-web.js';
 
 const log = logFactory('tfjs-service');
 
@@ -36,7 +37,7 @@ interface LoadOptions {
   fromTFHub?: boolean;
 }
 
-abstract class TfModel {
+abstract class TfModel implements Services {
 
   public abstract async load(modelUrl, options: LoadOptions): Promise<Reference>;
 
@@ -56,7 +57,7 @@ abstract class TfModel {
   private async _getModel(model): Promise<Inferrable> {
     const tf = await requireTf();
     log('Referencing model');
-    return await rmgr.deref(model) as Inferrable;
+    return rmgr.deref(model) as Inferrable;
   }
 
   private _getInputShape(model: Inferrable): number[] | number[][] {
@@ -97,6 +98,11 @@ class LayersModel extends TfModel {
   }
 }
 
+const imageToTensor = async ({imageUrl}): Promise<Reference> => {
+  const imgElem = loadImage(imageUrl);
+  const imgTensor = tf.brower.fromPixels(imgElem, 3);
+  return rmgr.ref(imgTensor);
+};
 
 const tensorToOutput = async (tensor) => {
   return await tensor.array();
@@ -106,3 +112,6 @@ const tensorToOutput = async (tensor) => {
 Services.register('graph-model', new GraphModel());
 Services.register('layer-model', new LayersModel());
 
+Services.register('preprocess', {
+  imageToTensor,
+});
