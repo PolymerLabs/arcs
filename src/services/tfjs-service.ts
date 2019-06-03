@@ -10,7 +10,7 @@
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
-import {requireTf, tf} from '../platform/tf-web.js';
+import {requireTf} from '../platform/tf-web.js';
 import {Consumer, Mapper} from '../runtime/hot.js';
 import {loadImage} from '../platform/image-web.js';
 
@@ -42,6 +42,7 @@ abstract class TfModel implements Services {
   public abstract async load(modelUrl, options: LoadOptions): Promise<Reference>;
 
   public async predict(model, inputs, config): Promise<number[]> {
+    const tf = await requireTf();
     const model_ = await this._getModel(model);
 
     log('Predicting');
@@ -55,7 +56,6 @@ abstract class TfModel implements Services {
   }
 
   private async _getModel(model): Promise<Inferrable> {
-    const tf = await requireTf();
     log('Referencing model');
     return rmgr.deref(model) as Inferrable;
   }
@@ -78,7 +78,7 @@ abstract class TfModel implements Services {
 class GraphModel extends TfModel {
   public async load(modelUrl, options): Promise<Reference> {
     const tf = await requireTf();
-    const model: Inferrable = await tf.loadGraphModel(modelUrl, options);
+    const model = await tf.loadGraphModel(modelUrl, options);
     return rmgr.ref(model);
   }
 
@@ -99,8 +99,10 @@ class LayersModel extends TfModel {
 }
 
 const imageToTensor = async ({imageUrl}): Promise<Reference> => {
-  const imgElem = loadImage(imageUrl);
-  const imgTensor = tf.brower.fromPixels(imgElem, 3);
+  const tf = await requireTf();
+  const imgElem = await loadImage(imageUrl);
+  // @ts-ignore
+  const imgTensor = await tf.browser.fromPixels(imgElem, 3);
   return rmgr.ref(imgTensor);
 };
 
