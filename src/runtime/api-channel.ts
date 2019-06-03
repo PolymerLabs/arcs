@@ -37,7 +37,7 @@ interface MappingInfo<T> {
   ignore?: boolean;
 }
 
-type TargetInfo = Map<string, MappingInfo<unknown>[]>
+type TargetInfo = Map<string, MappingInfo<unknown>[]>;
 const targets = new Map<{}, TargetInfo>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
