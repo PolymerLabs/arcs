@@ -17,17 +17,19 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
+// modify these config values as needed
 const headless = true;
 const root = `shells`;
 
+// don't modify after here (in general)
 const process = require('process');
 const fs = require('fs');
 const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
-const HEADLESS = '--headless';
-const chromeArgs = headless ? [HEADLESS] : [];
+const HEADLESS_ARG = '--headless';
+const chromeArgs = (headless && !debug) ? [HEADLESS_ARG] : [];
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
@@ -314,5 +316,5 @@ if (debug) {
     throw new Error(`New capabilities have been introduced; that's a good thing! But this code needs updating to take that into account.`);
   }
   const chromeOptions = capabilities[0].chromeOptions;
-  chromeOptions.args = chromeOptions.args.filter(arg => arg != HEADLESS);
+  chromeOptions.args = chromeOptions.args.filter(arg => arg != HEADLESS_ARG);
 }

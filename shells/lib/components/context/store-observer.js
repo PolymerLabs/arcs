@@ -40,6 +40,8 @@ export class StoreObserver {
     if (--observers === 0) {
       console.warn(`all observers disposed (generally a good thing)`);
     }
+    // TODO(sjmiles): what if this never resolves?
+    await this.ready;
     // stop observing store
     this.off();
     // observe removal of all entities
