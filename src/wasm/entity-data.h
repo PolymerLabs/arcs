@@ -1,80 +1,111 @@
 #ifndef _ARCS_ENTITY_DATA_H
 #define _ARCS_ENTITY_DATA_H
-// GENERATED CODE
+
+// GENERATED CODE - DO NOT EDIT
 
 namespace arcs {
 
 class Data {
 public:
-  double num = 0;
-  std::string txt;
-  URL lnk;
-  bool flg = false;
-  std::unordered_set<double> c_num;
-  std::unordered_set<std::string> c_txt;
-  std::unordered_set<URL, HashURL, EqualURL> c_lnk;
-  std::unordered_set<bool> c_flg;
+  double num() const { return num_; }
+  void set_num(double value) { num_ = value; num_valid_ = true; }
+  void clear_num() { num_ = double(); num_valid_ = false; }
+  bool has_num() const { return num_valid_; }
 
-  static const int FIELD_COUNT = 8;
+  const std::string& txt() const { return txt_; }
+  void set_txt(const std::string& value) { txt_ = value; txt_valid_ = true; }
+  void clear_txt() { txt_ = std::string(); txt_valid_ = false; }
+  bool has_txt() const { return txt_valid_; }
 
-  std::string encode() {
-    internal::StringEncoder encoder;
-    if (num != 0)
-      encoder.encodeValue("num:N", num, "|");
-    if (!txt.empty())
-      encoder.encodeValue("txt:T", txt, "|");
-    if (!lnk.href.empty())
-      encoder.encodeValue("lnk:U", lnk, "|");
-    if (flg)
-      encoder.encodeValue("flg:B", flg, "|");
-    if (!c_num.empty())
-      encoder.encodeCollection("c_num:CN", c_num);
-    if (!c_txt.empty())
-      encoder.encodeCollection("c_txt:CT", c_txt);
-    if (!c_lnk.empty())
-      encoder.encodeCollection("c_lnk:CU", c_lnk);
-    if (!c_flg.empty())
-      encoder.encodeCollection("c_flg:CB", c_flg);
-    return std::move(encoder.result());
-  }
+  const URL& lnk() const { return lnk_; }
+  void set_lnk(const URL& value) { lnk_ = value; lnk_valid_ = true; }
+  void clear_lnk() { lnk_ = URL(); lnk_valid_ = false; }
+  bool has_lnk() const { return lnk_valid_; }
 
-  static Data decode(const char* str) {
-    Data obj;
-    internal::StringDecoder decoder(str);
-    for (int i = 0; !decoder.done() && i < FIELD_COUNT; i++) {
-      std::string name = decoder.upTo(':');
-      if (0) {
-      } else if (name == "num") {
-        decoder.validate("N");
-        decoder.decodeValue(obj.num);
-      } else if (name == "txt") {
-        decoder.validate("T");
-        decoder.decodeValue(obj.txt);
-      } else if (name == "lnk") {
-        decoder.validate("U");
-        decoder.decodeValue(obj.lnk);
-      } else if (name == "flg") {
-        decoder.validate("B");
-        decoder.decodeValue(obj.flg);
-      } else if (name == "c_num") {
-        decoder.validate("CN");
-        decoder.decodeCollection(obj.c_num);
-      } else if (name == "c_txt") {
-        decoder.validate("CT");
-        decoder.decodeCollection(obj.c_txt);
-      } else if (name == "c_lnk") {
-        decoder.validate("CU");
-        decoder.decodeCollection(obj.c_lnk);
-      } else if (name == "c_flg") {
-        decoder.validate("CB");
-        decoder.decodeCollection(obj.c_flg);
-      }
-      decoder.validate("|");
-    }
-    return obj;
-  }
+  bool flg() const { return flg_; }
+  void set_flg(bool value) { flg_ = value; flg_valid_ = true; }
+  void clear_flg() { flg_ = bool(); flg_valid_ = false; }
+  bool has_flg() const { return flg_valid_; }
+
+  std::string _internal_id;  // TODO
+
+private:
+  double num_ = double();
+  bool num_valid_ = false;
+
+  std::string txt_ = std::string();
+  bool txt_valid_ = false;
+
+  URL lnk_ = URL();
+  bool lnk_valid_ = false;
+
+  bool flg_ = bool();
+  bool flg_valid_ = false;
+
+  static const int FIELD_COUNT = 4;
+  friend void decode_entity<Data>(Data* entity, const char* str);
 };
 
+template<>
+void decode_entity(Data* entity, const char* str) {
+  if (str == nullptr) return;
+  internal::StringDecoder decoder(str);
+  decoder.decode(entity->_internal_id);
+  decoder.validate("|");
+  for (int i = 0; !decoder.done() && i < Data::FIELD_COUNT; i++) {
+    std::string name = decoder.upTo(':');
+    if (0) {
+    } else if (name == "num") {
+      decoder.validate("N");
+      decoder.decode(entity->num_);
+      entity->num_valid_ = true;
+    } else if (name == "txt") {
+      decoder.validate("T");
+      decoder.decode(entity->txt_);
+      entity->txt_valid_ = true;
+    } else if (name == "lnk") {
+      decoder.validate("U");
+      decoder.decode(entity->lnk_);
+      entity->lnk_valid_ = true;
+    } else if (name == "flg") {
+      decoder.validate("B");
+      decoder.decode(entity->flg_);
+      entity->flg_valid_ = true;
+    }
+    decoder.validate("|");
+  }
 }
+
+template<>
+std::string encode_entity(const Data& entity) {
+  internal::StringEncoder encoder;
+  encoder.encode("", entity._internal_id);
+  if (entity.has_num())
+    encoder.encode("num:N", entity.num());
+  if (entity.has_txt())
+    encoder.encode("txt:T", entity.txt());
+  if (entity.has_lnk())
+    encoder.encode("lnk:U", entity.lnk());
+  if (entity.has_flg())
+    encoder.encode("flg:B", entity.flg());
+  return std::move(encoder.result());
+}
+
+template<>
+std::string entity_to_str(const Data& entity, const char* join) {
+  internal::StringPrinter printer;
+  printer.addId(entity._internal_id);
+  if (entity.has_num())
+    printer.add("num: ", entity.num());
+  if (entity.has_txt())
+    printer.add("txt: ", entity.txt());
+  if (entity.has_lnk())
+    printer.add("lnk: ", entity.lnk());
+  if (entity.has_flg())
+    printer.add("flg: ", entity.flg());
+  return std::move(printer.result(join));
+}
+
+}  // namespace arcs
 
 #endif
