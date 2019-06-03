@@ -407,7 +407,7 @@ export class Manifest {
       }
     }
 
-    // ts-lint-ignore: no-any
+    // tslint:disable-next-line: no-any
     function processError(e: ManifestError|any, parseError: boolean|undefined = undefined) {
       if (!((e instanceof ManifestError) || e.location)) {
         return e;
