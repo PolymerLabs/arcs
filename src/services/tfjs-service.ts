@@ -41,23 +41,20 @@ abstract class TfModel implements Services {
 
   public abstract async load(modelUrl, options: LoadOptions): Promise<Reference>;
 
-  public async predict(model, inputs, config): Promise<number[]> {
+  public async predict(model: Reference, inputs: Reference, config): Promise<number[]> {
     const tf = await requireTf();
-    const model_ = await this._getModel(model);
+    log('Referencing model and input...');
+    const model_  = rmgr.deref(model) as Inferrable;
+    const inputs_ = rmgr.deref(inputs);
 
     log('Predicting');
-    const yHat = await model_.predict(inputs, config);
+    const yHat = await model_.predict(inputs_, config);
 
     return await tensorToOutput(yHat);
   }
 
   public async warmUp(model): Promise<void> {
 
-  }
-
-  private async _getModel(model): Promise<Inferrable> {
-    log('Referencing model');
-    return rmgr.deref(model) as Inferrable;
   }
 
   private _getInputShape(model: Inferrable): number[] | number[][] {
@@ -101,7 +98,6 @@ class LayersModel extends TfModel {
 const imageToTensor = async ({imageUrl}): Promise<Reference> => {
   const tf = await requireTf();
   const imgElem = await loadImage(imageUrl);
-  // @ts-ignore
   const imgTensor = await tf.browser.fromPixels(imgElem, 3);
   return rmgr.ref(imgTensor);
 };
