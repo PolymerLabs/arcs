@@ -21,7 +21,7 @@ export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.Syn
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id: number} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id: number}; 
 
-type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boolean;
+export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boolean;
 
 // A representation of a store. Note that initially a constructed store will be
 // inactive - it will not connect to a driver, will not accept connections from 

@@ -8,22 +8,28 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PECInnerPort} from '../api-channel';
+import {assert} from '../../platform/assert-web.js';
 import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
 import {Handle} from './handle';
-import {ProxyMessage, ProxyMessageType} from './store';
+import {ActiveStore, ProxyMessage, ProxyMessageType} from './store';
 
 /**
- * TODO: describe this class. And add some tests.
+ * TODO: describe this class.
  */
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
+  private id: number;
+  private store: ActiveStore<T>;
 
-  constructor(crdt: CRDTModel<T>, port: PECInnerPort) {
+  constructor(crdt: CRDTModel<T>, store: ActiveStore<T>) {
     this.crdt = crdt;
-    // TODO: here we will need to do register the callback with the port, something like this:
-    // port.InitializeProxy(this, x => this.onMessage(x));
+    this.registerWithStore(store);
+  }
+
+  registerWithStore(store: ActiveStore<T>) {
+    this.id = store.on(x => this.onMessage(x));
+    this.store = store;
   }
 
   registerHandle(h: Handle<T>): VersionMap {
@@ -31,40 +37,73 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return new Map(this.crdt.getData().version);
   }
 
-  applyOp(op: CRDTOperation): boolean {
-    return this.crdt.applyOperation(op);
+  async applyOp(op: CRDTOperation): Promise<boolean> {
+    if (!this.crdt.applyOperation(op)) {      
+      return false;      
+    }
+    const message: ProxyMessage<T> = {
+      type: ProxyMessageType.Operations,
+      operations: [op],
+      id: this.id
+    };
+    await this.store.onProxyMessage(message);
+    this.notifyUpdate([op]);
+    return true;
   }
 
-  getParticleView(): T['consumerType'] {
+  async getParticleView(): Promise<T['consumerType']> {
+    await this.synchronizeModel();
     return this.crdt.getParticleView()!;
   }
 
   onMessage(message: ProxyMessage<T>): boolean {
-    // TODO: if InitializeProxy returns the id, we can assert that it is the same as the message id.
+    assert(message.id === this.id);
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
-        for (const handle of this.handles) {
-          if (handle.options.notifySync) {
-            handle.onSync();
-          }
-        }
+        this.notifySync();
         break;
       case ProxyMessageType.Operations:
         for (const op of message.operations) {
-          this.crdt.applyOperation(op);
+          if (!this.crdt.applyOperation(op)) {
+            // If we cannot cleanly apply ops, sync the whole model.
+            this.synchronizeModel();
+            // TODO do we need to notify that we are desynced? and return?
+          }          
         }
-        for (const handle of this.handles) {
-          if (handle.options.notifyUpdate) {
-            handle.onUpdate(message.operations);
-          }
-        }
+        this.notifyUpdate(message.operations);
         break;
-      // TODO: handle ProxyMessageType.SyncRequest by sending the local model.
+      case ProxyMessageType.SyncRequest:
+        this.store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: this.crdt.getData(), id: this.id});
+        break;
       default:
         throw new CRDTError(
-            `Invalid operation provided to onMessage, type: ${message.type}`);
+            `Invalid operation provided to onMessage, message: ${message}`);
     }
     return true;
+  }
+
+  // TODO: use a Scheduler to deliver this in batches by particle.
+  private notifyUpdate(operations: CRDTOperation[]) {
+    for (const handle of this.handles) {
+      if (handle.options.notifyUpdate) {
+        handle.onUpdate(operations);
+      } else if (handle.options.keepSynced) {
+        // keepSynced but not notifyUpdate, notify of the new model.
+        handle.onSync();
+      }
+    }
+  }
+
+  private notifySync() {
+    for (const handle of this.handles) {
+      if (handle.options.notifySync) {
+        handle.onSync();
+      }
+    }
+  }
+
+  private async synchronizeModel(): Promise<boolean> {
+    return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: this.id});
   }
 }

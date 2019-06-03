@@ -57,7 +57,7 @@ export abstract class Handle<T extends CRDTTypeRecord> {
  * implied by the set.
  */
 export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
-  add(entity: T): boolean {
+  async add(entity: T): Promise<boolean> {
     this.clock.set(this.key, (this.clock.get(this.key) || 0) + 1);
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
@@ -68,16 +68,11 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
     return this.storageProxy.applyOp(op);
   }
 
-  addMultiple(entities: T[]): boolean {
-    for (const e of entities) {
-      if (!this.add(e)) {
-        return false;
-      }
-    }
-    return true;
+  async addMultiple(entities: T[]): Promise<boolean> {
+    return Promise.all(entities.map(e => this.add(e))).then(array => array.every(Boolean));    
   }
 
-  remove(entity: T): boolean {
+  async remove(entity: T): Promise<boolean> {
     const op: CRDTOperation = {
       type: CollectionOpTypes.Remove,
       removed: entity,
@@ -87,8 +82,9 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
     return this.storageProxy.applyOp(op);
   }
 
-  clear(): boolean {
-    for (const value of this.toList()) {
+  async clear(): Promise<boolean> {
+    const values:T[]  = await this.toList();    
+    for (const value of values) {
       const removeOp: CRDTOperation = {
         type: CollectionOpTypes.Remove,
         removed: value,
@@ -102,8 +98,8 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
     return true;
   }
 
-  toList(): T[] {
-    return [...this.storageProxy.getParticleView()];
+  async toList(): Promise<T[]> {
+    return this.storageProxy.getParticleView().then(set => [...set]);
   }
 
   onUpdate(ops: CollectionOperation<T>[]) {
@@ -133,7 +129,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<T>> {
  * A handle on a single entity.
  */
 export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<T>> {
-  set(entity: T): boolean {
+  async set(entity: T): Promise<boolean> {
     this.clock.set(this.key, (this.clock.get(this.key) || 0) + 1);
     const op: CRDTOperation = {
       type: SingletonOpTypes.Set,
@@ -144,7 +140,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<T>> {
     return this.storageProxy.applyOp(op);
   }
 
-  clear(): boolean {
+  async clear(): Promise<boolean> {
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,
@@ -153,7 +149,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<T>> {
     return this.storageProxy.applyOp(op);
   }
 
-  get(): T {
+  async get(): Promise<T> {
     return this.storageProxy.getParticleView();
   }
 
