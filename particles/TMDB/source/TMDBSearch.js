@@ -30,12 +30,15 @@ defineParticle(({DomParticle, log}) => {
     }
     async fetchResults(query, resultsHandleName) {
       const response = await fetch(`${service}/?query=search/multi/?query=${query.query}`);
-      const data = await response.json();
-      log('fetchResults', data);
-      if (data.results) {
-        this.receiveResults(data.results, resultsHandleName);
+      try {
+        const data = await response.json();
+        log('fetchResults', data);
+        if (data.results) {
+          this.receiveResults(data.results, resultsHandleName);
+        }
+      } finally {
+        this.setState({receiving: false});
       }
-      this.setState({receiving: false});
     }
     async receiveResults(results, resultsHandleName) {
       log('receiveResults', results);

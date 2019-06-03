@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Event.schema'
-import '../Common/Description.schema'
+import '../Common/schema/Description.schema'
 
 particle Calendar in 'source/Calendar.js'
   inout Event event

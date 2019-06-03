@@ -17,6 +17,7 @@ defineParticle(({DomParticle, html, log}) => {
     flex-wrap: wrap;
     justify-content: center;
     padding: 8px 0;
+    background-color: var(--slug-color);
   }
   [card] {
     margin: 8px;

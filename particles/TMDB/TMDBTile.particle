@@ -1,0 +1,5 @@
+import './schemas/TMDBSearchResult.schema'
+
+particle TMDBTile in './source/TMDBTile.js'
+  in TMDBSearchResult result
+  consume tile
