@@ -1,4 +1,5 @@
 import 'Ml5.recipes'
 import 'MobileNet.recipes'
 import 'ServiceTest.recipes'
+import 'ImageClassifier.recipes'
 

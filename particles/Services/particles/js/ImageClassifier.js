@@ -38,11 +38,12 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     }
     render({}, state) {
       // formerly update
-      if(!state.loaded) {
+      if (!state.loaded) {
         state.loaded = true;
         this.loadModel(modelUrl, {onProgress: this.onLoadProgress, fromTFHub: true});
       }
-      if (!state.classified) {
+
+      if (!state.classified && state.loaded) {
         state.classified = true;
         this.classify(url);
       }
@@ -72,9 +73,17 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     }
 
     async classify(imageUrl) {
-      const imgReference = await this.service({call: 'preprocessor.imageToTensor', imageUrl});
+      if (!this.state.model) {
+        log('Model needs to be loaded!');
+        return;
+      }
+
+      const imgReference = await this.service({call: 'preprocess.imageToTensor', imageUrl});
+
       const response = await this.service({call: 'graph-model.predict', model: this.state.model, input: imgReference});
-      this.setState({response});
+
+      log('Classification result:');
+      log(response);
     }
   };
 
