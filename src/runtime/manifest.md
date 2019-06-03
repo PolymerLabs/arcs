@@ -154,7 +154,7 @@ A corresponding JSON file might look like:
 ]
 ```
 
-The JSON representation for a variable store is the same, if the JSON file contains
+The JSON representation for a singleton store is the same, if the JSON file contains
 multiple entities, the first one is used.
 
 * TODO: serialization can specify id and version.

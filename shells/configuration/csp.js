@@ -1,12 +1,12 @@
-/*
-@license
-Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
+/**
+ * @license
+ * Copyright (c) 2018 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 (() => {
   // TODO(sjmiles): (1) this is probably the wrong place for this enforcement, (2) I probably didn't catch all the cases
   // enfore HTTPS protocol (otherwise, crypto won't work and there are derivative errors)
@@ -48,6 +48,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://*.glitch.me
         https://unpkg.com
         https://cdn.jsdelivr.net
+        https://*.youtube.com
+        https://*.ytimg.com
         ;
     font-src
         'self'
@@ -73,6 +75,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         http://*.gstatic.com
         https://s1.ticketm.net
         https://i.scdn.co
+        https://*.youtube.com
         ;
     style-src
         'self'
@@ -84,6 +87,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         https://xenonjs.com
         https://behelits.com
         https://media.w3.org
+        https://*.youtube.com
         ;
   `
   // (optional) compress whitespace

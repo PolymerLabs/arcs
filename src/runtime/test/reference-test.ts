@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {assertSingletonWillChangeTo} from '../testing/test-util.js';
@@ -103,7 +103,7 @@ describe('references', () => {
     const backingStore = await volatileEngine.baseStorageFor(arc._stores[1].type, volatileEngine.baseStorageKey(arc._stores[1].type));
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
-    const refStore = arc._stores[0] as VariableStorageProvider;
+    const refStore = arc._stores[0] as SingletonStorageProvider;
     await refStore.set({id: 'id:1', storageKey: backingStore.storageKey});
 
     await assertSingletonWillChangeTo(arc, arc._stores[1], 'value', 'what a result!');
@@ -157,7 +157,7 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inputStore = arc._stores[0] as VariableStorageProvider;
+    const inputStore = arc._stores[0] as SingletonStorageProvider;
     await inputStore.set({id: 'id:1', rawData: {value: 'what a result!'}});
 
     const refStore = arc._stores[1];
@@ -220,7 +220,7 @@ describe('references', () => {
     const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
 
-    const refStore = arc._stores[1] as VariableStorageProvider;
+    const refStore = arc._stores[1] as SingletonStorageProvider;
     assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:2', rawData: {result: {id: 'id:1', storageKey: backingStore.storageKey}}});
 
@@ -315,7 +315,7 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const fooStore = arc._stores[0] as VariableStorageProvider;
+    const fooStore = arc._stores[0] as SingletonStorageProvider;
     assert.equal((fooStore.type as EntityType).entitySchema.name, 'Foo');
     await fooStore.set({id: 'id:1', rawData: {result: null, shortForm: 'a'}});
 
@@ -398,7 +398,7 @@ describe('references', () => {
     await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
     await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
-    const refStore = arc._stores[1] as VariableStorageProvider;
+    const refStore = arc._stores[1] as SingletonStorageProvider;
     assert.equal((refStore.type as EntityType).entitySchema.name, 'Foo');
     await refStore.set({id: 'id:a', rawData: {result: [{id: 'id:1', storageKey: backingStore.storageKey}, {id: 'id:2', storageKey: backingStore.storageKey}]}});
 
@@ -481,7 +481,7 @@ describe('references', () => {
     await inputStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
 
     await arc.idle;
-    const outputStore = arc._stores[1] as VariableStorageProvider;
+    const outputStore = arc._stores[1] as SingletonStorageProvider;
     assert.equal((outputStore.type as EntityType).entitySchema.name, 'Foo');
     const values = await outputStore.get();
     assert(values.rawData.result.length === 2);

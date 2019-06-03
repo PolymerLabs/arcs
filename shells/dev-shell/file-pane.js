@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 const template = `
   <style>
     #manifest {
@@ -37,7 +46,7 @@ const template = `
       border: 1px solid #ccc;
     }
   </style>
-  <textarea id="manifest" rows="10" spellcheck="false"></textarea>
+  <textarea id="manifest" rows="10" autofocus="true" spellcheck="false"></textarea>
   <div class="tab-panel">
     <div id="toggle">
       <div class="tab-row">
@@ -104,7 +113,7 @@ export class FilePane extends HTMLElement {
       file.style.display = 'none';
     }
     event.target.classList.add('active');
-    event.target.linkedFile.style.display = 'block';
+    event.target.linkedFile.style.display = '';
   }
 
   getManifest() {
@@ -121,7 +130,7 @@ export class FilePane extends HTMLElement {
 
   toggleFiles(event) {
     if (this.toggle.style.display === 'none') {
-      this.toggle.style.display = 'block';
+      this.toggle.style.display = '';
       event.target.textContent = 'Hide files';
     } else {
       this.toggle.style.display = 'none';
@@ -142,10 +151,14 @@ export class FilePane extends HTMLElement {
     a.click();
   }
 
+  seedManifest(lines) {
+    this.manifest.rows = lines.length + 1;
+    this.manifest.value = lines.join('\n');
+  }
+
   seedExample(manifest, particle) {
-    this.manifest.textContent = manifest;
-    this.files.children[0].textContent = particle;
-    this.manifest.focus();
+    this.manifest.value = manifest;
+    this.files.children[0].value = particle;
   }
 }
 

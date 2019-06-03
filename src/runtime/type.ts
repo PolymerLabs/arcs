@@ -1,11 +1,13 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+  
 import {Id} from './id.js';
 import {InterfaceInfo} from './interface-info.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -13,7 +15,7 @@ import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 import {ArcInfo} from './synthetic-types.js';
 import {TypeVariableInfo} from './type-variable-info.js';
-import {Literal} from './hot.js';
+import {Predicate, Literal} from './hot.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -123,7 +125,7 @@ export abstract class Type {
     return this;
   }
 
-  _applyExistenceTypeTest(test: (type: Type) => boolean) {
+  _applyExistenceTypeTest(test: Predicate<Type>) {
     return test(this);
   }
 
@@ -417,7 +419,7 @@ export class CollectionType<T extends Type> extends Type {
     return (result === collectionType) ? this : result.collectionOf();
   }
 
-  _applyExistenceTypeTest(test: (type: Type) => boolean): boolean {
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
     return this.collectionType._applyExistenceTypeTest(test);
   }
 

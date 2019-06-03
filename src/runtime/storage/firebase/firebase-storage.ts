@@ -1,10 +1,12 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from '../../../platform/assert-web.js';
 import {atob} from '../../../platform/atob-web.js';
@@ -14,10 +16,9 @@ import {Id} from '../../id.js';
 import {Runnable} from '../../hot.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type, TypeVariable} from '../../type.js';
 import {setDiff} from '../../util.js';
-
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from '../crdt-collection-model.js';
 import {KeyBase} from '../key-base.js';
-import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from '../storage-provider-base.js';
+import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from '../storage-provider-base.js';
 import {Dictionary} from '../../hot.js';
 
 export async function resetStorageForTesting(key) {
@@ -341,10 +342,10 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
 }
 
 /**
- * Models a Variable that is persisted to firebase in a
+ * Models a Singleton that is persisted to firebase in a
  * last-writer-wins scheme.
  *
- * Initialization: After construct/connect the variable is
+ * Initialization: After construct/connect the singleton is
  * not fully initialized, calls to `get` and `toLiteral`
  * will not complete until either:
  *  * The initial value is supplied via the firebase `.on`
@@ -357,7 +358,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
  *
  * Local modifications: When a local modification is applied
  * by a call to `set` we increment the version number,
- * mark this variable as locally modified, and start a
+ * mark this singleton as locally modified, and start a
  * process to atomically persist the change to firebase.
  * Until this process has completed we suppress incoming
  * changes from firebase. The version that we have chosen
@@ -367,7 +368,7 @@ abstract class FirebaseStorageProvider extends StorageProviderBase {
  * modifications), but the result will always be
  * monotonically increasing.
  */
-class FirebaseVariable extends FirebaseStorageProvider implements VariableStorageProvider {
+class FirebaseVariable extends FirebaseStorageProvider implements SingletonStorageProvider {
   private value: {storageKey: string, id: string}|null;
   private localModified: boolean;
   private readonly initialized: Promise<void>;
@@ -383,7 +384,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     super(type, storageEngine, id, reference, firebaseKey);
     this.wasConnect = shouldExist;
 
-    // Current value stored in this variable. Reflects either a
+    // Current value stored in this singleton. Reflects either a
     // value that was stored in firebase, or a value that was
     // written locally.
     this.value = null;
@@ -403,7 +404,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
 
     // Resolved when data is first available. The earlier of
     // * the initial value is supplied via firebase `reference.on`
-    // * a value is written to the variable by a call to `set`.
+    // * a value is written to the singleton by a call to `set`.
     this.initialized = new Promise(resolve => this.resolveInitialized = resolve);
 
     this.valueChangeCallback =
@@ -535,10 +536,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
       }
     }
 
-    const version = this.version + 1;
+    this.version++;
+    const version = this.version;
     let storageKey;
     if (this.referenceMode && value) {
       storageKey = this.storageEngine.baseStorageKey(this.type, this.storageKey);
+      this.value = {id: value.id, storageKey};
       this.pendingWrites.push({value, storageKey});
     } else {
       this.value = value;
@@ -546,11 +549,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     this.localModified = true;
 
     await this._persistChanges();
-    this.version = version;
-    if (this.referenceMode && value)
-    {
-      this.value = {id: value.id, storageKey};
-    }
 
     this._fire('change', new ChangeEvent({data: value, version, originatorId, barrier}));
   }
@@ -582,7 +580,6 @@ class FirebaseVariable extends FirebaseStorageProvider implements VariableStorag
     if (this.value && !this.referenceMode) {
       assert((this.value as {storageKey: string}).storageKey == undefined, `values in non-referenceMode stores shouldn't have storageKeys. This store is ${this.storageKey}`);
     }
-
     if (this.referenceMode && this.value !== null) {
       const value = this.value as {id: string, storageKey: string};
 
@@ -1350,7 +1347,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
     assert(false, 'referenceMode is not supported for BigCollection');
   }
 
-  // TODO: rename this to avoid clashing with Variable and allow particles some way to specify the id
+  // TODO: rename this to avoid clashing with Singleton and allow particles some way to specify the id
   async get(id: string) {
     const encId = FirebaseStorage.encodeKey(id);
     const snapshot = await this.reference.child('items/' + encId).once('value');

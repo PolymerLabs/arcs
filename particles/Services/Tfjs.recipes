@@ -1,4 +1,0 @@
-import 'particles/Tfjs.particle'
-recipe Tfjs
-  Tfjs
-  description `linear regression example using TensorFlowJs (service)`

@@ -1,9 +1,12 @@
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 const fs = require('fs');
 const os = require('os');
@@ -15,6 +18,7 @@ const _DO_NOT_USE_spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
 const chokidar = try_require('chokidar');
 const semver = require('semver');
+const request = try_require('request');
 
 function try_require(dep) {
   try {
@@ -64,6 +68,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
   webpack: [peg, railroad, build, webpack],
+  webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
   lint: [peg, build, lint, tslint],
@@ -74,7 +79,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
   health: [health],
   bundle: [build, bundle],
   schema2proto: [build, schema2proto],
-  default: [check, peg, railroad, build, runTests, webpack, lint, tslint],
+  schema2pkg: [build, schema2pkg],
+  default: [check, peg, railroad, build, runTests, webpack, webpackTools, lint, tslint],
 };
 
 const eslintCache = '.eslint_sigh_cache';
@@ -434,6 +440,10 @@ function webpack(): boolean {
   return result.success;
 }
 
+function webpackTools() {
+  return saneSpawn('npm', ['run', 'build:webpack-tools'], {stdio: 'inherit'});
+}
+
 type SpawnOptions = {
   shell?: boolean;
   stdio?: string;
@@ -542,7 +552,7 @@ function runTests(args: string[]): boolean {
     if (options.explore) {
       chainImports.push(`
       import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
-      console.log("Waiting for Arcs Explorer");
+      console.log('Waiting for Arcs Explorer');
       DevtoolsConnection.ensure();
     `);
     }
@@ -554,7 +564,7 @@ function runTests(args: string[]): boolean {
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
-              process.on("exit", function() {
+              process.on('exit', function() {
                 process.exit(failures > 0 ? 1 : 0);
               });
             });
@@ -625,7 +635,7 @@ function watch(args: string[]): boolean {
   }
   const command = args.shift() || 'webpack';
   const watcher = chokidar.watch('.', {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js)`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/)`),
     persistent: true
   });
   keepProcessAlive = true; // Tell the runner to not exit.
@@ -663,7 +673,7 @@ function health(args: string[]): boolean {
 
     // Read and parse existing TsLint config.
     const tsLintConfig = fs.readFileSync(pathToTsLintConfig, 'utf-8');
-    const tsLintConfigNoComments = tsLintConfig.replace(/ *\/\/.*\n/g, '');
+    const tsLintConfigNoComments = tsLintConfig.replace(/ *\/\/.*\r?\n/g, '');
     const parsedConfig = JSON.parse(tsLintConfigNoComments);
 
     modifier(parsedConfig);
@@ -718,11 +728,18 @@ function health(args: string[]): boolean {
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
+  const healthInformation: string[] = [];
+
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
-  const show = (a, b, c, d) => console.log(`| ${String(a).padEnd(20, ' ')}| ${String(b).padEnd(7, ' ')}| ${String(c).padEnd(7, ' ')}| ${String(d).padEnd(26, ' ')}|`);
+  const show = (desc, score, points, info, ignore=false) => {
+    if (!ignore) {
+      healthInformation.push(...[desc, score, points, info].map(String));
+    }
+    console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
+  };
 
   line();
-  show('Category', 'Result', 'Points', 'Detailed report');
+  show('Category', 'Result', 'Points', 'Detailed report', true);
   line();
 
   const slocOutput = saneSpawnWithOutput('node_modules/.bin/sloc', ['--detail', '--keys source', ...migrationFiles()]).stdout;
@@ -757,31 +774,63 @@ function health(args: string[]): boolean {
 
   line();
 
+  if (process.env.CONTINUOUS_INTEGRATION) {
+    return uploadCodeHealthStats(healthInformation);
+  }
   return true;
+}
+
+function uploadCodeHealthStats(data: string[]) {
+  console.log('Uploading health data');
+  const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
+
+  if (!request) {
+    return false;
+  }
+
+  const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
+  const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
+
+  const info = [branchTo, branchFrom, new Date().toString()];
+
+  request.post(trigger, {
+    json: [[...info, ...data]]
+  }, (error, response, body) => {
+    if (error || response.statusCode !== 200) {
+      console.error(error);
+      console.error(response.toJSON());
+      return;
+    }
+    console.log(`Upload response status: ${response.statusCode}`);
+  });
+  keepProcessAlive = true; // Tell the runner to not exit.
+  return true;
+}
+
+function spawnTool(toolPath: string, args: string[]) {
+  return saneSpawn(`node`, [
+      '--experimental-modules',
+      '--loader',
+      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
+      toolPath,
+      ...args
+    ],
+    {stdio: 'inherit'});
 }
 
 // E.g. $ ./tools/sigh bundle -o restaurants.zip particles/Restaurants/Restaurants.recipes
 function bundle(args: string[]) {
-  return saneSpawn(`node`, [
-      '--experimental-modules',
-      '--loader',
-      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
-      `build/tools/bundle-cli.js`,
-      ...args
-    ],
-    {stdio: 'inherit'});
+  return spawnTool('build/tools/bundle-cli.js', args);
 }
 
 // E.g. $ ./tools/sigh schema2proto -o particles/native/wasm/proto particles/Restaurants/Restaurants.recipes
 function schema2proto(args: string[]) {
-  return saneSpawn(`node`, [
-      '--experimental-modules',
-      '--loader',
-      fixPathForWindows(path.join(__dirname, '../tools/custom-loader.mjs')),
-      `build/tools/schema2proto.js`,
-      ...args
-    ],
-    {stdio: 'inherit'});
+  return spawnTool('build/tools/schema2proto.js', args);
+}
+
+// E.g. $ ./tools/sigh schema2pkg particles/Products/Product.schema
+function schema2pkg(args: string[]) {
+  return spawnTool('build/tools/schema2packager.js', args);
 }
 
 // Looks up the steps for `command` and runs each with `args`.
@@ -789,7 +838,12 @@ function runSteps(command: string, args: string[]): boolean {
   const funcs = steps[command];
   if (funcs === undefined) {
     console.log(`Unknown command: '${command}'`);
-    console.log('Available commands are:', Object.keys(steps).join(', '));
+    console.log('Available commands are:');
+    const cmds = Object.keys(steps);
+    let chunk;
+    while ((chunk = cmds.splice(0, 8)).length) {
+      console.log(' ', chunk.join(', '));
+    }
     process.exit(2);
   }
 
@@ -808,7 +862,7 @@ function runSteps(command: string, args: string[]): boolean {
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? '🎉' : '😱');
+    console.log(result ? '🎉 SUCCESS' : '😱 FAILURE');
   }
   return result;
 }

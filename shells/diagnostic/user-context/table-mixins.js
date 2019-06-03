@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import {ContextStores} from '../../lib/components/context/context-stores.js';
 import {nameOfType, simpleNameOfType, boxes} from '../../lib/components/context/context-utils.js';
 import {ObserverTable} from './observer-table.js';

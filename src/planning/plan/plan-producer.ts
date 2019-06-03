@@ -14,7 +14,7 @@ import {logFactory} from '../../platform/log-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {ArcDevtoolsChannel} from '../../devtools-connector/abstract-devtools-channel.js';
 import {DevtoolsConnection} from '../../devtools-connector/devtools-connection.js';
-import {VariableStorageProvider} from '../../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {PlanningExplorerAdapter} from '../debug/planning-explorer-adapter.js';
 import {StrategyExplorerAdapter} from '../debug/strategy-explorer-adapter.js';
 import {Planner} from '../planner.js';
@@ -22,10 +22,8 @@ import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
 import {InitSearch} from '../strategies/init-search.js';
 import {StrategyDerived} from '../strategizer.js';
-
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
-import {SuggestionCache} from './suggestion-cache.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -42,25 +40,23 @@ export class PlanProducer {
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
   speculator: Speculator;
-  suggestionCache: SuggestionCache;
   needReplan = false;
   replanOptions: {};
   _isPlanning = false;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
-  searchStore?: VariableStorageProvider;
+  searchStore?: SingletonStorageProvider;
   searchStoreCallback: ({}) => void;
   debug: boolean;
   devtoolsChannel: ArcDevtoolsChannel = null;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: VariableStorageProvider, {debug = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore?: SingletonStorageProvider, {debug = false} = {}) {
     assert(result, 'result cannot be null');                
     assert(arc, 'arc cannot be null');
     this.arc = arc;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
     this.speculator = new Speculator();
-    this.suggestionCache = new SuggestionCache(this.result);
     this.searchStore = searchStore;
     if (this.searchStore) {
       this.searchStoreCallback = () => this.onSearchChanged();
@@ -195,7 +191,6 @@ export class PlanProducer {
         recipeIndex: this.recipeIndex
       },
       speculator: this.speculator,
-      suggestionCache: this.suggestionCache,
       blockDevtools: true // Devtools communication is handled by PlanConsumer in Producer+Consumer setup.
     });
 

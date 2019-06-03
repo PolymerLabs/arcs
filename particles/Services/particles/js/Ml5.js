@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * @license
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -13,6 +14,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
   const template = html`
 <div>
+  <h2>Classification with ML5</h2>
   <img style="max-width: 240px;" src="{{imageUrl}}"><br>
   <div>
     <div>Label: </span><span>{{label}}</div>

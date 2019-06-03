@@ -42,6 +42,7 @@ export class PlanningTestHelper extends TestHelper {
 
   static async create(options: TestHelperPlanOptions = {}): Promise<PlanningTestHelper> {
     await TestHelper.setupOptions(options);
+    Planner.clearCache();
     const helper = new PlanningTestHelper();
     TestHelper.setupHelper(options, helper);
     helper.recipeIndex = RecipeIndex.create(helper.arc);
@@ -131,7 +132,7 @@ export class PlanningTestHelper extends TestHelper {
       assert.lengthOf(this.suggestions, 1);
       suggestion = this.suggestions[0];
     }
-    this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(suggestion.descriptionText)}'`);
+    this.log(`Accepting suggestion: '${suggestion.descriptionText ? ((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(suggestion.descriptionText) : `undefined`}'`);
     await this.instantiateSuggestion(suggestion);
   }
 

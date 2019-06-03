@@ -25,7 +25,7 @@ import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
-import {StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcType, CollectionType, EntityType, InterfaceType, RelationType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -369,7 +369,7 @@ ${this.activeRecipe.toString()}`;
     const storage = this.storageProviderFactory;
     const key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
     const arcInfoType = new ArcType();
-    const store = await storage.connectOrConstruct('store', arcInfoType, key.toString()) as VariableStorageProvider;
+    const store = await storage.connectOrConstruct('store', arcInfoType, key.toString()) as SingletonStorageProvider;
     store.referenceMode = false;
     // TODO: storage refactor: make sure set() is available here (or wrap store in a Handle-like adaptor).
     await store.set(arcInfoType.newInstance(this.id, serialization));
@@ -549,7 +549,7 @@ ${this.activeRecipe.toString()}`;
           assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
           const particleClone = particleSpec.clone().toLiteral();
           particleClone.id = newStore.id;
-          // TODO(shans): clean this up when we have interfaces for Variable, Collection, etc.
+          // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc.
           // tslint:disable-next-line: no-any
           await (newStore as any).set(particleClone);
         } else if (recipeHandle.fate === 'copy') {

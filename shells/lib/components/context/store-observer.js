@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * @license
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -39,6 +40,8 @@ export class StoreObserver {
     if (--observers === 0) {
       console.warn(`all observers disposed (generally a good thing)`);
     }
+    // TODO(sjmiles): what if this never resolves?
+    await this.ready;
     // stop observing store
     this.off();
     // observe removal of all entities

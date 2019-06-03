@@ -1,10 +1,12 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 'use strict';
 
@@ -179,7 +181,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
         // ones -- one for working with a single miniblog and a separate one
         // to act as the feed, as differing logic is starting to get complex.
         if (this.handles.get('metadata')) {
-          this.updateVariable('metadata', {blogOwner: props.user.id, description: ''});
+          this.updateSingleton('metadata', {blogOwner: props.user.id, description: ''});
         }
       }
     }
@@ -205,7 +207,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
       }
     }
     onBlurDescription(e, state) {
-      this.updateVariable('metadata',
+      this.updateSingleton('metadata',
           {blogOwner: this._props.user.id, description: e.data.value});
     }
     avatarToStyle(url) {

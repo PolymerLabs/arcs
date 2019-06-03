@@ -15,7 +15,7 @@ import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './des
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
-import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {StorageProviderBase, CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {StorageStub} from './manifest.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
@@ -24,7 +24,6 @@ import {Dictionary} from './hot.js';
 export class Description {
   private constructor(
       private readonly storeDescById: Dictionary<string> = {},
-      private readonly arcRecipeName: string,
       // TODO(mmandlis): replace Particle[] with serializable json objects.
       private readonly arcRecipes: {patterns: string[], particles: Particle[]}[],
       private readonly particleDescriptions: ParticleDescription[] = []) {
@@ -32,7 +31,7 @@ export class Description {
 
   static async createForPlan(plan: Recipe): Promise<Description> {
     const particleDescriptions = await Description.initDescriptionHandles(plan.particles);
-    return new Description({}, plan.name, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
+    return new Description({}, [{patterns: plan.patterns, particles: plan.particles}], particleDescriptions);
   }
 
   /**
@@ -53,7 +52,7 @@ export class Description {
     }
 
     // ... and pass to the private constructor.
-    return new Description(storeDescById, arc.activeRecipe.name, arc.recipeDeltas, particleDescriptions);
+    return new Description(storeDescById, arc.recipeDeltas, particleDescriptions);
   }
 
   getArcDescription(formatterClass = DescriptionFormatter): string|undefined {
@@ -73,11 +72,7 @@ export class Description {
 
   getRecipeSuggestion(formatterClass = DescriptionFormatter) {
     const formatter = new (formatterClass)(this.particleDescriptions, this.storeDescById);
-    const desc = formatter.getDescription(this.arcRecipes[this.arcRecipes.length - 1]);
-    if (desc) {
-      return desc;
-    }
-    return formatter._capitalizeAndPunctuate(this.arcRecipeName || Description.defaultDescription);
+    return formatter.getDescription(this.arcRecipes[this.arcRecipes.length - 1]);
   }
 
   getHandleDescription(recipeHandle: Handle): string {
@@ -156,21 +151,18 @@ export class Description {
         return {bigCollectionValues: value[0]};
       }
     } else if (store.type instanceof EntityType) {
-      const variableStore = store as VariableStorageProvider;
-      const value = await variableStore.get();
+      const singletonStore = store as SingletonStorageProvider;
+      const value = await singletonStore.get();
       if (value && value['rawData']) {
         return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
       }
     } else if (store.type instanceof InterfaceType) {
-      const variableStore = store as VariableStorageProvider;
-      const interfaceValue = await variableStore.get();
+      const singletonStore = store as SingletonStorageProvider;
+      const interfaceValue = await singletonStore.get();
       if (interfaceValue) {
         return {interfaceValue};
       }
     }
     return undefined;
   }
-
-  /** A fallback description if none other can be found */
-  static defaultDescription = `i'm feeling lucky`;
 }

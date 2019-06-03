@@ -144,7 +144,7 @@ recipe
       this.setState({savePost: false, message: '', image: this.getDefaultImage()});
     }
     savePost(renderParticleSpec, renderRecipe, user, message, image, arcKey) {
-      this.updateVariable('post', {
+      this.updateSingleton('post', {
         renderParticleSpec,
         renderRecipe,
         message,

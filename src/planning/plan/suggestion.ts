@@ -86,7 +86,6 @@ export class Suggestion {
   }
 
   getDescription(modality: string): string|{} {
-    assert(this.descriptionByModality[modality], `No description for modality '${modality}'`);
     return this.descriptionByModality[modality];
   }
 
@@ -219,5 +218,10 @@ export class Suggestion {
     // TODO(mmandlis): Is this still needed? Find out why and fix.
     const recipeResolver = new RecipeResolver(arc);
     return recipeResolver.resolve(this.plan);
+  }
+
+  isUpToDate(arc: Arc, plan: Recipe): boolean {
+    const arcVersionByStoreId = arc.getVersionByStore({includeArc: true, includeContext: true});
+    return plan.handles.every(handle => arcVersionByStoreId[handle.id] === this.versionByStore[handle.id]);
   }
 }

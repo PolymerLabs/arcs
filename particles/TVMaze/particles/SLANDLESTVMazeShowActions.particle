@@ -1,0 +1,17 @@
+import '../schemas/TVMazeShow.schema'
+
+particle SlandleTVMazeShowActions in './js/TVMazeShowActions.js'
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  `consume Slot action
+
+interface SlandleHostedActionParticleInterface
+  in TVMazeShow show
+  inout [TVMazeShow] shows
+  `consume Slot action
+
+particle SlandleActionMultiplexer in '../../List/source/Multiplexer.js'
+  host SlandleHostedActionParticleInterface hostedParticle
+  in [~a] list
+  in [TVMazeShow] shows
+  `consume [Slot] action

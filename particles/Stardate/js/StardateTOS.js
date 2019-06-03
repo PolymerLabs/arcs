@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 'use strict';
 
 /* global defineParticle */
@@ -14,8 +23,8 @@ defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     update() {
       const {stardate, destination} = this.computeStardate();
-      this.updateVariable('stardate', {date: stardate});
-      this.updateVariable('destination', {name: destination});
+      this.updateSingleton('stardate', {date: stardate});
+      this.updateSingleton('destination', {name: destination});
     }
     computeStardate() {
       // Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era

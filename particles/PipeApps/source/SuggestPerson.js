@@ -18,7 +18,7 @@ defineParticle(({DomParticle, html, log}) => {
     update({recentEntities}, state) {
       if (recentEntities) {
         const json = this.query(recentEntities);
-        this.updateVariable('suggestion', {json});
+        this.updateSingleton('suggestion', {json});
       }
     }
     query(entities) {

@@ -1,14 +1,16 @@
-// @license
-// Copyright (c) 2018 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/**
+ * @license
+ * Copyright (c) 2018 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 
 import {assert} from '../../platform/chai-web.js';
 import {Id, ArcId} from '../id.js';
-import {ChangeEvent, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {ChangeEvent, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {assertThrowsAsync} from '../testing/test-util.js';
@@ -20,12 +22,12 @@ describe('synthetic storage ', () => {
     resetVolatileStorageForTesting();
   });
 
-  async function setup(serialization): Promise<{id: Id, targetStore: VariableStorageProvider, synth: CollectionStorageProvider}> {
+  async function setup(serialization): Promise<{id: Id, targetStore: SingletonStorageProvider, synth: CollectionStorageProvider}> {
     const id = ArcId.newForTest('test');
     const storage = new StorageProviderFactory(id);
     const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
-    const targetStore = await storage.construct('id0', type, key) as VariableStorageProvider;
+    const targetStore = await storage.construct('id0', type, key) as SingletonStorageProvider;
     targetStore.referenceMode = false;
     await targetStore.set(type.newInstance(id, serialization.trim()));
     const synth = await storage.connect('id1', null, `synthetic://arc/handles/${key}`) as CollectionStorageProvider;

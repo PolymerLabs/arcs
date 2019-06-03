@@ -20,7 +20,7 @@ import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Content} from './slot-consumer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, VariableStorageProvider} from './storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, StorageProviderBase, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 
@@ -76,7 +76,7 @@ export class ParticleExecutionHost {
       }
 
       async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
-        const data = await (handle as VariableStorageProvider).get();
+        const data = await (handle as SingletonStorageProvider).get();
         this.SimpleCallback(callback, data);
       }
 
@@ -86,11 +86,11 @@ export class ParticleExecutionHost {
       }
 
       onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
-        (handle as VariableStorageProvider).set(data, particleId, barrier);
+        (handle as SingletonStorageProvider).set(data, particleId, barrier);
       }
 
       onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
-        (handle as VariableStorageProvider).clear(particleId, barrier);
+        (handle as SingletonStorageProvider).clear(particleId, barrier);
       }
 
       async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {

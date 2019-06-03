@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import {PropagatedException} from './arc-exceptions';
 import {Type} from './type';
 import {ParticleExecutionContext} from './particle-execution-context';
@@ -18,7 +27,7 @@ export interface Store {
   reportExceptionInHost(exception: PropagatedException): void;
 }
 
-export interface VariableStore extends Store {
+export interface SingletonStore extends Store {
   // tslint:disable-next-line: no-any
   get(): Promise<any>;
   

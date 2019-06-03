@@ -28,7 +28,7 @@ defineParticle(({DomParticle, log}) => {
       return (pipe && pipe.type === 'tv_show');
     }
     updateFind({type, name}) {
-      this.updateVariable('find', {type, name});
+      this.updateSingleton('find', {type, name});
   }
   };
 

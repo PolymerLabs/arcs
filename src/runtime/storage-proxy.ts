@@ -10,7 +10,6 @@
 
 import {assert} from '../platform/assert-web.js';
 import {mapStackTrace} from '../platform/sourcemapped-stacktrace-web.js';
-
 import {CursorNextValue, PECInnerPort} from './api-channel.js';
 import {PropagatedException, SystemException} from './arc-exceptions.js';
 import {Handle, HandleOptions} from './handle.js';
@@ -20,7 +19,7 @@ import {Particle} from './particle.js';
 import {CrdtCollectionModel, SerializedModelEntry, ModelValue} from './storage/crdt-collection-model.js';
 import {BigCollectionType, CollectionType, Type} from './type.js';
 import {EntityRawData} from './entity.js';
-import {Store, VariableStore, CollectionStore, BigCollectionStore} from './store.js';
+import {Store, SingletonStore, CollectionStore, BigCollectionStore} from './store.js';
 import {Id} from './id.js';
 
 enum SyncState {none, pending, full}
@@ -54,7 +53,7 @@ export abstract class StorageProxy implements Store {
     if (type instanceof BigCollectionType) {
       return new BigCollectionProxy(id, type, port, pec, scheduler, name);
     }
-    return new VariableProxy(id, type, port, pec, scheduler, name);
+    return new SingletonProxy(id, type, port, pec, scheduler, name);
   }
 
   storageKey: string;
@@ -196,7 +195,7 @@ export abstract class StorageProxy implements Store {
       }
       // Holy Layering Violation Batman
       //
-      // If we are a variable waiting for a barriered set response
+      // If we are a singleton waiting for a barriered set response
       // then that set response *is* the next thing we're waiting for,
       // regardless of version numbers.
       //
@@ -394,12 +393,12 @@ export class CollectionProxy extends StorageProxy implements CollectionStore {
 
 /**
  * Variables are synchronized in a 'last-writer-wins' scheme. When the
- * VariableProxy mutates the model, it sets a barrier and expects to
+ * SingletonProxy mutates the model, it sets a barrier and expects to
  * receive the barrier value echoed back in a subsequent update event.
  * Between those two points in time updates are not applied or
  * notified about as these reflect concurrent writes that did not 'win'.
  */
-export class VariableProxy extends StorageProxy implements VariableStore {
+export class SingletonProxy extends StorageProxy implements SingletonStore {
   model: {id: string} | null = null;
 
   _getModelForSync(): {id: string} {

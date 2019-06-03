@@ -253,10 +253,12 @@ export class MockSlotComposer extends FakeSlotComposer {
     const found = this._verifyRenderContent(particle, slotName, content);
     if (!found) {
       const canIgnore = this._canIgnore(particle.name, slotName, content);
-      if (canIgnore) {
+      if (canIgnore && !MockSlotComposer['warnedIgnore']) {
+        MockSlotComposer['warnedIgnore'] = true;
         console.log(`Skipping unexpected render slot request: ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')})`);
         console.log('expected? add this line:');
         console.log(`  .expectRenderSlot('${particle.name}', '${slotName}', {'contentTypes': ['${Object.keys(content).join('\', \'')}']})`);
+        console.log(`(additional warnings are suppressed)`);
       }
       assert(canIgnore, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
     }

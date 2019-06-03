@@ -11,7 +11,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../runtime/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {PlanningTestHelper} from '../../testing/planning-test-helper.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
@@ -143,7 +143,7 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
     
-    constructor(arc: Arc, searchStore: VariableStorageProvider) {
+    constructor(arc: Arc, searchStore: SingletonStorageProvider) {
       super(arc, new PlanningResult({context: arc.context, loader: arc.loader}, searchStore), searchStore);
     }
 
