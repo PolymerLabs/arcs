@@ -20,7 +20,8 @@ resource InfoResource
   start
   [
     {"str": "xx", "val": -5.8},
-    {"val": 107}
+    {"val": 107},
+    {"str": "yy"}
   ]
 store InfoStore of [Info] in InfoResource
 
