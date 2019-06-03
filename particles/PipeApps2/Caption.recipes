@@ -1,0 +1,15 @@
+import './Json.schema'
+import './PipeEntity.schema'
+
+particle CaptionThis in './source/CaptionThis.js'
+  in PipeEntity query
+  out Json output
+  consume content
+
+recipe CaptionThis &caption
+  use #caption_ as query
+  create as suggestion
+  CaptionThis
+    query = query
+    output = suggestion
+  description `caption this`

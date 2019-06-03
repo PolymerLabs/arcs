@@ -18,6 +18,7 @@ const pecIndustry = loader => {
   // provision (cached) Blob url (async, same workerBlobUrl is captured in both closures)
   let workerBlobUrl;
   loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
+  // return a pecfactory
   return id => {
     if (!workerBlobUrl) {
       console.warn('workerBlob not available, falling back to network URL');
@@ -31,13 +32,17 @@ const pecIndustry = loader => {
 
 const _expandUrls = urlMap => {
   const remap = {};
-  const {origin, pathname} = location;
+  const {origin, pathname} = window.location;
   Object.keys(urlMap).forEach(k => {
     let path = urlMap[k];
+    // leading slash without a protocol is considered absolute
     if (path[0] === '/') {
+      // reroute root in absolute path
       path = `${origin}${path}`;
     }
+    // anything with '//' in it is assumed to be non-local (have a protocol)
     else if (path.indexOf('//') < 0) {
+      // remap local path to absolute path
       path = `${origin}${pathname.split('/').slice(0, -1).join('/')}/${path}`;
     }
     remap[k] = path;

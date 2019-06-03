@@ -1,0 +1,31 @@
+import './PipeEntity.schema'
+import '../Music/Artist.recipes'
+
+particle ArtistPipe in './source/ArtistPipe.js'
+  in PipeEntity pipe
+  out ArtistFind find
+
+recipe FindArtist
+  use #artist_ as entity
+  create as find
+  create as descriptions
+  create as artist
+  ArtistPipe
+    pipe = entity
+    find = find
+  ArtistFinder
+    find = find
+    artist = artist
+    descriptions = descriptions
+
+particle ShowArtist in '../Music/source/ArtistShow.js'
+  in ArtistMusic artist
+  consume app
+  description `Learn more about ${artist}`
+
+recipe ShowArtist
+  use as artist
+  ShowArtist
+    artist = artist
+  description `${ShowArtist}`
+

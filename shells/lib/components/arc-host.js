@@ -9,13 +9,11 @@
  */
 
 import {ArcType} from '../../../build/runtime/type.js';
-import {logFactory} from '../../../build/platform/log-web.js';
+import {logsFactory} from '../../../build/runtime/log-factory.js';
 import {SyntheticStores} from '../runtime/synthetic-stores.js';
 import {Utils} from '../runtime/utils.js';
 
-const log = logFactory('ArcHost', '#cade57');
-const warn = logFactory('ArcHost', '#cade57', 'warn');
-const error = logFactory('ArcHost', '#cade57', 'error');
+const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
   constructor(context, storage, composer) {
@@ -91,7 +89,7 @@ export class ArcHost {
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
     if (!plan.isResolved()) {
-      log(`Suggestion plan ${plan.toString({showUnresolved: true})} is not resolved.`);
+      log(`plan ${plan.toString({showUnresolved: true})} is not resolved.`);
     }
     try {
       await arc.instantiate(plan);
@@ -99,7 +97,7 @@ export class ArcHost {
       error(x);
       //console.error(plan.toString());
     }
-    await this.persistSerialization();
+    await this.persistSerialization(arc);
   }
   async fetchSerialization(storage, arcid) {
     const key = `${storage}/${arcid}/arc-info`;
@@ -110,9 +108,9 @@ export class ArcHost {
       return info && info.serialization;
     }
   }
-  async persistSerialization() {
-    const {arc, config: {id}, storage} = this;
-    if (!storage.includes('volatile')) {
+  async persistSerialization(arc) {
+    const {id, storageKey} = arc;
+    if (!storageKey.includes('volatile')) {
       log(`persisting serialization to [${id}/serialization]`);
       const serialization = await arc.serialize();
       await arc.persistSerialization(serialization);

@@ -1,0 +1,10 @@
+import './Json.schema'
+
+particle UpdateMe in './source/UpdateMe.js'
+  out Json output
+  consume root
+
+recipe UpdateMe
+  create as output
+  UpdateMe
+    output = output
