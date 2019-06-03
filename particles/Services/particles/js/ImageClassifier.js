@@ -31,23 +31,22 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     get template() {
       return template_;
     }
+
     update({}, state) {
       // TODO(sjmiles): update() is called during SpecEx, while
       // render() is not. We'll put our processing code in render()
       // to avoid being expensive at SpecEx time.
     }
+
     render({}, state) {
       // formerly update
       if (!state.loaded) {
         state.loaded = true;
-        this.loadModel(modelUrl, {onProgress: this.onLoadProgress, fromTFHub: true});
+        this.loadModel(modelUrl, {fromTFHub: true})
+          .then(() => {
+            this.classify(url);
+          });
       }
-
-      if (!state.classified && state.loaded) {
-        state.classified = true;
-        this.classify(url);
-      }
-
 
       // render proper
       let {response} = state;
@@ -60,15 +59,14 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     }
 
     onLoadProgress(fraction) {
-      if (fraction === 1.0 || fraction === 100) {
-        document.getElementById('progress-bar').setAttribute('display', 'none');
-      }
       const prog = fraction < 1.0 ? fraction * 100.0 : fraction;
       this.setState({progress: prog});
     }
 
     async loadModel(modelUrl, options) {
+      log('Loading Model...');
       const model = await this.service({call: 'graph-model.load', modelUrl, options});
+      log('Model Loaded');
       this.setState({model});
     }
 
@@ -78,8 +76,10 @@ defineParticle(({DomParticle, log, html, resolver}) => {
         return;
       }
 
+      log('Preprocessing...');
       const imgReference = await this.service({call: 'preprocess.imageToTensor', imageUrl});
 
+      log('Classifying Model...');
       const response = await this.service({call: 'graph-model.predict', model: this.state.model, input: imgReference});
 
       log('Classification result:');
