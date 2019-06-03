@@ -67,21 +67,28 @@
 <div login>
   <div box>
     <div signin>Sign in to Arcs</div>
-    <div blurb>Sign in with your Arcs Account to get your arcs, shares, and other settings on all your devices</div>
+    <div blurb>Sign in with your Arcs Account to get your arcs, shares, and other settings.</div>
     <cx-input username error="Enter a storage key:">
       <input slot="input" id="keyInput" required list="users" on-input="onInput">
-      <label slot="label" for="keyInput">&nbsp;Storage Key</label>
+      <label slot="label" for="keyInput">Storage Key</label>
     </cx-input>
     <div bar>
       <cx-button><button disabled$="{{nextDisabled}}">Next</button></cx-button>
     </div>
   </div>
 
-  <datalist id="users">
+  <datalist id="Xusers">
     <option value="$firebase/scott">scott</option>
     <option value="$firebase/seefeldb">seefeldb</option>
     <option value="firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/wkorman">wkorman</option>
     <option value="$firebase/shans">shans</option>
+  </datalist>
+
+  <datalist id="users">
+    <option value="scott">firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0//scott</option>
+    <option value="seefeldb">firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0//seefeldb</option>
+    <option value="wkorman">firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0/wkorman</option>
+    <option value="shans">firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_7_0//shans</option>
   </datalist>
 
   <div postamble>
@@ -94,3 +101,9 @@
     </span>
   </div>
 </div>
+
+<script>
+  const storage = localStorage.getItem('arcs-0_7_0-storage');
+  console.log(storage);
+  //document.querySelector('input').value = storage;
+</script>
