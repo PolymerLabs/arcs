@@ -18,8 +18,8 @@ export class AmlService {
   reader: VSCodeStreamMessageReader;
   writer: VSCodeStreamMessageWriter;
   context: AmlServiceContext;  // The state.
-  initialized: boolean;  // error / onclose should trigger shutdown message.
-  streaming: boolean;    // Client supports partialResult.
+  initialized: boolean = false;  // error / onclose should trigger shutdown message.
+  streaming: boolean = false;    // Client supports partialResult.
 
   constructor(
       reader: VSCodeStreamMessageReader,

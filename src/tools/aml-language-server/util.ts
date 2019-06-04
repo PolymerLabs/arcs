@@ -87,12 +87,7 @@ export function uri2path(uri: string): string|undefined {
 }
 
 export function camelCase(str: string): string {
-  const parts: string[] = str.split('/');
-  for (let i = 1; i < parts.length; i++) {
-    // Upper the first char of words following slashes.
-    parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
-  }
-  return parts.join('');
+  return str.replace(/\/(.?)/g, (_, s) => s.toUpperCase());
 }
 
 export const alphaNumerics: string[] = (() => {

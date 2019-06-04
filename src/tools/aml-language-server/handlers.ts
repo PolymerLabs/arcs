@@ -8,26 +8,26 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Message} from 'vscode-jsonrpc';
 import {NotificationMessage} from 'vscode-jsonrpc/lib/messages';
-import {CodeActionParams, Command, CompletionItemKind, CompletionList, Diagnostic, DiagnosticSeverity, DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentSymbolParams, ExecuteCommandParams, Hover, InsertTextFormat, Location, MarkedString, ParameterInformation, PublishDiagnosticsParams, Range, ReferenceParams, RenameParams, SignatureHelp, SignatureInformation, SymbolInformation, TextDocumentPositionParams, TextDocumentSyncKind, TextEdit, WorkspaceEdit} from 'vscode-languageserver';
+import { Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, PublishDiagnosticsParams, Range, TextDocumentSyncKind} from 'vscode-languageserver';
 
 import {Dictionary} from '../../runtime/hot.js';
 import {Manifest, ManifestError} from '../../runtime/manifest.js';
+import {SourcePosition} from '../../runtime/manifest-ast-nodes.js';
 
 import {LspLoader} from './lspLoader.js';
 import * as MessageTypes from './messageTypes.js';
-import {alphaNumerics, AmlServiceContext, jsonrpc, normalizeUri, uri2path} from './util.js';
+import {AmlServiceContext, jsonrpc, normalizeUri, uri2path} from './util.js';
 
 // tslint:disable-next-line: no-any
-export type Handler = ((params: object, context: AmlServiceContext) => any);
+export type Handler = ((params: any, context: AmlServiceContext) => any);
 
+// tslint:disable-next-line: no-any
 export const handlers: Dictionary<Handler> = {
-  initialize: (params: object, context: AmlServiceContext):
+  initialize: (params: any, context: AmlServiceContext):
                   MessageTypes.InitializeResult => {
     context.rootPath =
-    // tslint:disable-next-line: no-any
-        (params as any).rootPath || uri2path((params as any).rootUri);
+        params.rootPath || uri2path(params.rootUri);
     const result: MessageTypes.InitializeResult = {
       capabilities: {
         // Tell the client that the server works in FULL text document sync mode
@@ -62,28 +62,31 @@ export const handlers: Dictionary<Handler> = {
   textDocumentCompletion: async (
       params, context: AmlServiceContext):
       Promise<MessageTypes.CompletionItem> => {
-        const uri = (params as {textDocument: {uri: string}}).textDocument.uri;
+        const uri = params.textDocument.uri as string;
         context.logger.info(`Completing for : ${uri}...`);
         return undefined;
       },
 
   textDocumentDidSave: async (params, context: AmlServiceContext):
       Promise<NotificationMessage> => {
-        const uri = (params as {textDocument: {uri: string}}).textDocument.uri;
+        params = params as DidSaveTextDocumentParams;
+        const uri = params.textDocument.uri;
         context.logger.info(`Handling save for: ${uri}...`);
         return publishDiagnostics(uri, context);
       },
 
   textDocumentDidChange: async (params, context: AmlServiceContext):
       Promise<NotificationMessage> => {
-        const uri = (params as {textDocument: {uri: string}}).textDocument.uri;
+        params = params as DidChangeTextDocumentParams;
+        const uri = params.textDocument.uri;
         context.logger.info(`Handling changes for: ${uri}...`);
         return publishDiagnostics(uri, context);
       },
 
   textDocumentDidOpen: async (params, context: AmlServiceContext):
       Promise<NotificationMessage> => {
-        const uri = (params as {textDocument: {uri: string}}).textDocument.uri;
+        params = params as DidOpenTextDocumentParams;
+        const uri = params.textDocument.uri;
         context.logger.info(`Opened: ${uri}...`);
         return publishDiagnostics(uri, context);
       }
@@ -91,8 +94,7 @@ export const handlers: Dictionary<Handler> = {
 
 async function publishDiagnostics(uri: string, context: AmlServiceContext):
     Promise<NotificationMessage> {
-      const diagnosticParams: PublishDiagnosticsParams =
-          await gatherDiagnostics(uri, context);
+      const diagnosticParams: PublishDiagnosticsParams = await gatherDiagnostics(uri, context);
       return {
         jsonrpc,
         method: 'textDocument/publishDiagnostics',
@@ -115,12 +117,12 @@ async function gatherDiagnostics(uri: string, context: AmlServiceContext):
       return {uri, diagnostics};
     }
 
-function convertToDiagnostic(error: ManifestError) {
-  const convertLocation = loc => ({
+function convertToDiagnostic(error: ManifestError): Diagnostic {
+  const convertLocation = (loc: SourcePosition) => ({
     character: loc.column,
     line: loc.line - 1,
   });
-  const stripPreamble = msg => {
+  const stripPreamble = (msg: string) => {
     // Remove preamble.
     msg = msg.replace(/^(Parse|Post-parse) [^\n]*line [0-9]*.\n/g, '');
     // Remove preview of code.
