@@ -79,12 +79,14 @@ export class StorePanel extends HTMLElement {
     this.error = shadowRoot.getElementById('error');
     this.store = null;
     this.updateCallback = null;
+    this.data = null;
 
     this.saveBtn.addEventListener('click', this.save.bind(this));
     this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
-    this.dataPanel.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
     this.header.addEventListener('animationend', () => this.header.classList.remove('flash'));
     this.dataPanel.addEventListener('animationend', () => this.dataPanel.classList.remove('flash'));
+    this.dataPanel.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
+    this.dataPanel.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
   }
 
   async attach(store) {
@@ -93,6 +95,13 @@ export class StorePanel extends HTMLElement {
     await this.update(true);
     this.updateCallback = () => this.update(false);
     store.on('change', this.updateCallback, this);
+  }
+
+  interceptCtrlEnter(event) {
+    if (event.key === 'Enter' && event.ctrlKey) {
+      this.save();
+      event.preventDefault();
+    }
   }
 
   toggleCollapsed() {
@@ -108,16 +117,18 @@ export class StorePanel extends HTMLElement {
   }
 
   async update(local) {
+    let items;
     if (this.store.toList) {
-      this.data = await this.store.toList();
-      if (this.data && this.data.length === 0) {
-        this.data = null;
-      }
+      items = await this.store.toList();
     } else {
-      this.data = await this.store.get();
+      const item = await this.store.get();
+      items = item ? [item] : [];
     }
-    if (this.data !== null) {
-      const json = JSON.stringify(this.data, null, 2);
+    this.data = {};
+    if (items.length > 0) {
+      items.forEach(({id, rawData}) => this.data[id] = rawData);
+      // Strip enclosing brackets and remove indent before displaying.
+      const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n  /g, '\n');
       this.dataPanel.value = json;
       this.dataPanel.rows = Math.min(json.match(/\n/g).length + 1, 20);
     } else {
@@ -150,18 +161,18 @@ export class StorePanel extends HTMLElement {
 
   async writeToStore(value) {
     if (this.store.toList) {
-      // Collections; we need to manually determine what to add and remove
+      // Collections; we need to manually determine the update ops
       const json = (value.length > 0) ? this.parse(value) : [];
       if (json === null) {
         return false;
       }
-      const delIds = new Set(this.data && this.data.map(e => e.id));
-      for (const item of json) {
-        if (!delIds.delete(item.id)) {
-          await this.store.store(item, [String(Math.random()).slice(2)]);
+      const curIds = new Set([...Object.keys(this.data)]);
+      for (const [id, rawData] of Object.entries(json)) {
+        if (!curIds.delete(id) || JSON.stringify(this.data[id]) !== JSON.stringify(rawData)) {
+          await this.store.store({id, rawData}, [String(Math.random()).slice(2)]);
         }
       }
-      for (const id of delIds.values()) {
+      for (const id of curIds.values()) {
         await this.store.remove(id);
       }
     } else {
@@ -173,7 +184,8 @@ export class StorePanel extends HTMLElement {
         if (json === null) {
           return false;
         }
-        await this.store.set(json);
+        const [id, rawData] = Object.entries(json)[0];
+        await this.store.set({id, rawData});
       }
     }
     return true;
@@ -181,6 +193,8 @@ export class StorePanel extends HTMLElement {
 
   parse(value) {
     try {
+      // Restore enclosing brackets that were stripped for display.
+      value = '{' + value + '}';
       return JSON.parse(value);
     } catch (err) {
       let msg = err.message.replace(/\n/g, '\\n');
