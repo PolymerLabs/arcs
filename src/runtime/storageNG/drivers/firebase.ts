@@ -139,11 +139,11 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   }
 
   async write(key: StorageKey, value: Data) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 
   async read(key: StorageKey) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 }
 

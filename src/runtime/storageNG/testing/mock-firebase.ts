@@ -23,34 +23,34 @@ class MockFirebaseDataSnapshot implements firebase.database.DataSnapshot {
     this.ref = reference;
   }
   child(path: string): firebase.database.DataSnapshot {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   exists(): boolean {
     return this.ref.value.value !== null;
   }
   exportVal() {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   forEach(action: (a: firebase.database.DataSnapshot) => boolean | void): boolean {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   getPriority(): string | number {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   hasChild(path: string): boolean {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   hasChildren(): boolean {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   numChildren(): number {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   val() {
     return this.ref.value.value;
   }
   toJSON(): {} {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 }
 
@@ -78,25 +78,25 @@ class MockFirebaseReference implements firebase.database.Reference {
   }
 
   child(path: string): firebase.database.Reference {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }  
   onDisconnect(): firebase.database.OnDisconnect {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   push(value?: any, onComplete?: (a: Error) => void): firebase.database.ThenableReference {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   async remove(onComplete?: (a: Error) => void) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   async set(value: any, onComplete?: (a: Error) => void) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   async setPriority(priority: string | number, onComplete: (a: Error) => void) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   async setWithPriority(newVal: any, newPriority: string | number, onComplete?: (a: Error) => void) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   async transaction(transactionUpdate: (a: {}) => {}, onComplete?: (a: Error, b: boolean, c: firebase.database.DataSnapshot) => void, applyLocally?: boolean) {
     const result = transactionUpdate(this.value.value);
@@ -146,27 +146,27 @@ class MockFirebaseReference implements firebase.database.Reference {
   }
 
   async update(values: {}, onComplete?: (a: Error) => void) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   endAt(value: string | number | boolean, key?: string): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   equalTo(value: string | number | boolean, key?: string): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   isEqual(other: firebase.database.Query): boolean {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   limitToFirst(limit: number): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   limitToLast(limit: number): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   off(eventType?: firebase.database.EventType, 
       callback?: (a: firebase.database.DataSnapshot, b?: string) => void, 
       context?: {}): void {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 
   on(eventType: firebase.database.EventType, 
@@ -186,26 +186,26 @@ class MockFirebaseReference implements firebase.database.Reference {
     return new MockFirebaseDataSnapshot(this);
   }
   orderByChild(path: string): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   orderByKey(): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   orderByPriority(): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   orderByValue(): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   ref: firebase.database.Reference;
   startAt(value: string | number | boolean, key?: string): firebase.database.Query {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   toJSON(): {} {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   toString(): string {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 
 
@@ -232,10 +232,10 @@ class MockFirebaseDatabase implements firebase.database.Database {
   }
 
   goOffline() {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   goOnline() {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   ref(path?: string): firebase.database.Reference {
     if (path == undefined) {
@@ -252,7 +252,7 @@ class MockFirebaseDatabase implements firebase.database.Database {
     return reference;
   }
   refFromURL(url: string): firebase.database.Reference {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 }
 
@@ -266,7 +266,7 @@ class MockFirebaseApp implements firebase.app.App {
   }
 
   auth(): firebase.auth.Auth {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   database(url?: string): firebase.database.Database {
     if (url == undefined) {
@@ -280,25 +280,25 @@ class MockFirebaseApp implements firebase.app.App {
     return this.databases[url];
   }
   async delete() {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   installations(): firebase.installations.Installations {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   messaging(): firebase.messaging.Messaging {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   storage(url?: string): firebase.storage.Storage {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   firestore(): firebase.firestore.Firestore {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   functions(region?: string): firebase.functions.Functions {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
   performance(): firebase.performance.Performance {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   } 
 }
 
