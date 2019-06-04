@@ -28,8 +28,10 @@ const errorshot = require('wdio-errorshot-reporter');
 const request = require('request');
 const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
+// By default use whitelisted-ips, add headless if debug is enabled
 const HEADLESS_ARG = '--headless';
-const chromeArgs = (headless && !debug) ? [HEADLESS_ARG] : [];
+const WHITELISTED_IPS_ARG = '--whitelisted-ips';
+const chromeArgs = (headless && !debug) ? [HEADLESS_ARG, WHITELISTED_IPS_ARG] : [WHITELISTED_IPS_ARG];
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
