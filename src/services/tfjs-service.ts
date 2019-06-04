@@ -27,7 +27,7 @@ interface Inferrable {
 }
 
 /**
- * @see tf.io.LoadOptions https://github.com/tensorflow/tfjs-core/blob/5be798096108e9186cf37537e6f1b69185223024/src/io/types.ts#L358
+ * @see https://github.com/tensorflow/tfjs-core/blob/5be798096108e9186cf37537e6f1b69185223024/src/io/types.ts#L358
  */
 interface LoadOptions {
   requestInit?: RequestInit;
@@ -135,10 +135,10 @@ Services.register('graph-model', new GraphModel());
 Services.register('layer-model', new LayersModel());
 
 Services.register('preprocess', {
-  imageToTensor,
   normalize,
 });
 
 Services.register('tf-image', {
   resizeBilinear,
+  imageToTensor,
 });

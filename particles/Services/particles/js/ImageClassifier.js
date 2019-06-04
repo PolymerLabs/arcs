@@ -77,10 +77,12 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       }
 
       log('Preprocessing...');
-      const imgReference = await this.service({call: 'preprocess.imageToTensor', imageUrl});
+      const imgReference = await this.service({call: 'tf-image.imageToTensor', imageUrl});
+      const normalized = await this.service({call: 'preprocess.normalize', imgReference, range: [0, 255]});
+      const resized = await this.service({call: 'tf-image.resizeBilinear', normalized, size: [224, 244, 3]});
 
       log('Classifying Model...');
-      const response = await this.service({call: 'graph-model.predict', model: this.state.model, input: imgReference});
+      const response = await this.service({call: 'graph-model.predict', model: this.state.model, input: resized});
 
       log('Classification result:');
       log(response);
