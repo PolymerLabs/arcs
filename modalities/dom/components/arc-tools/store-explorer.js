@@ -166,7 +166,8 @@ class StoreExplorer extends Xen.Base {
         //const name = store.id || store.name || data.tags || moniker;
         //const name = `${store.name || moniker}:${data.tags}`;
         const label = `${store.id || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
-        result.push({/*tags: data.details.tags,*/ data: {[label]: data}/*, name*/});
+        //result.push({tags: data.details.tags, data: {[label]: data}, name});
+        result.push({data: {[label]: data}});
       }
     }
     return result;
