@@ -14,6 +14,7 @@ import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
 import {requireTf, tf} from '../platform/tf-web.js';
+import {ClassificationPrediction} from './tfjs-service.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
@@ -40,11 +41,6 @@ interface ImageInferenceParams {
   model: Reference;
   image?: MobilenetImageInput;
   imageUrl?: string;
-}
-
-interface ClassificationPrediction {
-  className: string;
-  probability: number;
 }
 
 interface Classifier {

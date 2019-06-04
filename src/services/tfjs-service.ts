@@ -42,7 +42,7 @@ abstract class TfModel implements Services {
 
   public abstract async load({modelUrl, options}): Promise<Reference>;
 
-  public async predict({model, inputs, config}): Promise<number[]> {
+  public async predict({model, inputs, config}): Promise<Reference> {
     const tf = await requireTf();
     log('Referencing model and input...');
     const model_  = rmgr.deref(model) as Inferrable;
@@ -51,7 +51,7 @@ abstract class TfModel implements Services {
     log('Predicting');
     const yHat = await model_.predict(inputs_, config);
 
-    return await tensorToOutput(yHat);
+    return rmgr.ref(yHat);
   }
 
   public async warmUp({model}): Promise<void> {
@@ -144,6 +144,38 @@ const tensorToOutput = async (tensor) => {
   return await tensor.array();
 };
 
+const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<ClassificationPrediction[]> => {
+  const input_ = rmgr.deref(input || y || yHat) as tf.Tensor2D;
+
+  const softmax = input_.softmax();
+  const values = await softmax.data();
+  softmax.dispose();
+
+  const valuesAndIndices = [];
+  for (let i = 0; i < values.length; i++) {
+    valuesAndIndices.push({value: values[i], index: i});
+  }
+  valuesAndIndices.sort((a, b) => {
+    return b.value - a.value;
+  });
+  const topkValues = new Float32Array(topK);
+  const topkIndices = new Int32Array(topK);
+  for (let i = 0; i < topK; i++) {
+    topkValues[i] = valuesAndIndices[i].value;
+    topkIndices[i] = valuesAndIndices[i].index;
+  }
+
+  const topClassesAndProbs = [];
+  for (let i = 0; i < topkIndices.length; i++) {
+    log(topkIndices[i]);
+    topClassesAndProbs.push({
+      className: labels[topkIndices[i]],
+      probability: topkValues[i]
+    });
+  }
+  return topClassesAndProbs;
+};
+
 
 Services.register('graph-model', new GraphModel());
 Services.register('layer-model', new LayersModel());
@@ -154,7 +186,16 @@ Services.register('preprocess', {
   expandDims,
 });
 
+Services.register('postprocess', {
+  getTopKClasses,
+});
+
 Services.register('tf-image', {
   resizeBilinear,
   imageToTensor,
 });
+
+export interface ClassificationPrediction {
+  className: string;
+  probability: number;
+}
