@@ -5,16 +5,27 @@
 // subject to an additional IP rights grant found at
 
 import 'ArcMeta.schema'
+import '../Profile/UserName.schema'
+import '../Profile/Avatar.schema'
 
 particle Launcher in 'source/Launcher.js'
   inout [ArcMeta] arcs
+  in [ArcMetaShare] shared
+  in [AvatarShare] avatars
+  in [UserNameShare] names
   consume root
   description `arcs launcher`
 
 recipe Launcher
-  create 'SYSTEM_arcs' as arcs
   slot 'rootslotid-root' as root
+  create 'SYSTEM_arcs' #arcs as arcs
+  map 'BOXED_arcs' as shared
+  map 'BOXED_userName' as names
+  map 'BOXED_avatar' as avatars
   Launcher
-    arcs = arcs
     consume root as root
+    arcs = arcs
+    shared = shared
+    names = names
+    avatars = avatars
 

@@ -10,8 +10,6 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  const host = `favorite-food`;
-
   const template = html`
 
 <style>
@@ -51,28 +49,32 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    shouldRender({restaurant, foods}) {
-      log('shouldRender:', restaurant && foods);
-      return restaurant && foods;
+    update({restaurant, foods}, state) {
+      if (restaurant && foods && !state.foods) {
+        this.findFoodItems(restaurant, foods).then(foods => this.state = {foods});
+      }
     }
-    render({restaurant, foods}, state) {
-      const models = this.findFoodItems(restaurant, foods);
-      log('render:', restaurant, foods, models);
+    shouldRender({}, {foods}) {
+      return foods && foods.length;
+    }
+    render({restaurant}, {foods}) {
       return {
         subId: restaurant.id,
         items: {
           $template: 'have-favorite-food',
-          models
+          models: foods
         }
       };
     }
-    findFoodItems(restaurant, foods) {
-      return foods
+    async findFoodItems(restaurant, foodShares) {
+      const foods = await this.derefShares(foodShares);
+      const found = foods
         // select only foods matching this restaurant
         .filter(food => this.hasFood(restaurant.name, food.food))
         // extract POJO
         .map(food => food.dataClone())
         ;
+      return found;
     }
     hasFood(restaurant, food) {
       // Totally ridiculous heuristic: first letter in name matches first letter of food.

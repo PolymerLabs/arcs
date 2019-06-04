@@ -32,8 +32,9 @@ export class ArcHost {
     log('spawning arc', config);
     this.config = config;
     const context = this.context || await Utils.parse(``);
-    this.serialization = await this.computeSerialization(config, this.storage);
-    this.arc = await this._spawn(context, this.composer, this.storage, config.id, this.serialization);
+    const storage = config.storage || this.storage;
+    this.serialization = await this.computeSerialization(config, storage);
+    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -111,8 +112,9 @@ export class ArcHost {
   async persistSerialization(arc) {
     const {id, storageKey} = arc;
     if (!storageKey.includes('volatile')) {
-      log(`persisting serialization to [${id}/serialization]`);
+      log(`compiling serialization for [${id}]...`);
       const serialization = await arc.serialize();
+      log(`persisting serialization to [${id}/serialization]...`);
       await arc.persistSerialization(serialization);
     }
   }

@@ -8,21 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Const} from '../../../configuration/constants.js';
 import {SyntheticStores} from '../../runtime/synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
-import {ArcHandleListener, ArcMetaListener, ProfileListener, ShareListener} from './context-listeners.js';
+import {ArcHandleListener, ArcMetaListener, FriendArcMetaListener, ProfileListener, ShareListener} from './context-listeners.js';
 
-const ArcMetaContext = listener => new ArcHandleListener(new ArcMetaListener(listener));
-const ProfileContext = (context, listener) => new ArcHandleListener(new ProfileListener(context, listener));
+const ArcMetaContext = (context, listener) => new ArcHandleListener(new ArcMetaListener(context, listener));
 const ShareContext = (context, listener)  => new ArcHandleListener(new ShareListener(context, listener));
+const ProfileContext = (context, listener) => new ArcHandleListener(new ProfileListener(context, listener));
+const FriendArcMetaContext = (context, listener) => new ArcHandleListener(new FriendArcMetaListener(context, listener));
 
 const ContextObserver = (context, store) => new StoreObserver(store,
   // each handle is some Arc Metadata (including key)
-  ArcMetaContext(
+  ArcMetaContext(context,
     // handles from each referenced Arc contains arbitrary profile data
     ProfileContext(context,
       // consume profile data of type [Friend] to look up Friend Arcs
-      ArcMetaContext(
+      FriendArcMetaContext(context,
         // handles from each referenced Arc contains arbitrary shared data
         ShareContext(context)
       )
@@ -36,7 +38,7 @@ export class UserContext {
     this.connect(context, storageKey);
   }
   async connect(context, storageKey) {
-    const store = await SyntheticStores.getStore(storageKey, 'user-launcher');
+    const store = await SyntheticStores.getStore(storageKey, Const.DEFAULT.launcherId);
     if (store) {
       this.observer = ContextObserver(context, store);
       // wait for ready connection

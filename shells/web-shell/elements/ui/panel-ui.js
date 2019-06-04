@@ -85,13 +85,19 @@ const template = Xen.Template.html`
     }
     settings-panel {
       display: none;
-      padding: 24px;
+      padding: 0 24px;
     }
     settings-panel[open] {
       display: block;
     }
-    settings-panel > pre {
+    settings-panel pre {
       white-space: pre-wrap;
+      margin: 0.5em 0;
+    }
+    settings-panel h3 {
+      font-size: 1em;
+      margin-block-start: 1em;
+      margin-block-end: 0em;
     }
   </style>
   <div toolbars on-click="onToolbarsClick">
@@ -115,8 +121,8 @@ const template = Xen.Template.html`
     <div suggestions content open$="{{suggestionsContentOpen}}">
       <slot on-plan-choose="onChooseSuggestion"></slot>
     </div>
-    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare">
-      <pre unsafe-html="{{settings}}"></pre>
+    <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" avatars="{{avatars}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="onSelectUser" on-share="onShare" on-click="onSettingsPanelClick">
+      <div unsafe-html="{{settings}}"></div>
     </settings-panel>
   </div>
 `;
@@ -161,9 +167,20 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   }
   renderSettings() {
     //return JSON.stringify(WebConfig.config, null, '  ');
+    const users = WebConfig.config.userHistory.map(url => {
+      const parts = url.split('/');
+      const short = `${parts.slice(0, 3).join('/')}...${parts.slice(-1).join('/')}`;
+      return short;
+    });
     return Xen.html`
+<h3>Version</h3>
+<pre>${WebConfig.config.version}</pre>
 <h3>Storage</h3>
-<div>${WebConfig.config.storage}</div>
+<pre>${WebConfig.config.storage}</pre>
+<h3>Planner Storage</h3>
+<pre>${WebConfig.config.plannerStorage}</pre>
+<!-- <h3>Recent Users</h3>
+<select><option>${users.join('</option><option>')}</option></select> -->
     `;
   }
   commitSearch(search) {
@@ -182,6 +199,9 @@ export class PanelUi extends Xen.Debug(Xen.Async, log) {
   onContentsClick(e) {
     e.stopPropagation();
     this.fire('open', false);
+  }
+  onSettingsPanelClick(e) {
+    e.stopPropagation();
   }
   onSearchChange(e) {
     const search = e.target.value;

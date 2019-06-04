@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({DomParticle, html, log, resolver}) => {
 
 const template = html`
 
@@ -60,11 +60,21 @@ const template = html`
     display: flex;
     align-items: center;
   }
+  [delete] {
+    margin-left: 16px;
+  }
   icon {
     margin-right: 16px;
   }
   icon:last-of-type {
     margin-right: 0;
+  }
+  img[avatar] {
+    box-sizing: border-box;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    background-color: #eeeeee;
   }
 </style>
 
@@ -75,12 +85,14 @@ const template = html`
   <cx-tab>Shared</cx-tab>
 </cx-tabs>
 
+<div shares>{{shares}}</div>
+
 <div columns>
   <div style="flex: 1;">{{columnA}}</div>
   <div style="flex: 1;">{{columnB}}</div>
 </div>
 
-<template column>
+<template arc>
   <div chip xen:style="{{chipStyle}}">
     <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
@@ -90,7 +102,8 @@ const template = html`
       <icon key="{{arcId}}" on-click="onStar">{{starred}}</icon>
       <icon key="{{arcId}}" title="{{tip}}" on-click="onShare">{{sharing}}</icon>
       <span style="flex: 1;"></span>
-      <icon hovering key="{{arcId}}" on-click="onDelete">delete_forever</icon>
+      <img avatar src="{{avatar}}">
+      <icon delete hovering key="{{arcId}}" on-click="onDelete">delete_forever</icon>
     </div>
   </div>
 </template>
@@ -103,21 +116,67 @@ return class extends DomParticle {
   }
   _getInitialState() {
     return {
+      pendingShares: [],
       selected: 1
     };
   }
-  update({arcs}, state) {
-    if (arcs) {
+  update({arcs, shared, avatars}, state, oldProps) {
+    if (arcs && oldProps.arcs !== arcs) {
       this.setState(this.collateItems(arcs));
+    }
+    if (shared && oldProps.shared !== shared) {
+      this.composeShares(shared);
+    }
+    if (avatars && oldProps.avatars !== avatars) {
+      this.derefAvatars(avatars);
+    }
+  }
+  async derefAvatars(shares) {
+    // TODO(sjmiles): deref'ing all the things is probably wrong, we should deref on demand ... but it's a
+    // bit nasty because of the asynchrony. We should reframe this particle to generate render models
+    // as state, and manipulate them as state (which is the standard Xen answer!).
+    const derefPromises = shares.map(async share =>
+      Object.assign(share.dataClone(), {entity: (await share.ref.dereference()).dataClone()}));
+    const avatars = await Promise.all(derefPromises);
+    this.setState({avatars});
+  }
+  avatarForArc(arc) {
+    const avatars = this.state.avatars;
+    if (avatars) {
+      const base = arc.href.split('=').pop().split('/').slice(0, -1).join('/');
+      const avatar = avatars.find(avatar => avatar.fromKey === base);
+      return avatar && avatar.entity.url;
+    }
+  }
+  async composeShares(shares) {
+    log(this.id);
+    log('shares', shares);
+    const shared = [];
+    const arcs = await this.derefShares(shares);
+    // only continue if this is still the current set
+    if (this.props.shared === shares) {
+      log('arcs', arcs);
+      arcs.forEach(arc => {
+      if (arc.description && !arc.deleted) {
+        shared.push(this.renderArc(arc));
+      }
+      });
+      log('shared', shared);
+      this.setState({shared});
     }
   }
   shouldRender(props, {items}) {
     return Boolean(items);
   }
   render(props, {items, shared, starred, recent, selected}) {
-    const columns = [[], []];
-    const chosen = [items, recent, starred, shared][selected || 0];
+    const chosen = [items, recent, starred, shared][selected || 0] || [];
     chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
+    //
+    // TODO(sjmiles): late-bind avatar because this data can be delayed
+    chosen.forEach(model =>
+      model.avatar = this.avatarForArc(model) || resolver(`Launcher/../../Profile/assets/user.png`));
+    //
+    const columns = [[], []];
     const method = ['ltr', 'ttb'][0];
     if (method === 'ltr') {
       // method 1: left-to-right, top-to-bottom
@@ -133,16 +192,16 @@ return class extends DomParticle {
     }
     return {
       columnA: {
-        $template: 'column',
+        $template: 'arc',
         models: columns[0],
       },
       columnB: {
-        $template: 'column',
+        $template: 'arc',
         models: columns[1],
       }
     };
   }
-  collateItems(arcs) {
+  collateItems(arcs, avatars) {
     const result = {
       items: [],
       shared: [],
@@ -191,7 +250,7 @@ return class extends DomParticle {
       chipStyle,
       sharing: shares[share],
       tip: tips[share],
-      touched: arc.touched
+      touched: arc.touched,
     };
   }
   findArc(id) {

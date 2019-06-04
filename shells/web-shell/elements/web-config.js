@@ -15,15 +15,17 @@ import {Const} from '../../configuration/constants.js';
 const log = Xen.logFactory('WebConfig', '#60ac66');
 
 const configOptions = {
-  //configPropertyName: {
-  //  aliases: [...] // aliases for configPropertyName
-  //  default: ... // default value
-  //  map: { ... } // map human parameter names to actual config values
-  //  localStorageKey: "..." // key for persisting to/from localStorage
-  //  persistToUrl: <Boolean> // whether parameter should be written into URL
-  //},
+  /*
+    configPropertyName: {
+      aliases: [...] // aliases for configPropertyName
+      default: ... // default value
+      map: { ... } // map human parameter names to actual config values
+      localStorageKey: "..." // key for persisting to/from localStorage
+      persistToUrl: <Boolean> // whether parameter should be written into URL
+    }
+  */
   storage: {
-    aliases: ['storageKey'],
+    aliases: ['storageKey', 'persona'],
     default: Const.DEFAULT.storageKey,
     map: {
       'firebase': Const.DEFAULT.firebaseStorageKey,
@@ -34,10 +36,9 @@ const configOptions = {
     },
     localStorageKey: Const.LOCALSTORAGE.storage
   },
-  userid: {
-    aliases: ['user'],
-    default: Const.DEFAULT.userId,
-    localStorageKey: Const.LOCALSTORAGE.user
+  userHistoryJson: {
+    default: '[]',
+    localStorageKey: Const.LOCALSTORAGE.userHistory
   },
   arc: {
     aliases: ['arckey'],
@@ -46,8 +47,9 @@ const configOptions = {
   search: {
   },
   plannerStorage: {
-    localStorageKey: Const.LOCALSTORAGE.plannerStorage,
-    default: Const.DEFAULT.plannerStorageKey
+    aliases: ['planner'],
+    default: Const.DEFAULT.plannerStorageKey,
+    localStorageKey: Const.LOCALSTORAGE.plannerStorage
   },
   plannerNoDebug: {
     boolean: true
@@ -59,25 +61,35 @@ const configOptions = {
 
 export class WebConfig extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['userid', 'arckey'];
+    return ['arckey'];
   }
-  update({userid, arckey}, state) {
-    if (!state.config) {
+  update({arckey}, {config}) {
+    if (!config) {
       const params = (new URL(document.location)).searchParams;
-      state.config = ProcessConfig.processConfig(configOptions, params);
-      state.config.plannerDebug = !state.config.plannerNoDebug;
-      state.config.storage = this.expandStorageMacro(state.config.storage);
-      this._fire('config', state.config);
+      config = ProcessConfig.processConfig(configOptions, params);
+      config.version = Const.version;
+      config.plannerDebug = !config.plannerNoDebug;
+      config.storage = this.expandStorageMacro(config.storage);
+      this.state = {config};
     }
     if (arckey !== undefined) {
-      state.config.arc = arckey;
+      config.arc = arckey;
     }
-    if (userid !== undefined) {
-      state.config.userid = userid;
+    this.updateUserHistory(config);
+    log(config.userHistory);
+    ProcessConfig.persistParams(configOptions, config);
+    // TODO(sjmiles): only works if config is Highlander
+    WebConfig.config = config;
+    this._fire('config', config);
+  }
+  updateUserHistory(config) {
+    const {userHistoryJson, storage} = config;
+    const userHistory = JSON.parse(userHistoryJson);
+    if (userHistory.indexOf(storage) < 0) {
+      userHistory.push(storage);
     }
-    ProcessConfig.persistParams(configOptions, state.config);
-    // TODO(sjmiles): only works if config is a Highlander
-    WebConfig.config = state.config;
+    config.userHistory = userHistory;
+    config.userHistoryJson = JSON.stringify(userHistory);
   }
   // TODO(sjmiles): make this a ProcessConfig ability(?)
   // support some macros in storage keys
