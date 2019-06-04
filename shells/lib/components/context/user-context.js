@@ -45,12 +45,15 @@ export class UserContext {
       await this.observer.ready;
       // kill some time :(
       await sleep(2000);
-      // resolve context ready
-      this._resolveReady();
     } else {
       console.warn('UserContext: no launcher arc, will look again in 5s');
       setTimeout(() => this.connect(context, storageKey), 5000);
+      // we are about the resolve the context on the next line, even tho
+      // we have no context ... this is for the `new user` case, where
+      // the user has no context data anyway
     }
+    // resolve context ready
+    this._resolveReady();
   }
 }
 
