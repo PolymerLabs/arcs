@@ -390,8 +390,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
           if (promises.length > 0) {
             await Promise.all(promises.map(async a => a.promise));
             promises.forEach(a => {
-                args[a.position] = (args[a.position] as (() => unknown))();
-              });
+              args[a.position] = (args[a.position] as (() => unknown))();
+            });
           }
           const result = this['on' + f](...args);
 
