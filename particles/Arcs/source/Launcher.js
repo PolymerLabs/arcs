@@ -116,6 +116,7 @@ return class extends DomParticle {
   }
   _getInitialState() {
     return {
+      pendingShares: [],
       selected: 1
     };
   }
@@ -144,19 +145,25 @@ return class extends DomParticle {
     if (avatars) {
       const base = arc.href.split('=').pop().split('/').slice(0, -1).join('/');
       const avatar = avatars.find(avatar => avatar.fromKey === base);
-      log(avatar);
       return avatar && avatar.entity.url;
     }
   }
   async composeShares(shares) {
+    log(this.id);
+    log('shares', shares);
     const shared = [];
     const arcs = await this.derefShares(shares);
-    arcs.forEach(arc => {
-     if (arc.description && !arc.deleted) {
-       shared.push(this.renderArc(arc));
-     }
-    });
-    this.setState({shared});
+    // only continue if this is still the current set
+    if (this.props.shared === shares) {
+      log('arcs', arcs);
+      arcs.forEach(arc => {
+      if (arc.description && !arc.deleted) {
+        shared.push(this.renderArc(arc));
+      }
+      });
+      log('shared', shared);
+      this.setState({shared});
+    }
   }
   shouldRender(props, {items}) {
     return Boolean(items);
