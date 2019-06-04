@@ -11,7 +11,7 @@
 
 import {FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
 import {StorageKey} from '../storage-key.js';
-import {Exists} from '../drivers/driver-factory.js';
+import {Exists, DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/chai-web.js';
 
@@ -326,6 +326,10 @@ export class FakeFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     driver.appCache = new MockFirebaseAppCache(Runtime.getRuntime());
     await driver.init();
     return driver;
+  }
+
+  static register() {
+    DriverFactory.register(new FakeFirebaseStorageDriverProvider());
   }
 }
 

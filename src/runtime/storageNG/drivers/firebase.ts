@@ -56,6 +56,20 @@ export class FirebaseAppCache {
   }
 }
 
+// A driver for Firebase.
+//
+// In addition to the version described on the abstract Driver class,
+// this driver maintains a 'tag' on each model it processes. This is
+// necessary to deal with the fact that incoming state updates
+// (which call remoteStateChanged) are not distinguishable in terms
+// of being local or remote; furthermore, when local, they are actually 
+// delivered just *before* the transaction reports success. This means
+// that a given version *might* be the just-about-to-succeed local 
+// update, or it *might* be some completely new state from firebase.
+// A randomly generated tag is used to provide this distinguishing
+// mark.
+//
+// Isn't firebase *wonderful*?
 export class FirebaseDriver<Data> extends Driver<Data> {
   private receiver: ReceiveMethod<Data>;
   appCache: FirebaseAppCache = new FirebaseAppCache(Runtime.getRuntime());
@@ -168,3 +182,21 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     DriverFactory.register(new FirebaseStorageDriverProvider());
   }
 }
+
+// Note that this will automatically register for any production code
+// that uses firebase drivers; but it won't automatically register in 
+// testing.
+//
+// If you want to test using the firebase driver you have three options.
+// (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
+// somewhere at the beginning of your test; if you want to be hermetic,
+// call DriverFactory.clearRegistrationsForTesting() at the end.
+// (2) to use a mock firebase implementation and directly test the driver, 
+// construct your driver using 
+// FakeFirebaseStorageDriverProvider.newDriverForTesting(key, exists);
+// Note that key.databaseURL _must be_ test-url if you do this.
+// (3) you can also register the FakeFirebaseStorageDriverProvider with
+// the DriverFactory by calling FakeFirebaseStorageDriverProvider.register();
+// again your storageKey databaseURLs must be test-url and don't forget
+// to clean up with DriverFactory.clearRegistrationsForTesting().
+FirebaseStorageDriverProvider.register();
