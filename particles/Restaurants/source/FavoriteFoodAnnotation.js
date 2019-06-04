@@ -39,7 +39,7 @@ defineParticle(({DomParticle, html, log}) => {
 <template have-favorite-food>
   <div row>
     <icon icon-favorite>favorite</icon>
-    <span label>They have your favorite food <b>{{food}}</b>.</span>
+    <span label>They have <span>{{owner}}</span>'s favorite food <b>{{food}}</b>.</span>
   </div>
 </template>
 
@@ -49,15 +49,19 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    update({restaurant, foods}, state) {
+    update({restaurant, foods, names}, state) {
+      if (foods && names) {
+        this.findFoodOwnerName(foods[0], names);
+      }
       if (restaurant && foods && !state.foods) {
-        this.findFoodItems(restaurant, foods).then(foods => this.state = {foods});
+        this.findFoodItems(restaurant, foods);
       }
     }
     shouldRender({}, {foods}) {
       return foods && foods.length;
     }
-    render({restaurant}, {foods}) {
+    render({restaurant}, {foods, name}) {
+      foods.forEach(food => food.owner = name);
       return {
         subId: restaurant.id,
         items: {
@@ -66,15 +70,25 @@ defineParticle(({DomParticle, html, log}) => {
         }
       };
     }
+    async findFoodOwnerName(food, names) {
+      if (food) {
+        const results = await this.boxQuery(names, food.fromKey);
+        const foodOwner = results[0];
+        if (foodOwner) {
+          this.state = {name: foodOwner.userName};
+        }
+      }
+    }
     async findFoodItems(restaurant, foodShares) {
-      const foods = await this.derefShares(foodShares);
-      const found = foods
+      const allFoods = await this.derefShares(foodShares);
+      const foods = allFoods
         // select only foods matching this restaurant
         .filter(food => this.hasFood(restaurant.name, food.food))
         // extract POJO
         .map(food => food.dataClone())
         ;
-      return found;
+      this.state = {foods};
+
     }
     hasFood(restaurant, food) {
       // Totally ridiculous heuristic: first letter in name matches first letter of food.

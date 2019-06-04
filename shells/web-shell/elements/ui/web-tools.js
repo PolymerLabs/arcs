@@ -56,9 +56,6 @@ const template = Xen.Template.html`
 
   <div tools open$="{{open}}" on-click="onToolsPanelClick">
     <simple-tabs>
-      <div tab="Arc Info">
-        <pre style="padding: 8px; white-space: pre-wrap;">{{serialization}}</pre>
-      </div>
       <div tab="Store Explorer">
         <simple-tabs on-change="onTabChange">
           <div tab="User Arc" style="padding-top: 8px;">
@@ -74,6 +71,9 @@ const template = Xen.Template.html`
       </div>
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
+      </div>
+      <div tab="Arc Info">
+        <pre style="padding: 8px; white-space: pre-wrap;">{{serialization}}</pre>
       </div>
       <div tab="Plumber's Helpers">
         <button on-click="onReplan">Replan</button>

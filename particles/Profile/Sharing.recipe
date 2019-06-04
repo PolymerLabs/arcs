@@ -3,33 +3,15 @@ import 'UserName.schema'
 import '../Arcs/ArcMeta.schema'
 import '../Profile/FavoriteFood.recipes'
 
-resource PROFILE_avatarResource
+resource EmptyResource
   start
   []
-store PROFILE_avatar of [AvatarShare] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
 
-resource PROFILE_userNameResource
-  start
-  []
-store PROFILE_userName of [UserNameShare] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
+store PROFILE_avatar of [AvatarShare] 'PROFILE_avatar' @0 #profile in EmptyResource
+store PROFILE_userName of [UserNameShare] 'PROFILE_userName' @0 #profile in EmptyResource
+store PROFILE_favoriteFoods of [FavoriteFoodShare] 'PROFILE_favoriteFoods' @0 #profile in EmptyResource
 
-resource PROFILE_favoriteFoodsResource
-  start
-  []
-store PROFILE_favoriteFoods of [FavoriteFoodShare] 'PROFILE_favoriteFoods' @0 #profile in PROFILE_favoriteFoodsResource
-
-resource BOXED_avatarResource
-  start
-  []
-store BOXED_avatar of [AvatarShare] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
-
-resource BOXED_userNameResource
-  start
-  []
-store BOXED_userName of [UserNameShare] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
-
-resource BOXED_arcsResource
-  start
-  []
-store BOXED_arcs of [ArcMetaShare] 'BOXED_arcs' @0 #boxed in BOXED_arcsResource
-
+store BOXED_favoriteFoods of [FavoriteFoodShare] 'BOXED_favoriteFoods' @0 #boxed in EmptyResource
+store BOXED_avatar of [AvatarShare] 'BOXED_avatar' @0 #boxed in EmptyResource
+store BOXED_userName of [UserNameShare] 'BOXED_userName' @0 #boxed in EmptyResource
+store BOXED_arcs of [ArcMetaShare] 'BOXED_arcs' @0 #boxed in EmptyResource
