@@ -33,25 +33,3 @@ resource BOXED_arcsResource
   []
 store BOXED_arcs of [ArcMetaShare] 'BOXED_arcs' @0 #boxed in BOXED_arcsResource
 
-// the below is required to make the arc aware of these stores
-
-//particle Sharing in './source/Sharing.js'
-//  in [AvatarShare] boxedAvatar
-//  in [AvatarShare] profileAvatar
-  //
-//  in [UserNameShare] profileUserName
-//  in [UserNameShare] boxedUserName
-
-//recipe Sharing
-//  use 'PROFILE_avatar' as profileAvatar
-//  use 'BOXED_avatar' as boxedAvatar
-  //
-//  use 'PROFILE_userName' as profileUserName
-//  use 'BOXED_userName' as boxedUserName
-  //
-//  Sharing
-//    profileAvatar = profileAvatar
-//    boxedAvatar = boxedAvatar
-    //
-//    profileUserName = profileUserName
-//    boxedUserName = boxedUserName

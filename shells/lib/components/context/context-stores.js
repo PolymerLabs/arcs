@@ -10,10 +10,6 @@
 
 import {crackStorageKey, simpleNameOfType} from './context-utils.js';
 import {Reference} from '../../../../build/runtime/reference.js';
-//import {Type} from '../../../../build/runtime/type.js';
-import {logFactory} from '../../../../build/platform/log-web.js';
-
-const log = logFactory('ContextStores', 'lime');
 
 const pendingStores = {};
 
@@ -63,9 +59,6 @@ const ContextStoresImpl = class {
     }
     return promise;
   }
-  // getDecoratedId(entity, uid) {
-  //   return `${entity.id}:uid:${uid}`;
-  // }
   async storeEntityWithUid(store, entity, backingStorageKey, uid) {
     this.storeEntityReference(store, entity, backingStorageKey, uid);
   }
