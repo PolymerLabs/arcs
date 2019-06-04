@@ -13,6 +13,7 @@ import {Services} from '../runtime/services.js';
 import {requireTf} from '../platform/tf-web.js';
 import {Consumer, Mapper} from '../runtime/hot.js';
 import {loadImage} from '../platform/image-web.js';
+import {tf} from '../platform/tf-node.js';
 
 const log = logFactory('tfjs-service');
 
@@ -54,16 +55,12 @@ abstract class TfModel implements Services {
   }
 
   public async warmUp(model): Promise<void> {
-
+    throw Error('Not Implemented');
   }
 
   private _getInputShape(model: Inferrable): number[] | number[][] {
     const inputs = model.inputs;
-    if(inputs.length === 1) {
-      return [1];
-    }
-
-    return [1, 2];
+    throw Error('Not Implemented');
   }
 
   public dispose({reference}): void {
@@ -73,7 +70,7 @@ abstract class TfModel implements Services {
 
 
 class GraphModel extends TfModel {
-  public async load(modelUrl, options): Promise<Reference> {
+  public async load(modelUrl, options?): Promise<Reference> {
     const tf = await requireTf();
     const model = await tf.loadGraphModel(modelUrl, options);
     return rmgr.ref(model);
@@ -88,7 +85,7 @@ class GraphModel extends TfModel {
 }
 
 class LayersModel extends TfModel {
-  async load(modelUrl, options): Promise<Reference> {
+  async load(modelUrl, options?): Promise<Reference> {
     const tf = await requireTf();
     const model = await tf.loadLayersModel(modelUrl, options);
     return rmgr.ref(model);
@@ -102,6 +99,29 @@ const imageToTensor = async ({imageUrl}): Promise<Reference> => {
   return rmgr.ref(imgTensor);
 };
 
+const _zip = (a: unknown[], b: unknown[]) => a.length < b.length ? _zip(b, a) : a.map((e, i) => [e, b[i]]);
+
+const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
+  const tf = await requireTf();
+  const input_ = rmgr.deref(input) as tf.Tensor;
+
+  const normOffset = tf.scalar((range[1] - range[0]) / 2 + range[0]);
+
+  const normalized = input_.toFloat()
+    .sub(normOffset)
+    .div(normOffset);
+
+  return rmgr.ref(normalized);
+};
+
+const resizeBilinear = async ({images, size, alignCorners}): Promise<Reference> => {
+  const tf = await requireTf();
+  const images_ = rmgr.deref(images);
+
+  const resized = await tf.resizeBilinar(images_, size, alignCorners);
+  return rmgr.ref(resized);
+};
+
 const tensorToOutput = async (tensor) => {
   return await tensor.array();
 };
@@ -112,4 +132,9 @@ Services.register('layer-model', new LayersModel());
 
 Services.register('preprocess', {
   imageToTensor,
+  normalize,
+});
+
+Services.register('tf-image', {
+  resizeBilinear,
 });
