@@ -25,7 +25,8 @@ defineParticle(({DomParticle, log, html, resolver}) => {
   `;
 
   const url = resolver(`ImageClassifier/../../assets/waltbird.jpg`);
-  const modelUrl = 'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2';
+  const modelUrl = 'https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1';
+  const labelUrl = resolver(`ImageClassifier/../../assets/ImageNetLabels.txt`);
 
   return class extends DomParticle {
     get template() {
@@ -44,12 +45,13 @@ defineParticle(({DomParticle, log, html, resolver}) => {
         state.loaded = true;
         this.loadModel(modelUrl, {fromTFHub: true});
       }
+      this.getModelLabels();
 
       // render proper
       let {response} = state;
       response = response || {label: '<working>', probability: '<working>'};
       return {
-        label: response.label,
+        label: response.className,
         probability: response.probability,
         imageUrl: url
       };
@@ -83,10 +85,22 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       const resized = await this.service({call: 'preprocess.reshape', input: interpolated, newShape: [-1, 224, 224, 3]});
 
       log('Classifying Model...');
-      const response = await this.service({call: 'graph-model.predict', model: this.state.model, inputs: resized});
+      const yHat = await this.service({call: 'graph-model.predict', model: this.state.model, inputs: resized});
 
-      log('Classification result:');
-      log(response);
+      log('Classified. Interpreting results...');
+      await this.getModelLabels();
+      const predicitons = await this.service({call: 'postprocess.getTopKClasses', yHat, labels: this.state.labels, topK: 5});
+      log(predicitons);
+
+      this.setState({response: predicitons[0]});
+    }
+
+    async getModelLabels() {
+      if (!this.state.labels) {
+        const document = await fetch(labelUrl).then((r) => r.text());
+        const labels = document.split('\n');
+        this.setState({labels});
+      }
     }
   };
 
