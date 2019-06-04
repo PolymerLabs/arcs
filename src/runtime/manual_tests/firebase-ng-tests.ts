@@ -1,17 +1,17 @@
-import {FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from "../storageNG/drivers/firebase";
-import {firebase} from '../../platform/firebase-web.js';
-import {Exists} from "../storageNG/drivers/driver-factory";
-import {assert} from '../../platform/chai-web.js';
-
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import {FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from '../storageNG/drivers/firebase.js';
+import {firebase} from '../../platform/firebase-web.js';
+import {Exists} from '../storageNG/drivers/driver-factory.js';
+import {assert} from '../../platform/chai-web.js';
 
 const testUrl = 'arcs-storage-test.firebaseio.com';
 const testKey = 'AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8';
@@ -36,11 +36,13 @@ describe('firebase-ng-driver', function() {
     await resetStorageKeyForTesting(storageKey);
     const driver = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);
     await driver.init();
-    driver.registerReceiver((model: number, version: number) => {});
+    driver.registerReceiver((model: number, version: number) => { assert.fail(); });
     await driver.send(24, 1);
 
     const output = new FirebaseDriver<number>(storageKey, Exists.ShouldExist);
     await output.init();
+
+
     return new Promise((resolve, reject) => {
       output.registerReceiver((model: number, version: number) => {
         assert.equal(model, 24);
@@ -51,7 +53,7 @@ describe('firebase-ng-driver', function() {
     });
   });
 
-  it.only('will reject one of two synchronous writes', async () => {
+  it('will reject one of two synchronous writes', async () => {
     const storageKey = new FirebaseStorageKey(testUrl, testProject, testKey, 'foo');
     await resetStorageKeyForTesting(storageKey);
     const driver1 = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);

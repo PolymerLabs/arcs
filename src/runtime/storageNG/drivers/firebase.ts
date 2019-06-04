@@ -31,7 +31,7 @@ export class FirebaseStorageKey extends StorageKey {
 }
 
 export class FirebaseAppCache {
-  private appCache: Map<FirebaseStorageKey, firebase.app.App>;
+  protected appCache: Map<FirebaseStorageKey, firebase.app.App>;
 
   constructor(runtime: Runtime) {
     this.appCache = runtime.getCacheService().getOrCreateCache<FirebaseStorageKey, firebase.app.App>('firebase-driver');
@@ -48,6 +48,7 @@ export class FirebaseAppCache {
     this.appCache.forEach(app => {
       app.delete();
     });
+    this.appCache.clear();
   }
 
   static stop() {
@@ -57,18 +58,19 @@ export class FirebaseAppCache {
 
 export class FirebaseDriver<Data> extends Driver<Data> {
   private receiver: ReceiveMethod<Data>;
-  private appCache: FirebaseAppCache;
+  appCache: FirebaseAppCache = new FirebaseAppCache(Runtime.getRuntime());
+
   storageKey: FirebaseStorageKey;
   private reference: firebase.database.Reference;
   private seenVersion = 0;
+  private seenTag = 0;
+  private nextTag = null;
   private pendingModel: Data = null;
   private pendingVersion: number;
 
   async init() {
-    this.appCache = new FirebaseAppCache(Runtime.getRuntime());
-
     const app = this.appCache.getApp(this.storageKey);
-    const reference = firebase.database(app).ref(this.storageKey.location);
+    const reference = app.database().ref(this.storageKey.location);
     const currentSnapshot = await reference.once('value');
 
     if (this.exists === Exists.ShouldCreate && currentSnapshot.exists()) {
@@ -83,7 +85,7 @@ export class FirebaseDriver<Data> extends Driver<Data> {
         if (data !== null) {
           return undefined;
         }
-        return {version: 0};
+        return {version: 0, tag: 0};
       });
     } else {
       this.pendingModel = currentSnapshot.val().model || null;
@@ -105,27 +107,34 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   }
   
   async send(model: Data, version: number) {
-    let completed = false;
-    await this.reference.transaction(data => {
-      if (data && data.version !== version - 1) {
-        return undefined;
+    this.nextTag = Math.random();
+    const result = await this.reference.transaction(data => {
+      if (data) {
+        if (data.version !== version - 1) {
+          return undefined;
+        }
+        if (data.tag !== this.seenTag) {
+          return undefined;
+        }
       }
-      return {version, model};
-    }, (err: Error, complete: boolean) => completed = complete);
-    // If this write was successful, we don't want to send events based
-    // on this write back to the store.
-    if (completed) {
-      this.seenVersion = version;
-    }
-
-    return completed;
+      return {version, model, tag: this.nextTag};
+    }, (err: Error, complete: boolean) => {
+      if (complete) {
+        this.seenTag = this.nextTag;
+        this.nextTag = null;
+      }
+    }, false);
+    return result.committed;
   }
 
   remoteStateChanged(dataSnapshot: firebase.database.DataSnapshot) {
-    const {model, version} = dataSnapshot.val();
+    const {model, version, tag} = dataSnapshot.val();
     if (version > this.seenVersion) {
       this.seenVersion = version;
-      this.receiver(model, version);
+      this.seenTag = tag;
+      if (tag !== this.nextTag) {
+        this.receiver(model, version);
+      }
     }
   }
 
