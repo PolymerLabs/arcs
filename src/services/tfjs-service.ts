@@ -99,13 +99,17 @@ const imageToTensor = async ({imageUrl}): Promise<Reference> => {
   return rmgr.ref(imgTensor);
 };
 
-const _zip = (a: unknown[], b: unknown[]) => a.length < b.length ? _zip(b, a) : a.map((e, i) => [e, b[i]]);
+const _zip = (a: unknown[], b: unknown[]) => b.length < a.length ? _zip(b, a) : a.map((e, i) => [e, b[i]]);
 
 const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
   const tf = await requireTf();
   const input_ = rmgr.deref(input) as tf.Tensor;
 
-  const normOffset = tf.scalar((range[1] - range[0]) / 2 + range[0]);
+  const max_ = Math.max(...range);
+  const min_ = Math.min(...range);
+  const mid = (max_ - min_) / 2 + min_;
+
+  const normOffset = tf.scalar(mid);
 
   const normalized = input_.toFloat()
     .sub(normOffset)
