@@ -629,12 +629,19 @@ function runTests(args: string[]): boolean {
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
 function watch(args: string[]): boolean {
+  const options = minimist(args, {
+    string: ['dir'],
+    default: {dir: '.'},
+    stopEarly: true,  // Allow options to be used in the command; 'sigh watch --dir src test -g foo'
+  });
+
   if (chokidar === null) {
     console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
     return false;
   }
-  const command = args.shift() || 'webpack';
-  const watcher = chokidar.watch('.', {
+
+  const command = options._.shift() || 'webpack';
+  const watcher = chokidar.watch(options.dir, {
     ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/)`),
     persistent: true
   });
@@ -649,7 +656,7 @@ function watch(args: string[]): boolean {
     timeout = setTimeout(() => {
       console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      runSteps(command, args);
+      runSteps(command, options._);
       timeout = null;
     }, 500);
   });
