@@ -40,9 +40,9 @@ interface LoadOptions {
 
 abstract class TfModel implements Services {
 
-  public abstract async load(modelUrl, options: LoadOptions): Promise<Reference>;
+  public abstract async load({modelUrl, options}): Promise<Reference>;
 
-  public async predict(model: Reference, inputs: Reference, config): Promise<number[]> {
+  public async predict({model, inputs, config}): Promise<number[]> {
     const tf = await requireTf();
     log('Referencing model and input...');
     const model_  = rmgr.deref(model) as Inferrable;
@@ -54,11 +54,11 @@ abstract class TfModel implements Services {
     return await tensorToOutput(yHat);
   }
 
-  public async warmUp(model): Promise<void> {
+  public async warmUp({model}): Promise<void> {
     throw Error('Not Implemented');
   }
 
-  private _getInputShape(model: Inferrable): number[] | number[][] {
+  private _getInputShape({model}): number[] | number[][] {
     const inputs = model.inputs;
     throw Error('Not Implemented');
   }
@@ -70,7 +70,7 @@ abstract class TfModel implements Services {
 
 
 class GraphModel extends TfModel {
-  public async load(modelUrl, options?): Promise<Reference> {
+  public async load({modelUrl, options}): Promise<Reference> {
     const tf = await requireTf();
     const model = await tf.loadGraphModel(modelUrl, options);
     return rmgr.ref(model);
@@ -85,7 +85,7 @@ class GraphModel extends TfModel {
 }
 
 class LayersModel extends TfModel {
-  async load(modelUrl, options?): Promise<Reference> {
+  async load({modelUrl, options}): Promise<Reference> {
     const tf = await requireTf();
     const model = await tf.loadLayersModel(modelUrl, options);
     return rmgr.ref(model);
@@ -113,16 +113,30 @@ const normalize = async ({input, range=[0, 255]}): Promise<Reference> => {
 
   const normalized = input_.toFloat()
     .sub(normOffset)
-    .div(normOffset);
+    .div(normOffset) as tf.Tensor3D;
 
   return rmgr.ref(normalized);
+};
+
+const reshape = async ({input, newShape, shape}) => {
+  const tf = await requireTf();
+  const input_ = rmgr.deref(input);
+  const resized = await tf.reshape(input_, newShape || shape);
+  return rmgr.ref(resized);
+};
+
+const expandDims = async ({input, x, axis = 0}) => {
+  const tf = await requireTf();
+  const input_ = rmgr.deref(input || x);
+  const expanded = tf.expandDims(input_, axis);
+  return rmgr.ref(expanded);
 };
 
 const resizeBilinear = async ({images, size, alignCorners}): Promise<Reference> => {
   const tf = await requireTf();
   const images_ = rmgr.deref(images);
 
-  const resized = await tf.resizeBilinar(images_, size, alignCorners);
+  const resized = await tf.image.resizeBilinear(images_, size, alignCorners);
   return rmgr.ref(resized);
 };
 
@@ -136,6 +150,8 @@ Services.register('layer-model', new LayersModel());
 
 Services.register('preprocess', {
   normalize,
+  reshape,
+  expandDims,
 });
 
 Services.register('tf-image', {

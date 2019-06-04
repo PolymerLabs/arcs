@@ -42,10 +42,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       // formerly update
       if (!state.loaded) {
         state.loaded = true;
-        this.loadModel(modelUrl, {fromTFHub: true})
-          .then(() => {
-            this.classify(url);
-          });
+        this.loadModel(modelUrl, {fromTFHub: true});
       }
 
       // render proper
@@ -68,21 +65,25 @@ defineParticle(({DomParticle, log, html, resolver}) => {
       const model = await this.service({call: 'graph-model.load', modelUrl, options});
       log('Model Loaded');
       this.setState({model});
+
+      this.classify(url);
     }
 
     async classify(imageUrl) {
-      if (!this.state.model) {
+      log(this.state.model);
+      if (!this.state.model && this.state.model !== 0) {
         log('Model needs to be loaded!');
         return;
       }
 
       log('Preprocessing...');
       const imgReference = await this.service({call: 'tf-image.imageToTensor', imageUrl});
-      const normalized = await this.service({call: 'preprocess.normalize', imgReference, range: [0, 255]});
-      const resized = await this.service({call: 'tf-image.resizeBilinear', normalized, size: [224, 244, 3]});
+      const normalized = await this.service({call: 'preprocess.normalize', input: imgReference, range: [0, 255]});
+      const interpolated = await this.service({call: 'tf-image.resizeBilinear', images: normalized, size: [224, 224], alignCorners: true});
+      const resized = await this.service({call: 'preprocess.reshape', input: interpolated, newShape: [-1, 224, 224, 3]});
 
       log('Classifying Model...');
-      const response = await this.service({call: 'graph-model.predict', model: this.state.model, input: resized});
+      const response = await this.service({call: 'graph-model.predict', model: this.state.model, inputs: resized});
 
       log('Classification result:');
       log(response);
