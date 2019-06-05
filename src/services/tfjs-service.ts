@@ -11,7 +11,6 @@ import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {requireTf} from '../platform/tf-web.js';
-import {Consumer, Mapper} from '../runtime/hot.js';
 import {loadImage} from '../platform/image-web.js';
 import {tf} from '../platform/tf-node.js';
 
@@ -21,21 +20,19 @@ interface Disposable {
   dispose(): void;
 }
 
+/**
+ * @see `TensorInfo` https://github.com/tensorflow/tfjs-core/blob/master/src/tensor_types.ts
+ */
 interface Inferrable {
-  readonly inputs: object[]; // @see `TensorInfo` https://github.com/tensorflow/tfjs-core/blob/master/src/tensor_types.ts
+  readonly inputs: object[];
   predict(input, options: object): Promise<unknown>;
 }
 
-/**
- * @see https://github.com/tensorflow/tfjs-core/blob/5be798096108e9186cf37537e6f1b69185223024/src/io/types.ts#L358
- */
-interface LoadOptions {
-  requestInit?: RequestInit;
-  onProgress?: Consumer<number>;
-  fetchFunc?: Mapper<string| Request, Promise<Response>>;
-  strict?: boolean;
-  weightPathPrefix?: string;
-  fromTFHub?: boolean;
+type TfTensor = tf.Tensor | tf.Tensor[] | tf.NamedTensorMap;
+
+export interface ClassificationPrediction {
+  className: string;
+  probability: number;
 }
 
 abstract class TfModel implements Services {
@@ -44,23 +41,31 @@ abstract class TfModel implements Services {
 
   public async predict({model, inputs, config}): Promise<Reference> {
     const tf = await requireTf();
+
     log('Referencing model and input...');
-    const model_  = rmgr.deref(model) as Inferrable;
-    const inputs_ = rmgr.deref(inputs);
+    const model_  = rmgr.deref(model) as tf.InferenceModel;
+    const inputs_ = rmgr.deref(inputs) as TfTensor;
 
     log('Predicting');
-    const yHat = await model_.predict(inputs_, config);
+    const yHat = await model_.predict(inputs_, config) as TfTensor;
 
     return rmgr.ref(yHat);
   }
 
   public async warmUp({model}): Promise<void> {
-    throw Error('Not Implemented');
-  }
+    log('Warming up model...');
+    const tf = await requireTf();
+    const model_  = rmgr.deref(model) as tf.InferenceModel;
 
-  private _getInputShape({model}): number[] | number[][] {
-    const inputs = model.inputs;
-    throw Error('Not Implemented');
+    const zeros = model_.inputs
+      .map(i => i.shape ? i.shape : [])
+      .map((sh) => sh.map(x => Math.abs(x)))
+      .map((sh) => tf.zeros(sh || [1]));
+
+    const zeroInput = zeros.length === 1 ? zeros[0] : zeros;
+
+    await model_.predict(zeroInput, {});
+    log('Model warm.');
   }
 
   public dispose({reference}): void {
@@ -90,6 +95,7 @@ class LayersModel extends TfModel {
     const model = await tf.loadLayersModel(modelUrl, options);
     return rmgr.ref(model);
   }
+  // train(...)
 }
 
 const imageToTensor = async ({imageUrl}): Promise<Reference> => {
@@ -195,7 +201,4 @@ Services.register('tf-image', {
   imageToTensor,
 });
 
-export interface ClassificationPrediction {
-  className: string;
-  probability: number;
-}
+

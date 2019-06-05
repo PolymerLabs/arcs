@@ -65,6 +65,7 @@ defineParticle(({DomParticle, log, html, resolver}) => {
     async loadModel(modelUrl, options) {
       log('Loading Model...');
       const model = await this.service({call: 'graph-model.load', modelUrl, options});
+      await this.service({call: 'graph-model.warmUp', model});
       log('Model Loaded');
       this.setState({model});
 
