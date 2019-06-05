@@ -1,0 +1,8 @@
+schema Prediction
+  Number confidence
+
+schema Classification extends Prediction
+  Text label
+
+schema Regression extends Prediction
+  Number value

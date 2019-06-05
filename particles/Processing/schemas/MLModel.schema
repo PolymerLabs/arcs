@@ -1,0 +1,6 @@
+schema MlModel
+  URL location
+
+schema ClassificationModel extends MlModel
+  URL labels
+
