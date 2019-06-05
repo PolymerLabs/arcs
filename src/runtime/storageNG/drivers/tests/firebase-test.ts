@@ -13,6 +13,7 @@ import {FirebaseStorageKey, FirebaseDriver} from '../firebase.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {Exists} from '../driver-factory.js';
 import {FakeFirebaseStorageDriverProvider} from '../../testing/mock-firebase.js';
+import {assertThrowsAsync} from '../../../testing/test-util.js';
 
 describe('Firebase Driver', async () => {
 
@@ -33,24 +34,16 @@ describe('Firebase Driver', async () => {
 
   it(`can't be instantiated as ShouldExist if the storage location doesn't yet exist`, async () => {
     const firebaseKey = new FirebaseStorageKey('test-url', 'test-project', 'test-key', 'test-location');
-    try {
-      await FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldExist);
-      assert.fail('should throw exception');
-    } catch (e) {
-      assert.equal(e.toString(), `Error: requested connection to memory location [object Object] can't proceed as location doesn't exist`);
-    }
+    await assertThrowsAsync(
+      () => FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldExist), `location doesn't exist`);
   });
 
   it(`can't be instantiated as ShouldCreate if the storage location already exists`, async () => {
     const firebaseKey = new FirebaseStorageKey('test-url', 'test-project', 'test-key', 'test-location');
     const firebase1 = await FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
     
-    try {
-      await FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
-      assert.fail('should throw exception');
-    } catch (e) {
-      assert.equal(e.toString(),  `Error: requested creation of memory location [object Object] can't proceed as location already exists`);
-    }
+    await assertThrowsAsync(
+      () => FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate), `location already exists`);
   });
 
   it('can be instantiated either as a creation or as a connection using MayExist', async () => {
