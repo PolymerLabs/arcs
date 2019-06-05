@@ -14,7 +14,7 @@ export const jsonrpc = '2.0';
 
 export interface AmlServiceOptions {
   log: string;       // The logging service to use (either 'console' or 'null').
-  port: number;      // The port number to use for tcp/pi communication.
+  port: number;      // The port number to use for tcp/ip communication.
   help: boolean;     // Print the help information and do not run the server.
   version: boolean;  // Print the version information and do not run the server.
   stdio: boolean;    // Use stdio (rather than a tcp/ip port).
@@ -26,30 +26,20 @@ export interface AmlServiceContext {
   options: AmlServiceOptions;
 }
 
+// tslint:disable: no-any
 export interface Logger {
-  // tslint:disable-next-line: no-any
   log(...values: any[]): void;
-  // tslint:disable-next-line: no-any
   info(...values: any[]): void;
-  // tslint:disable-next-line: no-any
   warn(...values: any[]): void;
-  // tslint:disable-next-line: no-any
   error(...values: any[]): void;
 }
 
+// tslint:disable: no-any
 export class DevNullLogger implements Logger {
-  // tslint:disable-next-line: no-any
-  public log(...values: any[]): void {
-  }
-  // tslint:disable-next-line: no-any
-  public info(...values: any[]): void {
-  }
-  // tslint:disable-next-line: no-any
-  public warn(...values: any[]): void {
-  }
-  // tslint:disable-next-line: no-any
-  public error(...values: any[]): void {
-  }
+  public log(..._values: any[]): void {}
+  public info(..._values: any[]): void {}
+  public warn(..._values: any[]): void {}
+  public error(..._values: any[]): void {}
 }
 
 export function normalizeUri(uri: string): string {
@@ -89,17 +79,3 @@ export function uri2path(uri: string): string|undefined {
 export function camelCase(str: string): string {
   return str.replace(/\/(.?)/g, (_, s) => s.toUpperCase());
 }
-
-export const alphaNumerics: string[] = (() => {
-  const s = [];
-  for (let i = 'a'.charCodeAt(0); i <= 'z'.charCodeAt(0); i++) {
-    s.push(String.fromCharCode(i));
-  }
-  for (let i = 'A'.charCodeAt(0); i <= 'Z'.charCodeAt(0); i++) {
-    s.push(String.fromCharCode(i));
-  }
-  for (let i = '0'.charCodeAt(0); i <= '9'.charCodeAt(0); i++) {
-    s.push(String.fromCharCode(i));
-  }
-  return s;
-})();
