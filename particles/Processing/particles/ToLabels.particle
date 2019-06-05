@@ -2,7 +2,7 @@ import '../schemas/MlResource.schema'
 import '../schemas/MlModel.schema'
 import '../schemas/Inference.schema'
 
-particle Classifier in './js/ToLabels.js'
+particle ToLabels in './js/ToLabels.js'
   consume root
   in MlResource yHat
   in URL labels
