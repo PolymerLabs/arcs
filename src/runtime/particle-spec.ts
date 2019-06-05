@@ -193,8 +193,8 @@ export class ParticleSpec {
       });
     });
 
-    this.trustClaims = this._parseTrustClaims(model.trustClaims);
-    this.trustChecks = this._parseTrustChecks(model.trustChecks);
+    this.trustClaims = this.validateTrustClaims(model.trustClaims);
+    this.trustChecks = this.validateTrustChecks(model.trustChecks);
   }
 
   createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>): HandleConnectionSpec {
@@ -367,7 +367,7 @@ export class ParticleSpec {
     return this.toString();
   }
 
-  private _parseTrustClaims(claims: SerializedParticleTrustClaimSpec[]): Map<string, string> {
+  private validateTrustClaims(claims: SerializedParticleTrustClaimSpec[]): Map<string, string> {
     const results: Map<string, string> = new Map();
     if (claims) {
       claims.forEach(claim => {
@@ -380,7 +380,7 @@ export class ParticleSpec {
     return results;
   }
 
-  private _parseTrustChecks(checks?: SerializedParticleTrustCheckSpec[]): Map<string, string> {
+  private validateTrustChecks(checks?: SerializedParticleTrustCheckSpec[]): Map<string, string> {
     const results: Map<string, string> = new Map();
     if (checks) {
       checks.forEach(check => {
