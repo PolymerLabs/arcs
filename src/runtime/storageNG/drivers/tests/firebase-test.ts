@@ -44,6 +44,7 @@ describe('Firebase Driver', async () => {
   it(`can't be instantiated as ShouldCreate if the storage location already exists`, async () => {
     const firebaseKey = new FirebaseStorageKey('test-url', 'test-project', 'test-key', 'test-location');
     const firebase1 = await FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
+    
     try {
       await FakeFirebaseStorageDriverProvider.newDriverForTesting(firebaseKey, Exists.ShouldCreate);
       assert.fail('should throw exception');
@@ -69,7 +70,7 @@ describe('Firebase Driver', async () => {
     const recvQueue2: {model: number, version: number}[] = [];
     firebase2.registerReceiver((model: number, version: number) => recvQueue2.push({model, version}));
 
-    assert.equal(recvQueue1.length, 0);
+    assert.isEmpty(recvQueue1);
     assert.deepEqual(recvQueue2, [{model: 3, version: 1}]);
   });
 
@@ -77,11 +78,11 @@ describe('Firebase Driver', async () => {
     const firebaseKey = new FirebaseStorageKey('test-url', 'test-project', 'test-key', 'test-location');
     const firebase1 = await FakeFirebaseStorageDriverProvider.newDriverForTesting<number>(firebaseKey, Exists.ShouldCreate);
 
-    assert.equal(true, await firebase1.send(3, 1));
-    assert.equal(false, await firebase1.send(4, 0));
-    assert.equal(false, await firebase1.send(4, 1));
-    assert.equal(false, await firebase1.send(4, 3));
-    assert.equal(true, await firebase1.send(4, 2));
+    assert.isTrue(await firebase1.send(3, 1));
+    assert.isFalse(await firebase1.send(4, 0));
+    assert.isFalse(await firebase1.send(4, 1));
+    assert.isFalse(await firebase1.send(4, 3));
+    assert.isTrue(await firebase1.send(4, 2));
   });
 
   it('will only accept a given version from one connected driver', async () => {
@@ -97,7 +98,7 @@ describe('Firebase Driver', async () => {
     const promise2 = firebase2.send(4, 1);
 
     const results = await Promise.all([promise1, promise2]);
-    assert.deepEqual([true, false], results);
+    assert.deepEqual(results, [true, false]);
     assert.equal(recvQueue1.length, 0);
     assert.deepEqual(recvQueue2, [{model: 3, version: 1}]);
   });
