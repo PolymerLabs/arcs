@@ -18,7 +18,7 @@ import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
 
-async function assertRecipeParses(input, result) {
+async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
   //result = result.replace(new Regex(`()^|\n)${result.match(/^ */)[0]}`), '$1'),
   const target = (await Manifest.parse(result)).recipes[0].toString();
@@ -49,7 +49,7 @@ describe('manifest', () => {
           someParam -> #tag
         description \`hello world\`
           handle0 \`best handle\``);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const particle = manifest.particles[0];
       assert.equal('SomeParticle', particle.name);
       assert.deepEqual(['work'], particle.verbs);
@@ -68,7 +68,7 @@ describe('manifest', () => {
       assert.lengthOf(recipe.patterns, 1);
       assert.equal(recipe.patterns[0], 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best handle');
-      const type = recipe.handleConnections[0]._resolvedType;
+      const type = recipe.handleConnections[0]['_resolvedType'];
       assert.lengthOf(Object.keys(manifest.schemas), 1);
       const schema = Object.values(manifest.schemas)[0] as Schema;
       assert.lengthOf(Object.keys(schema.description), 3);
@@ -232,7 +232,7 @@ ${particleStr1}
     const manifest = await Manifest.parse(`
       schema Bar
         Text value`);
-    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -241,7 +241,7 @@ ${particleStr1}
       schema Foo
         Text value
       schema Bar extends Foo`);
-    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -313,8 +313,8 @@ ${particleStr1}
     const verify = (manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
-      assert.lengthOf(recipe._connectionConstraints, 1);
-      const constraint = recipe._connectionConstraints[0];
+      assert.lengthOf(recipe.connectionConstraints, 1);
+      const constraint = recipe.connectionConstraints[0];
       assert.equal(constraint.from.particle.name, 'A');
       assert.equal(constraint.from.connection, 'a');
       assert.equal(constraint.to.handle.localName, 'localThing');
@@ -413,7 +413,7 @@ ${particleStr1}
         out [Someother] someOthers
       recipe
         Thing`);
-    const verify = (manifest) => assert(manifest.recipes[0].particles[0].spec);
+    const verify = (manifest: Manifest) => assert(manifest.recipes[0].particles[0].spec);
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -503,7 +503,7 @@ ${particleStr1}
         (Text or URL) u
         Text test
         (Number, Number, Boolean) t`);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.equal(opt.u.kind, 'schema-union');
       verifyPrimitiveType(opt.u.types[0], 'Text');
@@ -546,7 +546,7 @@ ${particleStr1}
           consume mySlot as slot0
           consume oneMoreSlot as slot1
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
       recipe.normalize();
@@ -593,7 +593,7 @@ ${particleStr1}
           mySlot consume slot0
           oneMoreSlot consume slot1
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
       recipe.normalize();
@@ -1315,7 +1315,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   schema Product
   store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
     description \`Claire's wishlist\``, {loader});
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.stores, 1);
       assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };

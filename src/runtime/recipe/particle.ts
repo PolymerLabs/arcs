@@ -229,7 +229,7 @@ export class Particle {
   set verbs(verbs) { this._verbs = verbs; }
   set tags(tags) { this._tags = tags; }
 
-  addUnnamedConnection() {
+  addUnnamedConnection(): HandleConnection {
     const connection = new HandleConnection(undefined, this);
     this._unnamedConnections.push(connection);
     return connection;
