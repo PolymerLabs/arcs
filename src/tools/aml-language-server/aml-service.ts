@@ -9,7 +9,7 @@
  */
 
 import {ErrorCodes, Message, StreamMessageReader as VSCodeStreamMessageReader, StreamMessageWriter as VSCodeStreamMessageWriter} from 'vscode-jsonrpc';
-import {isNotificationMessage, isRequestMessage, isResponseMessage, NotificationMessage, RequestMessage, ResponseMessage} from 'vscode-jsonrpc/lib/messages';
+import {isNotificationMessage, isRequestMessage, isResponseMessage} from 'vscode-jsonrpc/lib/messages';
 
 import {handlers} from './handlers.js';
 import {jsonrpc, Logger, AmlServiceOptions, AmlServiceContext, camelCase} from './util.js';
@@ -18,8 +18,8 @@ export class AmlService {
   reader: VSCodeStreamMessageReader;
   writer: VSCodeStreamMessageWriter;
   context: AmlServiceContext;  // The state.
-  initialized: boolean = false;  // error / onclose should trigger shutdown message.
-  streaming: boolean = false;    // Client supports partialResult.
+  initialized = false;  // error / onclose should trigger shutdown message.
+  streaming = false;    // Client supports partialResult.
 
   constructor(
       reader: VSCodeStreamMessageReader,
@@ -61,9 +61,7 @@ export class AmlService {
     switch (method) {
       case 'initialize':
         this.initialized = true;
-        this.streaming = !!(message.params as {
-                             capabilities: {streaming: boolean}
-                           }).capabilities.streaming;
+        this.streaming = message.params.capabilities.streaming;
         break;
       case 'shutdown':
         this.initialized = false; // TODO(cypher1): Cleanup.

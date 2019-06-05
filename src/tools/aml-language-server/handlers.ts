@@ -9,7 +9,7 @@
  */
 
 import {NotificationMessage} from 'vscode-jsonrpc/lib/messages';
-import { Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, PublishDiagnosticsParams, Range, TextDocumentSyncKind} from 'vscode-languageserver';
+import {Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, PublishDiagnosticsParams, Range, TextDocumentSyncKind} from 'vscode-languageserver';
 
 import {Dictionary} from '../../runtime/hot.js';
 import {Manifest, ManifestError} from '../../runtime/manifest.js';
@@ -32,28 +32,28 @@ export const handlers: Dictionary<Handler> = {
       capabilities: {
         // Tell the client that the server works in FULL text document sync mode
         textDocumentSync: TextDocumentSyncKind.Full,
-        hoverProvider: true,
+        hoverProvider: false,
         signatureHelpProvider: {
           triggerCharacters: ['(', ','],
         },
-        definitionProvider: true,
-        typeDefinitionProvider: true,
-        referencesProvider: true,
-        documentSymbolProvider: true,
-        workspaceSymbolProvider: true,
-        xworkspaceReferencesProvider: true,
-        xdefinitionProvider: true,
-        xdependenciesProvider: true,
+        definitionProvider: false, // TODO(cypher1): Provide definitions.
+        typeDefinitionProvider: false,
+        referencesProvider: false,
+        documentSymbolProvider: false,
+        workspaceSymbolProvider: false,
+        xworkspaceReferencesProvider: false,
+        xdefinitionProvider: false,
+        xdependenciesProvider: false,
         completionProvider: {
-          resolveProvider: true,
-          triggerCharacters: ['.'],
+          resolveProvider: false,
+          triggerCharacters: ['.'], // TODO(cypher1): Provide Completing (on all).
         },
-        codeActionProvider: true,
-        renameProvider: true,
+        codeActionProvider: false,
+        renameProvider: false,
         executeCommandProvider: {
           commands: [],
         },
-        xpackagesProvider: true,
+        xpackagesProvider: false,
       }
     };
     return result;
