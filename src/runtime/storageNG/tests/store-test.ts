@@ -40,6 +40,10 @@ class MockStorageKey extends StorageKey {
   constructor() {
     super('testing');
   }
+
+  toString() {
+    return `${this.protocol}://`;
+  }
 }
 
 let testKey: StorageKey;

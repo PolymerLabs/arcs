@@ -14,4 +14,6 @@ export abstract class StorageKey {
   constructor(protocol: string) {
     this.protocol = protocol;
   }
+
+  abstract toString(): string;
 }

@@ -304,11 +304,12 @@ class MockFirebaseApp implements firebase.app.App {
 
 class MockFirebaseAppCache extends FirebaseAppCache {
   getApp(key: FirebaseStorageKey) {
-    assert.equal(key.databaseURL, 'test-url');
-    if (!this.appCache.has(key)) {
-      this.appCache.set(key, new MockFirebaseApp(key));
+    assert.equal(key.domain, 'test.domain');
+    const keyAsString = key.toString();
+    if (!this.appCache.has(keyAsString)) {
+      this.appCache.set(keyAsString, new MockFirebaseApp(key));
     }
-    return this.appCache.get(key);
+    return this.appCache.get(keyAsString);
   }
 }
 

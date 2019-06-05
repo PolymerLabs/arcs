@@ -42,7 +42,7 @@ describe('Volatile + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ], id: 1});
 
-    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey);
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore['localModel'].getData());
     assert.equal(volatileEntry.version, 3);
   });
@@ -79,7 +79,7 @@ describe('Volatile + Store Integration', async () => {
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.equal(results.filter(a => !a).length, 0);
     
-    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey);
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.toString());
     assert.deepEqual(volatileEntry.data, activeStore1['localModel'].getData());
     assert.equal(volatileEntry.version, 5);
   });
