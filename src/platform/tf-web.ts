@@ -17,7 +17,7 @@ const TF_VERSION = '1.1.2';
 export const requireTf = async () => {
 
   // Assume tf.data is not required for most dependencies
-  if (!window['tf'] || !window['version_core'] || !window['version_layers'] || !window['version_converter']) {
+  if (!window['tf'] || !window['tf']['version_core'] || !window['tf']['version_layers'] || !window['tf']['version_converter']) {
     await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`);
   }
   return window['tf'];
