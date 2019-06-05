@@ -34,7 +34,7 @@ class MockStorageDriverProvider implements StorageDriverProvider {
   willSupport(storageKey: StorageKey) {
     return true;
   }
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  async driver<Data>(storageKey: StorageKey, exists: Exists) {
     return new MockDriver<Data>(storageKey, exists);
   }
 }
@@ -68,7 +68,7 @@ describe('Store Flow', async () => {
   // Tests a model resync request happening synchronously with model updates from the driver
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
@@ -136,7 +136,7 @@ describe('Store Flow', async () => {
     this.timeout(5000);
 
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
 
@@ -188,16 +188,16 @@ describe('Store Flow', async () => {
 
   it('applies operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register();
       const storageKey = new VolatileStorageKey('unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-      const activeStore1 = store1.activate();
-
+      const activeStore1 = await store1.activate();
+  
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
-      const activeStore2 = store2.activate();
+      const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });
 
@@ -237,16 +237,16 @@ describe('Store Flow', async () => {
 
   it('applies model against operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register();
       const storageKey = new VolatileStorageKey('unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-      const activeStore1 = store1.activate();
-
+      const activeStore1 = await store1.activate();
+  
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
-      const activeStore2 = store2.activate();
+      const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });
 
