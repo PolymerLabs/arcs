@@ -90,10 +90,10 @@ defineParticle(({DomParticle, log, html, resolver}) => {
 
       log('Classified. Interpreting results...');
       await this.getModelLabels();
-      const predicitons = await this.service({call: 'postprocess.getTopKClasses', yHat, labels: this.state.labels, topK: 5});
-      log(predicitons);
+      const predictions = await this.service({call: 'postprocess.getTopKClasses', yHat, labels: this.state.labels, topK: 5});
+      log(predictions);
 
-      this.setState({response: predicitons[0]});
+      this.setState({response: predictions[0]});
     }
 
     async getModelLabels() {
