@@ -52,6 +52,12 @@ abstract class TfModel implements Services {
     return rmgr.ref(yHat);
   }
 
+  /**
+   * Load the model weights eagerly, so subsequent calls to `predict` will be fast.
+   *
+   * @param model Reference to a tensorflow model.
+   * @see https://www.tensorflow.org/js/guide/platform_environment#shader_compilation_texture_uploads
+   */
   public async warmUp({model}): Promise<void> {
     log('Warming up model...');
     const tf = await requireTf();
@@ -64,7 +70,9 @@ abstract class TfModel implements Services {
 
     const zeroInput = zeros.length === 1 ? zeros[0] : zeros;
 
-    await model_.predict(zeroInput, {});
+    const result = await model_.predict(zeroInput, {}) as tf.Tensor;
+    result.dispose();
+
     log('Model warm.');
   }
 
