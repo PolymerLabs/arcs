@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle, log}) => {
 
-  const handleName = 'logits';
+  const handleName = 'yHat';
 
   return class extends DomParticle {
     willReceiveProps({tensor, model}, state) {

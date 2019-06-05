@@ -4,7 +4,7 @@ import '../schemas/Inference.schema'
 
 particle Classifier in './js/ToLabels.js'
   consume root
-  in MlResource logits
+  in MlResource yHat
   in URL labels
   in Number k
   out [Classification] predictions
