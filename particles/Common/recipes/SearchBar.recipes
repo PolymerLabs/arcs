@@ -1,0 +1,12 @@
+import '../SearchBar.particle'
+import '../StyleSheet.particle'
+
+recipe SearchBar
+  create #volatile as query
+  slot #toproot as parent
+  StyleSheet
+    consume parent as parent
+      provide container as container
+  SearchBar
+    query = query
+    consume toproot as container

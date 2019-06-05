@@ -34,7 +34,7 @@ class MockStorageDriverProvider implements StorageDriverProvider {
   willSupport(storageKey: StorageKey) {
     return true;
   }
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  async driver<Data>(storageKey: StorageKey, exists: Exists) {
     return new MockDriver<Data>(storageKey, exists);
   }
 }
@@ -42,6 +42,10 @@ class MockStorageDriverProvider implements StorageDriverProvider {
 class MockStorageKey extends StorageKey {
   constructor() {
     super('testing');
+  }
+
+  toString() {
+    return `${this.protocol}://`;
   }
 }
 
@@ -54,8 +58,8 @@ const incOp = (actor: string, from: number): ProxyMessage<CRDTCountTypeRecord> =
     id: 1
   });
 
-const makeSimpleModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData => 
-  ({values: new Map([['me', meCount], ['them', themCount]]), 
+const makeSimpleModel = (meCount: number, themCount: number, meVersion: number, themVersion: number): CountData =>
+  ({values: new Map([['me', meCount], ['them', themCount]]),
     version: new Map([['me', meVersion], ['them', themVersion]])});
 
 const makeModel = (countDict: Dictionary<number>, versionDict: Dictionary<number>): CountData =>
@@ -68,29 +72,29 @@ describe('Store Flow', async () => {
   // Tests a model resync request happening synchronously with model updates from the driver
   it('services a model request and applies 2 models', async () => {
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
-    
+
       const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
-    });    
+    });
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 1, 
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, 
       {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 1, {type: ExpectedResponse.Void}); 
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
 
-    const send = sequenceTest.registerOutput('driver.send', 
+    const send = sequenceTest.registerOutput('driver.send',
       {
         type: ExpectedResponse.Defer,
         default: true,
       }, SequenceOutput.Replace);
-      
+
     const idVar = sequenceTest.registerVariable(-1);
     const isSyncRequest = sequenceTest.registerVariable(false);
     const model = sequenceTest.registerVariable(() => new CRDTCount(), true);
-  
+
     const on = sequenceTest.registerOutput('on',
       {
         type: ExpectedResponse.Constant,
@@ -112,10 +116,10 @@ describe('Store Flow', async () => {
           }
         }
       }, SequenceOutput.Register, idVar);
-      
-    const storageProxyChanges: {inputFn: () => [ProxyMessage<CRDTCountTypeRecord>], variable: {}}[] 
-      = [{inputFn: () => [{type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}], 
-          variable: {[isSyncRequest]: true}}]; 
+
+    const storageProxyChanges: {inputFn: () => [ProxyMessage<CRDTCountTypeRecord>], variable: {}}[]
+      = [{inputFn: () => [{type: ProxyMessageType.SyncRequest, id: sequenceTest.getVariable(idVar)}],
+          variable: {[isSyncRequest]: true}}];
 
     const driverChanges = [
       {output: {[send]: false}},
@@ -130,24 +134,27 @@ describe('Store Flow', async () => {
     await sequenceTest.test();
   });
 
-  // Tests 3 operation updates happening synchronously with 2 model updates from the driver 
-  it('applies 3 operations and 2 models simultaneously', async () => {
+  // Tests 3 operation updates happening synchronously with 2 model updates from the driver
+  it('applies 3 operations and 2 models simultaneously', async function() {    
+
+    this.timeout(5000);
+
     const sequenceTest = new SequenceTest<ActiveStore<CRDTCountTypeRecord>>();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       DriverFactory.clearRegistrationsForTesting();
       DriverFactory.register(new MockStorageDriverProvider());
-    
+
       const store = new Store(testKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
       const activeStore = store.activate();
       return activeStore;
-    });    
+    });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3, {type: ExpectedResponse.Constant, response: true});
-    const onReceive = sequenceTest.registerInput('onReceive', 1, {type: ExpectedResponse.Void}); 
+    const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void}); 
 
     const meCount = sequenceTest.registerVariable(0);
 
-    const send = sequenceTest.registerOutput('driver.send', 
+    const send = sequenceTest.registerOutput('driver.send',
       {
         type: ExpectedResponse.Defer,
         default: true,
@@ -165,7 +172,7 @@ describe('Store Flow', async () => {
 
     const driverChanges = [
       {output: {[send]: false}}, // at some point data arrives at the driver
-      // the sendCount at driverChanges[0] is the inc count for ‘me’ 
+      // the sendCount at driverChanges[0] is the inc count for ‘me’
       {inputFn: () => [makeSimpleModel(sequenceTest.getVariable(meCount), 1, sequenceTest.getVariable(meCount), 1), 1], output: {[send]: true}},
       {output: {[send]: false}}, // more data arrives
       {inputFn: () => [makeSimpleModel(sequenceTest.getVariable(meCount), 2, sequenceTest.getVariable(meCount), 2), 2], output: {[send]: true}}
@@ -185,16 +192,16 @@ describe('Store Flow', async () => {
 
   it('applies operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register();
       const storageKey = new VolatileStorageKey('unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-      const activeStore1 = store1.activate();
+      const activeStore1 = await store1.activate();
   
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
-      const activeStore2 = store2.activate();
+      const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });
 
@@ -234,16 +241,16 @@ describe('Store Flow', async () => {
 
   it('applies model against operations to two stores connected by a volatile driver', async () => {
     const sequenceTest = new SequenceTest();
-    sequenceTest.setTestConstructor(() => {
+    sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register();
       const storageKey = new VolatileStorageKey('unique');
       const store1 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldCreate, null, StorageMode.Direct, CRDTCount);
-      const activeStore1 = store1.activate();
+      const activeStore1 = await store1.activate();
   
       const store2 = new Store<CRDTCountTypeRecord>(storageKey, Exists.ShouldExist, null, StorageMode.Direct, CRDTCount);
-      const activeStore2 = store2.activate();
+      const activeStore2 = await store2.activate();
       return {store1: activeStore1, store2: activeStore2};
     });
 

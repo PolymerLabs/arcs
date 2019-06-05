@@ -14,42 +14,33 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  const host = 'tv-maze-search-bar';
-
   const template = html`
-<div ${host}>
-  <style>
-    body {
-      --shell-bg: #333333;
-      --shell-color: whitesmoke;
-      --tiles-bg: #333333;
-      --tiles-color: whitesmoke;
-    }
-    [${host}] > [search] {
-      display: flex;
-      align-items: center;
-      padding: 8px 16px;
-      background-color: var(--tiles-bg);
-      color: var(--tiles-color);
-    }
-    [${host}] > [search] > input {
-      flex: 1;
-      font-size: 1.2em;
-      padding: 7px 16px;
-      margin: 0 8px;
-      border-radius: 16px;
-      border: none;
-      outline: none;
-    }
-  </style>
-  <div search>
-    <icon trigger="find show" on-click="onSearchTrigger">search</icon>
-    <input placeholder="TV Show Search" on-change="onChange" value="{{searchText}}">
-    <speech-input on-result="onResult" on-end="onEnd"></speech-input>
-  </div>
+<style>
+  [search] {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+  }
+  input {
+    flex: 1;
+    font-size: 1.2em;
+    padding: 7px 16px;
+    margin: 0 8px;
+    border-radius: 16px;
+    border: none;
+    outline: none;
+    background-color: whitesmoke;
+    color: #333333;
+  }
+</style>
+
+<div search>
+  <icon trigger="find show" on-click="onSearchTrigger">search</icon>
+  <input placeholder="Search" on-change="onChange" value="{{searchText}}">
+  <speech-input on-result="onResult" on-end="onEnd"></speech-input>
 </div>
 
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {
@@ -73,7 +64,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       this.commit(e.data.value);
     }
     commit(text) {
-      this.updateVariable('query', {query: text || ''});
+      this.updateSingleton('query', {query: text || ''});
     }
     render(props, state) {
       return state;

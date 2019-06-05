@@ -59,7 +59,7 @@ defineParticle(({DomParticle, log, html}) => {
           day: show.schedule && show.schedule.days && show.schedule.days.shift() || '',
           time: show.schedule && show.schedule.time
         };
-        this.updateVariable('show', entityData);
+        this.updateSingleton('show', entityData);
         if (this.props.descriptions) {
           this.updateDescription(entityData);
         }

@@ -20,9 +20,9 @@ import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
-import {VariableStore} from '../store.js';
+import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
-import {VariableStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
+import {SingletonStorageProvider, CollectionStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
@@ -79,7 +79,7 @@ describe('particle-api', () => {
     });
 
     const data = arc.context.findSchemaByName('Data').entityClass();
-    const fooStore = await arc.createStore(data.type, 'foo', 'test:0') as VariableStorageProvider;
+    const fooStore = await arc.createStore(data.type, 'foo', 'test:0') as SingletonStorageProvider;
     const resStore = await arc.createStore(data.type.collectionOf(), 'res', 'test:1');
     const inspector = new util.ResultInspector(arc, resStore, 'value');
     const recipe = arc.context.recipes[0];
@@ -823,7 +823,7 @@ describe('particle-api', () => {
     
     await arc.instantiate(recipe);
 
-    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
     await arc.idle;
     await util.assertSingletonIs(outStore, 'result', 'hi');
   });
@@ -849,6 +849,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleSync(handle, model) {
+              await handle.get();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));
@@ -873,7 +874,7 @@ describe('particle-api', () => {
     
     await arc.instantiate(recipe);
 
-    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
     await arc.idle;
     await util.assertSingletonIs(outStore, 'result', 'hi');
   });
@@ -899,6 +900,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleUpdate(handle, update) {
+              await handle.get();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));
@@ -924,7 +926,7 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await arc.idle;
-    (inStore as unknown as VariableStore).set({id: '1', rawData: {}}, 'a');
+    (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
     await arc.idle;
     await util.assertSingletonIs(outStore, 'result', 'hi');
   });

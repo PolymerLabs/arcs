@@ -17,7 +17,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
@@ -74,7 +74,7 @@ describe('firebase', function() {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as VariableStorageProvider;
+      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as SingletonStorageProvider;
 
       let events = 0;
       variable.on('change', () => events++, this);
@@ -96,8 +96,8 @@ describe('firebase', function() {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
-      const var1 = await storage.construct('test0', barType, key) as VariableStorageProvider;
-      const var2 = await storage.connect('test0', barType, key) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', barType, key) as SingletonStorageProvider;
+      const var2 = await storage.connect('test0', barType, key) as SingletonStorageProvider;
 
       var1.set({id: 'id1', value: 'value1'});
       var2.set({id: 'id2', value: 'value2'});
@@ -115,7 +115,7 @@ describe('firebase', function() {
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', barType, key1) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', barType, key1) as SingletonStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
@@ -138,7 +138,7 @@ describe('firebase', function() {
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as VariableStorageProvider;
+      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as SingletonStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();
@@ -159,8 +159,8 @@ describe('firebase', function() {
       const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
       const storage = createStorage(arc.id);
 
-      const var1 = await storage.construct('test1', barType, newStoreKey('variable')) as VariableStorageProvider;
-      const var2 = await storage.construct('test2', barType, newStoreKey('variable')) as VariableStorageProvider;
+      const var1 = await storage.construct('test1', barType, newStoreKey('variable')) as SingletonStorageProvider;
+      const var2 = await storage.construct('test2', barType, newStoreKey('variable')) as SingletonStorageProvider;
 
       const bar = n => ({id: 'id' + n, data: 'd' + n});
       await var1.set(bar(1));
@@ -728,7 +728,7 @@ describe('firebase', function() {
       const storage = createStorage(arc.id);
       const dataType = new EntityType(manifest.schemas.Data);
 
-      const varStore = await storage.construct('test0', dataType, newStoreKey('variable')) as VariableStorageProvider;
+      const varStore = await storage.construct('test0', dataType, newStoreKey('variable')) as SingletonStorageProvider;
       const colStore = await storage.construct('test1', dataType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
       const bigStore = await storage.construct('test2', dataType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
 
@@ -754,7 +754,7 @@ describe('firebase', function() {
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
       const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactory: undefined, slotComposer: undefined, context: manifest});
-      const varStore2 = arc2.findStoreById(varStore.id) as VariableStorageProvider;
+      const varStore2 = arc2.findStoreById(varStore.id) as SingletonStorageProvider;
       const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
       const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
 

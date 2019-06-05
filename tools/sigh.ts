@@ -18,6 +18,7 @@ const _DO_NOT_USE_spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
 const chokidar = try_require('chokidar');
 const semver = require('semver');
+const request = try_require('request');
 
 function try_require(dep) {
   try {
@@ -63,6 +64,7 @@ import * as AstNode from '../../runtime/manifest-ast-nodes.js';
 };
 
 const steps: {[index: string]: ((args?: string[]) => boolean)[]} = {
+  languageServer: [peg, build, webpackTools, languageServer],
   peg: [peg, railroad],
   railroad: [railroad],
   test: [peg, railroad, build, runTests],
@@ -224,6 +226,12 @@ function linkUnit(dummySrc: string, dummyDest: string): boolean {
     return false;
   }
   return true;
+}
+
+function languageServer(): boolean {
+  keepProcessAlive = true; // Tell the runner to not exit.
+  // Opens a language server on port 2089
+  return saneSpawn(`tools/aml-language-server`, [], {stdio: 'inherit'});
 }
 
 function peg(): boolean {
@@ -551,7 +559,7 @@ function runTests(args: string[]): boolean {
     if (options.explore) {
       chainImports.push(`
       import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../build/devtools-connector/devtools-connection.js'))}';
-      console.log("Waiting for Arcs Explorer");
+      console.log('Waiting for Arcs Explorer');
       DevtoolsConnection.ensure();
     `);
     }
@@ -563,7 +571,7 @@ function runTests(args: string[]): boolean {
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
-              process.on("exit", function() {
+              process.on('exit', function() {
                 process.exit(failures > 0 ? 1 : 0);
               });
             });
@@ -628,12 +636,19 @@ function runTests(args: string[]): boolean {
 
 // Watches for file changes, then runs the steps for the first item in args, passing the remaining items.
 function watch(args: string[]): boolean {
+  const options = minimist(args, {
+    string: ['dir'],
+    default: {dir: '.'},
+    stopEarly: true,  // Allow options to be used in the command; 'sigh watch --dir src test -g foo'
+  });
+
   if (chokidar === null) {
     console.log('\nthe sigh watch subcommand requires chokidar to be installed. Please run \'npm install --no-save chokidar\' then try again\n');
     return false;
   }
-  const command = args.shift() || 'webpack';
-  const watcher = chokidar.watch('.', {
+
+  const command = options._.shift() || 'webpack';
+  const watcher = chokidar.watch(options.dir, {
     ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/)`),
     persistent: true
   });
@@ -648,7 +663,7 @@ function watch(args: string[]): boolean {
     timeout = setTimeout(() => {
       console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('\n  ')}`);
       changes.clear();
-      runSteps(command, args);
+      runSteps(command, options._);
       timeout = null;
     }, 500);
   });
@@ -727,11 +742,18 @@ function health(args: string[]): boolean {
   // Generating coverage report from tests.
   runSteps('test', ['--coverage']);
 
+  const healthInformation: string[] = [];
+
   const line = () => console.log('+---------------------+--------+--------+---------------------------+');
-  const show = (a, b, c, d) => console.log(`| ${String(a).padEnd(20, ' ')}| ${String(b).padEnd(7, ' ')}| ${String(c).padEnd(7, ' ')}| ${String(d).padEnd(26, ' ')}|`);
+  const show = (desc, score, points, info, ignore=false) => {
+    if (!ignore) {
+      healthInformation.push(...[desc, score, points, info].map(String));
+    }
+    console.log(`| ${String(desc).padEnd(20, ' ')}| ${String(score).padEnd(7, ' ')}| ${String(points).padEnd(7, ' ')}| ${String(info).padEnd(26, ' ')}|`);
+  };
 
   line();
-  show('Category', 'Result', 'Points', 'Detailed report');
+  show('Category', 'Result', 'Points', 'Detailed report', true);
   line();
 
   const slocOutput = saneSpawnWithOutput('node_modules/.bin/sloc', ['--detail', '--keys source', ...migrationFiles()]).stdout;
@@ -766,6 +788,36 @@ function health(args: string[]): boolean {
 
   line();
 
+  if (process.env.CONTINUOUS_INTEGRATION) {
+    return uploadCodeHealthStats(healthInformation);
+  }
+  return true;
+}
+
+function uploadCodeHealthStats(data: string[]) {
+  console.log('Uploading health data');
+  const trigger = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-health-uploader';
+
+  if (!request) {
+    return false;
+  }
+
+  const branchTo = process.env.TRAVIS_BRANCH || 'unknown-branch';
+  const branchFrom = process.env.TRAVIS_PULL_REQUEST_BRANCH || 'unknown-branch';
+
+  const info = [branchTo, branchFrom, new Date().toString()];
+
+  request.post(trigger, {
+    json: [[...info, ...data]]
+  }, (error, response, body) => {
+    if (error || response.statusCode !== 200) {
+      console.error(error);
+      console.error(response.toJSON());
+      return;
+    }
+    console.log(`Upload response status: ${response.statusCode}`);
+  });
+  keepProcessAlive = true; // Tell the runner to not exit.
   return true;
 }
 
@@ -831,6 +883,6 @@ function runSteps(command: string, args: string[]): boolean {
 
 const result = runSteps(process.argv[2] || 'default', process.argv.slice(3));
 
-if (!keepProcessAlive) { // the watch command is running.
+if (!keepProcessAlive) { // the watch command or languageServer command is running.
   process.exit(result ? 0 : 1);
 }

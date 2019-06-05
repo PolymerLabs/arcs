@@ -110,7 +110,7 @@ interface Sensor {
  * in practise.
  */
 export class SequenceTest<T> {
-  private prepareFunction: () => T;
+  private prepareFunction: (() => T) | (() => Promise<T>);
   private currentID = 0;
 
   private changes: {[index: string]: SequenceChange[]} = {};
@@ -125,7 +125,7 @@ export class SequenceTest<T> {
   /**
    * Set a function that constructs a fresh instance of the object under test for each ordering.
    */
-  setTestConstructor(prepareFunction: () => T) {
+  setTestConstructor(prepareFunction: (() => T) | (() => Promise<T>)) {
     this.prepareFunction = prepareFunction;
   }
 
@@ -291,20 +291,17 @@ export class SequenceTest<T> {
   }
 
   private async awaitResults() {
+    const allInputs = [...this.inputs.values()].map(a => a.results).reduce((a, b) => a.concat(b));
+
+    const uniquePromise = Promise.resolve('YOONIQ');
+    const output = await Promise.race([Promise.all(allInputs), Promise.all([uniquePromise])]);
+    if (output[0] === 'YOONIQ') {
+      console.log(...this.interleavingLog);
+      throw new Error(`Additional async point found!`);
+    }
+
     for (const input of this.inputs.values()) {
-      const results = [];
-      let i = 0;
-      for (const result of input.results) {
-        const uniquePromise = Promise.resolve('YOONIQ');
-        const output = await Promise.race([result, uniquePromise]);
-        if (output === 'YOONIQ') {
-          console.log(...this.interleavingLog);
-          throw new Error(`Additional async point found for input ${input.name} number ${i}`);
-        }
-        results.push(output);
-        i++;
-      }
-      input.results = results;
+      input.results = await Promise.all(input.results);
     }
   }
 
@@ -576,7 +573,10 @@ export class SequenceTest<T> {
       
       this.resetResults();
       this.resetVariables();
-      const obj = this.prepareFunction();
+      let obj = this.prepareFunction();
+      if (obj instanceof Promise) {
+        obj = await obj;
+      }
       this.setupOutputs(obj);
 
       this.interleavingLog = ['--', description, '\n'];

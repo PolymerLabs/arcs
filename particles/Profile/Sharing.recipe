@@ -1,45 +1,17 @@
 import 'Avatar.schema'
 import 'UserName.schema'
+import '../Arcs/ArcMeta.schema'
+import '../Profile/FavoriteFood.recipes'
 
-resource PROFILE_avatarResource
+resource EmptyResource
   start
   []
-store PROFILE_avatar of [Avatar] 'PROFILE_avatar' @0 #profile in PROFILE_avatarResource
 
-resource PROFILE_userNameResource
-  start
-  []
-store PROFILE_userName of [UserName] 'PROFILE_userName' @0 #profile in PROFILE_userNameResource
+store PROFILE_avatar of [AvatarShare] 'PROFILE_avatar' @0 #profile in EmptyResource
+store PROFILE_userName of [UserNameShare] 'PROFILE_userName' @0 #profile in EmptyResource
+store PROFILE_favoriteFoods of [FavoriteFoodShare] 'PROFILE_favoriteFoods' @0 #profile in EmptyResource
 
-resource BOXED_avatarResource
-  start
-  []
-store BOXED_avatar of [Avatar] 'BOXED_avatar' @0 #boxed in BOXED_avatarResource
-
-resource BOXED_userNameResource
-  start
-  []
-store BOXED_userName of [UserName] 'BOXED_userName' @0 #boxed in BOXED_userNameResource
-
-// the below is required to make the arc aware of these stores
-
-particle Sharing in './source/Sharing.js'
-  in [Avatar] boxedAvatar
-  in [Avatar] profileAvatar
-  //
-  in [UserName] profileUserName
-  in [UserName] boxedUserName
-
-recipe Sharing
-  use 'PROFILE_avatar' as profileAvatar
-  use 'BOXED_avatar' as boxedAvatar
-  //
-  use 'PROFILE_userName' as profileUserName
-  use 'BOXED_userName' as boxedUserName
-  //
-  Sharing
-    profileAvatar = profileAvatar
-    boxedAvatar = boxedAvatar
-    //
-    profileUserName = profileUserName
-    boxedUserName = boxedUserName
+store BOXED_favoriteFoods of [FavoriteFoodShare] 'BOXED_favoriteFoods' @0 #boxed in EmptyResource
+store BOXED_avatar of [AvatarShare] 'BOXED_avatar' @0 #boxed in EmptyResource
+store BOXED_userName of [UserNameShare] 'BOXED_userName' @0 #boxed in EmptyResource
+store BOXED_arcs of [ArcMetaShare] 'BOXED_arcs' @0 #boxed in EmptyResource

@@ -11,10 +11,9 @@
 import {assert} from '../../platform/assert-web.js';
 import {Id} from '../id.js';
 import {BigCollectionType, CollectionType, ReferenceType, Type} from '../type.js';
-
 import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-collection-model.js';
 import {KeyBase} from './key-base.js';
-import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, VariableStorageProvider} from './storage-provider-base.js';
+import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from './storage-provider-base.js';
 import {Dictionary} from '../hot.js';
 import {Runtime} from '../runtime.js';
 
@@ -175,7 +174,7 @@ abstract class VolatileStorageProvider extends StorageProviderBase {
     if (type instanceof BigCollectionType) {
       return new VolatileBigCollection(type, storageEngine, name, id, key);
     }
-    return new VolatileVariable(type, storageEngine, name, id, key);
+    return new VolatileSingleton(type, storageEngine, name, id, key);
   }
 
   // A consequence of awaiting this function is that this.backingStore
@@ -354,7 +353,7 @@ class VolatileCollection extends VolatileStorageProvider implements CollectionSt
   }
 }
 
-class VolatileVariable extends VolatileStorageProvider implements VariableStorageProvider {
+class VolatileSingleton extends VolatileStorageProvider implements SingletonStorageProvider {
   _stored: {id: string, storageKey?: string}|null;
   private localKeyId = 0;
   constructor(type, storageEngine, name, id, key) {
@@ -369,9 +368,9 @@ class VolatileVariable extends VolatileStorageProvider implements VariableStorag
   }
 
   clone() {
-    const variable = new VolatileVariable(this.type, this.storageEngine, this.name, this.id, null);
-    variable.cloneFrom(this);
-    return variable;
+    const singleton = new VolatileSingleton(this.type, this.storageEngine, this.name, this.id, null);
+    singleton.cloneFrom(this);
+    return singleton;
   }
 
   async cloneFrom(handle): Promise<void> {

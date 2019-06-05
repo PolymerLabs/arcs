@@ -1,12 +1,13 @@
 /**
  * @license
- * Copyright (c) 2019 Google Inc. All rights reserved.
+ * Copyright 2019 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 
 'use strict';
 
@@ -37,22 +38,27 @@ defineParticle(({DomParticle, log}) => {
       }
     }
     async fetchArtist(find) {
-      this.setState({receiving: true});
-      const response = await fetch(`${service}&query=${encodeURI(find.name)}`);
-      const artists = await response.json();
-      this.setState({receiving: false});
-      this.receiveArtists(artists);
+      this.startBusy();
+      this.state = {receiving: true};
+      try {
+        const response = await fetch(`${service}&query=${encodeURI(find.name)}`);
+        const artists = await response.json();
+        this.receiveArtists(artists);
+      } finally {
+        this.state = {receiving: false};
+        this.doneBusy();
+      }
     }
     async receiveArtists(artists) {
       log(artists);
       if (artists.error) {
-        console.log(artists.error);
+        log(artists.error);
       } else if (artists.itemListElement.length === 0) {
-        console.log('No results in the knowledge graph.');
+        log('No results in the knowledge graph.');
       } else {
         const artist = artists.itemListElement[0].result;
         log(artist);
-        this.updateVariable('artist', {
+        this.updateSingleton('artist', {
           artistid: artist['@id'],
           type: artist['@type'].join(','),
           name: artist.name,
@@ -60,7 +66,9 @@ defineParticle(({DomParticle, log}) => {
           imageUrl: artist.image && artist.image.contentUrl,
           detailedDescription: artist.detailedDescription && artist.detailedDescription.articleBody
         });
-        this.setParticleDescription('artist', artist.name);
+        const description = `${artist.name}: ${artist.description}`;
+        log(`setting particle description to [${description}]`);
+        this.setParticleDescription('artist', description);
       }
     }
   };

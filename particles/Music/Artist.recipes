@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/Description.schema'
+import '../Common/schema/Description.schema'
 
 schema ArtistFind
   Text name
@@ -32,7 +32,7 @@ particle ArtistShow in 'source/ArtistShow.js'
   description `Learn more about ${artist}`
 
 recipe ArtistInfo
-  use #artist as artist
+  use as artist
   ArtistShow
     artist = artist
   description `${ArtistShow}`

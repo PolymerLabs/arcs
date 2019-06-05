@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -10,18 +10,22 @@
 
 'use strict';
 
-/* global defineParticle, importScripts */
 defineParticle(({DomParticle, log}) => {
 
   return class extends DomParticle {
-    update({item}, state) {
-      if (item && item.id !== state.item_id) {
-        state.item_id = item.id;
-        // TODO(sjmiles): was supposed to be type agnostic ... oh well
-        //if (!collection.find(show => show.showid === item.showid)) {
-          this.updateSet('collection', item);
-        //}
+    get template() {
+      return `<span></span>`;
+    }
+    update({pipe}) {
+      if (this.pipeIsValid(pipe)) {
+        this.updateSingleton('find', {
+          name: pipe.name
+        });
       }
     }
+    pipeIsValid(pipe) {
+      return (pipe && pipe.type === 'artist');
+    }
   };
+
 });

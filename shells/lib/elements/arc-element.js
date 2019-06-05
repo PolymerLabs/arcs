@@ -12,6 +12,8 @@ import {logFactory} from '../../../build/platform/log-web.js';
 import {Xen} from '../components/xen.js';
 import {ArcComponentMixin} from '../components/arc-component.js';
 
+const ArcCustomElement = ArcComponentMixin(Xen.AsyncMixin(Xen.Base));
+
 const log = logFactory('ArcElement', '#bb1396');
 
 const template = Xen.Template.html`
@@ -47,6 +49,6 @@ const ArcElementMixin = Base => class extends Base {
   }
 };
 
-export const ArcElement = Xen.Debug(ArcElementMixin(ArcComponentMixin(Xen.AsyncMixin(Xen.Base))), log);
+export const ArcElement = ArcElementMixin(ArcCustomElement);
 
 customElements.define('arc-element', Xen.Debug(ArcElement, log));

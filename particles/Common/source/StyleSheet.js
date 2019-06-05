@@ -1,3 +1,4 @@
+
 /**
  * @license
  * Copyright (c) 2019 Google Inc. All rights reserved.
@@ -8,18 +9,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+'use strict';
+
+/* global defineParticle, importScripts */
+
 defineParticle(({DomParticle, html}) => {
 
   const template = html`
 
 <style>
   :host {
-    display: block;
-    padding: 8px;
+    /* --slug-color: black; */
+    --input-color: #222222;
+    /* --input-bg: navy; */
   }
 </style>
-
-User's id is: <b>{{userid}}</b>
+<div slotid="container"></div>
 
   `;
 
@@ -27,10 +32,8 @@ User's id is: <b>{{userid}}</b>
     get template() {
       return template;
     }
-    render({user}) {
-      return {
-        userid: (user && user.id) || '[no user id]'
-      };
+    render(props, state) {
+      return state;
     }
   };
 

@@ -5,10 +5,14 @@ import 'Events/Events.recipes'
 import 'Restaurants/Restaurants.recipes'
 import 'Music/Music.recipes'
 import 'TVMaze/TVMaze.recipes'
+import 'TMDB/recipes/TMDB.recipes'
 import 'Words/Words.recipes'
 import 'Services/Services.recipes'
 import 'Stardate/Stardate.recipes'
 import 'Demo/Demo.recipes'
+
+// for ArcMetaShare
+import 'Arcs/ArcMeta.schema'
 
 // Uncomment to enable tutorial recipes. See Tutorial/tutorial.md for details.
 // import 'Tutorial/Tutorial.recipes'

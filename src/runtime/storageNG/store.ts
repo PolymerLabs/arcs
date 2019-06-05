@@ -21,7 +21,7 @@ export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.Syn
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id: number} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id: number}; 
 
-type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boolean;
+export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => boolean;
 
 // A representation of a store. Note that initially a constructed store will be
 // inactive - it will not connect to a driver, will not accept connections from 
@@ -46,11 +46,11 @@ export class Store<T extends CRDTTypeRecord> {
     this.mode = mode;
     this.modelConstructor = modelConstructor;
   }
-  activate(): ActiveStore<T> {
+  async activate(): Promise<ActiveStore<T>> {
     if (this.constructors.get(this.mode) == null) {
       throw new Error(`StorageMode ${this.mode} not yet implemented`);
     }
-    const activeStore = new (this.constructors.get(this.mode))<T>(this.storageKey, this.exists, this.type, this.mode, this.modelConstructor);
+    const activeStore = await this.constructors.get(this.mode).construct<T>(this.storageKey, this.exists, this.type, this.mode, this.modelConstructor);
     this.exists = Exists.ShouldExist;
     return activeStore;
   }
@@ -72,14 +72,22 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   private nextCallbackID = 1;
   private version = 0;
 
-  constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+  /* 
+   * This class should only ever be constructed via the static construct method
+   */
+  private constructor(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
     super(storageKey, exists, type, mode, modelConstructor);
-    this.localModel = new modelConstructor();
-    this.driver = DriverFactory.driverInstance(storageKey, exists);
-    if (this.driver == null) {
+  }
+
+  static async construct<T extends CRDTTypeRecord>(storageKey: StorageKey, exists: Exists, type: Type, mode: StorageMode, modelConstructor: new () => CRDTModel<T>) {
+    const me = new DirectStore<T>(storageKey, exists, type, mode, modelConstructor);
+    me.localModel = new modelConstructor();
+    me.driver = await DriverFactory.driverInstance(storageKey, exists);
+    if (me.driver == null) {
       throw new CRDTError(`No driver exists to support storage key ${storageKey}`);
     }
-    this.driver.registerReceiver(this.onReceive.bind(this));
+    me.driver.registerReceiver(me.onReceive.bind(me));
+    return me;
   }
   // The driver will invoke this method when it has an updated remote model
   async onReceive(model: T['data'], version: number): Promise<void> {

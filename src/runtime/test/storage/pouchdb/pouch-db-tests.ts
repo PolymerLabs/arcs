@@ -14,7 +14,7 @@ import {Loader} from '../../../loader.js';
 import {Manifest} from '../../../manifest.js';
 import {PouchDbCollection} from '../../../storage/pouchdb/pouch-db-collection.js';
 import {PouchDbStorage} from '../../../storage/pouchdb/pouch-db-storage.js';
-import {PouchDbVariable} from '../../../storage/pouchdb/pouch-db-variable.js';
+import {PouchDbSingleton} from '../../../storage/pouchdb/pouch-db-singleton.js';
 import {StorageProviderFactory} from '../../../storage/storage-provider-factory.js';
 import {CallbackTracker} from '../../../testing/callback-tracker.js';
 import {EntityType, ReferenceType} from '../../../type.js';
@@ -71,7 +71,7 @@ describe('pouchdb for ' + testUrl, () => {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
-      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbVariable;
+      const variable = await storage.construct('test0', barType, newStoreKey('variable')) as PouchDbSingleton;
       const callbackTracker = new CallbackTracker(variable, 1);
 
       await variable.set({id: 'test0:test', value});
@@ -89,7 +89,7 @@ describe('pouchdb for ' + testUrl, () => {
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
-      const var1 = await storage.construct('test0', barType, key) as PouchDbVariable;
+      const var1 = await storage.construct('test0', barType, key) as PouchDbSingleton;
       const var1Callbacks = new CallbackTracker(var1, 2);
 
       assert.isNotNull(var1);
@@ -97,7 +97,7 @@ describe('pouchdb for ' + testUrl, () => {
         'test0',
         barType,
         key
-      ) as PouchDbVariable;
+      ) as PouchDbSingleton;
       assert.isNotNull(var2);
       const var2Callbacks = new CallbackTracker(var2, 2);
 
@@ -122,7 +122,7 @@ describe('pouchdb for ' + testUrl, () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', barType, key1) as PouchDbVariable;
+      const var1 = await storage.construct('test0', barType, key1) as PouchDbSingleton;
       await var1.set({id: 'id1', value: 'underlying'});
 
       const result = await var1.get();
@@ -145,7 +145,7 @@ describe('pouchdb for ' + testUrl, () => {
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
 
-      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as PouchDbVariable;
+      const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as PouchDbSingleton;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
       const result = await var1.get();

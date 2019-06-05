@@ -17,7 +17,7 @@ import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
-import {CollectionStorageProvider, VariableStorageProvider} from '../storage/storage-provider-base.js';
+import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {EntityType} from '../type.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
@@ -115,7 +115,7 @@ recipe
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
     const arc = createTestArc(recipe, manifest);
-    const fooStore: VariableStorageProvider = await arc.createStore(fooType, undefined, 'test:1') as VariableStorageProvider;
+    const fooStore: SingletonStorageProvider = await arc.createStore(fooType, undefined, 'test:1') as SingletonStorageProvider;
     const foosStore = await arc.createStore(fooType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
     return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
@@ -217,7 +217,7 @@ ${recipeManifest}
 
       const arc = createTestArc(recipe, manifest);
       const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-      const fooStore = await arc.createStore(fooType, undefined, 'test:2') as VariableStorageProvider;
+      const fooStore = await arc.createStore(fooType, undefined, 'test:2') as SingletonStorageProvider;
 
       // BigCollections don't trigger sync/update events when new values are added to the backing
       // store. Pre-populate the store to check the suggestion reads in the first one.
@@ -474,7 +474,7 @@ recipe
 
       // Add values to both Foo handles
       await fooStore.set({id: 1, rawData: {name: 'the-FOO'}});
-      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3') as VariableStorageProvider;
+      const fooStore2 = await arc.createStore(fooStore.type, undefined, 'test:3') as SingletonStorageProvider;
       await fooStore2.set({id: 2, rawData: {name: 'another-FOO'}});
       const description = await test.verifySuggestion({arc},
           'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
@@ -538,7 +538,7 @@ recipe
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
       const arc = createTestArc(recipe, manifest);
-      const store = await arc.createStore(scriptDateType, undefined, 'test:1') as VariableStorageProvider;
+      const store = await arc.createStore(scriptDateType, undefined, 'test:1') as SingletonStorageProvider;
       await test.verifySuggestion({arc}, 'Stardate .');
 
       await store.set({id: 1, rawData: {date: 'June 31'}});
@@ -573,7 +573,7 @@ recipe
         assert.isTrue(recipe.isResolved());
 
         const arc = createTestArc(recipe, manifest);
-        const tStore = await arc.createStore(myBESTType, undefined, 'test:1') as VariableStorageProvider;
+        const tStore = await arc.createStore(myBESTType, undefined, 'test:1') as SingletonStorageProvider;
         const tsStore = await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2') as CollectionStorageProvider;
 
         const description = await test.verifySuggestion({arc}, 'Make my best type list from my best type.');
@@ -692,7 +692,7 @@ recipe
       const arc = createTestArc(recipe, manifest);
       const hostedParticle = manifest.findParticleByName('NoDescription');
       const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type;
-      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as VariableStorageProvider;
+      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as SingletonStorageProvider;
       await newStore.set(hostedParticle.clone().toLiteral());
 
       await test.verifySuggestion({arc}, 'Start with capital letter.');
@@ -811,7 +811,7 @@ recipe
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     const arc = createTestArc(recipe, manifest);
-    const fooStore = await arc.createStore(fooType, undefined, 'test:1') as VariableStorageProvider;
+    const fooStore = await arc.createStore(fooType, undefined, 'test:1') as SingletonStorageProvider;
     const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
 
     return {

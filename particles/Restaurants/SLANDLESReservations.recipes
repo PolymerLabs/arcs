@@ -9,7 +9,7 @@ import '../List/SLANDLESList.recipes'
 import '../Layout/SLANDLESLayout.recipes'
 import '../Events/SLANDLESEvents.recipes'
 import '../Restaurants/Restaurant.schema'
-import '../Common/Description.schema'
+import '../Common/schema/Description.schema'
 
 particle SlandleReservationForm in 'source/ReservationForm.js'
   inout Event event

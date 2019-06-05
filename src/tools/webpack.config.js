@@ -17,7 +17,11 @@ module.exports = {
   target: 'node',
   mode: 'production',
   entry: {
-    'bundle-cli': `${buildDir}/bundle-cli.js`
+    'bundle-cli': `${buildDir}/bundle-cli.js`,
+    'aml-language-server': `${buildDir}/aml-language-server/aml-language-server.js`
+  },
+  optimization: {
+    minimize: true
   },
   output: {
     filename: '[name].js',

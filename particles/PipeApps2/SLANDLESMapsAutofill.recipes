@@ -1,0 +1,14 @@
+import './PipeEntity.schema'
+import './Json.schema'
+
+particle SlandleSuggestAddress in './source/SuggestAddress.js'
+  in [PipeEntity] recentEntities
+  out Json suggestion
+  `consume Slot app
+
+recipe SlandleCom_google_android_apps_maps &autofill
+  map 'pipe-entities' as recentEntities
+  create as suggestion
+  SlandleSuggestAddress
+    recentEntities = recentEntities
+    suggestion = suggestion

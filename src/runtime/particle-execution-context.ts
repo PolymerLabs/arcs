@@ -23,6 +23,7 @@ import {Type} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
+import {UserException} from './arc-exceptions.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -98,7 +99,7 @@ export class ParticleExecutionContext {
         pec.idle.then(a => {
           // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
           // update relevance, after handles are updated. Needs better idle signal.
-          setTimeout(() => { this.Idle(version, pec.relevance); }, 0);
+          setTimeout(() => this.Idle(version, pec.relevance), 0);
         });
       }
 
@@ -208,7 +209,7 @@ export class ParticleExecutionContext {
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
 
-    let particle;
+    let particle: Particle;
     if (spec.implFile && spec.implFile.endsWith('.wasm')) {
       particle = await this.loadWasmParticle(spec);
       particle.setCapabilities({});
@@ -233,7 +234,10 @@ export class ParticleExecutionContext {
     });
 
     return [particle, async () => {
-      await particle.setHandles(handleMap);
+      await particle.callSetHandles(handleMap, err => {
+        const exc = new UserException(err, 'setHandles', id, spec.name);
+        this.apiPort.ReportExceptionInHost(exc);
+      });
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
       const idx = this.pendingLoads.indexOf(p);
       this.pendingLoads.splice(idx, 1);

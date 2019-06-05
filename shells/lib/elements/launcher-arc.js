@@ -27,7 +27,7 @@ const log = logFactory('LauncherArc', '#cb23a6');
 const LauncherArcElement = class extends ArcElement {
   // get config() {
   //   return {
-  //     id: `${userid}${Const.launcherSuffix}`,
+  //     id: `${userid}${Const.DEFAULT.launcherSuffix}`,
   //     manifest: manifests.launcher
   //   };
   // }

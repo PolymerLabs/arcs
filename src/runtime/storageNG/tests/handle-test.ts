@@ -9,45 +9,44 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {PECInnerPort} from '../../api-channel';
-import {CRDTCollection} from '../../crdt/crdt-collection';
-import {CRDTSingleton} from '../../crdt/crdt-singleton';
-import {Particle} from '../../particle';
+import {CRDTCollection, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection';
+import {CRDTSingleton, CRDTSingletonTypeRecord} from '../../crdt/crdt-singleton';
 import {CollectionHandle, SingletonHandle} from '../handle';
 import {StorageProxy} from '../storage-proxy';
+import {MockStore} from './storage-proxy-test';
 
 function getCollectionHandle(): CollectionHandle<string> {
-  // tslint:disable-next-line: no-any
-  const fakePec: any = {};
   // tslint:disable-next-line: no-any
   const fakeParticle: any = {};
   return new CollectionHandle<string>(
       'me',
-      new StorageProxy(new CRDTCollection<string>(), fakePec),
+      new StorageProxy(
+          new CRDTCollection<string>(),
+          new MockStore<CRDTCollectionTypeRecord<string>>()),
       fakeParticle);
 }
 
 function getSingletonHandle(): SingletonHandle<string> {
   // tslint:disable-next-line: no-any
-  const fakePec: any = {};
-  // tslint:disable-next-line: no-any
   const fakeParticle: any = {};
   return new SingletonHandle<string>(
       'me',
-      new StorageProxy(new CRDTSingleton<string>(), fakePec),
+      new StorageProxy(
+          new CRDTSingleton<string>(),
+          new MockStore<CRDTSingletonTypeRecord<string>>()),
       fakeParticle);
 }
 
 describe('CollectionHandle', () => {
-  it('can add and remove elements', () => {
+  it('can add and remove elements', async () => {
     const handle = getCollectionHandle();
     assert.isEmpty(handle.toList());
     handle.add('A');
-    assert.sameMembers(handle.toList(), ['A']);
+    assert.sameMembers(await handle.toList(), ['A']);
     handle.add('B');
-    assert.sameMembers(handle.toList(), ['A', 'B']);
+    assert.sameMembers(await handle.toList(), ['A', 'B']);
     handle.remove('A');
-    assert.sameMembers(handle.toList(), ['B']);
+    assert.sameMembers(await handle.toList(), ['B']);
   });
 
   it('can clear', () => {
@@ -58,22 +57,22 @@ describe('CollectionHandle', () => {
     assert.isEmpty(handle.toList());
   });
 
-  it('can add multiple entities', () => {
+  it('can add multiple entities', async () => {
     const handle = getCollectionHandle();
-    handle.addMultiple(['A', 'B']);
-    assert.sameMembers(handle.toList(), ['A', 'B']);
+    await handle.addMultiple(['A', 'B']);
+    assert.sameMembers(await handle.toList(), ['A', 'B']);
   });
 });
 
 describe('SingletonHandle', () => {
-  it('can set and clear elements', () => {
+  it('can set and clear elements', async () => {
     const handle = getSingletonHandle();
-    assert.equal(handle.get(), null);
+    assert.equal(await handle.get(), null);
     handle.set('A');
-    assert.equal(handle.get(), 'A');
+    assert.equal(await handle.get(), 'A');
     handle.set('B');
-    assert.equal(handle.get(), 'B');
+    assert.equal(await handle.get(), 'B');
     handle.clear();
-    assert.equal(handle.get(), null);
+    assert.equal(await handle.get(), null);
   });
 });

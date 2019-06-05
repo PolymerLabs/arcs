@@ -129,7 +129,7 @@ defineParticle(({DomParticle, html, log}) => {
         //
         const alsoWatch = watchers && show ? this.buildDescription(watchers, show) : '';
         log(alsoWatch);
-        this.updateVariable('watcherText', {text: alsoWatch});
+        this.updateSingleton('watcherText', {text: alsoWatch});
         //
         let description = '';
         if (watchers && show) {

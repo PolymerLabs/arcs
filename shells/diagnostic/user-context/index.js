@@ -9,6 +9,7 @@
  */
 import '../../lib/database/firebase-support.js';
 import '../../lib/platform/loglevel-web.js';
+import {Const} from '../../configuration/constants.js';
 import {Utils} from '../../lib/runtime/utils.js';
 import {SyntheticStores} from '../../lib/runtime/synthetic-stores.js';
 import {StoreObserver} from '../../lib/components/context/store-observer.js';
@@ -58,7 +59,7 @@ const observe = async () => {
     document.querySelector('store-explorer').context = context;
   }
   // `user-launcher` store contains keys for user's Arcs
-  const store = await SyntheticStores.getStore(storage, 'user-launcher');
+  const store = await SyntheticStores.getStore(storage, Const.DEFAULT.launcherId);
   if (store) {
     return UserObserverImpl(store);
   }

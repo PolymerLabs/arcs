@@ -23,8 +23,8 @@ defineParticle(({DomParticle, html, log}) => {
   return class extends DomParticle {
     update() {
       const {stardate, destination} = this.computeStardate();
-      this.updateVariable('stardate', {date: stardate});
-      this.updateVariable('destination', {name: destination});
+      this.updateSingleton('stardate', {date: stardate});
+      this.updateSingleton('destination', {name: destination});
     }
     computeStardate() {
       // Aims to follow logic per https://en.wikipedia.org/wiki/Stardate#The_Original_Series_era

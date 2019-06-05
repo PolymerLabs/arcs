@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {handleFor, Variable} from '../handle.js';
+import {handleFor, Singleton} from '../handle.js';
 import {manifestTestSetup} from '../testing/manifest-integration-test-setup.js';
 import {IdGenerator} from '../id.js';
 
@@ -21,7 +21,7 @@ describe('runtime manifest integration', () => {
     const type = recipe.handles[0].type;
     const [store] = arc.findStoresByType(type);
 
-    const handle = handleFor(store, IdGenerator.newSession()) as Variable;
+    const handle = handleFor(store, IdGenerator.newSession()) as Singleton;
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     const result = await handle.get();

@@ -14,7 +14,7 @@ import {Loader} from '../../../runtime/loader.js';
 import {Arc} from '../../../runtime/arc.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {ArcId} from '../../../runtime/id.js';
-import {VariableStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
+import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import * as util from '../../../runtime/testing/test-util.js';
 
 describe('TicTacToe MoveApplier tests', () => {
@@ -29,21 +29,21 @@ describe('TicTacToe MoveApplier tests', () => {
                          storageKey: 'volatile://test^^123'});
     await arc.instantiate(recipe);
     const nextMoveStore = arc.findStoreById(
-      arc.activeRecipe.particles[0].connections['nextMove'].handle.id) as VariableStorageProvider;
+      arc.activeRecipe.particles[0].connections['nextMove'].handle.id) as SingletonStorageProvider;
 
     const stateStore = arc.findStoreById(
-      arc.activeRecipe.particles[0].connections['state'].handle.id) as VariableStorageProvider;
+      arc.activeRecipe.particles[0].connections['state'].handle.id) as SingletonStorageProvider;
 
     const boardResultStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['boardResult'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
     const messageResultStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['messageResult'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
 
     const boardStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['board'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
 
     await stateStore.set({id: 'startGame', rawData: {state: 0}});
 
@@ -75,21 +75,21 @@ describe('TicTacToe MoveApplier tests', () => {
                          storageKey: 'volatile://test^^123'});
     await arc.instantiate(recipe);
     const nextMoveStore = arc.findStoreById(
-      arc.activeRecipe.particles[0].connections['nextMove'].handle.id) as VariableStorageProvider;
+      arc.activeRecipe.particles[0].connections['nextMove'].handle.id) as SingletonStorageProvider;
 
     const stateStore = arc.findStoreById(
-      arc.activeRecipe.particles[0].connections['state'].handle.id) as VariableStorageProvider;
+      arc.activeRecipe.particles[0].connections['state'].handle.id) as SingletonStorageProvider;
 
     const boardResultStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['boardResult'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
     const messageResultStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['messageResult'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
 
     const boardStore = arc.findStoreById(
       arc.activeRecipe.particles[0].connections['board'].handle.id
-    ) as VariableStorageProvider;
+    ) as SingletonStorageProvider;
 
     await stateStore.set({id: 'startGame', rawData: {state: 1}});
 

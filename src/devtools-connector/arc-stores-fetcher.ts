@@ -11,7 +11,7 @@
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest, StorageStub} from '../runtime/manifest.js';
-import {StorageProviderBase, VariableStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
+import {StorageProviderBase, SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 
 type Result = {
@@ -58,8 +58,8 @@ export class ArcStoresFetcher {
       let value: any;
       if ((store as CollectionStorageProvider).toList) {
         value = await (store as CollectionStorageProvider).toList();
-      } else if ((store as VariableStorageProvider).get) {
-        value = await (store as VariableStorageProvider).get();
+      } else if ((store as SingletonStorageProvider).get) {
+        value = await (store as SingletonStorageProvider).get();
       } else {
         value = `(don't know how to dereference)`;
       }

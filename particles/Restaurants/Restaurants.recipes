@@ -1,20 +1,12 @@
-// Copyright (c) 2018 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
-
 import 'RestaurantFind.recipes'
 import 'RestaurantDisplay.recipes'
 import 'Reservations.recipes'
-import 'FavoriteFoodAnnotation.recipes'
 import '../List/List.recipes'
 import '../Profile/Geolocate.recipe'
 
 recipe Restaurants
   create #volatile as location
-  create as restaurants
+  create #volatile as restaurants
   create #volatile #selected as selected
   Geolocate
     location = location
@@ -32,3 +24,5 @@ recipe Restaurants
   RestaurantDetail
     restaurant = selected
   description `find restaurants near ${RestaurantFind.location}`
+
+import 'FavoriteFoodAnnotation.recipes'

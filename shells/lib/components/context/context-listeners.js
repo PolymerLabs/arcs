@@ -8,15 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Const} from '../../../configuration/constants.js';
 import {logFactory} from '../../../../build/platform/log-web.js';
 import {SyntheticStores} from '../../runtime/synthetic-stores.js';
 import {StoreObserver} from './store-observer.js';
 import {ContextStores} from './context-stores.js';
 import {simpleNameOfType, boxes, crackStorageKey} from './context-utils.js';
 
-// Existence and purpose of `user-launcher` is a Shell convention
+// Existence and purpose of launcher arc are Shell conventions
 const getLauncherStore = async storage => {
-  return await SyntheticStores.getStore(storage, 'user-launcher');
+  return await SyntheticStores.getStore(storage, Const.DEFAULT.launcherId);
 };
 
 const AbstractListener = class {
@@ -47,7 +48,11 @@ const AbstractListener = class {
 };
 
 export const ArcHandleListener = class extends AbstractListener {
+  createLogger() {
+    return logFactory(`ArcHandleListener`, `#4040FF`);
+  }
   async add(handle) {
+    this.log('add', handle);
     const store = await SyntheticStores.getHandleStore(handle);
     // TODO(sjmiles): sketchy
     store.handle = handle;
@@ -58,7 +63,48 @@ export const ArcHandleListener = class extends AbstractListener {
   }
 };
 
-export const ArcMetaListener = class extends AbstractListener {
+const ContextAwareListener = class extends AbstractListener {
+  constructor(context, listener) {
+    super(listener);
+    this.context = context;
+  }
+  async addSharedEntity({entity, shareSchema}, {userid, storeId, storeName, backingStorageKey, typeName}) {
+    let share = boxes[storeId];
+    if (!share) {
+      this.log(`found new share:`, typeName, storeName);
+      share = boxes[storeId] = {};
+      share.shareStorePromise = ContextStores.getShareStore(this.context, shareSchema, storeName, storeId, ['shared']);
+    }
+    const shareStore = await share.shareStorePromise;
+    ContextStores.storeEntityWithUid(shareStore, entity, backingStorageKey, userid);
+  }
+  async addBoxedEntity({entity, shareSchema}, {userid, boxStoreId, backingStorageKey}) {
+    let box = boxes[boxStoreId];
+    if (!box) {
+      box = boxes[boxStoreId] = {};
+      box.boxStorePromise = ContextStores.getShareStore(this.context, shareSchema, boxStoreId, boxStoreId, ['shared']);
+    }
+    const boxStore = await box.boxStorePromise;
+    ContextStores.storeEntityWithUid(boxStore, entity, backingStorageKey, userid);
+  }
+  async remove(entity, store) {
+    this.unobserve(entity.rawData.key);
+    const _remove = async (box, promiseName) => {
+      if (box && box[promiseName]) {
+        const store = await box[promiseName];
+        ContextStores.removeEntityWithUid(store, entity/*, metrics.userid*/);
+      }
+    };
+    //this.log('removing entity', entity);
+    const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
+    if (metrics.tag) {
+      _remove(boxes[metrics.storeId], 'shareStorePromise');
+      _remove(boxes[metrics.boxStoreId], 'boxStorePromise');
+    }
+  }
+};
+
+export const ArcMetaListener = class extends ContextAwareListener {
   async add(entity, store) {
     const {rawData: {key, deleted}} = entity;
     if (!deleted) {
@@ -66,16 +112,35 @@ export const ArcMetaListener = class extends AbstractListener {
       this.observe(key, await SyntheticStores.getStore(base, key));
     }
   }
-  remove(entity) {
-    this.unobserve(entity.rawData.key);
+};
+
+export const FriendArcMetaListener = class extends ArcMetaListener {
+  createLogger() {
+    return logFactory(`FriendArcMetaListener`, `#5321a5`);
+  }
+  async add(entity, store) {
+    const {rawData: {key, deleted}} = entity;
+    if (!deleted) {
+      const {base} = crackStorageKey(store.storageKey);
+      this.observe(key, await SyntheticStores.getStore(base, key));
+      //
+      const metrics = ContextStores.getStoreMetrics(store);
+      this.log(`add shared arc [${base}]`/*, store*/);
+      const shareSchema = this.context.findSchemaByName(metrics.shareTypeName);
+      if (!shareSchema) {
+        this.log(`found a share type [${metrics.shareTypeName}] with no schema, ignoring`);
+      } else {
+        // TODO(sjmiles): historically, no `tag` on ArcMeta store, so we have
+        // to simulate that info
+        metrics.boxStoreId = metrics.boxStoreId.replace(/null/g, 'arc');
+        // metrics needed: {userid, boxStoreId, backingStorageKey}
+        this.addBoxedEntity({entity, shareSchema}, metrics);
+      }
+    }
   }
 };
 
-export const ShareListener = class extends AbstractListener {
-  constructor(context, listener) {
-    super(listener);
-    this.context = context;
-  }
+export const ShareListener = class extends ContextAwareListener {
   get isProfile() {
     return false;
   }
@@ -83,47 +148,18 @@ export const ShareListener = class extends AbstractListener {
     return logFactory(`ShareListener`, 'blue');
   }
   async add(entity, store) {
-    const handle = store.handle;
-    const metrics = ContextStores.getHandleMetrics(handle, this.isProfile);
-    if (metrics) {
-      const {base: userid} = crackStorageKey(store.storageKey);
-      const typeName = simpleNameOfType(store.type);
-      //
-      let share = boxes[metrics.storeId];
-      if (!share) {
-        this.log(`found new share:`, typeName, metrics.storeName);
-        // TODO(sjmiles): critical re-entry situation, anybody trying to access the box
-        // during the `await` on the next line will see no store.
-        // We attempt to avoid this by await'ing `add` when looping over change records.
-        share = boxes[metrics.storeId] = {};
-        share.shareStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.storeName, metrics.storeId, ['shared']);
-      }
-      const shareStore = await share.shareStorePromise;
-      ContextStores.storeEntityWithUid(shareStore, entity, userid);
-      //
-      let box = boxes[metrics.boxStoreId];
-      if (!box) {
-        box = boxes[metrics.boxStoreId] = {};
-        box.boxStorePromise = ContextStores.getShareStore(this.context, metrics.type, metrics.boxStoreId, metrics.boxStoreId, ['shared']);
-      }
-      const boxStore = await box.boxStorePromise;
-      ContextStores.storeEntityWithUid(boxStore, entity, userid);
-    }
-  }
-  async remove(entity, store) {
-    this.log('removing entity', entity);
-    const {base: userid} = crackStorageKey(store.storageKey);
-    const metrics = ContextStores.getHandleMetrics(store.handle, this.isProfile);
-    if (metrics) {
-      const share = boxes[metrics.storeId];
-      if (share && share.shareStorePromise) {
-        const shareStore = await share.shareStorePromise;
-        ContextStores.removeEntityWithUid(shareStore, entity, userid);
-      }
-      const box = boxes[metrics.boxStoreId];
-      if (box && box.boxStorePromise) {
-        const boxStore = await box.boxStorePromise;
-        ContextStores.removeEntityWithUid(boxStore, entity, userid);
+    // TODO(sjmiles): `store.handle` is expected by getStoreMetrics, this is part
+    // of the handle/store confusion I didn't resolve properly here
+    const metrics = ContextStores.getStoreMetrics(store, this.isProfile);
+    if (metrics.tag) {
+      const shareSchema = this.context.findSchemaByName(metrics.shareTypeName);
+      if (!shareSchema) {
+        this.log(`found a share type [${metrics.shareTypeName}] with no schema, ignoring`);
+      } else {
+        // individual shares
+        this.addSharedEntity({entity, shareSchema}, metrics);
+        // collated (boxed) shares
+        this.addBoxedEntity({entity, shareSchema}, metrics);
       }
     }
   }
@@ -140,6 +176,7 @@ export const ProfileListener = class extends ShareListener {
     return (simpleNameOfType(store.type) === 'Friend' && store.type.isCollection);
   }
   async add(entity, store) {
+    this.log('add', entity);
     await super.add(entity, store);
     if (this.isFriendStore(store)) {
       const launcher = await getLauncherStore(entity.rawData.publicKey);

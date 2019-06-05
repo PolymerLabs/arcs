@@ -1,0 +1,31 @@
+import './Json.schema'
+import './PipeEntity.schema'
+
+schema Artist
+  Text type
+  Text name
+  Text source
+
+particle RandomArtist in './source/RandomArtist.js'
+  out Artist artist
+
+particle SuggestArtist in './source/SuggestArtist.js'
+  in Artist artist
+  out Json suggestion
+  consume content
+
+particle RequireQuery in './source/Noop.js'
+  in PipeEntity query
+
+recipe AutofillSpotifyMusic &autofill
+  create as artist
+  create as suggestion
+  use #autofill_com_spotify_music as query
+  RequireQuery
+    query = query
+  RandomArtist
+    artist = artist
+  SuggestArtist
+    artist = artist
+    suggestion = suggestion
+  description `autofill artist`

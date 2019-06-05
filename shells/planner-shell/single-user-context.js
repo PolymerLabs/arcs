@@ -269,7 +269,7 @@ export const SingleUserContext = class {
    if (!store) {
       console.warn(`removeUserStoreEntities: store is null for [${userid}]`);
     } else {
-      log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'variable'})`);
+      log(`scanning [${userid}] [${store.id}] (${store.toList ? 'collection' : 'singleton'})`);
       //const tags = context.findStoreTags(store);
       if (store.toList) {
         const entities = await store.toList();

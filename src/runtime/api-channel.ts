@@ -37,20 +37,40 @@ interface MappingInfo<T> {
   ignore?: boolean;
 }
 
-const targets = new Map<{}, Map<string, MappingInfo<unknown>[]>>();
+type TargetInfo = Map<string, MappingInfo<unknown>[]>;
+const targets = new Map<{}, TargetInfo>();
 
 function setPropertyKey(target: {}, propertyKey: string) {
-  if (!targets.has(target)) {
-    targets.set(target, new Map());
+  let map = targets.get(target);
+  if (map == undefined) {
+    map = new Map();
+    targets.set(target, map);
   }
-  if (!targets.get(target).has(propertyKey)) {
-    targets.get(target).set(propertyKey, []);
+  let list = map.get(propertyKey);
+  if (list == undefined) {
+    list = [];
+    map.set(propertyKey, list);
   }
+  return list;
+}
+
+function getPropertyKey(target: {}, propertyKey: string, parameterIndex: number) {
+  const map = targets.get(target);
+  if (map) {
+    const list = map.get(propertyKey);
+    if (list) {
+      const result = list[parameterIndex];
+      if (result) {
+        return result;
+      }
+    }
+  }
+  throw new Error(`the target ${target}, propertyKey ${propertyKey} and parameterIndex ${parameterIndex} provided did not exist`);
 }
 
 function set<T>(target: {}, propertyKey: string, parameterIndex: number, info: MappingInfo<T>) {
-  setPropertyKey(target, propertyKey);
-  targets.get(target).get(propertyKey)[parameterIndex] = info;
+  const list = setPropertyKey(target, propertyKey);
+  list[parameterIndex] = info;
 }
 
 function Direct(target: {}, propertyKey: string, parameterIndex: number) {
@@ -90,7 +110,7 @@ function RemoteMapped(target: {}, propertyKey: string, parameterIndex: number) {
   set(target.constructor, propertyKey, parameterIndex, {type: MappingType.RemoteMapped});
 }
 
-function NoArgs(target: {}, propertyKey: string) {
+function NoArgs(target: {constructor: {}}, propertyKey: string) {
   setPropertyKey(target.constructor, propertyKey);
 }
 
@@ -103,17 +123,11 @@ function Initializer(target: {}, propertyKey: string, parameterIndex: number) {
 }
 
 function Identifier(target: {}, propertyKey: string, parameterIndex: number) {
-  assert(targets.get(target.constructor));
-  assert(targets.get(target.constructor).get(propertyKey));
-  assert(targets.get(target.constructor).get(propertyKey)[parameterIndex]);
-  targets.get(target.constructor).get(propertyKey)[parameterIndex].identifier = true;
+  getPropertyKey(target.constructor, propertyKey, parameterIndex).identifier = true;
 }
 
 function RemoteIgnore(target: {}, propertyKey: string, parameterIndex: number) {
-  assert(targets.get(target.constructor));
-  assert(targets.get(target.constructor).get(propertyKey));
-  assert(targets.get(target.constructor).get(propertyKey)[parameterIndex]);
-  targets.get(target.constructor).get(propertyKey)[parameterIndex].ignore = true;
+  getPropertyKey(target.constructor, propertyKey, parameterIndex).ignore = true;
 }
 
 class ThingMapper {
@@ -191,7 +205,7 @@ class ThingMapper {
 export class APIPort {
   private _port: MessagePort;
   _mapper: ThingMapper;
-  protected inspector: ArcInspector;
+  protected inspector: ArcInspector | null;
   protected attachStack: boolean;
   messageCount: number;
   constructor(messagePort: MessagePort, prefix: string) {
@@ -226,7 +240,7 @@ export class APIPort {
     const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
     if (this.inspector) {
-      this.inspector.pecMessage(name, args, count, new Error().stack);
+      this.inspector.pecMessage(name, args, count, new Error().stack || '');
     }
     this._port.postMessage(call);
   }
@@ -248,7 +262,10 @@ function getArgs(func) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
+function convert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingMapper) {
+  if (info === undefined) {
+    return;
+  }
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -276,7 +293,10 @@ function convert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
 // value is covariant with info, and errors will be found
 // at start of runtime.
 // tslint:disable-next-line: no-any
-function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
+function unconvert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingMapper) {
+  if (info === undefined) {
+    return;
+  }
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.thingForIdentifier(value);
@@ -297,6 +317,9 @@ function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
     case MappingType.List:
       return value.map(v => unconvert(info.value, v, mapper));
     case MappingType.ByLiteral:
+      if (!info.converter) {
+        throw new Error(`Expected ${info.type} to have a converter but it doesn't`);
+      }
       return info.converter.fromLiteral(value);
     default:
       throw new Error(`Can't yet recieve MappingType ${info.type}`);
@@ -306,17 +329,17 @@ function unconvert<T>(info: MappingInfo<T>, value: any, mapper: ThingMapper) {
 function AutoConstruct<S extends {prototype: {}}>(target: S) {
   return <T extends {prototype: {}}>(constructor:T) => {
     const doConstruct = <Q extends {prototype: {}}, R extends {prototype: {}}>(me: Q, other: R) => {
-      const functions = targets.get(me);
+      const functions: TargetInfo = targets.get(me) || new Map();
       for (const f of functions.keys()) {
         const argNames = getArgs(me.prototype[f]);
-        const descriptor = functions.get(f);
+        const descriptor = functions.get(f) || [];
 
         // If this descriptor is for an initializer, record that fact and we'll process it after
         // the rest of the arguments.
-        const initializer = descriptor.findIndex(d => d.initializer);
+        const initializer = descriptor.findIndex(d => d.initializer || false);
         // If this descriptor records that this argument is the identifier, record it
         // as the requestedId for mapping below.
-        const requestedId = descriptor.findIndex(d => d.identifier);
+        const requestedId = descriptor.findIndex(d => d.identifier || false);
 
         /** @this APIPort */
         const impl = function(this: APIPort, ...args) {
@@ -346,8 +369,8 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 
         /** @this APIPort */
         const before = async function before(this: APIPort, messageBody) {
-          const args = [];
-          const promises = [];
+          const args: (unknown | (() => unknown))[] = [];
+          const promises: {promise: Promise<unknown>, position: number}[] = [];
           for (let i = 0; i < descriptor.length; i++) {
             // If there's a requestedId then the receiving end won't expect to
             // see the identifier as well.
@@ -365,8 +388,10 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
           }
 
           if (promises.length > 0) {
-            await Promise.all(promises.map(a => a.promise));
-            promises.forEach(a => args[a.position] = args[a.position]());
+            await Promise.all(promises.map(async a => a.promise));
+            promises.forEach(a => {
+              args[a.position] = (args[a.position] as (() => unknown))();
+            });
           }
           const result = this['on' + f](...args);
 

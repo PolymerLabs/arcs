@@ -436,11 +436,11 @@ recipe
           renderRecipe: this.buildRenderRecipe(props.renderParticle, tileBoard.gameId),
           renderParticleSpec: state.renderParticleSpec
         };
-        const newPost = this.updateVariable('post', postValues);
+        const newPost = this.updateSingleton('post', postValues);
         for (let i = props.posts.length - 1; i >= 0; i--) {
           this.handles.get('posts').remove(props.posts[i]);
         }
-        this.updateSet('posts', newPost);
+        this.updateCollection('posts', newPost);
       }
       moveData = {coordinates: '', gameId: tileBoard.gameId};
       this.setMove(moveData);
@@ -741,14 +741,14 @@ recipe
           highestScore})].`);
     }
     setMove(values) {
-      this.updateVariable('move', values);
+      this.updateSingleton('move', values);
     }
     setBoard(values) {
       // TODO(wkorman): See if we can preserve id and reuse existing instance.
-      this.updateVariable('board', values);
+      this.updateSingleton('board', values);
     }
     setStats(values) {
-      this.updateVariable('stats', values);
+      this.updateSingleton('stats', values);
     }
   };
 });

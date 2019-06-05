@@ -10,9 +10,8 @@
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {DomParticleBase, RenderModel} from './dom-particle-base.js';
-import {Collection, Handle, Variable} from './handle.js';
+import {Handle, Collection, Singleton} from './handle.js';
 import {Runnable} from './hot.js';
-
 
 export interface StatefulDomParticle extends DomParticleBase {
   // add type info for XenState members here
@@ -33,11 +32,6 @@ export interface DomParticleConfig {
  * to handle updates.
  */
 export class DomParticle extends XenStateMixin(DomParticleBase) {
-  _handlesToSync: Set<string>;
-  constructor() {
-    super();
-  }
-
   /**
    * Override if necessary, to do things when props change.
    */
@@ -74,27 +68,21 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
   }
 
   /**
-   * Added getters and setters to support usage of .state.
+   * Getters and setters for working with state/props.
    */
   get state() {
     return this._state;
   }
 
+  /**
+   * Syntactic sugar: `this.state = {state}` is equivalent to `this.setState(state)`.
+   */
   set state(state) {
     this.setState(state);
   }
 
   get props() {
     return this._props;
-  }
-
-  /**
-   * This is called once during particle setup. Override to control sync and update
-   * configuration on specific handles (via their configure() method).
-   * `handles` is a map from names to handle instances.
-   */
-  configureHandles(handles: ReadonlyMap<string, Handle>): void {
-    // Example: handles.get('foo').configure({keepSynced: false});
   }
 
   /**
@@ -123,67 +111,70 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
 
+  _async(fn) {
+    // asynchrony in Particle code must be bookended with start/doneBusy
+    this.startBusy();
+    const done = () => {
+      try {
+        fn.call(this);
+      } finally {
+        this.doneBusy();
+      }
+    };
+    // TODO(sjmiles): superclass uses Promise.resolve(),
+    // but here use a short timeout for a wider debounce
+    return setTimeout(done, 10);
+  }
+
   async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
     this.configureHandles(handles);
     this.handles = handles;
-    this._handlesToSync = new Set<string>();
-    for (const name of this.config.handleNames) {
-      const handle = handles.get(name);
-      if (handle && handle.options.keepSynced && handle.options.notifySync) {
-        this._handlesToSync.add(name);
-      }
-    }
-    // TODO(sjmiles): we must invalidate at least once,
-    // let's assume we will miss _handlesToProps if handlesToSync is empty
-    if (!this._handlesToSync.size) {
-      this._invalidate();
-    }
+    // TODO(sjmiles): we must invalidate at least once, is there a way to know
+    // whether handleSync/update will be called?
+    this._invalidate();
+  }
+
+  /**
+   * This is called once during particle setup. Override to control sync and update
+   * configuration on specific handles (via their configure() method).
+   * `handles` is a map from names to handle instances.
+   */
+  configureHandles(handles: ReadonlyMap<string, Handle>): void {
+    // Example: handles.get('foo').configure({keepSynced: false});
   }
 
   async onHandleSync(handle: Handle, model: RenderModel): Promise<void> {
-    this._handlesToSync.delete(handle.name);
-    if (this._handlesToSync.size === 0) {
-      await this._handlesToProps();
-    }
+    this._setProperty(handle.name, model);
   }
 
-  async onHandleUpdate(handle: Handle, update): Promise<void> {
-    // TODO(sjmiles): debounce handles updates
-    // TODO(alxr) Do we need `update`?
-    const work = () => {
-      //console.warn(handle, update);
-      this._handlesToProps();
-    };
-    this._debounce('handleUpdateDebounce', work, 300);
-  }
-
-  private async _handlesToProps() {
-    // convert handle data (array) into props (dictionary)
-    const props = Object.create(null);
-    // acquire list data from handles
-    const {handleNames} = this.config;
-    // data-acquisition is async
-    await Promise.all(handleNames.map(name => this._addNamedHandleData(props, name)));
-    // initialize properties
-    this._setProps(props);
-  }
-
-  private async _addNamedHandleData(dictionary, handleName) {
-    const handle = this.handles.get(handleName);
-    if (handle) {
-      dictionary[handleName] = await this._getHandleData(handle);
+  async onHandleUpdate({name}: Handle, {data, added, removed}): Promise<void> {
+    if (data) {
+      //console.log('update.data:', JSON.stringify(data, null, '  '));
+      this._setProps({[name]: data});
     }
-  }
-
-  private async _getHandleData(handle: Handle) {
-    if (handle instanceof Collection) {
-      return await (handle as Collection).toList();
+    if (added) {
+      //console.log('update.added:', JSON.stringify(added, null, '  '));
+      const prop = (this.props[name] || []).concat(added);
+      // TODO(sjmiles): generally improper to set `this._props` directly, this is a special case
+      this._props[name] = prop;
+      this._setProps({[name]: prop});
     }
-    if (handle instanceof Variable) {
-      return await (handle as Variable).get();
+    if (removed) {
+      //console.log('update.removed:', JSON.stringify(removed, null, '  '));
+      const prop = this.props[name];
+      if (Array.isArray(prop)) {
+        removed.forEach(removed => {
+          // TODO(sjmiles): linear search is inefficient
+          const index = prop.findIndex(entry => entry.id === removed.id);
+          if (index >= 0) {
+            prop.splice(index, 1);
+          } else {
+            console.warn(`dom-particle::onHandleUpdate: couldn't find item to remove`);
+          }
+        });
+        this._setProps({[name]: prop});
+      }
     }
-    // other types (e.g. BigCollections) map to the handle itself
-    return handle;
   }
 
   fireEvent(slotName: string, {handler, data}) {
@@ -193,16 +184,19 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     }
   }
 
-  private _debounce(key: string, func: Runnable, delay: number) {
+  debounce(key: string, func: Runnable, delay: number) {
     const subkey = `_debounce_${key}`;
-    if (!this._state[subkey]) {
+    const state = this.state;
+    if (!state[subkey]) {
+      state[subkey] = true;
       this.startBusy();
     }
     const idleThenFunc = () => {
       this.doneBusy();
       func();
-      this._state[subkey] = null;
+      state[subkey] = null;
     };
+    // TODO(sjmiles): rewrite Xen debounce so caller has idle control
     super._debounce(key, idleThenFunc, delay);
   }
 }

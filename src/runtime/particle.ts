@@ -11,11 +11,12 @@
 import {BigCollection} from './handle.js';
 import {Collection} from './handle.js';
 import {Handle} from './handle.js';
-import {Runnable} from './hot.js';
+import {Runnable, Consumer} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
+import {UserException} from './arc-exceptions.js';
 
 /**
  * A basic particle. For particles that provide UI, you may like to
@@ -56,6 +57,20 @@ export class Particle {
     this.capabilities = capabilities || {};
   }
 
+  private async invokeSafely(fun: (p: this) => Promise<void>, err: Consumer<Error>) {
+    try {
+      this.startBusy();
+      await fun(this);
+    } catch (e) {
+      err(e);
+    } finally {
+      this.doneBusy();
+    }
+  }
+
+  async callSetHandles(handles: ReadonlyMap<string, Handle>, onException: Consumer<Error>) {
+    this.invokeSafely(async p => p.setHandles(handles), onException);
+  }
 
   /**
    * This method is invoked with a handle for each store this particle
@@ -65,7 +80,11 @@ export class Particle {
    *
    * @param handles a map from handle names to store handles.
    */
-  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
+  protected async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
+  }
+
+  async callOnHandleSync(handle: Handle, model, onException: Consumer<Error>) {
+    this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
   }
 
   /**
@@ -74,10 +93,15 @@ export class Particle {
    * thereafter if the handle is resynchronized.
    *
    * @param handle The Handle instance that was updated.
-   * @param model For Variable-backed Handles, the Entity data or null if the Variable is not set.
+   * @param model For Singleton-backed Handles, the Entity data or null if the Singleton is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
-  async onHandleSync(handle: Handle, model): Promise<void> {
+  protected async onHandleSync(handle: Handle, model): Promise<void> {
+  }
+
+  // tslint:disable-next-line: no-any
+  async callOnHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}, onException: Consumer<Error>) {
+    this.invokeSafely(async p => p.onHandleUpdate(handle, update), onException);
   }
 
   /**
@@ -88,25 +112,29 @@ export class Particle {
    *
    * @param handle The Handle instance that was updated.
    * @param update An object containing one of the following fields:
-   *  - data: The full Entity for a Variable-backed Handle.
-   *  - oldData: The previous value of a Variable before it was updated.
+   *  - data: The full Entity for a Singleton-backed Handle.
+   *  - oldData: The previous value of a Singleton before it was updated.
    *  - added: An Array of Entities added to a Collection-backed Handle.
    *  - removed: An Array of Entities removed from a Collection-backed Handle.
    */
   // tslint:disable-next-line: no-any
-  async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}): Promise<void> {
+  protected async onHandleUpdate(handle: Handle, update: {data?: any, oldData?: any, added?: any, removed?: any, originator?: any}): Promise<void> {
+  }
+
+  async callOnHandleDesync(handle: Handle, onException: Consumer<Error>) {
+    this.invokeSafely(async p => p.onHandleDesync(handle), onException);
   }
 
   /**
    * Called for handles that are configured with both keepSynced and notifyDesync, when they are
-   * detected as being out-of-date against the backing store. For Variables, the event that triggers
+   * detected as being out-of-date against the backing store. For Singletons, the event that triggers
    * this will also resync the data and thus this call may usually be ignored. For Collections, the
    * underlying proxy will automatically request a full copy of the stored data to resynchronize.
    * onHandleSync will be invoked when that is received.
    *
    * @param handle The Handle instance that was desynchronized.
    */
-  async onHandleDesync(handle: Handle): Promise<void> {
+  protected async onHandleDesync(handle: Handle): Promise<void> {
   }
 
   async constructInnerArc(): Promise<InnerArcHandle> {
@@ -130,7 +158,7 @@ export class Particle {
 
   startBusy(): void {
     if (this._busy === 0) {
-      this._idle = new Promise(resolve => this._idleResolver = resolve);
+      this._idle = new Promise(resolve => this._idleResolver = () => resolve());
     }
     this._busy++;
   }

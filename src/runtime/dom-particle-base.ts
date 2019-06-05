@@ -9,7 +9,7 @@
  */
 
 import {Entity} from './entity.js';
-import {BigCollection, Collection, Variable} from './handle.js';
+import {BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 
@@ -175,10 +175,10 @@ export class DomParticleBase extends Particle {
    */
   async clearHandle(handleName: string): Promise<void> {
     const handle = this.handles.get(handleName);
-    if (handle instanceof Variable || handle instanceof Collection) {
+    if (handle instanceof Singleton || handle instanceof Collection) {
       handle.clear();
     } else {
-      throw new Error('Variable/Collection required');
+      throw new Error('Singleton/Collection required');
     }
   }
 
@@ -234,16 +234,16 @@ export class DomParticleBase extends Particle {
    * Modify value of named handle. A new entity is created
    * from `rawData` (`new [EntityClass](rawData)`).
    */
-  updateVariable(handleName: string, rawData) {
+  updateSingleton(handleName: string, rawData) {
     const handle = this.handles.get(handleName);
     if (handle && handle.entityClass) {
-      if (handle instanceof Variable) {
+      if (handle instanceof Singleton) {
         const entityClass = handle.entityClass;
         const entity = new entityClass(rawData);
         handle.set(entity);
         return entity;
       } else {
-        throw new Error('Variable required');
+        throw new Error('Singleton required');
       }
     }
     return undefined;
@@ -253,7 +253,7 @@ export class DomParticleBase extends Particle {
    * Modify or insert `entity` into named handle.
    * Modification is done by removing the old entity and reinserting the new one.
    */
-  async updateSet(handleName: string, entity: Entity): Promise<void> {
+  async updateCollection(handleName: string, entity: Entity): Promise<void> {
     // Set the entity into the right place in the set. If we find it
     // already present replace it, otherwise, add it.
     // TODO(dstockwell): Replace this with happy entity mutation approach.
@@ -269,9 +269,29 @@ export class DomParticleBase extends Particle {
   }
 
   /**
+   * Return array of Entities dereferenced from array of Share-Type Entities
+   */
+  async derefShares(shares): Promise<Entity[]> {
+    let entities = [];
+    this.startBusy();
+    try {
+      const derefPromises = shares.map(async share => share.ref.dereference());
+      entities = await Promise.all(derefPromises);
+    } finally {
+      this.doneBusy();
+    }
+    return entities;
+  }
+
+  /**
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`
    */
-  boxQuery(box, userid: string) {
-    return box && box.filter(item => userid === item.getUserID().split('|')[0]);
+  async boxQuery(box, userid): Promise<{}[]> {
+    if (!box) {
+      return [];
+    } else {
+      const matches = box.filter(item => userid === item.fromKey);
+      return await this.derefShares(matches);
+    }
   }
 }

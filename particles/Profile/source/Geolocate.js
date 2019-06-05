@@ -30,7 +30,7 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     onCoords(e) {
-      this.updateVariable('location', e.data.value);
+      this.updateSingleton('location', e.data.value);
     }
   };
 

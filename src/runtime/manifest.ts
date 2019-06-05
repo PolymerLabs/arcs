@@ -22,6 +22,7 @@ import {compareComparables, compareNumbers, compareStrings} from './recipe/compa
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
+import {HandleConnection} from './recipe/handle-connection.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
@@ -31,7 +32,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 
-class ManifestError extends Error {
+export class ManifestError extends Error {
   location: AstNode.SourceLocation;
   key: string;
   constructor(location: AstNode.SourceLocation, message: string) {
@@ -103,7 +104,7 @@ export class StorageStub {
   }
 
   _compareTo(other: StorageProviderBase) : number {
-    let cmp;
+    let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
     cmp = compareStrings(this.id, other.id);
@@ -156,14 +157,13 @@ const globalWarningKeys: Set<string> = new Set();
 type ManifestFinder<a> = (manifest: Manifest) => a;
 type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) | ((manifest: Manifest) => a[]);
 
-
 export class Manifest {
-  private _recipes = <Recipe[]>[];
-  private _imports = <Manifest[]>[];
+  private _recipes: Recipe[] = [];
+  private _imports: Manifest[] = [];
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores = <(StorageProviderBase|StorageStub)[]>[];
+  private _stores: (StorageProviderBase|StorageStub)[] = [];
   private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<StorageProviderBase|StorageStub, string[]> = new Map();
   private _fileName: string|null = null;
@@ -174,8 +174,9 @@ export class Manifest {
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
-  private errors = <ManifestError[]>[];
-  constructor({id}) {
+  private errors: ManifestError[] = [];
+
+  constructor({id}: {id: Id|string}) {
     // TODO: Cleanup usage of strings as Ids.
     assert(id instanceof Id || typeof id === 'string');
     if (id instanceof Id) {
@@ -188,6 +189,7 @@ export class Manifest {
       this._id = Id._newIdInternal(components[0], components.slice(1));
     }
   }
+
   get id() {
     if (this._meta.name) {
       return Id.fromString(this._meta.name);
@@ -353,14 +355,16 @@ export class Manifest {
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
+
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
+
   generateID(): Id {
     return this._idGenerator.newChildId(this.id);
   }
 
-  static async load(fileName: string, loader: {loadResource}, options?): Promise<Manifest> {
+  static async load(fileName: string, loader: {loadResource, path?, join?}, options?): Promise<Manifest> {
     options = options || {};
     let {registry, id} = options;
     registry = registry || {};
@@ -379,6 +383,10 @@ export class Manifest {
       });
     })();
     return await registry[fileName];
+  }
+
+  static getErrors(manifest: Manifest): ManifestError[] {
+    return manifest.errors;
   }
 
   static async parse(content: string, options?): Promise<Manifest> {
@@ -403,14 +411,19 @@ export class Manifest {
       }
     }
 
-    function processError(e, parseError=undefined) {
+    // tslint:disable-next-line: no-any
+    function processError(e: ManifestError|any, parseError: boolean|undefined = undefined) {
       if (!((e instanceof ManifestError) || e.location)) {
         return e;
       }
+      return processManifestError(e, parseError);
+    }
+
+    function processManifestError(e: ManifestError, parseError: boolean|undefined = undefined) {
       const lines = content.split('\n');
       const line = lines[e.location.start.line - 1];
       // TODO(sjmiles): see https://github.com/PolymerLabs/arcs/issues/2570
-      let message = e.message || '';
+      let message: string = e.message || '';
       if (line) {
         let span = 1;
         if (e.location.end.line === e.location.start.line) {
@@ -426,7 +439,7 @@ export class Manifest {
         for (let i = 0; i < span; i++) {
           highlight += '^';
         }
-        let preamble;
+        let preamble: string;
         if (parseError) {
           preamble = 'Parse error in';
         } else {
@@ -507,12 +520,12 @@ ${e.message}
     return manifest;
   }
 
-  private static _augmentAstWithTypes(manifest, items) {
+  private static _augmentAstWithTypes(manifest: Manifest, items) {
     const visitor = new class extends ManifestVisitor {
       constructor() {
         super();
       }
-      visit(node, visitChildren) {
+      visit(node, visitChildren: Runnable) {
         // TODO(dstockwell): set up a scope and merge type variables here, so that
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
@@ -609,7 +622,7 @@ ${e.message}
     visitor.traverse(items);
   }
 
-  private static _processSchema(manifest, schemaItem) {
+  private static _processSchema(manifest: Manifest, schemaItem) {
     let description;
     const fields = {};
     let names = [...schemaItem.names];
@@ -665,11 +678,11 @@ ${e.message}
     manifest._schemas[name] = schema;
   }
 
-  private static _processResource(manifest, schemaItem) {
+  private static _processResource(manifest: Manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processParticle(manifest, particleItem, loader) {
+  private static _processParticle(manifest: Manifest, particleItem, loader) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -681,8 +694,7 @@ ${e.message}
     if (particleItem.hasParticleArgument) {
       const warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
       warning.key = 'hasParticleArgument';
-      manifest._warnings.push(warning);
-
+      manifest['_warnings'].push(warning);
     }
 
     // TODO: loader should not be optional.
@@ -702,7 +714,7 @@ ${e.message}
   }
 
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
-  private static _processInterface(manifest, interfaceItem) {
+  private static _processInterface(manifest: Manifest, interfaceItem) {
     const handles = [];
     for (const arg of interfaceItem.args) {
       const handle = {name: undefined, type: undefined, direction: arg.direction};
@@ -960,6 +972,7 @@ ${e.message}
     for (const [particle, item] of items.byParticle) {
       for (const connectionItem of item.connections) {
         let connection;
+
         if (connectionItem.param === '*') {
           connection = particle.addUnnamedConnection();
         } else {
@@ -1108,7 +1121,7 @@ ${e.message}
       }
     }
   }
-  resolveTypeName(name) {
+  resolveTypeName(name: string): {schema?: Schema, iface?: InterfaceInfo}|null {
     const schema = this.findSchemaByName(name);
     if (schema) {
       return {schema};
@@ -1120,7 +1133,7 @@ ${e.message}
     return null;
   }
 
-  private static async _processStore(manifest, item, loader) {
+  private static async _processStore(manifest: Manifest, item, loader) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1140,7 +1153,7 @@ ${e.message}
       return;
     }
 
-    let json;
+    let json: string;
     let source;
     if (item.origin === 'file') {
       item.source = loader.join(manifest.fileName, item.source);
@@ -1180,7 +1193,7 @@ ${e.message}
       let hasSerializedId = false;
       entities = entities.map(entity => {
         if (entity == null) {
-          // FIXME: perhaps this happens when we have an empty variable?
+          // FIXME: perhaps this happens when we have an empty singleton?
           // we should just generate an empty list in that case.
           return null;
         }
@@ -1231,7 +1244,7 @@ ${e.message}
     await store.fromLiteral({version, model});
   }
 
-  private static async _createStore(manifest, type, name, id, tags, item, originalId) {
+  private static async _createStore(manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string) {
     const store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
@@ -1239,16 +1252,16 @@ ${e.message}
     return store;
   }
 
-  private _newRecipe(name) {
+  private _newRecipe(name: string): Recipe {
     const recipe = new Recipe(name);
     this._recipes.push(recipe);
     return recipe;
   }
 
-  toString(options?) {
+  toString(options?: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean}): string {
     // TODO: sort?
     options = options || {};
-    const results = [];
+    const results: string[] = [];
 
     this._imports.forEach(i => {
       if (options.recursive) {

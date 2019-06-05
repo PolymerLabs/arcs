@@ -81,7 +81,7 @@ defineParticle(({DomParticle, html, resolver}) => {
       };
     }
     onUpload(e) {
-      this.updateVariable('avatar', {url: e.data.value.url});
+      this.updateSingleton('avatar', {url: e.data.value.url});
     }
   };
 

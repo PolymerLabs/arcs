@@ -107,9 +107,9 @@ const log = Xen.logFactory('DeviceClientPipe', '#a01a01');
 
 class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['context', 'userid', 'storage', 'suggestions', 'arc', 'pipearc'];
+    return ['context', 'storage', 'suggestions', 'arc', 'pipearc'];
   }
-  update({userid, context, suggestions, arc, pipearc}, state) {
+  update({context, suggestions, arc, pipearc}, state) {
     if (pipearc && !state.pipeStore) {
       state.pipeStore = pipearc._stores[0];
       if (!state.pipeStore) {
@@ -125,7 +125,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
       ShellApi.registerPipe(this);
       log('registerPipe');
     }
-    if (userid && state.entity) {
+    if (state.entity) {
       this.updateEntity(state.entity);
       this.state = {entity: null};
     }
@@ -171,7 +171,7 @@ class DeviceClientPipe extends Xen.Debug(Xen.Async, log) {
     } else {
       const manifest = buildEntityManifest(entity);
       log(manifest);
-      const id = `${this.props.userid}-piped-${entity.id}`;
+      const id = `user-piped-${entity.id}`;
       this.fire('spawn', {id, manifest, description: `(from device) ${entity.name || entity.type}`});
       state = {spawned: id};
     }

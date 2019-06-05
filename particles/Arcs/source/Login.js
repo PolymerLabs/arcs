@@ -127,7 +127,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     }
     onInput({data: {value}}) {
       this.setState({nextDisabled: value == ''});
-      this.updateVariable('key', {key: value});
+      this.updateSingleton('key', {key: value});
     }
   };
 
