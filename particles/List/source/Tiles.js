@@ -36,9 +36,9 @@ defineParticle(({DomParticle, html, log}) => {
 <div pacify hidden="{{haveItems}}">(nothing to show)</div>
 <div tile-list>{{items}}</div>
 
-<template tiled-items>
+<template items>
   <div card selected$="{{selected}}">
-    <div slotid="tile" subid$="{{id}}" key="{{id}}" on-click="_onSelect"></div>
+    <div slotid="tile" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
     <div slotid="annotation" subid$="{{id}}"></div>
   </div>
 </template>
@@ -51,28 +51,33 @@ defineParticle(({DomParticle, html, log}) => {
     shouldRender({list}) {
       return Boolean(list);
     }
+    getId(entity) {
+      // TODO(sjmiles): ensure we get the entity.id even if the rawData has it's own id,
+      // discuss with Runtime folks (either we disallow `id` collision or have a more obvious way to get this)
+      return Object.getOwnPropertyDescriptor(entity.__proto__.__proto__, 'id').get.apply(entity);
+    }
     render({list, selected}) {
       const selectedId = selected && selected.id;
       const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
-      const items = {
-        $template: 'tiled-items',
-        models: sorted.map(item => this.renderItem(item, selectedId === item.id))
-      };
-      // log(items.models);
+      const models = sorted.map(item => this.renderItem(item, selectedId === this.getId(item)));
       return {
-        haveItems: true,
-        items
+        haveItems: models.length > 0,
+        items: {
+          $template: 'items',
+          models
+        }
       };
     }
-    renderItem({id}, selected) {
+    renderItem(entity, selected) {
       return {
-        id,
+        id: this.getId(entity),
         selected
       };
     }
-    _onSelect(e) {
-      const item = this._props.list.find(i => i.id === e.data.key);
+    onSelect(e) {
+      const item = this._props.list.find(i => this.getId(i) === e.data.key);
       this.handles.get('selected').set(item);
     }
   };
+
 });

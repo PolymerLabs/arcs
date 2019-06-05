@@ -8,54 +8,49 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
-defineParticle(({DomParticle, resolver, html}) => {
-
-  const host = `items-list`;
+defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
+<style>
+  :host {
+    padding: 8px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  [items] {
+    background-color: white;
+  }
+  /* note: avoid padding/margin/etc on [item] so the children can use the full bleed */
+  /* TODO(sjmiles): provide css-variables for customizing selection */
+  [items] > [item][selected] {
+    background-color: whitesmoke;
+  }
+  div[slotid="annotation"] {
+    font-size: 0.75em;
+  }
+  [items] p {
+    margin: 0;
+  }
+  [empty] {
+    color: #aaaaaa;
+    font-size: 14px;
+    font-style: italic;
+    padding: 10px 0;
+  }
+</style>
 
-<div ${host} style="padding: 8px;">
-  <style>
-    [${host}] {
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    [${host}] > [items] {
-      background-color: white;
-    }
-    /* note: avoid padding/margin/etc on [item] so the children can use the full bleed */
-    /* TODO(sjmiles): provide css-variables for customizing selection */
-    [${host}] > [items] > [item][selected] {
-      background-color: whitesmoke;
-    }
-    [${host}] div[slotid="annotation"] {
-      font-size: 0.75em;
-    }
-    [${host}] > [items] p {
-      margin: 0;
-    }
-    [${host}] [empty] {
-      color: #aaaaaa;
-      font-size: 14px;
-      font-style: italic;
-      padding: 10px 0;
-    }
-  </style>
+<div slotid="preamble"></div>
+<div empty hidden="{{hasItems}}">List is empty</div>
+<div items>{{items}}</div>
+<div slotid="action"></div>
+<div slotid="postamble"></div>
 
-  <div slotid="preamble"></div>
-  <div empty hidden="{{hasItems}}">List is empty</div>
-  <div items>{{items}}</div>
-  <div slotid="action"></div>
-  <div slotid="postamble"></div>
-
-  <template items>
-    <div item selected$="{{selected}}">
-      <div slotid="item" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
-      <div slotid="annotation" subid$="{{id}}"></div>
-    </div>
-  </template>
-</div>
+<template items>
+  <div item selected$="{{selected}}">
+    <div slotid="item" subid$="{{id}}" key="{{id}}" on-click="onSelect"></div>
+    <div slotid="annotation" subid$="{{id}}"></div>
+  </div>
+</template>
 
   `;
 
@@ -66,25 +61,33 @@ defineParticle(({DomParticle, resolver, html}) => {
     shouldRender({list}) {
       return Boolean(list);
     }
+    getId(entity) {
+      // TODO(sjmiles): ensure we get the entity.id even if the rawData has it's own id,
+      // discuss with Runtime folks (either we disallow `id` collision or have a more obvious way to get this)
+      return Object.getOwnPropertyDescriptor(entity.__proto__.__proto__, 'id').get.apply(entity);
+    }
     render({list, selected}) {
       const selectedId = selected && selected.id;
+      const sorted = list.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const models = sorted.map(item => this.renderItem(item, selectedId === this.getId(item)));
       return {
-        hasItems: list.length > 0,
+        haveItems: models.length > 0,
         items: {
           $template: 'items',
-          models: list.map(item => ({
-            id: item.id,
-            selected: selectedId === item.id
-          }))
+          models
         }
       };
     }
+    renderItem(entity, selected) {
+      return {
+        id: this.getId(entity),
+        selected
+      };
+    }
     onSelect(e) {
-      const item = this._props.list.find(i => i.id === e.data.key);
-      const selected = this.handles.get('selected');
-      if (item && selected) {
-        selected.set(item);
-      }
+      const item = this._props.list.find(i => this.getId(i) === e.data.key);
+      this.handles.get('selected').set(item);
     }
   };
+
 });
