@@ -71,10 +71,11 @@ const arcTemplate = `
       margin-right: 8px;
     }
     #arc-root {
-      margin: 4px 0 16px 0;
+      margin: 4px 0 12px 0;
       border: 1px solid;
     }
     .control {
+      display: none;
       cursor: pointer;
       font-size: 18px;
       vertical-align: top;
@@ -88,7 +89,7 @@ const arcTemplate = `
       display: none;
       max-width: calc(100% - 80px);
       overflow: auto;
-      margin-left: 8px;
+      margin: 4px 0 0 8px;
     }
     #serial {
       border: 1px dashed;
@@ -137,8 +138,14 @@ class ArcPanel extends HTMLElement {
     this.linkedArc = arc;
   }
 
-  setDescription(text) {
-    this.arcLabel.textContent += ` - "${text.trim()}"`;
+  display(description) {
+    this.serialControl.style.display = 'inline-block';
+    if (this.linkedArc._stores.length > 0) {
+      this.storesControl.style.display = 'inline-block';
+    }
+    if (description) {
+      this.arcLabel.textContent += ` - "${description.trim()}"`;
+    }
   }
 
   async toggleStores() {
