@@ -22,8 +22,8 @@ import {AmlServiceContext, jsonrpc, normalizeUri, uri2path} from './util.js';
 // tslint:disable-next-line: no-any
 export type Handler = ((params: any, context: AmlServiceContext) => any);
 
-// tslint:disable-next-line: no-any
 export const handlers: Dictionary<Handler> = {
+// tslint:disable-next-line: no-any
   initialize: (params: any, context: AmlServiceContext):
                   MessageTypes.InitializeResult => {
     context.rootPath =
