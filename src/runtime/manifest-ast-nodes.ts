@@ -165,6 +165,8 @@ export interface Particle extends BaseNode {
   slots?: ParticleSlot[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
+  trustChecks?: ParticleTrustCheck[];
+  trustClaims?: ParticleTrustClaim[];
 
   // fields in RecipeParticle only
   ref?: ParticleRef | '*';
@@ -172,6 +174,17 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
+export interface ParticleTrustClaim extends BaseNode {
+  kind: 'particle-trust-claim';
+  handle: string;
+  trustTag: string;
+}
+
+export interface ParticleTrustCheck extends BaseNode {
+  kind: 'particle-trust-check';
+  handle: string;
+  trustTag: string;
+}
 
 export interface ParticleModality extends BaseNode {
   kind: 'particle-modality';

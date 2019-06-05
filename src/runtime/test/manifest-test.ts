@@ -17,6 +17,7 @@ import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
+import {assertThrowsAsync} from '../testing/test-util.js';
 
 async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
@@ -1914,48 +1915,114 @@ resource SomeName
 
     const recipe = manifest.recipes[0];
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
- });
- it('can parse recipes with a require section', async () => {
-  const manifest = await Manifest.parse(`
-    particle P1
-      out S {} a
-      consume root 
-        provide details
-    particle P2
-      in S {} b
-        consume details
-    
-    recipe 
-      require
-        handle as h0
-        slot as s0
-        P1
-          * -> h0
-          consume root
-            provide details as s0
-        P2
-          * <- h0
+  });
+  
+  it('can parse recipes with a require section', async () => {
+    const manifest = await Manifest.parse(`
+      particle P1
+        out S {} a
+        consume root 
+          provide details
+      particle P2
+        in S {} b
           consume details
-      P1
-  `);
-  const recipe = manifest.recipes[0];
-  assert(recipe.requires.length === 1, 'could not parse require section');
- });
- it('recipe resolution checks the require sections', async () => {
-   const manifest = await Manifest.parse(`
+      
+      recipe 
+        require
+          handle as h0
+          slot as s0
+          P1
+            * -> h0
+            consume root
+              provide details as s0
+          P2
+            * <- h0
+            consume details
+        P1
+    `);
+    const recipe = manifest.recipes[0];
+    assert(recipe.requires.length === 1, 'could not parse require section');
+  });
+ 
+  it('recipe resolution checks the require sections', async () => {
+    const manifest = await Manifest.parse(`
 
-    particle A
-      in S {} input
-    particle B
-      out S {} output
+      particle A
+        in S {} input
+      particle B
+        out S {} output
 
-    recipe
-      require
-        A
-        B
-   `);
-   const recipe = manifest.recipes[0];
-   recipe.normalize();
-   assert.isFalse(recipe.isResolved(), 'recipe with a require section is resolved');
- });
+      recipe
+        require
+          A
+          B
+    `);
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved(), 'recipe with a require section is resolved');
+  });
+
+  describe('trust claims and checks', () => {
+    it('supports multiple claim statements', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          out T {} output1
+          out T {} output2
+          claim output1 is property1
+          claim output2 is property2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustClaims.size, 2);
+      assert.equal(particle.trustClaims.get('output1'), 'property1');
+      assert.equal(particle.trustClaims.get('output2'), 'property2');
+      assert.isEmpty(particle.trustChecks);
+    });
+
+    it('supports multiple check statements', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          check input1 is property1
+          check input2 is property2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustChecks.size, 2);
+      assert.equal(particle.trustChecks.get('input1'), 'property1');
+      assert.equal(particle.trustChecks.get('input2'), 'property2');
+      assert.isEmpty(particle.trustClaims);
+    });
+
+    it('fails for unknown handle names', async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} output
+          claim oops is trusted
+      `), `Can't make a claim on unknown handle oops`);
+
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} input
+          check oops is trusted
+      `), `Can't make a check on unknown handle oops`);
+    });
+
+    it(`doesn't allow claims on inputs`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} foo
+          claim foo is trusted
+      `), `Can't make a claim on handle foo (not an output handle)`);
+    });
+
+    it(`doesn't allow checks on outputs`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} foo
+          check foo is trusted
+      `), `Can't make a check on handle foo (not an input handle)`);
+    });
+  });
 });

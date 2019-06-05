@@ -233,6 +233,8 @@ Particle
     let args: AstNode.ParticleArgument[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
+    const trustClaims: AstNode.ParticleTrustClaim[] = [];
+    const trustChecks: AstNode.ParticleTrustCheck[] = [];
     let description: AstNode.Description | null = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -255,6 +257,10 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
+      } else if (item.kind === 'particle-trust-claim') {
+        trustClaims.push(item);
+      } else if (item.kind === 'particle-trust-check') {
+        trustChecks.push(item);
       } else if (item.modality) {
         modality.push(item.modality);
       } else {
@@ -276,7 +282,9 @@ Particle
       modality,
       slotConnections,
       description,
-      hasParticleArgument
+      hasParticleArgument,
+      trustClaims,
+      trustChecks,
     } as AstNode.Particle;
   }
 
@@ -285,6 +293,30 @@ ParticleItem "a particle item"
   / ParticleSlot
   / Description
   / ParticleHandle
+  / ParticleTrustClaim
+  / ParticleTrustCheck
+
+ParticleTrustClaim
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  {
+    return {
+      kind: 'particle-trust-claim',
+      location: location(),
+      handle,
+      trustTag,
+    } as AstNode.ParticleTrustClaim;
+  }
+
+ParticleTrustCheck
+  = 'check' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  {
+    return {
+      kind: 'particle-trust-check',
+      location: location(),
+      handle,
+      trustTag,
+    } as AstNode.ParticleTrustCheck;
+  }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
