@@ -271,7 +271,6 @@ const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<Classif
 
   const topClassesAndProbs = [];
   for (let i = 0; i < topkIndices.length; i++) {
-    log(topkIndices[i]);
     topClassesAndProbs.push({
       className: labels[topkIndices[i]],
       probability: topkValues[i]
