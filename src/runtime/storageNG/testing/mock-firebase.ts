@@ -83,19 +83,19 @@ class MockFirebaseReference implements firebase.database.Reference {
   onDisconnect(): firebase.database.OnDisconnect {
     throw new Error('Method not implemented.');
   }
-  push(value?: any, onComplete?: (a: Error) => void): firebase.database.ThenableReference {
+  push(value?: unknown, onComplete?: (a: Error) => void): firebase.database.ThenableReference {
     throw new Error('Method not implemented.');
   }
   async remove(onComplete?: (a: Error) => void) {
     throw new Error('Method not implemented.');
   }
-  async set(value: any, onComplete?: (a: Error) => void) {
+  async set(value: unknown, onComplete?: (a: Error) => void) {
     throw new Error('Method not implemented.');
   }
   async setPriority(priority: string | number, onComplete: (a: Error) => void) {
     throw new Error('Method not implemented.');
   }
-  async setWithPriority(newVal: any, newPriority: string | number, onComplete?: (a: Error) => void) {
+  async setWithPriority(newVal: unknown, newPriority: string | number, onComplete?: (a: Error) => void) {
     throw new Error('Method not implemented.');
   }
   async transaction(transactionUpdate: (a: {}) => {}, onComplete?: (a: Error, b: boolean, c: firebase.database.DataSnapshot) => void, applyLocally?: boolean) {
