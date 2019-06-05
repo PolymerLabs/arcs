@@ -1,0 +1,11 @@
+import '../schemas/MlResource.schema'
+import '../schemas/MlModel.schema'
+import '../schemas/Inference.schema'
+
+particle Classifier in './js/ToLabels.js'
+  consume root
+  in MlResource logits
+  in URL labels
+  in Number k
+  out [Classification] predictions
+  description `Convert raw inference into the top k labels (with confidence).`

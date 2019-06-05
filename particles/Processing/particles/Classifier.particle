@@ -1,0 +1,8 @@
+import '../schemas/MlResource.schema'
+
+particle Classifier in './js/Classifier.js'
+  consume root
+  in MlResource tensor
+  in MlResource model
+  out MlResource logits
+  description `Classify the input tensor given a model.`
