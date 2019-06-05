@@ -1,7 +1,6 @@
 schema Image
    Text alt
 
-
 schema ImageUrl extends Image
   (Text or URL) url
 
