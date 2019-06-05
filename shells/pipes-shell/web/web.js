@@ -47,8 +47,8 @@ import {DevtoolsSupport} from '../../lib/runtime/devtools-support.js';
   };
 //
 
-const storage = `pouchdb://local/arcs/`;
-const version = `version: mar-26`;
+const storage = `pouchdb://local/arcs/user`;
+const version = `version: jun-3`;
 
 console.log(`${version} -- ${storage}`);
 
@@ -60,4 +60,3 @@ console.log(`${version} -- ${storage}`);
   // configure ShellApi (window.DeviceClient is bound in by outer process, otherwise undefined)
   window.ShellApi = await ShellApiFactory(storage, manifest, window.DeviceClient);
 })();
-

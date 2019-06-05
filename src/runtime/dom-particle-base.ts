@@ -272,18 +272,26 @@ export class DomParticleBase extends Particle {
    * Return array of Entities dereferenced from array of Share-Type Entities
    */
   async derefShares(shares): Promise<Entity[]> {
-    const derefPromises = shares.map(async share => share.ref.dereference());
-    return await Promise.all(derefPromises);
+    let entities = [];
+    this.startBusy();
+    try {
+      const derefPromises = shares.map(async share => share.ref.dereference());
+      entities = await Promise.all(derefPromises);
+    } finally {
+      this.doneBusy();
+    }
+    return entities;
   }
 
   /**
    * Returns array of Entities found in BOXED data `box` that are owned by `userid`
    */
-  async boxQuery(box, userid) {
-    if (box) {
+  async boxQuery(box, userid): Promise<{}[]> {
+    if (!box) {
+      return [];
+    } else {
       const matches = box.filter(item => userid === item.fromKey);
       return await this.derefShares(matches);
     }
-    return [];
   }
 }

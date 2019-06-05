@@ -11,10 +11,12 @@
 import Xen from '../xen/xen.js';
 
 const log = Xen.logFactory('ModelImg', 'blue');
+
 /*
  Has two modes:
-  add an <img> child and set `src`
-  set `url` (will use background style)
+  1. add an <img> child and set `src`
+  or
+  2. set `url` (to use background style)
 
  Probably should be two elements instead.
 */
@@ -23,34 +25,39 @@ class ModelImg extends Xen.Base {
   static get observedAttributes() {
     return ['src', 'url', 'fadems'];
   }
+  get img() {
+    return this.firstElementChild;
+  }
   _update({src, url, fadems}, state) {
     const fade = fadems || 150;
     if (src && state.src !== src) {
-      //log(src);
       state.src = src;
-      const img = this.img;
-      img.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
-      img.src = src;
-      img.onload = e => this.onLoad(img, src);
+      this.loadSrc(this.img, src, fade);
     }
     if (url && state.url !== url) {
       //log(url);
       state.url = url;
-      this.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 0;`;
-      const image = Object.assign(new Image(), {src: url});
-      image.onload = () => {
-        this.style.cssText = `background-image: url(${url}); opacity: 1;`;
-        this.onLoad(image, url);
-      };
+      this.loadBg(this.img, url, fade);
     }
   }
-  get img() {
-    return this.firstElementChild;
+  loadBg(img, src, fade) {
+    //log('loadBg', src);
+    const image = new Image();
+    image.src = src;
+    image.onload = () => {
+      image.onload = null;
+      this.style.cssText = `background-image: url(${src});`;
+    };
   }
-  onLoad(img, url) {
-    //log(`[${url}] loaded`);
-    img.onload = null;
-    img.style.opacity = 1;
+  loadSrc(img, src, fade) {
+    //log('loadSrc', src);
+    img.style.cssText = 'opacity: 0;';
+    img.src = '';
+    img.src = src;
+    img.onload = () => {
+      img.onload = null;
+      img.style.cssText = `transition: opacity ${fade}ms ease-in; opacity: 1;`;
+    };
   }
 }
 

@@ -88,15 +88,15 @@ class StoreExplorer extends Xen.Base {
       }
     }
   }
-  _render(props, state) {
+  _render(props, {arcStores, contextStores}) {
     return {
       arcStores: {
         template: storeTemplate,
-        models: state.arcStores
+        models: arcStores
       },
       contextStores: {
         template: storeTemplate,
-        models: state.contextStores
+        models: contextStores
       }
     };
   }
@@ -147,24 +147,27 @@ class StoreExplorer extends Xen.Base {
         }
         const data = {
           name: store.name,
+          //name: store.id,
           type: nameOfType(store.type), //.toString(),
           storage: store.storageKey,
           //values: JSON.stringify(store.toList ? await store.toList() : `await store.get()`, null, '  ')
           values,
           details: {
             tags: tags ? [...tags].join(', ') : '',
-            id: store.id,
+            //id: store.id,
+            name: store.name,
             type: store.type
           }
         };
         if (store.description) {
           data.description = store.description;
         }
-        const moniker = store.id.split(':').pop();
-        const name = store.name || data.tags || moniker;
+        //const moniker = store.id.split(':').pop();
+        //const name = store.id || store.name || data.tags || moniker;
         //const name = `${store.name || moniker}:${data.tags}`;
-        const label = `${data.name || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
-        result.push({tags: data.details.tags, data: {[label]: data}, name});
+        const label = `${store.id || store.type.toPrettyString()} #${data.details.tags} ${data.type}`; // (type)`;
+        //result.push({tags: data.details.tags, data: {[label]: data}, name});
+        result.push({data: {[label]: data}});
       }
     }
     return result;
