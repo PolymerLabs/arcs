@@ -1,0 +1,15 @@
+schema Image
+  optional
+    Text alt
+
+
+schema ImageUrl extends Image
+  normative
+    Url url
+  optional
+    Text url
+
+schema ImageBlob extends Image
+  Bytes blob
+  Number width
+  Number height
