@@ -290,4 +290,64 @@ describe('interface', () => {
     assert.isFalse(check('GibsonCandidate'));
     assert.isFalse(check('LesPaulCandidate'));
   });
+
+  it.only('allows type checking with no names', async () => {
+    const manifest = await Manifest.parse(`
+      interface MyInterface
+        in ~aVar *
+        in ~bVar *
+      schema A
+      schema B
+      particle HostedParticle in 'a.js'
+        in A a
+        in B b
+    `);
+    const myInterface = manifest.interfaces.find(i => i.name === 'MyInterface');
+    const myParticle = manifest.particles.find(p => p.name === 'HostedParticle');
+    assert.isTrue(myInterface.restrictType(myParticle));
+
+    console.log(myInterface.handles.map(h => `${h.type.toString()} => ${h.type.toPrettyString()}`));
+    // This outputs: [ '~aVar => B', '~bVar => A' ]
+    const aVarHandle = myInterface.handles.find(h => h.type.toString() === '~aVar');
+    assert.equal(aVarHandle.type.resolvedType().toString(), 'A {}');
+  });
+
+  it.only('allows type checking with no names', async () => {
+    const manifest = await Manifest.parse(`
+      interface MyInterface
+        in ~aVar *
+        in ~bVar * // if * replaced with 'b', the normalization succeeds
+      schema A
+      schema B
+      particle MyParticle in 'a.js'
+        in A a
+        in B b
+      particle TransformationParticle in 'a.js'
+        in ~aVar a
+        in ~bVar b
+        host MyInterface hostedParticle
+
+      recipe
+        create as aHandle
+        map 'b' as bHandle
+        TransformationParticle
+          a = aHandle
+          b = bHandle
+          hostedParticle = MyParticle
+
+      resource BResource
+        start
+        [
+        ]
+      store Store1 of B 'b' in BResource
+    `);
+    const recipe = manifest.recipes[0];
+    const options = {errors: new Map()};
+    const normalized = recipe.normalize(options);
+    if (!normalized) {
+      console.log(`Cannot normalize recipe: ${[...options.errors.values()].join('\n')}`);
+    }
+    assert.isTrue(normalized);
+    // assert.isTrue(recipe.isResolved());
+  });
 });
