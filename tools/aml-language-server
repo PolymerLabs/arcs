@@ -1,4 +1,3 @@
 #!/bin/sh
-ARCS_DIR="$(dirname "$(dirname "$0")")"
-cd $ARCS_DIR
+cd $(dirname "$(readlink "$0")")/..
 node './dist/tools/aml-language-server.js' $@
