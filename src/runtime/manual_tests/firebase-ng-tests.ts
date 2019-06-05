@@ -13,9 +13,9 @@ import {firebase} from '../../platform/firebase-web.js';
 import {Exists} from '../storageNG/drivers/driver-factory.js';
 import {assert} from '../../platform/chai-web.js';
 
-const testUrl = 'arcs-storage-test.firebaseio.com';
 const testKey = 'AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8';
-const testProject = 'firebase-storage-test';
+const testProject = 'arcs-storage-test';
+const testDomain = 'firebaseio.com';
 
 async function resetStorageKeyForTesting(key: FirebaseStorageKey) {
   const app = firebase.initializeApp(key);
@@ -32,7 +32,7 @@ describe('firebase-ng-driver', function() {
   this.timeout(10000);
 
   it('can write to a new location', async () => {
-    const storageKey = new FirebaseStorageKey(testUrl, testProject, testKey, 'foo');
+    const storageKey = new FirebaseStorageKey(testProject, testDomain, testKey, 'foo');
     await resetStorageKeyForTesting(storageKey);
     const driver = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);
     await driver.init();
@@ -54,7 +54,7 @@ describe('firebase-ng-driver', function() {
   });
 
   it('will reject one of two synchronous writes', async () => {
-    const storageKey = new FirebaseStorageKey(testUrl, testProject, testKey, 'foo');
+    const storageKey = new FirebaseStorageKey(testProject, testDomain, testKey, 'foo');
     await resetStorageKeyForTesting(storageKey);
     const driver1 = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);
     await driver1.init();

@@ -25,6 +25,14 @@ describe('Volatile Driver', async () => {
     const volatile2 = new VolatileDriver(volatileKey, Exists.ShouldExist);
   });
 
+  it('treats keys constructed separately as the same if the details are the same', async () => {
+    const key1 = new VolatileStorageKey('test-location');
+    const key2 = new VolatileStorageKey('test-location');
+
+    const volatile1 = new VolatileDriver(key1, Exists.ShouldCreate);
+    const volatile2 = new VolatileDriver(key2, Exists.ShouldExist);
+  });
+
   it(`can't be instantiated as ShouldExist if the storage location doesn't yet exist`, () => {
     const volatileKey = new VolatileStorageKey('unique');
     assert.throws(() => new VolatileDriver(volatileKey, Exists.ShouldExist), `location doesn't exist`);

@@ -20,28 +20,35 @@ export class FirebaseStorageKey extends StorageKey {
   public readonly projectId: string;
   public readonly apiKey: string;
   public readonly location: string;
+  public readonly domain: string;
 
-  constructor(url: string, projectId: string, apiKey: string, location: string) {
+  constructor(projectId: string, domain: string, apiKey: string, location: string) {
     super('firebase');
-    this.databaseURL = url;
+    this.databaseURL = `${projectId}.${domain}`;
+    this.domain = domain;
     this.projectId = projectId;
     this.apiKey = apiKey;
     this.location = location;
   }
+
+  toString() {
+    return `${this.protocol}://${this.databaseURL}:${this.apiKey}/${this.location}`;
+  }
 }
 
 export class FirebaseAppCache {
-  protected appCache: Map<FirebaseStorageKey, firebase.app.App>;
+  protected appCache: Map<string, firebase.app.App>;
 
   constructor(runtime: Runtime) {
-    this.appCache = runtime.getCacheService().getOrCreateCache<FirebaseStorageKey, firebase.app.App>('firebase-driver');
+    this.appCache = runtime.getCacheService().getOrCreateCache<string, firebase.app.App>('firebase-driver');
   }
 
   getApp(key: FirebaseStorageKey) {
-    if (!this.appCache.has(key)) {
-      this.appCache.set(key, firebase.initializeApp(key));
+    const keyAsString = key.toString();
+    if (!this.appCache.has(keyAsString)) {
+      this.appCache.set(keyAsString, firebase.initializeApp(key));
     }
-    return this.appCache.get(key);
+    return this.appCache.get(keyAsString);
   }
 
   stopAllApps() {
