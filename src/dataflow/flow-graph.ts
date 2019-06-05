@@ -46,10 +46,10 @@ export class FlowGraph {
   }
 
   /** Returns a list of all pairwise particle connections, in string form: 'P1.foo -> P2.bar'. */
-  get connections(): string[] {
+  get connectionsAsStrings(): string[] {
     const connections: string[] = [];
     for (const handleNode of this.handles) {
-      handleNode.connections.forEach(c => connections.push(c));
+      handleNode.connectionsAsStrings.forEach(c => connections.push(c));
     }
     return connections;
   }
@@ -158,7 +158,7 @@ class HandleNode extends Node {
   }
 
   /** Returns a list of all pairs of particles that are connected through this handle, in string form. */
-  get connections(): string[] {
+  get connectionsAsStrings(): string[] {
     const connections: string[] = [];
     this.inEdges.forEach(inEdge => {
       this.outEdges.forEach(outEdge => {

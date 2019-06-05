@@ -62,7 +62,7 @@ describe('FlowGraph', () => {
     assert.isEmpty(P1.inEdges);
     assert.isEmpty(P2.outEdges);
     assert.equal(P1.outNodes[0], P2.inNodes[0], 'handle node is different');
-    assert.sameMembers(graph.connections, ['P1.foo -> P2.bar']);
+    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar']);
   });
 
   it('works with handles with multiple inputs', async () => {
@@ -82,7 +82,7 @@ describe('FlowGraph', () => {
           baz <- h
     `);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
-    assert.sameMembers(graph.connections, ['P1.foo -> P3.baz', 'P2.bar -> P3.baz']);
+    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P3.baz', 'P2.bar -> P3.baz']);
   });
 
   it('works with handles with multiple outputs', async () => {
@@ -102,6 +102,6 @@ describe('FlowGraph', () => {
           baz <- h
     `);
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
-    assert.sameMembers(graph.connections, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
+    assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
   });
 });
