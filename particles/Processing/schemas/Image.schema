@@ -1,13 +1,9 @@
 schema Image
-  optional
-    Text alt
+   Text alt
 
 
 schema ImageUrl extends Image
-  normative
-    Url url
-  optional
-    Text url
+  (Text or URL) url
 
 schema ImageBlob extends Image
   Bytes blob
