@@ -1,5 +1,4 @@
 schema Restaurant
-  Text id
   Text identifier
   Text reference
   Text name
