@@ -37,6 +37,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
+import {VolatileStorageProvider, VolatileKey, VolatileStorage} from './storage/volatile-storage.js';
 
 export class ManifestError extends Error {
   location: AstNode.SourceLocation;
@@ -50,36 +51,104 @@ export class ManifestError extends Error {
 // TODO(shans): Make sure that after refactor Storage objects have a lifecycle and can be directly used
 // deflated rather than requiring this stub.
 export class StorageStub {
-  type: Type;
-  id: string;
-  name: string;
-  storageKey: string;
-  storageProviderFactory: StorageProviderFactory;
-  referenceMode = false;
-  originalId: string;
-  description: string; // Fake to match StorageProviderBase;
-  /** Trust tags claimed by this data store. */
-  claims: ClaimIsTag[];
+  // type: Type;
+  // id: string;
+  // name: string;
+  // storageKey: string;
+  // storageProviderFactory: StorageProviderFactory;
+  // referenceMode = false;
+  // originalId: string;
+  // description: string;
+  // version: number;
+  // model: {}[];
 
-  constructor(type: Type, id: string, name: string, storageKey: string, storageProviderFactory: StorageProviderFactory, originalId: string, claims: ClaimIsTag[]) {
-    this.type = type;
-    this.id = id;
-    this.name = name;
-    this.storageKey = storageKey;
-    this.storageProviderFactory = storageProviderFactory;
-    this.originalId = originalId;
-    this.claims = claims;
+  constructor(public readonly type: Type, 
+              public readonly id: string,
+              public readonly name: string,
+              public readonly storageKey: string,
+              public readonly storageProviderFactory: StorageProviderFactory,
+              public readonly originalId: string,
+                /** Trust tags claimed by this data store. */
+              public readonly claims: ClaimIsTag[],
+              public readonly description: string,
+              public readonly version?: number,
+              public readonly source?: string,
+              public readonly referenceMode: boolean = false,
+              public readonly model?: {}[]) {
+    // this.type = type;
+    // this.id = id;
+    // this.name = name;
+    // this.storageKey = storageKey;
+    // this.storageProviderFactory = storageProviderFactory;
+    // this.originalId = originalId;
+    // this.description = description;
+    // this.version = version;
+    // this.model = model;
+    assert(this.source || this.storageKey);
+    // assert(!this.source || !this.storageKey);
   }
 
-  get version(): number {
-    return undefined; // Fake to match StorageProviderBase.
-  }
+  // get version(): number {
+  //   return undefined; // Fake to match StorageProviderBase.
+  // }
 
-  async inflate() {
-    const store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  // get description(): string {
+  //   return undefined; // Fake to match StorageProviderBase;
+  // }
+
+  async inflate() { //storageKey?: string) {
+    // if (this.source) {
+    //   debugger;
+    // }
+    //const manifestId = '!manifest::';
+    assert(this.storageKey);
+    let store: StorageProviderBase = null;
+    if (this.source) {
+      // console.log('>>> try constructing: ', this.storageKey);
+      store = await this.storageProviderFactory.construct(this.id, this.type, this.storageKey);
+    }
+    if (!store) {
+      // console.log('>>> try connecting: ', this.storageKey);
+      store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+    }
+    // console.log('>>> try connecting: ', this.storageKey);
+    // let store = await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+    // if (!store && this.source) {
+    //   console.log('>>> try constructing: ', this.storageKey);
+    //   store = await this.storageProviderFactory.construct(this.id, this.type, this.storageKey); 
+    // }
+    // const store = await (this.source//(this.version !== undefined && this.model)
+    //   ? await this.storageProviderFactory.construct(this.id, this.type, storageKey || this.storageKey) //`volatile://${manifestId}`)//this.storageKey)
+    //   : await this.storageProviderFactory.connect(this.id, this.type, this.storageKey));
+    
     assert(store != null, 'inflating missing storageKey ' + this.storageKey);
     store.originalId = this.originalId;
+
+    ///
+    store.referenceMode = this.referenceMode;
+    store.name = this.name;
+    store.source = this.source;
+    store.description = this.description;
+    ///
+    if (this.version !== undefined && this.model) {
+      await (store as VolatileStorageProvider).fromLiteral({version: this.version, model: this.model});
+    }
+
     return store;
+
+    // const store = await this.storageProviderFactory.construct(id, type, storageKey || `volatile://${this.id}`);
+    // assert(store.version !== null);
+    // store.name = name;
+    // this.storeManifestUrls.set(store.id, this.fileName);
+    // return this._addStore(store, tags);
+
+    // const store = await manifest.createStore(type, name, id, tags);
+    // store.source = item.source;
+    // store.description = item.description;
+    // store.originalId = originalId;
+    // return store;
+    // // await store.fromLiteral({version, model});
+
   }
 
   toLiteral() {
@@ -97,8 +166,19 @@ export class StorageStub {
     if (this.id) {
       handleStr.push(`'${this.id}'`);
     }
+    if (this.originalId) {
+      handleStr.push(`!!${this.originalId}`);
+    }
+    if (this.version !== undefined) {
+      handleStr.push(`@${this.version}`);
+    }
     if (handleTags && handleTags.length) {
       handleStr.push(`${handleTags.join(' ')}`);
+    }
+    if (this.source) {
+      handleStr.push(`in '${this.source}'`);
+    } else if (this.storageKey) {
+      handleStr.push(`at '${this.storageKey}'`);
     }
     // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
     // serialized here too - could it ever be part of StorageStub?
@@ -288,8 +368,11 @@ export class Manifest {
     return store;
   }
 
-  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[], originalId: string, claims: ClaimIsTag[]): StorageProviderBase | StorageStub {
-    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory, originalId, claims), tags);
+  newStorageStub(type: Type, name: string, id: string, storageKey: string, tags: string[],
+                 originalId: string, claims: ClaimIsTag[], description?: string, version?: number,
+                 source?: string, referenceMode?: boolean, model?: {}[]): StorageProviderBase | StorageStub {
+    return this._addStore(new StorageStub(
+        type, id, name, storageKey, this.storageProviderFactory, originalId, claims, description, version, source, referenceMode, model), tags);
   }
 
   _find<a>(manifestFinder: ManifestFinder<a>): a {
@@ -337,8 +420,8 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: StorageProviderBase | StorageStub) {
-    return this._find(manifest => manifest.storeTags.get(store));
+  findStoreTags(store: StorageProviderBase | StorageStub) : Set<string> {
+    return new Set(this._find(manifest => manifest.storeTags.get(store)));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
@@ -1173,8 +1256,7 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims);
-      return;
+      return manifest.newStorageStub(type, name, id, item.source, tags, originalId, claims, item.description, item.version);
     }
 
     let json: string;
@@ -1202,21 +1284,27 @@ ${e.message}
     }
 
     // TODO: clean this up
-    let unitType: Type;
+    let unitType: Type = null;
+    let referenceMode = true;
     if (type instanceof CollectionType) {
       unitType = type.collectionType;
     } else if (type instanceof BigCollectionType) {
       unitType = type.bigCollectionType;
     } else {
       if (entities.length === 0) {
-        await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
-        return;
+      // if (entities.length === 0) {
+      //   manifest.storeManifestUrls.set(id, manifest.fileName);
+      //   const stub = manifest.newStorageStub(type, name, id, /*item.source*/storageKey, tags, originalId, claims, item.description, version, item.source);
+      //   // await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
+      //   return stub; // TODO: unify with the last return.
+        referenceMode = false;
+      } else {
+        entities = entities.slice(entities.length - 1);
+        unitType = type;
       }
-      entities = entities.slice(entities.length - 1);
-      unitType = type;
     }
 
-    if (unitType instanceof EntityType) {
+    if (unitType && unitType instanceof EntityType) {
       let hasSerializedId = false;
       entities = entities.map(entity => {
         if (entity == null) {
@@ -1238,8 +1326,7 @@ ${e.message}
       }
     }
 
-    const version = item.version || 0;
-    const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
+    // const store = await Manifest._createStore(manifest, type, name, id, tags, item, originalId, claims);
 
     // While the referenceMode hack exists, we need to look at the entities being stored to
     // determine whether this store should be in referenceMode or not.
@@ -1251,7 +1338,8 @@ ${e.message}
       storageKey = manifest.findStoreByName(storageKey).storageKey;
       entities = entities.map(({id, rawData}) => ({id, storageKey}));
     } else if (entities.length > 0) {
-      store.referenceMode = false;
+      //store.referenceMode = false;
+      referenceMode = false;
     }
 
     // For this store to be able to be treated as a CRDT, each item needs a key.
@@ -1268,28 +1356,36 @@ ${e.message}
     } else {
       model = entities.map(value => ({id: value.id, value}));
     }
+    // await store.fromLiteral({version, model});
+    // const stub = manifest.newStorageStub(
+    //     type, name, id, /*item.source*/ storageKey, tags, originalId, item.description, version, item.source);
+    const version = item.version || 0;
 
-    // TODO(lindner): fromLiteral is not declared in the StorageProviderBase/StorageStub interface
-    // tslint:disable-next-line: no-any
-    await (store as any).fromLiteral({version, model});
+    // TODO: FIX HERE - there should be a method for creating this key!
+    // debugger;
+    const keyFragment = `volatile://${manifest.id}^^`;
+    const volatileKey = new VolatileKey(keyFragment); //.childKeyForHandle('');  //${manifest.id}`);
+    // volatileKey.arcId = undefined;
+    // if (!this['localIDBase']) this['localIDBase'] = 0;
+    volatileKey.location = 'volatile-' + //this['localIDBase']++; //0'; // + this.localIDBase++;
+        (manifest.storageProviderFactory._storageForKey(keyFragment) as VolatileStorage).localIDBase++;
+              //(manifest.storageProviderFactory._storageForKey(`volatile://${manifest.id}`) as VolatileStorage).localIDBase++;
+    const storageKey = volatileKey.toString();
+    // const version = item.version || 0;
+
+    const stub = manifest.newStorageStub(
+        type, name, id, /*item.source*/ storageKey /*null*/, tags, originalId, claims, item.description, version, item.source, referenceMode, model);
+    manifest.storeManifestUrls.set(id, manifest.fileName);
+    return stub;
   }
 
-  private static async _createStore(
-      manifest: Manifest,
-      type: Type,
-      name: string,
-      id: string,
-      tags: string[],
-      item,
-      originalId: string,
-      claims: ClaimIsTag[]): Promise<StorageProviderBase | StorageStub> {
-    const store = await manifest.createStore(type, name, id, tags, claims);
-    // TODO(lindner): Property 'source' does not exist on type 'StorageStub | StorageProviderBase'.
-    store['source'] = item.source;
-    store.description = item.description;
-    store.originalId = originalId;
-    return store;
-  }
+  // private static async _createStore(manifest, type: Type, name: string, id: string, tags: string[], item, originalId: string) {
+  //   const store = await manifest.createStore(type, name, id, tags);
+  //   store.source = item.source;
+  //   store.description = item.description;
+  //   store.originalId = originalId;
+  //   return store;
+  // }
 
   private _newRecipe(name: string): Recipe {
     const recipe = new Recipe(name);

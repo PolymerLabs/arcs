@@ -33,6 +33,7 @@ import {PecFactory} from './particle-execution-context.js';
 import {InterfaceInfo} from './interface-info.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
+import { VolatileStorage, VolatileKey } from './storage/volatile-storage';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -380,6 +381,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
+    debugger;
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const arc = new Arc({
       id: Id.fromString(manifest.meta.name),
@@ -535,7 +537,7 @@ ${this.activeRecipe.toString()}`;
     // TODO(mmandlis): Get rid of populating the missing local slot IDs here,
     // it should be done at planning stage.
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID().toString()}`);
-
+// debugger;
     for (const recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
@@ -562,6 +564,16 @@ ${this.activeRecipe.toString()}`;
           const copiedStoreRef = this.findStoreById(recipeHandle.id);
           let copiedStore: StorageProviderBase;
           if (copiedStoreRef instanceof StorageStub) {
+
+          //////
+          // const keyFragment = `volatile://^^`;
+          // const volatileKey = new VolatileKey(keyFragment);
+          // volatileKey.arcId = this.context.id.toString();
+          // volatileKey.location = 'volatile-' +
+          //     (this.storageProviderFactory._storageForKey(keyFragment) as VolatileStorage).localIDBase++;
+          // copiedStoreRef.storageKey = volatileKey.toString();
+          //////
+
             copiedStore = await copiedStoreRef.inflate();
           } else {
             copiedStore = copiedStoreRef;
@@ -569,7 +581,7 @@ ${this.activeRecipe.toString()}`;
           assert(copiedStore, `Cannot find store ${recipeHandle.id}`);
           assert(copiedStore.version !== null, `Copied store ${recipeHandle.id} doesn't have version.`);
           await newStore.cloneFrom(copiedStore);
-          this._tagStore(newStore, this.findStoreTags(copiedStore));
+          this._tagStore(newStore, this.context.findStoreTags(copiedStoreRef));
           const copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this.storeDescriptions.set(newStore, copiedStoreDesc);
@@ -580,7 +592,7 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.storageKey = newStore.storageKey;
         continue;
         // TODO: move the call to ParticleExecutionHost's DefineHandle to here
-      }
+      } 
 
       // TODO(shans/sjmiles): This shouldn't be possible, but at the moment the
       // shell pre-populates all arcs with a set of handles so if a recipe explicitly
@@ -591,14 +603,51 @@ ${this.activeRecipe.toString()}`;
       }
 
       if (recipeHandle.fate !== '`slot') {
+        // if (this.isInnerArc) {
+        //   debugger;
+        // }
         let storageKey = recipeHandle.storageKey;
         if (!storageKey) {
           storageKey = this.keyForId(recipeHandle.id);
         }
         assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
         const type = recipeHandle.type.resolvedType();
-        assert(type.isResolved(), `couldn't resolve type ${type.toString()}`);
-        const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+        assert(type.isResolved());
+        // let store = null;
+        // if (storageKey) {
+        let 
+          store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+        // } else {
+
+        if (!store && recipeHandle.fate === 'map') {
+          assert(recipeHandle.fate === 'map');
+          const storeRef = this.findStoreById(recipeHandle.id);
+          assert(storeRef instanceof StorageStub);
+          if (storeRef instanceof StorageStub) {
+            //////
+            // const keyFragment = `volatile://^^`;
+            // const volatileKey = new VolatileKey(keyFragment);
+            // volatileKey.arcId = this.id.toString();
+            // volatileKey.location = 'volatile-' +
+            //     (this.storageProviderFactory._storageForKey(keyFragment) as VolatileStorage).localIDBase++;
+            // //////
+            // storeRef.storageKey = volatileKey.toString();
+
+            // overriding key with this.id
+            // const key = this.storageProviderFactory._storageForKey(storeRef.storageKey).parseStringAsKey(storeRef.storageKey);
+            // if (this.isSpeculative && (key instanceof VolatileKey)) {
+            //   (key as VolatileKey).arcId = this.id.toString();
+            // }
+            if (!this.isSpeculative) {
+              debugger;
+            }
+            // console.log('.................. INFLATING: ', storeRef.storageKey, '(', this.isSpeculative, ')');
+            store = await storeRef.inflate(); //key.toString());
+          }
+        }
+        // if (!store) {
+        //   debugger;
+        // }
         assert(store, `store '${recipeHandle.id}' was not found`);
         this._registerStore(store, recipeHandle.tags);
       }
@@ -752,7 +801,7 @@ ${this.activeRecipe.toString()}`;
     if (this.storeTags.has(store)) {
       return this.storeTags.get(store);
     }
-    return new Set(this._context.findStoreTags(store));
+    return this._context.findStoreTags(store);
   }
 
   getStoreDescription(store: StorageProviderBase): string {
