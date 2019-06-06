@@ -12,7 +12,7 @@ import {logFactory} from '../platform/log-web.js';
 import {Service, Services} from '../runtime/services.js';
 import {requireTf} from '../platform/tf-web.js';
 import {loadImage} from '../platform/image-web.js';
-import {tf} from '../platform/tf-node.js';
+import {tf} from '../platform/tf-web.js';
 
 const log = logFactory('tfjs-service');
 
