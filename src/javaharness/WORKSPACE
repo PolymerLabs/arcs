@@ -1,0 +1,60 @@
+workspace(name = "arcs_javaharness")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Load j2cl repository
+http_archive(
+    name = "com_google_j2cl",
+    strip_prefix = "j2cl-master",
+    url = "https://github.com/google/j2cl/archive/master.zip",
+)
+
+http_archive(
+    name = "google_bazel_common",
+    strip_prefix = "bazel-common-1c225e62390566a9e88916471948ddd56e5f111c",
+    urls = ["https://github.com/google/bazel-common/archive/1c225e62390566a9e88916471948ddd56e5f111c.zip"],
+)
+
+
+load("@com_google_j2cl//build_defs:repository.bzl", "load_j2cl_repo_deps")
+load_j2cl_repo_deps()
+
+load("@com_google_j2cl//build_defs:rules.bzl", "setup_j2cl_workspace")
+setup_j2cl_workspace()
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+_JSINTEROP_BASE_VERSION = "master"
+
+http_archive(
+    name = "com_google_jsinterop_base",
+    strip_prefix = "jsinterop-base-%s" % _JSINTEROP_BASE_VERSION,
+    url = "https://github.com/google/jsinterop-base/archive/%s.zip"% _JSINTEROP_BASE_VERSION,
+)
+
+http_archive(
+    name = "com_google_dagger",
+    urls = ["https://github.com/google/dagger/archive/dagger-2.23.1.zip"],
+)
+
+maven_jar(
+    name = "com_google_dagger_runtime",
+    artifact = "com.google.dagger:dagger:jar:sources:2.23.1"
+)
+
+maven_jar(
+    name = "javax_inject_source",
+    artifact = "javax.inject:javax.inject:jar:sources:1"
+)
+
+http_archive(
+    name = "com_google_elemental2",
+    strip_prefix = "elemental2-20190325",
+    url = "https://github.com/google/elemental2/archive/v20190325.zip",
+)
+
+load("@com_google_elemental2//build_defs:repository.bzl", "load_elemental2_repo_deps")
+load_elemental2_repo_deps()
+
+load("@com_google_elemental2//build_defs:workspace.bzl", "setup_elemental2_workspace")
+setup_elemental2_workspace()
+
