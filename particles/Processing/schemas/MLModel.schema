@@ -1,7 +1,15 @@
-schema MlModel
-  URL location
+schema ModelLoadOptions
+  Boolean strict
+  Text weightPathPrefix
   Boolean fromTFHub
 
+schema MlModel
+  URL location
+  ModelLoadOptions options
+
+schema TextLabels
+  [Text] labels
+
 schema ClassificationModel extends MlModel
-  URL labels
+  TextLabels labels
 

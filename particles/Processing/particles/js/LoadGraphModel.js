@@ -23,7 +23,7 @@ defineParticle(({DomParticle, log}) => {
       const model_ = await this.service({
         call: 'graph-model.load',
         modelUrl: model.location,
-        options: {fromTFHub: model.fromTFHub}
+        options: model.options,
       });
 
 
