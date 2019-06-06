@@ -55,6 +55,97 @@ export class FlowGraph {
     }
     return connections;
   }
+
+  /** Returns true if all checks in the graph pass. */
+  validateGraph(): boolean {
+    for (const edge of this.edges) {
+      if (edge.check) {
+        const success = this.validateSingleEdge(edge);
+        if (!success) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /** Validates a single check (on the given edge). Returns true if the check passes. */
+  private validateSingleEdge(edge: Edge): boolean {
+    if (!edge.check) {
+      throw new Error('Edge does not have any check conditions.');
+    }
+
+    const check = edge.check;
+    const startPath = BackwardsPath.fromEdge(edge);
+    const stack: BackwardsPath[] = [startPath];
+
+    while (stack.length) {
+      const path = stack.pop();
+      const nodeToCheck = path.endNode;
+      // TODO: Check the node itself too. The node might be untagged (e.g. if it has no input edges), so it could fail a check.
+      const edgesToCheck = nodeToCheck.inEdges;
+      for (const edge of edgesToCheck) {
+        const result = edge.isCheckSatisfied(check);
+        switch (result) {
+          case CheckResult.Success:
+            // Check was met. Continue checking other paths.
+            continue;
+          case CheckResult.Failure:
+            // Check failed.
+            return false;
+          case CheckResult.KeepGoing:
+            // Check has not failed yet for this path yet. Add it to the stack and keep going.
+            stack.push(path.appendEdge(edge));
+            continue;
+          default:
+            throw new Error(`Unknown check result: ${result}`);
+        }
+      }
+    }
+    return true;
+  }
+}
+
+/**
+ * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
+ * nodes in the path. 
+ */
+export class BackwardsPath {
+  private constructor(
+    /** Nodes in the path, in reverse order. */
+    readonly nodes: Node[] = []) {}
+
+  static fromEdge(edge: Edge) {
+    return new BackwardsPath([edge.end, edge.start]);
+  }
+
+  appendEdge(edge: Edge): BackwardsPath {
+    // Flip the edge around.
+    const edgeStart = edge.end;
+    const edgeEnd = edge.start;
+
+    if (edgeStart !== this.endNode) {
+      throw new Error('Edge must connect to end of path.');
+    }
+    if (this.nodes.includes(edgeEnd)) {
+      throw new Error('Path must not include cycles.');
+    }
+    return new BackwardsPath([...this.nodes, edgeEnd]);
+  }
+
+  get startNode(): Node {
+    return this.nodes[0];
+  }
+
+  get endNode(): Node {
+    return this.nodes[this.nodes.length - 1];
+  }
+}
+
+export enum CheckResult {
+  Success,
+  Failure,
+  KeepGoing,
 }
 
 /** Creates a new node for every given particle. */
@@ -97,7 +188,7 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
-abstract class Node {
+export abstract class Node {
   abstract readonly inEdges: Edge[];
   abstract readonly outEdges: Edge[];
 
@@ -110,12 +201,15 @@ abstract class Node {
   }
 }
 
-interface Edge {
+export interface Edge {
   readonly start: Node;
   readonly end: Node;
   readonly label: string;
   readonly claim?: string;
   readonly check?: string;
+
+  /** Returns true if this edge has a claim that satisfies the given check condition. */
+  isCheckSatisfied(check: string): CheckResult;
 }
 
 class ParticleNode extends Node {
@@ -149,6 +243,11 @@ class ParticleInput implements Edge {
     this.label = `${particleNode.name}.${inputName}`;
     this.check = particleNode.checks.get(inputName);
   }
+
+  isCheckSatisfied(check: string): CheckResult {
+    // In-edges don't have claims. Keep checking.
+    return CheckResult.KeepGoing;
+  }
 }
 
 class ParticleOutput implements Edge {
@@ -164,6 +263,19 @@ class ParticleOutput implements Edge {
     this.end = otherEnd;
     this.label = `${particleNode.name}.${outputName}`;
     this.claim = particleNode.claims.get(outputName);
+  }
+
+  isCheckSatisfied(check: string): CheckResult {
+    if (!this.claim) {
+      // This out-edge has no claims. Keep checking.
+      return CheckResult.KeepGoing;
+    }
+    if (this.claim === check) {
+      return CheckResult.Success;
+    }
+    // The claim on this edge "clobbers" any claims that might have been made upstream. We won't check though, and will fail the check
+    // completely.
+    return CheckResult.Failure;
   }
 }
 
