@@ -31,7 +31,7 @@ defineParticle(({DomParticle, log}) => {
       log(results);
 
       await this.clearHandle(handleName);
-      this.appendRawDataToHandle(handleName, results);
+      this.updateSingleton(handleName, results);
     }
 
     //TODO(alxr) Refactor to a better label representation

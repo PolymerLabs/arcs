@@ -22,7 +22,7 @@ defineParticle(({DomParticle}) => {
     async convert(image) {
       const imgReference = await this.service({call: 'tf-image.imageToTensor', imageUrl: image});
       await this.clearHandle(handleName);
-      this.appendRawDataToHandle(handleName, {ref: imgReference});
+      this.updateSingleton(handleName, {ref: imgReference});
       this.setState({converted: true});
     }
 

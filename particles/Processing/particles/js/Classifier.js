@@ -25,7 +25,7 @@ defineParticle(({DomParticle, log}) => {
       log('Classified.');
 
       await this.clearHandle(handleName);
-      this.appendRawDataToHandle(handleName, {ref: yHat});
+      this.updateSingleton(handleName, {ref: yHat});
     }
   };
 });
