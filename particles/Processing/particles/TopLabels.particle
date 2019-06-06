@@ -2,7 +2,7 @@ import '../schemas/MlResource.schema'
 import '../schemas/MlModel.schema'
 import '../schemas/Inference.schema'
 
-particle ToLabels in './js/ToLabels.js'
+particle ToLabels in './js/TopLabels.js'
   consume root
   in MlResource yHat
   in TextLabels labels
