@@ -9,7 +9,7 @@
  */
 import {Reference, ResourceManager as rmgr} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
-import {Services} from '../runtime/services.js';
+import {Service} from '../runtime/services.js';
 import {requireTf} from '../platform/tf-web.js';
 import {loadImage} from '../platform/image-web.js';
 import {tf} from '../platform/tf-node.js';
@@ -23,7 +23,7 @@ export interface ClassificationPrediction {
   probability: number;
 }
 
-abstract class TfModel implements Services {
+abstract class TfModel implements Service {
 
   public abstract async load({modelUrl, options}): Promise<Reference>;
 
