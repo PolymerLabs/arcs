@@ -29,6 +29,7 @@ const configOptions = {
     default: Const.DEFAULT.storageKey,
     map: {
       'firebase': Const.DEFAULT.firebaseStorageKey,
+      'firebasetest': Const.DEFAULT.firebasetestStorageKey,
       'pouchdb': Const.DEFAULT.pouchdbStorageKey,
       'pouch': Const.DEFAULT.pouchdbStorageKey,
       'volatile': Const.DEFAULT.volatileStorageKey,

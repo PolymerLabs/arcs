@@ -183,9 +183,9 @@ It will wait for you to attach your debugger before running the tests. Open
 heading. You can use `Ctrl-P` to open files (you may need to add the `build`
 folder to your workspace first). Hit "resume" to start running the unit tests.
 
-### Debugging Selenium Failures
+### Debugging Webdriver Failures
 
-Selenium failures are often easy to cause due to seemingly unrelated changes,
+Webdriver failures are often easy to cause due to seemingly unrelated changes,
 and difficult to diagnose.
 
 There are 2 main avenues to debug them in this system. The first is to have
@@ -193,7 +193,7 @@ the browser run in a graphical manner (as opposed to the default headless
 configuration). The second is to actually debug the running selenium instance.
 
 There are some debugging hints (code and configuration you can uncomment to
-make debugging easier) in `test/specs/starter-test.js` and `test/wdio.conf.js`
+make debugging easier) in `test/wdio.conf.js`
 marked with the phrase `debug hint`.
 
 To activate a sane set of helpful debugging flags, there's a `wdio-debug`
@@ -208,42 +208,15 @@ Webdriver takes screenshots of failures, which are saved to the
 `./shells/test/errorShots/` directory. When running on Travis, the screenshots
 are uploaded to the `Arcs Webdriver Screenshots` team drive.
 
+If you want to run a specific test pass in `--spec=name_of_file`
+
 #### Graphical (non-headless)
 
-It may be easiest to see the problem in a browser window to diagnose it. Edit
-`wdio.conf.js` in the branch with failures, comment out the `'--headless'`
-option and increase the mocha timeout. In combination, these two changes will
-allow you to see what's happening on the screen, and will give you enough time
-to debug the situation.
+It may be easiest to see the problem in a browser window to diagnose it. Run
+the wdio tests using the `--wdio-debug=true` to allow you to see what's
+happening on the screen, and will give you enough time to debug the situation.
 
-```
-arcs/shells> vi test/wdio.conf.js
-arcs/shells> git diff test/wdio.conf.js
-diff --git a/test/wdio.conf.js b/test/wdio.conf.js
-index 0e36452..8ecf3d6 100644
---- a/test/wdio.conf.js
-+++ b/test/wdio.conf.js
-@@ -50,7 +50,7 @@ exports.config = {
-       chromeOptions: {
-         args: [
-           // arcs note: comment this out to see the system running
--          '--headless'
-+          // '--headless'
-         ]
-       }
-     }
-@@ -139,7 +139,7 @@ exports.config = {
-   mochaOpts: {
-     ui: 'bdd',
-     // arcs note: increase this timeout for debugging
--    timeout: 20003
-+    timeout: 2000003
-   }
-   //
-   // =====
-```
-
-Then, in your test, you can add a breakpoint (via `browser.debug();`) to pause
+In your test you can add breakpoints (via `browser.debug();`) to pause
 execution so you can debug in the browser. It may be worthwhile to add several
 `browser.debug()` invocations through your flow to trace execution (`.exit`
 will exit the debugger and continue execution of the test).
@@ -258,9 +231,8 @@ There are also some commands available natively at that point, including
 
 #### Attaching a Debugger
 
-To attach a debugger, uncomment the `execArgv` `--inspect` configuration option.
-It's likely that you'll still want to have increased the `mochaTimeout` and to
-be running graphically, so those are in the example as well:
+To attach a debugger, use the `--wdio-debug=true` flag and uncomment the
+`execArgv` `--inspect` configuration option.
 
 ```
 arcs/shells> git diff test/wdio.conf.js
@@ -269,32 +241,16 @@ index 0e36452..4240c0a 100644
 --- a/test/wdio.conf.js
 +++ b/test/wdio.conf.js
 @@ -50,11 +50,12 @@ exports.config = {
-       chromeOptions: {
-         args: [
-           // arcs note: comment this out to see the system running
--          '--headless'
-+          // '--headless'
-         ]
-       }
      }
    ],
 +  execArgv: ['--inspect'],
    //
    // ===================
    // Test Configurations
-@@ -139,7 +140,7 @@ exports.config = {
-   mochaOpts: {
-     ui: 'bdd',
-     // arcs note: increase this timeout for debugging
--    timeout: 20003
-+    timeout: 2000003
-   }
-   //
-   // =====
 ```
 
 When starting, you should see log item like `debugger listening on
-ws://127.0.0.1:9229/..` as normally appears for [node
+ws://127.0.0.1:8786/..` as normally appears for [node
 debugging](https://nodejs.org/api/debugger.html). Passing the `--inspect`
 argument will also enable the [V8 Inspector
 Integration](https://nodejs.org/api/debugger.html) which may be easier to use

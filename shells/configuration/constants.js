@@ -9,6 +9,7 @@
  */
 const version = '0_7_0';
 const firebase = `firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${version}`;
+const firebasetest = `firebase://arcs-storage-test.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/${version}`;
 const pouchdb = `pouchdb://local/arcs/${version}`;
 const volatile = 'volatile://';
 const prefix = `arcs-${version}`;
@@ -18,6 +19,7 @@ export const Const = {
   DEFAULT: {
     userId: 'user',
     firebaseStorageKey: firebase,
+    firebasetestStorageKey: firebasetest,
     pouchdbStorageKey: pouchdb,
     volatileStorageKey: volatile,
     storageKey: pouchdb, //firebase,

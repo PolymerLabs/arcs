@@ -53,7 +53,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return container.parentNode === contextContainer;
   }
 
-  createNewContainer(contextContainer, subId) {
+  createNewContainer(contextContainer, subId: string) {
     assert(contextContainer, 'contextContainer cannot be null');
     const newContainer = document.createElement(this.containerKind || 'div');
     if (this.consumeConn) {
@@ -112,23 +112,23 @@ export class SlotDomConsumer extends SlotConsumer {
     return newContent;
   }
 
-  private _modelForSingletonSlot(model, subId) {
+  private _modelForSingletonSlot(model, subId: string) {
     assert(!subId, 'subId should be absent for a Singleton Slot');
     return model;
   }
 
-  private _modelForSetSlotConsumedAsSetSlot(model, subId) {
+  private _modelForSetSlotConsumedAsSetSlot(model, subId: string) {
     assert(model.items && model.items.every(item => item.subId),
         'model for a Set Slot consumed as a Set Slot needs to have items array, with every element having subId');
     return model.items.find(item => item.subId === subId);
   }
 
-  private _modelForSetSlotConsumedAsSingletonSlot(model, subId) {
+  private _modelForSetSlotConsumedAsSingletonSlot(model, subId: string) {
     assert(model.subId, 'model for a Set Slot consumed as a Singleton Slot needs to have subId');
     return subId === model.subId ? model : null;
   }
 
-  setContainerContent(rendering: DomRendering, content: Content, subId) {
+  setContainerContent(rendering: DomRendering, content: Content, subId: string) {
     if (!rendering.container) {
       return;
     }
@@ -152,7 +152,7 @@ export class SlotDomConsumer extends SlotConsumer {
     rendering.liveDom = null;
   }
 
-  dispose() {
+  dispose(): void {
     if (this._observer) {
       this._observer.disconnect();
     }
@@ -183,7 +183,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return Object.assign(document.createElement('template'), {innerHTML: template});
   }
 
-  get templatePrefix() {
+  get templatePrefix(): string {
     return this.consumeConn.getQualifiedName();
   }
 
@@ -280,7 +280,8 @@ export class SlotDomConsumer extends SlotConsumer {
     }
   }
 
-  initInnerContainers(container) {
+  initInnerContainers(container): void {
+    
     Array.from(container.querySelectorAll('[slotid]')).forEach(innerContainer => {
       if (!this.isDirectInnerSlot(container, innerContainer)) {
         // Skip inner slots of an inner slot of the given slot.
@@ -294,18 +295,18 @@ export class SlotDomConsumer extends SlotConsumer {
       }
       const subId = this.getNodeValue(innerContainer, 'subid');
       assert(Boolean(subId) === providedContext.spec.isSet,
-        `Sub-id ${subId} for slot ${providedContext.name} doesn't match set spec: ${providedContext.spec.isSet}`);
+             `Slot ${slotId} is missing sub-id ${subId} for ${providedContext.name}`);
       providedContext.sourceSlotConsumer._initInnerSlotContainer(slotId, subId, innerContainer);
     });
   }
 
   // get a value from node that could be an attribute, if not a property
-  getNodeValue(node, name) {
+  getNodeValue(node, name: string) {
     // TODO(sjmiles): remember that attribute names from HTML are lower-case
     return node[name] || node.getAttribute(name);
   }
 
-  isDirectInnerSlot(container, innerContainer) {
+  isDirectInnerSlot(container, innerContainer): boolean {
     if (innerContainer === container) {
       return true;
     }
@@ -327,7 +328,7 @@ export class SlotDomConsumer extends SlotConsumer {
     return false;
   }
 
-  _initMutationObserver(): MutationObserver|null {
+  protected _initMutationObserver(): MutationObserver|null {
     if (this.consumeConn) {
       return new MutationObserver(async (records) => {
         this._observer.disconnect();
