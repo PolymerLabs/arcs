@@ -13,7 +13,8 @@ import {Reference, ResourceManager} from './resource-manager.js';
 import {logFactory} from '../platform/log-web.js';
 import {Services} from '../runtime/services.js';
 import {loadImage} from '../platform/image-web.js';
-import {requireTf} from '../platform/tf-web.js';
+import {requireTf, tf} from '../platform/tf-web.js';
+import {ClassificationPrediction} from './tfjs-service.js';
 
 const log = logFactory('tfjs-mobilenet-service');
 
@@ -34,17 +35,12 @@ interface MobilenetParams {
 }
 
 /** @see https://github.com/tensorflow/tfjs-models/tree/master/mobilenet#making-a-classification */
-type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement; // | tf.Tensor3D;
+type MobilenetImageInput = ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D;
 
 interface ImageInferenceParams {
   model: Reference;
   image?: MobilenetImageInput;
   imageUrl?: string;
-}
-
-interface ClassificationPrediction {
-  className: string;
-  probability: number;
 }
 
 interface Classifier {
