@@ -31,7 +31,7 @@ defineParticle(({DomParticle, log}) => {
       this.updateSingleton(handleName, {ref: model_});
 
       try {
-        this.service({call: 'graph-model.warmUp', model_});
+        this.service({call: 'layers-model.warmUp', model_});
       } catch {
         log('Warm up failed');
       }

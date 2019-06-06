@@ -13,18 +13,18 @@ defineParticle(({DomParticle, log}) => {
   const handleName = 'predictions';
 
   return class extends DomParticle {
-    willReceiveProps({logits, labels, k}, state) {
-      const topK = k || 3;
+    willReceiveProps({yHat, labels, k}, state) {
+      const topK = k || 5;
 
-      if (logits && labels) {
-        this.convert(logits, labels, topK);
+      if (yHat && labels) {
+        this.convert(yHat, labels, topK);
       }
     }
 
-    async convert(logits, labels, topK) {
+    async convert(yHat, labels, topK) {
       log(`Converting tensor output to top ${topK} labels...`);
 
-      const predictions = await this.service({call: 'postprocess.getTopKClasses', yHat: logits, labels, topk});
+      const predictions = await this.service({call: 'postprocess.getTopKClasses', yHat, labels, topk});
       const results = predictions.map(p => ({confidence: p.probability, label: p.className}));
       log(results);
 

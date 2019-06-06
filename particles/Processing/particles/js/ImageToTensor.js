@@ -14,7 +14,7 @@ defineParticle(({DomParticle}) => {
 
   return class extends DomParticle {
     willReceiveProps({image}, state) {
-      if (!state.converted && image) {
+      if (image) {
         this.convert(image);
       }
     }
@@ -23,7 +23,6 @@ defineParticle(({DomParticle}) => {
       const imgReference = await this.service({call: 'tf-image.imageToTensor', imageUrl: image});
       await this.clearHandle(handleName);
       this.updateSingleton(handleName, {ref: imgReference});
-      this.setState({converted: true});
     }
 
   };
