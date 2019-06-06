@@ -20,6 +20,7 @@ import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';
 import {Relevance} from '../../runtime/relevance.js';
+import {SuggestFilter} from './suggest-filter.js';
 
 /**
  * options for the fromLiteral() method.
@@ -39,6 +40,8 @@ export type EnvOptions = {
   context: Manifest;
   loader: Loader;
 };
+
+export type SuggestionVisibilityOptions = {reasons?: string[]};
 
 export class Suggestion {
   plan: Recipe;
@@ -223,5 +226,66 @@ export class Suggestion {
   isUpToDate(arc: Arc, plan: Recipe): boolean {
     const arcVersionByStoreId = arc.getVersionByStore({includeArc: true, includeContext: true});
     return plan.handles.every(handle => arcVersionByStoreId[handle.id] === this.versionByStore[handle.id]);
+  }
+
+  isVisible(arc: Arc, filter: SuggestFilter, options?: SuggestionVisibilityOptions): boolean {
+    if (this.plan.slots.length === 0) {
+      if (options && options.reasons) {
+        options.reasons.push(`No slots`);
+      }
+      return false;
+    }
+    if (!this.descriptionText) {
+      if (options && options.reasons) {
+        options.reasons.push(`No description`);
+      }
+      return false;
+    }
+    if (!arc.modality.isCompatible(this.plan.modality.names)) {
+      if (options && options.reasons) {
+        options.reasons.push(`Incompatible modalities ${this.plan.modality.names.join(', ')} with Arc modalities: ${arc.modality.names.join(', ')}`);
+      }
+      return false;
+    }
+    if (filter.showAll) {
+      return true;
+    }
+    if (filter.search) {
+      if (!this.descriptionText.toLowerCase().includes(filter.search) && !this.hasSearch(filter.search)) {
+        if (options && options.reasons) {
+          options.reasons.push(`Description doesn't match search filter: ${filter.search}`);
+        }
+        return false;
+      }
+      return true;
+    }
+
+    if (!this.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root')) &&
+        !((this.plan.slotConnections || []).find(sc => sc.name === 'root'))) {
+      // suggestion uses only non 'root' slots.
+      // TODO: should check agains slot-composer's root contexts instead.
+      return true;
+    }
+
+    const usesHandlesFromActiveRecipe = this.plan.handles.some(handle => {
+      // TODO(mmandlis): find a generic way to exlude system handles (eg Theme),
+      // either by tagging or by exploring connection directions etc.
+      return !!handle.id &&
+             !!arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
+    });
+    const usesRemoteNonRootSlots = !!this.plan.slots.some(slot => {
+      return !slot.name.includes('root') && !slot.tags.includes('root') &&
+             slot.id && !slot.id.includes('root') &&
+             Boolean(arc.pec.slotComposer.findContextById(slot.id));
+    });
+    if (options && options.reasons) {
+      if (!usesHandlesFromActiveRecipe) {
+        options.reasons.push(`No active recipe handles`);
+      }
+      if (!usesRemoteNonRootSlots) {
+        options.reasons.push(`No remote non-root slots.`);
+      }
+    }
+    return usesHandlesFromActiveRecipe && usesRemoteNonRootSlots;
   }
 }
