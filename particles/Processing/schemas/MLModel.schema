@@ -1,5 +1,6 @@
 schema MlModel
   URL location
+  Boolean fromTFHub
 
 schema ClassificationModel extends MlModel
   URL labels

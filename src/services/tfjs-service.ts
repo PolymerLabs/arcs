@@ -282,7 +282,10 @@ const getTopKClasses = async ({input, y, yHat, labels, topK=3}): Promise<Classif
 
 
 Services.register('graph-model', new GraphModel());
-Services.register('layer-model', new LayersModel());
+
+const layersModel = new LayersModel();
+Services.register('layer-model', layersModel);
+Services.register('layers-model', layersModel);
 
 Services.register('preprocess', {
   normalize,
