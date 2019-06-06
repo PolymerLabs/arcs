@@ -18,7 +18,7 @@ export const requireTf = async () => {
 
   // Assume tf.data is not required for most dependencies
   if (!window['tf'] || !window['tf']['version_core'] || !window['tf']['version_layers'] || !window['tf']['version_converter']) {
-    await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`);
+    await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js`);
   }
   return window['tf'];
 };
