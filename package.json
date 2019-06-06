@@ -55,7 +55,7 @@
     "glob": "^7.1.4",
     "grammkit": "0.7.0",
     "http-server": "^0.11.1",
-    "js-green-licenses": "^1.0.0",
+    "js-green-licenses": "^1.1.0",
     "minimist": "^1.2.0",
     "mocha": "^5.2.0",
     "mocha-chrome": "^2.0.0",

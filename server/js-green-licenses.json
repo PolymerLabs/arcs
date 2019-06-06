@@ -32,6 +32,8 @@
     "expand-template",
     /* WTFPL */
     "spark-md5",
+    /* Apache 2.0, but not discoverable */
+    "@tensorflow/tfjs-node",
     /* Unknown version */
     "esprima-fb",
     "esprima-fb@~3001.1.0-dev-harmony-fb"
