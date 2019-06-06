@@ -104,4 +104,40 @@ describe('FlowGraph', () => {
     assert.hasAllKeys(graph.particleMap, ['P1', 'P2', 'P3']);
     assert.sameMembers(graph.connectionsAsStrings, ['P1.foo -> P2.bar', 'P1.foo -> P3.baz']);
   });
+
+  it('copies particle claims to particle nodes and out-edges', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        out Foo {} foo
+        claim foo is trusted
+      recipe R
+        P
+          foo -> h
+    `);
+    const node = graph.particleMap.get('P');
+    assert.equal(node.claims.size, 1);
+    assert.equal(node.claims.get('foo'), 'trusted');
+    assert.isEmpty(node.checks);
+
+    assert.lengthOf(node.outEdges, 1);
+    assert.equal(node.outEdges[0].claim, 'trusted');
+  });
+
+  it('copies particle checks to particle nodes and in-edges', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        in Foo {} foo
+        check foo is trusted
+      recipe R
+        P
+          foo <- h
+    `);
+    const node = graph.particleMap.get('P');
+    assert.equal(node.checks.size, 1);
+    assert.equal(node.checks.get('foo'), 'trusted');
+    assert.isEmpty(node.claims);
+
+    assert.lengthOf(node.inEdges, 1);
+    assert.equal(node.inEdges[0].check, 'trusted');
+  });
 });

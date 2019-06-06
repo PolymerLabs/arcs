@@ -119,9 +119,15 @@ class ParticleNode extends Node {
   readonly outEdges: ParticleOutput[] = [];
   readonly name: string;
 
+  // Maps from handle names to tags.
+  readonly claims: Map<string, string>;
+  readonly checks: Map<string, string>;
+
   constructor(particle: Particle) {
     super();
     this.name = particle.name;
+    this.claims = particle.spec.trustClaims;
+    this.checks = particle.spec.trustChecks;
   }
 }
 
@@ -130,10 +136,14 @@ class ParticleInput implements Edge {
   readonly end: ParticleNode;
   readonly label: string;
 
+  /* Optional check on this input. */
+  readonly check?: string;
+
   constructor(particleNode: ParticleNode, otherEnd: Node, inputName: string) {
     this.start = otherEnd;
     this.end = particleNode;
     this.label = `${particleNode.name}.${inputName}`;
+    this.check = particleNode.checks.get(inputName);
   }
 }
 
@@ -142,10 +152,14 @@ class ParticleOutput implements Edge {
   readonly end: Node;
   readonly label: string;
 
+  /* Optional claim on this output. */
+  readonly claim?: string;
+
   constructor(particleNode: ParticleNode, otherEnd: Node, outputName: string) {
     this.start = particleNode;
     this.end = otherEnd;
     this.label = `${particleNode.name}.${outputName}`;
+    this.claim = particleNode.claims.get(outputName);
   }
 }
 
