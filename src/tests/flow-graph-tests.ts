@@ -9,7 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
-import {FlowGraph, Node, Edge, BackwardsPath} from '../dataflow/flow-graph.js';
+import {FlowGraph, Node, Edge, CheckResult, BackwardsPath} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -142,6 +142,56 @@ describe('FlowGraph', () => {
   });
 });
 
+describe('FlowGraph validation', () => {
+  it('succeeds when there are no checks', async () => {
+    const graph = await buildFlowGraph(`
+      particle P
+        out Foo {} foo
+        claim foo is trusted
+      recipe R
+        P
+          foo -> h
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('succeeds when a check is satisfied directly', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is trusted
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isTrue(graph.validateGraph());
+  });
+
+  it('fails when a different tag is claimed', async () => {
+    const graph = await buildFlowGraph(`
+      particle P1
+        out Foo {} foo
+        claim foo is notTrusted
+      particle P2
+        in Foo {} bar
+        check bar is trusted
+      recipe R
+        P1
+          foo -> h
+        P2
+          bar <- h
+    `);
+    assert.isFalse(graph.validateGraph());
+  });
+
+  // TODO: Add tests for for more complex graphs, and for other kinds of failures.
+});
+
 class TestNode extends Node {
   readonly inEdges: TestEdge[] = [];
   readonly outEdges: TestEdge[] = [];
@@ -152,6 +202,10 @@ class TestEdge implements Edge {
       readonly start: TestNode,
       readonly end: TestNode,
       readonly label: string) {}
+  
+  isCheckSatisfied(check: string): CheckResult {
+    return CheckResult.Success;
+  }
 }
 
 describe('BackwardsPath', () => {
