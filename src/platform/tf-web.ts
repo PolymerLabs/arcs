@@ -9,14 +9,18 @@
  */
 
 import {dynamicScript} from './dynamic-script-web.js';
+import * as tf from '../../node_modules/@tensorflow/tfjs-core/dist/tf-core.js';
 
 const TF_VERSION = '1.1.2';
 
 /** Dynamically loads and returns the `tfjs` module. */
 export const requireTf = async () => {
-  if (!window['tf']) {
-    await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js?module`);
+
+  // Assume tf.data is not required for most dependencies
+  if (!window['tf'] || !window['tf']['version_core'] || !window['tf']['version_layers'] || !window['tf']['version_converter']) {
+    await dynamicScript(`https://unpkg.com/@tensorflow/tfjs@${TF_VERSION}/dist/tf.min.js`);
   }
   return window['tf'];
 };
 
+export {tf};
