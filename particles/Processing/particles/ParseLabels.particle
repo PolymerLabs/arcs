@@ -1,0 +1,9 @@
+import '../schemas/MlResource.schema'
+import '../schemas/MlModel.schema'
+import '../schemas/Inference.schema'
+
+particle ParseLabels in './js/ParseLabels.js'
+  consume root
+  in URL url
+  out TextLabels labels
+  description `Parse a URL to a text file into a list of labels`
