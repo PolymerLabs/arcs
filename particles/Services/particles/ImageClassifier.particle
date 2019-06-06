@@ -1,0 +1,2 @@
+particle ImageClassifier in './js/ImageClassifier.js'
+  consume root
