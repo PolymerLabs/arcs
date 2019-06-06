@@ -19,6 +19,7 @@ export class FlowGraph {
   readonly particles: ParticleNode[];
   readonly handles: HandleNode[];
   readonly nodes: Node[];
+  readonly edges: Edge[] = [];
 
   /** Maps from particle name to node. */
   readonly particleMap: Map<string, ParticleNode>;
@@ -31,12 +32,13 @@ export class FlowGraph {
     // Create the nodes of the graph.
     const particleNodes = createParticleNodes(recipe.particles);
     const handleNodes = createHandleNodes(recipe.handles);
-    
+
     // Add edges to the nodes.
     recipe.handleConnections.forEach(connection => {
       const particleNode = particleNodes.get(connection.particle);
       const handleNode = handleNodes.get(connection.handle);
-      addHandleConnection(particleNode, handleNode, connection);
+      const edge = addHandleConnection(particleNode, handleNode, connection);
+      this.edges.push(edge);
     });
 
     this.particles = [...particleNodes.values()];
@@ -74,19 +76,19 @@ function createHandleNodes(handles: Handle[]) {
 }
 
 /** Adds a connection between the given particle and handle nodes. */
-function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection) {
+function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode, connection: HandleConnection): Edge {
   switch (connection.direction) {
     case 'in': {
       const edge = new ParticleInput(particleNode, handleNode, connection.name);
       particleNode.inEdges.push(edge);
       handleNode.outEdges.push(edge);
-      break;
+      return edge;
     }
     case 'out': {
       const edge = new ParticleOutput(particleNode, handleNode, connection.name);
       particleNode.outEdges.push(edge);
       handleNode.inEdges.push(edge);
-      break;
+      return edge;
     }
     case 'inout': // TODO: Handle inout directions.
     case 'host':
@@ -112,6 +114,8 @@ interface Edge {
   readonly start: Node;
   readonly end: Node;
   readonly label: string;
+  readonly claim?: string;
+  readonly check?: string;
 }
 
 class ParticleNode extends Node {

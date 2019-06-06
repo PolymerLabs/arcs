@@ -119,8 +119,8 @@ describe('FlowGraph', () => {
     assert.equal(node.claims.get('foo'), 'trusted');
     assert.isEmpty(node.checks);
 
-    assert.lengthOf(node.outEdges, 1);
-    assert.equal(node.outEdges[0].claim, 'trusted');
+    assert.lengthOf(graph.edges, 1);
+    assert.equal(graph.edges[0].claim, 'trusted');
   });
 
   it('copies particle checks to particle nodes and in-edges', async () => {
@@ -137,7 +137,7 @@ describe('FlowGraph', () => {
     assert.equal(node.checks.get('foo'), 'trusted');
     assert.isEmpty(node.claims);
 
-    assert.lengthOf(node.inEdges, 1);
-    assert.equal(node.inEdges[0].check, 'trusted');
+    assert.lengthOf(graph.edges, 1);
+    assert.equal(graph.edges[0].check, 'trusted');
   });
 });
