@@ -14,7 +14,7 @@ defineParticle(({DomParticle}) => {
 
   return class extends DomParticle {
     willReceiveProps({image}, state) {
-      if(!state.converted && image) {
+      if (!state.converted && image) {
         this.convert(image);
       }
     }
