@@ -57,6 +57,40 @@ export class FlowGraph {
   }
 }
 
+/**
+ * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
+ * nodes in the path. 
+ */
+export class BackwardsPath {
+  private constructor(readonly nodes: Node[]) {}
+
+  static fromEdge(edge: Edge) {
+    return new BackwardsPath([edge.end, edge.start]);
+  }
+
+  appendEdge(edge: Edge): BackwardsPath {
+    // Flip the edge around.
+    const edgeStart = edge.end;
+    const edgeEnd = edge.start;
+
+    if (edgeStart !== this.endNode) {
+      throw new Error('Edge must connect to end of path.');
+    }
+    if (this.nodes.includes(edgeEnd)) {
+      throw new Error('Path must not include cycles.');
+    }
+    return new BackwardsPath([...this.nodes, edgeEnd]);
+  }
+
+  get startNode(): Node {
+    return this.nodes[0];
+  }
+
+  get endNode(): Node {
+    return this.nodes[this.nodes.length - 1];
+  }
+}
+
 /** Creates a new node for every given particle. */
 function createParticleNodes(particles: Particle[]) {
   const nodes: Map<Particle, ParticleNode> = new Map();
@@ -97,7 +131,7 @@ function addHandleConnection(particleNode: ParticleNode, handleNode: HandleNode,
   }
 }
 
-abstract class Node {
+export abstract class Node {
   abstract readonly inEdges: Edge[];
   abstract readonly outEdges: Edge[];
 
@@ -110,7 +144,7 @@ abstract class Node {
   }
 }
 
-interface Edge {
+export interface Edge {
   readonly start: Node;
   readonly end: Node;
   readonly label: string;

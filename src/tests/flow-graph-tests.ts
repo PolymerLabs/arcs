@@ -9,7 +9,7 @@
  */
 import {Manifest} from '../runtime/manifest.js';
 import {assert} from '../platform/chai-web.js';
-import {FlowGraph} from '../dataflow/flow-graph.js';
+import {FlowGraph, Node, Edge, BackwardsPath} from '../dataflow/flow-graph.js';
 
 async function buildFlowGraph(manifestContent: string): Promise<FlowGraph> {
   const manifest = await Manifest.parse(manifestContent);
@@ -139,5 +139,55 @@ describe('FlowGraph', () => {
 
     assert.lengthOf(graph.edges, 1);
     assert.equal(graph.edges[0].check, 'trusted');
+  });
+});
+
+class TestNode extends Node {
+  readonly inEdges: TestEdge[] = [];
+  readonly outEdges: TestEdge[] = [];
+}
+
+class TestEdge implements Edge {
+  constructor(
+      readonly start: TestNode,
+      readonly end: TestNode,
+      readonly label: string) {}
+}
+
+describe('BackwardsPath', () => {
+  // Construct directed graph: A -> B -> C.
+  const nodeA = new TestNode();
+  const nodeB = new TestNode();
+  const nodeC = new TestNode();
+  const edgeAToB = new TestEdge(nodeA, nodeB, 'A -> B');
+  const edgeBToC = new TestEdge(nodeB, nodeC, 'B -> C');
+  const edgeCToA = new TestEdge(nodeC, nodeA, 'C -> A');
+
+  it('starts with a single edge', () => {
+    const path = BackwardsPath.fromEdge(edgeAToB);
+
+    assert.sameOrderedMembers(path.nodes, [nodeB, nodeA]);
+    assert.equal(path.startNode, nodeB);
+    assert.equal(path.endNode, nodeA);
+  });
+
+  it('can add another edge to the end of the path', () => {
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.appendEdge(edgeAToB);
+
+    assert.sameOrderedMembers(path.nodes, [nodeC, nodeB, nodeA]);
+    assert.equal(path.startNode, nodeC);
+    assert.equal(path.endNode, nodeA);
+  });
+
+  it('forbids cycles', () => {
+    let path = BackwardsPath.fromEdge(edgeBToC);
+    path = path.appendEdge(edgeAToB);
+    assert.throws(() => path.appendEdge(edgeCToA), 'Path must not include cycles');
+  });
+
+  it('only allows adding to the end of the path', () => {
+    const path = BackwardsPath.fromEdge(edgeBToC);
+    assert.throws(() => path.appendEdge(edgeCToA), 'Edge must connect to end of path');
   });
 });
