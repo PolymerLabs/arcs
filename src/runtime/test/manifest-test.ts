@@ -17,8 +17,9 @@ import {Schema} from '../schema.js';
 import {CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Dictionary} from '../hot.js';
+import {assertThrowsAsync} from '../testing/test-util.js';
 
-async function assertRecipeParses(input, result) {
+async function assertRecipeParses(input: string, result: string) : Promise<void> {
   // Strip common leading whitespace.
   //result = result.replace(new Regex(`()^|\n)${result.match(/^ */)[0]}`), '$1'),
   const target = (await Manifest.parse(result)).recipes[0].toString();
@@ -49,7 +50,7 @@ describe('manifest', () => {
           someParam -> #tag
         description \`hello world\`
           handle0 \`best handle\``);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const particle = manifest.particles[0];
       assert.equal('SomeParticle', particle.name);
       assert.deepEqual(['work'], particle.verbs);
@@ -68,7 +69,7 @@ describe('manifest', () => {
       assert.lengthOf(recipe.patterns, 1);
       assert.equal(recipe.patterns[0], 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best handle');
-      const type = recipe.handleConnections[0]._resolvedType;
+      const type = recipe.handleConnections[0]['_resolvedType'];
       assert.lengthOf(Object.keys(manifest.schemas), 1);
       const schema = Object.values(manifest.schemas)[0] as Schema;
       assert.lengthOf(Object.keys(schema.description), 3);
@@ -232,7 +233,7 @@ ${particleStr1}
     const manifest = await Manifest.parse(`
       schema Bar
         Text value`);
-    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -241,7 +242,7 @@ ${particleStr1}
       schema Foo
         Text value
       schema Bar extends Foo`);
-    const verify = (manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
+    const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -313,8 +314,8 @@ ${particleStr1}
     const verify = (manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
-      assert.lengthOf(recipe._connectionConstraints, 1);
-      const constraint = recipe._connectionConstraints[0];
+      assert.lengthOf(recipe.connectionConstraints, 1);
+      const constraint = recipe.connectionConstraints[0];
       assert.equal(constraint.from.particle.name, 'A');
       assert.equal(constraint.from.connection, 'a');
       assert.equal(constraint.to.handle.localName, 'localThing');
@@ -413,7 +414,7 @@ ${particleStr1}
         out [Someother] someOthers
       recipe
         Thing`);
-    const verify = (manifest) => assert(manifest.recipes[0].particles[0].spec);
+    const verify = (manifest: Manifest) => assert(manifest.recipes[0].particles[0].spec);
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -503,7 +504,7 @@ ${particleStr1}
         (Text or URL) u
         Text test
         (Number, Number, Boolean) t`);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const opt = manifest.schemas.Foo.fields;
       assert.equal(opt.u.kind, 'schema-union');
       verifyPrimitiveType(opt.u.types[0], 'Text');
@@ -546,7 +547,7 @@ ${particleStr1}
           consume mySlot as slot0
           consume oneMoreSlot as slot1
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
       recipe.normalize();
@@ -593,7 +594,7 @@ ${particleStr1}
           mySlot consume slot0
           oneMoreSlot consume slot1
     `);
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       const recipe = manifest.recipes[0];
       assert(recipe);
       recipe.normalize();
@@ -1315,7 +1316,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   schema Product
   store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
     description \`Claire's wishlist\``, {loader});
-    const verify = (manifest) => {
+    const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.stores, 1);
       assert.deepEqual(['wishlist'], manifest.storeTags.get(manifest.stores[0]));
     };
@@ -1914,48 +1915,114 @@ resource SomeName
 
     const recipe = manifest.recipes[0];
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
- });
- it('can parse recipes with a require section', async () => {
-  const manifest = await Manifest.parse(`
-    particle P1
-      out S {} a
-      consume root 
-        provide details
-    particle P2
-      in S {} b
-        consume details
-    
-    recipe 
-      require
-        handle as h0
-        slot as s0
-        P1
-          * -> h0
-          consume root
-            provide details as s0
-        P2
-          * <- h0
+  });
+  
+  it('can parse recipes with a require section', async () => {
+    const manifest = await Manifest.parse(`
+      particle P1
+        out S {} a
+        consume root 
+          provide details
+      particle P2
+        in S {} b
           consume details
-      P1
-  `);
-  const recipe = manifest.recipes[0];
-  assert(recipe.requires.length === 1, 'could not parse require section');
- });
- it('recipe resolution checks the require sections', async () => {
-   const manifest = await Manifest.parse(`
+      
+      recipe 
+        require
+          handle as h0
+          slot as s0
+          P1
+            * -> h0
+            consume root
+              provide details as s0
+          P2
+            * <- h0
+            consume details
+        P1
+    `);
+    const recipe = manifest.recipes[0];
+    assert(recipe.requires.length === 1, 'could not parse require section');
+  });
+ 
+  it('recipe resolution checks the require sections', async () => {
+    const manifest = await Manifest.parse(`
 
-    particle A
-      in S {} input
-    particle B
-      out S {} output
+      particle A
+        in S {} input
+      particle B
+        out S {} output
 
-    recipe
-      require
-        A
-        B
-   `);
-   const recipe = manifest.recipes[0];
-   recipe.normalize();
-   assert.isFalse(recipe.isResolved(), 'recipe with a require section is resolved');
- });
+      recipe
+        require
+          A
+          B
+    `);
+    const recipe = manifest.recipes[0];
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved(), 'recipe with a require section is resolved');
+  });
+
+  describe('trust claims and checks', () => {
+    it('supports multiple claim statements', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          out T {} output1
+          out T {} output2
+          claim output1 is property1
+          claim output2 is property2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustClaims.size, 2);
+      assert.equal(particle.trustClaims.get('output1'), 'property1');
+      assert.equal(particle.trustClaims.get('output2'), 'property2');
+      assert.isEmpty(particle.trustChecks);
+    });
+
+    it('supports multiple check statements', async () => {
+      const manifest = await Manifest.parse(`
+        particle A
+          in T {} input1
+          in T {} input2
+          check input1 is property1
+          check input2 is property2
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.equal(particle.trustChecks.size, 2);
+      assert.equal(particle.trustChecks.get('input1'), 'property1');
+      assert.equal(particle.trustChecks.get('input2'), 'property2');
+      assert.isEmpty(particle.trustClaims);
+    });
+
+    it('fails for unknown handle names', async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} output
+          claim oops is trusted
+      `), `Can't make a claim on unknown handle oops`);
+
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} input
+          check oops is trusted
+      `), `Can't make a check on unknown handle oops`);
+    });
+
+    it(`doesn't allow claims on inputs`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          in T {} foo
+          claim foo is trusted
+      `), `Can't make a claim on handle foo (not an output handle)`);
+    });
+
+    it(`doesn't allow checks on outputs`, async () => {
+      assertThrowsAsync(async () => await Manifest.parse(`
+        particle A
+          out T {} foo
+          check foo is trusted
+      `), `Can't make a check on handle foo (not an input handle)`);
+    });
+  });
 });

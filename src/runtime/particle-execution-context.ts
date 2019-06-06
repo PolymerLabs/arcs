@@ -99,7 +99,7 @@ export class ParticleExecutionContext {
         pec.idle.then(a => {
           // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
           // update relevance, after handles are updated. Needs better idle signal.
-          setTimeout(() => { this.Idle(version, pec.relevance); }, 0);
+          setTimeout(() => this.Idle(version, pec.relevance), 0);
         });
       }
 

@@ -10,8 +10,6 @@
 
 defineParticle(({DomParticle, html, log}) => {
 
-  const host = `favorite-food`;
-
   const template = html`
 
 <style>
@@ -41,7 +39,7 @@ defineParticle(({DomParticle, html, log}) => {
 <template have-favorite-food>
   <div row>
     <icon icon-favorite>favorite</icon>
-    <span label>They have your favorite food <b>{{food}}</b>.</span>
+    <span label>They have <span>{{owner}}</span>'s favorite food <b>{{food}}</b>.</span>
   </div>
 </template>
 
@@ -51,28 +49,46 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    shouldRender({restaurant, foods}) {
-      log('shouldRender:', restaurant && foods);
-      return restaurant && foods;
+    update({restaurant, foods, names}, state) {
+      if (foods && names) {
+        this.findFoodOwnerName(foods[0], names);
+      }
+      if (restaurant && foods && !state.foods) {
+        this.findFoodItems(restaurant, foods);
+      }
     }
-    render({restaurant, foods}, state) {
-      const models = this.findFoodItems(restaurant, foods);
-      log('render:', restaurant, foods, models);
+    shouldRender({}, {foods}) {
+      return foods && foods.length;
+    }
+    render({restaurant}, {foods, name}) {
+      foods.forEach(food => food.owner = name);
       return {
         subId: restaurant.id,
         items: {
           $template: 'have-favorite-food',
-          models
+          models: foods
         }
       };
     }
-    findFoodItems(restaurant, foods) {
-      return foods
+    async findFoodOwnerName(food, names) {
+      if (food) {
+        const results = await this.boxQuery(names, food.fromKey);
+        const foodOwner = results[0];
+        if (foodOwner) {
+          this.state = {name: foodOwner.userName};
+        }
+      }
+    }
+    async findFoodItems(restaurant, foodShares) {
+      const allFoods = await this.derefShares(foodShares);
+      const foods = allFoods
         // select only foods matching this restaurant
         .filter(food => this.hasFood(restaurant.name, food.food))
         // extract POJO
         .map(food => food.dataClone())
         ;
+      this.state = {foods};
+
     }
     hasFood(restaurant, food) {
       // Totally ridiculous heuristic: first letter in name matches first letter of food.

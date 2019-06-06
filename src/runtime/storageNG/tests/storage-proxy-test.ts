@@ -9,14 +9,14 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt';
-import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton';
-import {Particle} from '../../particle';
-import {Exists} from '../drivers/driver-factory';
-import {Handle} from '../handle';
-import {StorageKey} from '../storage-key';
-import {StorageProxy} from '../storage-proxy';
-import {ActiveStore, StorageMode, ProxyCallback, ProxyMessage, ProxyMessageType} from '../store';
+import {CRDTOperation, CRDTTypeRecord} from '../../crdt/crdt.js';
+import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {Particle} from '../../particle.js';
+import {Exists} from '../drivers/driver-factory.js';
+import {Handle} from '../handle.js';
+import {StorageKey} from '../storage-key.js';
+import {StorageProxy} from '../storage-proxy.js';
+import {ActiveStore, StorageMode, ProxyCallback, ProxyMessage, ProxyMessageType} from '../store.js';
 
 
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
@@ -39,6 +39,10 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
 class MockStorageKey extends StorageKey {
   constructor() {
     super('testing');
+  }
+
+  toString() {
+    return `${this.protocol}://`;
   }
 }
 

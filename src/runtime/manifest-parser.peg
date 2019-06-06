@@ -20,7 +20,7 @@
 {
   let indent = '';
   let startIndent = '';
-  const indents = [];
+  const indents: string[] = [];
 
   const emptyRef = () => ({kind: 'handle-ref', id: null, name: null, tags: [], location: location()}) as AstNode.HandleRef;
 
@@ -230,9 +230,11 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 Particle
   = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args: {}[] = [];
-    const modality = [];
-    const slotConnections: {}[] = [];
+    let args: AstNode.ParticleArgument[] = [];
+    const modality: string[] = [];
+    const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
+    const trustClaims: AstNode.ParticleTrustClaim[] = [];
+    const trustChecks: AstNode.ParticleTrustCheck[] = [];
     let description: AstNode.Description | null = null;
     let hasParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -255,6 +257,10 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
+      } else if (item.kind === 'particle-trust-claim') {
+        trustClaims.push(item);
+      } else if (item.kind === 'particle-trust-check') {
+        trustChecks.push(item);
       } else if (item.modality) {
         modality.push(item.modality);
       } else {
@@ -276,7 +282,9 @@ Particle
       modality,
       slotConnections,
       description,
-      hasParticleArgument
+      hasParticleArgument,
+      trustClaims,
+      trustChecks,
     } as AstNode.Particle;
   }
 
@@ -285,6 +293,30 @@ ParticleItem "a particle item"
   / ParticleSlot
   / Description
   / ParticleHandle
+  / ParticleTrustClaim
+  / ParticleTrustCheck
+
+ParticleTrustClaim
+  = 'claim' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  {
+    return {
+      kind: 'particle-trust-claim',
+      location: location(),
+      handle,
+      trustTag,
+    } as AstNode.ParticleTrustClaim;
+  }
+
+ParticleTrustCheck
+  = 'check' whiteSpace handle:lowerIdent whiteSpace 'is' whiteSpace trustTag:lowerIdent eolWhiteSpace
+  {
+    return {
+      kind: 'particle-trust-check',
+      location: location(),
+      handle,
+      trustTag,
+    } as AstNode.ParticleTrustCheck;
+  }
 
 ParticleHandle
   = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
@@ -430,8 +462,8 @@ ParticleSlot
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
-    let formFactor = null;
-    const provideSlotConnections = [];
+    let formFactor: AstNode.SlotFormFactor|null = null;
+    const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind === 'provided-slot') {
@@ -474,8 +506,8 @@ SlotFormFactor
 ParticleProvidedSlot
   = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:lowerIdent tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
-    let formFactor = null;
-    const handles = [];
+    let formFactor: AstNode.SlotFormFactor|null = null;
+    const handles: AstNode.ParticleProvidedSlotHandle[] = [];
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
       if (item.kind === 'form-factor') {
@@ -590,8 +622,8 @@ TopLevelAlias
 RecipeParticle
   = ref:(ParticleRef / '*') name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
-    const handleConnections = [];
-    const slotConnections = [];
+    const handleConnections: AstNode.RecipeParticleConnection[]  = [];
+    const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
     if (connections) {
       connections = extractIndented(connections);
       for (const conn of connections) {
@@ -631,7 +663,7 @@ ParticleConnectionTargetComponents
   = param:(upperIdent / lowerIdent)? whiteSpace? tags:(TagList)?
   {
     param = optional(param, param => param, null);
-    let name = null;
+    let name: string|null = null;
     let particle = null;
     if (param) {
       if (param[0].toUpperCase() === param[0]) {

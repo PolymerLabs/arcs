@@ -158,7 +158,7 @@ export class Particle {
 
   startBusy(): void {
     if (this._busy === 0) {
-      this._idle = new Promise(resolve => this._idleResolver = resolve);
+      this._idle = new Promise(resolve => this._idleResolver = () => resolve());
     }
     this._busy++;
   }

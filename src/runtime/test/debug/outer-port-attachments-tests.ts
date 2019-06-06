@@ -70,6 +70,8 @@ describe('OuterPortAttachment', () => {
         modality: ['dom'],
         slotConnections: [],
         verbs: [],
+        trustClaims: [],
+        trustChecks: [],
         args: [{
           dependentConnections: [],
           direction: 'inout',

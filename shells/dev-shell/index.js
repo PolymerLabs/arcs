@@ -85,10 +85,7 @@ async function wrappedExecute() {
       arcPanel.showError('Error in arc.instantiate', e);
       continue;
     }
-    const description = await Runtime.getArcDescription(arc);
-    if (description) {
-      arcPanel.setDescription(description);
-    }
+    arcPanel.display(await Runtime.getArcDescription(arc));
   }
 }
 

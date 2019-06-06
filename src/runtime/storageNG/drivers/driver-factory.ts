@@ -18,9 +18,18 @@ export interface StorageDriverProvider {
   // information on the StorageDriver and characteristics
   // of the Storage
   willSupport(storageKey: StorageKey): boolean;
-  driver<Data>(storageKey: StorageKey, exists: Exists): Driver<Data>;
+  driver<Data>(storageKey: StorageKey, exists: Exists): Promise<Driver<Data>>;
 }
 
+// Interface that drivers must support.
+// 
+// Note the threading of a version number here; each model provided
+// by the driver to the Store (using the receiver) is paired with a version,
+// as is each model sent from the Store to the driver (using Driver.send()).
+// 
+// This threading is used to track whether driver state has changed while
+// the Store is processing a particular model. send() should always fail
+// if the version isn't exactly 1 greater than the current internal version.
 export abstract class Driver<Data> {
   storageKey: StorageKey;
   exists: Exists;
@@ -44,7 +53,7 @@ export class DriverFactory {
     this.providers = [];
   }
   static providers: StorageDriverProvider[] = [];
-  static driverInstance<Data>(storageKey: StorageKey, exists: Exists): Driver<Data> {
+  static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
         return provider.driver<Data>(storageKey, exists);
@@ -53,11 +62,11 @@ export class DriverFactory {
     return null;
   }
 
-  static register(storageDriverProvider: StorageDriverProvider): void {
+  static register(storageDriverProvider: StorageDriverProvider) {
     this.providers.push(storageDriverProvider);
   }
 
-  static willSupport(storageKey: StorageKey): boolean {
+  static willSupport(storageKey: StorageKey) {
     for (const provider of this.providers) {
       if (provider.willSupport(storageKey)) {
         return true;

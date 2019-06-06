@@ -128,7 +128,7 @@ export class StorePanel extends HTMLElement {
     if (items.length > 0) {
       items.forEach(({id, rawData}) => this.data[id] = rawData);
       // Strip enclosing brackets and remove indent before displaying.
-      const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n  /g, '\n');
+      const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n {2}/g, '\n');
       this.dataPanel.value = json;
       this.dataPanel.rows = Math.min(json.match(/\n/g).length + 1, 20);
     } else {

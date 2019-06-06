@@ -9,9 +9,9 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt';
-import {Handle} from './handle';
-import {ActiveStore, ProxyMessage, ProxyMessageType} from './store';
+import {CRDTChange, CRDTConsumerType, CRDTData, CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
+import {Handle} from './handle.js';
+import {ActiveStore, ProxyMessage, ProxyMessageType} from './store.js';
 
 /**
  * TODO: describe this class.

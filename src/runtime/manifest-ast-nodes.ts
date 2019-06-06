@@ -153,6 +153,8 @@ export interface MetaStorageKey extends BaseNode {
   kind: 'storageKey';
 }
 
+export type MetaItem = MetaStorageKey | MetaName;
+
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
@@ -163,6 +165,8 @@ export interface Particle extends BaseNode {
   slots?: ParticleSlot[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleArgument?: boolean;  // not used in RecipeParticle
+  trustChecks?: ParticleTrustCheck[];
+  trustClaims?: ParticleTrustClaim[];
 
   // fields in RecipeParticle only
   ref?: ParticleRef | '*';
@@ -170,6 +174,17 @@ export interface Particle extends BaseNode {
   slotConnections?: RecipeParticleSlotConnection[];
 }
 
+export interface ParticleTrustClaim extends BaseNode {
+  kind: 'particle-trust-claim';
+  handle: string;
+  trustTag: string;
+}
+
+export interface ParticleTrustCheck extends BaseNode {
+  kind: 'particle-trust-check';
+  handle: string;
+  trustTag: string;
+}
 
 export interface ParticleModality extends BaseNode {
   kind: 'particle-modality';
@@ -187,6 +202,7 @@ export interface ParticleArgument extends BaseNode {
 }
 
 export type ParticleHandle = ParticleArgument;
+export type ParticleItem = ParticleModality | ParticleSlot | Description | ParticleHandle;
 
 export interface ParticleHandleDescription extends BaseNode {
   kind: 'handle-description';
@@ -270,12 +286,16 @@ export interface RecipeParticleConnection extends BaseNode {
   target: ParticleConnectionTargetComponents;
 }
 
+export type RecipeParticleItem = RecipeParticleSlotConnection | RecipeParticleConnection;
+
 export interface ParticleConnectionTargetComponents extends BaseNode {
   kind: 'handle-connection-components';
   name: string|null;
   particle: string|null;
   tags: TagList;
 }
+
+export type RecipeHandleFate = string;
 
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
@@ -338,7 +358,7 @@ export interface TagConnectionTarget extends BaseNode {
   targetType: 'tag';
 }
 
-export interface LocalNameConnectionTarget extends BaseNode {
+export interface NameConnectionTarget extends BaseNode {
   name: string;
   targetType: 'localName';
 }
@@ -473,6 +493,8 @@ export interface SlotFormFactor extends BaseNode {
   formFactor: string;
 }
 
+export type ParticleSlotItem = SlotFormFactor | ParticleProvidedSlot;
+
 export interface TypeName extends BaseNode {
   kind: 'type-name';
   name: string;
@@ -485,14 +507,21 @@ export interface NameAndTagList {
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Annotation = string;
+export type Indent = number;
 export type LocalName = string;
 export type Manifest = ManifestItem[];
 export type ManifestStorageItem = string;
+export type ManifestStorageDescription = string;
+export type Modality = string;
 export type ParticleArgumentDirection = string;
+export type ReservedWord = string;
 export type ResourceStart = string;
 export type ResourceBody = string;
 export type ResourceLine = string;
+export type SameIndent = boolean;
+export type SameOrMoreIndent = string;
 export type SchemaExtends = string[];
+export type SpaceTagList = Tag[];
 export type Tag = string;
 export type TagList = Tag[];
 export type TopLevelAlias = string;
@@ -500,9 +529,10 @@ export type Verb = string;
 export type VerbList = Verb[];
 export type Version = number;
 export type backquotedString = string;
+export type fieldName = string;
 export type id = string;
-export type upperIndent = string;
-export type lowerIndent = string;
+export type upperIdent = string;
+export type lowerIdent = string;
 export type whiteSpace = string;
 export type eolWhiteSpace = string;
 export type eol = string;

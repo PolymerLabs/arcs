@@ -72,6 +72,9 @@ const template = Xen.Template.html`
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
       </div>
+      <div tab="Arc Info">
+        <pre style="padding: 8px; white-space: pre-wrap;">{{serialization}}</pre>
+      </div>
       <div tab="Plumber's Helpers">
         <button on-click="onReplan">Replan</button>
       </div>
@@ -87,6 +90,11 @@ export class WebTools extends Xen.Debug(Xen.Async, log) {
   }
   get template() {
     return template;
+  }
+  update({arc, nullarc}) {
+    if (arc || nullarc) {
+      (arc||nullarc).serialize().then(serialization => this.state = {serialization});
+    }
   }
   render(props, state) {
     const renderModel = {

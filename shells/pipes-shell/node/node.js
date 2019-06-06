@@ -30,7 +30,7 @@ import {ShellApiFactory} from '../device.js';
 
 //const storage = `pouchdb://local/arcs/`;
 const storage = `volatile://`;
-const version = `apr-16`;
+const version = `jun-3`;
 
 console.log(`version: ${version}, storage: ${storage}`);
 
