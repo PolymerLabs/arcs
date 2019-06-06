@@ -5,7 +5,7 @@ import '../schemas/Inference.schema'
 particle ToLabels in './js/ToLabels.js'
   consume root
   in MlResource yHat
-  in URL labels
+  in TextLabels labels
   in Number k
   out [Classification] predictions
   description `Convert raw inference into the top k labels (with confidence).`
