@@ -54,7 +54,7 @@ export class ResourceManager {
   static dispose(r: Reference): void {
     const obj = this.references[r];
 
-    if (obj.hasOwnProperty('dispose')) {
+    if (obj['dispose']) {
       obj.dispose();
     }
     delete this.references[r];
