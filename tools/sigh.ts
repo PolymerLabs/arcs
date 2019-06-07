@@ -91,14 +91,17 @@ const cleanFiles = ['manifest-railroad.html', 'flow-assertion-railroad.html', es
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
-const srcExclude = /\b(node_modules|deps|build|third_party)\b/;
+const srcExclude = /\b(node_modules|deps|build|third_party|javaharness|Kotlin)\b/;
 // RE pattern to exclude when finding within project built files.
-const buildExclude = /\b(node_modules|deps|src|third_party)\b/;
+const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
 
 function* findProjectFiles(dir: string, exclude: RegExp|null, predicate: (path: string) => boolean): Iterable<string> {
   const tests = [];
   for (const entry of fs.readdirSync(dir)) {
     if (entry.startsWith('.') || (exclude && exclude.test(entry))) {
+      continue;
+    }
+    if (entry.indexOf('bazel-') != -1) {
       continue;
     }
 
@@ -649,7 +652,7 @@ function watch(args: string[]): boolean {
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/)`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|bazel-.*/)`),
     persistent: true
   });
   keepProcessAlive = true; // Tell the runner to not exit.
