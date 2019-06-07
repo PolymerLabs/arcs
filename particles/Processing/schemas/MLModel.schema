@@ -5,11 +5,6 @@ schema ModelLoadOptions
 
 schema MlModel
   URL location
-  ModelLoadOptions options
+  Reference<ModelLoadOptions> options
 
-schema TextLabels
-  [Text] labels
-
-schema ClassificationModel extends MlModel
-  TextLabels labels
 
