@@ -95,7 +95,7 @@ export class FlowGraph {
             return false;
           case CheckResult.KeepGoing:
             // Check has not failed yet for this path yet. Add it to the stack and keep going.
-            stack.push(path.appendEdge(edge));
+            stack.push(path.newPathWithEdge(edge));
             continue;
           default:
             throw new Error(`Unknown check result: ${result}`);
@@ -114,16 +114,16 @@ export enum CheckResult {
 
 /**
  * A path that walks backwards through the graph, i.e. it walks along the directed edges in the reverse direction. The path is described by the
- * nodes in the path. 
+ * nodes in the path. Class is immutable.
  */
 export class BackwardsPath {
-  private constructor(readonly nodes: Node[]) {}
+  private constructor(readonly nodes: readonly Node[]) {}
 
   static fromEdge(edge: Edge) {
     return new BackwardsPath([edge.end, edge.start]);
   }
 
-  appendEdge(edge: Edge): BackwardsPath {
+  newPathWithEdge(edge: Edge): BackwardsPath {
     // Flip the edge around.
     const edgeStart = edge.end;
     const edgeEnd = edge.start;

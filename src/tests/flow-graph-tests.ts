@@ -220,28 +220,28 @@ describe('BackwardsPath', () => {
   it('starts with a single edge', () => {
     const path = BackwardsPath.fromEdge(edgeAToB);
 
-    assert.sameOrderedMembers(path.nodes, [nodeB, nodeA]);
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeB, nodeA]);
     assert.equal(path.startNode, nodeB);
     assert.equal(path.endNode, nodeA);
   });
 
   it('can add another edge to the end of the path', () => {
     let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.appendEdge(edgeAToB);
+    path = path.newPathWithEdge(edgeAToB);
 
-    assert.sameOrderedMembers(path.nodes, [nodeC, nodeB, nodeA]);
+    assert.sameOrderedMembers(path.nodes as Node[], [nodeC, nodeB, nodeA]);
     assert.equal(path.startNode, nodeC);
     assert.equal(path.endNode, nodeA);
   });
 
   it('forbids cycles', () => {
     let path = BackwardsPath.fromEdge(edgeBToC);
-    path = path.appendEdge(edgeAToB);
-    assert.throws(() => path.appendEdge(edgeCToA), 'Path must not include cycles');
+    path = path.newPathWithEdge(edgeAToB);
+    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Path must not include cycles');
   });
 
   it('only allows adding to the end of the path', () => {
     const path = BackwardsPath.fromEdge(edgeBToC);
-    assert.throws(() => path.appendEdge(edgeCToA), 'Edge must connect to end of path');
+    assert.throws(() => path.newPathWithEdge(edgeCToA), 'Edge must connect to end of path');
   });
 });
